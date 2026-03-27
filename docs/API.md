@@ -63,6 +63,7 @@ type Season = "ad" | "ct" | "lt" | "ea" | "ap" | "ot" | "sg";
 type Rank = 0 | 1 | 2 | 3 | 4;
 
 type CanonicalHour =
+  | "matutinum"
   | "laudes"
   | "prima"
   | "tertia"
@@ -181,10 +182,16 @@ tonus.cantus({ mode: [1, 2], office: ["an", "hy"] });
 tonus.cantus({ id: "gregobase:1234" });
 
 // raw GABC body
-tonus.cantus({ gabc: "(c4) Sán(g)ctus(h) Sán(g)ctus(h)", incipit: "Sanctus", mode: 1 });
+tonus.cantus({
+  gabc: "(c4) Sán(g)ctus(h) Sán(g)ctus(h)",
+  incipit: "Sanctus",
+  mode: 1,
+});
 
 // full GABC file
-tonus.cantus({ gabc: "name: Sanctus;\nmode: 1;\n%%\n(c4) Sán(g)ctus(h) Sán(g)ctus(h)" });
+tonus.cantus({
+  gabc: "name: Sanctus;\nmode: 1;\n%%\n(c4) Sán(g)ctus(h) Sán(g)ctus(h)",
+});
 ```
 
 ### `tonus.festum(query?) -> Feast[]`
@@ -207,7 +214,7 @@ tonus.proprium({ office: "in" });
 tonus.proprium({ feast: feasts, office: "gr" });
 ```
 
-**Coverage:** 926 entries (523 Sancti + 403 Tempora). Commune Sanctorum fallback not yet implemented.
+**Coverage:** 926 entries (523 Sancti + 403 Tempora). When a feast has no dedicated proper for a slot, the Commune Sanctorum proper is used as fallback (31 commune sets, 387 feast→commune mappings).
 
 ### `tonus.ordinarium(query?) -> OrdinaryChant[]`
 
@@ -221,14 +228,24 @@ tonus.ordinarium({ mass: 9, ordinary: "gl" });
 
 ### `tonus.officium(query?) -> Chant[]`
 
-Divine Office hour retrieval. Returns antiphons and hymns for Lauds and Vespers. Feast acts as a filter when provided.
+Divine Office hour retrieval. Returns chants for a canonical hour. Feast acts as a filter when provided. When no hour is specified, returns chants for all available hours.
 
 ```js
 tonus.officium({ hour: "laudes" });
 tonus.officium({ feast: feasts, hour: "vesperae" });
+tonus.officium({ feast: feasts, hour: "matutinum" });
+tonus.officium({ hour: "tertia" });
 ```
 
-**Note:** `prima`, `tertia`, `sexta`, `nona`, `completorium` return empty — not yet extracted.
+| Hour                    | Content                                   |
+| ----------------------- | ----------------------------------------- |
+| `matutinum`             | Invitatory, antiphons, hymn, responsories |
+| `laudes`                | Antiphons, Benedictus antiphon, hymn      |
+| `tertia`                | Responsory breve                          |
+| `sexta`                 | Responsory breve                          |
+| `nona`                  | Responsory breve                          |
+| `vesperae`              | Antiphons, Magnificat antiphon, hymn      |
+| `prima`, `completorium` | Not yet extracted — return empty          |
 
 ### `tonus.psalmus(query?) -> Chant[]`
 
@@ -263,8 +280,14 @@ interface CaelumQuery {
 }
 
 type BodyName =
-  | "Sun" | "Moon" | "Mercury" | "Venus" | "Earth"
-  | "Mars" | "Jupiter" | "Saturn";
+  | "Sun"
+  | "Moon"
+  | "Mercury"
+  | "Venus"
+  | "Earth"
+  | "Mars"
+  | "Jupiter"
+  | "Saturn";
 ```
 
 **`Caelum`**
@@ -327,7 +350,7 @@ interface Temper {
 
   // computed
   ratios: number[]; // frequency ratios relative to root, one per pitch class
-  cents: number[];  // cent values 0–1200 per pitch class
+  cents: number[]; // cent values 0–1200 per pitch class
 
   // methods
   nota(input: PitchInput): Note;
@@ -496,7 +519,7 @@ interface Note {
   bend: number; // 14-bit MIDI pitch bend, 8192 = center
   velocity: number | null;
   duration: number | null;
-  arsis: number | null;  // ascending rhythmic weight; 1 = ictus, counts up
+  arsis: number | null; // ascending rhythmic weight; 1 = ictus, counts up
   thesis: number | null; // descending rhythmic weight; counts down to next ictus
 }
 ```
@@ -573,8 +596,8 @@ type IntervalQuality = "perfect" | "major" | "minor" | "augmented";
 type IntervalDirection = "up" | "down" | "unison";
 
 interface Interval {
-  name: string;    // e.g. "Quinta", "Semitonium"
-  alias?: string;  // e.g. "Diapente", "Diatessaron"
+  name: string; // e.g. "Quinta", "Semitonium"
+  alias?: string; // e.g. "Diapente", "Diatessaron"
   quality: IntervalQuality;
   class: IntervalClass;
   direction: IntervalDirection;
@@ -599,7 +622,7 @@ type Finger =
 type Region = "base" | "mid" | "tip" | "top";
 
 interface StepName {
-  short: string;    // "d"
+  short: string; // "d"
   compound: string; // "Delasolre"
 }
 
@@ -624,7 +647,7 @@ interface Step {
 ```ts
 interface GamutOptions {
   span?: [number, number]; // [lowest, highest] MIDI
-  chromatic?: boolean;     // include chromatic pitches, default false
+  chromatic?: boolean; // include chromatic pitches, default false
 }
 
 interface TonusOpts {
@@ -652,12 +675,12 @@ interface ModeProfile {
 
 interface ModeData {
   mode: number;
-  name: string;    // "Protus Authenticus"
-  alias: string;   // "dorian"
-  family: string;  // "Protus"
+  name: string; // "Protus Authenticus"
+  alias: string; // "dorian"
+  family: string; // "Protus"
   type: "authentic" | "plagal";
-  final: number;   // finalis pitch class (C=0)
-  tenor: number;   // reciting tone pitch class
+  final: number; // finalis pitch class (C=0)
+  tenor: number; // reciting tone pitch class
   scalePcs: number[]; // 7 diatonic pitch classes
   hexachords: ("durum" | "naturale" | "molle")[]; // rank-ordered
   profile: ModeProfile;
@@ -781,24 +804,24 @@ interface ChantMetrics {
 ```ts
 interface Body {
   name: BodyName;
-  nomen: string;       // Latin name ("Sol", "Luna", "Iuppiter", etc.)
-  symbol: string;      // Unicode symbol ("☉", "☾", "♃", etc.)
+  nomen: string; // Latin name ("Sol", "Luna", "Iuppiter", etc.)
+  symbol: string; // Unicode symbol ("☉", "☾", "♃", etc.)
   helio: HelioPos;
   geo: GeoPos;
-  speed: number;       // deg/day (negative = retrograde)
+  speed: number; // deg/day (negative = retrograde)
   retrograde: boolean;
   magnitude: number;
-  elongation: number;  // deg from Sun (geocentric)
-  phase: number;       // 0–1 illuminated fraction
+  elongation: number; // deg from Sun (geocentric)
+  phase: number; // 0–1 illuminated fraction
   apparentDiameter: number | { equ: number; pol: number }; // arcsec
-  zodiac: number;      // sign 0–11 (Aries=0 … Pisces=11)
-  sign: string;        // "Aries", "Taurus", etc.
+  zodiac: number; // sign 0–11 (Aries=0 … Pisces=11)
+  sign: string; // "Aries", "Taurus", etc.
   distEarthRadii?: number; // Moon only
 }
 
 interface HelioPos {
-  lon: number;  // ecliptic longitude, deg (0–360)
-  lat: number;  // ecliptic latitude, deg
+  lon: number; // ecliptic longitude, deg (0–360)
+  lat: number; // ecliptic latitude, deg
   dist: number; // distance from Sun, AU
 }
 
@@ -807,8 +830,8 @@ interface GeoPos {
   lat: number;
   dist: number;
   equatorial: {
-    ra: number;   // right ascension, deg
-    dec: number;  // declination, deg
+    ra: number; // right ascension, deg
+    dec: number; // declination, deg
     dist: number;
   };
 }
@@ -822,8 +845,8 @@ Aspects are pure geometric data — angular relationships between geocentric bod
 interface Aspect {
   type: "conjunction" | "opposition" | "trine" | "square" | "sextile";
   bodies: [string, string];
-  angle: number;   // exact separation, deg
-  orb: number;     // degrees from exact aspect angle
+  angle: number; // exact separation, deg
+  orb: number; // degrees from exact aspect angle
   strength: number; // 0–1
 }
 ```
@@ -848,12 +871,6 @@ interface Aspect {
 
 ## v1.1 Deferred
 
-- `tonus.textus()` — raw liturgical text retrieval
-- Full minor hours — prima, tertia, sexta, nona, completorium
-- Commune Sanctorum fallback for proprium
 - Additional pitch/frequency conversion helpers, interval math, Scala format parsing
 - `thesis` calculation verification and tuning
-- Rhythmic gesture curve visualizer — arsis/thesis wave rendering over score data
-- Aspect interpretation layer — Ptolemaic nature (benefic/malefic), Quadrivium harmony mappings (musical interval associations)
-- Moon phase labels — new/crescent/quarter/gibbous/full derived from phase value
-- Eclipse detection — solar/lunar eclipse classification from conjunction/opposition geometry
+- planetary scale and music of the spheres emitters
