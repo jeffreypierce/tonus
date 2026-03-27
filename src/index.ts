@@ -6,6 +6,7 @@ import { getHour } from "./engines/chant/hour.js";
 import { getPsalm } from "./engines/chant/psalm.js";
 import { buildTemper } from "./engines/temper/api.js";
 import { buildScore, buildPondus, buildAccentus } from "./engines/score/api.js";
+import { getPlanets } from "./engines/planets/planets.js";
 
 import type { FeastQuery, Feast } from "./engines/cal/types.js";
 import type {
@@ -21,6 +22,12 @@ import type {
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
   MidiOpts, ChantMetrics, TableEmitResult,
 } from "./engines/score/api.js";
+import type {
+  PlanetarySnapshot, PlanetQuery, Body, BodyName, Aspect,
+} from "./engines/planets/types.js";
+
+export type Caelum = PlanetarySnapshot;
+export type CaelumQuery = PlanetQuery;
 
 const tonus = {
   festum: getFeast,
@@ -33,6 +40,7 @@ const tonus = {
   ordo: buildScore,
   pondus: buildPondus,
   accentus: buildAccentus,
+  caelum: getPlanets,
 };
 
 export default tonus;
@@ -46,4 +54,5 @@ export type {
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
   MidiOpts, ChantMetrics, TableEmitResult,
+  Body, BodyName, Aspect,
 };
