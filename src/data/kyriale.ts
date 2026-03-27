@@ -1,6 +1,6 @@
-// humana/data/kyriale — Mass ordinary (kyriale) chants
+// kyriale.ts — Mass ordinary (kyriale) chants
 // Extracted from GregoBase (GR source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-03-27T04:25:12.493Z
+// Generated: 2026-03-27T05:25:56.368Z
 // Entries: 116
 //
 // Mass numbers are derived from GR page references (e.g. page "18*" = Mass XVIII).

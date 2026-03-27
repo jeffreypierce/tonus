@@ -1,7 +1,7 @@
 // humana/data/hilde — Symphoniae armonie celestium revelationum
 // Transcribed by Richard Vendome (Hildegard Symposium, Salisbury 1999)
 // mode: null on all entries — inferMode() resolves at runtime from GABC finalis
-import type { Chant } from "../types.js";
+import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
 export const HILDE_SOURCE: Chant["source"] = {

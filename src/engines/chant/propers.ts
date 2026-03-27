@@ -6,11 +6,24 @@ import { temporaSundayId } from "../cal/date.js";
 import type { Chant, PropriumQuery, OfficeCode } from "./types.js";
 import type { Feast } from "../cal/types.js";
 import { PROPERS, type ProperSet } from "../../data/propers.js";
+import { COMMUNE_PROPERS, FEAST_COMMUNE, type CommuneProperSet } from "../../data/commune.js";
 
 let _byFeastId: Map<string, ProperSet> | null = null;
 function byFeastId(): Map<string, ProperSet> {
   if (!_byFeastId) _byFeastId = new Map(PROPERS.map((p) => [p.feastId, p]));
   return _byFeastId;
+}
+
+let _communeByFeast: Map<string, string> | null = null;
+function communeByFeast(): Map<string, string> {
+  if (!_communeByFeast) _communeByFeast = new Map(FEAST_COMMUNE.map((f) => [f.feastId, f.commune]));
+  return _communeByFeast;
+}
+
+let _communePropers: Map<string, CommuneProperSet> | null = null;
+function communePropers(): Map<string, CommuneProperSet> {
+  if (!_communePropers) _communePropers = new Map(COMMUNE_PROPERS.map((c) => [c.commune, c]));
+  return _communePropers;
 }
 
 const PROPER_SLOTS: (keyof Pick<ProperSet, "in" | "gr" | "al" | "tr" | "of" | "co">)[] =
@@ -22,9 +35,12 @@ function resolveProperChants(feastId: string): Chant[] {
   const sunday = temporaSundayId(feastId);
   const seasonProper = sunday ? (map.get(sunday) ?? null) : null;
 
+  const commune = communeByFeast().get(feastId);
+  const communeProper = commune ? (communePropers().get(commune) ?? null) : null;
+
   const results: Chant[] = [];
   for (const slot of PROPER_SLOTS) {
-    const id = proper?.[slot] ?? seasonProper?.[slot] ?? null;
+    const id = proper?.[slot] ?? seasonProper?.[slot] ?? communeProper?.[slot] ?? null;
     const chant = resolveChant(id);
     if (chant) results.push(chant);
   }

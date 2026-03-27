@@ -15,7 +15,7 @@ export type OrdinaryCode = "ky" | "gl" | "cr" | "sa" | "ag" | "be" | "it";
 export type ChantSource = "gr" | "lu" | "la" | "lh" | "hilde";
 
 export type CanonicalHour =
-  | "laudes" | "prima" | "tertia" | "sexta" | "nona"
+  | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"
   | "vesperae" | "completorium";
 
 // ── Display labels ──

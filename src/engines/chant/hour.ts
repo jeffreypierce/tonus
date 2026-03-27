@@ -5,11 +5,11 @@ import { resolveChant, resolveChants } from "./chant.js";
 import { temporaSundayId } from "../cal/date.js";
 import type { Chant, OfficiumQuery, CanonicalHour } from "./types.js";
 import type { Feast } from "../cal/types.js";
-import { OFFICE, type OfficeDay } from "../../data/office.js";
+import { OFFICE_ROMAN, type OfficeDay } from "../../data/office-roman.js";
 
 let _roman: Map<string, OfficeDay> | null = null;
 function romanMap(): Map<string, OfficeDay> {
-  if (!_roman) _roman = new Map(OFFICE.map((d) => [d.feastId, d]));
+  if (!_roman) _roman = new Map(OFFICE_ROMAN.map((d) => [d.feastId, d]));
   return _roman;
 }
 
@@ -21,12 +21,28 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
 
   const results: Chant[] = [];
 
-  if (hour === "laudes") {
+  if (hour === "matutinum") {
+    const inv = resolveChant(day.invit);
+    if (inv) results.push(inv);
+    results.push(...resolveChants(day.antMatutinum));
+    const hy = resolveChant(day.hymnMatutinum);
+    if (hy) results.push(hy);
+    results.push(...resolveChants(day.respMatutinum));
+  } else if (hour === "laudes") {
     results.push(...resolveChants(day.antLaudes));
     const bc = resolveChant(day.antBenedictus);
     if (bc) results.push(bc);
     const hy = resolveChant(day.hymnLaudes);
     if (hy) results.push(hy);
+  } else if (hour === "tertia") {
+    const rb = resolveChant(day.respBreveTertia);
+    if (rb) results.push(rb);
+  } else if (hour === "sexta") {
+    const rb = resolveChant(day.respBreveSexta);
+    if (rb) results.push(rb);
+  } else if (hour === "nona") {
+    const rb = resolveChant(day.respBreveNona);
+    if (rb) results.push(rb);
   } else if (hour === "vesperae") {
     results.push(...resolveChants(day.antVespera));
     const mc = resolveChant(day.antMagnificat);
@@ -34,7 +50,6 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
     const hy = resolveChant(day.hymnVespera);
     if (hy) results.push(hy);
   }
-  // prima, tertia, sexta, nona, completorium — empty (v1.1)
 
   return results;
 }
@@ -55,12 +70,11 @@ export function getHour(query?: OfficiumQuery): Chant[] {
   if (feasts && hour) {
     results = feasts.flatMap((f) => chantsForFeastHour(f, hour));
   } else if (feasts) {
-    // All hours for given feasts (laudes + vesperae)
-    const hours: CanonicalHour[] = ["laudes", "vesperae"];
+    const hours: CanonicalHour[] = ["matutinum", "laudes", "tertia", "sexta", "nona", "vesperae"];
     results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h)));
   } else if (hour) {
     // Hour without feast — scan all office entries
-    results = OFFICE.flatMap((day) => {
+    results = OFFICE_ROMAN.flatMap((day) => {
       const mockFeast = { id: day.feastId } as Feast;
       return chantsForFeastHour(mockFeast, hour);
     });

@@ -1,8 +1,8 @@
-// humana/data/la — Liber antiphonarius 1960 corpus (Roman office)
+// la.ts — Liber antiphonarius 1960 corpus (Roman office)
 // Extracted from GregoBase (source ID 48) by scripts/extract-gregobase.mjs
-// Generated: 2026-03-27T04:25:12.493Z
+// Generated: 2026-03-27T05:25:56.368Z
 // Chants: 1422
-import type { Chant } from "../types.js";
+import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
 export const LA_SOURCE: Chant["source"] = {

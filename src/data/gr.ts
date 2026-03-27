@@ -1,8 +1,8 @@
-// humana/data/gr — Graduale Romanum 1961 corpus
+// gr.ts — Graduale Romanum 1961 corpus
 // Extracted from GregoBase (source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-03-27T04:25:12.493Z
+// Generated: 2026-03-27T05:25:56.368Z
 // Chants: 1344
-import type { Chant } from "../types.js";
+import type { Chant } from "./types.js";
 
 export const GR_SOURCE: Chant["source"] = {
   book: "Graduale Romanum",
