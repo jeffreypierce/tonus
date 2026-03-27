@@ -25,6 +25,53 @@ export interface ScaleOpts {
 
 // ── Internal helpers ──
 
+export interface RatioResult {
+  ratio: number;
+  cents: number;
+  display: string;
+}
+
+// Stern-Brocot rational approximation — finds nearest simple fraction
+function approximate(value: number, maxDen = 1000): [number, number] {
+  if (value === Math.round(value)) return [Math.round(value), 1];
+
+  let [a, b, c, d] = [0, 1, 1, 0];
+  let bestNum = 1, bestDen = 1, bestErr = Infinity;
+
+  for (let i = 0; i < 100; i++) {
+    const medNum = a + c;
+    const medDen = b + d;
+    if (medDen > maxDen) break;
+
+    const med = medNum / medDen;
+    const err = Math.abs(value - med);
+    if (err < bestErr) {
+      bestErr = err;
+      bestNum = medNum;
+      bestDen = medDen;
+    }
+    if (err < 1e-9) break;
+
+    if (value > med) {
+      a = medNum;
+      b = medDen;
+    } else {
+      c = medNum;
+      d = medDen;
+    }
+  }
+
+  return [bestNum, bestDen];
+}
+
+export function toRatio(input: string): RatioResult {
+  const r = parseStep(input);
+  const cents = 1200 * Math.log2(r);
+  const [num, den] = approximate(r);
+  const display = den === 1 ? `${num}:1` : `${num}:${den}`;
+  return { ratio: r, cents, display };
+}
+
 function foldOct(r: number): number {
   let x = r;
   while (x >= 2) x *= 0.5;
@@ -48,26 +95,68 @@ function parseComma(comma: number | string): number {
   return n;
 }
 
-// Parse a single step value — ratio string ("3/2") or cent number
-function parseStep(v: number | string): number {
-  if (typeof v === "number") return 2 ** (v / 1200); // cents → ratio
-  const s = v.trim();
-  const slash = s.indexOf("/");
-  if (slash !== -1) {
-    const num = parseFloat(s.slice(0, slash));
-    const den = parseFloat(s.slice(slash + 1));
+// Parse a single pitch value using Scala convention:
+// period present → cents, slash or colon → ratio, bare integer → ratio over 1
+export function parseStep(v: number | string): number {
+  if (typeof v === "number") return 2 ** (v / 1200);
+  const s = v.trim().split(/\s/)[0]!; // first token only (Scala allows trailing text)
+  const ratioMatch = s.match(/^(\d+)[/:](\d+)$/);
+  if (ratioMatch) {
+    const num = Number(ratioMatch[1]);
+    const den = Number(ratioMatch[2]);
     if (!Number.isFinite(num) || !Number.isFinite(den) || den === 0)
-      throw new RangeError(`Invalid step ratio: "${s}"`);
+      throw new RangeError(`Invalid ratio: "${s}"`);
     return num / den;
   }
   const n = parseFloat(s);
   if (!Number.isFinite(n)) throw new RangeError(`Invalid step value: "${s}"`);
-  return 2 ** (n / 1200); // treat bare number string as cents
+  if (s.includes(".")) return 2 ** (n / 1200); // cents
+  return n; // bare integer → ratio (e.g. 2 = 2/1)
+}
+
+export interface ScalaFile {
+  name: string;
+  steps: string[];
+}
+
+export function parseScala(input: string): ScalaFile {
+  const lines = input.split(/\r?\n/);
+  const nonComment: string[] = [];
+  for (const line of lines) {
+    if (line.trimStart().startsWith("!")) continue;
+    nonComment.push(line);
+  }
+
+  const name = (nonComment[0] ?? "").trim();
+  const count = parseInt(nonComment[1] ?? "0", 10);
+  if (!Number.isFinite(count) || count < 0)
+    throw new RangeError(`Invalid note count in Scala file: "${nonComment[1]}"`);
+
+  const steps: string[] = [];
+  for (let i = 2; i < nonComment.length && steps.length < count; i++) {
+    const trimmed = nonComment[i].trim();
+    if (trimmed) steps.push(trimmed);
+  }
+
+  if (steps.length !== count)
+    throw new RangeError(`Scala file declares ${count} pitches but only ${steps.length} found`);
+
+  return { name, steps };
 }
 
 const PURE_FIFTH = 3 / 2;
 const SYNTONIC_COMMA = 81 / 80;
 const FIFTH_TO_CHROM = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+
+const PTOLEMAIC: Record<string, string[]> = {
+  "ptolemy-intense": ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8"],
+  "ptolemy-soft":    ["1/1", "8/7", "80/63", "4/3", "3/2", "12/7", "40/21"],
+  "ptolemy-equable": ["1/1", "12/11", "6/5", "4/3", "3/2", "18/11", "9/5"],
+};
+
+export function getPtolemaicRatios(tuning: string): string[] | undefined {
+  return PTOLEMAIC[tuning];
+}
 
 function buildPythagoreanRatios(commaN: number): number[] {
   const tf = commaN === 0

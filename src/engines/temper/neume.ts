@@ -1,45 +1,14 @@
 // ---------------------------------------------------------------------------
-// engines/temper/neume — interval classification and neume analysis
+// engines/temper/neume — neume shape classification
 // ---------------------------------------------------------------------------
-import { INTERVAL, UNISONUS } from "./data/constants.js";
+import { classifyInterval } from "./interval.js";
+import type { Interval } from "./interval.js";
 import type { PitchInput } from "./pitch.js";
 import { toNote } from "./note.js";
 import type { Note } from "./note.js";
 import type { Scale } from "./scale.js";
 
-export type IntervalDirection = "up" | "down" | "unison";
-export type IntervalQuality = "perfect" | "major" | "minor" | "augmented";
-
-export interface Interval {
-  name: string;
-  alias?: string;
-  quality: IntervalQuality;
-  class: string;
-  direction: IntervalDirection;
-  semitones: number;
-  cents: number;
-}
-
-export function classifyInterval(a: number, b?: number): Interval {
-  const semitones = b !== undefined ? b - a : a;
-  const abs = Math.abs(semitones);
-  const simple = abs % 12;
-
-  const direction: IntervalDirection =
-    semitones > 0 ? "up" : semitones < 0 ? "down" : "unison";
-
-  const entry = abs === 0 ? UNISONUS : (simple === 0 ? INTERVAL[0]! : INTERVAL[simple]!);
-
-  return {
-    name: entry.latin,
-    alias: entry.alias,
-    quality: entry.quality as IntervalQuality,
-    class: entry.class,
-    direction,
-    semitones,
-    cents: semitones * 100,
-  };
-}
+export type { Interval };
 
 export type NeumeShape =
   | "punctum"

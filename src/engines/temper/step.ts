@@ -26,19 +26,20 @@ export interface Step {
   hand: { finger: Finger; region: Region } | null;
   degree: number | null;
   role: "finalis" | "tenor" | "other" | null;
+  ratio: number | null;
 }
 
 export function toStep(midi: number, scala?: Scale): Step {
   const mode = scala?.mode;
   const guido = lookupGuido(midi, mode);
 
+  const pc = ((midi % 12) + 12) % 12;
   let degree: number | null = null;
   let role: Step["role"] = null;
 
   if (mode != null) {
     const modeData = MODES.get(mode);
     if (modeData) {
-      const pc = ((midi % 12) + 12) % 12;
       const idx = modeData.scalePcs.indexOf(pc);
       degree = idx === -1 ? null : idx + 1;
 
@@ -57,6 +58,8 @@ export function toStep(midi: number, scala?: Scale): Step {
     ? { finger: guido.hand.finger as Finger, region: guido.hand.region as Region }
     : null;
 
+  const ratio = scala?.ratios[pc] ?? null;
+
   return {
     name,
     hexachord: guido.hexachord,
@@ -65,5 +68,6 @@ export function toStep(midi: number, scala?: Scale): Step {
     hand,
     degree,
     role,
+    ratio,
   };
 }

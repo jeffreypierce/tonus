@@ -1,16 +1,18 @@
 // ---------------------------------------------------------------------------
 // engines/temper/api — Temper context builder
 // ---------------------------------------------------------------------------
-import { buildRatios } from "./scale.js";
-import type { Scale, ScaleOpts } from "./scale.js";
+import { buildRatios, parseScala, getPtolemaicRatios, toRatio } from "./scale.js";
+import type { Scale, ScaleOpts, ScalaFile, RatioResult } from "./scale.js";
 import { parsePitch } from "./pitch.js";
 import type { Pitch, PitchInput } from "./pitch.js";
 import { toStep } from "./step.js";
 import type { Step, StepName, StepVariant, Finger, Region } from "./step.js";
 import { toNote } from "./note.js";
 import type { Note } from "./note.js";
+import { classifyInterval } from "./interval.js";
+import type { Interval, IntervalDirection, IntervalQuality } from "./interval.js";
 import { buildNeume } from "./neume.js";
-import type { Neume, NeumeShape, Interval, IntervalDirection, IntervalQuality } from "./neume.js";
+import type { Neume, NeumeShape } from "./neume.js";
 import { buildGamut } from "./gamut.js";
 import type { GamutOptions } from "./gamut.js";
 import { getMode } from "./modes.js";
@@ -18,7 +20,10 @@ import type { ModeData, ModeProfile } from "./modes.js";
 import { getTone, getDifferentia } from "../../data/tones.js";
 import type { GuidonianEntry, GuidonianVariant } from "./guido.js";
 
-export type Tuning = "pythagorean" | "meantone" | "just" | "equal" | "custom";
+export type BuiltinTuning =
+  | "pythagorean" | "meantone" | "equal"
+  | "ptolemy-intense" | "ptolemy-soft" | "ptolemy-equable";
+export type Tuning = BuiltinTuning | string;
 
 export interface TemperOpts {
   tuning?: Tuning;
@@ -27,10 +32,10 @@ export interface TemperOpts {
   root?: number;
   transpose?: number;
   comma?: number | string;
-  scale?: string[];
+  scale?: string | string[];
 }
 
-export type TemperInput = Tuning | TemperOpts;
+export type TemperInput = BuiltinTuning | TemperOpts;
 
 export interface TonusOpts {
   differentia?: string;
@@ -56,7 +61,9 @@ export interface Temper {
 
   nota(input: PitchInput): Note;
   gradus(input: PitchInput): Step;
+  intervallum(a: PitchInput, b: PitchInput): Interval;
   neuma(inputs: PitchInput[]): Neume;
+  ratio(input: string): RatioResult & { step: Step | null };
   gamut(opts?: GamutOptions): Note[];
   modus(mode: number): ModeData;
   tonus(opts?: TonusOpts): Tonus;
@@ -68,8 +75,19 @@ function resolveOpts(input?: TemperInput): TemperOpts {
   return input;
 }
 
-function tuningToScaleOpts(opts: TemperOpts): ScaleOpts {
-  const tuning = opts.tuning ?? "pythagorean";
+function resolveScale(opts: TemperOpts): { tuning: string; scaleSteps?: string[] } {
+  if (!opts.scale) return { tuning: opts.tuning ?? "pythagorean" };
+
+  if (Array.isArray(opts.scale)) {
+    return { tuning: opts.tuning ?? "custom", scaleSteps: opts.scale };
+  }
+
+  const parsed = parseScala(opts.scale);
+  return { tuning: opts.tuning ?? (parsed.name || "custom"), scaleSteps: parsed.steps };
+}
+
+function tuningToScaleOpts(opts: TemperOpts): { scalaOpts: ScaleOpts; tuning: string } {
+  const { tuning, scaleSteps } = resolveScale(opts);
   const scalaOpts: ScaleOpts = {
     mode: opts.mode === "auto" ? 1 : (opts.mode ?? 1),
     a4: opts.a4 ?? 440,
@@ -77,33 +95,34 @@ function tuningToScaleOpts(opts: TemperOpts): ScaleOpts {
     transpose: opts.transpose ?? 0,
   };
 
-  switch (tuning) {
-    case "pythagorean":
-      scalaOpts.comma = 0;
-      break;
-    case "meantone":
-      scalaOpts.comma = opts.comma ?? "1/4";
-      break;
-    case "just":
-      scalaOpts.comma = 1;
-      break;
-    case "equal":
-      scalaOpts.steps = Array.from({ length: 12 }, (_, i) => i * 100);
-      break;
-    case "custom":
-      if (!opts.scale) throw new Error("custom tuning requires a scale array");
-      scalaOpts.steps = opts.scale;
-      break;
+  if (scaleSteps) {
+    scalaOpts.steps = scaleSteps;
+  } else {
+    switch (tuning) {
+      case "pythagorean":
+        scalaOpts.comma = 0;
+        break;
+      case "meantone":
+        scalaOpts.comma = opts.comma ?? "1/4";
+        break;
+      case "equal":
+        scalaOpts.steps = Array.from({ length: 12 }, (_, i) => i * 100);
+        break;
+      default: {
+        const ptolemaic = getPtolemaicRatios(tuning);
+        if (ptolemaic) scalaOpts.steps = ptolemaic;
+        break;
+      }
+    }
   }
 
-  return scalaOpts;
+  return { scalaOpts, tuning };
 }
 
 export function buildTemper(input?: TemperInput): Temper {
   const opts = resolveOpts(input);
-  const tuning = opts.tuning ?? "pythagorean";
   const modeVal = opts.mode ?? "auto";
-  const scalaOpts = tuningToScaleOpts(opts);
+  const { scalaOpts, tuning } = tuningToScaleOpts(opts);
   const scala = buildRatios(scalaOpts);
 
   return {
@@ -125,8 +144,28 @@ export function buildTemper(input?: TemperInput): Temper {
       return toStep(midi, scala);
     },
 
+    intervallum(a: PitchInput, b: PitchInput): Interval {
+      const midiA = parsePitch(a, { mode: scala.mode, a4: scala.a4 });
+      const midiB = parsePitch(b, { mode: scala.mode, a4: scala.a4 });
+      return classifyInterval(midiA, midiB);
+    },
+
     neuma(inputs: PitchInput[]): Neume {
       return buildNeume(inputs, scala);
+    },
+
+    ratio(input: string): RatioResult & { step: Step | null } {
+      const result = toRatio(input);
+      const folded = result.ratio >= 2 ? result.ratio / Math.pow(2, Math.floor(Math.log2(result.ratio))) : result.ratio;
+      let step: Step | null = null;
+      for (let pc = 0; pc < 12; pc++) {
+        if (Math.abs((scala.ratios[pc] ?? 0) - folded) < 1e-6) {
+          const baseMidi = 60 + pc;
+          step = toStep(baseMidi, scala);
+          break;
+        }
+      }
+      return { ...result, step };
     },
 
     gamut(gamutOpts?: GamutOptions): Note[] {
@@ -155,6 +194,8 @@ export function buildTemper(input?: TemperInput): Temper {
 export type {
   Scale,
   ScaleOpts,
+  ScalaFile,
+  RatioResult,
   Pitch,
   PitchInput,
   Step,

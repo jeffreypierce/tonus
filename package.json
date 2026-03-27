@@ -13,7 +13,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.js.map",
+    "!dist/**/*.d.ts.map"
   ],
   "scripts": {
     "build": "tsc && cp src/data/psalms.json dist/data/psalms.json",

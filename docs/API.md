@@ -314,9 +314,12 @@ Builds a tuning context. All pitch helper methods are on the returned `Temper` o
 tonus.temper()                                          // pythagorean, mode auto, A4=440
 tonus.temper("pythagorean")                             // string shorthand
 tonus.temper({ tuning: "meantone", comma: "1/4" })
-tonus.temper({ tuning: "just" })
+tonus.temper({ tuning: "ptolemy-intense" })             // just intonation (pure thirds)
+tonus.temper({ tuning: "ptolemy-soft" })                // septimal (7th harmonic)
+tonus.temper({ tuning: "ptolemy-equable" })             // undecimal (neutral intervals)
 tonus.temper({ tuning: "equal", mode: 3, a4: 415 })
-tonus.temper({ tuning: "custom", scale: ["1/1", "9/8", "81/64", ...] })
+tonus.temper({ scale: ["1/1", "9/8", "5/4", ...] })    // custom array
+tonus.temper({ scale: "! meanquar.scl\n..." })          // Scala file
 ```
 
 **`TemperOpts`**
@@ -328,12 +331,27 @@ tonus.temper({ tuning: "custom", scale: ["1/1", "9/8", "81/64", ...] })
 | `a4`        | `number`           | `440`           | A4 reference frequency in Hz                                                                                               |
 | `root`      | `number`           | mode finalis    | Root pitch class override (0–11)                                                                                           |
 | `transpose` | `number`           | `0`             | Output semitone transposition                                                                                              |
-| `comma`     | `number \| string` | —               | Meantone comma (`0.25`, `"1/4"`, `"1/3"`). Throws if used with non-meantone tuning                                         |
-| `scale`     | `string[]`         | —               | 12 custom tuning steps as ratio strings (`"3/2"`) or cent strings (`"700c"`) per Scala format. Requires `tuning: "custom"` |
+| `comma`     | `number \| string` | —               | Meantone comma (`0.25`, `"1/4"`, `"1/3"`). Only with `"meantone"` tuning                                                   |
+| `scale`     | `string \| string[]` | —             | Scala `.scl` file string or array of 7/12 ratio/cent values. Implies custom tuning; name extracted from Scala description  |
+
+**Tuning presets:**
+
+| Name | Description |
+|------|-------------|
+| `"pythagorean"` | Pure fifths (3/2), no tempering. Default |
+| `"meantone"` | Tempered fifths. `comma` controls amount (default 1/4) |
+| `"equal"` | 12-tone equal temperament |
+| `"ptolemy-intense"` | Ptolemy's intense diatonic (*syntonon*) — classical just intonation with pure major thirds (5/4) |
+| `"ptolemy-soft"` | Ptolemy's soft diatonic (*malakon*) — septimal tuning using the 7th harmonic (8/7 whole tone) |
+| `"ptolemy-equable"` | Ptolemy's equable diatonic (*homalon*) — undecimal tuning with neutral intervals (12/11 second) |
+
+Any other string is accepted as a custom tuning name (e.g. from a Scala file description).
 
 ```ts
-type Tuning = "pythagorean" | "meantone" | "just" | "equal" | "custom";
-type TemperInput = Tuning | TemperOpts;
+type Tuning = "pythagorean" | "meantone" | "equal"
+  | "ptolemy-intense" | "ptolemy-soft" | "ptolemy-equable"
+  | string;
+type TemperInput = BuiltinTuning | TemperOpts;
 ```
 
 **`Temper`** — resolved context object
@@ -355,6 +373,8 @@ interface Temper {
   // methods
   nota(input: PitchInput): Note;
   gradus(input: PitchInput): Step;
+  intervallum(a: PitchInput, b: PitchInput): Interval;
+  ratio(input: string): RatioResult & { step: Step | null };
   neuma(inputs: PitchInput[]): Neume;
   gamut(opts?: GamutOptions): Note[];
   modus(mode: number): ModeData;
@@ -639,6 +659,19 @@ interface Step {
   hand: { finger: Finger; region: Region } | null;
   degree: number | null;
   role: "finalis" | "tenor" | "other" | null;
+  ratio: number | null; // frequency ratio from tuning scale
+}
+```
+
+### RatioResult
+
+`ratio()` converts between cents, decimal ratios, and colon display notation. Accepts Scala-convention strings: period = cents (`"701.955"`), slash or colon = ratio (`"3/2"`, `"3:2"`), bare integer = ratio (`"2"` = 2:1). Returns a matching `Step` when the ratio corresponds to a scale degree in the current tuning.
+
+```ts
+interface RatioResult {
+  ratio: number;   // decimal frequency ratio
+  cents: number;   // interval in cents
+  display: string; // colon notation, e.g. "3:2"
 }
 ```
 
