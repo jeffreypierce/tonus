@@ -1,7 +1,9 @@
-// ---------------------------------------------------------------------------
-// data/lu — Liber Usualis 1961 corpus (2377 chants)
-// ---------------------------------------------------------------------------
-import type { Chant } from "../engines/chant/types.js";
+// humana/data/lu — Liber Usualis 1961 corpus (primary antiphon/hymn source)
+// Extracted from GregoBase (source ID 3) by scripts/extract-gregobase.mjs
+// Generated: 2026-03-27T04:25:12.493Z
+// Chants: 2377
+// LA fills gaps for chant IDs not present here.
+import type { Chant } from "../types.js";
 import type { ChantData } from "./gr.js";
 
 export const LU_SOURCE: Chant["source"] = {

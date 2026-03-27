@@ -1,6 +1,4 @@
-// ---------------------------------------------------------------------------
-// data/tones — psalm tones (Graduale Romanum appendix)
-// ---------------------------------------------------------------------------
+// humana/data/tones — psalm tones (Graduale Romanum appendix)
 // Pitches as MIDI numbers; tone codes follow DO convention: "1g", "6F", "4e".
 // c4 clef reference: f=53 g=55 h=57 i=59 j=60 k=62 l=64 (F3–F4)
 

@@ -1,8 +1,7 @@
-// ---------------------------------------------------------------------------
-// data/cal — liturgical feast entries generated from Divinum Officium
-// ---------------------------------------------------------------------------
+// humana/data/cal — liturgical feast entries generated from Divinum Officium
 // Sancti IDs: MM-DD stem matching horas/Latin/Sancti/MM-DD.txt
 // Tempora IDs: DO stem matching horas/Latin/Tempora/STEM.txt
+// Regenerate: node scripts/gen-cal.mjs
 
 export interface CalEntry {
   id: string;   // "MM-DD" for Sancti, DO stem (e.g. "Adv1-0") for Tempora

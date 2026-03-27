@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// instrumentalis/score/articulation — note-level articulation profiles
+// engines/score/articulation — note-level articulation profiles
 // ---------------------------------------------------------------------------
 
 import type {

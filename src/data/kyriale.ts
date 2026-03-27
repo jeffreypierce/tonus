@@ -1,6 +1,11 @@
-// ---------------------------------------------------------------------------
-// data/kyriale — Mass ordinary chants (116 entries)
-// ---------------------------------------------------------------------------
+// humana/data/kyriale — Mass ordinary (kyriale) chants
+// Extracted from GregoBase (GR source ID 2) by scripts/extract-gregobase.mjs
+// Generated: 2026-03-27T04:25:12.493Z
+// Entries: 116
+//
+// Mass numbers are derived from GR page references (e.g. page "18*" = Mass XVIII).
+// office-part 'ky' in GregoBase covers all ordinary parts (Kyrie, Gloria, Credo,
+// Sanctus, Agnus Dei, Ite missa est, Benedicamus); office code is inferred from incipit.
 
 export type KyrialeOffice =
   | "ky"

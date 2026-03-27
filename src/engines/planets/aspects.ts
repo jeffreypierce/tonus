@@ -1,3 +1,6 @@
+// ---------------------------------------------------------------------------
+// engines/planets/aspects — angular aspect detection
+// ---------------------------------------------------------------------------
 import { wrapAngle } from "./math.js";
 import type { Aspect } from "./types.js";
 

@@ -1,4 +1,6 @@
-// mundana/math — pure trig/math helpers, no imports, no side effects
+// ---------------------------------------------------------------------------
+// engines/planets/math — pure trig/math helpers
+// ---------------------------------------------------------------------------
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
 

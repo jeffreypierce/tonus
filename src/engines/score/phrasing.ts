@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// instrumentalis/score/phrasing — performance-shaping profiles
+// engines/score/phrasing — performance-shaping profiles
 // ---------------------------------------------------------------------------
 
 import type { ScoredNote, PhrasingProfile, PhrasingType } from "./types.js";

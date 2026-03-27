@@ -1,5 +1,6 @@
-// mundana/appearance — magnitude, phase, elongation, apparent diameter
-// Internal module — not exported from barrel. Use cosmos.ts API.
+// ---------------------------------------------------------------------------
+// engines/planets/appearance — magnitude, phase, elongation, apparent diameter
+// ---------------------------------------------------------------------------
 import { sinDeg, cosDeg, asinDeg, acosDeg, wrapAngle } from "./math.js";
 
 // Apparent diameter at 1 AU (arcsec) — flat for Mercury/Venus/Sun, obj for others

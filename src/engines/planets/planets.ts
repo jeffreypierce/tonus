@@ -1,3 +1,6 @@
+// ---------------------------------------------------------------------------
+// engines/planets/planets — planetary snapshot builder
+// ---------------------------------------------------------------------------
 import { angleDelta, wrapAngle } from "./math.js";
 import { getState, sunPos, moonPos, planetPos, EARTH_RADIUS_AU } from "./position.js";
 import { sunAppearance, moonAppearance, planetAppearance } from "./appearance.js";
@@ -7,7 +10,6 @@ import type { Body, BodyName, PlanetName, PlanetarySnapshot, PlanetQuery } from 
 import { latinName } from "./types.js";
 
 const MS_PER_DAY = 86400000;
-const PLANET_NAMES: PlanetName[] = ["Mercury", "Venus", "Mars", "Jupiter", "Saturn"];
 const ALL_BODIES: BodyName[] = ["Sun", "Moon", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn"];
 
 const SIGNS = [

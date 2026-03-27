@@ -1,6 +1,5 @@
-// ---------------------------------------------------------------------------
-// data/masses — 18 kyriale mass profiles
-// ---------------------------------------------------------------------------
+// humana/data/masses — 18 kyriale mass profiles
+//
 // Describes which masses are appropriate for a given season, rank, and day.
 // Mass 0 has two ad-lib variants (index 0a/0b); all others are single entries.
 export interface MassEntry {
@@ -16,7 +15,7 @@ export interface MassEntry {
 }
 
 // Ad libitum entries are not part of the numbered kyriale; they serve as a
-// fallback when no numbered mass matches the feast context.
+// last-resort fallback when no numbered mass matches the feast context.
 export const AD_LIB: { standard: MassEntry; bvm: MassEntry } = {
   standard: {
     id: "adlib_standard",

@@ -1,7 +1,8 @@
-// ---------------------------------------------------------------------------
-// data/lh — Liber Hymnarius 1983 corpus (361 chants)
-// ---------------------------------------------------------------------------
-import type { Chant } from "../engines/chant/types.js";
+// humana/data/lh — Liber Hymnarius 1983 corpus
+// Extracted from GregoBase (source ID 15) by scripts/extract-gregobase.mjs
+// Generated: 2026-03-27T04:25:12.493Z
+// Chants: 361
+import type { Chant } from "../types.js";
 import type { ChantData } from "./gr.js";
 
 export const LH_SOURCE: Chant["source"] = {

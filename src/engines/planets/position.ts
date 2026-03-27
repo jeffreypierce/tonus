@@ -1,5 +1,6 @@
-// mundana/position — Julian date, astro state, helio/geo position engine
-// Internal module — not exported from barrel. Use cosmos.ts API.
+// ---------------------------------------------------------------------------
+// engines/planets/position — Julian date, astro state, helio/geo position engine
+// ---------------------------------------------------------------------------
 import { sinDeg, cosDeg, atan2Deg, kepler, wrapAngle, toAu, toCartesian, toSpherical, toEquatorial } from "./math.js";
 import { ORBITAL_ELEMENTS } from "./orbital.js";
 

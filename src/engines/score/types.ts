@@ -2,10 +2,11 @@
 // engines/score/types — score engine types
 // ---------------------------------------------------------------------------
 import type { Note } from "../temper/note.js";
+import type { Step } from "../temper/step.js";
 import type { NeumeShape } from "../temper/neume.js";
 import type { OfficeCode, OrdinaryCode } from "../chant/types.js";
 
-export type { Note, NeumeShape, OfficeCode, OrdinaryCode };
+export type { Note, Step, NeumeShape, OfficeCode, OrdinaryCode };
 
 export type Clef = "c1" | "c2" | "c3" | "c4" | "f1" | "f2" | "f3" | "f4" | `cb${1 | 2 | 3 | 4}` | `fb${1 | 2 | 3 | 4}`;
 
@@ -90,6 +91,7 @@ export interface ParseError {
 }
 
 export interface ScoredNote extends Note {
+  step: Step;
   lyric: string;
   syllableIndex: number;
   ictus: boolean;

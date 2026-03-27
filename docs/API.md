@@ -140,7 +140,7 @@ interface Chant {
     book: string;
     year: number | null;
     editor: string | null;
-    code: ChantSource | "user";
+    code?: ChantSource | "user";
   };
 }
 
@@ -240,6 +240,45 @@ tonus.psalmus({ psalm: 109, verse: "1a", mode: 2, differentia: "6F" });
 tonus.psalmus({ psalm: "benedictus", mode: 8, intonation: false });
 ```
 
+### `tonus.caelum(query?) -> Caelum`
+
+Planetary ephemeris. Returns a sky snapshot with positional data for classical solar system bodies and angular aspects between them. Computes heliocentric and geocentric positions, apparent magnitude, phase, elongation, zodiac sign, and speed. Accepts a `Date`, a `Feast`, or defaults to now.
+
+```js
+tonus.caelum();
+tonus.caelum({ date: new Date(2026, 11, 25) });
+tonus.caelum({ feast: feasts[0] });
+tonus.caelum({ bodies: ["Sun", "Moon", "Jupiter"] });
+tonus.caelum({ feast: feasts[0], bodies: ["Sun", "Moon"], orbLimit: 5 });
+```
+
+**`CaelumQuery`**
+
+```ts
+interface CaelumQuery {
+  date?: Date;
+  feast?: Feast;
+  bodies?: BodyName[];
+  orbLimit?: number; // max orb for aspect detection, degrees (default 8)
+}
+
+type BodyName =
+  | "Sun" | "Moon" | "Mercury" | "Venus" | "Earth"
+  | "Mars" | "Jupiter" | "Saturn";
+```
+
+**`Caelum`**
+
+```ts
+interface Caelum {
+  date: Date;
+  bodies: Body[];
+  aspects: Aspect[];
+}
+```
+
+When `bodies` is omitted, all 8 are returned. Aspects are computed only between requested bodies. When `feast` is provided, its date is used (explicit `date` takes precedence).
+
 ---
 
 ## Builder Functions
@@ -294,7 +333,7 @@ interface Temper {
   nota(input: PitchInput): Note;
   gradus(input: PitchInput): Step;
   neuma(inputs: PitchInput[]): Neume;
-  gamut(opts?: GamutOpts): Note[];
+  gamut(opts?: GamutOptions): Note[];
   modus(mode: number): ModeData;
   tonus(opts?: TonusOpts): Tonus;
 }
@@ -419,15 +458,19 @@ interface MidiOpts {
 ```ts
 interface Phrase {
   syllables: Syllable[];
-  divisio?: Divisio;
+  divisio?: RestEvent;
 }
 
 interface Syllable {
   lyric: string;
+  notes: ScoredNote[];
   neume: Neume;
-  quilisma: boolean;
-  liquescent: boolean;
-  strophicus: boolean;
+}
+
+interface RestEvent {
+  type: "rest";
+  divisio: "," | "`" | ";" | ":" | "::";
+  duration: number;
 }
 
 interface ParseError {
@@ -576,10 +619,10 @@ interface Step {
 }
 ```
 
-### GamutOpts, TonusOpts, Tonus
+### GamutOptions, TonusOpts, Tonus
 
 ```ts
-interface GamutOpts {
+interface GamutOptions {
   span?: [number, number]; // [lowest, highest] MIDI
   chromatic?: boolean;     // include chromatic pitches, default false
 }
@@ -731,6 +774,62 @@ interface ChantMetrics {
 
 ---
 
+## Caelum Types
+
+### Body
+
+```ts
+interface Body {
+  name: BodyName;
+  nomen: string;       // Latin name ("Sol", "Luna", "Iuppiter", etc.)
+  symbol: string;      // Unicode symbol ("☉", "☾", "♃", etc.)
+  helio: HelioPos;
+  geo: GeoPos;
+  speed: number;       // deg/day (negative = retrograde)
+  retrograde: boolean;
+  magnitude: number;
+  elongation: number;  // deg from Sun (geocentric)
+  phase: number;       // 0–1 illuminated fraction
+  apparentDiameter: number | { equ: number; pol: number }; // arcsec
+  zodiac: number;      // sign 0–11 (Aries=0 … Pisces=11)
+  sign: string;        // "Aries", "Taurus", etc.
+  distEarthRadii?: number; // Moon only
+}
+
+interface HelioPos {
+  lon: number;  // ecliptic longitude, deg (0–360)
+  lat: number;  // ecliptic latitude, deg
+  dist: number; // distance from Sun, AU
+}
+
+interface GeoPos {
+  lon: number;
+  lat: number;
+  dist: number;
+  equatorial: {
+    ra: number;   // right ascension, deg
+    dec: number;  // declination, deg
+    dist: number;
+  };
+}
+```
+
+### Aspect
+
+Aspects are pure geometric data — angular relationships between geocentric body longitudes. Five classical aspects are detected: conjunction (0°), sextile (60°), square (90°), trine (120°), opposition (180°). Strength is a linear falloff from 1 (exact) to 0 (at orb limit).
+
+```ts
+interface Aspect {
+  type: "conjunction" | "opposition" | "trine" | "square" | "sextile";
+  bodies: [string, string];
+  angle: number;   // exact separation, deg
+  orb: number;     // degrees from exact aspect angle
+  strength: number; // 0–1
+}
+```
+
+---
+
 ## Error Contract
 
 - Query functions return `[]` on no match, never throw.
@@ -755,3 +854,6 @@ interface ChantMetrics {
 - Additional pitch/frequency conversion helpers, interval math, Scala format parsing
 - `thesis` calculation verification and tuning
 - Rhythmic gesture curve visualizer — arsis/thesis wave rendering over score data
+- Aspect interpretation layer — Ptolemaic nature (benefic/malefic), Quadrivium harmony mappings (musical interval associations)
+- Moon phase labels — new/crescent/quarter/gibbous/full derived from phase value
+- Eclipse detection — solar/lunar eclipse classification from conjunction/opposition geometry

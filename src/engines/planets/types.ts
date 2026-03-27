@@ -1,3 +1,6 @@
+// ---------------------------------------------------------------------------
+// engines/planets/types — planetary engine types
+// ---------------------------------------------------------------------------
 export interface HelioPos {
   lon: number;  // ecliptic longitude, deg (0–360)
   lat: number;  // ecliptic latitude, deg

@@ -22,6 +22,7 @@ import type {
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
   MidiOpts, ChantMetrics, TableEmitResult,
 } from "./engines/score/api.js";
+import type { Phrase, Syllable, RestEvent, ParseError } from "./engines/score/types.js";
 import type {
   PlanetarySnapshot, PlanetQuery, Body, BodyName, Aspect,
 } from "./engines/planets/types.js";
@@ -54,5 +55,6 @@ export type {
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
   MidiOpts, ChantMetrics, TableEmitResult,
+  Phrase, Syllable, RestEvent, ParseError,
   Body, BodyName, Aspect,
 };

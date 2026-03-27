@@ -1,5 +1,7 @@
-// mundana/orbital — typed orbital elements for 8 solar system bodies
-// Source: JPL Keplerian Elements (Standish 1992 / DE430)
+// ---------------------------------------------------------------------------
+// engines/planets/orbital — JPL Keplerian elements for 8 solar system bodies
+// ---------------------------------------------------------------------------
+// Source: Standish 1992 / DE430
 // Two datasets per body: [0] = 3000 BC–3000 AD, [1] = 1800–2050 AD (preferred)
 export interface OrbitalElements {
   name: string;
