@@ -12,7 +12,7 @@ export type Clef = "c1" | "c2" | "c3" | "c4" | "f1" | "f2" | "f3" | "f4" | `cb${
 
 export type PhrasingType = "recitative" | "lyrical" | "hymnic" | "solemn";
 
-export type ArticulationType = "equalist" | "balanced" | "marked" | "solesmes";
+export type ArticulationType = "restrained" | "balanced" | "expressive" | "strict";
 
 export interface ArticulationWeights {
   ictusWeight: number;

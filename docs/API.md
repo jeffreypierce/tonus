@@ -396,12 +396,13 @@ tonus.pondus({ style: "strict", overrides: { ... } })
 
 | Style          | Description                                                         |
 | -------------- | ------------------------------------------------------------------- |
+| `"restrained"` | Minimal ornament response, flatter dynamics — semiological approach |
 | `"balanced"`   | Default. Even articulation, moderate weight                         |
 | `"expressive"` | Heightened ornament response, stronger shaping                      |
 | `"strict"`     | Full Solesmes rule fidelity, careful episema and quilisma treatment |
 
 ```ts
-type PondusStyle = "balanced" | "expressive" | "strict";
+type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
 type PondusInput = PondusStyle | PondusOpts;
 
 interface PondusOpts {

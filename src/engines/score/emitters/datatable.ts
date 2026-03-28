@@ -23,8 +23,6 @@ export interface Note {
   vowel: string;
   /** MIDI pitch number (after transpose, clamped 0–127) */
   midi: number;
-  /** Fractional MIDI derived from tuning offset (midi + offset/100) */
-  midiF: number;
   /** Pitch class 0–11 (C=0) */
   pc: number;
   /** Octave (MIDI convention: C4 = octave 4) */
@@ -77,15 +75,23 @@ const DIATONIC_PCS = [0, 2, 4, 5, 7, 9, 11] as const;
  */
 function scaleDegree(midiPitch: number, finalPc: number): number {
   const pc = ((midiPitch % 12) + 12) % 12;
-  const diatonicPc = DIATONIC_PCS.includes(pc as typeof DIATONIC_PCS[number])
+  const diatonicPc = DIATONIC_PCS.includes(pc as (typeof DIATONIC_PCS)[number])
     ? pc
-    : DIATONIC_PCS.slice().reverse().find((d) => d <= pc) ?? DIATONIC_PCS[DIATONIC_PCS.length - 1];
+    : (DIATONIC_PCS.slice()
+        .reverse()
+        .find((d) => d <= pc) ?? DIATONIC_PCS[DIATONIC_PCS.length - 1]);
 
-  const finalDiatonicPc = DIATONIC_PCS.includes(finalPc as typeof DIATONIC_PCS[number])
+  const finalDiatonicPc = DIATONIC_PCS.includes(
+    finalPc as (typeof DIATONIC_PCS)[number],
+  )
     ? finalPc
     : DIATONIC_PCS[0];
-  const finalIdx = DIATONIC_PCS.indexOf(finalDiatonicPc as typeof DIATONIC_PCS[number]);
-  const noteIdx  = DIATONIC_PCS.indexOf(diatonicPc as typeof DIATONIC_PCS[number]);
+  const finalIdx = DIATONIC_PCS.indexOf(
+    finalDiatonicPc as (typeof DIATONIC_PCS)[number],
+  );
+  const noteIdx = DIATONIC_PCS.indexOf(
+    diatonicPc as (typeof DIATONIC_PCS)[number],
+  );
 
   return ((noteIdx - finalIdx + 7) % 7) + 1;
 }
@@ -98,10 +104,13 @@ function noteRole(pc: number, modeData: ModeData | undefined): NoteRole {
   return null;
 }
 
-export function toTable(ir: Score, options: TableEmitOptions = {}): TableEmitResult {
-  const modeNum   = options.mode ?? inferMode(ir);
-  const modeData  = modeNum !== undefined ? MODES.get(modeNum) : undefined;
-  const finalPc   = modeData?.final ?? 0;
+export function toTable(
+  ir: Score,
+  options: TableEmitOptions = {},
+): TableEmitResult {
+  const modeNum = options.mode ?? inferMode(ir);
+  const modeData = modeNum !== undefined ? MODES.get(modeNum) : undefined;
+  const finalPc = modeData?.final ?? 0;
   const interpretation = options.interpretation ?? {};
   const usePhrasing =
     options.mode !== undefined ||
@@ -129,18 +138,29 @@ export function toTable(ir: Score, options: TableEmitOptions = {}): TableEmitRes
     for (const syl of phrase.syllables) {
       for (let ni = 0; ni < syl.notes.length; ni++) {
         const note = syl.notes[ni];
-        annotated.push({ note, phraseIndex: pi, syllableIndex: si, noteIndex: ni, divisio: divStr, neume: syl.neume });
+        annotated.push({
+          note,
+          phraseIndex: pi,
+          syllableIndex: si,
+          noteIndex: ni,
+          divisio: divStr,
+          neume: syl.neume,
+        });
         flatForPhrasing.push(note);
       }
       si++;
     }
 
     if (phrase.divisio) {
-      flatForPhrasing.push({ type: "rest", divisio: phrase.divisio.divisio, duration: phrase.divisio.duration });
+      flatForPhrasing.push({
+        type: "rest",
+        divisio: phrase.divisio.divisio,
+        duration: phrase.divisio.duration,
+      });
     }
   }
 
-  let velocities: (number | null)[]  = annotated.map(() => null);
+  let velocities: (number | null)[] = annotated.map(() => null);
   let shapedDurations: number[] = annotated.map((a) => a.note.duration ?? 1);
 
   if (usePhrasing && annotated.length > 0) {
@@ -158,7 +178,7 @@ export function toTable(ir: Score, options: TableEmitOptions = {}): TableEmitRes
     );
 
     for (let i = 0; i < shaped.length && i < annotated.length; i++) {
-      velocities[i]      = shaped[i].velocity;
+      velocities[i] = shaped[i].velocity;
       shapedDurations[i] = shaped[i].shapedDuration;
     }
   }
@@ -170,33 +190,32 @@ export function toTable(ir: Score, options: TableEmitOptions = {}): TableEmitRes
     const role = noteRole(n.pc, modeData);
 
     return {
-      phraseIndex:    a.phraseIndex,
-      syllableIndex:  a.syllableIndex,
-      noteIndex:      a.noteIndex,
-      neumeIndex:     a.noteIndex,
-      lyric:          n.lyric,
+      phraseIndex: a.phraseIndex,
+      syllableIndex: a.syllableIndex,
+      noteIndex: a.noteIndex,
+      neumeIndex: a.noteIndex,
+      lyric: n.lyric,
       vowel,
-      midi:           n.midi,
-      midiF:          n.midi + (n.bend - 8192) / 8192,
-      pc:             n.pc,
-      octave:         n.oct,
+      midi: n.midi,
+      pc: n.pc,
+      octave: n.oct,
       degree,
-      hz:             n.hz,
-      offset:         0,
-      arsis:          n.arsis ?? 0,
-      duration:       n.duration ?? 1,
-      velocity:       velocities[i],
+      hz: n.hz,
+      offset: 0,
+      arsis: n.arsis ?? 0,
+      duration: n.duration ?? 1,
+      velocity: velocities[i],
       shapedDuration: shapedDurations[i],
-      ictus:          n.ictus,
-      accidental:     n.acc,
-      divisio:        a.divisio,
+      ictus: n.ictus,
+      accidental: n.acc,
+      divisio: a.divisio,
       role,
-      name:           n.step.name?.short ?? null,
-      fullName:       n.step.name?.compound ?? null,
-      hand:           n.step.hand,
-      hexachord:      n.step.hexachord,
-      solfege:        n.step.solmization ?? SOLFEGE_BY_PC.get(n.pc) ?? null,
-      neume:          a.neume,
+      name: n.step.name?.short ?? null,
+      fullName: n.step.name?.compound ?? null,
+      hand: n.step.hand,
+      hexachord: n.step.hexachord,
+      solfege: n.step.solmization ?? SOLFEGE_BY_PC.get(n.pc) ?? null,
+      neume: a.neume,
     };
   });
 

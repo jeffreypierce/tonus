@@ -25,7 +25,7 @@ import type { MidiEmitOptions } from "./emitters/midi.js";
 import type { TableEmitResult } from "./emitters/datatable.js";
 import type { ChantMetrics } from "./emitters/metrics.js";
 
-export type PondusStyle = "balanced" | "expressive" | "strict";
+export type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
 export type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
 
 export interface Pondus {
@@ -75,9 +75,10 @@ export interface Score {
 }
 
 const PONDUS_TO_ARTICULATION: Record<PondusStyle, ArticulationType> = {
+  restrained: "restrained",
   balanced: "balanced",
-  expressive: "marked",
-  strict: "solesmes",
+  expressive: "expressive",
+  strict: "strict",
 };
 
 const ACCENTUS_TO_PHRASING: Record<AccentusStyle, PhrasingType> = {

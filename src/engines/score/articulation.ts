@@ -40,7 +40,7 @@ const BASE_WEIGHTS: ArticulationWeights = {
 };
 
 const ARTICULATION_PROFILES: Record<ArticulationType, ArticulationProfile> = {
-  equalist: {
+  restrained: {
     weights: { ...BASE_WEIGHTS, accentWeight: 0.25, ictusDuration: 0.2 },
     weightBase: 5,
     weightGain: 2.3,
@@ -70,7 +70,7 @@ const ARTICULATION_PROFILES: Record<ArticulationType, ArticulationProfile> = {
     durArch: 0.08,
     ictusBoost: 1.08,
   },
-  marked: {
+  expressive: {
     weights: { ...BASE_WEIGHTS, ictusWeight: 1.1, accentWeight: 0.55 },
     weightBase: 5,
     weightGain: 3.5,
@@ -85,7 +85,7 @@ const ARTICULATION_PROFILES: Record<ArticulationType, ArticulationProfile> = {
     durArch: 0.1,
     ictusBoost: 1.12,
   },
-  solesmes: {
+  strict: {
     weights: {
       ...BASE_WEIGHTS,
       episemaDuration: 1.0,
