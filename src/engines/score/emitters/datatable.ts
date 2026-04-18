@@ -1,19 +1,17 @@
-import type { Score, ScoredNote, Neume } from "../types.js";
+import type { Score, Note, Neume } from "../types.js";
 import { MODES } from "../../temper/modes.js";
-import type { ModeData } from "../../temper/modes.js";
 import {
   buildPhrasing,
   shapePhrasingForMode,
   applyPhrasing,
 } from "../phrasing.js";
 import { inferMode } from "../infer.js";
-import { selectVowel } from "../../chant/syllabify.js";
 import { CHROMA_TO_SOLFEGE as SOLFEGE_BY_PC } from "../../temper/data/constants.js";
 import type { ChantType, InterpretationOptions } from "../types.js";
 
-export type NoteRole = "final" | "tenor" | "mod" | null;
+export type NoteRole = "finalis" | "tenor" | "other" | null;
 
-export interface Note {
+export interface TabulaRow {
   phraseIndex: number;
   syllableIndex: number;
   noteIndex: number;
@@ -27,8 +25,8 @@ export interface Note {
   pc: number;
   /** Octave (MIDI convention: C4 = octave 4) */
   octave: number;
-  /** Diatonic scale degree 1–7 relative to mode finalis (or C if no mode) */
-  degree: number;
+  /** Diatonic scale degree 1–7 relative to mode finalis; null for non-diatonic pitches or no mode */
+  degree: number | null;
   hz: number;
   offset: number;
   arsis: number;
@@ -64,44 +62,7 @@ export interface TableEmitOptions {
 }
 
 export interface TableEmitResult {
-  rows: Note[];
-}
-
-const DIATONIC_PCS = [0, 2, 4, 5, 7, 9, 11] as const;
-
-/**
- * Diatonic scale degree 1–7 relative to a finalis pitch class.
- * Chromatic pitches (black keys) are mapped to the nearest lower diatonic PC.
- */
-function scaleDegree(midiPitch: number, finalPc: number): number {
-  const pc = ((midiPitch % 12) + 12) % 12;
-  const diatonicPc = DIATONIC_PCS.includes(pc as (typeof DIATONIC_PCS)[number])
-    ? pc
-    : (DIATONIC_PCS.slice()
-        .reverse()
-        .find((d) => d <= pc) ?? DIATONIC_PCS[DIATONIC_PCS.length - 1]);
-
-  const finalDiatonicPc = DIATONIC_PCS.includes(
-    finalPc as (typeof DIATONIC_PCS)[number],
-  )
-    ? finalPc
-    : DIATONIC_PCS[0];
-  const finalIdx = DIATONIC_PCS.indexOf(
-    finalDiatonicPc as (typeof DIATONIC_PCS)[number],
-  );
-  const noteIdx = DIATONIC_PCS.indexOf(
-    diatonicPc as (typeof DIATONIC_PCS)[number],
-  );
-
-  return ((noteIdx - finalIdx + 7) % 7) + 1;
-}
-
-function noteRole(pc: number, modeData: ModeData | undefined): NoteRole {
-  if (!modeData) return null;
-  if (pc === modeData.final) return "final";
-  if (pc === modeData.tenor) return "tenor";
-  if (modeData.modulations.regular.includes(pc)) return "mod";
-  return null;
+  rows: TabulaRow[];
 }
 
 export function toTable(
@@ -110,7 +71,6 @@ export function toTable(
 ): TableEmitResult {
   const modeNum = options.mode ?? inferMode(ir);
   const modeData = modeNum !== undefined ? MODES.get(modeNum) : undefined;
-  const finalPc = modeData?.final ?? 0;
   const interpretation = options.interpretation ?? {};
   const usePhrasing =
     options.mode !== undefined ||
@@ -118,7 +78,7 @@ export function toTable(
     options.office !== undefined;
 
   type AnnotatedNote = {
-    note: ScoredNote;
+    note: Note;
     phraseIndex: number;
     syllableIndex: number;
     noteIndex: number;
@@ -128,7 +88,7 @@ export function toTable(
 
   const annotated: AnnotatedNote[] = [];
   type RestEntry = { type: "rest"; divisio: string; duration: number };
-  const flatForPhrasing: Array<ScoredNote | RestEntry> = [];
+  const flatForPhrasing: Array<Note | RestEntry> = [];
 
   for (let pi = 0; pi < ir.phrases.length; pi++) {
     const phrase = ir.phrases[pi];
@@ -161,7 +121,7 @@ export function toTable(
   }
 
   let velocities: (number | null)[] = annotated.map(() => null);
-  let shapedDurations: number[] = annotated.map((a) => a.note.duration ?? 1);
+  let shapedDurations: number[] = annotated.map((a) => a.note.performance.duration);
 
   if (usePhrasing && annotated.length > 0) {
     const profile = buildPhrasing(interpretation.phrasing ?? "lyrical", {
@@ -178,43 +138,40 @@ export function toTable(
     );
 
     for (let i = 0; i < shaped.length && i < annotated.length; i++) {
-      velocities[i] = shaped[i].velocity;
+      velocities[i] = shaped[i].performance.velocity;
       shapedDurations[i] = shaped[i].shapedDuration;
     }
   }
 
-  const rows: Note[] = annotated.map((a, i) => {
+  const rows: TabulaRow[] = annotated.map((a, i) => {
     const n = a.note;
-    const { vowel } = selectVowel(n.lyric);
-    const degree = scaleDegree(n.midi, finalPc);
-    const role = noteRole(n.pc, modeData);
 
     return {
       phraseIndex: a.phraseIndex,
       syllableIndex: a.syllableIndex,
       noteIndex: a.noteIndex,
       neumeIndex: a.noteIndex,
-      lyric: n.lyric,
-      vowel,
-      midi: n.midi,
-      pc: n.pc,
-      octave: n.oct,
-      degree,
-      hz: n.hz,
-      offset: 0,
-      arsis: n.arsis ?? 0,
-      duration: n.duration ?? 1,
+      lyric: n.context.lyric,
+      vowel: n.context.vowel,
+      midi: n.pitch.midi,
+      pc: n.pitch.pc,
+      octave: n.pitch.oct,
+      degree: n.step.degree,
+      hz: n.pitch.hz,
+      offset: n.pitch.offset,
+      arsis: n.performance.arsis,
+      duration: n.performance.duration,
       velocity: velocities[i],
       shapedDuration: shapedDurations[i],
-      ictus: n.ictus,
-      accidental: n.acc,
+      ictus: n.context.ictus,
+      accidental: n.pitch.acc,
       divisio: a.divisio,
-      role,
-      name: n.step.name?.short ?? null,
-      fullName: n.step.name?.compound ?? null,
+      role: n.step.role,
+      name: n.step.name,
+      fullName: n.step.compound,
       hand: n.step.hand,
       hexachord: n.step.hexachord,
-      solfege: n.step.solmization ?? SOLFEGE_BY_PC.get(n.pc) ?? null,
+      solfege: n.step.solmization ?? SOLFEGE_BY_PC.get(n.pitch.pc) ?? null,
       neume: a.neume,
     };
   });

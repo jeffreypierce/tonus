@@ -1,12 +1,12 @@
 // ---------------------------------------------------------------------------
-// engines/planets/planets — planetary snapshot builder
+// engines/planet/planet — planetary snapshot builder
 // ---------------------------------------------------------------------------
 import { angleDelta, wrapAngle } from "./math.js";
 import { getState, sunPos, moonPos, planetPos, EARTH_RADIUS_AU } from "./position.js";
 import { sunAppearance, moonAppearance, planetAppearance } from "./appearance.js";
 import { detectAspects } from "./aspects.js";
 import { ORBITAL_ELEMENTS } from "./orbital.js";
-import type { Body, BodyName, PlanetName, PlanetarySnapshot, PlanetQuery } from "./types.js";
+import type { Body, BodyName, PlanetName, Cosmos, CosmosQuery } from "./types.js";
 import { latinName } from "./types.js";
 
 const MS_PER_DAY = 86400000;
@@ -166,21 +166,52 @@ const BODY_BUILDERS: Record<BodyName, (ts: number) => Body> = {
   Saturn: (ts) => buildPlanet("Saturn", ts),
 };
 
-export function getPlanets(query: PlanetQuery = {}): PlanetarySnapshot {
-  const date = query.date ?? query.feast?.date ?? new Date();
-  const ts = date.getTime();
-  const requested = query.bodies ?? ALL_BODIES;
+const MAX_FRAMES = 10000;
 
+function snapshotAt(date: Date, requested: BodyName[], orbLimit: number | undefined): Cosmos {
+  const ts = date.getTime();
   const bodies = requested.map((name) => BODY_BUILDERS[name](ts));
 
   const geoLons: Record<string, number> = {};
   for (const body of bodies) {
-    if (body.name !== "Earth") {
-      geoLons[body.name] = body.geo.lon;
-    }
+    if (body.name !== "Earth") geoLons[body.name] = body.geo.lon;
   }
 
-  const aspects = detectAspects(geoLons, { orbLimit: query.orbLimit });
-
+  const aspects = detectAspects(geoLons, { orbLimit });
   return { date, bodies, aspects };
+}
+
+export function getCosmos(query: CosmosQuery & { from: Date; to: Date }): Cosmos[];
+export function getCosmos(query?: CosmosQuery): Cosmos;
+export function getCosmos(query: CosmosQuery = {}): Cosmos | Cosmos[] {
+  const requested = query.bodies ?? ALL_BODIES;
+
+  if (query.from != null || query.to != null) {
+    if (query.from == null || query.to == null) {
+      throw new RangeError("caelum range requires both from and to");
+    }
+    if (query.to.getTime() < query.from.getTime()) {
+      throw new RangeError("caelum range: to must be >= from");
+    }
+    const step = query.step ?? 1;
+    if (step <= 0) {
+      throw new RangeError("caelum range: step must be > 0");
+    }
+    const stepMs = step * MS_PER_DAY;
+    const startTs = query.from.getTime();
+    const endTs = query.to.getTime();
+    const frameCount = Math.floor((endTs - startTs) / stepMs) + 1;
+    if (frameCount > MAX_FRAMES) {
+      throw new RangeError(`caelum range would produce ${frameCount} frames (max ${MAX_FRAMES})`);
+    }
+
+    const frames: Cosmos[] = [];
+    for (let ts = startTs; ts <= endTs; ts += stepMs) {
+      frames.push(snapshotAt(new Date(ts), requested, query.orbLimit));
+    }
+    return frames;
+  }
+
+  const date = query.date ?? query.feast?.date ?? new Date();
+  return snapshotAt(date, requested, query.orbLimit);
 }

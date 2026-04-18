@@ -82,6 +82,8 @@ export interface Feast {
 
 export interface FeastQuery {
   date?: Date;
+  from?: Date;
+  to?: Date;
   name?: string;
   season?: Season;
   rank?: Rank;

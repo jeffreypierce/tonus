@@ -57,7 +57,9 @@ Typical module layout:
 
 **Engine functions** (in `src/engines/`) are internal. They follow the `getX` / `buildX` naming pattern and are never exported from `src/index.ts`.
 
-**Public API functions** are what users call. They are nouns or short verbs (`cantus()`, `festum()`, `temper()`, `ordo()`), follow the query/builder contract, and are assembled in `src/index.ts`.
+**Public API functions** are what users call. They are nouns or short verbs (`cantus()`, `festum()`, `temper()`, `cantio()`), follow the query/builder contract, and are assembled in `src/index.ts`.
+
+**Builder engines** expose their public surface through `api.ts`. **Query engines** expose theirs through a file named after the engine's primary domain (e.g. `calendar.ts`, `chant.ts`, `planet/planet.ts`). The `api.ts` pattern is reserved for engines that compose multiple internal modules into a returned context object with methods.
 
 ---
 

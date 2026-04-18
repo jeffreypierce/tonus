@@ -174,6 +174,20 @@ export function getFeast(query?: FeastQuery): Feast[] {
 
   if (query.date) {
     results = feastsForDate(query.date);
+  } else if (query.from != null || query.to != null) {
+    if (query.from == null || query.to == null) {
+      throw new RangeError("festum range requires both from and to");
+    }
+    if (query.to.getTime() < query.from.getTime()) {
+      throw new RangeError("festum range: to must be >= from");
+    }
+    results = [];
+    let d = startOfDay(query.from);
+    const end = startOfDay(query.to);
+    while (d <= end) {
+      results.push(...feastsForDate(d));
+      d = addDays(d, 1);
+    }
   } else {
     // Full calendar scan for the current liturgical year range
     const now = new Date();

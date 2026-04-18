@@ -1,4 +1,4 @@
-import type { Score, ScoredNote, ChantType, InterpretationOptions } from "../types.js";
+import type { Score, Note, ChantType, InterpretationOptions } from "../types.js";
 import { MODES } from "../../temper/modes.js";
 import {
   buildPhrasing,
@@ -131,7 +131,7 @@ function resolveOpts(options: MidiEmitOptions): ResolvedMidiOpts {
 }
 
 function buildJson(
-  notes: Array<ScoredNote & { shapedDuration?: number }>,
+  notes: Array<Note & { shapedDuration?: number }>,
   playOrder: Array<{ kind: "note"; index: number } | { kind: "rest"; duration: number }>,
   opts: ResolvedMidiOpts,
   diagnostics: Diagnostic[],
@@ -151,19 +151,19 @@ function buildJson(
     }
 
     const note = notes[item.index];
-    const pitch = clampToMidiPitch(note.midi + opts.transpose, diagnostics);
-    const duration = note.shapedDuration ?? (note.duration ?? 1);
+    const pitch = clampToMidiPitch(note.pitch.midi + opts.transpose, diagnostics);
+    const duration = note.shapedDuration ?? note.performance.duration;
     const durationTicks = Math.max(1, Math.round(duration * opts.ppq));
-    const velocity = note.velocity != null
-      ? Math.round(note.velocity * 127)
+    const velocity = note.performance.velocity > 0
+      ? Math.round(note.performance.velocity * 127)
       : opts.velocity;
 
-    if (opts.emitPitchBend && Math.abs(note.bend - 8192) > 1) {
+    if (opts.emitPitchBend && Math.abs(note.pitch.bend - 8192) > 1) {
       events.push({
         type: "pitchBend",
         tick,
         channel: opts.channel,
-        value14: note.bend,
+        value14: note.pitch.bend,
         cents: 0,
       });
     }
@@ -174,7 +174,7 @@ function buildJson(
       pitch,
       velocity,
       channel: opts.channel,
-      hz: note.hz,
+      hz: note.pitch.hz,
       cents: 0,
     });
     events.push({
@@ -185,7 +185,7 @@ function buildJson(
       channel: opts.channel,
     });
 
-    if (opts.emitPitchBend && Math.abs(note.bend - 8192) > 1) {
+    if (opts.emitPitchBend && Math.abs(note.pitch.bend - 8192) > 1) {
       events.push({
         type: "pitchBend",
         tick: tick + durationTicks,
@@ -264,7 +264,7 @@ function buildMidiBytes(json: MidiJsonResult): Uint8Array {
 
 // Flatten IR into playback sequence
 function preparePlayback(ir: Score, options: MidiEmitOptions): {
-  notes: Array<ScoredNote & { shapedDuration?: number }>;
+  notes: Array<Note & { shapedDuration?: number }>;
   playOrder: Array<{ kind: "note"; index: number } | { kind: "rest"; duration: number }>;
 } {
   const modeNum  = options.mode ?? inferMode(ir);
@@ -276,7 +276,7 @@ function preparePlayback(ir: Score, options: MidiEmitOptions): {
     options.office !== undefined;
 
   type FlatItem =
-    | { kind: "note"; note: ScoredNote }
+    | { kind: "note"; note: Note }
     | { kind: "rest"; duration: number; divisio: string };
 
   const flat: FlatItem[] = [];
@@ -289,7 +289,7 @@ function preparePlayback(ir: Score, options: MidiEmitOptions): {
     }
   }
 
-  const shapedNotes: Array<ScoredNote & { shapedDuration?: number }> = [];
+  const shapedNotes: Array<Note & { shapedDuration?: number }> = [];
   const playOrder: Array<{ kind: "note"; index: number } | { kind: "rest"; duration: number }> = [];
 
   if (usePhrasing) {
@@ -302,7 +302,7 @@ function preparePlayback(ir: Score, options: MidiEmitOptions): {
     const tenorPc   = modeData?.tenor;
     const notesForPhrasing: PhrasingInputEvent[] = flat.map((item) =>
       item.kind === "note"
-        ? { type: "note", midi: item.note.midi, weight: item.note.weight, duration: item.note.duration, ictus: item.note.ictus }
+        ? item.note
         : { type: "rest", divisio: item.divisio, duration: item.duration },
     );
     const shaped = applyPhrasing(notesForPhrasing, modeProfile, tenorPc);

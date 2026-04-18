@@ -6,7 +6,9 @@ import { getHour } from "./engines/chant/hour.js";
 import { getPsalm } from "./engines/chant/psalm.js";
 import { buildTemper } from "./engines/temper/api.js";
 import { buildScore, buildPondus, buildAccentus } from "./engines/score/api.js";
-import { getPlanets } from "./engines/planets/planets.js";
+import { getCosmos } from "./engines/planet/planet.js";
+import { buildSumma } from "./engines/summa/api.js";
+import { buildHarmonia } from "./engines/harmonia/api.js";
 
 import type { FeastQuery, Feast } from "./engines/cal/types.js";
 import type {
@@ -15,20 +17,26 @@ import type {
 } from "./engines/chant/types.js";
 import type {
   TemperInput, Temper, Tuning, TemperOpts,
-  PitchInput, Note, Step, Neume, NeumeShape,
+  Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
 } from "./engines/temper/api.js";
 import type {
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
-  MidiOpts, ChantMetrics, TableEmitResult,
+  MidiOpts, TableEmitResult,
 } from "./engines/score/api.js";
-import type { Phrase, Syllable, RestEvent, ParseError } from "./engines/score/types.js";
 import type {
-  PlanetarySnapshot, PlanetQuery, Body, BodyName, Aspect,
-} from "./engines/planets/types.js";
-
-export type Caelum = PlanetarySnapshot;
-export type CaelumQuery = PlanetQuery;
+  Residue, SummaOpts, Attractor, VowelAttractor,
+  NoteRange, ArsisProfile, CadenceDistribution,
+} from "./engines/summa/api.js";
+import type {
+  Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
+  Frame, ModalAffinity, Author,
+} from "./engines/harmonia/api.js";
+import type { Note, Performance, Phrase, Syllable, RestEvent, ParseError } from "./engines/score/types.js";
+import type { VoicedPitch } from "./engines/harmonia/voice.js";
+import type {
+  Cosmos, CosmosQuery, Body, BodyName, Aspect,
+} from "./engines/planet/types.js";
 
 const tonus = {
   festum: getFeast,
@@ -38,10 +46,12 @@ const tonus = {
   officium: getHour,
   psalmus: getPsalm,
   temper: buildTemper,
-  ordo: buildScore,
+  cantio: buildScore,
   pondus: buildPondus,
   accentus: buildAccentus,
-  caelum: getPlanets,
+  caelum: getCosmos,
+  summa: buildSumma,
+  harmonia: buildHarmonia,
 };
 
 export default tonus;
@@ -51,10 +61,15 @@ export type {
   Chant, CantusQuery, OrdinaryChant,
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Temper, TemperInput, TemperOpts, Tuning,
-  PitchInput, Note, Step, Neume, NeumeShape,
+  Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
-  MidiOpts, ChantMetrics, TableEmitResult,
-  Phrase, Syllable, RestEvent, ParseError,
-  Body, BodyName, Aspect,
+  MidiOpts, TableEmitResult,
+  Note, Performance, Phrase, Syllable, RestEvent, ParseError,
+  VoicedPitch,
+  Cosmos, CosmosQuery, Body, BodyName, Aspect,
+  Residue, SummaOpts, Attractor, VowelAttractor,
+  NoteRange, ArsisProfile, CadenceDistribution,
+  Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
+  Frame, ModalAffinity, Author,
 };

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// engines/planets/types — planetary engine types
+// engines/planet/types — planetary engine types
 // ---------------------------------------------------------------------------
 export interface HelioPos {
   lon: number;  // ecliptic longitude, deg (0–360)
@@ -64,15 +64,18 @@ export interface Aspect {
   strength: number; // 0–1
 }
 
-export interface PlanetarySnapshot {
+export interface Cosmos {
   date: Date;
   bodies: Body[];
   aspects: Aspect[];
 }
 
-export interface PlanetQuery {
+export interface CosmosQuery {
   date?: Date;
   feast?: { date: Date };
+  from?: Date;
+  to?: Date;
+  step?: number; // in days (1 = 86400000 ms), default 1
   bodies?: BodyName[];
   orbLimit?: number; // max orb for aspect detection, degrees (default 8)
 }

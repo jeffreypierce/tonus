@@ -82,3 +82,37 @@ describe("pascha", () => {
     assert.equal(easter.getDate(), 31);
   });
 });
+
+describe("getFeast range", () => {
+  test("from/to returns feasts spanning the range", () => {
+    const feasts = getFeast({
+      from: new Date(2026, 11, 24),
+      to: new Date(2026, 11, 26),
+    });
+    assert.ok(feasts.length > 0);
+    assert.ok(feasts.some((f) => f.id === "12-25"));
+  });
+
+  test("from/to with filters works", () => {
+    const feasts = getFeast({
+      from: new Date(2026, 11, 1),
+      to: new Date(2026, 11, 31),
+      rank: 1,
+    });
+    assert.ok(feasts.every((f) => f.rank === 1));
+  });
+
+  test("throws when to < from", () => {
+    assert.throws(
+      () => getFeast({ from: new Date(2026, 11, 31), to: new Date(2026, 11, 1) }),
+      /to must be >= from/,
+    );
+  });
+
+  test("throws when only from provided", () => {
+    assert.throws(
+      () => getFeast({ from: new Date(2026, 11, 1) }),
+      /requires both from and to/,
+    );
+  });
+});

@@ -3,9 +3,8 @@
 // ---------------------------------------------------------------------------
 import { classifyInterval } from "./interval.js";
 import type { Interval } from "./interval.js";
-import type { PitchInput } from "./pitch.js";
-import { toNote } from "./note.js";
-import type { Note } from "./note.js";
+import { toPitch } from "./pitch.js";
+import type { Pitch, PitchInput } from "./pitch.js";
 import type { Scale } from "./scale.js";
 
 export type { Interval };
@@ -26,18 +25,21 @@ export type NeumeShape =
   | "compound";
 
 export interface Neume {
-  notes: Note[];
+  pitches: Pitch[];
   intervals: Interval[];
   shape: NeumeShape;
 }
 
-function classifyShape(intervals: Interval[]): NeumeShape {
-  if (intervals.length === 0) return "punctum";
-  const dirs = intervals.map((iv) => iv.direction);
-  const up = (d: string) => d === "up";
-  const dn = (d: string) => d === "down";
+export type Direction = "up" | "down" | "unison";
 
-  switch (dirs.length) {
+export function classifyShape(dirs: Direction[]): NeumeShape {
+  const n = dirs.length;
+  if (n === 0) return "punctum";
+
+  const up = (d: Direction) => d === "up";
+  const dn = (d: Direction) => d === "down";
+
+  switch (n) {
     case 1:
       return up(dirs[0]!) ? "pes" : dn(dirs[0]!) ? "clivis" : "punctum";
     case 2: {
@@ -64,16 +66,16 @@ function classifyShape(intervals: Interval[]): NeumeShape {
 }
 
 export function buildNeume(inputs: PitchInput[], scala: Scale): Neume {
-  const notes: Note[] = inputs.map((n) => toNote(n, scala));
+  const pitches: Pitch[] = inputs.map((n) => toPitch(n, scala));
 
   const intervals: Interval[] = [];
-  for (let i = 0; i < notes.length - 1; i++) {
-    intervals.push(classifyInterval(notes[i]!.midi, notes[i + 1]!.midi));
+  for (let i = 0; i < pitches.length - 1; i++) {
+    intervals.push(classifyInterval(pitches[i]!.midi, pitches[i + 1]!.midi));
   }
 
   return {
-    notes,
+    pitches,
     intervals,
-    shape: classifyShape(intervals),
+    shape: classifyShape(intervals.map((iv) => iv.direction)),
   };
 }

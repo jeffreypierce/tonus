@@ -218,12 +218,24 @@ describe("ratio", () => {
   });
 });
 
-describe("step ratio", () => {
-  test("Step includes ratio from scale", () => {
+describe("step", () => {
+  test("Step includes explicit pc", () => {
     const t = buildTemper({ tuning: "ptolemy-intense", mode: 1 });
-    const step = t.gradus("D4"); // finalis
-    assert.ok(step.ratio !== null);
-    assert.ok(typeof step.ratio === "number");
+    const step = t.gradus("D4");
+    assert.equal(step.pc, 2);
+  });
+
+  test("Step name is a string (Guidonian or SPN fallback)", () => {
+    const t = buildTemper({ mode: 1 });
+    const step = t.gradus("D4");
+    assert.equal(typeof step.name, "string");
+    assert.ok(step.name.length > 0);
+  });
+
+  test("Step compound is string or null", () => {
+    const t = buildTemper({ mode: 1 });
+    const step = t.gradus("D4");
+    assert.ok(step.compound === null || typeof step.compound === "string");
   });
 });
 
@@ -248,6 +260,20 @@ describe("nota", () => {
   test("resolves a solfege input to a Note", () => {
     const note = t.nota({ solfege: "RE" });
     assert.equal(note.pc, 2);
+  });
+
+  test("nota returns a Pitch with ratio field", () => {
+    const note = t.nota("D4");
+    assert.ok(typeof note.ratio === "number");
+    assert.ok(note.ratio > 0);
+  });
+
+  test("nota has no performance or context fields", () => {
+    const note = t.nota("D4");
+    assert.equal(note.velocity, undefined);
+    assert.equal(note.duration, undefined);
+    assert.equal(note.arsis, undefined);
+    assert.equal(note.thesis, undefined);
   });
 
   test("pythagorean A4 has zero bend (center of pitch wheel)", () => {
@@ -326,7 +352,7 @@ describe("neuma", () => {
   test("classifies a two-note ascending group as pes", () => {
     const neume = t.neuma([60, 62]);
     assert.equal(neume.shape, "pes");
-    assert.equal(neume.notes.length, 2);
+    assert.equal(neume.pitches.length, 2);
   });
 
   test("classifies a three-note up-down group as torculus", () => {

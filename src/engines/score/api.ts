@@ -10,7 +10,6 @@ import { computeMeta } from "./meta.js";
 import { toMidi } from "./emitters/midi.js";
 import { toMusicXML } from "./emitters/musicxml.js";
 import { toTable } from "./emitters/datatable.js";
-import { computeMetrics } from "./emitters/metrics.js";
 import type { Chant } from "../chant/types.js";
 import type { Temper } from "../temper/api.js";
 import type {
@@ -23,7 +22,6 @@ import type {
 } from "./types.js";
 import type { MidiEmitOptions } from "./emitters/midi.js";
 import type { TableEmitResult } from "./emitters/datatable.js";
-import type { ChantMetrics } from "./emitters/metrics.js";
 
 export type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
 export type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
@@ -71,7 +69,6 @@ export interface Score {
   midi(opts?: MidiOpts): Uint8Array;
   musicxml(): string;
   tabula(): TableEmitResult;
-  summa(): ChantMetrics;
 }
 
 const PONDUS_TO_ARTICULATION: Record<PondusStyle, ArticulationType> = {
@@ -150,13 +147,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
         transpose: opts?.temper?.transpose,
       });
     },
-
-    summa(): ChantMetrics {
-      return computeMetrics(ir, {
-        mode: meta.mode ?? undefined,
-      });
-    },
   };
 }
 
-export type { TableEmitResult, ChantMetrics, ParseError };
+export type { TableEmitResult, ParseError };

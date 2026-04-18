@@ -29,20 +29,19 @@ describe("buildScore", () => {
   test("resolves notes through temper with hz and pitch bend", () => {
     const score = buildScore(makeChant(KYRIE_GABC));
     const note = score.phrases[0].syllables[0].notes[0];
-    assert.ok(typeof note.midi === "number");
-    assert.ok(typeof note.hz === "number" && note.hz > 0);
-    assert.ok(typeof note.bend === "number");
-    assert.ok(typeof note.spn === "string");
+    assert.ok(typeof note.pitch.midi === "number");
+    assert.ok(typeof note.pitch.hz === "number" && note.pitch.hz > 0);
+    assert.ok(typeof note.pitch.bend === "number");
+    assert.ok(typeof note.pitch.spn === "string");
   });
 
   test("assigns arsis and thesis gesture counts to notes", () => {
     const score = buildScore(makeChant(KYRIE_GABC));
     const notes = score.phrases[0].syllables.flatMap((s) => s.notes);
-    const withArsis = notes.filter((n) => n.arsis !== null);
-    assert.ok(withArsis.length > 0);
-    for (const n of withArsis) {
-      assert.ok(typeof n.arsis === "number" && n.arsis >= 1);
-      assert.ok(typeof n.thesis === "number" && n.thesis >= 1);
+    assert.ok(notes.length > 0);
+    for (const n of notes) {
+      assert.ok(typeof n.performance.arsis === "number" && n.performance.arsis >= 1);
+      assert.ok(typeof n.performance.thesis === "number" && n.performance.thesis >= 1);
     }
   });
 
@@ -55,11 +54,31 @@ describe("buildScore", () => {
     }
   });
 
+  test("note.context.vowel is populated from lyric", () => {
+    const score = buildScore(makeChant(KYRIE_GABC));
+    const notes = score.phrases[0].syllables.flatMap((s) => s.notes);
+    // Every note has a vowel string (may be empty for punctuation-only syllables)
+    for (const n of notes) {
+      assert.equal(typeof n.context.vowel, "string");
+    }
+    // At least one note has a non-empty vowel (e.g. "y" in "Ky", "e" in "ri(h)", etc.)
+    assert.ok(notes.some((n) => n.context.vowel.length > 0));
+  });
+
+  test("note has all 4 sub-objects (pitch, step, performance, context)", () => {
+    const score = buildScore(makeChant(KYRIE_GABC));
+    const note = score.phrases[0].syllables[0].notes[0];
+    assert.ok(note.pitch);
+    assert.ok(note.step);
+    assert.ok(note.performance);
+    assert.ok(note.context);
+  });
+
   test("detects ictus from notation marks", () => {
     const gabc = "(c4) A(g.)B(h)C(g.) (::)";
     const score = buildScore(makeChant(gabc));
     const notes = score.phrases[0].syllables.flatMap((s) => s.notes);
-    const ictusNotes = notes.filter((n) => n.ictus);
+    const ictusNotes = notes.filter((n) => n.context.ictus);
     assert.ok(ictusNotes.length > 0);
   });
 
@@ -120,11 +139,5 @@ describe("emitters", () => {
     assert.ok(typeof xml === "string");
     assert.ok(xml.includes("score-partwise"));
     assert.ok(xml.includes("tonus"));
-  });
-
-  test("summa returns note count and phrase count", () => {
-    const metrics = score.summa();
-    assert.ok(typeof metrics.noteCount === "number" && metrics.noteCount > 0);
-    assert.ok(typeof metrics.phraseCount === "number" && metrics.phraseCount > 0);
   });
 });

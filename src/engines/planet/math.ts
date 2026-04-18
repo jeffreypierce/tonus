@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// engines/planets/math — pure trig/math helpers
+// engines/planet/math — pure trig/math helpers
 // ---------------------------------------------------------------------------
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;

@@ -1,10 +1,12 @@
 // ---------------------------------------------------------------------------
-// engines/temper/pitch — Pitch type and input parsing
+// engines/temper/pitch — Pitch type, input parsing, and scale binding
 // ---------------------------------------------------------------------------
 
 import { NAME_TO_CHROMA, SOLFEGE_TO_CHROMA, SHARP_SPELLING, FLAT_SPELLING, PREFER_FLAT_PCS, GUIDO_TO_PC } from "./data/constants.js";
 import { gabcToMidi } from "./gabc.js";
 import { MODES } from "./modes.js";
+import { midiToHz } from "./scale.js";
+import type { Scale } from "./scale.js";
 
 // ── Types ──
 
@@ -17,6 +19,7 @@ export interface Pitch {
   hz: number;
   offset: number;    // cents from 12-TET
   bend: number;      // 14-bit MIDI pitch bend (8192 = center)
+  ratio: number;     // frequency ratio for this pc within the Scale
 }
 
 // Tagged input forms — explicit, no ambiguity
@@ -98,21 +101,21 @@ export function parsePitch(input: PitchInput, ctx: PitchContext = {}): number {
 }
 
 // ── toPitch ──
-// Converts a MIDI number + tuning data to a Pitch object.
-export function toPitch(
-  midi: number,
-  hz: number,
-  offset: number,
-  bend: number,
-): Pitch {
-  const m = clamp(midi);
-  const pc = m % 12;
-  const oct = Math.floor(m / 12) - 1;
+// Resolves a PitchInput through a Scale into a tuned Pitch.
+// Applies the Scale's transpose and returns a Pitch with midi/pc/oct/spn
+// from the transposed MIDI plus tuning-derived hz/offset/bend/ratio.
+export function toPitch(input: PitchInput, scale: Scale): Pitch {
+  const rawMidi = parsePitch(input, { mode: scale.mode, a4: scale.a4 });
+  const { hz, offset, bend } = midiToHz(rawMidi, scale);
+  const midi = clamp(rawMidi + scale.transpose);
+  const pc = midi % 12;
+  const oct = Math.floor(midi / 12) - 1;
   const useFlat = PREFER_FLAT_PCS.has(pc);
   const sp = useFlat ? FLAT_SPELLING[pc]! : SHARP_SPELLING[pc]!;
   const accStr = sp.acc === -1 ? "b" : sp.acc === 1 ? "#" : "";
   const spn = `${sp.step}${accStr}${oct}`;
-  return { midi: m, pc, oct, acc: sp.acc, spn, hz, offset, bend };
+  const ratio = scale.ratios[pc] ?? 1;
+  return { midi, pc, oct, acc: sp.acc, spn, hz, offset, bend, ratio };
 }
 
 // ── scaleDegreeInMode ──

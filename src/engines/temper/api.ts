@@ -3,12 +3,10 @@
 // ---------------------------------------------------------------------------
 import { buildRatios, parseScala, getPtolemaicRatios, toRatio } from "./scale.js";
 import type { Scale, ScaleOpts, ScalaFile, RatioResult } from "./scale.js";
-import { parsePitch } from "./pitch.js";
+import { parsePitch, toPitch } from "./pitch.js";
 import type { Pitch, PitchInput } from "./pitch.js";
 import { toStep } from "./step.js";
-import type { Step, StepName, StepVariant, Finger, Region } from "./step.js";
-import { toNote } from "./note.js";
-import type { Note } from "./note.js";
+import type { Step, StepVariant, Finger, Region } from "./step.js";
 import { classifyInterval } from "./interval.js";
 import type { Interval, IntervalDirection, IntervalQuality } from "./interval.js";
 import { buildNeume } from "./neume.js";
@@ -44,9 +42,9 @@ export interface TonusOpts {
 export interface Tonus {
   mode: number;
   differentia: string;
-  intonation: Note[];
-  mediant: Note[];
-  termination: Note[];
+  intonation: Pitch[];
+  mediant: Pitch[];
+  termination: Pitch[];
 }
 
 export interface Temper {
@@ -59,12 +57,12 @@ export interface Temper {
   ratios: number[];
   cents: number[];
 
-  nota(input: PitchInput): Note;
+  nota(input: PitchInput): Pitch;
   gradus(input: PitchInput): Step;
   intervallum(a: PitchInput, b: PitchInput): Interval;
   neuma(inputs: PitchInput[]): Neume;
   ratio(input: string): RatioResult & { step: Step | null };
-  gamut(opts?: GamutOptions): Note[];
+  gamut(opts?: GamutOptions): Pitch[];
   modus(mode: number): ModeData;
   tonus(opts?: TonusOpts): Tonus;
 }
@@ -135,8 +133,8 @@ export function buildTemper(input?: TemperInput): Temper {
     ratios: scala.ratios,
     cents: scala.cents,
 
-    nota(pitchInput: PitchInput): Note {
-      return toNote(pitchInput, scala);
+    nota(pitchInput: PitchInput): Pitch {
+      return toPitch(pitchInput, scala);
     },
 
     gradus(pitchInput: PitchInput): Step {
@@ -168,7 +166,7 @@ export function buildTemper(input?: TemperInput): Temper {
       return { ...result, step };
     },
 
-    gamut(gamutOpts?: GamutOptions): Note[] {
+    gamut(gamutOpts?: GamutOptions): Pitch[] {
       return buildGamut(scala, gamutOpts);
     },
 
@@ -183,9 +181,9 @@ export function buildTemper(input?: TemperInput): Temper {
       return {
         mode: modeVal,
         differentia: diff.code,
-        intonation: tone.intonation.map((m) => toNote(m, scala)),
-        mediant: tone.mediant.map((m) => toNote(m, scala)),
-        termination: diff.termination.map((m) => toNote(m, scala)),
+        intonation: tone.intonation.map((m) => toPitch(m, scala)),
+        mediant: tone.mediant.map((m) => toPitch(m, scala)),
+        termination: diff.termination.map((m) => toPitch(m, scala)),
       };
     },
   };
@@ -199,11 +197,9 @@ export type {
   Pitch,
   PitchInput,
   Step,
-  StepName,
   StepVariant,
   Finger,
   Region,
-  Note,
   Neume,
   NeumeShape,
   Interval,

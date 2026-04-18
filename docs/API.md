@@ -117,6 +117,8 @@ interface PsalmusQuery {
 
 interface FeastQuery {
   date?: Date;
+  from?: Date;
+  to?: Date;
   name?: string;
   season?: Season;
   rank?: Rank;
@@ -196,13 +198,15 @@ tonus.cantus({
 
 ### `tonus.festum(query?) -> Feast[]`
 
-Calendar lookup. Returns all matching feasts sorted `day asc, rank desc`. For a date query, returns the primary feast and all concurrent feasts on that day in rank order.
+Calendar lookup. Returns all matching feasts sorted `day asc, rank desc`. For a date query, returns the primary feast and all concurrent feasts on that day in rank order. For a range query (`from`/`to`), iterates each day and flattens. With no date or range, scans the current liturgical year.
 
 ```js
 tonus.festum({ date: new Date() });
+tonus.festum({ from: advent1, to: epiphany });          // range
 tonus.festum({ name: "Dominica I Adventus" });
 tonus.festum({ season: "ea" });
 tonus.festum({ rank: 4, marian: true });
+tonus.festum({ from: jan1, to: dec31, marian: true }); // range with filter
 ```
 
 ### `tonus.proprium(query?) -> Chant[]`
@@ -257,48 +261,58 @@ tonus.psalmus({ psalm: 109, verse: "1a", mode: 2, differentia: "6F" });
 tonus.psalmus({ psalm: "benedictus", mode: 8, intonation: false });
 ```
 
-### `tonus.caelum(query?) -> Caelum`
+### `tonus.caelum(query?) -> Cosmos | Cosmos[]`
 
-Planetary ephemeris. Returns a sky snapshot with positional data for classical solar system bodies and angular aspects between them. Computes heliocentric and geocentric positions, apparent magnitude, phase, elongation, zodiac sign, and speed. Accepts a `Date`, a `Feast`, or defaults to now.
+Planetary ephemeris. Returns a sky snapshot with positional data for classical solar system bodies and angular aspects between them. Computes heliocentric and geocentric positions, apparent magnitude, phase, elongation, zodiac sign, and speed.
 
+Single moment (returns `Cosmos`):
 ```js
-tonus.caelum();
+tonus.caelum();                                      // now
 tonus.caelum({ date: new Date(2026, 11, 25) });
 tonus.caelum({ feast: feasts[0] });
 tonus.caelum({ bodies: ["Sun", "Moon", "Jupiter"] });
-tonus.caelum({ feast: feasts[0], bodies: ["Sun", "Moon"], orbLimit: 5 });
 ```
 
-**`CaelumQuery`**
+Time range (returns `Cosmos[]`):
+```js
+tonus.caelum({
+  from: new Date(2026, 11, 25),
+  to: new Date(2026, 11, 31),
+});
+tonus.caelum({ from: jan1, to: dec31, step: 7 }); // weekly snapshots
+```
+
+**`CosmosQuery`**
 
 ```ts
-interface CaelumQuery {
+interface CosmosQuery {
   date?: Date;
   feast?: Feast;
+  from?: Date;
+  to?: Date;
+  step?: number;        // days (1 = 86400000 ms), default 1
   bodies?: BodyName[];
-  orbLimit?: number; // max orb for aspect detection, degrees (default 8)
+  orbLimit?: number;    // max orb for aspect detection, degrees (default 8)
 }
 
 type BodyName =
-  | "Sun"
-  | "Moon"
-  | "Mercury"
-  | "Venus"
-  | "Earth"
-  | "Mars"
-  | "Jupiter"
-  | "Saturn";
+  | "Sun" | "Moon" | "Mercury" | "Venus" | "Earth"
+  | "Mars" | "Jupiter" | "Saturn";
 ```
 
-**`Caelum`**
+**`Cosmos`**
 
 ```ts
-interface Caelum {
+interface Cosmos {
   date: Date;
   bodies: Body[];
   aspects: Aspect[];
 }
 ```
+
+**Return type:** `Cosmos` for single-moment queries, `Cosmos[]` for ranges. TypeScript narrows automatically based on whether `from/to` are provided.
+
+**Range semantics:** snapshots at `from.getTime() + n * step * 86400000 ms` while `<= to.getTime()`. Throws if `to < from`, `step <= 0`, or the range would produce more than 10000 frames.
 
 When `bodies` is omitted, all 8 are returned. Aspects are computed only between requested bodies. When `feast` is provided, its date is used (explicit `date` takes precedence).
 
@@ -442,7 +456,7 @@ interface AccentusOpts {
 
 ---
 
-### `tonus.ordo(chant, opts?) -> Score`
+### `tonus.cantio(chant, opts?) -> Score`
 
 Builds a `Score` from a single `Chant`. Applies interpretation if `pondus` and `accentus` are provided — `velocity`, `duration`, `arsis`, and `thesis` on each `Note` will be `null` otherwise.
 
@@ -451,12 +465,11 @@ const t = tonus.temper({ tuning: "pythagorean" });
 const p = tonus.pondus("balanced");
 const a = tonus.accentus("lyrical");
 
-const score = tonus.ordo(chant, { temper: t, pondus: p, accentus: a });
+const score = tonus.cantio(chant, { temper: t, pondus: p, accentus: a });
 
 score.midi({ bpm: 120 });
 score.musicxml();
 score.tabula();
-score.summa();
 ```
 
 **`ScoreOpts`**
@@ -480,7 +493,6 @@ interface Score {
   midi(opts?: MidiOpts): Uint8Array;
   musicxml(): string;
   tabula(): TabulaResult;
-  summa(): ChantMetrics;
 }
 ```
 
@@ -525,25 +537,59 @@ interface ParseError {
 
 ---
 
+## Pitch
+
+`Pitch` is the tuned identity type — every pitch in tonus carries tuning data since it's always resolved through a `Scale`. Returned by `temper.nota()`, present in `Neume.pitches[]`, nested as `note.pitch` in the score engine's `Note`, and referenced by `Attractor.pitch`.
+
+```ts
+interface Pitch {
+  midi: number;
+  pc: number;      // pitch class 0–11
+  oct: number;
+  acc: -1 | 0 | 1; // flat, natural, sharp
+  spn: string;     // scientific pitch name, e.g. "D4"
+  hz: number;      // frequency in Hz (through the Scale)
+  offset: number;  // cents from 12-TET
+  bend: number;    // 14-bit MIDI pitch bend, 8192 = center
+  ratio: number;   // Scale ratio for this pc
+}
+```
+
+---
+
 ## Note
 
-`Note` is the universal pitch type. Returned by `temper.nota()`, present in `Neume.notes[]`, and inlined into `TabulaRow`. Interpretation fields (`velocity`, `duration`, `arsis`, `thesis`) are `null` when `ordo` is called without `pondus` and `accentus`.
+The score engine's unified `Note` composes four concerns into sub-objects. Present in `Syllable.notes[]` and all score emitters.
 
 ```ts
 interface Note {
-  midi: number;
-  pc: number;
-  oct: number;
-  acc: number; // -1 flat, 0 natural, 1 sharp
-  spn: string; // "D4"
-  hz: number;
-  bend: number; // 14-bit MIDI pitch bend, 8192 = center
-  velocity: number | null;
-  duration: number | null;
-  arsis: number | null; // ascending rhythmic weight; 1 = ictus, counts up
-  thesis: number | null; // descending rhythmic weight; counts down to next ictus
+  pitch: Pitch;           // tuned identity
+  step: Step;             // modal/Guidonian annotation
+  performance: Performance; // interpretation (velocity, duration, arsis, thesis)
+  context: Context;       // position, lyric, ornamentation
+}
+
+interface Performance {
+  velocity: number;  // 0–1 shaping factor
+  duration: number;
+  arsis: number;     // ≥ 1, gesture upbeat count
+  thesis: number;    // ≥ 1, gesture downbeat count
+}
+
+interface Context {
+  lyric: string;
+  vowel: string;                                         // from selectVowel(lyric)
+  syllableIndex: number;
+  ictus: boolean;
+  accidentalSource: "none" | "state" | "explicit";
+  quilisma: boolean;
+  liquescent: boolean;
+  strophicus: boolean;
+  weight: number;                                        // articulation weight
 }
 ```
+
+Access: `note.pitch.midi`, `note.performance.velocity`, `note.step.name`, `note.context.lyric`.
 
 ---
 
@@ -590,7 +636,7 @@ type NeumeShape =
   | "compound";
 
 interface Neume {
-  notes: Note[];
+  pitches: Pitch[];
   intervals: Interval[];
   shape: NeumeShape;
 }
@@ -629,23 +675,11 @@ interface Interval {
 
 ### Step
 
-`Step` is returned by `temper.gradus()` and inlined into `TabulaRow`.
+`Step` is modal/Guidonian annotation for a pitch class. Returned by `temper.gradus()` and nested as `note.step` in the score engine. Carries no tuning data — that's on `Pitch`.
 
 ```ts
-type Finger =
-  | "wrist"
-  | "palm"
-  | "thumb"
-  | "index"
-  | "middle"
-  | "ring"
-  | "pinky";
+type Finger = "wrist" | "palm" | "thumb" | "index" | "middle" | "ring" | "pinky";
 type Region = "base" | "mid" | "tip" | "top";
-
-interface StepName {
-  short: string; // "d"
-  compound: string; // "Delasolre"
-}
 
 interface StepVariant {
   hexachord: "durum" | "naturale" | "molle";
@@ -653,14 +687,15 @@ interface StepVariant {
 }
 
 interface Step {
-  name: StepName | null;
+  pc: number;                                       // pitch class 0–11
+  name: string;                                     // "d" (Guidonian) or SPN letter fallback
+  compound: string | null;                          // "Delasolre"; null out of gamut
   hexachord: "durum" | "naturale" | "molle" | null;
-  solmization: string | null;
-  variants: StepVariant[];
+  solmization: string | null;                       // null out of gamut
+  variants: StepVariant[];                          // available mutations across hexachords
   hand: { finger: Finger; region: Region } | null;
-  degree: number | null;
+  degree: number | null;                            // 1–7 diatonic degree in mode
   role: "finalis" | "tenor" | "other" | null;
-  ratio: number | null; // frequency ratio from tuning scale
 }
 ```
 
@@ -788,11 +823,68 @@ interface TabulaResult {
 
 ---
 
-## Summa Types
+### `tonus.summa(scores, opts?) -> Residue`
 
-`summa()` returns computed metrics for a score.
+Pure analysis. Accepts a single `Score` or an array, returns a `Residue` — a plain data object with no methods. Aggregates metrics across all provided scores.
+
+```js
+const score = tonus.cantio(chant);
+const r = tonus.summa(score);
+
+// Multi-score aggregation
+const combined = tonus.summa([score1, score2, score3]);
+
+// Explicit mode override
+const modal = tonus.summa(score, { mode: 3 });
+```
+
+**`SummaOpts`**
 
 ```ts
+interface SummaOpts {
+  mode?: number;  // optional override; otherwise inferred from score chants
+}
+```
+
+**`Residue`**
+
+```ts
+interface Residue {
+  // Source metadata
+  scoreCount: number;
+  chants: Chant[];
+
+  // Counts
+  phraseCount: number;
+  noteCount: number;
+  syllableCount: number;
+
+  // Pitch
+  noteRange: NoteRange | null;
+  ambitus: number | null;
+
+  // Texture
+  melismaRatio: number;
+  melismaByPhrase: number[];
+
+  // Rhythm
+  ictusRate: number;
+  arsisProfile: ArsisProfile | null;
+
+  // Cadence
+  cadenceWeight: number;
+  cadenceDistribution: CadenceDistribution;
+
+  // Modal
+  mode: number | null;
+  modalConformance: number | null;
+
+  // Distributions
+  pcDistribution: Record<number, number>;  // fractions sum to 1
+  attractors: Attractor[];                  // top pitch classes as tuned Pitches
+  vowelAttractors: VowelAttractor[];        // vowel-weighted resonances
+}
+
 interface NoteRange {
   min: number;
   max: number;
@@ -812,26 +904,24 @@ interface CadenceDistribution {
   doubleBar: number;
 }
 
-interface ChantMetrics {
-  phraseCount: number;
-  noteCount: number;
-  syllableCount: number;
-  noteRange: NoteRange | null;
-  ambitus: number | null;
-  melismaRatio: number;
-  melismaByPhrase: number[];
-  ictusRate: number;
-  arsisProfile: ArsisProfile | null;
-  cadenceWeight: number;
-  cadenceDistribution: CadenceDistribution;
-  modalConformance: number | null; // 0–1, fraction of notes on structural pitches
-  pcDistribution: Record<number, number>;
+interface Attractor {
+  pc: number;      // pitch class 0–11
+  weight: number;  // normalized 0–1
+  pitch: Pitch;    // tuned through the scores' temper
+}
+
+interface VowelAttractor {
+  vowel: string;   // "a", "e", "i", "o", "u"
+  weight: number;  // fraction of total vowel weight
+  pc: number;      // most-associated pitch class
 }
 ```
 
+Attractors are returned as tuned `Note` objects — ready to sonify. Pure data: no methods, no emitters. Callers render using this data however they need.
+
 ---
 
-## Caelum Types
+## Cosmos Types
 
 ### Body
 
@@ -887,11 +977,114 @@ interface Aspect {
 
 ---
 
+### `tonus.harmonia(cosmos, opts?) -> Influence`
+
+Voices the sky through a planetary-harmony doctrina. Pure analysis — returns a plain data object with no methods.
+
+```js
+const sky = tonus.caelum();
+tonus.harmonia(sky);                                           // Boethius + pythagorean default
+tonus.harmonia(sky, { doctrina: "ptolemy" });                  // Ptolemy doctrine
+tonus.harmonia(sky, { temper: tonus.temper("ptolemy-intense") });
+
+// Time-range analysis with per-cosmos frames
+const range = tonus.caelum({ from, to });
+const inf = tonus.harmonia(range);  // inf.frames is populated
+```
+
+**`HarmoniaOpts`**
+
+```ts
+interface HarmoniaOpts {
+  temper?: Temper;        // default: pythagorean A440
+  doctrina?: Author;      // default: "boethius"
+}
+
+type Author = "pythagoras" | "boethius" | "pliny" | "ptolemy";
+```
+
+**Doctrines:**
+
+| Author | Source | Span | Notable |
+|--------|--------|------|---------|
+| `"pythagoras"` | via Plato, Republic X | 1 octave | Disjunct diatonic tetrachords (B durum); includes Fixed Stars |
+| `"boethius"` | De Institutione Musica | major 7th | Conjunct diatonic tetrachords (B molle); medieval default |
+| `"pliny"` | Naturalis Historia II.xx | 1 octave | Chromatic Dorian (distance-based); Earth = proslambanomenos |
+| `"ptolemy"` | Harmonics III | 2 octaves | Fixed tones of the Greater Perfect System |
+
+Historical coherence: `temper("ptolemy-intense")` + `harmonia({ doctrina: "ptolemy" })` produces pure Ptolemaic intervals throughout — Sun→Jupiter is a pure 3/2, Sun→Saturn is a pure 2/1.
+
+**`Influence`**
+
+```ts
+interface Influence {
+  // Source metadata
+  doctrina: Author;
+  doctrinaName: string;     // "Anicius Manlius Severinus Boethius"
+  cosmosCount: number;
+  date: Date;               // first cosmos's date
+
+  // Voiced bodies (aggregated across all cosmos)
+  bodies: VoicedBody[];
+  aspects: VoicedAspect[];
+
+  // Aggregate metrics
+  pcDistribution: Record<number, number>;
+  attractors: Attractor[];
+  consonanceIndex: number;   // 0–1
+  retrogradeCount: number;
+  silentCount: number;       // bodies below audibility threshold
+
+  // Modal affinity — all 8 modes ranked by fit
+  modalAffinity: ModalAffinity[];
+
+  // Per-cosmos frames (only when input was an array)
+  frames?: Frame[];
+}
+
+interface VoicedPitch {
+  pitch: Pitch;           // tuned pitch from doctrina
+  performance: Performance; // velocity (0–127 MIDI byte, NOT the score's 0–1 factor),
+                            // duration 0, arsis 1, thesis 0 by default
+}
+
+interface VoicedBody extends Body {
+  nota: VoicedPitch;    // partial Note shape (no step/context yet)
+  presence: number;     // 0–1 (visibility + brightness)
+  motion: number;       // 0–1 (normalized speed)
+  greekName: string;    // position in Greek tonal system
+}
+
+interface VoicedAspect extends Aspect {
+  interval: Interval;                                   // musical interval between the pair
+  consonance: "perfect" | "imperfect" | "dissonant";
+}
+
+interface Frame {
+  date: Date;
+  bodies: VoicedBody[];
+  aspects: VoicedAspect[];
+  consonanceIndex: number;
+}
+
+interface ModalAffinity {
+  mode: number;
+  alias: string;
+  score: number;
+}
+```
+
+Each `VoicedBody` has a `nota` (tuned through the temper) with `velocity` scaled by the body's presence. Aspects receive an `interval` (from `temper.intervallum`) and a `consonance` classification: P1/P5/P8 are perfect, major/minor 3rd and 6th are imperfect, everything else is dissonant.
+
+`modalAffinity` ranks all 8 Gregorian modes by how well the sky's pitch-class distribution matches that mode's structural tones (finalis, tenor, regular modulations).
+
+---
+
 ## Error Contract
 
 - Query functions return `[]` on no match, never throw.
 - Builder functions throw `Error` with a descriptive message on invalid input.
-- `ordo` throws on invalid `Chant` input.
+- `cantio` throws on invalid `Chant` input.
 - `temper.tonus()` throws if `mode` is `"auto"` — mode must be set explicitly.
 - `comma` on `TemperOpts` throws if used with any tuning other than `"meantone"`.
 - `scale` on `TemperOpts` requires `tuning: "custom"` — throws otherwise.
@@ -905,6 +1098,8 @@ interface Aspect {
 
 ## v1.1 Deferred
 
-- Additional pitch/frequency conversion helpers, interval math, Scala format parsing
 - `thesis` calculation verification and tuning
-- planetary scale and music of the spheres emitters
+- Fludd and Kepler doctrinae (heliocentric frames, monochord string-length data)
+- `coniunctio` — weigh overlap between a `Residue` and an `Influence`
+- `color` harmonia option (voicing profiles: natural, ficta, speculativa)
+- `cursus` harmonia option (time-domain texture control)

@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // engines/score/emitters/musicxml — MusicXML document emitter
 // ---------------------------------------------------------------------------
-import type { Score, ScoredNote, Neume, Phrase } from "../types.js";
+import type { Score, Note, Neume, Phrase } from "../types.js";
 import type { ModeData } from "../../temper/data/modes.js";
 import { MODES } from "../../temper/modes.js";
 import { inferMode } from "../infer.js";
@@ -32,17 +32,17 @@ function elem(tag: string, content: string): string {
   return `<${tag}>${content}</${tag}>`;
 }
 
-// ── Pitch from ScoredNote ──
+// ── Pitch from Note ──
 
-function xmlStep(note: ScoredNote): string {
+function xmlStep(note: Note): string {
   // spn is e.g. "D4", "Bb3" — first char is the step letter
-  return note.spn[0];
+  return note.pitch.spn[0];
 }
 
-function xmlAccidentalGlyph(note: ScoredNote): string | null {
-  if (note.accidentalSource !== "explicit") return null;
-  if (note.acc === -1) return "flat";
-  if (note.acc === 1) return "sharp";
+function xmlAccidentalGlyph(note: Note): string | null {
+  if (note.context.accidentalSource !== "explicit") return null;
+  if (note.pitch.acc === -1) return "flat";
+  if (note.pitch.acc === 1) return "sharp";
   return "natural";
 }
 
@@ -67,41 +67,41 @@ function computeSyllabic(lyric: string): "single" | "begin" | "middle" | "end" {
 }
 
 function renderNote(
-  note: ScoredNote, lyric: string, isFirst: boolean, isLast: boolean,
+  note: Note, lyric: string, isFirst: boolean, isLast: boolean,
   isMultiNote: boolean, neume: Neume, ctx: RenderContext,
 ): string {
   const lines: string[] = [`      <note>`];
 
   lines.push(`        <pitch>`);
   lines.push(`          ${elem("step", xmlStep(note))}`);
-  if (note.acc !== 0) lines.push(`          ${elem("alter", String(note.acc))}`);
-  lines.push(`          ${elem("octave", String(note.oct))}`);
+  if (note.pitch.acc !== 0) lines.push(`          ${elem("alter", String(note.pitch.acc))}`);
+  lines.push(`          ${elem("octave", String(note.pitch.oct))}`);
   lines.push(`        </pitch>`);
   lines.push(`        ${elem("duration", "4")}`);
   lines.push(`        ${elem("type", "eighth")}`);
 
   const glyph = xmlAccidentalGlyph(note);
   if (glyph) lines.push(`        ${elem("accidental", glyph)}`);
-  if (note.quilisma) lines.push(`        ${elem("notehead", "diamond")}`);
+  if (note.context.quilisma) lines.push(`        ${elem("notehead", "diamond")}`);
 
   const notations: string[] = [];
   if (isMultiNote && isFirst) notations.push(`          <slur type="start" number="1"/>`);
   if (isMultiNote && isLast) notations.push(`          <slur type="stop" number="1"/>`);
-  if (note.ictus) {
+  if (note.context.ictus) {
     notations.push(`          <articulations>`, `            <accent/>`, `          </articulations>`);
   }
   const technical: string[] = [];
-  if (note.quilisma) technical.push(`            <other-technical>quilisma</other-technical>`);
-  if (note.liquescent) technical.push(`            <other-technical>liquescent</other-technical>`);
-  if (note.strophicus) technical.push(`            <other-technical>strophicus</other-technical>`);
+  if (note.context.quilisma) technical.push(`            <other-technical>quilisma</other-technical>`);
+  if (note.context.liquescent) technical.push(`            <other-technical>liquescent</other-technical>`);
+  if (note.context.strophicus) technical.push(`            <other-technical>strophicus</other-technical>`);
   if (technical.length) {
     notations.push(`          <technical>`, ...technical, `          </technical>`);
   }
   if (isFirst && neume.type !== "punctum") {
     notations.push(`          <other-notation type="start">${xmlEscape(neume.type)}</other-notation>`);
   }
-  if (ctx.emitWeights && note.arsis != null) {
-    notations.push(`          <other-notation type="start">arsis:${note.arsis} thesis:${note.thesis ?? 0}</other-notation>`);
+  if (ctx.emitWeights) {
+    notations.push(`          <other-notation type="start">arsis:${note.performance.arsis} thesis:${note.performance.thesis}</other-notation>`);
   }
   if (notations.length) {
     lines.push(`        <notations>`, ...notations, `        </notations>`);

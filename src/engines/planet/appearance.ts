@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// engines/planets/appearance — magnitude, phase, elongation, apparent diameter
+// engines/planet/appearance — magnitude, phase, elongation, apparent diameter
 // ---------------------------------------------------------------------------
 import { sinDeg, cosDeg, asinDeg, acosDeg, wrapAngle } from "./math.js";
 

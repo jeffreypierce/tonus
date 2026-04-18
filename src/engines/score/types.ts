@@ -1,12 +1,42 @@
 // ---------------------------------------------------------------------------
 // engines/score/types — score engine types
 // ---------------------------------------------------------------------------
-import type { Note } from "../temper/note.js";
+import type { Pitch } from "../temper/pitch.js";
 import type { Step } from "../temper/step.js";
 import type { NeumeShape } from "../temper/neume.js";
 import type { OfficeCode, OrdinaryCode } from "../chant/types.js";
 
-export type { Note, Step, NeumeShape, OfficeCode, OrdinaryCode };
+// Performance — per-event interpretation layer (always numeric, never null).
+// Used by harmonia voicing and by the score engine.
+export interface Performance {
+  velocity: number;
+  duration: number;
+  arsis: number;
+  thesis: number;
+}
+
+// Context — position, lyric, and ornamentation within a score.
+export interface Context {
+  lyric: string;
+  vowel: string;
+  syllableIndex: number;
+  ictus: boolean;
+  accidentalSource: "none" | "state" | "explicit";
+  quilisma: boolean;
+  liquescent: boolean;
+  strophicus: boolean;
+  weight: number;
+}
+
+// Note — the unified score-level note, four sub-objects composed.
+export interface Note {
+  pitch: Pitch;
+  step: Step;
+  performance: Performance;
+  context: Context;
+}
+
+export type { Pitch, Step, NeumeShape, OfficeCode, OrdinaryCode };
 
 export type Clef = "c1" | "c2" | "c3" | "c4" | "f1" | "f2" | "f3" | "f4" | `cb${1 | 2 | 3 | 4}` | `fb${1 | 2 | 3 | 4}`;
 
@@ -90,18 +120,6 @@ export interface ParseError {
   index?: number;
 }
 
-export interface ScoredNote extends Note {
-  step: Step;
-  lyric: string;
-  syllableIndex: number;
-  ictus: boolean;
-  accidentalSource: "none" | "state" | "explicit";
-  quilisma: boolean;
-  liquescent: boolean;
-  strophicus: boolean;
-  weight: number;
-}
-
 export interface ParsedNote {
   type: "note";
   step: number;
@@ -143,7 +161,7 @@ export interface Neume {
 
 export interface Syllable {
   lyric: string;
-  notes: ScoredNote[];
+  notes: Note[];
   neume: Neume;
 }
 

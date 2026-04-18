@@ -45,13 +45,14 @@ function selectBestChant(
 ): KyrialeEntry | null {
   if (!entries.length) return null;
 
-  let candidates = filterMode
-    ? entries.filter((e) => e.mode === filterMode)
+  const modeStr = filterMode != null ? String(filterMode) : null;
+  let candidates = modeStr
+    ? entries.filter((e) => e.mode === modeStr)
     : entries;
 
-  if (!candidates.length && filterMode) {
-    const paired = pairedMode(filterMode);
-    if (paired) candidates = entries.filter((e) => e.mode === paired);
+  if (!candidates.length && modeStr) {
+    const paired = pairedMode(filterMode!);
+    if (paired) candidates = entries.filter((e) => e.mode === String(paired));
   }
   if (!candidates.length) candidates = entries;
 
@@ -184,7 +185,7 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
     let entries = KYRIALE.slice();
     if (query.mass != null) entries = entries.filter((e) => e.mass === query.mass);
     if (query.ordinary) entries = entries.filter((e) => e.office === query.ordinary);
-    if (filterMode != null) entries = entries.filter((e) => e.mode === filterMode);
+    if (filterMode != null) entries = entries.filter((e) => e.mode === String(filterMode));
 
     const offset = Math.max(0, query.offset ?? 0);
     const limit = query.limit == null ? entries.length : Math.max(0, query.limit);

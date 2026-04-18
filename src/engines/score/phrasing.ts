@@ -2,12 +2,12 @@
 // engines/score/phrasing — performance-shaping profiles
 // ---------------------------------------------------------------------------
 
-import type { ScoredNote, PhrasingProfile, PhrasingType } from "./types.js";
+import type { Note, PhrasingProfile, PhrasingType } from "./types.js";
 import type { ModeData } from "../temper/modes.js";
 
 export type { PhrasingProfile } from "./types.js";
 
-export interface ShapedNote extends ScoredNote {
+export interface ShapedNote extends Note {
   shapedDuration: number;
 }
 
@@ -235,14 +235,9 @@ function pitchClassDistance(pc1: number, pc2: number): number {
   return Math.min(forward, backward);
 }
 
-export type PhrasingInputEvent = {
-  type: string;
-  midi?: number;
-  weight?: number;
-  duration?: number | null;
-  ictus?: boolean | number;
-  divisio?: string;
-};
+export type PhrasingInputEvent =
+  | (Note & { type?: "note" })
+  | { type: "rest"; divisio: string; duration: number };
 
 export function applyPhrasing(
   events: PhrasingInputEvent[],
@@ -286,23 +281,24 @@ export function applyPhrasing(
       maxStep = -Infinity;
 
     for (const { ev } of noteEntries) {
-      const arsis = ev.weight ?? 0;
+      // ev is always a Note here (rest events never enter currentPhrase)
+      const note = ev as Note;
+      const arsis = note.context.weight;
       if (arsis < minArsis) minArsis = arsis;
       if (arsis > maxArsis) maxArsis = arsis;
-      if (typeof ev.midi === "number") {
-        if (ev.midi < minStep) minStep = ev.midi;
-        if (ev.midi > maxStep) maxStep = ev.midi;
-      }
+      const midi = note.pitch.midi;
+      if (midi < minStep) minStep = midi;
+      if (midi > maxStep) maxStep = midi;
     }
 
     const arsisSpan = maxArsis - minArsis || 1;
     const stepSpan = maxStep - minStep || 1;
 
     noteEntries.forEach(({ ev, nextDivisio }, order) => {
-      const arsis = ev.weight ?? 0;
+      const note = ev as Note;
+      const arsis = note.context.weight;
       const arsisRelative = (arsis - minArsis) / arsisSpan;
-      const contourRelative =
-        typeof ev.midi === "number" ? (ev.midi - minStep) / stepSpan : 0.5;
+      const contourRelative = (note.pitch.midi - minStep) / stepSpan;
 
       const t = (order + 0.5) / (noteEntries.length + 0.0001);
       const arch = 0.5 - 0.5 * Math.cos(2 * Math.PI * t);
@@ -315,12 +311,8 @@ export function applyPhrasing(
           (profile.velSpread * VELOCITY_SPREAD_MULTIPLIER);
       velocity *= profile.accent;
 
-      if (
-        profile.tenor &&
-        typeof tenorPc === "number" &&
-        typeof ev.midi === "number"
-      ) {
-        const pc = ((ev.midi % 12) + 12) % 12;
+      if (profile.tenor && typeof tenorPc === "number") {
+        const pc = note.pitch.pc;
         const dist = pitchClassDistance(pc, tenorPc);
         const tenorPull = Math.max(0, 1 - dist / TENOR_DISTANCE_DIVISOR);
         velocity *= 1 + profile.tenor * TENOR_GAIN * tenorPull;
@@ -335,13 +327,13 @@ export function applyPhrasing(
         Math.min(VELOCITY_MAX, velocity * profile.baseVelocity),
       );
 
-      const baseDur = ev.duration ?? 1;
+      const baseDur = note.performance.duration;
       let durFactor =
         DURATION_BASE_FACTOR +
         arsisRelative * DURATION_ARSIS_FACTOR +
         arch * DURATION_ARCH_FACTOR;
       durFactor += (contourRelative - VELOCITY_CENTER) * profile.contourDur;
-      if (ev.ictus) durFactor *= profile.ictusBoost;
+      if (note.context.ictus) durFactor *= profile.ictusBoost;
       durFactor += profile.cadence * divisioStrength * CADENCE_DURATION_FACTOR;
 
       const shapedDuration = Math.max(
@@ -350,8 +342,11 @@ export function applyPhrasing(
       );
 
       shaped.push({
-        ...(ev as unknown as ScoredNote),
-        velocity: finalVelocity,
+        ...note,
+        performance: {
+          ...note.performance,
+          velocity: finalVelocity,
+        },
         shapedDuration,
       });
     });

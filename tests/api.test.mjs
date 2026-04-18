@@ -47,11 +47,11 @@ describe("tonus namespace", () => {
 
   test("ordo builds a score from a chant with emitter methods", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
-    const score = tonus.ordo(chant);
+    const score = tonus.cantio(chant);
     assert.ok(score.phrases.length > 0);
     assert.ok(score.midi() instanceof Uint8Array);
     assert.ok(score.musicxml().includes("score-partwise"));
-    assert.ok(score.summa().noteCount > 0);
+    assert.ok(tonus.summa(score).noteCount > 0);
   });
 
   test("pondus and accentus return interpretation profiles", () => {
@@ -65,7 +65,7 @@ describe("tonus namespace", () => {
     const feasts = tonus.festum({ date: new Date(2026, 11, 25) });
     const propers = tonus.proprium({ feast: feasts, office: "in" });
     assert.ok(propers.length > 0);
-    const score = tonus.ordo(propers[0]);
+    const score = tonus.cantio(propers[0]);
     const midi = score.midi({ bpm: 120 });
     assert.ok(midi instanceof Uint8Array);
     assert.ok(midi.length > 0);

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// engines/planets/position — Julian date, astro state, helio/geo position engine
+// engines/planet/position — Julian date, astro state, helio/geo position engine
 // ---------------------------------------------------------------------------
 import { sinDeg, cosDeg, atan2Deg, kepler, wrapAngle, toAu, toCartesian, toSpherical, toEquatorial } from "./math.js";
 import { ORBITAL_ELEMENTS } from "./orbital.js";

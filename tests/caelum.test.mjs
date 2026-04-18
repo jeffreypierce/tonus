@@ -75,3 +75,48 @@ describe("caelum", () => {
     assert.equal(sky.bodies.length, 8);
   });
 });
+
+describe("caelum range", () => {
+  const FROM = new Date(2026, 11, 25);
+  const TO = new Date(2026, 11, 31);
+
+  test("returns Cosmos[] when from/to provided", () => {
+    const frames = tonus.caelum({ from: FROM, to: TO });
+    assert.ok(Array.isArray(frames));
+    assert.equal(frames.length, 7); // 25, 26, 27, 28, 29, 30, 31
+  });
+
+  test("step of 7 days produces weekly snapshots", () => {
+    const frames = tonus.caelum({
+      from: new Date(2026, 0, 1),
+      to: new Date(2026, 1, 1),
+      step: 7,
+    });
+    assert.ok(frames.length >= 4 && frames.length <= 5);
+  });
+
+  test("single date returns Cosmos not array", () => {
+    const sky = tonus.caelum({ date: FROM });
+    assert.ok(!Array.isArray(sky));
+    assert.ok(sky.bodies);
+  });
+
+  test("throws when to < from", () => {
+    assert.throws(() => tonus.caelum({ from: TO, to: FROM }), /to must be >= from/);
+  });
+
+  test("throws when step <= 0", () => {
+    assert.throws(() => tonus.caelum({ from: FROM, to: TO, step: 0 }), /step must be > 0/);
+  });
+
+  test("throws when range too large", () => {
+    assert.throws(
+      () => tonus.caelum({ from: new Date(2026, 0, 1), to: new Date(2060, 0, 1), step: 1 }),
+      /max 10000/,
+    );
+  });
+
+  test("throws when only from provided", () => {
+    assert.throws(() => tonus.caelum({ from: FROM }), /requires both from and to/);
+  });
+});

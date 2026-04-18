@@ -39,7 +39,7 @@ export function inferMode(ir: Score): number | undefined {
   const midis: number[] = [];
   for (const phrase of ir.phrases) {
     for (const syl of phrase.syllables) {
-      for (const note of syl.notes) midis.push(note.midi);
+      for (const note of syl.notes) midis.push(note.pitch.midi);
     }
   }
   if (midis.length === 0) return undefined;
