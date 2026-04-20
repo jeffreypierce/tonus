@@ -5,7 +5,7 @@ import type { Score } from "../score/api.js";
 import type { Chant } from "../chant/types.js";
 import type { Scale } from "../temper/scale.js";
 import { buildRatios } from "../temper/scale.js";
-import { computeMetrics, type NoteRange, type ArsisProfile, type CadenceDistribution } from "./metrics.js";
+import { computeMetrics, type NoteRange, type ArsisThesisBalance, type CadenceDistribution } from "./metrics.js";
 import { computeAttractors, type Attractor } from "./attractors.js";
 import { computeVowelAttractors, type VowelAttractor } from "./vowels.js";
 
@@ -24,7 +24,7 @@ export interface Residue {
   melismaRatio: number;
   melismaByPhrase: number[];
   ictusRate: number;
-  arsisProfile: ArsisProfile | null;
+  arsisThesisBalance: ArsisThesisBalance;
   cadenceWeight: number;
   cadenceDistribution: CadenceDistribution;
   mode: number | null;
@@ -34,7 +34,7 @@ export interface Residue {
   vowelAttractors: VowelAttractor[];
 }
 
-export type { Attractor, VowelAttractor, NoteRange, ArsisProfile, CadenceDistribution };
+export type { Attractor, VowelAttractor, NoteRange, ArsisThesisBalance, CadenceDistribution };
 
 function inferModeFromChant(chant: Chant): number | undefined {
   const m = parseInt(chant.mode ?? "", 10);
@@ -70,7 +70,7 @@ export function buildSumma(input: Score | Score[], opts: SummaOpts = {}): Residu
     melismaRatio: metrics.melismaRatio,
     melismaByPhrase: metrics.melismaByPhrase,
     ictusRate: metrics.ictusRate,
-    arsisProfile: metrics.arsisProfile,
+    arsisThesisBalance: metrics.arsisThesisBalance,
     cadenceWeight: metrics.cadenceWeight,
     cadenceDistribution: metrics.cadenceDistribution,
     mode: modeNum ?? null,

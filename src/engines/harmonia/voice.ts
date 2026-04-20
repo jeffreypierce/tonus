@@ -47,8 +47,8 @@ function voiceOne(body: Body, voice: Voice, scale: Scale): VoicedBody {
   const performance: Performance = {
     velocity: Math.round(presence * 127),
     duration: 0,
-    arsis: 1,
-    thesis: 0,
+    rhythmicShape: "arsic",
+    rhythmicIndex: 1,
   };
 
   return {

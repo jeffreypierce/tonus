@@ -6,13 +6,18 @@ import type { Step } from "../temper/step.js";
 import type { NeumeShape } from "../temper/neume.js";
 import type { OfficeCode, OrdinaryCode } from "../chant/types.js";
 
-// Performance — per-event interpretation layer (always numeric, never null).
+// ArsisThesis — Solesmes rhythmic quality of a compound beat.
+// Arsic = rising, active, impulse toward apex. Thetic = resting, retractive, falling from apex.
+// Carroll, Technique of Gregorian Chironomy (1955), Chapters 2–4.
+export type ArsisThesis = "arsic" | "thetic";
+
+// Performance — per-event interpretation layer.
 // Used by harmonia voicing and by the score engine.
 export interface Performance {
   velocity: number;
   duration: number;
-  arsis: number;
-  thesis: number;
+  rhythmicShape: ArsisThesis;   // quality of this note's compound beat (shared across group)
+  rhythmicIndex: number;         // 1-based position within the compound beat
 }
 
 // Context — position, lyric, and ornamentation within a score.
@@ -25,6 +30,7 @@ export interface Context {
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
+  doubleEpisema: boolean;
   weight: number;
 }
 
@@ -133,6 +139,7 @@ export interface ParsedNote {
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
+  doubleEpisema: boolean;
 }
 
 export interface RestEvent {

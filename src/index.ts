@@ -26,13 +26,13 @@ import type {
 } from "./engines/score/api.js";
 import type {
   Residue, SummaOpts, Attractor, VowelAttractor,
-  NoteRange, ArsisProfile, CadenceDistribution,
+  NoteRange, ArsisThesisBalance, CadenceDistribution,
 } from "./engines/summa/api.js";
 import type {
   Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
   Frame, ModalAffinity, Author,
 } from "./engines/harmonia/api.js";
-import type { Note, Performance, Phrase, Syllable, RestEvent, ParseError } from "./engines/score/types.js";
+import type { Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis } from "./engines/score/types.js";
 import type { VoicedPitch } from "./engines/harmonia/voice.js";
 import type {
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
@@ -65,11 +65,11 @@ export type {
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
   MidiOpts, TableEmitResult,
-  Note, Performance, Phrase, Syllable, RestEvent, ParseError,
+  Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
   VoicedPitch,
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
   Residue, SummaOpts, Attractor, VowelAttractor,
-  NoteRange, ArsisProfile, CadenceDistribution,
+  NoteRange, ArsisThesisBalance, CadenceDistribution,
   Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
   Frame, ModalAffinity, Author,
 };

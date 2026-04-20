@@ -64,6 +64,7 @@ interface IntermNote {
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
+  doubleEpisema: boolean;
   _weight: number;
   _durWeight: number;
 }
@@ -136,6 +137,7 @@ function parseNeume(
     let isQuilisma = false;
     let isLiquescent = false;
     let isStrophicus = false;
+    let isDoubleEpisema = false;
 
     // Dash prefix (weak note)
     if (token[0] === "-") {
@@ -205,8 +207,9 @@ function parseNeume(
       durWeight += weights.episemaDuration;
       ictus = true;
       // Double episema '..' — boost first note of neume
-      if (modifiers.includes("..") && intermed[0]) {
-        intermed[0]._durWeight += weights.episemaDoubleDuration;
+      if (modifiers.includes("..")) {
+        isDoubleEpisema = true;
+        if (intermed[0]) intermed[0]._durWeight += weights.episemaDoubleDuration;
       }
     }
 
@@ -283,6 +286,7 @@ function parseNeume(
       quilisma: isQuilisma,
       liquescent: isLiquescent,
       strophicus: isStrophicus,
+      doubleEpisema: isDoubleEpisema,
       _weight: w,
       _durWeight: durWeight,
     });
@@ -341,6 +345,7 @@ function parseNeume(
       quilisma: note.quilisma,
       liquescent: note.liquescent,
       strophicus: note.strophicus,
+      doubleEpisema: note.doubleEpisema,
     };
   });
 

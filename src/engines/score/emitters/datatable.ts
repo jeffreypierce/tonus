@@ -29,7 +29,10 @@ export interface TabulaRow {
   degree: number | null;
   hz: number;
   offset: number;
-  arsis: number;
+  /** Solesmes quality of this note's compound beat (shared across group). */
+  rhythmicShape: "arsic" | "thetic";
+  /** 1-based position within the compound beat. */
+  rhythmicIndex: number;
   duration: number;
   /** 0–1 from phrasing; null if phrasing inactive */
   velocity: number | null;
@@ -159,7 +162,8 @@ export function toTable(
       degree: n.step.degree,
       hz: n.pitch.hz,
       offset: n.pitch.offset,
-      arsis: n.performance.arsis,
+      rhythmicShape: n.performance.rhythmicShape,
+      rhythmicIndex: n.performance.rhythmicIndex,
       duration: n.performance.duration,
       velocity: velocities[i],
       shapedDuration: shapedDurations[i],

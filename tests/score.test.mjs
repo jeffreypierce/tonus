@@ -35,13 +35,72 @@ describe("buildScore", () => {
     assert.ok(typeof note.pitch.spn === "string");
   });
 
-  test("assigns arsis and thesis gesture counts to notes", () => {
+  test("assigns rhythmicShape and rhythmicIndex to notes", () => {
     const score = buildScore(makeChant(KYRIE_GABC));
     const notes = score.phrases[0].syllables.flatMap((s) => s.notes);
     assert.ok(notes.length > 0);
     for (const n of notes) {
-      assert.ok(typeof n.performance.arsis === "number" && n.performance.arsis >= 1);
-      assert.ok(typeof n.performance.thesis === "number" && n.performance.thesis >= 1);
+      assert.ok(n.performance.rhythmicShape === "arsic" || n.performance.rhythmicShape === "thetic");
+      assert.ok(typeof n.performance.rhythmicIndex === "number" && n.performance.rhythmicIndex >= 1);
+    }
+  });
+
+  test("compound beat: all notes between ictuses share rhythmicShape; rhythmicIndex runs 1..N", () => {
+    const score = buildScore(makeChant(KYRIE_GABC));
+    // Classification runs per phrase — partition per phrase, then by ictus.
+    for (const phrase of score.phrases) {
+      const notes = phrase.syllables.flatMap((s) => s.notes);
+      const groups = [];
+      let current = [];
+      for (const n of notes) {
+        if (n.context.ictus) {
+          if (current.length > 0) groups.push(current);
+          current = [n];
+        } else {
+          current.push(n);
+        }
+      }
+      if (current.length > 0) groups.push(current);
+
+      for (const group of groups) {
+        const shape = group[0].performance.rhythmicShape;
+        for (let i = 0; i < group.length; i++) {
+          assert.equal(group[i].performance.rhythmicShape, shape);
+          assert.equal(group[i].performance.rhythmicIndex, i + 1);
+        }
+      }
+    }
+  });
+
+  test("rhythmicShape: post-apex groups classify thetic", () => {
+    // Kyrie eleison: rising Ky-ri-e to apex, then descending e-le-i-son
+    const score = buildScore(makeChant(KYRIE_GABC));
+    const allNotes = score.phrases.flatMap((p) => p.syllables.flatMap((s) => s.notes));
+    // The last note of the phrase is on the descent and should be thetic
+    const last = allNotes[allNotes.length - 1];
+    assert.equal(last.performance.rhythmicShape, "thetic");
+  });
+
+  test("salicus (ascending 3 with ictus on middle note) classifies as salicus neume and is always arsic", () => {
+    // Three ascending notes where the middle has an ictus mark (')
+    const gabc = "(c4) Sa(gi'k) (::)";
+    const score = buildScore(makeChant(gabc));
+    const syl = score.phrases[0].syllables[0];
+    assert.equal(syl.neume.type, "salicus");
+    for (const n of syl.notes) {
+      assert.equal(n.performance.rhythmicShape, "arsic");
+    }
+  });
+
+  test("doubly-dotted clivis is always thetic", () => {
+    // Two descending notes with double episema (..) on the first note
+    const gabc = "(c4) Cli(h..g) (::)";
+    const score = buildScore(makeChant(gabc));
+    const syl = score.phrases[0].syllables[0];
+    assert.equal(syl.neume.type, "clivis");
+    assert.ok(syl.notes.some((n) => n.context.doubleEpisema));
+    for (const n of syl.notes) {
+      assert.equal(n.performance.rhythmicShape, "thetic");
     }
   });
 

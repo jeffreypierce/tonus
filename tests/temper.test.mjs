@@ -272,8 +272,8 @@ describe("nota", () => {
     const note = t.nota("D4");
     assert.equal(note.velocity, undefined);
     assert.equal(note.duration, undefined);
-    assert.equal(note.arsis, undefined);
-    assert.equal(note.thesis, undefined);
+    assert.equal(note.rhythmicShape, undefined);
+    assert.equal(note.rhythmicIndex, undefined);
   });
 
   test("pythagorean A4 has zero bend (center of pitch wheel)", () => {

@@ -458,7 +458,7 @@ interface AccentusOpts {
 
 ### `tonus.cantio(chant, opts?) -> Score`
 
-Builds a `Score` from a single `Chant`. Applies interpretation if `pondus` and `accentus` are provided — `velocity`, `duration`, `arsis`, and `thesis` on each `Note` will be `null` otherwise.
+Builds a `Score` from a single `Chant`. Applies interpretation if `pondus` and `accentus` are provided — `velocity` and `duration` on each `Note` will be defaults otherwise. `rhythmicShape` and `rhythmicIndex` are always populated by the Solesmes compound-beat classifier.
 
 ```js
 const t = tonus.temper({ tuning: "pythagorean" });
@@ -565,15 +565,25 @@ The score engine's unified `Note` composes four concerns into sub-objects. Prese
 interface Note {
   pitch: Pitch;           // tuned identity
   step: Step;             // modal/Guidonian annotation
-  performance: Performance; // interpretation (velocity, duration, arsis, thesis)
+  performance: Performance; // interpretation (velocity, duration, rhythmicShape, rhythmicIndex)
   context: Context;       // position, lyric, ornamentation
 }
 
+// Solesmes compound-beat classification. A compound beat is the group of notes
+// between one ictus and the next. Each group has a single quality (arsic = rising,
+// active; thetic = resting, retractive) shared by every note in it. `rhythmicIndex`
+// is the 1-based position of the note inside its group.
+// Rules (Carroll, *The Technique of Gregorian Chironomy*, 1955, Ch. 4):
+//   1. Incise unity — after the melodic apex, groups are thetic.
+//   2. Relative ictus pitch — higher than previous ictus → arsic, lower → thetic.
+//   3. Neume slope — rising notes → arsic, falling → thetic.
+type ArsisThesis = "arsic" | "thetic";
+
 interface Performance {
-  velocity: number;  // 0–1 shaping factor
+  velocity: number;      // 0–1 shaping factor
   duration: number;
-  arsis: number;     // ≥ 1, gesture upbeat count
-  thesis: number;    // ≥ 1, gesture downbeat count
+  rhythmicShape: ArsisThesis;  // shape of this note's compound beat (shared across group)
+  rhythmicIndex: number;        // 1-based position within the compound beat
 }
 
 interface Context {
@@ -797,8 +807,8 @@ interface TabulaRow {
   bend: number;
   velocity: number | null;
   duration: number | null;
-  arsis: number | null;
-  thesis: number | null;
+  rhythmicShape: "arsic" | "thetic";
+  rhythmicIndex: number;
 
   // Step fields (see Step)
   nameSimple: string | null;
@@ -869,7 +879,7 @@ interface Residue {
 
   // Rhythm
   ictusRate: number;
-  arsisProfile: ArsisProfile | null;
+  arsisThesisBalance: ArsisThesisBalance;
 
   // Cadence
   cadenceWeight: number;
@@ -891,9 +901,9 @@ interface NoteRange {
   span: number;
 }
 
-interface ArsisProfile {
-  mean: number;
-  variance: number;
+interface ArsisThesisBalance {
+  arsic: number;   // count of arsic notes across the score
+  thetic: number;  // count of thetic notes across the score
 }
 
 interface CadenceDistribution {
@@ -1045,7 +1055,7 @@ interface Influence {
 interface VoicedPitch {
   pitch: Pitch;           // tuned pitch from doctrina
   performance: Performance; // velocity (0–127 MIDI byte, NOT the score's 0–1 factor),
-                            // duration 0, arsis 1, thesis 0 by default
+                            // duration 0, rhythmicShape "arsic", rhythmicIndex 1 by default
 }
 
 interface VoicedBody extends Body {
@@ -1098,7 +1108,9 @@ Each `VoicedBody` has a `nota` (tuned through the temper) with `velocity` scaled
 
 ## v1.1 Deferred
 
-- `thesis` calculation verification and tuning
+- **Solesmes rhythmic refinements** — textual rules (word-accent → arsic, word-final → thetic), conventional cases (salicus always arsic, doubly-dotted clivis always thetic, cadence formulas), and incise-level (vs phrase-level) apex detection at quarter-bar divisiones
+- **Carroll's Seven Rhythmic Types** — derived classifier reading the `rhythmicShape` sequence across an incise and labeling it Type IV (A–T), V (A–A–T), VI (A–T–T), VII (A–T–A–T), VIII (compound overlapping)
+- **Chironomy diagram emitter** (`score.chironomy() -> ChironomyDiagram`) — renders Carroll's reclining figure-8 arcs from the per-note `rhythmicShape` + `rhythmicIndex` data: each compound beat is one arc (arsic left-loop or thetic right-loop), ictus at the bottom, notes placed along the arc by index
 - Fludd and Kepler doctrinae (heliocentric frames, monochord string-length data)
 - `coniunctio` — weigh overlap between a `Residue` and an `Influence`
 - `color` harmonia option (voicing profiles: natural, ficta, speculativa)

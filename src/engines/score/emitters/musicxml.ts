@@ -101,7 +101,7 @@ function renderNote(
     notations.push(`          <other-notation type="start">${xmlEscape(neume.type)}</other-notation>`);
   }
   if (ctx.emitWeights) {
-    notations.push(`          <other-notation type="start">arsis:${note.performance.arsis} thesis:${note.performance.thesis}</other-notation>`);
+    notations.push(`          <other-notation type="start">shape:${note.performance.rhythmicShape} index:${note.performance.rhythmicIndex}</other-notation>`);
   }
   if (notations.length) {
     lines.push(`        <notations>`, ...notations, `        </notations>`);

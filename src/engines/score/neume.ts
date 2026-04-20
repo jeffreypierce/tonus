@@ -20,6 +20,12 @@ export function classifyNeume(notes: Note[]): Neume {
     intervals.push(notes[i].pitch.midi - notes[i - 1].pitch.midi);
   }
 
-  const type = classifyShape(intervals.map(toDirection));
+  let type = classifyShape(intervals.map(toDirection));
+  // Salicus: three ascending notes with ictus on the middle note (distinguishes
+  // from scandicus, which has no middle ictus). GABC marks it with `'` on the
+  // middle note.
+  if (type === "scandicus" && notes.length === 3 && notes[1]!.context.ictus) {
+    type = "salicus";
+  }
   return { type, intervals, hasQuilisma, hasLiquescent, hasStrophicus };
 }

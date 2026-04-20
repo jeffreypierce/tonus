@@ -11,9 +11,9 @@ export interface NoteRange {
   span: number;
 }
 
-export interface ArsisProfile {
-  mean: number;
-  variance: number;
+export interface ArsisThesisBalance {
+  arsic: number;
+  thetic: number;
 }
 
 export interface CadenceDistribution {
@@ -33,7 +33,7 @@ export interface MetricsResult {
   melismaRatio: number;
   melismaByPhrase: number[];
   ictusRate: number;
-  arsisProfile: ArsisProfile | null;
+  arsisThesisBalance: ArsisThesisBalance;
   cadenceWeight: number;
   cadenceDistribution: CadenceDistribution;
   modalConformance: number | null;
@@ -55,7 +55,8 @@ export function computeMetrics(inputs: MetricsInput | MetricsInput[]): MetricsRe
   let ictusCount = 0;
   let minMidi = Infinity;
   let maxMidi = -Infinity;
-  const arsisValues: number[] = [];
+  let arsicCount = 0;
+  let theticCount = 0;
   const pcCounts = new Array<number>(12).fill(0);
   const cadDist: CadenceDistribution = { comma: 0, tick: 0, semicolon: 0, colon: 0, doubleBar: 0 };
   let cadenceWeight = 0;
@@ -79,7 +80,8 @@ export function computeMetrics(inputs: MetricsInput | MetricsInput[]): MetricsRe
           if (note.pitch.midi > maxMidi) maxMidi = note.pitch.midi;
           pcCounts[note.pitch.pc]++;
           if (note.context.ictus) ictusCount++;
-          arsisValues.push(note.performance.arsis);
+          if (note.performance.rhythmicShape === "arsic") arsicCount++;
+          else theticCount++;
         }
       }
 
@@ -102,12 +104,7 @@ export function computeMetrics(inputs: MetricsInput | MetricsInput[]): MetricsRe
     ? { min: minMidi, max: maxMidi, span: maxMidi - minMidi }
     : null;
 
-  let arsisProfile: ArsisProfile | null = null;
-  if (arsisValues.length > 0) {
-    const mean = arsisValues.reduce((s, v) => s + v, 0) / arsisValues.length;
-    const variance = arsisValues.reduce((s, v) => s + (v - mean) ** 2, 0) / arsisValues.length;
-    arsisProfile = { mean, variance };
-  }
+  const arsisThesisBalance: ArsisThesisBalance = { arsic: arsicCount, thetic: theticCount };
 
   const pcDistribution: Record<number, number> = {};
   for (let pc = 0; pc < 12; pc++) {
@@ -143,7 +140,7 @@ export function computeMetrics(inputs: MetricsInput | MetricsInput[]): MetricsRe
     melismaRatio,
     melismaByPhrase,
     ictusRate: noteCount > 0 ? ictusCount / noteCount : 0,
-    arsisProfile,
+    arsisThesisBalance,
     cadenceWeight,
     cadenceDistribution: cadDist,
     modalConformance,

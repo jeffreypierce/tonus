@@ -16,6 +16,7 @@ export type NeumeShape =
   | "torculus"
   | "porrectus"
   | "scandicus"
+  | "salicus"
   | "climacus"
   | "torculus resupinus"
   | "porrectus flexus"
