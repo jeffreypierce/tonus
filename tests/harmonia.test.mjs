@@ -12,26 +12,24 @@ function findBody(voiced, name) {
 describe("harmonia — defaults", () => {
   test("defaults to Boethius doctrine with pythagorean temper", () => {
     const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
-    const inf = tonus.harmonia(cosmos);
-    assert.equal(inf.doctrina, "boethius");
-    assert.ok(inf.doctrinaName.includes("Boethius"));
-    assert.equal(inf.cosmosCount, 1);
+    const h = tonus.harmonia(cosmos);
+    assert.equal(h.doctrina, "boethius");
+    assert.ok(h.doctrinaName.includes("Boethius"));
   });
 
   test("single cosmos omits frames", () => {
     const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
-    const inf = tonus.harmonia(cosmos);
-    assert.equal(inf.frames, undefined);
+    const h = tonus.harmonia(cosmos);
+    assert.equal(h.frames, undefined);
   });
 
   test("array cosmos includes frames", () => {
     const from = new Date(2026, 11, 25, 12, 0, 0);
     const to = new Date(2026, 11, 27, 12, 0, 0);
     const frames = tonus.caelum({ from, to });
-    const inf = tonus.harmonia(frames);
-    assert.equal(inf.cosmosCount, 3);
-    assert.ok(Array.isArray(inf.frames));
-    assert.equal(inf.frames.length, 3);
+    const h = tonus.harmonia(frames);
+    assert.ok(Array.isArray(h.frames));
+    assert.equal(h.frames.length, 3);
   });
 });
 
@@ -50,9 +48,29 @@ describe("harmonia — voicings", () => {
     const hasEarth = boethius.bodies.some((b) => b.name === "Earth");
     assert.equal(hasEarth, false);
 
-    // Pliny has Earth (proslambanomenos)
+    // Pliny's Earth-as-proslambanomenos is dropped because Earth has no
+    // classical planetary vowel — only the seven vowel-bearing planets voice.
     const pliny = infs[2];
-    assert.ok(pliny.bodies.some((b) => b.name === "Earth"));
+    assert.equal(pliny.bodies.some((b) => b.name === "Earth"), false);
+  });
+
+  test("every voiced body carries a Greek planetary vowel", () => {
+    const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
+    const inf = tonus.harmonia(cosmos);
+    for (const b of inf.bodies) {
+      assert.ok(b.vowel, `${b.name} missing vowel`);
+      assert.equal(typeof b.vowel.greek, "string");
+      assert.equal(typeof b.vowel.greekLower, "string");
+      assert.ok(["a", "e", "i", "o", "u"].includes(b.vowel.phonetic));
+    }
+  });
+
+  test("Sun is associated with Iota", () => {
+    const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
+    const inf = tonus.harmonia(cosmos);
+    const sun = findBody(inf.bodies, "Sun");
+    assert.equal(sun.vowel.name, "Iota");
+    assert.equal(sun.vowel.greek, "Ι");
   });
 
   test("Sun has presence 1 (elongation 0)", () => {
@@ -84,42 +102,45 @@ describe("harmonia — voicings", () => {
   });
 });
 
-describe("harmonia — metrics", () => {
-  test("attractors are tuned Pitches", () => {
+describe("harmonia — imprint", () => {
+  test("imprint attractors are tuned Pitches", () => {
     const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
-    const inf = tonus.harmonia(cosmos);
-    assert.ok(inf.attractors.length > 0);
-    for (const a of inf.attractors) {
+    const h = tonus.harmonia(cosmos);
+    assert.ok(h.imprint.attractors.length > 0);
+    for (const a of h.imprint.attractors) {
       assert.ok(a.pitch);
       assert.ok(typeof a.pitch.hz === "number" && a.pitch.hz > 0);
     }
   });
 
-  test("consonanceIndex is in [0, 1]", () => {
+  test("imprint modalAffinity has 8 entries sorted descending", () => {
     const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
-    const inf = tonus.harmonia(cosmos);
-    assert.ok(inf.consonanceIndex >= 0 && inf.consonanceIndex <= 1);
-  });
-
-  test("modalAffinity has 8 entries sorted descending", () => {
-    const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
-    const inf = tonus.harmonia(cosmos);
-    assert.equal(inf.modalAffinity.length, 8);
+    const h = tonus.harmonia(cosmos);
+    assert.equal(h.imprint.modalAffinity.length, 8);
     for (let i = 1; i < 8; i++) {
-      assert.ok(inf.modalAffinity[i - 1].score >= inf.modalAffinity[i].score);
+      assert.ok(h.imprint.modalAffinity[i - 1].score >= h.imprint.modalAffinity[i].score);
     }
-    // All 8 modes present
-    const modes = new Set(inf.modalAffinity.map((m) => m.mode));
+    const modes = new Set(h.imprint.modalAffinity.map((m) => m.mode));
     assert.equal(modes.size, 8);
   });
 
-  test("retrogradeCount and silentCount are non-negative integers", () => {
+  test("every aspect's interval carries a consonance classification", () => {
     const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
-    const inf = tonus.harmonia(cosmos);
-    assert.ok(inf.retrogradeCount >= 0);
-    assert.ok(inf.silentCount >= 0);
-    assert.ok(Number.isInteger(inf.retrogradeCount));
-    assert.ok(Number.isInteger(inf.silentCount));
+    const h = tonus.harmonia(cosmos);
+    for (const a of h.aspects) {
+      assert.ok(a.interval);
+      assert.ok(["perfect", "imperfect", "dissonant"].includes(a.interval.consonance));
+    }
+  });
+
+  test("imprint.vowelAttractors pitch is a tuned Pitch", () => {
+    const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
+    const h = tonus.harmonia(cosmos);
+    assert.ok(h.imprint.vowelAttractors.length > 0);
+    for (const v of h.imprint.vowelAttractors) {
+      assert.ok(v.pitch);
+      assert.ok(typeof v.pitch.hz === "number" && v.pitch.hz > 0);
+    }
   });
 });
 

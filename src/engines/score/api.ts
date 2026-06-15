@@ -5,11 +5,11 @@ import { parseGABC } from "./parse.js";
 import { buildIR } from "./ir.js";
 import { buildRatios } from "../temper/scale.js";
 import { buildArticulation } from "./articulation.js";
-import { buildPhrasing, shapePhrasingForMode, applyPhrasing } from "./phrasing.js";
+import { buildPhrasing } from "./phrasing.js";
 import { computeMeta } from "./meta.js";
-import { toMidi } from "./emitters/midi.js";
-import { toMusicXML } from "./emitters/musicxml.js";
-import { toTable } from "./emitters/datatable.js";
+import { computeImprint, type Imprint } from "../imprint.js";
+import { computeProsody, type Prosody } from "./prosody.js";
+import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import type { Chant } from "../chant/types.js";
 import type { Temper } from "../temper/api.js";
 import type {
@@ -20,8 +20,6 @@ import type {
   ParseError,
   Phrase as IRPhrase,
 } from "./types.js";
-import type { MidiEmitOptions } from "./emitters/midi.js";
-import type { TableEmitResult } from "./emitters/datatable.js";
 
 export type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
 export type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
@@ -49,13 +47,6 @@ export interface AccentusOpts {
 export type PondusInput = PondusStyle | PondusOpts;
 export type AccentusInput = AccentusStyle | AccentusOpts;
 
-export interface MidiOpts {
-  ppq?: number;
-  bpm?: number;
-  bendRange?: number;
-  velocityRange?: [number, number];
-}
-
 export interface ScoreOpts {
   temper?: Temper;
   pondus?: Pondus;
@@ -66,9 +57,9 @@ export interface Score {
   chant: Chant;
   phrases: IRPhrase[];
   errors: ParseError[];
-  midi(opts?: MidiOpts): Uint8Array;
-  musicxml(): string;
-  tabula(): TableEmitResult;
+  tabula: ChantTabulaRow[];
+  prosody: Prosody;
+  imprint: Imprint;
 }
 
 const PONDUS_TO_ARTICULATION: Record<PondusStyle, ArticulationType> = {
@@ -122,32 +113,14 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     chant,
     phrases: ir.phrases,
     errors: ir.errors,
-
-    midi(midiOpts?: MidiOpts): Uint8Array {
-      const emitted = toMidi(ir, {
-        mode: meta.mode ?? undefined,
-        tempoBpm: midiOpts?.bpm,
-        ppq: midiOpts?.ppq,
-        format: "file",
-      });
-      return emitted.bytes ?? new Uint8Array(0);
-    },
-
-    musicxml(): string {
-      const result = toMusicXML(ir, {
-        mode: meta.mode ?? undefined,
-      });
-      return result.xml;
-    },
-
-    tabula(): TableEmitResult {
-      return toTable(ir, {
-        mode: meta.mode ?? undefined,
-        a4Hz: opts?.temper?.a4,
-        transpose: opts?.temper?.transpose,
-      });
-    },
+    tabula: computeTabula(ir, {
+      mode: meta.mode ?? undefined,
+      a4Hz: opts?.temper?.a4,
+      transpose: opts?.temper?.transpose,
+    }),
+    prosody: computeProsody(ir.phrases),
+    imprint: computeImprint(ir.phrases, scale),
   };
 }
 
-export type { TableEmitResult, ParseError };
+export type { ParseError };

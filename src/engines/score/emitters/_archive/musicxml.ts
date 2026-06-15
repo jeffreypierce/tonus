@@ -1,10 +1,10 @@
 // ---------------------------------------------------------------------------
 // engines/score/emitters/musicxml — MusicXML document emitter
 // ---------------------------------------------------------------------------
-import type { Score, Note, Neume, Phrase } from "../types.js";
-import type { ModeData } from "../../temper/data/modes.js";
-import { MODES } from "../../temper/modes.js";
-import { inferMode } from "../infer.js";
+import type { Score, Note, Neume, Phrase } from "../../types.js";
+import type { ModeData } from "../../../temper/data/modes.js";
+import { MODES } from "../../../temper/modes.js";
+import { inferMode } from "../../infer.js";
 export interface MusicXmlEmitOptions {
   mode?: number;
   emitWeights?: boolean;

@@ -7,7 +7,6 @@ import { getPsalm } from "./engines/chant/psalm.js";
 import { buildTemper } from "./engines/temper/api.js";
 import { buildScore, buildPondus, buildAccentus } from "./engines/score/api.js";
 import { getCosmos } from "./engines/planet/planet.js";
-import { buildSumma } from "./engines/summa/api.js";
 import { buildHarmonia } from "./engines/harmonia/api.js";
 
 import type { FeastQuery, Feast } from "./engines/cal/types.js";
@@ -22,16 +21,20 @@ import type {
 } from "./engines/temper/api.js";
 import type {
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
-  MidiOpts, TableEmitResult,
 } from "./engines/score/api.js";
+import type { ChantTabulaRow } from "./engines/score/tabula.js";
 import type {
-  Residue, SummaOpts, Attractor, VowelAttractor,
-  NoteRange, ArsisThesisBalance, CadenceDistribution,
-} from "./engines/summa/api.js";
+  Imprint, Attractor, VowelAttractor, ModalAffinity,
+} from "./engines/imprint.js";
 import type {
-  Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
-  Frame, ModalAffinity, Author,
+  Prosody, RhythmicProfile, NoteRange, CadenceDistribution,
+} from "./engines/score/prosody.js";
+import type {
+  Harmony, Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
+  Frame, Author,
 } from "./engines/harmonia/api.js";
+import type { HarmonyTabulaRow } from "./engines/harmonia/tabula.js";
+import type { PlanetVowel } from "./engines/harmonia/data/vowels.js";
 import type { Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis } from "./engines/score/types.js";
 import type { VoicedPitch } from "./engines/harmonia/voice.js";
 import type {
@@ -50,7 +53,6 @@ const tonus = {
   pondus: buildPondus,
   accentus: buildAccentus,
   caelum: getCosmos,
-  summa: buildSumma,
   harmonia: buildHarmonia,
 };
 
@@ -64,12 +66,12 @@ export type {
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
-  MidiOpts, TableEmitResult,
+  ChantTabulaRow,
   Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
   VoicedPitch,
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
-  Residue, SummaOpts, Attractor, VowelAttractor,
-  NoteRange, ArsisThesisBalance, CadenceDistribution,
-  Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
-  Frame, ModalAffinity, Author,
+  Imprint, Attractor, VowelAttractor, ModalAffinity,
+  Prosody, RhythmicProfile, NoteRange, CadenceDistribution,
+  Harmony, Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
+  Frame, Author, HarmonyTabulaRow, PlanetVowel,
 };

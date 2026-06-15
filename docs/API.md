@@ -460,6 +460,8 @@ interface AccentusOpts {
 
 Builds a `Score` from a single `Chant`. Applies interpretation if `pondus` and `accentus` are provided — `velocity` and `duration` on each `Note` will be defaults otherwise. `rhythmicShape` and `rhythmicIndex` are always populated by the Solesmes compound-beat classifier.
 
+The `Score` is pure data: no methods. Analysis lives on `score.imprint` (shared with `Harmony`) and `score.prosody` (chant-specific). A flat iteration surface is exposed via `score.tabula`.
+
 ```js
 const t = tonus.temper({ tuning: "pythagorean" });
 const p = tonus.pondus("balanced");
@@ -467,9 +469,10 @@ const a = tonus.accentus("lyrical");
 
 const score = tonus.cantio(chant, { temper: t, pondus: p, accentus: a });
 
-score.midi({ bpm: 120 });
-score.musicxml();
-score.tabula();
+score.phrases;             // structured: Phrase[] with Syllable[] and Note[]
+score.tabula;              // flat: ChantTabulaRow[] — one row per note
+score.prosody;             // chant measurements: counts, ranges, melisma, cadence
+score.imprint;             // pc/modal fingerprint (comparable with harmony.imprint)
 ```
 
 **`ScoreOpts`**
@@ -489,21 +492,9 @@ interface Score {
   chant: Chant;
   phrases: Phrase[];
   errors: ParseError[];
-
-  midi(opts?: MidiOpts): Uint8Array;
-  musicxml(): string;
-  tabula(): TabulaResult;
-}
-```
-
-**`MidiOpts`**
-
-```ts
-interface MidiOpts {
-  ppq?: number;
-  bpm?: number;
-  bendRange?: number;
-  velocityRange?: [number, number]; // [min, max] e.g. [20, 110]
+  tabula: ChantTabulaRow[];
+  prosody: Prosody;
+  imprint: Imprint;
 }
 ```
 
@@ -785,125 +776,156 @@ interface ModeData {
 
 ## Tabula Types
 
-`tabula()` returns a flat normalized note table. Each row has positional indexes plus `Note` and `Step` fields inlined. Where field names overlap, `Note` takes precedence.
+Both `Score` and `Harmony` expose a `tabula` property: a flat array of rows, one per note (chant) or one per voiced body (harmony). Consumers iterate these for analysis, visualization, or emission. No `tabula()` method — it's always a property.
+
+**`ChantTabulaRow`** (on `score.tabula`)
 
 ```ts
-type NoteRole = "final" | "tenor" | "mod" | null;
+type NoteRole = "finalis" | "tenor" | "other" | null;
 
-interface TabulaRow {
+interface ChantTabulaRow {
   // position
   phraseIndex: number;
   syllableIndex: number;
   noteIndex: number;
   neumeIndex: number;
 
-  // Note fields (see Note)
+  // Note fields
+  midi: number;
+  pc: number;
+  octave: number;
+  accidental: -1 | 0 | 1;
+  hz: number;
+  offset: number;
+  velocity: number | null;
+  duration: number;
+  shapedDuration: number;
+  rhythmicShape: "arsic" | "thetic";
+  rhythmicIndex: number;
+  ictus: boolean;
+
+  // Step fields
+  degree: number | null;
+  role: NoteRole;
+  name: string | null;           // Guidonian short name
+  fullName: string | null;       // Guidonian compound name
+  hand: { finger: string; region: string } | null;
+  hexachord: "durum" | "naturale" | "molle" | null;
+  solfege: string | null;
+
+  // Context
+  lyric: string;
+  vowel: string;
+  divisio: string | null;
+  neume: Neume;
+}
+```
+
+**`HarmonyTabulaRow`** (on `harmony.tabula`)
+
+```ts
+interface HarmonyTabulaRow {
+  bodyIndex: number;
+  name: BodyName;
+  nomen: string;
+  greekName: string;
+
   midi: number;
   pc: number;
   oct: number;
-  acc: number;
   spn: string;
   hz: number;
-  bend: number;
-  velocity: number | null;
-  duration: number | null;
-  rhythmicShape: "arsic" | "thetic";
-  rhythmicIndex: number;
 
-  // Step fields (see Step)
-  nameSimple: string | null;
-  nameCompound: string | null;
-  hexachord: "durum" | "naturale" | "molle" | null;
-  solmization: string | null;
-  handFinger: Finger | null;
-  handRegion: Region | null;
-  degree: number | null;
-  role: NoteRole;
+  presence: number;      // 0–1
+  motion: number;        // 0–1
+  velocity: number;      // 0–127 MIDI byte
 
-  // additional analysis
-  lyric: string;
-  vowel: string;
-  divisio: Divisio | null;
-}
+  vowelGreek: string;
+  vowelPhonetic: string;
+  vowelName: string;
 
-interface TabulaResult {
-  rows: TabulaRow[];
+  zodiac: number;        // 0–11
+  sign: string;
+  retrograde: boolean;
+  elongation: number;    // deg from Sun
+  magnitude: number;
+
+  aspectCount: number;   // number of aspects this body participates in
 }
 ```
 
 ---
 
-### `tonus.summa(scores, opts?) -> Residue`
+### Imprint (shared analytical fingerprint)
 
-Pure analysis. Accepts a single `Score` or an array, returns a `Residue` — a plain data object with no methods. Aggregates metrics across all provided scores.
+Both `Score` and `Harmony` expose an `imprint: Imprint` property. Same shape, computed from different inputs: chant phrases in the Score case (unweighted pc counts), voiced planetary bodies in the Harmony case (presence-weighted). Comparable between the two.
 
 ```js
-const score = tonus.cantio(chant);
-const r = tonus.summa(score);
+score.imprint.modalAffinity[0];    // best-fitting mode for this chant
+harmony.imprint.modalAffinity[0];  // best-fitting mode for this moment of sky
 
-// Multi-score aggregation
-const combined = tonus.summa([score1, score2, score3]);
-
-// Explicit mode override
-const modal = tonus.summa(score, { mode: 3 });
+// Old `modalConformance(declaredMode)` is now:
+const declared = parseInt(score.chant.mode, 10);
+score.imprint.modalAffinity.find((m) => m.mode === declared).score;
 ```
 
-**`SummaOpts`**
+**`Imprint`**
 
 ```ts
-interface SummaOpts {
-  mode?: number;  // optional override; otherwise inferred from score chants
+interface Imprint {
+  pcDistribution: Record<number, number>;  // fractions sum to 1
+  attractors: Attractor[];                  // top pitch classes, tuned
+  vowelAttractors: VowelAttractor[];        // vowel-weighted resonances, tuned
+  modalAffinity: ModalAffinity[];            // all 8 modes ranked by fit
+}
+
+interface Attractor {
+  pc: number;       // pitch class 0–11
+  weight: number;   // normalized 0–1
+  pitch: Pitch;     // tuned through the score/harmony's temper
+}
+
+interface VowelAttractor {
+  vowel: string;    // "a" | "e" | "i" | "o" | "u"
+  weight: number;   // fraction of total vowel weight
+  pitch: Pitch;     // the vowel's most-associated tuned pitch
+}
+
+interface ModalAffinity {
+  mode: number;     // 1–8
+  alias: string;    // "Dorian" | "Hypodorian" | …
+  score: number;    // pc-distribution weight against mode's structural tones
 }
 ```
 
-**`Residue`**
+### Prosody (chant-specific measurements)
+
+`score.prosody` only — Harmony has no prosody. Shape-only, no modal analysis.
+
+**`Prosody`**
 
 ```ts
-interface Residue {
-  // Source metadata
-  scoreCount: number;
-  chants: Chant[];
-
-  // Counts
-  phraseCount: number;
+interface Prosody {
   noteCount: number;
   syllableCount: number;
-
-  // Pitch
+  phraseCount: number;
   noteRange: NoteRange | null;
   ambitus: number | null;
-
-  // Texture
   melismaRatio: number;
   melismaByPhrase: number[];
-
-  // Rhythm
   ictusRate: number;
-  arsisThesisBalance: ArsisThesisBalance;
-
-  // Cadence
+  rhythmicProfile: RhythmicProfile;
   cadenceWeight: number;
   cadenceDistribution: CadenceDistribution;
-
-  // Modal
-  mode: number | null;
-  modalConformance: number | null;
-
-  // Distributions
-  pcDistribution: Record<number, number>;  // fractions sum to 1
-  attractors: Attractor[];                  // top pitch classes as tuned Pitches
-  vowelAttractors: VowelAttractor[];        // vowel-weighted resonances
 }
 
-interface NoteRange {
-  min: number;
-  max: number;
-  span: number;
-}
+interface NoteRange { min: number; max: number; span: number; }
 
-interface ArsisThesisBalance {
-  arsic: number;   // count of arsic notes across the score
-  thetic: number;  // count of thetic notes across the score
+interface RhythmicProfile {
+  arsic: number;         // count of arsic notes across the score
+  thetic: number;        // count of thetic notes across the score
+  avgGroupSize: number;  // mean notes per compound beat
+  maxGroupSize: number;  // largest compound beat observed
 }
 
 interface CadenceDistribution {
@@ -913,21 +935,7 @@ interface CadenceDistribution {
   colon: number;
   doubleBar: number;
 }
-
-interface Attractor {
-  pc: number;      // pitch class 0–11
-  weight: number;  // normalized 0–1
-  pitch: Pitch;    // tuned through the scores' temper
-}
-
-interface VowelAttractor {
-  vowel: string;   // "a", "e", "i", "o", "u"
-  weight: number;  // fraction of total vowel weight
-  pc: number;      // most-associated pitch class
-}
 ```
-
-Attractors are returned as tuned `Note` objects — ready to sonify. Pure data: no methods, no emitters. Callers render using this data however they need.
 
 ---
 
@@ -987,9 +995,9 @@ interface Aspect {
 
 ---
 
-### `tonus.harmonia(cosmos, opts?) -> Influence`
+### `tonus.harmonia(cosmos, opts?) -> Harmony`
 
-Voices the sky through a planetary-harmony doctrina. Pure analysis — returns a plain data object with no methods.
+Voices the sky through a planetary-harmony doctrina. Pure data — no methods. Every voiced body carries a Greek planetary vowel; every aspect's interval carries a consonance classification.
 
 ```js
 const sky = tonus.caelum();
@@ -999,8 +1007,10 @@ tonus.harmonia(sky, { temper: tonus.temper("ptolemy-intense") });
 
 // Time-range analysis with per-cosmos frames
 const range = tonus.caelum({ from, to });
-const inf = tonus.harmonia(range);  // inf.frames is populated
+const h = tonus.harmonia(range);  // h.frames is populated
 ```
+
+> **Note:** `Influence` is kept as a deprecated alias for `Harmony` to ease migration; new code should use `Harmony`.
 
 **`HarmoniaOpts`**
 
@@ -1024,69 +1034,78 @@ type Author = "pythagoras" | "boethius" | "pliny" | "ptolemy";
 
 Historical coherence: `temper("ptolemy-intense")` + `harmonia({ doctrina: "ptolemy" })` produces pure Ptolemaic intervals throughout — Sun→Jupiter is a pure 3/2, Sun→Saturn is a pure 2/1.
 
-**`Influence`**
+**`Harmony`**
 
 ```ts
-interface Influence {
-  // Source metadata
+interface Harmony {
   doctrina: Author;
   doctrinaName: string;     // "Anicius Manlius Severinus Boethius"
-  cosmosCount: number;
   date: Date;               // first cosmos's date
-
-  // Voiced bodies (aggregated across all cosmos)
   bodies: VoicedBody[];
   aspects: VoicedAspect[];
+  frames?: Frame[];         // only when input was an array of cosmos
 
-  // Aggregate metrics
-  pcDistribution: Record<number, number>;
-  attractors: Attractor[];
-  consonanceIndex: number;   // 0–1
-  retrogradeCount: number;
-  silentCount: number;       // bodies below audibility threshold
-
-  // Modal affinity — all 8 modes ranked by fit
-  modalAffinity: ModalAffinity[];
-
-  // Per-cosmos frames (only when input was an array)
-  frames?: Frame[];
+  tabula: HarmonyTabulaRow[];  // flat iterable view
+  imprint: Imprint;             // shared analytical fingerprint
 }
 
+/** @deprecated renamed to `Harmony` */
+type Influence = Harmony;
+
 interface VoicedPitch {
-  pitch: Pitch;           // tuned pitch from doctrina
-  performance: Performance; // velocity (0–127 MIDI byte, NOT the score's 0–1 factor),
-                            // duration 0, rhythmicShape "arsic", rhythmicIndex 1 by default
+  pitch: Pitch;
+  performance: Performance;
 }
 
 interface VoicedBody extends Body {
-  nota: VoicedPitch;    // partial Note shape (no step/context yet)
-  presence: number;     // 0–1 (visibility + brightness)
-  motion: number;       // 0–1 (normalized speed)
-  greekName: string;    // position in Greek tonal system
+  nota: VoicedPitch;
+  presence: number;        // 0–1 (visibility + brightness)
+  motion: number;          // 0–1 (normalized speed)
+  greekName: string;       // position in Greek tonal system
+  vowel: PlanetVowel;      // classical planetary vowel
 }
 
 interface VoicedAspect extends Aspect {
-  interval: Interval;                                   // musical interval between the pair
-  consonance: "perfect" | "imperfect" | "dissonant";
+  interval: Interval;      // carries consonance; see Interval type
 }
 
 interface Frame {
   date: Date;
   bodies: VoicedBody[];
   aspects: VoicedAspect[];
-  consonanceIndex: number;
-}
-
-interface ModalAffinity {
-  mode: number;
-  alias: string;
-  score: number;
 }
 ```
 
-Each `VoicedBody` has a `nota` (tuned through the temper) with `velocity` scaled by the body's presence. Aspects receive an `interval` (from `temper.intervallum`) and a `consonance` classification: P1/P5/P8 are perfect, major/minor 3rd and 6th are imperfect, everything else is dissonant.
+Each `VoicedBody` has a `nota` (tuned through the temper) with `velocity` scaled by the body's presence, and a `vowel` — the classical Greek vowel associated with that planet (see **Planetary Vowels** below).
 
-`modalAffinity` ranks all 8 Gregorian modes by how well the sky's pitch-class distribution matches that mode's structural tones (finalis, tenor, regular modulations).
+Aspects receive an `interval` via `classifyInterval`; the interval itself carries `consonance: "perfect" | "imperfect" | "dissonant"`. P1/P5/P8 → perfect, m3/M3/m6/M6 → imperfect, else → dissonant.
+
+Bodies not mapped in `PLANET_VOWELS` (Earth, Fixed Stars) are **not** voiced. Pliny's Earth-as-proslambanomenos is dropped in v1 as a consequence.
+
+### Planetary Vowels
+
+Each classical planet is mapped to one of the seven Greek vowels. Source: Godwin, *The Mystery of the Seven Vowels* (Phanes Press, 1991), drawing on Porphyry, Marcus Gnosticus, Demetrius, Nicomachus, Eusebius, and Barthélemy. The Moon→Saturn ordering matches Nicomachus (*Excerpta ex Nicomacho* 6).
+
+| Body | Greek | Name | Phonetic |
+| ---- | ----- | ---- | -------- |
+| Moon | Α / α | Alpha | a |
+| Mercury | Ε / ε | Epsilon | e |
+| Venus | Η / η | Eta | e |
+| Sun | Ι / ι | Iota | i |
+| Mars | Ο / ο | Omicron | o |
+| Jupiter | Υ / υ | Upsilon | u |
+| Saturn | Ω / ω | Omega | o |
+
+```ts
+interface PlanetVowel {
+  greek: string;        // "Α"
+  greekLower: string;   // "α"
+  name: string;         // "Alpha"
+  modern: string;       // "A"
+  phonetic: "a" | "e" | "i" | "o" | "u";
+  ipa: string;
+}
+```
 
 ---
 
@@ -1108,10 +1127,12 @@ Each `VoicedBody` has a `nota` (tuned through the temper) with `velocity` scaled
 
 ## v1.1 Deferred
 
-- **Solesmes rhythmic refinements** — textual rules (word-accent → arsic, word-final → thetic), conventional cases (salicus always arsic, doubly-dotted clivis always thetic, cadence formulas), and incise-level (vs phrase-level) apex detection at quarter-bar divisiones
-- **Carroll's Seven Rhythmic Types** — derived classifier reading the `rhythmicShape` sequence across an incise and labeling it Type IV (A–T), V (A–A–T), VI (A–T–T), VII (A–T–A–T), VIII (compound overlapping)
-- **Chironomy diagram emitter** (`score.chironomy() -> ChironomyDiagram`) — renders Carroll's reclining figure-8 arcs from the per-note `rhythmicShape` + `rhythmicIndex` data: each compound beat is one arc (arsic left-loop or thetic right-loop), ictus at the bottom, notes placed along the arc by index
-- Fludd and Kepler doctrinae (heliocentric frames, monochord string-length data)
-- `coniunctio` — weigh overlap between a `Residue` and an `Influence`
-- `color` harmonia option (voicing profiles: natural, ficta, speculativa)
-- `cursus` harmonia option (time-domain texture control)
+- **`tonus.midi(source)` and `tonus.musicxml(source)`** — top-level emitters consuming a Score (or tabula directly). v1 archives the implementations at `src/engines/score/emitters/_archive/`; they're exercised by tests but not exported.
+- **Multi-chant `cantio([...chants])`** and multi-score `Imprint` aggregation — v1 is single-score only.
+- **`coniunctio(imprintA, imprintB)`** — overlap/comparison between two Imprints (Score vs Harmony, or Harmony at two times).
+- **Solesmes rhythmic refinements** — textual rules (word-accent → arsic, word-final → thetic) and cadence-formula overrides.
+- **Carroll's Seven Rhythmic Types** — derived classifier reading the `rhythmicShape` sequence across an incise and labeling it Type IV (A–T), V (A–A–T), VI (A–T–T), VII (A–T–A–T), VIII (compound overlapping).
+- **Chironomy diagram emitter** — Carroll's reclining figure-8 arcs, rendered from per-note `rhythmicShape` + `rhythmicIndex` data.
+- **Fludd and Kepler doctrinae** (heliocentric frames, monochord string-length data).
+- **`color` harmonia option** (voicing profiles: natural, ficta, speculativa).
+- **`cursus` harmonia option** (time-domain texture control).

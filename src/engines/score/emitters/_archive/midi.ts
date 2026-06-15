@@ -1,12 +1,12 @@
-import type { Score, Note, ChantType, InterpretationOptions } from "../types.js";
-import { MODES } from "../../temper/modes.js";
+import type { Score, Note, ChantType, InterpretationOptions } from "../../types.js";
+import { MODES } from "../../../temper/modes.js";
 import {
   buildPhrasing,
   shapePhrasingForMode,
   applyPhrasing,
-} from "../phrasing.js";
-import type { PhrasingInputEvent } from "../phrasing.js";
-import { inferMode } from "../infer.js";
+} from "../../phrasing.js";
+import type { PhrasingInputEvent } from "../../phrasing.js";
+import { inferMode } from "../../infer.js";
 
 /** Lightweight diagnostic record (replaces external Diagnostic import). */
 interface Diagnostic { code?: string; message: string }
@@ -15,14 +15,14 @@ export {
   buildPhrasing,
   shapePhrasingForMode,
   applyPhrasing,
-} from "../phrasing.js";
+} from "../../phrasing.js";
 export type {
   PhrasingProfile,
   ShapedNote,
   PhrasingInputEvent,
   BuildPhrasingOptions,
   ShapePhrasingForModeOptions,
-} from "../phrasing.js";
+} from "../../phrasing.js";
 
 export interface MidiEmitOptions {
   mode?: number;

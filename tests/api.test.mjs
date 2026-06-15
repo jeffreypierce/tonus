@@ -1,6 +1,8 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import tonus from "../dist/index.js";
+import { toMidi } from "../dist/engines/score/emitters/_archive/midi.js";
+import { toMusicXML } from "../dist/engines/score/emitters/_archive/musicxml.js";
 
 describe("tonus namespace", () => {
   test("festum returns feasts for a date", () => {
@@ -45,13 +47,15 @@ describe("tonus namespace", () => {
     assert.ok(chants.length > 0);
   });
 
-  test("ordo builds a score from a chant with emitter methods", () => {
+  test("ordo builds a score from a chant; archive emitters still produce output", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
     const score = tonus.cantio(chant);
     assert.ok(score.phrases.length > 0);
-    assert.ok(score.midi() instanceof Uint8Array);
-    assert.ok(score.musicxml().includes("score-partwise"));
-    assert.ok(tonus.summa(score).noteCount > 0);
+    assert.ok(score.prosody.noteCount > 0);
+    const midi = toMidi(score, { format: "file" });
+    assert.ok(midi.bytes instanceof Uint8Array);
+    const xml = toMusicXML(score);
+    assert.ok(xml.xml.includes("score-partwise"));
   });
 
   test("pondus and accentus return interpretation profiles", () => {
@@ -66,8 +70,8 @@ describe("tonus namespace", () => {
     const propers = tonus.proprium({ feast: feasts, office: "in" });
     assert.ok(propers.length > 0);
     const score = tonus.cantio(propers[0]);
-    const midi = score.midi({ bpm: 120 });
-    assert.ok(midi instanceof Uint8Array);
-    assert.ok(midi.length > 0);
+    const midi = toMidi(score, { tempoBpm: 120, format: "file" });
+    assert.ok(midi.bytes instanceof Uint8Array);
+    assert.ok(midi.bytes.length > 0);
   });
 });

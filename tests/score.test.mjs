@@ -1,6 +1,8 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { buildScore, buildPondus, buildAccentus } from "../dist/engines/score/api.js";
+import { toMidi } from "../dist/engines/score/emitters/_archive/midi.js";
+import { toMusicXML } from "../dist/engines/score/emitters/_archive/musicxml.js";
 
 const KYRIE_GABC = "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (::)";
 
@@ -184,19 +186,37 @@ describe("buildAccentus", () => {
   });
 });
 
-describe("emitters", () => {
+describe("archived emitters (not on v1 Score API)", () => {
   const score = buildScore(makeChant(KYRIE_GABC));
 
-  test("midi returns a Uint8Array", () => {
-    const midi = score.midi({ bpm: 120 });
-    assert.ok(midi instanceof Uint8Array);
-    assert.ok(midi.length > 0);
+  test("toMidi produces bytes", () => {
+    const midi = toMidi(score, { tempoBpm: 120, format: "file" });
+    assert.ok(midi.bytes instanceof Uint8Array);
+    assert.ok(midi.bytes.length > 0);
   });
 
-  test("musicxml returns a string containing score-partwise", () => {
-    const xml = score.musicxml();
-    assert.ok(typeof xml === "string");
-    assert.ok(xml.includes("score-partwise"));
-    assert.ok(xml.includes("tonus"));
+  test("toMusicXML produces a score-partwise document", () => {
+    const out = toMusicXML(score);
+    assert.ok(typeof out.xml === "string");
+    assert.ok(out.xml.includes("score-partwise"));
+    assert.ok(out.xml.includes("tonus"));
+  });
+});
+
+describe("score.tabula property", () => {
+  const score = buildScore(makeChant(KYRIE_GABC));
+
+  test("tabula is an array with one row per note", () => {
+    assert.ok(Array.isArray(score.tabula));
+    assert.equal(score.tabula.length, score.prosody.noteCount);
+  });
+
+  test("tabula rows carry pitch + rhythm + lyric data", () => {
+    const row = score.tabula[0];
+    assert.ok(typeof row.midi === "number");
+    assert.ok(typeof row.pc === "number");
+    assert.ok(typeof row.hz === "number");
+    assert.ok(["arsic", "thetic"].includes(row.rhythmicShape));
+    assert.equal(typeof row.lyric, "string");
   });
 });

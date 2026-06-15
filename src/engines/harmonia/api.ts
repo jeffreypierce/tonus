@@ -8,13 +8,12 @@ import type { Scale } from "../temper/scale.js";
 import { buildRatios } from "../temper/scale.js";
 import { voiceBodies, type VoicedBody } from "./voice.js";
 import { voiceAspects, type VoicedAspect } from "./aspects.js";
-import { computeHarmoniaMetrics } from "./metrics.js";
-import { computeModalAffinity, type ModalAffinity } from "./affinity.js";
-import type { Attractor } from "../summa/attractors.js";
+import { computeImprintFromBodies, type Imprint } from "../imprint.js";
+import { computeHarmonyTabula, type HarmonyTabulaRow } from "./tabula.js";
 import type { Author, Doctrina } from "./data/doctrines.js";
 import { DOCTRINAE } from "./data/doctrines.js";
 
-export type { VoicedBody, VoicedAspect, ModalAffinity, Author };
+export type { VoicedBody, VoicedAspect, Author };
 
 export interface HarmoniaOpts {
   temper?: Temper;
@@ -25,24 +24,21 @@ export interface Frame {
   date: Date;
   bodies: VoicedBody[];
   aspects: VoicedAspect[];
-  consonanceIndex: number;
 }
 
-export interface Influence {
+export interface Harmony {
   doctrina: Author;
   doctrinaName: string;
-  cosmosCount: number;
   date: Date;
   bodies: VoicedBody[];
   aspects: VoicedAspect[];
-  pcDistribution: Record<number, number>;
-  attractors: Attractor[];
-  consonanceIndex: number;
-  retrogradeCount: number;
-  silentCount: number;
-  modalAffinity: ModalAffinity[];
   frames?: Frame[];
+  tabula: HarmonyTabulaRow[];
+  imprint: Imprint;
 }
+
+/** @deprecated renamed to `Harmony` */
+export type Influence = Harmony;
 
 function resolveScale(temper: Temper | undefined): Scale {
   if (temper) {
@@ -54,7 +50,6 @@ function resolveScale(temper: Temper | undefined): Scale {
       comma: temper.comma,
     });
   }
-  // Default: pythagorean A440
   return buildRatios();
 }
 
@@ -85,7 +80,7 @@ function averageBodies(frames: VoicedBody[][]): VoicedBody[] {
 export function buildHarmonia(
   input: Cosmos | Cosmos[],
   opts: HarmoniaOpts = {},
-): Influence {
+): Harmony {
   const cosmosArray = Array.isArray(input) ? input : [input];
   if (cosmosArray.length === 0) {
     throw new RangeError("harmonia requires at least one Cosmos");
@@ -100,51 +95,32 @@ export function buildHarmonia(
     throw new RangeError(`Unknown doctrina: ${doctrinaKey}`);
   }
 
-  // Per-cosmos voicing
   const perCosmosBodies: VoicedBody[][] = [];
   const frames: Frame[] = [];
   for (const cosmos of cosmosArray) {
     const vb = voiceBodies(cosmos.bodies, doctrina, scale);
     const va = voiceAspects(cosmos.aspects, vb);
     perCosmosBodies.push(vb);
-
-    const frameMetrics = computeHarmoniaMetrics(vb, va, scale);
-    frames.push({
-      date: cosmos.date,
-      bodies: vb,
-      aspects: va,
-      consonanceIndex: frameMetrics.consonanceIndex,
-    });
+    frames.push({ date: cosmos.date, bodies: vb, aspects: va });
   }
 
-  // Aggregate bodies (average presence/motion across frames)
   const aggregateBodies = averageBodies(perCosmosBodies);
-
-  // Aspects for the aggregate: use the first frame's aspects (they are
-  // time-dependent, so no meaningful aggregate).
   const aggregateAspects = frames[0]?.aspects ?? [];
+  const imprint = computeImprintFromBodies(aggregateBodies, scale);
 
-  const metrics = computeHarmoniaMetrics(aggregateBodies, aggregateAspects, scale);
-  const modalAffinity = computeModalAffinity(metrics.pcDistribution);
-
-  const influence: Influence = {
+  const harmony: Harmony = {
     doctrina: doctrinaKey,
     doctrinaName: doctrina.name,
-    cosmosCount: cosmosArray.length,
     date: cosmosArray[0]!.date,
     bodies: aggregateBodies,
     aspects: aggregateAspects,
-    pcDistribution: metrics.pcDistribution,
-    attractors: metrics.attractors,
-    consonanceIndex: metrics.consonanceIndex,
-    retrogradeCount: metrics.retrogradeCount,
-    silentCount: metrics.silentCount,
-    modalAffinity,
+    tabula: computeHarmonyTabula(aggregateBodies, aggregateAspects),
+    imprint,
   };
 
   if (Array.isArray(input)) {
-    influence.frames = frames;
+    harmony.frames = frames;
   }
 
-  return influence;
+  return harmony;
 }

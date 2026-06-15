@@ -1,17 +1,17 @@
-import type { Score, Note, Neume } from "../types.js";
-import { MODES } from "../../temper/modes.js";
+import type { Score, Note, Neume } from "./types.js";
+import { MODES } from "../temper/modes.js";
 import {
   buildPhrasing,
   shapePhrasingForMode,
   applyPhrasing,
-} from "../phrasing.js";
-import { inferMode } from "../infer.js";
-import { CHROMA_TO_SOLFEGE as SOLFEGE_BY_PC } from "../../temper/data/constants.js";
-import type { ChantType, InterpretationOptions } from "../types.js";
+} from "./phrasing.js";
+import { inferMode } from "./infer.js";
+import { CHROMA_TO_SOLFEGE as SOLFEGE_BY_PC } from "../temper/data/constants.js";
+import type { ChantType, InterpretationOptions } from "./types.js";
 
 export type NoteRole = "finalis" | "tenor" | "other" | null;
 
-export interface TabulaRow {
+export interface ChantTabulaRow {
   phraseIndex: number;
   syllableIndex: number;
   noteIndex: number;
@@ -56,7 +56,7 @@ export interface TabulaRow {
   neume: Neume;
 }
 
-export interface TableEmitOptions {
+export interface TabulaOptions {
   mode?: number;
   office?: ChantType;
   interpretation?: InterpretationOptions;
@@ -64,14 +64,10 @@ export interface TableEmitOptions {
   transpose?: number;
 }
 
-export interface TableEmitResult {
-  rows: TabulaRow[];
-}
-
-export function toTable(
+export function computeTabula(
   ir: Score,
-  options: TableEmitOptions = {},
-): TableEmitResult {
+  options: TabulaOptions = {},
+): ChantTabulaRow[] {
   const modeNum = options.mode ?? inferMode(ir);
   const modeData = modeNum !== undefined ? MODES.get(modeNum) : undefined;
   const interpretation = options.interpretation ?? {};
@@ -146,7 +142,7 @@ export function toTable(
     }
   }
 
-  const rows: TabulaRow[] = annotated.map((a, i) => {
+  const rows: ChantTabulaRow[] = annotated.map((a, i) => {
     const n = a.note;
 
     return {
@@ -180,5 +176,5 @@ export function toTable(
     };
   });
 
-  return { rows };
+  return rows;
 }

@@ -7,6 +7,8 @@ import type { Scale } from "../temper/scale.js";
 import { toPitch } from "../temper/pitch.js";
 import type { Performance } from "../score/types.js";
 import type { Doctrina, Voice } from "./data/doctrines.js";
+import type { PlanetVowel } from "./data/vowels.js";
+import { PLANET_VOWELS } from "./data/vowels.js";
 import { computePresence, computeMotion } from "./presence.js";
 
 // VoicedPitch — a tuned Pitch with a Performance layer, sized for harmonia.
@@ -23,13 +25,14 @@ export interface VoicedBody extends Body {
   presence: number; // 0–1
   motion: number;   // 0–1
   greekName: string;
+  vowel: PlanetVowel;
 }
 
 // MIDI anchor for the doctrina's mese. A4 = MIDI 69 — matches the default temper
 // reference. Ratios in the doctrina are multiplied by this anchor to produce Hz.
 const ANCHOR_MIDI = 69;
 
-function voiceOne(body: Body, voice: Voice, scale: Scale): VoicedBody {
+function voiceOne(body: Body, voice: Voice, vowel: PlanetVowel, scale: Scale): VoicedBody {
   const pliny = voice.greekName === "proslambanomenos" && body.name === "Earth";
   const presence = pliny ? 1 : computePresence(body);
   const motion = pliny ? 0 : computeMotion(body);
@@ -57,6 +60,7 @@ function voiceOne(body: Body, voice: Voice, scale: Scale): VoicedBody {
     presence,
     motion,
     greekName: voice.greekName,
+    vowel,
   };
 }
 
@@ -73,7 +77,9 @@ export function voiceBodies(
   for (const body of bodies) {
     const voice = voiceByBody.get(body.name);
     if (!voice) continue; // body not part of this doctrina (e.g. Earth in Boethius)
-    result.push(voiceOne(body, voice, scale));
+    const vowel = PLANET_VOWELS[body.name];
+    if (!vowel) continue; // body has no classical vowel mapping (e.g. Earth, FixedStars)
+    result.push(voiceOne(body, voice, vowel, scale));
   }
   return result;
 }

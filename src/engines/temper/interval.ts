@@ -5,6 +5,7 @@ import { INTERVAL, UNISONUS } from "./data/constants.js";
 
 export type IntervalDirection = "up" | "down" | "unison";
 export type IntervalQuality = "perfect" | "major" | "minor" | "augmented";
+export type Consonance = "perfect" | "imperfect" | "dissonant";
 
 export interface Interval {
   name: string;
@@ -14,6 +15,16 @@ export interface Interval {
   direction: IntervalDirection;
   semitones: number;
   cents: number;
+  consonance: Consonance;
+}
+
+const PERFECT_CLASSES = new Set(["P1", "P5", "P8"]);
+const IMPERFECT_CLASSES = new Set(["m3", "M3", "m6", "M6"]);
+
+function classifyConsonance(intervalClass: string): Consonance {
+  if (PERFECT_CLASSES.has(intervalClass)) return "perfect";
+  if (IMPERFECT_CLASSES.has(intervalClass)) return "imperfect";
+  return "dissonant";
 }
 
 export function classifyInterval(a: number, b?: number): Interval {
@@ -34,5 +45,6 @@ export function classifyInterval(a: number, b?: number): Interval {
     direction,
     semitones,
     cents: semitones * 100,
+    consonance: classifyConsonance(entry.class),
   };
 }
