@@ -207,7 +207,7 @@ Each feast carries two rank expressions: `rank` (simplified 1–4 scale, used fo
 Dates are UTC-canonical: build query dates from ISO strings (`new Date("2026-01-06")`) or `Date.UTC`, and read results with UTC getters or `toISOString()`. Local-time constructions like `new Date(2026, 0, 6)` resolve to different days depending on the machine's timezone.
 
 ```js
-tonus.festum({ date: new Date() });
+tonus.festum();                    // today (resolved as the current UTC day)
 tonus.festum({ from: advent1, to: epiphany });          // range
 tonus.festum({ name: "Dominica I Adventus" });
 tonus.festum({ season: "ea" });
@@ -328,7 +328,7 @@ When `bodies` is omitted, all 8 are returned. Aspects are computed only between 
 
 ### `tonus.temperamentum(input?) -> Temperamentum`
 
-Builds a tuning context. All pitch helper methods are on the returned `Temper` object.
+Builds a tuning context. All pitch helper methods are on the returned `Temperamentum` object.
 
 ```js
 tonus.temperamentum()                                          // pythagorean, mode auto, A4=440
@@ -342,7 +342,7 @@ tonus.temperamentum({ scale: ["1/1", "9/8", "5/4", ...] })    // custom array
 tonus.temperamentum({ scale: "! meanquar.scl\n..." })          // Scala file
 ```
 
-**`TemperOpts`**
+**`TemperamentumOpts`**
 
 | Field       | Type               | Default         | Description                                                                                                                |
 | ----------- | ------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -371,13 +371,13 @@ Any other string is accepted as a custom tuning name (e.g. from a Scala file des
 type Tuning = "pythagorean" | "meantone" | "equal"
   | "ptolemy-intense" | "ptolemy-soft" | "ptolemy-equable"
   | string;
-type TemperInput = BuiltinTuning | TemperOpts;
+type TemperamentumInput = BuiltinTuning | TemperamentumOpts;
 ```
 
-**`Temper`** — resolved context object
+**`Temperamentum`** — resolved context object
 
 ```ts
-interface Temper {
+interface Temperamentum {
   // resolved
   tuning: Tuning;
   mode: number | "auto";
@@ -600,7 +600,7 @@ Access: `note.pitch.midi`, `note.performance.velocity`, `note.step.name`, `note.
 
 ---
 
-## Temper Types
+## Temperamentum Types
 
 ### PitchInput
 
@@ -727,7 +727,7 @@ interface GamutOptions {
 }
 
 interface TonusOpts {
-  differentia?: string; // e.g. "6F", "4e"; mode comes from Temper, throws if "auto"
+  differentia?: string; // e.g. "6F", "4e"; mode comes from Temperamentum, throws if "auto"
 }
 
 interface Tonus {
@@ -1054,7 +1054,6 @@ interface Harmony {
   imprint: Imprint;             // shared analytical fingerprint
 }
 
-/** @deprecated renamed to `Harmony` */
 
 interface VoicedPitch {
   pitch: Pitch;
@@ -1119,8 +1118,8 @@ interface PlanetVowel {
 - Builder functions throw `Error` with a descriptive message on invalid input.
 - `notatio` throws on invalid `Chant` input.
 - `temperamentum.tonus()` throws if `mode` is `"auto"` — mode must be set explicitly.
-- `comma` on `TemperOpts` throws if used with any tuning other than `"meantone"`.
-- `scale` on `TemperOpts` requires `tuning: "custom"` — throws otherwise.
+- `comma` on `TemperamentumOpts` throws if used with any tuning other than `"meantone"`.
+- `scale` on `TemperamentumOpts` requires `tuning: "custom"` — throws otherwise.
 
 ## Determinism Contract
 

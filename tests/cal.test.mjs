@@ -29,6 +29,14 @@ describe("getFeast", () => {
     assert.equal(s?.gradus, "Duplex");
   });
 
+  test("finds tempora spilling into the next civil year", () => {
+    // Nat2-0 (Holy Name) anchors to 2025's Christmas but falls on
+    // 2026-01-04 — it must be reachable from the January date.
+    const feasts = getFeast({ date: new Date("2026-01-04") });
+    assert.ok(feasts.some((f) => f.id === "Nat2-0"),
+      `expected Nat2-0 in: ${feasts.map((f) => f.id).join(", ")}`);
+  });
+
   test("every feast has a non-empty gradus", () => {
     const feasts = getFeast({ season: "ea" });
     assert.ok(feasts.length > 0);

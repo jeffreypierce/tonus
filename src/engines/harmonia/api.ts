@@ -44,7 +44,10 @@ function resolveScale(temper: Temperamentum | undefined): Scale {
       a4: temper.a4,
       root: temper.root,
       transpose: temper.transpose,
-      comma: temper.comma,
+      // steps carries the temperamentum's fully resolved scale (ptolemaic,
+      // meantone, custom, Scala) — without it only the pythagorean default
+      // would be rebuilt here.
+      steps: temper.cents,
     });
   }
   return buildRatios();

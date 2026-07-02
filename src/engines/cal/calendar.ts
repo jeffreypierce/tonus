@@ -37,6 +37,7 @@ export function getAnchors(year: number): RuleAnchors {
   if (_anchorCache.has(year)) return _anchorCache.get(year)!;
 
   const easter = startOfDay(pascha(year));
+  const advent1 = firstSundayOnOrAfter(new Date(Date.UTC(year, 10, 27)));
   const anchors: RuleAnchors = {
     year,
     easter,
@@ -45,8 +46,8 @@ export function getAnchors(year: number): RuleAnchors {
     septuagesima: subDays(easter, 63),
     pentecost: addDays(easter, 49),
     ascension: addDays(easter, 39),
-    adventFirstSunday: firstSundayOnOrAfter(new Date(Date.UTC(year, 10, 27))),
-    gaudete: addDays(firstSundayOnOrAfter(new Date(Date.UTC(year, 10, 27))), 14),
+    adventFirstSunday: advent1,
+    gaudete: addDays(advent1, 14),
     christmas: new Date(Date.UTC(year, 11, 25)),
     epiphany: new Date(Date.UTC(year, 0, 6)),
     baptism: nextSunday(new Date(Date.UTC(year, 0, 7))),
@@ -139,12 +140,13 @@ function calEntryToFeast(
   d: Date,
 ): Feast {
   const id = entry.id ?? "";
+  const rankLabel = RANK_LABELS[entry.rank as Rank] ?? "Feria";
   return {
     id,
     name: entry.name,
     rank: entry.rank as Rank,
-    rankLabel: RANK_LABELS[entry.rank as Rank] ?? "Feria",
-    gradus: entry.gradus ?? RANK_LABELS[entry.rank as Rank] ?? "Feria",
+    rankLabel,
+    gradus: entry.gradus ?? rankLabel,
     season: season.code,
     seasonLabel: SEASON_LABELS[season.code],
     seasonStart: season.start,
@@ -159,10 +161,18 @@ function calEntryToFeast(
 
 function feastsForDate(date: Date): Feast[] {
   const d = startOfDay(date);
-  const season = findSeason(d);
   const key = isoDate(d);
-  const entries = buildCalendar(d.getUTCFullYear()).get(key);
-  if (!entries?.length) return [];
+  const year = d.getUTCFullYear();
+  // Tempora anchored in the previous year can spill into January (e.g.
+  // Nat2-0, the Sunday of the Holy Name), so the prior year's calendar is
+  // consulted too.
+  const entries = [
+    ...(buildCalendar(year).get(key) ?? []),
+    ...(buildCalendar(year - 1).get(key) ?? []),
+  ];
+  if (!entries.length) return [];
+  entries.sort((a, b) => a.rank - b.rank);
+  const season = findSeason(d);
   return entries.map((e) => calEntryToFeast(e, season, d));
 }
 
@@ -197,13 +207,14 @@ export function getFeast(query?: FeastQuery): Feast[] {
       d = addDays(d, 1);
     }
   } else {
-    // Full calendar scan for the current liturgical year range
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const anchors = getAnchors(year);
-    const startDate = anchors.adventFirstSunday;
-    const endAnchors = getAnchors(year + 1);
-    const endDate = endAnchors.adventFirstSunday;
+    // Full calendar scan for the current liturgical year range. The
+    // liturgical year begins at Advent, so before Advent the range anchors
+    // to the previous civil year's first Advent Sunday.
+    const today = startOfDay(new Date());
+    let year = today.getUTCFullYear();
+    if (today < getAnchors(year).adventFirstSunday) year -= 1;
+    const startDate = getAnchors(year).adventFirstSunday;
+    const endDate = getAnchors(year + 1).adventFirstSunday;
 
     results = [];
     let d = startDate;

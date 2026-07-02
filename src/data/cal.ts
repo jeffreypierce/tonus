@@ -85,20 +85,20 @@ export const CAL_SANCTI: CalEntry[] = [
   },
   {
     "id": "01-13",
-    "name": "In Commemoratione Baptismatis Domini Nostri Jesu Christi",
-    "rank": 2,
+    "name": "In Octava Epiphaniæ",
+    "rank": 1,
     "gradus": "Duplex majus"
   },
   {
     "id": "01-14",
     "name": "S. Hilarii Episcopi Confessoris Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
     "id": "01-15",
     "name": "S. Pauli Primi Eremitæ et Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -152,7 +152,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "01-24",
     "name": "S. Timothei Episcopi et Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -164,7 +164,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "01-26",
     "name": "S. Polycarpi Episcopi et Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -182,19 +182,19 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "01-29",
     "name": "S. Francisci Salesii Episcopi Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
     "id": "01-30",
     "name": "S. Martinæ Virginis et Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
     "id": "01-31",
     "name": "S. Joannis Bosco Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -248,13 +248,13 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "02-09",
     "name": "S. Cyrilli Episc. Alexandrini Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
     "id": "02-10",
     "name": "S. Scholasticæ Virginis",
-    "rank": 2,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -344,7 +344,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "03-12",
     "name": "S. Gregorii Papæ Confessoris et Ecclesiæ Doctoris",
-    "rank": 2,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -356,7 +356,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "03-18",
     "name": "S. Cyrilli Episcopi Hierosolymitani Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -368,13 +368,13 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "03-21",
     "name": "S. Benedicti Abbatis",
-    "rank": 3,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
     "id": "03-24",
     "name": "S. Gabrielis Archangeli",
-    "rank": 3,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
@@ -386,7 +386,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "03-27",
     "name": "S. Joannis Damasceni Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -404,7 +404,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "04-04",
     "name": "S. Isidori Episcopi Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -452,7 +452,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "04-23",
     "name": "S. Georgii Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
@@ -476,7 +476,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "04-27",
     "name": "S. Petri Canisii Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -524,7 +524,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "05-05",
     "name": "S. Pii V Papæ et Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -560,7 +560,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "05-12",
     "name": "Ss. Nerei, Achillei et Domitillæ Virg. atque Pancratii Martyrum",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
@@ -602,7 +602,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "05-19",
     "name": "S. Petri Celestini Papæ et Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -662,7 +662,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "06-01",
     "name": "S. Angelæ Mericiæ Virginis",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -704,7 +704,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "06-11",
     "name": "S. Barnabæ Apostoli",
-    "rank": 3,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
@@ -716,7 +716,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "06-13",
     "name": "S. Antonii de Padua Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -734,7 +734,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "06-18",
     "name": "S. Ephræm Syri Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -764,7 +764,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "06-23",
     "name": "In Vigilia S. Joannis Baptistæ",
-    "rank": 2,
+    "rank": 4,
     "gradus": "Simplex"
   },
   {
@@ -782,7 +782,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "06-26",
     "name": "Ss. Joannis et Pauli Martyrum",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -800,7 +800,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "06-30",
     "name": "In Commemoratione S. Pauli Apostoli",
-    "rank": 3,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
@@ -860,7 +860,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "07-12",
     "name": "S. Joannis Gualberti Abbatis",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -890,7 +890,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "07-17",
     "name": "S. Alexii Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
@@ -926,7 +926,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "07-23",
     "name": "S. Apollinaris Episcopi et Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -956,7 +956,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "07-28",
     "name": "Ss. Nazarii et Celsi Martyrum, Victoris I Papæ et Martyris ac Innocentii I Papæ et Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
@@ -986,7 +986,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "08-02",
     "name": "S. Alfonsi Mariæ de Ligorio Episc. Conf. et Eccles. Doct.",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -998,7 +998,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "08-04",
     "name": "S. Dominici Confessoris",
-    "rank": 3,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
@@ -1022,7 +1022,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "08-08",
     "name": "Ss. Cyriaci, Largi et Smaragdi Martyrum",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
@@ -1142,7 +1142,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "08-29",
     "name": "In Decollatione S. Joannis Baptistæ",
-    "rank": 3,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
@@ -1226,13 +1226,13 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "09-16",
     "name": "Ss. Cornelii Papæ et Cypriani Episcopi, Martyrum",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
     "id": "09-17",
     "name": "Impressionis Stigmatum S. Francisci",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -1250,7 +1250,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "09-20",
     "name": "Ss. Eustachii et Sociorum Martyrum",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -1268,7 +1268,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "09-23",
     "name": "S. Lini Papæ et Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
@@ -1286,7 +1286,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "09-27",
     "name": "Ss. Cosmæ et Damiani Martyrum",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
@@ -1316,7 +1316,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "10-02",
     "name": "Ss. Angelorum Custodum",
-    "rank": 3,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
@@ -1328,7 +1328,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "10-04",
     "name": "S. Francisci Confessoris",
-    "rank": 3,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
@@ -1340,7 +1340,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "10-06",
     "name": "S. Brunonis Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -1382,7 +1382,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "10-14",
     "name": "S. Callisti Papæ et Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -1574,19 +1574,19 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "11-24",
     "name": "S. Joannis a Cruce Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
     "id": "11-25",
     "name": "S. Catharinæ Virginis et Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
     "id": "11-26",
     "name": "S. Silvestri Abbatis",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -1616,7 +1616,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "12-04",
     "name": "S. Petri Chrysologi Episcopi Confessoris et Ecclesiæ Doctoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -1628,7 +1628,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "12-06",
     "name": "S. Nicolai Episcopi et Confessoris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -1654,6 +1654,12 @@ export const CAL_SANCTI: CalEntry[] = [
     "name": "S. Luciæ Virginis et Martyris",
     "rank": 3,
     "gradus": "Duplex"
+  },
+  {
+    "id": "12-15",
+    "name": "In Octava Concept. Immac. Beatæ Mariæ Virginis",
+    "rank": 2,
+    "gradus": "Duplex majus"
   },
   {
     "id": "12-16",
@@ -1700,7 +1706,7 @@ export const CAL_SANCTI: CalEntry[] = [
   {
     "id": "12-29",
     "name": "S. Thomæ Cantuariensis Episcopi et Martyris",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Duplex"
   },
   {
@@ -1817,7 +1823,7 @@ export const CAL_TEMPORA: CalEntry[] = [
   {
     "id": "Adv3-3",
     "name": "Feria IV Quattuor Temporum in Adventu",
-    "rank": 2,
+    "rank": 3,
     "gradus": "Feria major"
   },
   {
@@ -1829,13 +1835,13 @@ export const CAL_TEMPORA: CalEntry[] = [
   {
     "id": "Adv3-5",
     "name": "Feria VI Quattuor Temporum in Adventu",
-    "rank": 2,
+    "rank": 3,
     "gradus": "Feria major"
   },
   {
     "id": "Adv3-6",
     "name": "Sabbato Quattuor Temporum in Adventu",
-    "rank": 2,
+    "rank": 3,
     "gradus": "Feria major"
   },
   {
@@ -2387,13 +2393,13 @@ export const CAL_TEMPORA: CalEntry[] = [
   {
     "id": "Pasc5-5",
     "name": "Feria VI infra Octavam Ascensionis",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
     "id": "Pasc5-6",
     "name": "Sabbato infra Octavam Ascensionis",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
@@ -2405,25 +2411,25 @@ export const CAL_TEMPORA: CalEntry[] = [
   {
     "id": "Pasc6-1",
     "name": "Feria II infra Octavam Ascensionis",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
     "id": "Pasc6-2",
     "name": "Feria III infra Octavam Ascensionis",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
     "id": "Pasc6-3",
     "name": "Feria IV infra Octavam Ascensionis",
-    "rank": 4,
+    "rank": 3,
     "gradus": "Semiduplex"
   },
   {
     "id": "Pasc6-4",
     "name": "In Octava Ascensionis",
-    "rank": 4,
+    "rank": 2,
     "gradus": "Duplex majus"
   },
   {
@@ -2507,13 +2513,13 @@ export const CAL_TEMPORA: CalEntry[] = [
   {
     "id": "Pent01-5",
     "name": "Feria Sexta infra octavam Corporis Christi",
-    "rank": 4,
+    "rank": 2,
     "gradus": "Semiduplex II classis"
   },
   {
     "id": "Pent01-6",
     "name": "Sabbato infra octavam Corporis Christi",
-    "rank": 4,
+    "rank": 2,
     "gradus": "Semiduplex II classis"
   },
   {
@@ -2525,25 +2531,25 @@ export const CAL_TEMPORA: CalEntry[] = [
   {
     "id": "Pent02-1",
     "name": "Feria Secunda infra Octavam Corporis Christi",
-    "rank": 4,
+    "rank": 2,
     "gradus": "Semiduplex II classis"
   },
   {
     "id": "Pent02-2",
     "name": "Feria Tertia infra Octavam Corporis Christi",
-    "rank": 4,
+    "rank": 2,
     "gradus": "Semiduplex II classis"
   },
   {
     "id": "Pent02-3",
     "name": "Feria Quarta infra Octavam Corporis Christi",
-    "rank": 4,
+    "rank": 2,
     "gradus": "Semiduplex II classis"
   },
   {
     "id": "Pent02-4",
     "name": "In Octava Sanctissimi Corporis Christi",
-    "rank": 4,
+    "rank": 1,
     "gradus": "Duplex majus"
   },
   {
@@ -3503,7 +3509,7 @@ export const CAL_TEMPORA: CalEntry[] = [
   {
     "id": "Quad1-3",
     "name": "Feria Quarta Quattuor Temporum Quadragesimæ",
-    "rank": 2,
+    "rank": 3,
     "gradus": "Feria major"
   },
   {
@@ -3515,13 +3521,13 @@ export const CAL_TEMPORA: CalEntry[] = [
   {
     "id": "Quad1-5",
     "name": "Feria Sexta Quattuor Temporum Quadragesimæ",
-    "rank": 2,
+    "rank": 3,
     "gradus": "Feria major"
   },
   {
     "id": "Quad1-6",
     "name": "Sabbato Quattuor Temporum Quadragesimæ",
-    "rank": 2,
+    "rank": 3,
     "gradus": "Feria major"
   },
   {

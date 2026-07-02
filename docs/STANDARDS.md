@@ -49,7 +49,7 @@ Typical module layout:
 | Type union | PascalCase | `Season`, `CanonicalHour`, `BodyName` |
 | Constant map/array | SCREAMING_SNAKE | `ORBITAL_ELEMENTS`, `SEASON_LABELS` |
 | Module-level cache | `_camelCase` | `_byId`, `_calCache` |
-| Options interface | noun + `Opts` | `CaelumQuery`, `TemperOpts` |
+| Options interface | noun + `Opts` | `CaelumQuery`, `TemperamentumOpts` |
 
 ---
 
@@ -77,7 +77,7 @@ tonus.temperamentum({ tuning: "pythagorean" })  // → Temperamentum
 tonus.ordo(chant)                         // → Score
 ```
 
-`Score` and `Temper` are the only types with methods — this is spec-mandated, not a general pattern.
+`Score` and `Temperamentum` are the only types with methods — this is spec-mandated, not a general pattern.
 
 ---
 
@@ -162,7 +162,7 @@ test("cantus: returns chants for mode 1", () => {
 
 ## What not to do
 
-- No classes (except `Score` and `Temper` — spec-mandated context objects)
+- No classes (except `Score` and `Temperamentum` — spec-mandated context objects)
 - No default exports except `src/index.ts`
 - No `any` except in JS interop
 - No helper abstractions for one-off operations

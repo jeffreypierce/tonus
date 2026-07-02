@@ -1,8 +1,8 @@
-# authors.ts — Derivation Methodology
+# doctrines.ts — Derivation Methodology
 
 ## Overview
 
-This document describes the sources, reasoning, and verification methods used to derive the planetary ratio data in `engines/harmonia/data/authors.ts`. Each author's system was reconstructed from primary and secondary source texts, expressed as Pythagorean ratios relative to the mese (Sun), and verified computationally for internal consistency (correct interval closure, octave completion, and cents values).
+This document describes the sources, reasoning, and verification methods used to derive the planetary ratio data in `engines/harmonia/data/doctrines.ts`. Each author's system was reconstructed from primary and secondary source texts, expressed as Pythagorean ratios relative to the mese (Sun), and verified computationally for internal consistency (correct interval closure, octave completion, and cents values).
 
 ---
 
