@@ -58,11 +58,15 @@ describe("tonus namespace", () => {
     assert.ok(xml.xml.includes("score-partwise"));
   });
 
-  test("pondus and accentus return interpretation profiles", () => {
-    const p = tonus.pondus("strict");
-    const a = tonus.accentus("solemn");
-    assert.equal(p.style, "strict");
-    assert.equal(a.style, "solemn");
+  test("notatio accepts pondus and accentus as style strings or opts", () => {
+    const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
+    const s1 = tonus.notatio(chant, { pondus: "strict", accentus: "solemn" });
+    assert.ok(s1.phrases.length > 0);
+    const s2 = tonus.notatio(chant, {
+      pondus: { style: "expressive" },
+      accentus: { style: "recitative" },
+    });
+    assert.ok(s2.phrases.length > 0);
   });
 
   test("full pipeline: feast → proprium → ordo → midi", () => {

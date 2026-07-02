@@ -4,8 +4,6 @@
 import { parseGABC } from "./parse.js";
 import { buildIR } from "./ir.js";
 import { buildRatios } from "../temper/scale.js";
-import { buildArticulation } from "./articulation.js";
-import { buildPhrasing } from "./phrasing.js";
 import { computeMeta } from "./meta.js";
 import { computeImprint, type Imprint } from "../imprint.js";
 import { computeProsody, type Prosody } from "./prosody.js";
@@ -24,16 +22,6 @@ import type {
 export type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
 export type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
 
-export interface Pondus {
-  style: PondusStyle;
-  profile: ArticulationProfile;
-}
-
-export interface Accentus {
-  style: AccentusStyle;
-  profile: PhrasingProfile;
-}
-
 export interface PondusOpts {
   style?: PondusStyle;
   overrides?: Partial<ArticulationProfile>;
@@ -49,8 +37,8 @@ export type AccentusInput = AccentusStyle | AccentusOpts;
 
 export interface ScoreOpts {
   temperamentum?: Temperamentum;
-  pondus?: Pondus;
-  accentus?: Accentus;
+  pondus?: PondusInput;
+  accentus?: AccentusInput;
 }
 
 export interface Score {
@@ -76,43 +64,29 @@ const ACCENTUS_TO_PHRASING: Record<AccentusStyle, PhrasingType> = {
   solemn: "solemn",
 };
 
-/**
- * Weight profile builder (`tonus.pondus`): articulation and dynamic
- * weighting applied per-note when a score is built.
- */
-export function buildPondus(input?: PondusInput): Pondus {
-  const opts: PondusOpts = typeof input === "string" ? { style: input } : (input ?? {});
-  const style = opts.style ?? "balanced";
-  const artType = PONDUS_TO_ARTICULATION[style];
-  const profile = buildArticulation(artType, { overrides: opts.overrides });
-  return { style, profile };
+function resolvePondus(input?: PondusInput): PondusOpts {
+  return typeof input === "string" ? { style: input } : (input ?? {});
 }
 
-/**
- * Phrasing style builder (`tonus.accentus`): accent and phrasing
- * parameters (style, breath, elision) applied when a score is built.
- */
-export function buildAccentus(input?: AccentusInput): Accentus {
-  const opts: AccentusOpts = typeof input === "string" ? { style: input } : (input ?? {});
-  const style = opts.style ?? "lyrical";
-  const phraseType = ACCENTUS_TO_PHRASING[style];
-  const profile = buildPhrasing(phraseType, { overrides: opts.overrides });
-  return { style, profile };
+function resolveAccentus(input?: AccentusInput): AccentusOpts {
+  return typeof input === "string" ? { style: input } : (input ?? {});
 }
 
 /**
  * Score builder (`tonus.notatio`). Parses a chant's GABC into a musical
  * IR — phrases, syllables, notes with tuned pitches, arsis/thesis
- * rhythm, prosody, imprint, and a tabula — under optional temperamentum,
- * pondus, and accentus contexts.
+ * rhythm, prosody, imprint, and a tabula. Options: a temperamentum
+ * (tuning), a pondus (articulation weight, style name or opts), and an
+ * accentus (phrasing, style name or opts).
  * @throws Error on invalid Chant input or unparseable GABC.
  */
 export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
+  const pondus = resolvePondus(opts?.pondus);
+  const accentus = resolveAccentus(opts?.accentus);
   const parsed = parseGABC(chant.gabc, {
     interpretation: {
-      articulation: opts?.pondus
-        ? PONDUS_TO_ARTICULATION[opts.pondus.style]
-        : "balanced",
+      articulation: PONDUS_TO_ARTICULATION[pondus.style ?? "balanced"],
+      articulationOverrides: pondus.overrides,
     },
   });
   const modeNum = chant.mode ? parseInt(chant.mode) || undefined : undefined;
@@ -120,6 +94,9 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     mode: opts?.temperamentum?.mode === "auto" ? (modeNum ?? 1) : (opts?.temperamentum?.mode ?? modeNum ?? 1),
     a4: opts?.temperamentum?.a4 ?? 440,
     transpose: opts?.temperamentum?.transpose ?? 0,
+    // Carry the temperamentum's fully resolved scale — otherwise custom
+    // and non-pythagorean tunings would be silently rebuilt as default.
+    steps: opts?.temperamentum?.cents,
   });
   const ir = buildIR(parsed, chant, scale);
   const meta = computeMeta(ir, { mode: modeNum });
@@ -132,6 +109,14 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
       mode: meta.mode ?? undefined,
       a4Hz: opts?.temperamentum?.a4,
       transpose: opts?.temperamentum?.transpose,
+      // Only pass phrasing when the caller asked for it, so the default
+      // tabula shaping (mode-gated) is unchanged.
+      interpretation: opts?.accentus
+        ? {
+            phrasing: ACCENTUS_TO_PHRASING[accentus.style ?? "lyrical"],
+            phrasingOverrides: accentus.overrides,
+          }
+        : undefined,
     }),
     prosody: computeProsody(ir.phrases),
     imprint: computeImprint(ir.phrases, scale),

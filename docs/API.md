@@ -158,7 +158,7 @@ interface Feast {
   name: string;
   rank: Rank;
   rankLabel: string; // period label for the simplified rank, e.g. "Semiduplex"
-  gradus: string;    // authentic Tridentine rank from Divinum Officium,
+  ritus: string;     // authentic Tridentine rank from Divinum Officium,
                      // e.g. "Duplex majus", "Feria privilegiata"
   season: Season;
   seasonLabel: string;
@@ -202,7 +202,7 @@ tonus.cantus({
 
 Calendar lookup. Returns all matching feasts sorted `day asc, rank desc`. For a date query, returns the primary feast and all concurrent feasts on that day in rank order. For a range query (`from`/`to`), iterates each day and flattens. With no date or range, scans the current liturgical year.
 
-Each feast carries two rank expressions: `rank` (simplified 1–4 scale, used for filtering and mass selection, labelled with period vocabulary in `rankLabel`) and `gradus`, the authentic Tridentine rank string extracted from the Divinum Officium `[Rank]` line — `"Duplex majus"`, `"Semiduplex II classis"`, `"Feria privilegiata"`, and so on. Gradus is taken from the default (pre-1960) rank line, so it reflects the older vocabulary that is continuous with medieval usage. Note: `gradus` here (feast rank) is unrelated to `Temperamentum.gradus()` (Guidonian step) — the same Latin word serving two of its senses.
+Each feast carries two rank expressions: `rank` (simplified 1–4 scale, used for filtering and mass selection, labelled with period vocabulary in `rankLabel`) and `ritus`, the authentic Tridentine rank string extracted from the Divinum Officium `[Rank]` line — `"Duplex majus"`, `"Semiduplex II classis"`, `"Feria privilegiata"`, and so on. Ritus is taken from the default (Tridentine) rank line, so it reflects the older vocabulary that is continuous with medieval usage. `Ritus` is the rubrics' own term for feast rank ("festa ritus duplicis"); `gradus` belongs to the Guidonian step (`Temperamentum.gradus()`).
 
 Dates are UTC-canonical: build query dates from ISO strings (`new Date("2026-01-06")`) or `Date.UTC`, and read results with UTC getters or `toISOString()`. Local-time constructions like `new Date(2026, 0, 6)` resolve to different days depending on the machine's timezone.
 
@@ -404,15 +404,28 @@ interface Temperamentum {
 
 ---
 
-### `tonus.pondus(input?) -> Pondus`
+### `tonus.notatio(chant, opts?) -> Score`
 
-Builds an articulation profile. Controls note-level weight, duration, and ornament interpretation. Default: `"balanced"`.
+Builds a `Score` from a single `Chant`. Interpretation is controlled by two options: `pondus` (note-level articulation weight) and `accentus` (phrase-level velocity shaping) — each accepts a style name or an opts object with overrides. `rhythmicShape` and `rhythmicIndex` are always populated by the Solesmes compound-beat classifier.
+
+The `Score` is pure data: no methods. Analysis lives on `score.imprint` (shared with `Harmony`) and `score.prosody` (chant-specific). A flat iteration surface is exposed via `score.tabula`.
 
 ```js
-tonus.pondus()
-tonus.pondus("expressive")
-tonus.pondus({ style: "strict", overrides: { ... } })
+const t = tonus.temperamentum({ tuning: "pythagorean" });
+
+const score = tonus.notatio(chant, {
+  temperamentum: t,
+  pondus: "expressive",                              // style name…
+  accentus: { style: "solemn", overrides: { ... } }, // …or opts with overrides
+});
+
+score.phrases;             // structured: Phrase[] with Syllable[] and Note[]
+score.tabula;              // flat: ChantTabulaRow[] — one row per note
+score.prosody;             // chant measurements: counts, ranges, melisma, cadence
+score.imprint;             // pc/modal fingerprint (comparable with harmony.imprint)
 ```
+
+**`pondus`** — articulation: note weight, duration, ornament interpretation. Default `"balanced"`.
 
 | Style          | Description                                                         |
 | -------------- | ------------------------------------------------------------------- |
@@ -421,27 +434,7 @@ tonus.pondus({ style: "strict", overrides: { ... } })
 | `"expressive"` | Heightened ornament response, stronger shaping                      |
 | `"strict"`     | Full Solesmes rule fidelity, careful episema and quilisma treatment |
 
-```ts
-type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
-type PondusInput = PondusStyle | PondusOpts;
-
-interface PondusOpts {
-  style?: PondusStyle;
-  overrides?: Partial<ArticulationProfile>;
-}
-```
-
----
-
-### `tonus.accentus(input?) -> Accentus`
-
-Builds a phrasing profile. Controls phrase-level velocity curves, cadence weight, and tenor emphasis. Default: `"lyrical"`.
-
-```js
-tonus.accentus()
-tonus.accentus("solemn")
-tonus.accentus({ style: "hymnic", overrides: { ... } })
-```
+**`accentus`** — phrasing: velocity curves, cadence weight, tenor emphasis. When omitted, tabula shaping uses the mode-gated default.
 
 | Style          | Description                                         |
 | -------------- | --------------------------------------------------- |
@@ -450,44 +443,27 @@ tonus.accentus({ style: "hymnic", overrides: { ... } })
 | `"hymnic"`     | Measured, steady; suits metrical hymns              |
 | `"solemn"`     | Deep curve, strong cadence, elevated velocity       |
 
-```ts
-type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
-type AccentusInput = AccentusStyle | AccentusOpts;
-
-interface AccentusOpts {
-  style?: AccentusStyle;
-  overrides?: Partial<PhrasingProfile>;
-}
-```
-
----
-
-### `tonus.notatio(chant, opts?) -> Score`
-
-Builds a `Score` from a single `Chant`. Applies interpretation if `pondus` and `accentus` are provided — `velocity` and `duration` on each `Note` will be defaults otherwise. `rhythmicShape` and `rhythmicIndex` are always populated by the Solesmes compound-beat classifier.
-
-The `Score` is pure data: no methods. Analysis lives on `score.imprint` (shared with `Harmony`) and `score.prosody` (chant-specific). A flat iteration surface is exposed via `score.tabula`.
-
-```js
-const t = tonus.temperamentum({ tuning: "pythagorean" });
-const p = tonus.pondus("balanced");
-const a = tonus.accentus("lyrical");
-
-const score = tonus.notatio(chant, { temperamentum: t, pondus: p, accentus: a });
-
-score.phrases;             // structured: Phrase[] with Syllable[] and Note[]
-score.tabula;              // flat: ChantTabulaRow[] — one row per note
-score.prosody;             // chant measurements: counts, ranges, melisma, cadence
-score.imprint;             // pc/modal fingerprint (comparable with harmony.imprint)
-```
-
 **`ScoreOpts`**
 
 ```ts
 interface ScoreOpts {
   temperamentum?: Temperamentum;
-  pondus?: Pondus;
-  accentus?: Accentus;
+  pondus?: PondusInput;    // PondusStyle | PondusOpts
+  accentus?: AccentusInput; // AccentusStyle | AccentusOpts
+}
+
+type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
+type PondusInput = PondusStyle | PondusOpts;
+interface PondusOpts {
+  style?: PondusStyle;
+  overrides?: Partial<ArticulationProfile>;
+}
+
+type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
+type AccentusInput = AccentusStyle | AccentusOpts;
+interface AccentusOpts {
+  style?: AccentusStyle;
+  overrides?: Partial<PhrasingProfile>;
 }
 ```
 

@@ -6,7 +6,7 @@ Conducted July 2026 against v0.1.0.
 
 ## Verdict
 
-The system is coherent, well-sourced, and — after the gradus restoration
+The system is coherent, well-sourced, and — after the ritus restoration
 described below — uses rank vocabulary that is genuinely continuous with
 medieval usage. Its one structural honesty requirement: the calendar is not a
 *medieval* calendar but the **Tridentine Roman calendar (1570–1962)** as
@@ -45,11 +45,12 @@ with **1969 Novus Ordo vocabulary** ("Solemnity", "Memorial") — the single
 loudest anachronism in the system, since the underlying data uses the
 medieval-descended classification. Fixed in v0.1.0:
 
-- Every calendar entry now carries **`gradus`**: the authentic rank string
-  from the *default* (pre-1960) DO rank line — `Duplex majus`, `Semiduplex`,
+- Every calendar entry now carries **`ritus`**: the authentic rank string
+  from the *default* (Tridentine) DO rank line — `Duplex majus`, `Semiduplex`,
   `Feria privilegiata`, `Duplex I classis cum Octava privilegiata I ordinis`.
-  19 distinct values, 641/641 coverage. The 1960-rubric variants (class-style
-  vocabulary) are deliberately not used for gradus.
+  19 distinct values, 642/642 coverage. The 1960-rubric variants are used
+  neither for names nor ranks nor ritus — the 1960 rubrics rename feasts and
+  abolish octaves, which this project's medieval orientation avoids.
 - `rank: 1–4` remains as the machine-sortable scale (it drives filtering and
   kyriale mass selection), now labeled with period vocabulary
   (`Duplex I classis` … `Simplex`) instead of Solemnity/Feast/Memorial.
@@ -62,7 +63,7 @@ medieval-descended classification. Fixed in v0.1.0:
 The corpora are modern Solesmes restorations, not medieval manuscripts:
 
 | Corpus | Book | Era of edition |
-|---|---|---|
+| --- | --- | --- |
 | gr | Graduale Romanum, Solesmes | 1961 |
 | lu | Liber Usualis, Solesmes | 20th c. |
 | la | Liber Antiphonarius, Solesmes | 1960 |
@@ -83,14 +84,14 @@ scholarly but not itself medieval.
 ### Public API (after the v0.1.0 renames)
 
 | Term | Verdict |
-|---|---|
+| --- | --- |
 | `festum`, `cantus`, `proprium`, `ordinarium`, `officium`, `psalmus`, `harmonia` | Correct, idiomatic liturgical/musical Latin. |
 | `temperamentum` | Correct; classical root of "temperament." (Renamed from English `temper`.) |
 | `notatio` | Correct for a notation-derived score object. (Renamed from `cantio`, which collided semantically with `cantus`.) |
 | `caelum` | Correct ("the heavens"). Internal engine name `planet`/`Cosmos` is English by project convention (internals English, public Latin). |
-| `pondus` | Repurposed: classical "weight," used here for articulation/dynamic weighting. Not a historical music term — a deliberate artistic coinage, documented as such. |
-| `accentus` | Repurposed: historically the accentus/concentus distinction separates spoken-style from melodic chant. Here it names a phrasing-style profile — adjacent to, but not identical with, the historical sense. Deliberate; documented. |
-| `gradus` | Used twice with distinct senses: feast rank (`Feast.gradus`) and Guidonian step (`Temperamentum.gradus()`). Both are legitimate senses of the word; the collision is noted in API.md. |
+| `pondus` (notatio option) | Repurposed: classical "weight," used for articulation weighting. A deliberate artistic coinage, documented as such. |
+| `accentus` (notatio option) | Repurposed: historically the accentus/concentus distinction separates spoken-style from melodic chant. Here it names a phrasing-style profile — adjacent to, but not identical with, the historical sense. Deliberate; documented. |
+| `ritus` / `gradus` | Disambiguated in v0.1.0: `Feast.ritus` carries the feast rank (the rubrics' own term — "festa ritus duplicis"), while `gradus` is reserved for the Guidonian step (`Temperamentum.gradus()`). One word per concept. |
 
 ### Music-theory vocabulary (verified correct)
 
@@ -137,7 +138,7 @@ as such.
 
 ## 6. Recommendations
 
-1. **Done in v0.1.0**: gradus restoration; period rank labels; API Latin
+1. **Done in v0.1.0**: ritus restoration; period rank labels; API Latin
    renames; era honesty in README.
 2. **Future**: per-feast era metadata (medieval/tridentine/modern);
    Sarum use and monastic (Benedictine) cursus as alternate calendars;

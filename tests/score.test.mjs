@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { buildScore, buildPondus, buildAccentus } from "../dist/engines/score/api.js";
+import { buildScore } from "../dist/engines/score/api.js";
 import { toMidi } from "../dist/engines/score/emitters/_archive/midi.js";
 import { toMusicXML } from "../dist/engines/score/emitters/_archive/musicxml.js";
 
@@ -155,34 +155,31 @@ describe("buildScore", () => {
   });
 });
 
-describe("buildPondus", () => {
-  test("defaults to balanced style", () => {
-    const p = buildPondus();
-    assert.equal(p.style, "balanced");
-    assert.ok(p.profile.weights);
+describe("pondus and accentus options", () => {
+  test("pondus style changes note articulation", () => {
+    const balanced = buildScore(makeChant(KYRIE_GABC));
+    const strict = buildScore(makeChant(KYRIE_GABC), { pondus: "strict" });
+    const durations = (s) =>
+      s.phrases.flatMap((p) => p.syllables.flatMap((sy) => sy.notes.map((n) => n.performance.duration)));
+    assert.notDeepEqual(durations(strict), durations(balanced));
   });
 
-  test("accepts expressive style", () => {
-    const p = buildPondus("expressive");
-    assert.equal(p.style, "expressive");
+  test("accentus opts shape the tabula", () => {
+    const plain = buildScore(makeChant(KYRIE_GABC));
+    const solemn = buildScore(makeChant(KYRIE_GABC), { accentus: "solemn" });
+    assert.equal(plain.tabula.length, solemn.tabula.length);
+    const velocities = (s) => s.tabula.map((r) => r.velocity);
+    assert.notDeepEqual(velocities(solemn), velocities(plain));
   });
 
-  test("accepts strict style", () => {
-    const p = buildPondus("strict");
-    assert.equal(p.style, "strict");
-  });
-});
-
-describe("buildAccentus", () => {
-  test("defaults to lyrical style", () => {
-    const a = buildAccentus();
-    assert.equal(a.style, "lyrical");
-    assert.ok(typeof a.profile.curve === "number");
-  });
-
-  test("accepts solemn style", () => {
-    const a = buildAccentus("solemn");
-    assert.equal(a.style, "solemn");
+  test("accentus overrides are honored", () => {
+    const base = buildScore(makeChant(KYRIE_GABC), { accentus: "lyrical" });
+    const flat = buildScore(makeChant(KYRIE_GABC), {
+      accentus: { style: "lyrical", overrides: { curve: 0 } },
+    });
+    assert.ok(Array.isArray(flat.tabula));
+    const velocities = (s) => s.tabula.map((r) => r.velocity);
+    assert.notDeepEqual(velocities(flat), velocities(base));
   });
 });
 

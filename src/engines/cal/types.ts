@@ -19,7 +19,7 @@ export const SEASON_LABELS: Readonly<Record<Season, string>> = Object.freeze({
 });
 
 // Period vocabulary for the simplified 1–4 scale. The precise per-feast term
-// ("Duplex majus", "Feria privilegiata", …) lives in Feast.gradus.
+// ("Duplex majus", "Feria privilegiata", …) lives in Feast.ritus.
 export const RANK_LABELS: Readonly<Record<Rank, string>> = Object.freeze({
   0: "Triduum Sacrum",
   1: "Duplex I classis",
@@ -71,7 +71,7 @@ export interface Feast {
   name: string;
   rank: Rank;
   rankLabel: string;
-  gradus: string; // authentic Tridentine rank, e.g. "Duplex majus"
+  ritus: string; // authentic Tridentine rank, e.g. "Duplex majus"
   season: Season;
   seasonLabel: string;
   seasonStart: Date;

@@ -18,15 +18,15 @@ describe("getFeast", () => {
     assert.equal(feasts[0].name, "In Epiphania Domini");
   });
 
-  test("carries the authentic Tridentine gradus", () => {
+  test("carries the authentic Tridentine ritus", () => {
     const [epiphany] = getFeast({ date: new Date("2026-01-06") });
-    assert.equal(epiphany.gradus, "Duplex I classis");
+    assert.equal(epiphany.ritus, "Duplex I classis");
 
-    // S. Hilarii (Jan 14): gradus from the default rank line ("Duplex"),
+    // S. Hilarii (Jan 14): ritus from the default rank line ("Duplex"),
     // not the 1960-rubric variant.
     const hilary = getFeast({ date: new Date("2026-01-14") });
     const s = hilary.find((f) => f.id === "01-14");
-    assert.equal(s?.gradus, "Duplex");
+    assert.equal(s?.ritus, "Duplex");
   });
 
   test("finds tempora spilling into the next civil year", () => {
@@ -37,12 +37,12 @@ describe("getFeast", () => {
       `expected Nat2-0 in: ${feasts.map((f) => f.id).join(", ")}`);
   });
 
-  test("every feast has a non-empty gradus", () => {
+  test("every feast has a non-empty ritus", () => {
     const feasts = getFeast({ season: "ea" });
     assert.ok(feasts.length > 0);
     for (const f of feasts) {
-      assert.equal(typeof f.gradus, "string");
-      assert.ok(f.gradus.length > 0);
+      assert.equal(typeof f.ritus, "string");
+      assert.ok(f.ritus.length > 0);
     }
   });
 

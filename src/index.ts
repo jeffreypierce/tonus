@@ -5,7 +5,7 @@ import { getOrdinary } from "./engines/chant/ordinary.js";
 import { getHour } from "./engines/chant/hour.js";
 import { getPsalm } from "./engines/chant/psalm.js";
 import { buildTemper } from "./engines/temper/api.js";
-import { buildScore, buildPondus, buildAccentus } from "./engines/score/api.js";
+import { buildScore } from "./engines/score/api.js";
 import { getCosmos } from "./engines/planet/planet.js";
 import { buildHarmonia } from "./engines/harmonia/api.js";
 
@@ -20,7 +20,7 @@ import type {
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
 } from "./engines/temper/api.js";
 import type {
-  Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
+  Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
 } from "./engines/score/api.js";
 import type { ChantTabulaRow } from "./engines/score/tabula.js";
 import type {
@@ -50,8 +50,6 @@ const tonus = {
   psalmus: getPsalm,
   temperamentum: buildTemper,
   notatio: buildScore,
-  pondus: buildPondus,
-  accentus: buildAccentus,
   caelum: getCosmos,
   harmonia: buildHarmonia,
 };
@@ -65,7 +63,7 @@ export type {
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
-  Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
+  Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   ChantTabulaRow,
   Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
   VoicedPitch,

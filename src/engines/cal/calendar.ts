@@ -146,7 +146,7 @@ function calEntryToFeast(
     name: entry.name,
     rank: entry.rank as Rank,
     rankLabel,
-    gradus: entry.gradus ?? rankLabel,
+    ritus: entry.ritus ?? rankLabel,
     season: season.code,
     seasonLabel: SEASON_LABELS[season.code],
     seasonStart: season.start,
