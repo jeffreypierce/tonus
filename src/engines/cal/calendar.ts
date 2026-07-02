@@ -166,6 +166,13 @@ function feastsForDate(date: Date): Feast[] {
   return entries.map((e) => calEntryToFeast(e, season, d));
 }
 
+/**
+ * Calendar lookup (`tonus.festum`). Returns matching feasts sorted
+ * `day asc, rank desc` — for a date, the primary feast plus concurrent
+ * feasts; for a `from`/`to` range, every day flattened; with no query,
+ * the current liturgical year. Dates are UTC-canonical: build them from
+ * ISO strings or `Date.UTC`.
+ */
 export function getFeast(query?: FeastQuery): Feast[] {
   if (!query || Object.keys(query).length === 0) {
     return feastsForDate(new Date());

@@ -76,6 +76,10 @@ const ACCENTUS_TO_PHRASING: Record<AccentusStyle, PhrasingType> = {
   solemn: "solemn",
 };
 
+/**
+ * Weight profile builder (`tonus.pondus`): articulation and dynamic
+ * weighting applied per-note when a score is built.
+ */
 export function buildPondus(input?: PondusInput): Pondus {
   const opts: PondusOpts = typeof input === "string" ? { style: input } : (input ?? {});
   const style = opts.style ?? "balanced";
@@ -84,6 +88,10 @@ export function buildPondus(input?: PondusInput): Pondus {
   return { style, profile };
 }
 
+/**
+ * Phrasing style builder (`tonus.accentus`): accent and phrasing
+ * parameters (style, breath, elision) applied when a score is built.
+ */
 export function buildAccentus(input?: AccentusInput): Accentus {
   const opts: AccentusOpts = typeof input === "string" ? { style: input } : (input ?? {});
   const style = opts.style ?? "lyrical";
@@ -92,6 +100,13 @@ export function buildAccentus(input?: AccentusInput): Accentus {
   return { style, profile };
 }
 
+/**
+ * Score builder (`tonus.notatio`). Parses a chant's GABC into a musical
+ * IR — phrases, syllables, notes with tuned pitches, arsis/thesis
+ * rhythm, prosody, imprint, and a tabula — under optional temperamentum,
+ * pondus, and accentus contexts.
+ * @throws Error on invalid Chant input or unparseable GABC.
+ */
 export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   const parsed = parseGABC(chant.gabc, {
     interpretation: {

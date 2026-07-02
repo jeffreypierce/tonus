@@ -57,6 +57,11 @@ function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   return Array.isArray(v) ? v : [v];
 }
 
+/**
+ * Mass proper retrieval (`tonus.proprium`): Introitus, Graduale,
+ * Alleluia/Tractus, Offertorium, Communio. A feast narrows the result;
+ * feasts without a dedicated proper fall back to the Commune Sanctorum.
+ */
 export function getPropers(query?: PropriumQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
 

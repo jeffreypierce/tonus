@@ -59,6 +59,11 @@ function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   return Array.isArray(v) ? v : [v];
 }
 
+/**
+ * Divine Office retrieval (`tonus.officium`) for a canonical hour
+ * (matutinum … completorium). Without an hour, returns chants for all
+ * available hours; a feast acts as a filter.
+ */
 export function getHour(query?: OfficiumQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
 

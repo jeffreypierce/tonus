@@ -117,6 +117,13 @@ function tuningToScaleOpts(opts: TemperamentumOpts): { scalaOpts: ScaleOpts; tun
   return { scalaOpts, tuning };
 }
 
+/**
+ * Tuning context builder (`tonus.temperamentum`). Accepts a built-in
+ * tuning name, options, a custom scale array, or a Scala file, and
+ * returns a Temperamentum whose methods resolve pitches, intervals,
+ * neumes, the Guidonian gamut, and psalm tones under that tuning.
+ * @throws Error on invalid tuning, scale, or mode input.
+ */
 export function buildTemper(input?: TemperamentumInput): Temperamentum {
   const opts = resolveOpts(input);
   const modeVal = opts.mode ?? "auto";

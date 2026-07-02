@@ -181,6 +181,12 @@ function snapshotAt(date: Date, requested: BodyName[], orbLimit: number | undefi
   return { date, bodies, aspects };
 }
 
+/**
+ * Ephemeris lookup (`tonus.caelum`). Computes geocentric and heliocentric
+ * positions, zodiac signs, retrogradation, and aspects for the classical
+ * bodies at an instant (JPL Keplerian elements, 3000 BC – 3000 AD). A
+ * `from`/`to` range returns a stepped series.
+ */
 export function getCosmos(query: CosmosQuery & { from: Date; to: Date }): Cosmos[];
 export function getCosmos(query?: CosmosQuery): Cosmos;
 export function getCosmos(query: CosmosQuery = {}): Cosmos | Cosmos[] {

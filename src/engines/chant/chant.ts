@@ -99,6 +99,11 @@ export function resolveChants(ids: string[]): Chant[] {
   return ids.map(resolveChant).filter((c): c is Chant => c !== null);
 }
 
+/**
+ * Cross-corpus chant retrieval (`tonus.cantus`) over GR, LA, LH, LU, and
+ * Hilde. A `gabc` field bypasses the corpus and returns a single user
+ * chant parsed from raw GABC (body or full file with headers).
+ */
 export function getChants(query?: CantusQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
 

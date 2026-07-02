@@ -170,6 +170,10 @@ function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   return Array.isArray(v) ? v : [v];
 }
 
+/**
+ * Mass ordinary retrieval (`tonus.ordinarium`) from the Kyriale. A feast
+ * drives mass selection; `mass` pins a kyriale number directly.
+ */
 export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
   if (!query || Object.keys(query).length === 0) return [];
 

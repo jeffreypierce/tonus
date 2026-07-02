@@ -74,6 +74,12 @@ function averageBodies(frames: VoicedBody[][]): VoicedBody[] {
   return result;
 }
 
+/**
+ * Harmony of the spheres builder (`tonus.harmonia`). Voices a Cosmos
+ * (or series) into pitches and Greek vowels under a doctrina —
+ * Pythagoras, Boethius (default), Pliny, or Ptolemy — returning voiced
+ * bodies, aspects, an imprint, and a tabula.
+ */
 export function buildHarmonia(
   input: Cosmos | Cosmos[],
   opts: HarmoniaOpts = {},
