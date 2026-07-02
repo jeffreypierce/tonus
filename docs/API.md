@@ -16,13 +16,13 @@ import tonus from "tonus";
 
 **Builder functions** are verbs — they do something and return context objects with methods. They throw `Error` on invalid input.
 
-**Context objects** — `Feast[]` or `Temper` — are passed into query functions as optional filters via the query object.
+**Context objects** — `Feast[]` or `Temperamentum` — are passed into query functions as optional filters via the query object.
 
 ```js
 const feasts = tonus.festum({ season: "ea" });
 tonus.proprium({ feast: feasts, office: "an" });
 
-const t = tonus.temper({ tuning: "pythagorean" });
+const t = tonus.temperamentum({ tuning: "pythagorean" });
 t.nota("D4");
 ```
 
@@ -202,7 +202,7 @@ tonus.cantus({
 
 Calendar lookup. Returns all matching feasts sorted `day asc, rank desc`. For a date query, returns the primary feast and all concurrent feasts on that day in rank order. For a range query (`from`/`to`), iterates each day and flattens. With no date or range, scans the current liturgical year.
 
-Each feast carries two rank expressions: `rank` (simplified 1–4 scale, used for filtering and mass selection, labelled with period vocabulary in `rankLabel`) and `gradus`, the authentic Tridentine rank string extracted from the Divinum Officium `[Rank]` line — `"Duplex majus"`, `"Semiduplex II classis"`, `"Feria privilegiata"`, and so on. Gradus is taken from the default (pre-1960) rank line, so it reflects the older vocabulary that is continuous with medieval usage. Note: `gradus` here (feast rank) is unrelated to `Temper.gradus()` (Guidonian step) — the same Latin word serving two of its senses.
+Each feast carries two rank expressions: `rank` (simplified 1–4 scale, used for filtering and mass selection, labelled with period vocabulary in `rankLabel`) and `gradus`, the authentic Tridentine rank string extracted from the Divinum Officium `[Rank]` line — `"Duplex majus"`, `"Semiduplex II classis"`, `"Feria privilegiata"`, and so on. Gradus is taken from the default (pre-1960) rank line, so it reflects the older vocabulary that is continuous with medieval usage. Note: `gradus` here (feast rank) is unrelated to `Temperamentum.gradus()` (Guidonian step) — the same Latin word serving two of its senses.
 
 Dates are UTC-canonical: build query dates from ISO strings (`new Date("2026-01-06")`) or `Date.UTC`, and read results with UTC getters or `toISOString()`. Local-time constructions like `new Date(2026, 0, 6)` resolve to different days depending on the machine's timezone.
 
@@ -326,20 +326,20 @@ When `bodies` is omitted, all 8 are returned. Aspects are computed only between 
 
 ## Builder Functions
 
-### `tonus.temper(input?) -> Temper`
+### `tonus.temperamentum(input?) -> Temperamentum`
 
 Builds a tuning context. All pitch helper methods are on the returned `Temper` object.
 
 ```js
-tonus.temper()                                          // pythagorean, mode auto, A4=440
-tonus.temper("pythagorean")                             // string shorthand
-tonus.temper({ tuning: "meantone", comma: "1/4" })
-tonus.temper({ tuning: "ptolemy-intense" })             // just intonation (pure thirds)
-tonus.temper({ tuning: "ptolemy-soft" })                // septimal (7th harmonic)
-tonus.temper({ tuning: "ptolemy-equable" })             // undecimal (neutral intervals)
-tonus.temper({ tuning: "equal", mode: 3, a4: 415 })
-tonus.temper({ scale: ["1/1", "9/8", "5/4", ...] })    // custom array
-tonus.temper({ scale: "! meanquar.scl\n..." })          // Scala file
+tonus.temperamentum()                                          // pythagorean, mode auto, A4=440
+tonus.temperamentum("pythagorean")                             // string shorthand
+tonus.temperamentum({ tuning: "meantone", comma: "1/4" })
+tonus.temperamentum({ tuning: "ptolemy-intense" })             // just intonation (pure thirds)
+tonus.temperamentum({ tuning: "ptolemy-soft" })                // septimal (7th harmonic)
+tonus.temperamentum({ tuning: "ptolemy-equable" })             // undecimal (neutral intervals)
+tonus.temperamentum({ tuning: "equal", mode: 3, a4: 415 })
+tonus.temperamentum({ scale: ["1/1", "9/8", "5/4", ...] })    // custom array
+tonus.temperamentum({ scale: "! meanquar.scl\n..." })          // Scala file
 ```
 
 **`TemperOpts`**
@@ -462,18 +462,18 @@ interface AccentusOpts {
 
 ---
 
-### `tonus.cantio(chant, opts?) -> Score`
+### `tonus.notatio(chant, opts?) -> Score`
 
 Builds a `Score` from a single `Chant`. Applies interpretation if `pondus` and `accentus` are provided — `velocity` and `duration` on each `Note` will be defaults otherwise. `rhythmicShape` and `rhythmicIndex` are always populated by the Solesmes compound-beat classifier.
 
 The `Score` is pure data: no methods. Analysis lives on `score.imprint` (shared with `Harmony`) and `score.prosody` (chant-specific). A flat iteration surface is exposed via `score.tabula`.
 
 ```js
-const t = tonus.temper({ tuning: "pythagorean" });
+const t = tonus.temperamentum({ tuning: "pythagorean" });
 const p = tonus.pondus("balanced");
 const a = tonus.accentus("lyrical");
 
-const score = tonus.cantio(chant, { temper: t, pondus: p, accentus: a });
+const score = tonus.notatio(chant, { temperamentum: t, pondus: p, accentus: a });
 
 score.phrases;             // structured: Phrase[] with Syllable[] and Note[]
 score.tabula;              // flat: ChantTabulaRow[] — one row per note
@@ -485,7 +485,7 @@ score.imprint;             // pc/modal fingerprint (comparable with harmony.impr
 
 ```ts
 interface ScoreOpts {
-  temper?: Temper;
+  temperamentum?: Temperamentum;
   pondus?: Pondus;
   accentus?: Accentus;
 }
@@ -536,7 +536,7 @@ interface ParseError {
 
 ## Pitch
 
-`Pitch` is the tuned identity type — every pitch in tonus carries tuning data since it's always resolved through a `Scale`. Returned by `temper.nota()`, present in `Neume.pitches[]`, nested as `note.pitch` in the score engine's `Note`, and referenced by `Attractor.pitch`.
+`Pitch` is the tuned identity type — every pitch in tonus carries tuning data since it's always resolved through a `Scale`. Returned by `temperamentum.nota()`, present in `Neume.pitches[]`, nested as `note.pitch` in the score engine's `Note`, and referenced by `Attractor.pitch`.
 
 ```ts
 interface Pitch {
@@ -682,7 +682,7 @@ interface Interval {
 
 ### Step
 
-`Step` is modal/Guidonian annotation for a pitch class. Returned by `temper.gradus()` and nested as `note.step` in the score engine. Carries no tuning data — that's on `Pitch`.
+`Step` is modal/Guidonian annotation for a pitch class. Returned by `temperamentum.gradus()` and nested as `note.step` in the score engine. Carries no tuning data — that's on `Pitch`.
 
 ```ts
 type Finger = "wrist" | "palm" | "thumb" | "index" | "middle" | "ring" | "pinky";
@@ -888,7 +888,7 @@ interface Imprint {
 interface Attractor {
   pc: number;       // pitch class 0–11
   weight: number;   // normalized 0–1
-  pitch: Pitch;     // tuned through the score/harmony's temper
+  pitch: Pitch;     // tuned through the score/harmony's temperamentum
 }
 
 interface VowelAttractor {
@@ -1009,20 +1009,19 @@ Voices the sky through a planetary-harmony doctrina. Pure data — no methods. E
 const sky = tonus.caelum();
 tonus.harmonia(sky);                                           // Boethius + pythagorean default
 tonus.harmonia(sky, { doctrina: "ptolemy" });                  // Ptolemy doctrine
-tonus.harmonia(sky, { temper: tonus.temper("ptolemy-intense") });
+tonus.harmonia(sky, { temperamentum: tonus.temperamentum("ptolemy-intense") });
 
 // Time-range analysis with per-cosmos frames
 const range = tonus.caelum({ from, to });
 const h = tonus.harmonia(range);  // h.frames is populated
 ```
 
-> **Note:** `Influence` is kept as a deprecated alias for `Harmony` to ease migration; new code should use `Harmony`.
 
 **`HarmoniaOpts`**
 
 ```ts
 interface HarmoniaOpts {
-  temper?: Temper;        // default: pythagorean A440
+  temperamentum?: Temperamentum;        // default: pythagorean A440
   doctrina?: Author;      // default: "boethius"
 }
 
@@ -1038,7 +1037,7 @@ type Author = "pythagoras" | "boethius" | "pliny" | "ptolemy";
 | `"pliny"` | Naturalis Historia II.xx | 1 octave | Chromatic Dorian (distance-based); Earth = proslambanomenos |
 | `"ptolemy"` | Harmonics III | 2 octaves | Fixed tones of the Greater Perfect System |
 
-Historical coherence: `temper("ptolemy-intense")` + `harmonia({ doctrina: "ptolemy" })` produces pure Ptolemaic intervals throughout — Sun→Jupiter is a pure 3/2, Sun→Saturn is a pure 2/1.
+Historical coherence: `temperamentum("ptolemy-intense")` + `harmonia({ doctrina: "ptolemy" })` produces pure Ptolemaic intervals throughout — Sun→Jupiter is a pure 3/2, Sun→Saturn is a pure 2/1.
 
 **`Harmony`**
 
@@ -1056,7 +1055,6 @@ interface Harmony {
 }
 
 /** @deprecated renamed to `Harmony` */
-type Influence = Harmony;
 
 interface VoicedPitch {
   pitch: Pitch;
@@ -1082,7 +1080,7 @@ interface Frame {
 }
 ```
 
-Each `VoicedBody` has a `nota` (tuned through the temper) with `velocity` scaled by the body's presence, and a `vowel` — the classical Greek vowel associated with that planet (see **Planetary Vowels** below).
+Each `VoicedBody` has a `nota` (tuned through the temperamentum) with `velocity` scaled by the body's presence, and a `vowel` — the classical Greek vowel associated with that planet (see **Planetary Vowels** below).
 
 Aspects receive an `interval` via `classifyInterval`; the interval itself carries `consonance: "perfect" | "imperfect" | "dissonant"`. P1/P5/P8 → perfect, m3/M3/m6/M6 → imperfect, else → dissonant.
 
@@ -1119,8 +1117,8 @@ interface PlanetVowel {
 
 - Query functions return `[]` on no match, never throw.
 - Builder functions throw `Error` with a descriptive message on invalid input.
-- `cantio` throws on invalid `Chant` input.
-- `temper.tonus()` throws if `mode` is `"auto"` — mode must be set explicitly.
+- `notatio` throws on invalid `Chant` input.
+- `temperamentum.tonus()` throws if `mode` is `"auto"` — mode must be set explicitly.
 - `comma` on `TemperOpts` throws if used with any tuning other than `"meantone"`.
 - `scale` on `TemperOpts` requires `tuning: "custom"` — throws otherwise.
 
@@ -1134,7 +1132,7 @@ interface PlanetVowel {
 ## v1.1 Deferred
 
 - **`tonus.midi(source)` and `tonus.musicxml(source)`** — top-level emitters consuming a Score (or tabula directly). v1 archives the implementations at `src/engines/score/emitters/_archive/`; they're exercised by tests but not exported.
-- **Multi-chant `cantio([...chants])`** and multi-score `Imprint` aggregation — v1 is single-score only.
+- **Multi-chant `notatio([...chants])`** and multi-score `Imprint` aggregation — v1 is single-score only.
 - **`coniunctio(imprintA, imprintB)`** — overlap/comparison between two Imprints (Score vs Harmony, or Harmony at two times).
 - **Solesmes rhythmic refinements** — textual rules (word-accent → arsic, word-final → thetic) and cadence-formula overrides.
 - **Carroll's Seven Rhythmic Types** — derived classifier reading the `rhythmicShape` sequence across an incise and labeling it Type IV (A–T), V (A–A–T), VI (A–T–T), VII (A–T–A–T), VIII (compound overlapping).

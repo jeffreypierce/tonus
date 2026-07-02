@@ -10,14 +10,14 @@ function chant(gabc, mode = "1") {
 
 describe("score.prosody", () => {
   test("counts phrases, notes, syllables", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC));
+    const score = tonus.notatio(chant(KYRIE_GABC));
     assert.ok(score.prosody.phraseCount > 0);
     assert.ok(score.prosody.noteCount > 0);
     assert.ok(score.prosody.syllableCount > 0);
   });
 
   test("includes noteRange and ambitus", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC));
+    const score = tonus.notatio(chant(KYRIE_GABC));
     const { noteRange, ambitus } = score.prosody;
     assert.ok(noteRange);
     assert.ok(noteRange.min < noteRange.max);
@@ -25,7 +25,7 @@ describe("score.prosody", () => {
   });
 
   test("rhythmicProfile arsic + thetic equals noteCount", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC));
+    const score = tonus.notatio(chant(KYRIE_GABC));
     const { rhythmicProfile, noteCount } = score.prosody;
     assert.equal(rhythmicProfile.arsic + rhythmicProfile.thetic, noteCount);
     assert.ok(rhythmicProfile.maxGroupSize >= 1);
@@ -34,7 +34,7 @@ describe("score.prosody", () => {
   });
 
   test("cadence distribution and weight reflect divisios", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC));
+    const score = tonus.notatio(chant(KYRIE_GABC));
     assert.equal(score.prosody.cadenceDistribution.comma, 1);
     assert.equal(score.prosody.cadenceDistribution.doubleBar, 1);
     assert.ok(score.prosody.cadenceWeight > 0);
@@ -43,13 +43,13 @@ describe("score.prosody", () => {
 
 describe("score.imprint", () => {
   test("pcDistribution sums to ~1", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC));
+    const score = tonus.notatio(chant(KYRIE_GABC));
     const total = Object.values(score.imprint.pcDistribution).reduce((s, v) => s + v, 0);
     assert.ok(Math.abs(total - 1) < 0.001);
   });
 
   test("attractors are tuned Pitches sorted by weight descending", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC));
+    const score = tonus.notatio(chant(KYRIE_GABC));
     const { attractors } = score.imprint;
     assert.ok(attractors.length > 0);
     for (const a of attractors) {
@@ -65,7 +65,7 @@ describe("score.imprint", () => {
   });
 
   test("vowelAttractors carry tuned Pitches (not bare pc)", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC));
+    const score = tonus.notatio(chant(KYRIE_GABC));
     const { vowelAttractors } = score.imprint;
     assert.ok(vowelAttractors.length > 0);
     for (const v of vowelAttractors) {
@@ -77,7 +77,7 @@ describe("score.imprint", () => {
   });
 
   test("modalAffinity has 8 entries sorted descending", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC));
+    const score = tonus.notatio(chant(KYRIE_GABC));
     const { modalAffinity } = score.imprint;
     assert.equal(modalAffinity.length, 8);
     for (let i = 1; i < 8; i++) {
@@ -88,7 +88,7 @@ describe("score.imprint", () => {
   });
 
   test("modalConformance derivable from modalAffinity by declared mode", () => {
-    const score = tonus.cantio(chant(KYRIE_GABC, "1"));
+    const score = tonus.notatio(chant(KYRIE_GABC, "1"));
     const declared = parseInt(score.chant.mode ?? "", 10);
     const match = score.imprint.modalAffinity.find((m) => m.mode === declared);
     assert.ok(match);

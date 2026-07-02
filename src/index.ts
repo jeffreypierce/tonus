@@ -15,7 +15,7 @@ import type {
   OrdinariumQuery, OfficiumQuery, PsalmusQuery,
 } from "./engines/chant/types.js";
 import type {
-  TemperInput, Temper, Tuning, TemperOpts,
+  TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
 } from "./engines/temper/api.js";
@@ -30,7 +30,7 @@ import type {
   Prosody, RhythmicProfile, NoteRange, CadenceDistribution,
 } from "./engines/score/prosody.js";
 import type {
-  Harmony, Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
+  Harmony, HarmoniaOpts, VoicedBody, VoicedAspect,
   Frame, Author,
 } from "./engines/harmonia/api.js";
 import type { HarmonyTabulaRow } from "./engines/harmonia/tabula.js";
@@ -48,8 +48,8 @@ const tonus = {
   ordinarium: getOrdinary,
   officium: getHour,
   psalmus: getPsalm,
-  temper: buildTemper,
-  cantio: buildScore,
+  temperamentum: buildTemper,
+  notatio: buildScore,
   pondus: buildPondus,
   accentus: buildAccentus,
   caelum: getCosmos,
@@ -62,7 +62,7 @@ export type {
   Feast, FeastQuery,
   Chant, CantusQuery, OrdinaryChant,
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
-  Temper, TemperInput, TemperOpts, Tuning,
+  Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, Pondus, PondusInput, Accentus, AccentusInput,
@@ -72,6 +72,6 @@ export type {
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
   Imprint, Attractor, VowelAttractor, ModalAffinity,
   Prosody, RhythmicProfile, NoteRange, CadenceDistribution,
-  Harmony, Influence, HarmoniaOpts, VoicedBody, VoicedAspect,
+  Harmony, HarmoniaOpts, VoicedBody, VoicedAspect,
   Frame, Author, HarmonyTabulaRow, PlanetVowel,
 };

@@ -30,7 +30,7 @@ describe("tonus namespace", () => {
   });
 
   test("temper builds a tuning context with methods", () => {
-    const t = tonus.temper({ tuning: "pythagorean", mode: 1 });
+    const t = tonus.temperamentum({ tuning: "pythagorean", mode: 1 });
     const note = t.nota("D4");
     assert.equal(note.midi, 62);
     assert.ok(note.hz > 0);
@@ -49,7 +49,7 @@ describe("tonus namespace", () => {
 
   test("ordo builds a score from a chant; archive emitters still produce output", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
-    const score = tonus.cantio(chant);
+    const score = tonus.notatio(chant);
     assert.ok(score.phrases.length > 0);
     assert.ok(score.prosody.noteCount > 0);
     const midi = toMidi(score, { format: "file" });
@@ -69,7 +69,7 @@ describe("tonus namespace", () => {
     const feasts = tonus.festum({ date: new Date("2026-12-25") });
     const propers = tonus.proprium({ feast: feasts, office: "in" });
     assert.ok(propers.length > 0);
-    const score = tonus.cantio(propers[0]);
+    const score = tonus.notatio(propers[0]);
     const midi = toMidi(score, { tempoBpm: 120, format: "file" });
     assert.ok(midi.bytes instanceof Uint8Array);
     assert.ok(midi.bytes.length > 0);

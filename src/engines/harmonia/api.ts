@@ -2,7 +2,7 @@
 // engines/harmonia/api — voice the sky through a planetary-harmony doctrina
 // ---------------------------------------------------------------------------
 import type { Cosmos } from "../planet/types.js";
-import type { Temper } from "../temper/api.js";
+import type { Temperamentum } from "../temper/api.js";
 import { buildTemper } from "../temper/api.js";
 import type { Scale } from "../temper/scale.js";
 import { buildRatios } from "../temper/scale.js";
@@ -16,7 +16,7 @@ import { DOCTRINAE } from "./data/doctrines.js";
 export type { VoicedBody, VoicedAspect, Author };
 
 export interface HarmoniaOpts {
-  temper?: Temper;
+  temperamentum?: Temperamentum;
   doctrina?: Author;
 }
 
@@ -37,10 +37,7 @@ export interface Harmony {
   imprint: Imprint;
 }
 
-/** @deprecated renamed to `Harmony` */
-export type Influence = Harmony;
-
-function resolveScale(temper: Temper | undefined): Scale {
+function resolveScale(temper: Temperamentum | undefined): Scale {
   if (temper) {
     return buildRatios({
       mode: temper.mode === "auto" ? 1 : temper.mode,
@@ -86,7 +83,7 @@ export function buildHarmonia(
     throw new RangeError("harmonia requires at least one Cosmos");
   }
 
-  const temper = opts.temper ?? buildTemper();
+  const temper = opts.temperamentum ?? buildTemper();
   const scale = resolveScale(temper);
 
   const doctrinaKey: Author = opts.doctrina ?? "boethius";

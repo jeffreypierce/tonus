@@ -11,7 +11,7 @@ import { computeImprint, type Imprint } from "../imprint.js";
 import { computeProsody, type Prosody } from "./prosody.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import type { Chant } from "../chant/types.js";
-import type { Temper } from "../temper/api.js";
+import type { Temperamentum } from "../temper/api.js";
 import type {
   ArticulationProfile,
   ArticulationType,
@@ -48,7 +48,7 @@ export type PondusInput = PondusStyle | PondusOpts;
 export type AccentusInput = AccentusStyle | AccentusOpts;
 
 export interface ScoreOpts {
-  temper?: Temper;
+  temperamentum?: Temperamentum;
   pondus?: Pondus;
   accentus?: Accentus;
 }
@@ -102,9 +102,9 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   });
   const modeNum = chant.mode ? parseInt(chant.mode) || undefined : undefined;
   const scale = buildRatios({
-    mode: opts?.temper?.mode === "auto" ? (modeNum ?? 1) : (opts?.temper?.mode ?? modeNum ?? 1),
-    a4: opts?.temper?.a4 ?? 440,
-    transpose: opts?.temper?.transpose ?? 0,
+    mode: opts?.temperamentum?.mode === "auto" ? (modeNum ?? 1) : (opts?.temperamentum?.mode ?? modeNum ?? 1),
+    a4: opts?.temperamentum?.a4 ?? 440,
+    transpose: opts?.temperamentum?.transpose ?? 0,
   });
   const ir = buildIR(parsed, chant, scale);
   const meta = computeMeta(ir, { mode: modeNum });
@@ -115,8 +115,8 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     errors: ir.errors,
     tabula: computeTabula(ir, {
       mode: meta.mode ?? undefined,
-      a4Hz: opts?.temper?.a4,
-      transpose: opts?.temper?.transpose,
+      a4Hz: opts?.temperamentum?.a4,
+      transpose: opts?.temperamentum?.transpose,
     }),
     prosody: computeProsody(ir.phrases),
     imprint: computeImprint(ir.phrases, scale),

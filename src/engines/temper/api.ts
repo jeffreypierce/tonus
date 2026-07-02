@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// engines/temper/api — Temper context builder
+// engines/temper/api — Temperamentum context builder
 // ---------------------------------------------------------------------------
 import { buildRatios, parseScala, getPtolemaicRatios, toRatio } from "./scale.js";
 import type { Scale, ScaleOpts, ScalaFile, RatioResult } from "./scale.js";
@@ -23,7 +23,7 @@ export type BuiltinTuning =
   | "ptolemy-intense" | "ptolemy-soft" | "ptolemy-equable";
 export type Tuning = BuiltinTuning | string;
 
-export interface TemperOpts {
+export interface TemperamentumOpts {
   tuning?: Tuning;
   mode?: number | "auto";
   a4?: number;
@@ -33,7 +33,7 @@ export interface TemperOpts {
   scale?: string | string[];
 }
 
-export type TemperInput = BuiltinTuning | TemperOpts;
+export type TemperamentumInput = BuiltinTuning | TemperamentumOpts;
 
 export interface TonusOpts {
   differentia?: string;
@@ -47,7 +47,7 @@ export interface Tonus {
   termination: Pitch[];
 }
 
-export interface Temper {
+export interface Temperamentum {
   tuning: Tuning;
   mode: number | "auto";
   a4: number;
@@ -67,13 +67,13 @@ export interface Temper {
   tonus(opts?: TonusOpts): Tonus;
 }
 
-function resolveOpts(input?: TemperInput): TemperOpts {
+function resolveOpts(input?: TemperamentumInput): TemperamentumOpts {
   if (!input) return {};
   if (typeof input === "string") return { tuning: input };
   return input;
 }
 
-function resolveScale(opts: TemperOpts): { tuning: string; scaleSteps?: string[] } {
+function resolveScale(opts: TemperamentumOpts): { tuning: string; scaleSteps?: string[] } {
   if (!opts.scale) return { tuning: opts.tuning ?? "pythagorean" };
 
   if (Array.isArray(opts.scale)) {
@@ -84,7 +84,7 @@ function resolveScale(opts: TemperOpts): { tuning: string; scaleSteps?: string[]
   return { tuning: opts.tuning ?? (parsed.name || "custom"), scaleSteps: parsed.steps };
 }
 
-function tuningToScaleOpts(opts: TemperOpts): { scalaOpts: ScaleOpts; tuning: string } {
+function tuningToScaleOpts(opts: TemperamentumOpts): { scalaOpts: ScaleOpts; tuning: string } {
   const { tuning, scaleSteps } = resolveScale(opts);
   const scalaOpts: ScaleOpts = {
     mode: opts.mode === "auto" ? 1 : (opts.mode ?? 1),
@@ -117,7 +117,7 @@ function tuningToScaleOpts(opts: TemperOpts): { scalaOpts: ScaleOpts; tuning: st
   return { scalaOpts, tuning };
 }
 
-export function buildTemper(input?: TemperInput): Temper {
+export function buildTemper(input?: TemperamentumInput): Temperamentum {
   const opts = resolveOpts(input);
   const modeVal = opts.mode ?? "auto";
   const { scalaOpts, tuning } = tuningToScaleOpts(opts);
@@ -175,7 +175,7 @@ export function buildTemper(input?: TemperInput): Temper {
     },
 
     tonus(tonusOpts?: TonusOpts): Tonus {
-      if (modeVal === "auto") throw new Error("tonus() requires an explicit mode — set mode in buildTemper()");
+      if (modeVal === "auto") throw new Error("tonus() requires an explicit mode — set mode in temperamentum()");
       const tone = getTone(modeVal);
       const diff = getDifferentia(tone, tonusOpts?.differentia);
       return {

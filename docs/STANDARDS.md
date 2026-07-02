@@ -42,7 +42,7 @@ Typical module layout:
 
 | Thing | Convention | Example |
 |---|---|---|
-| Public API function | noun or short verb | `cantus`, `festum`, `temper`, `ordo` |
+| Public API function | noun or short verb | `cantus`, `festum`, `temperamentum`, `ordo` |
 | Engine function | camelCase verb | `getFeast`, `buildScore`, `detectAspects` |
 | Internal helper | camelCase | `resolveMasses`, `computeSpeed` |
 | Type / interface | PascalCase | `Feast`, `Body`, `ChantMetrics` |
@@ -57,7 +57,7 @@ Typical module layout:
 
 **Engine functions** (in `src/engines/`) are internal. They follow the `getX` / `buildX` naming pattern and are never exported from `src/index.ts`.
 
-**Public API functions** are what users call. They are nouns or short verbs (`cantus()`, `festum()`, `temper()`, `cantio()`), follow the query/builder contract, and are assembled in `src/index.ts`.
+**Public API functions** are what users call. They are nouns or short verbs (`cantus()`, `festum()`, `temperamentum()`, `notatio()`), follow the query/builder contract, and are assembled in `src/index.ts`.
 
 **Builder engines** expose their public surface through `api.ts`. **Query engines** expose theirs through a file named after the engine's primary domain (e.g. `calendar.ts`, `chant.ts`, `planet/planet.ts`). The `api.ts` pattern is reserved for engines that compose multiple internal modules into a returned context object with methods.
 
@@ -73,7 +73,7 @@ tonus.festum({ date })       // → Feast[], [] on no match
 
 **Builder functions** return context objects, throw on invalid input:
 ```ts
-tonus.temper({ tuning: "pythagorean" })  // → Temper
+tonus.temperamentum({ tuning: "pythagorean" })  // → Temperamentum
 tonus.ordo(chant)                         // → Score
 ```
 
