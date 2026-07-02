@@ -7,7 +7,6 @@ import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
 import { LH_DATA, LH_SOURCE } from "../../data/lh.js";
-import { HILDE_DATA, HILDE_SOURCE } from "../../data/hilde.js";
 
 function modeLabel(mode: string | null): string | null {
   return mode != null ? (MODE_LABELS[mode] ?? null) : null;
@@ -76,7 +75,6 @@ const CORPUS: Chant[] = [
   ...LU_DATA.map((c) => withLabels(c, LU_SOURCE)),
   ...LA_DATA.map((c) => withLabels(c, LA_SOURCE)),
   ...LH_DATA.map((c) => withLabels(c, LH_SOURCE)),
-  ...HILDE_DATA.map((c) => withLabels(c, HILDE_SOURCE)),
 ];
 
 let _byId: Map<string, Chant> | null = null;
@@ -100,8 +98,8 @@ export function resolveChants(ids: string[]): Chant[] {
 }
 
 /**
- * Cross-corpus chant retrieval (`tonus.cantus`) over GR, LA, LH, LU, and
- * Hilde. A `gabc` field bypasses the corpus and returns a single user
+ * Cross-corpus chant retrieval (`tonus.cantus`) over GR, LA, LH, and LU.
+ * A `gabc` field bypasses the corpus and returns a single user
  * chant parsed from raw GABC (body or full file with headers).
  */
 export function getChants(query?: CantusQuery): Chant[] {

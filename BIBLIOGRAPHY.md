@@ -19,16 +19,12 @@ from; the printed books they digitize are listed beneath them.
 - *Liber Hymnarius cum invitatoriis & aliquibus responsoriis*. Solesmes,
   1983. — 361 chants (`lh`).
 
-**Hildegard of Bingen**, *Symphonia armonie celestium revelationum*
-(12th c.). Transcribed by Richard Vendome for the Hildegard Symposium,
-Salisbury, 1999. — 87 chants (`hilde`).
-
 ## Liturgical texts and calendar
 
 ▸ **Divinum Officium** — the 1570–1962 Roman Breviary and Missal in
   machine-readable form. <https://divinumofficium.com/> /
   <https://github.com/DivinumOfficium/divinum-officium>. Extracted:
-  liturgical calendar with feast names and ranks (641 entries, Sancti +
+  liturgical calendar with feast names and ranks (642 entries, Sancti +
   Tempora), Mass propers (926 entries), Office hours (929 days), and the
   Psalterium (2,612 psalm + 579 canticle verses, Vulgate).
 

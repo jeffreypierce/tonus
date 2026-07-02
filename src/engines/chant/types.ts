@@ -12,7 +12,7 @@ export type OfficeCode =
 
 export type OrdinaryCode = "ky" | "gl" | "cr" | "sa" | "ag" | "be" | "it";
 
-export type ChantSource = "gr" | "lu" | "la" | "lh" | "hilde";
+export type ChantSource = "gr" | "lu" | "la" | "lh";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"

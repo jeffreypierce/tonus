@@ -68,13 +68,13 @@ The corpora are modern Solesmes restorations, not medieval manuscripts:
 | lu | Liber Usualis, Solesmes | 20th c. |
 | la | Liber Antiphonarius, Solesmes | 1960 |
 | lh | Liber Hymnarius, Solesmes | 1983 |
-| hilde | Hildegard, *Symphonia armonie celestium revelationum* | 12th c. repertoire, 1999 transcription (Vendome) |
 
 This is the right practical choice — the Solesmes books are the only
 comprehensive machine-readable representation of the Gregorian repertoire —
 but it means the melodies reflect the Solesmes restoration's editorial
-judgments, not any single medieval source. The Hildegard corpus is the one
-genuinely medieval-composer collection, in a modern transcription. The rhythm
+judgments, not any single medieval source. (A Hildegard von Bingen corpus —
+the one medieval-composer collection — was removed pending the author's own
+critical edition; the extraction pipeline can restore it.) The rhythm
 model (arsis/thesis, documented in `docs/theory/solesmes-rhythm.md`) is
 likewise the Solesmes school's — a 19th–20th-century interpretive framework,
 scholarly but not itself medieval.

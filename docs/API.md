@@ -37,7 +37,7 @@ t.nota("D4");
 ### Enums
 
 ```ts
-type ChantSource = "gr" | "lu" | "la" | "lh" | "hilde";
+type ChantSource = "gr" | "lu" | "la" | "lh";
 
 type OfficeCode =
   | "an"
@@ -158,8 +158,8 @@ interface Feast {
   name: string;
   rank: Rank;
   rankLabel: string; // period label for the simplified rank, e.g. "Semiduplex"
-  ritus: string;     // authentic Tridentine rank from Divinum Officium,
-                     // e.g. "Duplex majus", "Feria privilegiata"
+  ritus: string; // authentic Tridentine rank from Divinum Officium,
+  // e.g. "Duplex majus", "Feria privilegiata"
   season: Season;
   seasonLabel: string;
   seasonStart: Date;
@@ -178,7 +178,7 @@ interface Feast {
 
 ### `tonus.cantus(query?) -> Chant[]`
 
-Cross-corpus chant retrieval over GR, LA, LH, LU, and Hilde. Also accepts raw GABC input via the `gabc` field — when present, the corpus is bypassed and a single user `Chant` is returned. GABC input may be a notation body or a full GABC file (headers + `%%` + body); header values for `name`, `mode`, and `office-part` are extracted automatically. The `incipit`, `mode`, and `office` fields on the query override header values.
+Cross-corpus chant retrieval over GR, LA, LH, and LU. Also accepts raw GABC input via the `gabc` field — when present, the corpus is bypassed and a single user `Chant` is returned. GABC input may be a notation body or a full GABC file (headers + `%%` + body); header values for `name`, `mode`, and `office-part` are extracted automatically. The `incipit`, `mode`, and `office` fields on the query override header values.
 
 ```js
 tonus.cantus({ mode: 1, office: "an", source: "gr" });
@@ -207,8 +207,8 @@ Each feast carries two rank expressions: `rank` (simplified 1–4 scale, used fo
 Dates are UTC-canonical: build query dates from ISO strings (`new Date("2026-01-06")`) or `Date.UTC`, and read results with UTC getters or `toISOString()`. Local-time constructions like `new Date(2026, 0, 6)` resolve to different days depending on the machine's timezone.
 
 ```js
-tonus.festum();                    // today (resolved as the current UTC day)
-tonus.festum({ from: advent1, to: epiphany });          // range
+tonus.festum(); // today (resolved as the current UTC day)
+tonus.festum({ from: advent1, to: epiphany }); // range
 tonus.festum({ name: "Dominica I Adventus" });
 tonus.festum({ season: "ea" });
 tonus.festum({ rank: 4, marian: true });
@@ -272,14 +272,16 @@ tonus.psalmus({ psalm: "benedictus", mode: 8, intonation: false });
 Planetary ephemeris. Returns a sky snapshot with positional data for classical solar system bodies and angular aspects between them. Computes heliocentric and geocentric positions, apparent magnitude, phase, elongation, zodiac sign, and speed.
 
 Single moment (returns `Cosmos`):
+
 ```js
-tonus.caelum();                                      // now
+tonus.caelum(); // now
 tonus.caelum({ date: new Date(2026, 11, 25) });
 tonus.caelum({ feast: feasts[0] });
 tonus.caelum({ bodies: ["Sun", "Moon", "Jupiter"] });
 ```
 
 Time range (returns `Cosmos[]`):
+
 ```js
 tonus.caelum({
   from: new Date(2026, 11, 25),
@@ -296,14 +298,20 @@ interface CosmosQuery {
   feast?: Feast;
   from?: Date;
   to?: Date;
-  step?: number;        // days (1 = 86400000 ms), default 1
+  step?: number; // days (1 = 86400000 ms), default 1
   bodies?: BodyName[];
-  orbLimit?: number;    // max orb for aspect detection, degrees (default 8)
+  orbLimit?: number; // max orb for aspect detection, degrees (default 8)
 }
 
 type BodyName =
-  | "Sun" | "Moon" | "Mercury" | "Venus" | "Earth"
-  | "Mars" | "Jupiter" | "Saturn";
+  | "Sun"
+  | "Moon"
+  | "Mercury"
+  | "Venus"
+  | "Earth"
+  | "Mars"
+  | "Jupiter"
+  | "Saturn";
 ```
 
 **`Cosmos`**
@@ -344,32 +352,37 @@ tonus.temperamentum({ scale: "! meanquar.scl\n..." })          // Scala file
 
 **`TemperamentumOpts`**
 
-| Field       | Type               | Default         | Description                                                                                                                |
-| ----------- | ------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `tuning`    | `Tuning`           | `"pythagorean"` | Base temperament                                                                                                           |
-| `mode`      | `number \| "auto"` | `"auto"`        | Gregorian mode (1–8); `"auto"` resolves from chant, falls back to UT (C) with no modal rotation                            |
-| `a4`        | `number`           | `440`           | A4 reference frequency in Hz                                                                                               |
-| `root`      | `number`           | mode finalis    | Root pitch class override (0–11)                                                                                           |
-| `transpose` | `number`           | `0`             | Output semitone transposition                                                                                              |
-| `comma`     | `number \| string` | —               | Meantone comma (`0.25`, `"1/4"`, `"1/3"`). Only with `"meantone"` tuning                                                   |
-| `scale`     | `string \| string[]` | —             | Scala `.scl` file string or array of 7/12 ratio/cent values. Implies custom tuning; name extracted from Scala description  |
+| Field       | Type                 | Default         | Description                                                                                                               |
+| ----------- | -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `tuning`    | `Tuning`             | `"pythagorean"` | Base temperament                                                                                                          |
+| `mode`      | `number \| "auto"`   | `"auto"`        | Gregorian mode (1–8); `"auto"` resolves from chant, falls back to UT (C) with no modal rotation                           |
+| `a4`        | `number`             | `440`           | A4 reference frequency in Hz                                                                                              |
+| `root`      | `number`             | mode finalis    | Root pitch class override (0–11)                                                                                          |
+| `transpose` | `number`             | `0`             | Output semitone transposition                                                                                             |
+| `comma`     | `number \| string`   | —               | Meantone comma (`0.25`, `"1/4"`, `"1/3"`). Only with `"meantone"` tuning                                                  |
+| `scale`     | `string \| string[]` | —               | Scala `.scl` file string or array of 7/12 ratio/cent values. Implies custom tuning; name extracted from Scala description |
 
 **Tuning presets:**
 
-| Name | Description |
-|------|-------------|
-| `"pythagorean"` | Pure fifths (3/2), no tempering. Default |
-| `"meantone"` | Tempered fifths. `comma` controls amount (default 1/4) |
-| `"equal"` | 12-tone equal temperament |
-| `"ptolemy-intense"` | Ptolemy's intense diatonic (*syntonon*) — classical just intonation with pure major thirds (5/4) |
-| `"ptolemy-soft"` | Ptolemy's soft diatonic (*malakon*) — septimal tuning using the 7th harmonic (8/7 whole tone) |
-| `"ptolemy-equable"` | Ptolemy's equable diatonic (*homalon*) — undecimal tuning with neutral intervals (12/11 second) |
+| Name                | Description                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| `"pythagorean"`     | Pure fifths (3/2), no tempering. Default                                                         |
+| `"meantone"`        | Tempered fifths. `comma` controls amount (default 1/4)                                           |
+| `"equal"`           | 12-tone equal temperament                                                                        |
+| `"ptolemy-intense"` | Ptolemy's intense diatonic (_syntonon_) — classical just intonation with pure major thirds (5/4) |
+| `"ptolemy-soft"`    | Ptolemy's soft diatonic (_malakon_) — septimal tuning using the 7th harmonic (8/7 whole tone)    |
+| `"ptolemy-equable"` | Ptolemy's equable diatonic (_homalon_) — undecimal tuning with neutral intervals (12/11 second)  |
 
 Any other string is accepted as a custom tuning name (e.g. from a Scala file description).
 
 ```ts
-type Tuning = "pythagorean" | "meantone" | "equal"
-  | "ptolemy-intense" | "ptolemy-soft" | "ptolemy-equable"
+type Tuning =
+  | "pythagorean"
+  | "meantone"
+  | "equal"
+  | "ptolemy-intense"
+  | "ptolemy-soft"
+  | "ptolemy-equable"
   | string;
 type TemperamentumInput = BuiltinTuning | TemperamentumOpts;
 ```
@@ -448,7 +461,7 @@ score.imprint;             // pc/modal fingerprint (comparable with harmony.impr
 ```ts
 interface ScoreOpts {
   temperamentum?: Temperamentum;
-  pondus?: PondusInput;    // PondusStyle | PondusOpts
+  pondus?: PondusInput; // PondusStyle | PondusOpts
   accentus?: AccentusInput; // AccentusStyle | AccentusOpts
 }
 
@@ -517,14 +530,14 @@ interface ParseError {
 ```ts
 interface Pitch {
   midi: number;
-  pc: number;      // pitch class 0–11
+  pc: number; // pitch class 0–11
   oct: number;
   acc: -1 | 0 | 1; // flat, natural, sharp
-  spn: string;     // scientific pitch name, e.g. "D4"
-  hz: number;      // frequency in Hz (through the Scale)
-  offset: number;  // cents from 12-TET
-  bend: number;    // 14-bit MIDI pitch bend, 8192 = center
-  ratio: number;   // Scale ratio for this pc
+  spn: string; // scientific pitch name, e.g. "D4"
+  hz: number; // frequency in Hz (through the Scale)
+  offset: number; // cents from 12-TET
+  bend: number; // 14-bit MIDI pitch bend, 8192 = center
+  ratio: number; // Scale ratio for this pc
 }
 ```
 
@@ -536,10 +549,10 @@ The score engine's unified `Note` composes four concerns into sub-objects. Prese
 
 ```ts
 interface Note {
-  pitch: Pitch;           // tuned identity
-  step: Step;             // modal/Guidonian annotation
+  pitch: Pitch; // tuned identity
+  step: Step; // modal/Guidonian annotation
   performance: Performance; // interpretation (velocity, duration, rhythmicShape, rhythmicIndex)
-  context: Context;       // position, lyric, ornamentation
+  context: Context; // position, lyric, ornamentation
 }
 
 // Solesmes compound-beat classification. A compound beat is the group of notes
@@ -553,22 +566,22 @@ interface Note {
 type ArsisThesis = "arsic" | "thetic";
 
 interface Performance {
-  velocity: number;      // 0–1 shaping factor
+  velocity: number; // 0–1 shaping factor
   duration: number;
-  rhythmicShape: ArsisThesis;  // shape of this note's compound beat (shared across group)
-  rhythmicIndex: number;        // 1-based position within the compound beat
+  rhythmicShape: ArsisThesis; // shape of this note's compound beat (shared across group)
+  rhythmicIndex: number; // 1-based position within the compound beat
 }
 
 interface Context {
   lyric: string;
-  vowel: string;                                         // from selectVowel(lyric)
+  vowel: string; // from selectVowel(lyric)
   syllableIndex: number;
   ictus: boolean;
   accidentalSource: "none" | "state" | "explicit";
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
-  weight: number;                                        // articulation weight
+  weight: number; // articulation weight
 }
 ```
 
@@ -661,7 +674,14 @@ interface Interval {
 `Step` is modal/Guidonian annotation for a pitch class. Returned by `temperamentum.gradus()` and nested as `note.step` in the score engine. Carries no tuning data — that's on `Pitch`.
 
 ```ts
-type Finger = "wrist" | "palm" | "thumb" | "index" | "middle" | "ring" | "pinky";
+type Finger =
+  | "wrist"
+  | "palm"
+  | "thumb"
+  | "index"
+  | "middle"
+  | "ring"
+  | "pinky";
 type Region = "base" | "mid" | "tip" | "top";
 
 interface StepVariant {
@@ -670,14 +690,14 @@ interface StepVariant {
 }
 
 interface Step {
-  pc: number;                                       // pitch class 0–11
-  name: string;                                     // "d" (Guidonian) or SPN letter fallback
-  compound: string | null;                          // "Delasolre"; null out of gamut
+  pc: number; // pitch class 0–11
+  name: string; // "d" (Guidonian) or SPN letter fallback
+  compound: string | null; // "Delasolre"; null out of gamut
   hexachord: "durum" | "naturale" | "molle" | null;
-  solmization: string | null;                       // null out of gamut
-  variants: StepVariant[];                          // available mutations across hexachords
+  solmization: string | null; // null out of gamut
+  variants: StepVariant[]; // available mutations across hexachords
   hand: { finger: Finger; region: Region } | null;
-  degree: number | null;                            // 1–7 diatonic degree in mode
+  degree: number | null; // 1–7 diatonic degree in mode
   role: "finalis" | "tenor" | "other" | null;
 }
 ```
@@ -688,8 +708,8 @@ interface Step {
 
 ```ts
 interface RatioResult {
-  ratio: number;   // decimal frequency ratio
-  cents: number;   // interval in cents
+  ratio: number; // decimal frequency ratio
+  cents: number; // interval in cents
   display: string; // colon notation, e.g. "3:2"
 }
 ```
@@ -789,8 +809,8 @@ interface ChantTabulaRow {
   // Step fields
   degree: number | null;
   role: NoteRole;
-  name: string | null;           // Guidonian short name
-  fullName: string | null;       // Guidonian compound name
+  name: string | null; // Guidonian short name
+  fullName: string | null; // Guidonian compound name
   hand: { finger: string; region: string } | null;
   hexachord: "durum" | "naturale" | "molle" | null;
   solfege: string | null;
@@ -818,21 +838,21 @@ interface HarmonyTabulaRow {
   spn: string;
   hz: number;
 
-  presence: number;      // 0–1
-  motion: number;        // 0–1
-  velocity: number;      // 0–127 MIDI byte
+  presence: number; // 0–1
+  motion: number; // 0–1
+  velocity: number; // 0–127 MIDI byte
 
   vowelGreek: string;
   vowelPhonetic: string;
   vowelName: string;
 
-  zodiac: number;        // 0–11
+  zodiac: number; // 0–11
   sign: string;
   retrograde: boolean;
-  elongation: number;    // deg from Sun
+  elongation: number; // deg from Sun
   magnitude: number;
 
-  aspectCount: number;   // number of aspects this body participates in
+  aspectCount: number; // number of aspects this body participates in
 }
 ```
 
@@ -843,8 +863,8 @@ interface HarmonyTabulaRow {
 Both `Score` and `Harmony` expose an `imprint: Imprint` property. Same shape, computed from different inputs: chant phrases in the Score case (unweighted pc counts), voiced planetary bodies in the Harmony case (presence-weighted). Comparable between the two.
 
 ```js
-score.imprint.modalAffinity[0];    // best-fitting mode for this chant
-harmony.imprint.modalAffinity[0];  // best-fitting mode for this moment of sky
+score.imprint.modalAffinity[0]; // best-fitting mode for this chant
+harmony.imprint.modalAffinity[0]; // best-fitting mode for this moment of sky
 
 // Old `modalConformance(declaredMode)` is now:
 const declared = parseInt(score.chant.mode, 10);
@@ -855,28 +875,28 @@ score.imprint.modalAffinity.find((m) => m.mode === declared).score;
 
 ```ts
 interface Imprint {
-  pcDistribution: Record<number, number>;  // fractions sum to 1
-  attractors: Attractor[];                  // top pitch classes, tuned
-  vowelAttractors: VowelAttractor[];        // vowel-weighted resonances, tuned
-  modalAffinity: ModalAffinity[];            // all 8 modes ranked by fit
+  pcDistribution: Record<number, number>; // fractions sum to 1
+  attractors: Attractor[]; // top pitch classes, tuned
+  vowelAttractors: VowelAttractor[]; // vowel-weighted resonances, tuned
+  modalAffinity: ModalAffinity[]; // all 8 modes ranked by fit
 }
 
 interface Attractor {
-  pc: number;       // pitch class 0–11
-  weight: number;   // normalized 0–1
-  pitch: Pitch;     // tuned through the score/harmony's temperamentum
+  pc: number; // pitch class 0–11
+  weight: number; // normalized 0–1
+  pitch: Pitch; // tuned through the score/harmony's temperamentum
 }
 
 interface VowelAttractor {
-  vowel: string;    // "a" | "e" | "i" | "o" | "u"
-  weight: number;   // fraction of total vowel weight
-  pitch: Pitch;     // the vowel's most-associated tuned pitch
+  vowel: string; // "a" | "e" | "i" | "o" | "u"
+  weight: number; // fraction of total vowel weight
+  pitch: Pitch; // the vowel's most-associated tuned pitch
 }
 
 interface ModalAffinity {
-  mode: number;     // 1–8
-  alias: string;    // "Dorian" | "Hypodorian" | …
-  score: number;    // pc-distribution weight against mode's structural tones
+  mode: number; // 1–8
+  alias: string; // "Dorian" | "Hypodorian" | …
+  score: number; // pc-distribution weight against mode's structural tones
 }
 ```
 
@@ -901,13 +921,17 @@ interface Prosody {
   cadenceDistribution: CadenceDistribution;
 }
 
-interface NoteRange { min: number; max: number; span: number; }
+interface NoteRange {
+  min: number;
+  max: number;
+  span: number;
+}
 
 interface RhythmicProfile {
-  arsic: number;         // count of arsic notes across the score
-  thetic: number;        // count of thetic notes across the score
-  avgGroupSize: number;  // mean notes per compound beat
-  maxGroupSize: number;  // largest compound beat observed
+  arsic: number; // count of arsic notes across the score
+  thetic: number; // count of thetic notes across the score
+  avgGroupSize: number; // mean notes per compound beat
+  maxGroupSize: number; // largest compound beat observed
 }
 
 interface CadenceDistribution {
@@ -983,22 +1007,21 @@ Voices the sky through a planetary-harmony doctrina. Pure data — no methods. E
 
 ```js
 const sky = tonus.caelum();
-tonus.harmonia(sky);                                           // Boethius + pythagorean default
-tonus.harmonia(sky, { doctrina: "ptolemy" });                  // Ptolemy doctrine
+tonus.harmonia(sky); // Boethius + pythagorean default
+tonus.harmonia(sky, { doctrina: "ptolemy" }); // Ptolemy doctrine
 tonus.harmonia(sky, { temperamentum: tonus.temperamentum("ptolemy-intense") });
 
 // Time-range analysis with per-cosmos frames
 const range = tonus.caelum({ from, to });
-const h = tonus.harmonia(range);  // h.frames is populated
+const h = tonus.harmonia(range); // h.frames is populated
 ```
-
 
 **`HarmoniaOpts`**
 
 ```ts
 interface HarmoniaOpts {
-  temperamentum?: Temperamentum;        // default: pythagorean A440
-  doctrina?: Author;      // default: "boethius"
+  temperamentum?: Temperamentum; // default: pythagorean A440
+  doctrina?: Author; // default: "boethius"
 }
 
 type Author = "pythagoras" | "boethius" | "pliny" | "ptolemy";
@@ -1006,12 +1029,12 @@ type Author = "pythagoras" | "boethius" | "pliny" | "ptolemy";
 
 **Doctrines:**
 
-| Author | Source | Span | Notable |
-|--------|--------|------|---------|
-| `"pythagoras"` | via Plato, Republic X | 1 octave | Disjunct diatonic tetrachords (B durum); includes Fixed Stars |
-| `"boethius"` | De Institutione Musica | major 7th | Conjunct diatonic tetrachords (B molle); medieval default |
-| `"pliny"` | Naturalis Historia II.xx | 1 octave | Chromatic Dorian (distance-based); Earth = proslambanomenos |
-| `"ptolemy"` | Harmonics III | 2 octaves | Fixed tones of the Greater Perfect System |
+| Author         | Source                   | Span      | Notable                                                       |
+| -------------- | ------------------------ | --------- | ------------------------------------------------------------- |
+| `"pythagoras"` | via Plato, Republic X    | 1 octave  | Disjunct diatonic tetrachords (B durum); includes Fixed Stars |
+| `"boethius"`   | De Institutione Musica   | major 7th | Conjunct diatonic tetrachords (B molle); medieval default     |
+| `"pliny"`      | Naturalis Historia II.xx | 1 octave  | Chromatic Dorian (distance-based); Earth = proslambanomenos   |
+| `"ptolemy"`    | Harmonics III            | 2 octaves | Fixed tones of the Greater Perfect System                     |
 
 Historical coherence: `temperamentum("ptolemy-intense")` + `harmonia({ doctrina: "ptolemy" })` produces pure Ptolemaic intervals throughout — Sun→Jupiter is a pure 3/2, Sun→Saturn is a pure 2/1.
 
@@ -1020,16 +1043,15 @@ Historical coherence: `temperamentum("ptolemy-intense")` + `harmonia({ doctrina:
 ```ts
 interface Harmony {
   doctrina: Author;
-  doctrinaName: string;     // "Anicius Manlius Severinus Boethius"
-  date: Date;               // first cosmos's date
+  doctrinaName: string; // "Anicius Manlius Severinus Boethius"
+  date: Date; // first cosmos's date
   bodies: VoicedBody[];
   aspects: VoicedAspect[];
-  frames?: Frame[];         // only when input was an array of cosmos
+  frames?: Frame[]; // only when input was an array of cosmos
 
-  tabula: HarmonyTabulaRow[];  // flat iterable view
-  imprint: Imprint;             // shared analytical fingerprint
+  tabula: HarmonyTabulaRow[]; // flat iterable view
+  imprint: Imprint; // shared analytical fingerprint
 }
-
 
 interface VoicedPitch {
   pitch: Pitch;
@@ -1038,14 +1060,14 @@ interface VoicedPitch {
 
 interface VoicedBody extends Body {
   nota: VoicedPitch;
-  presence: number;        // 0–1 (visibility + brightness)
-  motion: number;          // 0–1 (normalized speed)
-  greekName: string;       // position in Greek tonal system
-  vowel: PlanetVowel;      // classical planetary vowel
+  presence: number; // 0–1 (visibility + brightness)
+  motion: number; // 0–1 (normalized speed)
+  greekName: string; // position in Greek tonal system
+  vowel: PlanetVowel; // classical planetary vowel
 }
 
 interface VoicedAspect extends Aspect {
-  interval: Interval;      // carries consonance; see Interval type
+  interval: Interval; // carries consonance; see Interval type
 }
 
 interface Frame {
@@ -1063,24 +1085,24 @@ Bodies not mapped in `PLANET_VOWELS` (Earth, Fixed Stars) are **not** voiced. Pl
 
 ### Planetary Vowels
 
-Each classical planet is mapped to one of the seven Greek vowels. Source: Godwin, *The Mystery of the Seven Vowels* (Phanes Press, 1991), drawing on Porphyry, Marcus Gnosticus, Demetrius, Nicomachus, Eusebius, and Barthélemy. The Moon→Saturn ordering matches Nicomachus (*Excerpta ex Nicomacho* 6).
+Each classical planet is mapped to one of the seven Greek vowels. Source: Godwin, _The Mystery of the Seven Vowels_ (Phanes Press, 1991), drawing on Porphyry, Marcus Gnosticus, Demetrius, Nicomachus, Eusebius, and Barthélemy. The Moon→Saturn ordering matches Nicomachus (_Excerpta ex Nicomacho_ 6).
 
-| Body | Greek | Name | Phonetic |
-| ---- | ----- | ---- | -------- |
-| Moon | Α / α | Alpha | a |
-| Mercury | Ε / ε | Epsilon | e |
-| Venus | Η / η | Eta | e |
-| Sun | Ι / ι | Iota | i |
-| Mars | Ο / ο | Omicron | o |
-| Jupiter | Υ / υ | Upsilon | u |
-| Saturn | Ω / ω | Omega | o |
+| Body    | Greek | Name    | Phonetic |
+| ------- | ----- | ------- | -------- |
+| Moon    | Α / α | Alpha   | a        |
+| Mercury | Ε / ε | Epsilon | e        |
+| Venus   | Η / η | Eta     | e        |
+| Sun     | Ι / ι | Iota    | i        |
+| Mars    | Ο / ο | Omicron | o        |
+| Jupiter | Υ / υ | Upsilon | u        |
+| Saturn  | Ω / ω | Omega   | o        |
 
 ```ts
 interface PlanetVowel {
-  greek: string;        // "Α"
-  greekLower: string;   // "α"
-  name: string;         // "Alpha"
-  modern: string;       // "A"
+  greek: string; // "Α"
+  greekLower: string; // "α"
+  name: string; // "Alpha"
+  modern: string; // "A"
   phonetic: "a" | "e" | "i" | "o" | "u";
   ipa: string;
 }
