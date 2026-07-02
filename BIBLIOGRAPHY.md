@@ -47,7 +47,7 @@ Secondary syntheses (taxonomy, ratio derivations, vowel attestations):
   attestations; the Moon→Saturn vowel order follows Nicomachus.
 
 Primary sources underlying the four doctrinae (as translated/analyzed in
-Godwin; see `docs/authors.md` for full derivations):
+Godwin; see `docs/theory/doctrines.md` for full derivations):
 
 - Boethius. *De institutione musica* I.27 (c. 524) — conjunct diatonic
   planetary scale, transmitting Nicomachus; the medieval standard.

@@ -24,7 +24,7 @@ const harmony = tonus.harmonia(sky);
 
 **[Interactive demo](https://jeffreypierce.github.io/tonus/)** — pick a
 date, see its feast, chants, sky, and voicing. Full reference:
-**[docs/API.md](docs/API.md)**.
+**[docs/api/](docs/api/README.md)**.
 
 ## Install
 

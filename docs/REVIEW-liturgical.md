@@ -120,7 +120,7 @@ difference is cosmetic, source-faithful, and accepted.
 The harmonia engine implements **musica universalis** on late-antique
 authority: four doctrinae (Pythagoras, Boethius — the default and the
 medieval standard —, Pliny, Ptolemy) with ratios derived in
-`docs/authors.md` from primary texts via Joscelyn Godwin's syntheses
+`docs/theory/doctrines.md` from primary texts via Joscelyn Godwin's syntheses
 (*Harmonies of Heaven and Earth* 1987, *The Harmony of the Spheres* 1993).
 Planetary vowels follow Nicomachus's Moon→Saturn ordering of the seven Greek
 vowels (Godwin, *The Mystery of the Seven Vowels*, 1991). The geocentric,
