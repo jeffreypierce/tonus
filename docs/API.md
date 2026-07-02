@@ -157,7 +157,9 @@ interface Feast {
   id: string;
   name: string;
   rank: Rank;
-  rankLabel: string;
+  rankLabel: string; // period label for the simplified rank, e.g. "Semiduplex"
+  gradus: string;    // authentic Tridentine rank from Divinum Officium,
+                     // e.g. "Duplex majus", "Feria privilegiata"
   season: Season;
   seasonLabel: string;
   seasonStart: Date;
@@ -199,6 +201,10 @@ tonus.cantus({
 ### `tonus.festum(query?) -> Feast[]`
 
 Calendar lookup. Returns all matching feasts sorted `day asc, rank desc`. For a date query, returns the primary feast and all concurrent feasts on that day in rank order. For a range query (`from`/`to`), iterates each day and flattens. With no date or range, scans the current liturgical year.
+
+Each feast carries two rank expressions: `rank` (simplified 1–4 scale, used for filtering and mass selection, labelled with period vocabulary in `rankLabel`) and `gradus`, the authentic Tridentine rank string extracted from the Divinum Officium `[Rank]` line — `"Duplex majus"`, `"Semiduplex II classis"`, `"Feria privilegiata"`, and so on. Gradus is taken from the default (pre-1960) rank line, so it reflects the older vocabulary that is continuous with medieval usage. Note: `gradus` here (feast rank) is unrelated to `Temper.gradus()` (Guidonian step) — the same Latin word serving two of its senses.
+
+Dates are UTC-canonical: build query dates from ISO strings (`new Date("2026-01-06")`) or `Date.UTC`, and read results with UTC getters or `toISOString()`. Local-time constructions like `new Date(2026, 0, 6)` resolve to different days depending on the machine's timezone.
 
 ```js
 tonus.festum({ date: new Date() });

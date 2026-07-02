@@ -18,12 +18,14 @@ export const SEASON_LABELS: Readonly<Record<Season, string>> = Object.freeze({
   sg: "Septuagesima",
 });
 
+// Period vocabulary for the simplified 1–4 scale. The precise per-feast term
+// ("Duplex majus", "Feria privilegiata", …) lives in Feast.gradus.
 export const RANK_LABELS: Readonly<Record<Rank, string>> = Object.freeze({
-  0: "Triduum",
-  1: "Solemnity (I class)",
-  2: "Feast (II class)",
-  3: "Memorial (III class)",
-  4: "Commemoration / Optional Memorial",
+  0: "Triduum Sacrum",
+  1: "Duplex I classis",
+  2: "Duplex II classis",
+  3: "Semiduplex",
+  4: "Simplex",
 });
 
 // ── BVM / Apostolic feast sets (keyed by DO stem: MM-DD for Sancti) ──
@@ -69,6 +71,7 @@ export interface Feast {
   name: string;
   rank: Rank;
   rankLabel: string;
+  gradus: string; // authentic Tridentine rank, e.g. "Duplex majus"
   season: Season;
   seasonLabel: string;
   seasonStart: Date;

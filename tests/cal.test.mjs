@@ -18,6 +18,26 @@ describe("getFeast", () => {
     assert.equal(feasts[0].name, "In Epiphania Domini");
   });
 
+  test("carries the authentic Tridentine gradus", () => {
+    const [epiphany] = getFeast({ date: new Date("2026-01-06") });
+    assert.equal(epiphany.gradus, "Duplex I classis");
+
+    // S. Hilarii (Jan 14): gradus from the default rank line ("Duplex"),
+    // not the 1960-rubric variant.
+    const hilary = getFeast({ date: new Date("2026-01-14") });
+    const s = hilary.find((f) => f.id === "01-14");
+    assert.equal(s?.gradus, "Duplex");
+  });
+
+  test("every feast has a non-empty gradus", () => {
+    const feasts = getFeast({ season: "ea" });
+    assert.ok(feasts.length > 0);
+    for (const f of feasts) {
+      assert.equal(typeof f.gradus, "string");
+      assert.ok(f.gradus.length > 0);
+    }
+  });
+
   test("returns empty array for a date with no feast entries", () => {
     const feasts = getFeast({ date: new Date("2026-07-15") });
     // Mid-July feria — may or may not have entries, but should not throw

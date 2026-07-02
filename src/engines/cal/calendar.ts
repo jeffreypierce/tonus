@@ -144,6 +144,7 @@ function calEntryToFeast(
     name: entry.name,
     rank: entry.rank as Rank,
     rankLabel: RANK_LABELS[entry.rank as Rank] ?? "Feria",
+    gradus: entry.gradus ?? RANK_LABELS[entry.rank as Rank] ?? "Feria",
     season: season.code,
     seasonLabel: SEASON_LABELS[season.code],
     seasonStart: season.start,
