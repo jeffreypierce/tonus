@@ -45,7 +45,7 @@ function verseToChant(
     pages: [],
     source: {
       book: "Psalterium",
-      year: new Date().getFullYear(),
+      year: new Date().getUTCFullYear(),
       editor: "tonus",
     },
   };

@@ -6,7 +6,7 @@ import { toMusicXML } from "../dist/engines/score/emitters/_archive/musicxml.js"
 
 describe("tonus namespace", () => {
   test("festum returns feasts for a date", () => {
-    const feasts = tonus.festum({ date: new Date(2026, 11, 25) });
+    const feasts = tonus.festum({ date: new Date("2026-12-25") });
     assert.ok(feasts.length > 0);
     assert.equal(feasts[0].name, "In Nativitate Domini");
   });
@@ -37,7 +37,7 @@ describe("tonus namespace", () => {
   });
 
   test("proprium returns proper chants for a feast", () => {
-    const feasts = tonus.festum({ date: new Date(2026, 11, 25) });
+    const feasts = tonus.festum({ date: new Date("2026-12-25") });
     const propers = tonus.proprium({ feast: feasts });
     assert.ok(propers.length > 0);
   });
@@ -66,7 +66,7 @@ describe("tonus namespace", () => {
   });
 
   test("full pipeline: feast → proprium → ordo → midi", () => {
-    const feasts = tonus.festum({ date: new Date(2026, 11, 25) });
+    const feasts = tonus.festum({ date: new Date("2026-12-25") });
     const propers = tonus.proprium({ feast: feasts, office: "in" });
     assert.ok(propers.length > 0);
     const score = tonus.cantio(propers[0]);

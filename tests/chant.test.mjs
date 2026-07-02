@@ -63,7 +63,7 @@ describe("getChants", () => {
 
 describe("getPropers", () => {
   test("returns proper chants for a feast", () => {
-    const feasts = getFeast({ date: new Date(2026, 11, 25) });
+    const feasts = getFeast({ date: new Date("2026-12-25") });
     const propers = getPropers({ feast: feasts });
     assert.ok(propers.length > 0);
   });
@@ -91,13 +91,13 @@ describe("getOrdinary", () => {
 
 describe("getHour", () => {
   test("returns office chants for laudes", () => {
-    const feasts = getFeast({ date: new Date(2026, 11, 25) });
+    const feasts = getFeast({ date: new Date("2026-12-25") });
     const chants = getHour({ feast: feasts, hour: "laudes" });
     assert.ok(chants.length > 0);
   });
 
   test("returns office chants for vesperae", () => {
-    const feasts = getFeast({ date: new Date(2026, 11, 25) });
+    const feasts = getFeast({ date: new Date("2026-12-25") });
     const chants = getHour({ feast: feasts, hour: "vesperae" });
     assert.ok(chants.length > 0);
   });

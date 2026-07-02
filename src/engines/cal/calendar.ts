@@ -45,11 +45,11 @@ export function getAnchors(year: number): RuleAnchors {
     septuagesima: subDays(easter, 63),
     pentecost: addDays(easter, 49),
     ascension: addDays(easter, 39),
-    adventFirstSunday: firstSundayOnOrAfter(new Date(year, 10, 27)),
-    gaudete: addDays(firstSundayOnOrAfter(new Date(year, 10, 27)), 14),
-    christmas: startOfDay(new Date(year, 11, 25)),
-    epiphany: startOfDay(new Date(year, 0, 6)),
-    baptism: nextSunday(new Date(year, 0, 7)),
+    adventFirstSunday: firstSundayOnOrAfter(new Date(Date.UTC(year, 10, 27))),
+    gaudete: addDays(firstSundayOnOrAfter(new Date(Date.UTC(year, 10, 27))), 14),
+    christmas: new Date(Date.UTC(year, 11, 25)),
+    epiphany: new Date(Date.UTC(year, 0, 6)),
+    baptism: nextSunday(new Date(Date.UTC(year, 0, 7))),
   };
 
   _anchorCache.set(year, anchors);
@@ -77,7 +77,7 @@ export function buildCalendar(year: number): Map<string, CalEntry[]> {
 }
 
 function findSeason(date: Date): { code: Season; start: Date; end: Date } {
-  const year = date.getFullYear();
+  const year = date.getUTCFullYear();
   const a = getAnchors(year);
   const prev = getAnchors(year - 1);
   const next = getAnchors(year + 1);
@@ -111,7 +111,7 @@ function findSeason(date: Date): { code: Season; start: Date; end: Date } {
 }
 
 function selectMasses(feast: CalEntry, season: Season, date: Date): number[] {
-  const dowCode = date.getDay() === 0 ? "dominica" : "feria";
+  const dowCode = date.getUTCDay() === 0 ? "dominica" : "feria";
   const requireBvm = BVM_FEAST_IDS.has(feast.id);
   const desiredRank = feast.rank;
   // Treat "ot" and "ap" as equivalent (both Ordinary Time).
@@ -149,7 +149,7 @@ function calEntryToFeast(
     seasonStart: season.start,
     seasonEnd: season.end,
     date: d,
-    weekday: d.getDay(),
+    weekday: d.getUTCDay(),
     masses: selectMasses(entry, season.code, d),
     marian: BVM_FEAST_IDS.has(id),
     apostolic: APOSTOLIC_FEAST_IDS.has(id),
@@ -160,7 +160,7 @@ function feastsForDate(date: Date): Feast[] {
   const d = startOfDay(date);
   const season = findSeason(d);
   const key = isoDate(d);
-  const entries = buildCalendar(d.getFullYear()).get(key);
+  const entries = buildCalendar(d.getUTCFullYear()).get(key);
   if (!entries?.length) return [];
   return entries.map((e) => calEntryToFeast(e, season, d));
 }
@@ -191,7 +191,7 @@ export function getFeast(query?: FeastQuery): Feast[] {
   } else {
     // Full calendar scan for the current liturgical year range
     const now = new Date();
-    const year = now.getFullYear();
+    const year = now.getUTCFullYear();
     const anchors = getAnchors(year);
     const startDate = anchors.adventFirstSunday;
     const endAnchors = getAnchors(year + 1);

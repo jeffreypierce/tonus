@@ -24,17 +24,17 @@ export function isoDate(date: Date): string {
 }
 
 export function startOfDay(date: Date): Date {
-  // Use UTC parts to avoid DST issues with dates created from ISO strings
-  // like new Date("2025-12-25") (UTC midnight).
+  // Canonical form is UTC midnight, so dates from ISO strings like
+  // new Date("2025-12-25") behave identically in every timezone.
   const y = date.getUTCFullYear(),
     m = date.getUTCMonth(),
     d = date.getUTCDate();
-  return new Date(y, m, d);
+  return new Date(Date.UTC(y, m, d));
 }
 
 export function addDays(date: Date, days: number): Date {
   const d = new Date(date);
-  d.setDate(d.getDate() + days);
+  d.setUTCDate(d.getUTCDate() + days);
   return d;
 }
 
@@ -44,18 +44,18 @@ export function subDays(date: Date, days: number): Date {
 
 export function firstSundayOnOrAfter(date: Date): Date {
   const d = startOfDay(date);
-  return addDays(d, (7 - d.getDay()) % 7);
+  return addDays(d, (7 - d.getUTCDay()) % 7);
 }
 
 export function nextSunday(date: Date): Date {
   const d = startOfDay(date);
-  return addDays(d, (7 - d.getDay()) % 7 || 7);
+  return addDays(d, (7 - d.getUTCDay()) % 7 || 7);
 }
 
 export function parseMonthDay(year: number, mmdd: string): Date {
   const [m, d] = mmdd.split("-").map(Number);
   if (!m || !d) throw new Error(`Invalid month-day: ${mmdd}`);
-  return new Date(year, m - 1, d);
+  return new Date(Date.UTC(year, m - 1, d));
 }
 
 // ── Easter ──
@@ -70,7 +70,7 @@ export function pascha(year: number): Date {
   const L = I - J;
   const month = 3 + t((L + 40) / 44);
   const day = L + 28 - 31 * t(month / 4);
-  return new Date(year, month - 1, day);
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 function paschaJulian(year: number): Date {
