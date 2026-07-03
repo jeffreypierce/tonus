@@ -20,7 +20,7 @@ import {
   type Season,
   type Dignitas,
   SEASON_LABELS,
-  ritusToDignitas,
+  entryDignitas,
   dignitasOrder,
   BVM_FEAST_IDS,
   APOSTOLIC_FEAST_IDS,
@@ -165,7 +165,7 @@ function calEntryToFeast(
   const id = entry.id ?? "";
   // All 642 entries carry a ritus; "Feria" is a defensive floor only.
   const ritus = entry.ritus ?? "Feria";
-  const dignitas = ritusToDignitas(ritus);
+  const dignitas = entryDignitas(id, ritus);
   return {
     id,
     name: entry.name,
@@ -185,7 +185,7 @@ function calEntryToFeast(
 
 // Precedence order of a raw CalEntry (for same-day sorting before conversion).
 function entryDignitasOrder(entry: CalEntry): number {
-  return dignitasOrder(ritusToDignitas(entry.ritus ?? "Feria"));
+  return dignitasOrder(entryDignitas(entry.id, entry.ritus ?? "Feria"));
 }
 
 function feastsForDate(date: Date): Feast[] {

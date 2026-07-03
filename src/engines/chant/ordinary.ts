@@ -117,6 +117,10 @@ function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
 }
 
 function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | null): OrdinaryChant[] {
+  // The Triduum has no Mass-ordinary cycle (Good Friday has no Mass; the
+  // Vigil's ordinary belongs to Easter). An explicitly pinned mass overrides.
+  if (feast.dignitas === "triduum" && pinMass == null) return [];
+
   const masses = pinMass != null
     ? (() => { const e = MASSES.get(pinMass); return e ? [e] : []; })()
     : resolveMasses(feast);

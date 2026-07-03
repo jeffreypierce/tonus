@@ -125,6 +125,30 @@ export function ritusToDignitas(ritus: string): Dignitas {
   return "feria"; // last resort; extractor coverage is 100%, so unreached
 }
 
+// ── Privileged Sundays (per-id dignity overrides) ──
+// DO's Tridentine ritus line under-specifies four privileged Sundays as plain
+// "Semiduplex"; their precedence lived only in DO's numeric rank, which tonus
+// does not use. Historically Advent I is a first-class Sunday (yields to
+// nothing) and the Septuagesima-block Sundays are second-class (yield only to
+// first- and second-class feasts) — the same Sunday classes DO itself encodes
+// for Lent ("Semiduplex I classis") and late Advent ("Semiduplex II classis").
+// `ritus` stays verbatim; only the derived dignitas is lifted.
+export const PRIVILEGED_SUNDAYS: Readonly<Record<string, Dignitas>> =
+  Object.freeze({
+    "Adv1-0": "semiduplex-i", // Dominica I Adventus
+    "Quadp1-0": "semiduplex-ii", // Dominica in Septuagesima
+    "Quadp2-0": "semiduplex-ii", // Dominica in Sexagesima
+    "Quadp3-0": "semiduplex-ii", // Dominica in Quinquagesima
+  });
+
+/**
+ * Dignitas for a calendar entry: the per-id privileged-Sunday override when
+ * one exists, otherwise the ritus reduction.
+ */
+export function entryDignitas(id: string | undefined, ritus: string): Dignitas {
+  return (id !== undefined ? PRIVILEGED_SUNDAYS[id] : undefined) ?? ritusToDignitas(ritus);
+}
+
 /** Precedence index (0 = highest). Use for sorting and comparison. */
 export function dignitasOrder(dignitas: Dignitas): number {
   return DIGNITAS_ORDER.indexOf(dignitas);

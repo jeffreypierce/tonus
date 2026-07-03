@@ -224,6 +224,26 @@ describe("dignitas reduction", () => {
     assert.ok(gf, `no Quad6 entry: ${feasts.map((f) => f.id).join(", ")}`);
     assert.equal(gf.dignitas, "triduum");
   });
+
+  test("Advent I is a privileged Sunday: outranks St. Andrew (Duplex II classis)", () => {
+    // 2025-11-30: Dominica I Adventus coincides with S. Andreæ Apostoli.
+    // DO's ritus line says plain "Semiduplex" for Adv1-0; the per-id override
+    // lifts it to semiduplex-i so the first-class Sunday wins the day.
+    const feasts = getFeast({ date: new Date("2025-11-30") });
+    assert.equal(feasts[0].id, "Adv1-0");
+    assert.equal(feasts[0].dignitas, "semiduplex-i");
+    assert.equal(feasts[0].ritus, "Semiduplex"); // ritus stays verbatim
+  });
+
+  test("Septuagesima is a privileged Sunday: outranks a plain Duplex feast", () => {
+    // 2026-02-01: Dominica in Septuagesima vs S. Ignatii (Duplex).
+    const feasts = getFeast({ date: new Date("2026-02-01") });
+    const first = feasts[0];
+    assert.equal(first.id, "Quadp1-0");
+    assert.equal(first.dignitas, "semiduplex-ii");
+    // A second-class Sunday still yields to first/second-class feasts:
+    assert.ok(dignitasOrder("duplex-ii") < dignitasOrder("semiduplex-ii"));
+  });
 });
 
 describe("season alignment (temporale)", () => {
