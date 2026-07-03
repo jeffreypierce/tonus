@@ -68,7 +68,7 @@ export function getHour(query?: OfficiumQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
 
   const feasts = toArray(query.feast);
-  const hour = query.hour;
+  const hour = query.hora;
 
   let results: Chant[];
 

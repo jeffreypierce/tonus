@@ -18,6 +18,18 @@ export const SEASON_LABELS: Readonly<Record<Season, string>> = Object.freeze({
   pent: "Time after Pentecost",
 });
 
+// Authentic Latin season names (the books' own headings). Feast.tempus
+// carries these; SEASON_LABELS above is the English reference map.
+export const TEMPUS_NAMES: Readonly<Record<Season, string>> = Object.freeze({
+  adv: "Tempus Adventus",
+  nat: "Tempus Nativitatis",
+  epi: "Tempus post Epiphaniam",
+  quadp: "Tempus Septuagesimæ",
+  quad: "Tempus Quadragesimæ",
+  pasc: "Tempus Paschale",
+  pent: "Tempus post Pentecosten",
+});
+
 // Penitential seasons: Gloria and (in quadp/quad) Alleluia are suppressed.
 export const PENITENTIAL_SEASONS: ReadonlySet<Season> = new Set<Season>([
   "adv",
@@ -25,14 +37,15 @@ export const PENITENTIAL_SEASONS: ReadonlySet<Season> = new Set<Season>([
   "quad",
 ]);
 
-// ── Feast dignity (dignitas) ──
+// ── Feast dignity (grade) ──
 // The authentic Tridentine rank (the "ritus" string) reduces to a canonical
-// ordered Dignitas. Ordering is classis-primary: a first-class day outranks
+// ordered Grade. Ordering is classis-primary: a first-class day outranks
 // any non-first-class feast regardless of the duplex/semiduplex axis, so a
 // plain Duplex feast never displaces a Lent Sunday (Semiduplex I classis).
-// (Named `dignitas`, not `gradus` — gradus is the Guidonian step on
-// Temperamentum. One word per concept.)
-export type Dignitas =
+// Register pattern: `grade` is the English-keyed machine code, `ritus` the
+// Latin-keyed authentic carrier (mirroring season/tempus). English `grade`
+// also keeps clear of Latin `gradus`, the Guidonian step on Temperamentum.
+export type Grade =
   | "triduum"
   | "duplex-i"
   | "duplex-majus-i"
@@ -50,8 +63,8 @@ export type Dignitas =
 
 // High → low precedence. Position in this array IS the dignity — earlier
 // outranks later. There is no separate numeric rank field; precedence is read
-// from this order via dignitasOrder / compareDignitas.
-export const DIGNITAS_ORDER: readonly Dignitas[] = [
+// from this order via gradeOrder / compareGrade.
+export const GRADE_ORDER: readonly Grade[] = [
   "triduum",
   "duplex-i",
   "duplex-majus-i",
@@ -68,10 +81,32 @@ export const DIGNITAS_ORDER: readonly Dignitas[] = [
   "feria",
 ];
 
+// Canonical Latin name per grade (display reference map, like SEASON_LABELS).
+// Feast objects don't carry this — `ritus` is the on-object Latin carrier;
+// use this map when the canonical grade name is wanted instead (it differs
+// from ritus only for octave compounds, the Triduum, and the privileged-
+// Sunday overrides).
+export const GRADE_NAMES: Readonly<Record<Grade, string>> = Object.freeze({
+  triduum: "Triduum Sacrum",
+  "duplex-i": "Duplex I classis",
+  "duplex-majus-i": "Duplex majus I classis",
+  "semiduplex-i": "Semiduplex I classis",
+  "feria-privilegiata": "Feria privilegiata",
+  "duplex-ii": "Duplex II classis",
+  "semiduplex-ii": "Semiduplex II classis",
+  "duplex-majus": "Duplex majus",
+  duplex: "Duplex",
+  semiduplex: "Semiduplex",
+  simplex: "Simplex",
+  "feria-major": "Feria major",
+  vigilia: "Vigilia",
+  feria: "Feria",
+});
+
 // Exact reduction of every ritus string the extractor produces to its
-// canonical Dignitas. Compounds ("… cum Octava …") reduce to their base
+// canonical Grade. Compounds ("… cum Octava …") reduce to their base
 // grade; the Triduum's privileged-feria ritus reduces to `triduum`.
-export const RITUS_TO_DIGNITAS: Readonly<Record<string, Dignitas>> =
+export const RITUS_TO_GRADE: Readonly<Record<string, Grade>> =
   Object.freeze({
     "Feria privilegiata Duplex I classis": "triduum",
     "Duplex I classis": "duplex-i",
@@ -98,7 +133,7 @@ export const RITUS_TO_DIGNITAS: Readonly<Record<string, Dignitas>> =
 // exact table above (future data). Longer patterns first so "Feria
 // privilegiata Duplex I classis" wins over "Feria privilegiata", and
 // "Duplex I classis" over "Duplex".
-const RITUS_PATTERNS: readonly [string, Dignitas][] = [
+const RITUS_PATTERNS: readonly [string, Grade][] = [
   ["Feria privilegiata Duplex I classis", "triduum"],
   ["Duplex majus I classis", "duplex-majus-i"],
   ["Duplex I classis", "duplex-i"],
@@ -115,12 +150,12 @@ const RITUS_PATTERNS: readonly [string, Dignitas][] = [
   ["Feria", "feria"],
 ];
 
-/** Reduce a Tridentine ritus string to its canonical Dignitas. */
-export function ritusToDignitas(ritus: string): Dignitas {
-  const exact = RITUS_TO_DIGNITAS[ritus];
+/** Reduce a Tridentine ritus string to its canonical Grade. */
+export function ritusToGrade(ritus: string): Grade {
+  const exact = RITUS_TO_GRADE[ritus];
   if (exact) return exact;
-  for (const [pattern, dignitas] of RITUS_PATTERNS) {
-    if (ritus.includes(pattern)) return dignitas;
+  for (const [pattern, grade] of RITUS_PATTERNS) {
+    if (ritus.includes(pattern)) return grade;
   }
   return "feria"; // last resort; extractor coverage is 100%, so unreached
 }
@@ -132,8 +167,8 @@ export function ritusToDignitas(ritus: string): Dignitas {
 // nothing) and the Septuagesima-block Sundays are second-class (yield only to
 // first- and second-class feasts) — the same Sunday classes DO itself encodes
 // for Lent ("Semiduplex I classis") and late Advent ("Semiduplex II classis").
-// `ritus` stays verbatim; only the derived dignitas is lifted.
-export const PRIVILEGED_SUNDAYS: Readonly<Record<string, Dignitas>> =
+// `ritus` stays verbatim; only the derived grade is lifted.
+export const PRIVILEGED_SUNDAYS: Readonly<Record<string, Grade>> =
   Object.freeze({
     "Adv1-0": "semiduplex-i", // Dominica I Adventus
     "Quadp1-0": "semiduplex-ii", // Dominica in Septuagesima
@@ -142,21 +177,21 @@ export const PRIVILEGED_SUNDAYS: Readonly<Record<string, Dignitas>> =
   });
 
 /**
- * Dignitas for a calendar entry: the per-id privileged-Sunday override when
+ * Grade for a calendar entry: the per-id privileged-Sunday override when
  * one exists, otherwise the ritus reduction.
  */
-export function entryDignitas(id: string | undefined, ritus: string): Dignitas {
-  return (id !== undefined ? PRIVILEGED_SUNDAYS[id] : undefined) ?? ritusToDignitas(ritus);
+export function entryGrade(id: string | undefined, ritus: string): Grade {
+  return (id !== undefined ? PRIVILEGED_SUNDAYS[id] : undefined) ?? ritusToGrade(ritus);
 }
 
 /** Precedence index (0 = highest). Use for sorting and comparison. */
-export function dignitasOrder(dignitas: Dignitas): number {
-  return DIGNITAS_ORDER.indexOf(dignitas);
+export function gradeOrder(grade: Grade): number {
+  return GRADE_ORDER.indexOf(grade);
 }
 
-/** Sort comparator: earlier in DIGNITAS_ORDER (higher dignity) sorts first. */
-export function compareDignitas(a: Dignitas, b: Dignitas): number {
-  return dignitasOrder(a) - dignitasOrder(b);
+/** Sort comparator: earlier in GRADE_ORDER (higher dignity) sorts first. */
+export function compareGrade(a: Grade, b: Grade): number {
+  return gradeOrder(a) - gradeOrder(b);
 }
 
 // ── BVM / Apostolic feast sets (keyed by DO stem: MM-DD for Sancti) ──
@@ -197,14 +232,17 @@ export const APOSTOLIC_FEAST_IDS: ReadonlySet<string> = new Set([
 ]);
 
 // ── Core interface ──
+// Field-name registers: a Latin key returns authentic Latin content (nomen,
+// ritus, grade, tempus); an English key returns a machine code or datum
+// (season, date, weekday, masses).
 export interface Feast {
   id: string;
-  name: string;
+  nomen: string;      // Latin feast name, e.g. "In Nativitate Domini"
   ritus: string;      // authentic Tridentine rank, e.g. "Duplex majus"
-  dignitas: Dignitas; // canonical grade the ritus reduces to; precedence via
-                      // DIGNITAS_ORDER (no separate numeric rank field)
-  season: Season;
-  seasonLabel: string;
+  grade: Grade; // canonical grade the ritus reduces to; precedence via
+                      // GRADE_ORDER (no separate numeric rank field)
+  season: Season;     // machine code (DO Tempora stem)
+  tempus: string;     // Latin season name, e.g. "Tempus Adventus"
   seasonStart: Date;
   seasonEnd: Date;
   date: Date;
@@ -218,9 +256,9 @@ export interface FeastQuery {
   date?: Date;
   from?: Date;
   to?: Date;
-  name?: string;
+  nomen?: string; // partial match, case-insensitive
   season?: Season;
-  dignitas?: Dignitas;
+  grade?: Grade;
   marian?: boolean;
   apostolic?: boolean;
 }

@@ -222,9 +222,9 @@ interface TonusOpts {
 interface Tonus {
   mode: number;
   differentia: string;
-  intonation: Pitch[];
-  mediant: Pitch[];
-  termination: Pitch[];
+  intonatio: Pitch[];   // opening intonation formula
+  mediatio: Pitch[];    // mediant cadence at the verse colon
+  terminatio: Pitch[];  // termination cadence (per differentia)
 }
 ```
 

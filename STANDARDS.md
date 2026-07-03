@@ -43,6 +43,8 @@ Typical module layout:
 | Thing | Convention | Example |
 |---|---|---|
 | Public API function | noun or short verb | `cantus`, `festum`, `temperamentum`, `ordo` |
+| Public field, Latin content | Latin key | `nomen`, `ritus`, `tempus`, `genus`, `modus` |
+| Public field, machine code/datum | English key | `season`, `grade`, `mode`, `date`, `masses` |
 | Engine function | camelCase verb | `getFeast`, `buildScore`, `detectAspects` |
 | Internal helper | camelCase | `resolveMasses`, `computeSpeed` |
 | Type / interface | PascalCase | `Feast`, `Body`, `ChantMetrics` |

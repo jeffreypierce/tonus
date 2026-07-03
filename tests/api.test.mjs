@@ -8,7 +8,7 @@ describe("tonus namespace", () => {
   test("festum returns feasts for a date", () => {
     const feasts = tonus.festum({ date: new Date("2026-12-25") });
     assert.ok(feasts.length > 0);
-    assert.equal(feasts[0].name, "In Nativitate Domini");
+    assert.equal(feasts[0].nomen, "In Nativitate Domini");
   });
 
   test("cantus returns chants by mode and office", () => {
@@ -49,7 +49,7 @@ describe("tonus namespace", () => {
 
   test("ordinarium is empty for the Triduum (no Mass-ordinary cycle)", () => {
     const goodFriday = tonus.festum({ date: new Date("2026-04-03") });
-    assert.equal(goodFriday[0].dignitas, "triduum");
+    assert.equal(goodFriday[0].grade, "triduum");
     assert.deepEqual(tonus.ordinarium({ feast: goodFriday[0] }), []);
     // A pinned mass still works (e.g. the Vigil borrowing Lux et origo):
     const pinned = tonus.ordinarium({ feast: goodFriday[0], mass: 1, ordinary: "ky" });

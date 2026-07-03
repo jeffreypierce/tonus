@@ -11,7 +11,7 @@ export const GR_SOURCE: Chant["source"] = {
   code: "gr",
 };
 
-export type ChantData = Omit<Chant, "source" | "officeLabel" | "modeLabel">;
+export type ChantData = Omit<Chant, "source" | "genus" | "modus">;
 
 export const GR_DATA: ChantData[] = [
   {

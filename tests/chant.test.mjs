@@ -92,13 +92,13 @@ describe("getOrdinary", () => {
 describe("getHour", () => {
   test("returns office chants for laudes", () => {
     const feasts = getFeast({ date: new Date("2026-12-25") });
-    const chants = getHour({ feast: feasts, hour: "laudes" });
+    const chants = getHour({ feast: feasts, hora: "laudes" });
     assert.ok(chants.length > 0);
   });
 
   test("returns office chants for vesperae", () => {
     const feasts = getFeast({ date: new Date("2026-12-25") });
-    const chants = getHour({ feast: feasts, hour: "vesperae" });
+    const chants = getHour({ feast: feasts, hora: "vesperae" });
     assert.ok(chants.length > 0);
   });
 });

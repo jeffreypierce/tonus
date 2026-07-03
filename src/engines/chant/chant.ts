@@ -8,7 +8,7 @@ import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
 import { LH_DATA, LH_SOURCE } from "../../data/lh.js";
 
-function modeLabel(mode: string | null): string | null {
+function modusOf(mode: string | null): string | null {
   return mode != null ? (MODE_LABELS[mode] ?? null) : null;
 }
 
@@ -53,9 +53,9 @@ function chantFromGABC(query: CantusQuery): Chant[] {
     incipit,
     gabc: body,
     office,
-    officeLabel: OFFICE_LABELS[office] ?? office,
+    genus: OFFICE_LABELS[office] ?? office,
     mode: mode ?? null,
-    modeLabel: modeLabel(mode ?? null),
+    modus: modusOf(mode ?? null),
     pages: [],
     source: { book: "User", year: null, editor: null, code: "user" },
   }];
@@ -65,8 +65,8 @@ function withLabels(c: ChantData, source: Chant["source"]): Chant {
   return {
     ...c,
     source,
-    officeLabel: OFFICE_LABELS[c.office as OfficeCode] ?? c.office,
-    modeLabel: modeLabel(c.mode),
+    genus: OFFICE_LABELS[c.office as OfficeCode] ?? c.office,
+    modus: modusOf(c.mode),
   };
 }
 

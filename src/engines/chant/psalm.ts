@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 import { PSALMS, type PsalmVerse } from "../../data/psalms.js";
 import { intone } from "./intone.js";
-import type { Chant, PsalmusQuery } from "./types.js";
+import { MODE_LABELS, type Chant, type PsalmusQuery } from "./types.js";
 
 const CANTICLE_NAMES: Record<string, number> = {
   benedictus: 231,
@@ -39,9 +39,9 @@ function verseToChant(
     incipit: v.half1.slice(0, 40),
     gabc,
     office: "ps",
-    officeLabel: "Psalmus",
+    genus: "Psalmus",
     mode: String(mode),
-    modeLabel: `Mode ${mode === 0 ? "P" : mode}`,
+    modus: mode === 0 ? "Tonus Peregrinus" : (MODE_LABELS[String(mode)] ?? `Modus ${mode}`),
     pages: [],
     source: {
       book: "Psalterium",
@@ -63,6 +63,6 @@ export function getPsalm(query?: PsalmusQuery): Chant[] {
 
   const mode = query.mode ?? 8;
   return verses.map((v) =>
-    verseToChant(v, mode, query.differentia, query.intonation),
+    verseToChant(v, mode, query.differentia, query.intonatio),
   );
 }

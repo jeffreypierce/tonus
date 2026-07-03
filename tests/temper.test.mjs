@@ -459,14 +459,14 @@ describe("modus", () => {
 });
 
 describe("tonus", () => {
-  test("returns psalm tone intonation, mediant, and termination as Notes", () => {
+  test("returns psalm tone intonatio, mediatio, and terminatio as Notes", () => {
     const t = buildTemper({ mode: 1 });
     const tone = t.tonus();
     assert.equal(tone.mode, 1);
-    assert.ok(tone.intonation.length > 0);
-    assert.ok(tone.mediant.length > 0);
-    assert.ok(tone.termination.length > 0);
-    assert.ok(typeof tone.intonation[0].hz === "number");
+    assert.ok(tone.intonatio.length > 0);
+    assert.ok(tone.mediatio.length > 0);
+    assert.ok(tone.terminatio.length > 0);
+    assert.ok(typeof tone.intonatio[0].hz === "number");
   });
 
   test("throws when mode is auto", () => {

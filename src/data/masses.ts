@@ -4,8 +4,8 @@
 // Mass 0 has two ad-lib variants (index 0a/0b); all others are single entries.
 import {
   type Season,
-  type Dignitas,
-  DIGNITAS_ORDER,
+  type Grade,
+  GRADE_ORDER,
 } from "../engines/cal/types.js";
 
 export interface MassEntry {
@@ -13,19 +13,19 @@ export interface MassEntry {
   mass: number; // 0–18
   title: string;
   seasons: Season[]; // liturgical seasons this mass serves
-  grades: Dignitas[]; // feast grades (dignities) this mass serves
+  grades: Grade[]; // feast grades (dignities) this mass serves
   days: ("dominica" | "feria")[];
   bvm: boolean; // BVM-specific mass
   credos: string[]; // allowed Credo numerals
   notes: string;
 }
 
-// Inclusive slice of DIGNITAS_ORDER from `high` (more solemn) to `low`.
+// Inclusive slice of GRADE_ORDER from `high` (more solemn) to `low`.
 // e.g. gradesFrom("duplex-i", "duplex-ii") lists every grade between them.
-function gradesFrom(high: Dignitas, low: Dignitas): Dignitas[] {
-  const hi = DIGNITAS_ORDER.indexOf(high);
-  const lo = DIGNITAS_ORDER.indexOf(low);
-  return DIGNITAS_ORDER.slice(hi, lo + 1);
+function gradesFrom(high: Grade, low: Grade): Grade[] {
+  const hi = GRADE_ORDER.indexOf(high);
+  const lo = GRADE_ORDER.indexOf(low);
+  return GRADE_ORDER.slice(hi, lo + 1);
 }
 
 // Ad libitum entries are not part of the numbered kyriale; they serve as a

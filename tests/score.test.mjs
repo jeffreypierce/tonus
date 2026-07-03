@@ -12,9 +12,9 @@ function makeChant(gabc, mode = "1") {
     incipit: "Test",
     gabc,
     office: "or",
-    officeLabel: "Ordinarium",
+    genus: "Ordinarium",
     mode,
-    modeLabel: "Mode I",
+    modus: "Modus I",
     pages: [],
     source: { book: "Test", year: null, editor: null },
   };

@@ -12,15 +12,15 @@ import {
 } from "./types.js";
 import {
   type Feast,
-  type Dignitas,
-  dignitasOrder,
+  type Grade,
+  gradeOrder,
   PENITENTIAL_SEASONS,
 } from "../cal/types.js";
 
 // A "high feast" (Duplex II classis or above) prefers the solemn kyriale
-// masses 1–9. Threshold expressed against DIGNITAS_ORDER, not a magic number.
-function isHighFeast(dignitas: Dignitas): boolean {
-  return dignitasOrder(dignitas) <= dignitasOrder("duplex-ii");
+// masses 1–9. Threshold expressed against GRADE_ORDER, not a magic number.
+function isHighFeast(grade: Grade): boolean {
+  return gradeOrder(grade) <= gradeOrder("duplex-ii");
 }
 
 const ORDINARY_OFFICES = new Set(Object.keys(ORDINARY_LABELS));
@@ -105,13 +105,13 @@ function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
     incipit: entry.incipit,
     gabc: entry.gabc,
     office: "or",
-    officeLabel: "Ordinarium",
+    genus: "Ordinarium",
     mode: entry.mode ? String(entry.mode) : null,
-    modeLabel: entry.mode ? (MODE_LABELS[String(entry.mode)] ?? null) : null,
+    modus: entry.mode ? (MODE_LABELS[String(entry.mode)] ?? null) : null,
     pages: [],
     source: { book: "Graduale Romanum", year: 1961, editor: "Solesmes", code: "gr" },
     ordinary,
-    ordinaryLabel: ORDINARY_LABELS[ordinary] ?? entry.incipit,
+    ordinarium: ORDINARY_LABELS[ordinary] ?? entry.incipit,
     mass: entry.mass ?? 0,
   };
 }
@@ -119,14 +119,14 @@ function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
 function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | null): OrdinaryChant[] {
   // The Triduum has no Mass-ordinary cycle (Good Friday has no Mass; the
   // Vigil's ordinary belongs to Easter). An explicitly pinned mass overrides.
-  if (feast.dignitas === "triduum" && pinMass == null) return [];
+  if (feast.grade === "triduum" && pinMass == null) return [];
 
   const masses = pinMass != null
     ? (() => { const e = MASSES.get(pinMass); return e ? [e] : []; })()
     : resolveMasses(feast);
   const massNumbers = masses.map((m) => m.mass);
   const mode = filterMode ?? null;
-  const highFeast = isHighFeast(feast.dignitas);
+  const highFeast = isHighFeast(feast.grade);
 
   const pick = (office: string): OrdinaryChant | null => {
     const entries = entriesForOffice(office, massNumbers);
@@ -155,7 +155,7 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
     const best = named ?? selectBestChant(credoEntries, mode, highFeast, massNumbers);
     if (best) {
       const cr = entryToOrdinaryChant(best);
-      cr.ordinaryLabel = `Credo ${credoCode}`;
+      cr.ordinarium = `Credo ${credoCode}`;
       results.push(cr);
     }
   }

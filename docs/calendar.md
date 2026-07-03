@@ -17,12 +17,12 @@ the current liturgical year (Advent to Advent).
 tonus.festum();                                  // today (current UTC day)
 tonus.festum({ date: new Date("2026-01-06") }); // Epiphany
 tonus.festum({ from: advent1, to: epiphany });  // range
-tonus.festum({ name: "Dominica I Adventus" });
+tonus.festum({ nomen: "Dominica I Adventus" });
 tonus.festum({ season: "pasc" });               // Paschaltide feasts
-tonus.festum({ dignitas: "duplex-i", marian: true });
+tonus.festum({ grade: "duplex-i", marian: true });
 ```
 
-## Rank: `ritus` and `dignitas`
+## Rank: `ritus` and `grade`
 
 Each feast carries two views of its rank:
 
@@ -33,21 +33,24 @@ Each feast carries two views of its rank:
   continuous with medieval usage — never from the 1960-rubric variants. For
   the ~18 great feasts with an octave, `ritus` is the only field that
   preserves the octave detail (communi / simplici / privilegiata).
-- **`dignitas`** — the canonical ordered grade the `ritus` reduces to. The
-  19 ritus strings collapse into 14 grades whose *order* encodes precedence;
-  this is what sorting, filtering, and mass selection read.
+- **`grade`** — the canonical ordered grade code the `ritus` reduces to.
+  The 19 ritus strings collapse into 14 grades whose *order* encodes
+  precedence; this is what sorting, filtering, and mass selection read.
 
-*Ritus* is what the book says; *dignitas* is where that ranks. `dignitas` is
-named to avoid `gradus`, which is reserved for the Guidonian step
-([`Temperamentum.gradus()`](tuning.md#step)).
+*Ritus* is what the book says; *grade* is where that ranks. The pair follows
+the register rule — English key carries the machine code, Latin key the
+authentic carrier — exactly like `season`/`tempus`. Canonical Latin grade
+names ("Triduum Sacrum", "Duplex I classis") live in the exported
+`GRADE_NAMES` map. English `grade` also keeps clear of Latin `gradus`, the
+Guidonian step ([`Temperamentum.gradus()`](tuning.md#step)).
 
 ### The dignity order
 
-`DIGNITAS_ORDER` runs highest → lowest. Ordering is **classis-primary**: a
+`GRADE_ORDER` runs highest → lowest. Ordering is **classis-primary**: a
 first-class day outranks any non-first-class feast regardless of the
 duplex/semiduplex axis, so a plain Duplex feast never displaces a Lent Sunday.
 
-| # | `dignitas` | reduces from `ritus` | who it is |
+| # | `grade` | reduces from `ritus` | who it is |
 | --- | --- | --- | --- |
 | 1 | `triduum` | Feria privilegiata Duplex I classis | Maundy Thu, Good Fri, Holy Sat |
 | 2 | `duplex-i` | Duplex I classis (+ octave variants) | Christmas, Easter, Pentecost |
@@ -64,15 +67,15 @@ duplex/semiduplex axis, so a plain Duplex feast never displaces a Lent Sunday.
 | 13 | `vigilia` | Vigilia | |
 | 14 | `feria` | Feria | ordinary weekdays |
 
-`dignitasOrder(d)` gives the 0-based index (0 = highest); `compareDignitas`
-is a sort comparator; `ritusToDignitas(s)` performs the reduction.
+`gradeOrder(g)` gives the 0-based index (0 = highest); `compareGrade` is a
+sort comparator; `ritusToGrade(s)` performs the reduction.
 
 **Privileged-Sunday override.** Divinum Officium's Tridentine ritus line
 under-specifies four privileged Sundays as plain `"Semiduplex"`: Advent I
 (historically first-class — it yields to nothing) and the three
 Septuagesima-block Sundays (second-class). Their precedence lived only in
 DO's numeric rank, which tonus does not use, so a small per-id override
-(`PRIVILEGED_SUNDAYS`) lifts their derived `dignitas` — Advent I to
+(`PRIVILEGED_SUNDAYS`) lifts their derived `grade` — Advent I to
 `semiduplex-i`, Septuagesima/Sexagesima/Quinquagesima to `semiduplex-ii` —
 matching the Sunday classes DO itself encodes for Lent and late Advent.
 `ritus` stays verbatim; without the override, St. Andrew would displace
@@ -80,18 +83,21 @@ Advent I Sunday whenever November 30 falls on it.
 
 ## Seasons (the temporale)
 
-Season codes are one-to-one with the Divinum Officium Tempora stems, so a
-date's season and the stem of any Tempora feast on it agree by construction:
+Each feast carries the pair `season` (machine code, one-to-one with the
+Divinum Officium Tempora stems, so a date's season and the stem of any
+Tempora feast on it agree by construction) and `tempus` (the books' own
+Latin season name). English display names live in the exported
+`SEASON_LABELS` map.
 
-| `season` | Label | Span | Stem |
+| `season` | `tempus` | English | Span |
 | --- | --- | --- | --- |
-| `adv` | Advent | Advent I Sunday → Christmas | Adv |
-| `nat` | Christmastide | Christmas → 1st Sunday after Epiphany | Nat |
-| `epi` | Time after Epiphany | there → Septuagesima | Epi |
-| `quadp` | Septuagesima | Septuagesima Sunday → Ash Wednesday | Quadp |
-| `quad` | Lent | Ash Wednesday → Easter | Quad |
-| `pasc` | Paschaltide | Easter → Trinity Sunday (Pentecost octave included) | Pasc |
-| `pent` | Time after Pentecost | Trinity Sunday → next Advent | Pent |
+| `adv` | Tempus Adventus | Advent | Advent I Sunday → Christmas |
+| `nat` | Tempus Nativitatis | Christmastide | Christmas → 1st Sunday after Epiphany |
+| `epi` | Tempus post Epiphaniam | Time after Epiphany | there → Septuagesima |
+| `quadp` | Tempus Septuagesimæ | Septuagesima | Septuagesima Sunday → Ash Wednesday |
+| `quad` | Tempus Quadragesimæ | Lent | Ash Wednesday → Easter |
+| `pasc` | Tempus Paschale | Paschaltide | Easter → Trinity Sunday (Pentecost octave included) |
+| `pent` | Tempus post Pentecosten | Time after Pentecost | Trinity Sunday → next Advent |
 
 Two boundary decisions follow the data: the Pentecost octave stays **paschal**
 (so the Vidi aquam sprinkle covers it), and the weeks after Epiphany run until
@@ -122,13 +128,13 @@ Immaculate Heart 1944). tonus keeps these rather than adjudicate each feast's
 century; the honest description is "Tridentine Roman, continuous with medieval
 practice," not "a medieval calendar."
 
-**Why two rank fields.** The `dignitas` grade is the computable workhorse —
+**Why two rank fields.** The `grade` code is the computable workhorse —
 ordered, filterable, the key to mass selection. But collapsing to it would
 discard the octave qualifiers that distinguish, say, Christmas ("Duplex I
 classis cum Octava privilegiata") from an ordinary Duplex I classis. Only 18 of
 642 feasts carry such a compound `ritus`, but they are the great feasts, and
 the octave governs the following week — so `ritus` earns its place as the
-faithful record, `dignitas` as the usable index.
+faithful record, `grade` as the usable index.
 
 **Rank ordering is classis-primary.** In the occurrence rules a first-class day
 outranks a non-first-class feast irrespective of the duplex/semiduplex axis —
@@ -141,7 +147,7 @@ misorder the penitential Sundays.
 ```ts
 type Season = "adv" | "nat" | "epi" | "quadp" | "quad" | "pasc" | "pent";
 
-type Dignitas =
+type Grade =
   | "triduum" | "duplex-i" | "duplex-majus-i" | "semiduplex-i"
   | "feria-privilegiata" | "duplex-ii" | "semiduplex-ii" | "duplex-majus"
   | "duplex" | "semiduplex" | "simplex" | "feria-major" | "vigilia" | "feria";
@@ -150,20 +156,20 @@ interface FeastQuery {
   date?: Date;
   from?: Date;
   to?: Date;
-  name?: string;       // partial match, case-insensitive
+  nomen?: string;      // partial match, case-insensitive
   season?: Season;
-  dignitas?: Dignitas;
+  grade?: Grade;
   marian?: boolean;
   apostolic?: boolean;
 }
 
 interface Feast {
   id: string;         // "MM-DD" (sancti) or DO stem, e.g. "Adv1-0" (tempora)
-  name: string;       // "In Nativitate Domini"
+  nomen: string;      // Latin feast name, "In Nativitate Domini"
   ritus: string;      // authentic Tridentine rank, incl. octave detail
-  dignitas: Dignitas; // canonical ordered grade; precedence via DIGNITAS_ORDER
+  grade: Grade;       // canonical grade code; precedence via GRADE_ORDER
   season: Season;
-  seasonLabel: string;
+  tempus: string;     // Latin season name, "Tempus Adventus"
   seasonStart: Date;
   seasonEnd: Date;
   date: Date;

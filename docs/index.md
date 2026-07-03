@@ -22,6 +22,21 @@ import tonus from "tonus";
 
 ## Conventions
 
+**Latin and English in the API.** The language of a key tells you the
+register of its value. A **Latin field returns authentic Latin content** —
+`nomen` ("In Nativitate Domini"), `ritus` ("Duplex majus"),
+`tempus` ("Tempus Adventus"), `genus` ("Antiphona"), `modus` ("Modus I"),
+`ordinarium` ("Kyrie eleison"), `incipit`, `differentia`, `tabula`,
+`pondus`, `accentus`, `hora`. An **English field returns a machine code or
+datum** — `season: "adv"`, `grade: "duplex-i"`, `mode: "1"`, `office: "an"`,
+`date`, `masses`, `velocity`, `midi`, `hz`. Where both registers exist for one concept they
+form a pair (`season`/`tempus`, `grade`/`ritus`, `mode`/`modus`,
+`name`/`nomen` on `Body`).
+Display/reference strings live in exported maps (`SEASON_LABELS`,
+`GRADE_NAMES`), not on the objects. The astronomy layer (`retrograde`, `magnitude`, `elongation`) is
+deliberately modern English — an accurate sky, voiced through period
+doctrine. Do not Latinize the machine register.
+
 **Query functions** are nouns — they name what you want and return arrays.
 Empty matches return `[]`, never `null`. Calendar results sort
 `day asc, dignity desc`; chant results sort by rank then incipit.

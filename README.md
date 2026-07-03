@@ -8,8 +8,8 @@ harmony of the spheres — one API, ten Latin verbs.
 import tonus from "tonus";
 
 const [feast] = tonus.festum({ date: new Date("2026-12-25") });
-// { id: "12-25", name: "In Nativitate Domini",
-//   ritus: "Duplex I classis", dignitas: "duplex-i", season: "nat", … }
+// { id: "12-25", nomen: "In Nativitate Domini",
+//   ritus: "Duplex I classis", grade: "duplex-i", tempus: "Tempus Nativitatis", … }
 
 const [introit] = tonus.proprium({ feast, office: "in" });
 // "Puer natus est", mode 7, GABC notation from the Liber Usualis

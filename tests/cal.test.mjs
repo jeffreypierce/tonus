@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { getFeast } from "../dist/engines/cal/calendar.js";
 import { pascha } from "../dist/engines/cal/date.js";
 import {
-  DIGNITAS_ORDER,
-  RITUS_TO_DIGNITAS,
-  ritusToDignitas,
-  dignitasOrder,
+  GRADE_ORDER,
+  RITUS_TO_GRADE,
+  ritusToGrade,
+  gradeOrder,
 } from "../dist/engines/cal/types.js";
 
 describe("getFeast", () => {
@@ -15,8 +15,8 @@ describe("getFeast", () => {
     assert.ok(feasts.length > 0);
     assert.equal(feasts[0].id, "12-25");
     // Christmas is Duplex I classis with a privileged octave; the octave
-    // detail survives in ritus, the ordered grade in dignitas.
-    assert.equal(feasts[0].dignitas, "duplex-i");
+    // detail survives in ritus, the ordered grade in grade.
+    assert.equal(feasts[0].grade, "duplex-i");
     assert.match(feasts[0].ritus, /^Duplex I classis/);
   });
 
@@ -24,7 +24,7 @@ describe("getFeast", () => {
     const feasts = getFeast({ date: new Date("2026-01-06") });
     assert.ok(feasts.length > 0);
     assert.equal(feasts[0].id, "01-06");
-    assert.equal(feasts[0].name, "In Epiphania Domini");
+    assert.equal(feasts[0].nomen, "In Epiphania Domini");
   });
 
   test("carries the authentic Tridentine ritus", () => {
@@ -46,13 +46,13 @@ describe("getFeast", () => {
       `expected Nat2-0 in: ${feasts.map((f) => f.id).join(", ")}`);
   });
 
-  test("every feast has a non-empty ritus and a valid dignitas", () => {
+  test("every feast has a non-empty ritus and a valid grade", () => {
     const feasts = getFeast({ season: "pasc" });
     assert.ok(feasts.length > 0);
     for (const f of feasts) {
       assert.equal(typeof f.ritus, "string");
       assert.ok(f.ritus.length > 0);
-      assert.ok(DIGNITAS_ORDER.includes(f.dignitas), `bad dignitas: ${f.dignitas}`);
+      assert.ok(GRADE_ORDER.includes(f.grade), `bad grade: ${f.grade}`);
     }
   });
 
@@ -68,10 +68,10 @@ describe("getFeast", () => {
     for (const f of feasts) assert.equal(f.season, "pasc");
   });
 
-  test("filters feasts by dignitas", () => {
-    const feasts = getFeast({ dignitas: "duplex-i" });
+  test("filters feasts by grade", () => {
+    const feasts = getFeast({ grade: "duplex-i" });
     assert.ok(feasts.length > 0);
-    for (const f of feasts) assert.equal(f.dignitas, "duplex-i");
+    for (const f of feasts) assert.equal(f.grade, "duplex-i");
   });
 
   test("filters marian feasts when marian: true", () => {
@@ -87,9 +87,9 @@ describe("getFeast", () => {
   });
 
   test("searches feasts by partial name match", () => {
-    const feasts = getFeast({ name: "Adventus" });
+    const feasts = getFeast({ nomen: "Adventus" });
     assert.ok(feasts.length > 0);
-    for (const f of feasts) assert.ok(f.name.toLowerCase().includes("adventus"));
+    for (const f of feasts) assert.ok(f.nomen.toLowerCase().includes("adventus"));
   });
 
   test("returns feasts sorted by date ascending then dignity descending", () => {
@@ -100,7 +100,7 @@ describe("getFeast", () => {
       assert.ok(
         prev.date < curr.date ||
           (prev.date.getTime() === curr.date.getTime() &&
-            dignitasOrder(prev.dignitas) <= dignitasOrder(curr.dignitas)),
+            gradeOrder(prev.grade) <= gradeOrder(curr.grade)),
       );
     }
   });
@@ -139,10 +139,10 @@ describe("getFeast range", () => {
     const feasts = getFeast({
       from: new Date("2026-12-01"),
       to: new Date("2026-12-31"),
-      dignitas: "duplex-i",
+      grade: "duplex-i",
     });
     assert.ok(feasts.length > 0);
-    assert.ok(feasts.every((f) => f.dignitas === "duplex-i"));
+    assert.ok(feasts.every((f) => f.grade === "duplex-i"));
   });
 
   test("throws when to < from", () => {
@@ -191,38 +191,38 @@ describe("timezone stability", () => {
   });
 });
 
-describe("dignitas reduction", () => {
-  test("every ritus string in the table reduces to a valid dignitas", () => {
-    for (const [ritus, expected] of Object.entries(RITUS_TO_DIGNITAS)) {
-      assert.equal(ritusToDignitas(ritus), expected, `ritus: ${ritus}`);
-      assert.ok(DIGNITAS_ORDER.includes(expected));
+describe("grade reduction", () => {
+  test("every ritus string in the table reduces to a valid grade", () => {
+    for (const [ritus, expected] of Object.entries(RITUS_TO_GRADE)) {
+      assert.equal(ritusToGrade(ritus), expected, `ritus: ${ritus}`);
+      assert.ok(GRADE_ORDER.includes(expected));
     }
   });
 
   test("compound ritus reduces to its base grade", () => {
     // Octave qualifiers don't change the day's own dignity.
-    assert.equal(ritusToDignitas("Duplex I classis cum Octava communi"), "duplex-i");
+    assert.equal(ritusToGrade("Duplex I classis cum Octava communi"), "duplex-i");
     assert.equal(
-      ritusToDignitas("Duplex I classis cum Octava privilegiata III ordinis"),
+      ritusToGrade("Duplex I classis cum Octava privilegiata III ordinis"),
       "duplex-i",
     );
-    assert.equal(ritusToDignitas("Duplex II classis cum Octava simplici"), "duplex-ii");
+    assert.equal(ritusToGrade("Duplex II classis cum Octava simplici"), "duplex-ii");
     // The Triduum's oddly-named privileged-feria ritus.
-    assert.equal(ritusToDignitas("Feria privilegiata Duplex I classis"), "triduum");
+    assert.equal(ritusToGrade("Feria privilegiata Duplex I classis"), "triduum");
   });
 
   test("classis-primary: a Lent Sunday outranks a plain Duplex feast", () => {
     // Semiduplex I classis (Lent Sundays) beats Duplex despite the
     // duplex/semiduplex axis, because first-class takes precedence.
-    assert.ok(dignitasOrder("semiduplex-i") < dignitasOrder("duplex"));
+    assert.ok(gradeOrder("semiduplex-i") < gradeOrder("duplex"));
   });
 
-  test("Good Friday resolves to the top dignitas", () => {
+  test("Good Friday resolves to the top grade", () => {
     // Quad6-5 = Good Friday, ritus "Feria privilegiata Duplex I classis".
     const feasts = getFeast({ date: new Date("2026-04-03") }); // Good Friday 2026
     const gf = feasts.find((f) => f.id?.startsWith("Quad6"));
     assert.ok(gf, `no Quad6 entry: ${feasts.map((f) => f.id).join(", ")}`);
-    assert.equal(gf.dignitas, "triduum");
+    assert.equal(gf.grade, "triduum");
   });
 
   test("Advent I is a privileged Sunday: outranks St. Andrew (Duplex II classis)", () => {
@@ -231,7 +231,7 @@ describe("dignitas reduction", () => {
     // lifts it to semiduplex-i so the first-class Sunday wins the day.
     const feasts = getFeast({ date: new Date("2025-11-30") });
     assert.equal(feasts[0].id, "Adv1-0");
-    assert.equal(feasts[0].dignitas, "semiduplex-i");
+    assert.equal(feasts[0].grade, "semiduplex-i");
     assert.equal(feasts[0].ritus, "Semiduplex"); // ritus stays verbatim
   });
 
@@ -240,9 +240,9 @@ describe("dignitas reduction", () => {
     const feasts = getFeast({ date: new Date("2026-02-01") });
     const first = feasts[0];
     assert.equal(first.id, "Quadp1-0");
-    assert.equal(first.dignitas, "semiduplex-ii");
+    assert.equal(first.grade, "semiduplex-ii");
     // A second-class Sunday still yields to first/second-class feasts:
-    assert.ok(dignitasOrder("duplex-ii") < dignitasOrder("semiduplex-ii"));
+    assert.ok(gradeOrder("duplex-ii") < gradeOrder("semiduplex-ii"));
   });
 });
 

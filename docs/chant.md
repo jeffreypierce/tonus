@@ -76,8 +76,8 @@ acts as a filter. When no hour is specified, returns chants for all
 available hours.
 
 ```js
-tonus.officium({ hour: "laudes" });
-tonus.officium({ feast: feasts, hour: "vesperae" });
+tonus.officium({ hora: "laudes" });
+tonus.officium({ feast: feasts, hora: "vesperae" });
 ```
 
 | Hour | Content |
@@ -92,14 +92,14 @@ tonus.officium({ feast: feasts, hour: "vesperae" });
 
 Psalm and canticle retrieval as intoned `Chant[]`: GABC-encoded psalm verses
 sung to a psalm tone (modes 1–8 plus the tonus peregrinus). `differentia`
-specifies the cadential variant; `intonation` controls whether the opening
+specifies the cadential variant; `intonatio` controls whether the opening
 formula is included. Canticles are addressed by name: `benedictus`,
 `magnificat`, `nunc dimittis`, `te deum`, `benedicite`.
 
 ```js
 tonus.psalmus({ psalm: 109, mode: 1 });
 tonus.psalmus({ psalm: 109, verse: "1a", mode: 2, differentia: "6F" });
-tonus.psalmus({ psalm: "benedictus", mode: 8, intonation: false });
+tonus.psalmus({ psalm: "benedictus", mode: 8, intonatio: false });
 ```
 
 ## Types
@@ -123,9 +123,9 @@ interface Chant {
   incipit: string;
   gabc: string;
   office: OfficeCode;
-  officeLabel: string;
+  genus: string;             // Latin genre name, "Antiphona", "Introitus" …
   mode: string | null;
-  modeLabel: string | null;
+  modus: string | null;      // Latin mode name, "Modus I"–"Modus VIII"
   pages: { page: string; sequence: number; extent: number }[];
   source: {
     book: string;
@@ -137,7 +137,7 @@ interface Chant {
 
 interface OrdinaryChant extends Chant {
   ordinary: OrdinaryCode;
-  ordinaryLabel: string;
+  ordinarium: string;        // Latin ordinary name, "Kyrie eleison" …
   mass: number;
 }
 
@@ -165,7 +165,7 @@ interface OrdinariumQuery extends CantusQuery {
 
 interface OfficiumQuery extends CantusQuery {
   feast?: Feast | Feast[];
-  hour?: CanonicalHour;
+  hora?: CanonicalHour;
 }
 
 interface PsalmusQuery {
@@ -173,7 +173,7 @@ interface PsalmusQuery {
   verse?: string;
   mode?: number;
   differentia?: string;  // differentia code, e.g. "6F", "4e"
-  intonation?: boolean;  // include opening intonation formula, default true
+  intonatio?: boolean;   // include opening intonation formula, default true
 }
 ```
 

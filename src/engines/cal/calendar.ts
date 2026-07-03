@@ -18,10 +18,10 @@ import {
   type Feast,
   type FeastQuery,
   type Season,
-  type Dignitas,
-  SEASON_LABELS,
-  entryDignitas,
-  dignitasOrder,
+  type Grade,
+  TEMPUS_NAMES,
+  entryGrade,
+  gradeOrder,
   BVM_FEAST_IDS,
   APOSTOLIC_FEAST_IDS,
 } from "./types.js";
@@ -73,7 +73,7 @@ export function buildCalendar(year: number): Map<string, CalEntry[]> {
 
   // Lower rank number means higher priority.
   for (const list of map.values())
-    list.sort((a, b) => entryDignitasOrder(a) - entryDignitasOrder(b));
+    list.sort((a, b) => entryGradeOrder(a) - entryGradeOrder(b));
 
   _calCache.set(year, map);
   return map;
@@ -136,7 +136,7 @@ function findSeason(date: Date): { code: Season; start: Date; end: Date } {
 
 function selectMasses(
   id: string,
-  dignitas: Dignitas,
+  grade: Grade,
   season: Season,
   date: Date,
 ): number[] {
@@ -149,7 +149,7 @@ function selectMasses(
     if (!mass) continue;
     if (requireBvm !== mass.bvm) continue;
     if (!mass.seasons.includes(season)) continue;
-    if (!mass.grades.includes(dignitas)) continue;
+    if (!mass.grades.includes(grade)) continue;
     if (!mass.days.includes(dowCode)) continue;
     matches.push(num);
   }
@@ -165,27 +165,27 @@ function calEntryToFeast(
   const id = entry.id ?? "";
   // All 642 entries carry a ritus; "Feria" is a defensive floor only.
   const ritus = entry.ritus ?? "Feria";
-  const dignitas = entryDignitas(id, ritus);
+  const grade = entryGrade(id, ritus);
   return {
     id,
-    name: entry.name,
+    nomen: entry.name,
     ritus,
-    dignitas,
+    grade,
     season: season.code,
-    seasonLabel: SEASON_LABELS[season.code],
+    tempus: TEMPUS_NAMES[season.code],
     seasonStart: season.start,
     seasonEnd: season.end,
     date: d,
     weekday: d.getUTCDay(),
-    masses: selectMasses(id, dignitas, season.code, d),
+    masses: selectMasses(id, grade, season.code, d),
     marian: BVM_FEAST_IDS.has(id),
     apostolic: APOSTOLIC_FEAST_IDS.has(id),
   };
 }
 
 // Precedence order of a raw CalEntry (for same-day sorting before conversion).
-function entryDignitasOrder(entry: CalEntry): number {
-  return dignitasOrder(entryDignitas(entry.id, entry.ritus ?? "Feria"));
+function entryGradeOrder(entry: CalEntry): number {
+  return gradeOrder(entryGrade(entry.id, entry.ritus ?? "Feria"));
 }
 
 function feastsForDate(date: Date): Feast[] {
@@ -200,7 +200,7 @@ function feastsForDate(date: Date): Feast[] {
     ...(buildCalendar(year - 1).get(key) ?? []),
   ];
   if (!entries.length) return [];
-  entries.sort((a, b) => entryDignitasOrder(a) - entryDignitasOrder(b));
+  entries.sort((a, b) => entryGradeOrder(a) - entryGradeOrder(b));
   const season = findSeason(d);
   return entries.map((e) => calEntryToFeast(e, season, d));
 }
@@ -253,15 +253,15 @@ export function getFeast(query?: FeastQuery): Feast[] {
     }
   }
 
-  if (query.name) {
-    const n = query.name.toLowerCase();
-    results = results.filter((f) => f.name.toLowerCase().includes(n));
+  if (query.nomen) {
+    const n = query.nomen.toLowerCase();
+    results = results.filter((f) => f.nomen.toLowerCase().includes(n));
   }
   if (query.season) {
     results = results.filter((f) => f.season === query.season);
   }
-  if (query.dignitas !== undefined) {
-    results = results.filter((f) => f.dignitas === query.dignitas);
+  if (query.grade !== undefined) {
+    results = results.filter((f) => f.grade === query.grade);
   }
   if (query.marian !== undefined) {
     results = results.filter((f) => f.marian === query.marian);
@@ -274,7 +274,7 @@ export function getFeast(query?: FeastQuery): Feast[] {
   results.sort(
     (a, b) =>
       a.date.getTime() - b.date.getTime() ||
-      dignitasOrder(a.dignitas) - dignitasOrder(b.dignitas),
+      gradeOrder(a.grade) - gradeOrder(b.grade),
   );
 
   return results;

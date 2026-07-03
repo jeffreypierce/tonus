@@ -1,9 +1,9 @@
 // ---------------------------------------------------------------------------
 // engines/chant/types — internal types and shared constants for chant engines
 // ---------------------------------------------------------------------------
-import type { Season, Dignitas, Feast } from "../cal/types.js";
+import type { Season, Grade, Feast } from "../cal/types.js";
 
-export type { Season, Dignitas, Feast };
+export type { Season, Grade, Feast };
 
 // ── Primitive codes ──
 export type OfficeCode =
@@ -20,8 +20,8 @@ export type CanonicalHour =
 
 // ── Display labels ──
 export const MODE_LABELS: Readonly<Record<string, string>> = Object.freeze({
-  "1": "Mode I", "2": "Mode II", "3": "Mode III", "4": "Mode IV",
-  "5": "Mode V", "6": "Mode VI", "7": "Mode VII", "8": "Mode VIII",
+  "1": "Modus I", "2": "Modus II", "3": "Modus III", "4": "Modus IV",
+  "5": "Modus V", "6": "Modus VI", "7": "Modus VII", "8": "Modus VIII",
 });
 
 export const OFFICE_LABELS: Readonly<Record<OfficeCode, string>> = Object.freeze({
@@ -59,20 +59,21 @@ export interface Chant {
   id: string;
   incipit: string;
   gabc: string;
-  office: OfficeCode;
-  officeLabel: string;
+  office: OfficeCode;        // machine code; Latin name on `genus`
+  genus: string;             // Latin genre name, e.g. "Antiphona", "Introitus"
   mode: string | null;       // raw from source: "1"–"8", "*", "†" …
-  modeLabel: string | null;  // "Mode I"–"Mode VIII", null for non-numeric
+  modus: string | null;      // Latin mode name, "Modus I"–"Modus VIII";
+                             // "Tonus Peregrinus" for psalm tone P
   pages: { page: string; sequence: number; extent: number }[];
   source: { book: string; year: number | null; editor: string | null; code?: ChantSource | "user" };
-  ordinary?: OrdinaryCode;   // present for kyriale chants
-  ordinaryLabel?: string;
+  ordinary?: OrdinaryCode;   // machine code; present for kyriale chants
+  ordinarium?: string;       // Latin ordinary name, e.g. "Kyrie eleison"
   mass?: number;
 }
 
 export interface OrdinaryChant extends Chant {
   ordinary: OrdinaryCode;
-  ordinaryLabel: string;
+  ordinarium: string;
   mass: number;
 }
 
@@ -100,7 +101,7 @@ export interface OrdinariumQuery extends CantusQuery {
 
 export interface OfficiumQuery extends CantusQuery {
   feast?: Feast | Feast[];
-  hour?: CanonicalHour;
+  hora?: CanonicalHour;
 }
 
 export interface PsalmusQuery {
@@ -108,7 +109,7 @@ export interface PsalmusQuery {
   verse?: string;
   mode?: number;
   differentia?: string;
-  intonation?: boolean;
+  intonatio?: boolean;
 }
 
 export interface PsalmVerse {

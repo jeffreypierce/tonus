@@ -42,9 +42,9 @@ export interface TonusOpts {
 export interface Tonus {
   mode: number;
   differentia: string;
-  intonation: Pitch[];
-  mediant: Pitch[];
-  termination: Pitch[];
+  intonatio: Pitch[];   // opening intonation formula
+  mediatio: Pitch[];    // mediant cadence at the verse colon
+  terminatio: Pitch[];  // termination cadence (per differentia)
 }
 
 export interface Temperamentum {
@@ -188,9 +188,9 @@ export function buildTemper(input?: TemperamentumInput): Temperamentum {
       return {
         mode: modeVal,
         differentia: diff.code,
-        intonation: tone.intonation.map((m) => toPitch(m, scala)),
-        mediant: tone.mediant.map((m) => toPitch(m, scala)),
-        termination: diff.termination.map((m) => toPitch(m, scala)),
+        intonatio: tone.intonation.map((m) => toPitch(m, scala)),
+        mediatio: tone.mediant.map((m) => toPitch(m, scala)),
+        terminatio: diff.termination.map((m) => toPitch(m, scala)),
       };
     },
   };
