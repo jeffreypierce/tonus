@@ -2,31 +2,138 @@
 // engines/cal/types — calendar types and constants
 // ---------------------------------------------------------------------------
 
-// ── Primitive codes ──
-export type Season = "ad" | "ct" | "lt" | "ea" | "ap" | "ot" | "sg";
+// ── Season codes ──
+// One-to-one with the Divinum Officium Tempora stems, so findSeason and the
+// cal data agree by construction (Adv→adv, Nat→nat, Epi→epi, Quadp→quadp,
+// Quad→quad, Pasc→pasc, Pent→pent).
+export type Season = "adv" | "nat" | "epi" | "quadp" | "quad" | "pasc" | "pent";
 
-export type Rank = 0 | 1 | 2 | 3 | 4;
-
-// ── Display labels ──
 export const SEASON_LABELS: Readonly<Record<Season, string>> = Object.freeze({
-  ad: "Advent",
-  ct: "Christmastide",
-  lt: "Lent",
-  ea: "Eastertide",
-  ap: "Time after Pentecost",
-  ot: "Time after Epiphany",
-  sg: "Septuagesima",
+  adv: "Advent",
+  nat: "Christmastide",
+  epi: "Time after Epiphany",
+  quadp: "Septuagesima",
+  quad: "Lent",
+  pasc: "Paschaltide",
+  pent: "Time after Pentecost",
 });
 
-// Period vocabulary for the simplified 1–4 scale. The precise per-feast term
-// ("Duplex majus", "Feria privilegiata", …) lives in Feast.ritus.
-export const RANK_LABELS: Readonly<Record<Rank, string>> = Object.freeze({
-  0: "Triduum Sacrum",
-  1: "Duplex I classis",
-  2: "Duplex II classis",
-  3: "Semiduplex",
-  4: "Simplex",
-});
+// Penitential seasons: Gloria and (in quadp/quad) Alleluia are suppressed.
+export const PENITENTIAL_SEASONS: ReadonlySet<Season> = new Set<Season>([
+  "adv",
+  "quadp",
+  "quad",
+]);
+
+// ── Feast dignity (dignitas) ──
+// The authentic Tridentine rank (the "ritus" string) reduces to a canonical
+// ordered Dignitas. Ordering is classis-primary: a first-class day outranks
+// any non-first-class feast regardless of the duplex/semiduplex axis, so a
+// plain Duplex feast never displaces a Lent Sunday (Semiduplex I classis).
+// (Named `dignitas`, not `gradus` — gradus is the Guidonian step on
+// Temperamentum. One word per concept.)
+export type Dignitas =
+  | "triduum"
+  | "duplex-i"
+  | "duplex-majus-i"
+  | "semiduplex-i"
+  | "feria-privilegiata"
+  | "duplex-ii"
+  | "semiduplex-ii"
+  | "duplex-majus"
+  | "duplex"
+  | "semiduplex"
+  | "simplex"
+  | "feria-major"
+  | "vigilia"
+  | "feria";
+
+// High → low precedence. Position in this array IS the dignity — earlier
+// outranks later. There is no separate numeric rank field; precedence is read
+// from this order via dignitasOrder / compareDignitas.
+export const DIGNITAS_ORDER: readonly Dignitas[] = [
+  "triduum",
+  "duplex-i",
+  "duplex-majus-i",
+  "semiduplex-i",
+  "feria-privilegiata",
+  "duplex-ii",
+  "semiduplex-ii",
+  "duplex-majus",
+  "duplex",
+  "semiduplex",
+  "simplex",
+  "feria-major",
+  "vigilia",
+  "feria",
+];
+
+// Exact reduction of every ritus string the extractor produces to its
+// canonical Dignitas. Compounds ("… cum Octava …") reduce to their base
+// grade; the Triduum's privileged-feria ritus reduces to `triduum`.
+export const RITUS_TO_DIGNITAS: Readonly<Record<string, Dignitas>> =
+  Object.freeze({
+    "Feria privilegiata Duplex I classis": "triduum",
+    "Duplex I classis": "duplex-i",
+    "Duplex I classis cum Octava communi": "duplex-i",
+    "Duplex I classis cum Octava privilegiata I ordinis": "duplex-i",
+    "Duplex I classis cum Octava privilegiata II ordinis": "duplex-i",
+    "Duplex I classis cum Octava privilegiata III ordinis": "duplex-i",
+    "Duplex majus I classis": "duplex-majus-i",
+    "Semiduplex I classis": "semiduplex-i",
+    "Feria privilegiata": "feria-privilegiata",
+    "Duplex II classis": "duplex-ii",
+    "Duplex II classis cum Octava simplici": "duplex-ii",
+    "Semiduplex II classis": "semiduplex-ii",
+    "Duplex majus": "duplex-majus",
+    Duplex: "duplex",
+    Semiduplex: "semiduplex",
+    Simplex: "simplex",
+    "Feria major": "feria-major",
+    Vigilia: "vigilia",
+    Feria: "feria",
+  });
+
+// Ordered, most-specific-first fallback matcher for ritus strings not in the
+// exact table above (future data). Longer patterns first so "Feria
+// privilegiata Duplex I classis" wins over "Feria privilegiata", and
+// "Duplex I classis" over "Duplex".
+const RITUS_PATTERNS: readonly [string, Dignitas][] = [
+  ["Feria privilegiata Duplex I classis", "triduum"],
+  ["Duplex majus I classis", "duplex-majus-i"],
+  ["Duplex I classis", "duplex-i"],
+  ["Duplex II classis", "duplex-ii"],
+  ["Semiduplex I classis", "semiduplex-i"],
+  ["Semiduplex II classis", "semiduplex-ii"],
+  ["Feria privilegiata", "feria-privilegiata"],
+  ["Duplex majus", "duplex-majus"],
+  ["Semiduplex", "semiduplex"],
+  ["Duplex", "duplex"],
+  ["Simplex", "simplex"],
+  ["Feria major", "feria-major"],
+  ["Vigilia", "vigilia"],
+  ["Feria", "feria"],
+];
+
+/** Reduce a Tridentine ritus string to its canonical Dignitas. */
+export function ritusToDignitas(ritus: string): Dignitas {
+  const exact = RITUS_TO_DIGNITAS[ritus];
+  if (exact) return exact;
+  for (const [pattern, dignitas] of RITUS_PATTERNS) {
+    if (ritus.includes(pattern)) return dignitas;
+  }
+  return "feria"; // last resort; extractor coverage is 100%, so unreached
+}
+
+/** Precedence index (0 = highest). Use for sorting and comparison. */
+export function dignitasOrder(dignitas: Dignitas): number {
+  return DIGNITAS_ORDER.indexOf(dignitas);
+}
+
+/** Sort comparator: earlier in DIGNITAS_ORDER (higher dignity) sorts first. */
+export function compareDignitas(a: Dignitas, b: Dignitas): number {
+  return dignitasOrder(a) - dignitasOrder(b);
+}
 
 // ── BVM / Apostolic feast sets (keyed by DO stem: MM-DD for Sancti) ──
 export const BVM_FEAST_IDS: ReadonlySet<string> = new Set([
@@ -69,9 +176,9 @@ export const APOSTOLIC_FEAST_IDS: ReadonlySet<string> = new Set([
 export interface Feast {
   id: string;
   name: string;
-  rank: Rank;
-  rankLabel: string;
-  ritus: string; // authentic Tridentine rank, e.g. "Duplex majus"
+  ritus: string;      // authentic Tridentine rank, e.g. "Duplex majus"
+  dignitas: Dignitas; // canonical grade the ritus reduces to; precedence via
+                      // DIGNITAS_ORDER (no separate numeric rank field)
   season: Season;
   seasonLabel: string;
   seasonStart: Date;
@@ -89,7 +196,7 @@ export interface FeastQuery {
   to?: Date;
   name?: string;
   season?: Season;
-  rank?: Rank;
+  dignitas?: Dignitas;
   marian?: boolean;
   apostolic?: boolean;
 }

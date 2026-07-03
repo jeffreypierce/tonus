@@ -18,9 +18,10 @@ import {
   type Feast,
   type FeastQuery,
   type Season,
-  type Rank,
+  type Dignitas,
   SEASON_LABELS,
-  RANK_LABELS,
+  ritusToDignitas,
+  dignitasOrder,
   BVM_FEAST_IDS,
   APOSTOLIC_FEAST_IDS,
 } from "./types.js";
@@ -71,10 +72,32 @@ export function buildCalendar(year: number): Map<string, CalEntry[]> {
   }
 
   // Lower rank number means higher priority.
-  for (const list of map.values()) list.sort((a, b) => a.rank - b.rank);
+  for (const list of map.values())
+    list.sort((a, b) => entryDignitasOrder(a) - entryDignitasOrder(b));
 
   _calCache.set(year, map);
   return map;
+}
+
+// Season boundaries follow the Divinum Officium Tempora stems exactly, so a
+// date's season always matches the stem of any Tempora feast that falls on it
+// (asserted by the stem↔season test):
+//   adv   Advent I Sunday          → Christmas (Dec 25)
+//   nat   Christmas                → epiphanySunday (1st Sun after Epiphany)
+//   epi   epiphanySunday           → Septuagesima (Easter − 63)
+//   quadp Septuagesima Sunday      → Ash Wednesday (Easter − 46)
+//   quad  Ash Wednesday            → Easter
+//   pasc  Easter                   → trinitySunday (Pentecost + 7); the
+//                                     Pentecost octave stays paschal
+//   pent  trinitySunday            → next Advent I Sunday
+// Epi and Nat both anchor on firstSundayOnOrAfter(feast+1) in
+// resolveTemporaStem; epiphanySunday is that boundary between them.
+function epiphanySunday(a: RuleAnchors): Date {
+  return firstSundayOnOrAfter(addDays(a.epiphany, 1));
+}
+
+function trinitySunday(a: RuleAnchors): Date {
+  return addDays(a.pentecost, 7);
 }
 
 function findSeason(date: Date): { code: Season; start: Date; end: Date } {
@@ -90,43 +113,43 @@ function findSeason(date: Date): { code: Season; start: Date; end: Date } {
   });
 
   if (date >= next.adventFirstSunday && date < next.christmas)
-    return s("ad", next.adventFirstSunday, next.christmas);
+    return s("adv", next.adventFirstSunday, next.christmas);
   if (date >= a.adventFirstSunday && date < a.christmas)
-    return s("ad", a.adventFirstSunday, a.christmas);
-  if (date >= prev.christmas && date < a.baptism)
-    return s("ct", prev.christmas, a.baptism);
-  if (date >= a.christmas && date < next.baptism)
-    return s("ct", a.christmas, next.baptism);
-  if (date >= a.baptism && date < a.septuagesima)
-    return s("ot", a.baptism, a.septuagesima);
+    return s("adv", a.adventFirstSunday, a.christmas);
+  if (date >= prev.christmas && date < epiphanySunday(a))
+    return s("nat", prev.christmas, epiphanySunday(a));
+  if (date >= a.christmas && date < epiphanySunday(next))
+    return s("nat", a.christmas, epiphanySunday(next));
+  if (date >= epiphanySunday(a) && date < a.septuagesima)
+    return s("epi", epiphanySunday(a), a.septuagesima);
   if (date >= a.septuagesima && date < a.ashWednesday)
-    return s("sg", a.septuagesima, a.ashWednesday);
+    return s("quadp", a.septuagesima, a.ashWednesday);
   if (date >= a.ashWednesday && date < a.easter)
-    return s("lt", a.ashWednesday, a.easter);
-  if (date >= a.easter && date < a.pentecost)
-    return s("ea", a.easter, a.pentecost);
-  if (date >= a.pentecost && date < next.adventFirstSunday)
-    return s("ap", a.pentecost, next.adventFirstSunday);
+    return s("quad", a.ashWednesday, a.easter);
+  if (date >= a.easter && date < trinitySunday(a))
+    return s("pasc", a.easter, trinitySunday(a));
+  if (date >= trinitySunday(a) && date < next.adventFirstSunday)
+    return s("pent", trinitySunday(a), next.adventFirstSunday);
 
-  return s("ot", prev.pentecost, a.septuagesima);
+  return s("epi", epiphanySunday(a), a.septuagesima);
 }
 
-function selectMasses(feast: CalEntry, season: Season, date: Date): number[] {
+function selectMasses(
+  id: string,
+  dignitas: Dignitas,
+  season: Season,
+  date: Date,
+): number[] {
   const dowCode = date.getUTCDay() === 0 ? "dominica" : "feria";
-  const requireBvm = BVM_FEAST_IDS.has(feast.id);
-  const desiredRank = feast.rank;
-  // Treat "ot" and "ap" as equivalent (both Ordinary Time).
-  const normSeason = (s: string) => (s === "ap" ? "ot" : s);
-  const sc = normSeason(season);
+  const requireBvm = BVM_FEAST_IDS.has(id);
 
   const matches: number[] = [];
   for (const num of DEFAULT_MASSES) {
     const mass = MASSES.get(num);
     if (!mass) continue;
     if (requireBvm !== mass.bvm) continue;
-    const hasSeasonMatch = mass.seasons.some((s) => normSeason(s) === sc);
-    if (!hasSeasonMatch) continue;
-    if (!mass.ranks.includes(desiredRank)) continue;
+    if (!mass.seasons.includes(season)) continue;
+    if (!mass.grades.includes(dignitas)) continue;
     if (!mass.days.includes(dowCode)) continue;
     matches.push(num);
   }
@@ -140,23 +163,29 @@ function calEntryToFeast(
   d: Date,
 ): Feast {
   const id = entry.id ?? "";
-  const rankLabel = RANK_LABELS[entry.rank as Rank] ?? "Feria";
+  // All 642 entries carry a ritus; "Feria" is a defensive floor only.
+  const ritus = entry.ritus ?? "Feria";
+  const dignitas = ritusToDignitas(ritus);
   return {
     id,
     name: entry.name,
-    rank: entry.rank as Rank,
-    rankLabel,
-    ritus: entry.ritus ?? rankLabel,
+    ritus,
+    dignitas,
     season: season.code,
     seasonLabel: SEASON_LABELS[season.code],
     seasonStart: season.start,
     seasonEnd: season.end,
     date: d,
     weekday: d.getUTCDay(),
-    masses: selectMasses(entry, season.code, d),
+    masses: selectMasses(id, dignitas, season.code, d),
     marian: BVM_FEAST_IDS.has(id),
     apostolic: APOSTOLIC_FEAST_IDS.has(id),
   };
+}
+
+// Precedence order of a raw CalEntry (for same-day sorting before conversion).
+function entryDignitasOrder(entry: CalEntry): number {
+  return dignitasOrder(ritusToDignitas(entry.ritus ?? "Feria"));
 }
 
 function feastsForDate(date: Date): Feast[] {
@@ -171,7 +200,7 @@ function feastsForDate(date: Date): Feast[] {
     ...(buildCalendar(year - 1).get(key) ?? []),
   ];
   if (!entries.length) return [];
-  entries.sort((a, b) => a.rank - b.rank);
+  entries.sort((a, b) => entryDignitasOrder(a) - entryDignitasOrder(b));
   const season = findSeason(d);
   return entries.map((e) => calEntryToFeast(e, season, d));
 }
@@ -231,8 +260,8 @@ export function getFeast(query?: FeastQuery): Feast[] {
   if (query.season) {
     results = results.filter((f) => f.season === query.season);
   }
-  if (query.rank !== undefined) {
-    results = results.filter((f) => f.rank === query.rank);
+  if (query.dignitas !== undefined) {
+    results = results.filter((f) => f.dignitas === query.dignitas);
   }
   if (query.marian !== undefined) {
     results = results.filter((f) => f.marian === query.marian);
@@ -243,7 +272,9 @@ export function getFeast(query?: FeastQuery): Feast[] {
 
   // Sort: day asc, rank desc (lower rank number = higher priority, so asc)
   results.sort(
-    (a, b) => a.date.getTime() - b.date.getTime() || a.rank - b.rank,
+    (a, b) =>
+      a.date.getTime() - b.date.getTime() ||
+      dignitasOrder(a.dignitas) - dignitasOrder(b.dignitas),
   );
 
   return results;

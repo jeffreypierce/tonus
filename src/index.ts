@@ -9,7 +9,7 @@ import { buildScore } from "./engines/score/api.js";
 import { getCosmos } from "./engines/planet/planet.js";
 import { buildHarmonia } from "./engines/harmonia/api.js";
 
-import type { FeastQuery, Feast } from "./engines/cal/types.js";
+import type { FeastQuery, Feast, Season, Dignitas } from "./engines/cal/types.js";
 import type {
   CantusQuery, Chant, OrdinaryChant, PropriumQuery,
   OrdinariumQuery, OfficiumQuery, PsalmusQuery,
@@ -57,7 +57,7 @@ const tonus = {
 export default tonus;
 
 export type {
-  Feast, FeastQuery,
+  Feast, FeastQuery, Season, Dignitas,
   Chant, CantusQuery, OrdinaryChant,
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,

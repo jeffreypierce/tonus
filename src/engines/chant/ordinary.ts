@@ -10,7 +10,18 @@ import {
   type OrdinariumQuery,
   type OrdinaryCode,
 } from "./types.js";
-import type { Feast } from "../cal/types.js";
+import {
+  type Feast,
+  type Dignitas,
+  dignitasOrder,
+  PENITENTIAL_SEASONS,
+} from "../cal/types.js";
+
+// A "high feast" (Duplex II classis or above) prefers the solemn kyriale
+// masses 1–9. Threshold expressed against DIGNITAS_ORDER, not a magic number.
+function isHighFeast(dignitas: Dignitas): boolean {
+  return dignitasOrder(dignitas) <= dignitasOrder("duplex-ii");
+}
 
 const ORDINARY_OFFICES = new Set(Object.keys(ORDINARY_LABELS));
 const MODE_PAIRS: [number, number][] = [[1, 2], [3, 4], [5, 6], [7, 8]];
@@ -40,7 +51,7 @@ function entriesForOffice(office: string, massNumbers: number[]): KyrialeEntry[]
 function selectBestChant(
   entries: KyrialeEntry[],
   filterMode: number | null,
-  rank: number,
+  highFeast: boolean,
   massNumbers: number[],
 ): KyrialeEntry | null {
   if (!entries.length) return null;
@@ -56,7 +67,7 @@ function selectBestChant(
   }
   if (!candidates.length) candidates = entries;
 
-  if (rank <= 2 && candidates.length > 1) {
+  if (highFeast && candidates.length > 1) {
     const preferred = candidates.filter(
       (c) => c.mass != null && c.mass >= 1 && c.mass <= 9,
     );
@@ -77,9 +88,9 @@ function selectCredoCode(feast: Feast, allowed: string[]): string | null {
   const { season, weekday, marian, apostolic } = feast;
   const isSunday = weekday === 0;
 
-  if (isSunday && ["ad", "lt", "ct"].includes(season) && allowed.includes("IV")) return "IV";
-  if (isSunday && season === "ea" && allowed.includes("III")) return "III";
-  if (isSunday && ["ot", "ap"].includes(season) && allowed.includes("I")) return "I";
+  if (isSunday && ["adv", "quadp", "quad", "nat"].includes(season) && allowed.includes("IV")) return "IV";
+  if (isSunday && season === "pasc" && allowed.includes("III")) return "III";
+  if (isSunday && ["epi", "pent"].includes(season) && allowed.includes("I")) return "I";
   if (apostolic && allowed.includes("III")) return "III";
   if (marian && allowed.includes("IV")) return "IV";
   return allowed[0];
@@ -111,10 +122,11 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
     : resolveMasses(feast);
   const massNumbers = masses.map((m) => m.mass);
   const mode = filterMode ?? null;
+  const highFeast = isHighFeast(feast.dignitas);
 
   const pick = (office: string): OrdinaryChant | null => {
     const entries = entriesForOffice(office, massNumbers);
-    const best = selectBestChant(entries, mode, feast.rank, massNumbers);
+    const best = selectBestChant(entries, mode, highFeast, massNumbers);
     return best ? entryToOrdinaryChant(best) : null;
   };
 
@@ -123,7 +135,8 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
   const ky = pick("ky");
   if (ky) results.push(ky);
 
-  const glOmitted = ["ad", "lt"].includes(feast.season);
+  // Gloria is omitted in penitential seasons (Advent, Septuagesima, Lent).
+  const glOmitted = PENITENTIAL_SEASONS.has(feast.season);
   if (!glOmitted) {
     const gl = pick("gl");
     if (gl) results.push(gl);
@@ -135,7 +148,7 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
   if (credoCode) {
     const credoEntries = KYRIALE.filter((e) => e.office === "cr");
     const named = credoEntries.find((e) => e.incipit.includes(credoCode));
-    const best = named ?? selectBestChant(credoEntries, mode, feast.rank, massNumbers);
+    const best = named ?? selectBestChant(credoEntries, mode, highFeast, massNumbers);
     if (best) {
       const cr = entryToOrdinaryChant(best);
       cr.ordinaryLabel = `Credo ${credoCode}`;
@@ -156,10 +169,11 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
     if (it) results.push(it);
   }
 
-  // Sprinkle rite
-  const sprinkleType = feast.season === "ea" ? "va" : "as";
+  // Sprinkle rite: Vidi aquam in Paschaltide (through the Pentecost octave),
+  // Asperges otherwise.
+  const sprinkleType = feast.season === "pasc" ? "va" : "as";
   const sprinkleEntries = entriesForOffice(sprinkleType, massNumbers);
-  const sprinkleBest = selectBestChant(sprinkleEntries, mode, feast.rank, massNumbers);
+  const sprinkleBest = selectBestChant(sprinkleEntries, mode, highFeast, massNumbers);
   if (sprinkleBest) results.push(entryToOrdinaryChant(sprinkleBest));
 
   return results;

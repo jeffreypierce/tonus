@@ -1,17 +1,31 @@
 // humana/data/masses — 18 kyriale mass profiles
 //
-// Describes which masses are appropriate for a given season, rank, and day.
+// Describes which masses are appropriate for a given season, grade, and day.
 // Mass 0 has two ad-lib variants (index 0a/0b); all others are single entries.
+import {
+  type Season,
+  type Dignitas,
+  DIGNITAS_ORDER,
+} from "../engines/cal/types.js";
+
 export interface MassEntry {
   id: string;
   mass: number; // 0–18
   title: string;
-  seasons: string[]; // season codes; "ot" and "ap" are treated as equivalent
-  ranks: number[]; // applicable feast ranks (0–4)
+  seasons: Season[]; // liturgical seasons this mass serves
+  grades: Dignitas[]; // feast grades (dignities) this mass serves
   days: ("dominica" | "feria")[];
   bvm: boolean; // BVM-specific mass
   credos: string[]; // allowed Credo numerals
   notes: string;
+}
+
+// Inclusive slice of DIGNITAS_ORDER from `high` (more solemn) to `low`.
+// e.g. gradesFrom("duplex-i", "duplex-ii") lists every grade between them.
+function gradesFrom(high: Dignitas, low: Dignitas): Dignitas[] {
+  const hi = DIGNITAS_ORDER.indexOf(high);
+  const lo = DIGNITAS_ORDER.indexOf(low);
+  return DIGNITAS_ORDER.slice(hi, lo + 1);
 }
 
 // Ad libitum entries are not part of the numbered kyriale; they serve as a
@@ -21,8 +35,8 @@ export const AD_LIB: { standard: MassEntry; bvm: MassEntry } = {
     id: "adlib_standard",
     mass: 0,
     title: "Missa de Angelis (short)",
-    seasons: ["ot", "ct"],
-    ranks: [2, 3, 4],
+    seasons: ["epi", "nat"],
+    grades: gradesFrom("duplex-ii", "feria"),
     days: ["dominica"],
     bvm: false,
     credos: ["I"],
@@ -32,8 +46,8 @@ export const AD_LIB: { standard: MassEntry; bvm: MassEntry } = {
     id: "adlib_bvm",
     mass: 0,
     title: "Missa de Beata Maria (Missa Salve)",
-    seasons: ["ot", "ap"],
-    ranks: [3, 4],
+    seasons: ["epi", "pent"],
+    grades: gradesFrom("semiduplex", "feria"),
     days: ["feria"],
     bvm: true,
     credos: [],
@@ -48,12 +62,12 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_1",
       mass: 1,
       title: "Lux et Origo",
-      seasons: ["ea"],
-      ranks: [0, 1, 2],
+      seasons: ["pasc"],
+      grades: gradesFrom("triduum", "duplex-ii"),
       days: ["dominica"],
       bvm: false,
       credos: ["I", "III"],
-      notes: "Sundays of Eastertide; also solemn feasts in Paschaltide.",
+      notes: "Sundays of Paschaltide; also solemn feasts in Paschaltide.",
     },
   ],
   [
@@ -62,12 +76,12 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_2",
       mass: 2,
       title: "Kyrie fons bonitatis",
-      seasons: ["ea"],
-      ranks: [0, 1, 2],
+      seasons: ["pasc"],
+      grades: gradesFrom("triduum", "duplex-ii"),
       days: ["dominica", "feria"],
       bvm: false,
       credos: ["I", "III"],
-      notes: "Solemn feasts of the Lord during Eastertide.",
+      notes: "Solemn feasts of the Lord during Paschaltide.",
     },
   ],
   [
@@ -76,13 +90,13 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_3",
       mass: 3,
       title: "Kyrie Deus sempiterne",
-      seasons: ["ct", "ot"],
-      ranks: [1, 2],
+      seasons: ["nat", "epi"],
+      grades: gradesFrom("duplex-i", "duplex-ii"),
       days: ["dominica", "feria"],
       bvm: false,
       credos: ["I", "III"],
       notes:
-        "Solemn feasts of the Lord outside Eastertide, especially at Christmas/Epiphany.",
+        "Solemn feasts of the Lord outside Paschaltide, especially at Christmas/Epiphany.",
     },
   ],
   [
@@ -91,8 +105,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_4",
       mass: 4,
       title: "Cunctipotens genitor Deus",
-      seasons: ["ct", "ot", "ea"],
-      ranks: [1, 2],
+      seasons: ["nat", "epi", "pasc", "pent"],
+      grades: gradesFrom("duplex-i", "duplex-ii"),
       days: ["dominica", "feria"],
       bvm: false,
       credos: ["I", "III"],
@@ -105,8 +119,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_5",
       mass: 5,
       title: "Kyrie magnæ Deus potentiæ",
-      seasons: ["ct", "ot", "ea"],
-      ranks: [1, 2],
+      seasons: ["nat", "epi", "pasc", "pent"],
+      grades: gradesFrom("duplex-i", "duplex-ii"),
       days: ["dominica"],
       bvm: false,
       credos: [],
@@ -119,8 +133,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_6",
       mass: 6,
       title: "Kyrie Rex genitor",
-      seasons: ["ct", "ot", "ea"],
-      ranks: [2, 3],
+      seasons: ["nat", "epi", "pasc", "pent"],
+      grades: gradesFrom("duplex-ii", "semiduplex"),
       days: ["feria", "dominica"],
       bvm: false,
       credos: [],
@@ -133,8 +147,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_7",
       mass: 7,
       title: "Kyrie Rex splendens",
-      seasons: ["ot", "ap"],
-      ranks: [2],
+      seasons: ["epi", "pent"],
+      grades: gradesFrom("duplex-ii", "duplex"),
       days: ["dominica"],
       bvm: false,
       credos: [],
@@ -147,8 +161,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_8",
       mass: 8,
       title: "De Angelis",
-      seasons: ["ot", "ct"],
-      ranks: [1, 2, 3, 4],
+      seasons: ["epi", "nat", "pent"],
+      grades: gradesFrom("duplex-i", "feria"),
       days: ["dominica"],
       bvm: false,
       credos: ["I", "III"],
@@ -161,8 +175,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_9",
       mass: 9,
       title: "Cum jubilo",
-      seasons: ["ad", "ct", "lt", "ea", "ot"],
-      ranks: [0, 1, 2, 3, 4],
+      seasons: ["adv", "nat", "quad", "pasc", "epi", "pent"],
+      grades: gradesFrom("triduum", "feria"),
       days: ["feria", "dominica"],
       bvm: true,
       credos: ["IV"],
@@ -176,8 +190,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_10",
       mass: 10,
       title: "Alme Pater",
-      seasons: ["ad", "ct", "lt", "ea", "ot"],
-      ranks: [2, 3, 4],
+      seasons: ["adv", "nat", "quad", "pasc", "epi", "pent"],
+      grades: gradesFrom("duplex-ii", "feria"),
       days: ["feria", "dominica"],
       bvm: true,
       credos: [],
@@ -190,12 +204,12 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_11",
       mass: 11,
       title: "Orbis factor",
-      seasons: ["ot"],
-      ranks: [2, 3, 4],
+      seasons: ["epi", "pent"],
+      grades: gradesFrom("duplex-ii", "feria"),
       days: ["dominica"],
       bvm: false,
       credos: ["I", "III"],
-      notes: "For Sundays per annum.",
+      notes: "For Sundays per annum (after Epiphany and after Pentecost).",
     },
   ],
   [
@@ -204,8 +218,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_12",
       mass: 12,
       title: "Pater cuncta",
-      seasons: ["ot", "ap"],
-      ranks: [2],
+      seasons: ["epi", "pent"],
+      grades: gradesFrom("duplex-ii", "duplex"),
       days: ["dominica"],
       bvm: false,
       credos: [],
@@ -218,8 +232,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_13",
       mass: 13,
       title: "Stelliferi conditor orbis",
-      seasons: ["ot", "ap"],
-      ranks: [2],
+      seasons: ["epi", "pent"],
+      grades: gradesFrom("duplex-ii", "duplex"),
       days: ["dominica"],
       bvm: false,
       credos: [],
@@ -232,8 +246,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_14",
       mass: 14,
       title: "Jesu Redemptor",
-      seasons: ["ot", "ct"],
-      ranks: [2],
+      seasons: ["epi", "nat"],
+      grades: gradesFrom("duplex-ii", "duplex"),
       days: ["feria", "dominica"],
       bvm: false,
       credos: [],
@@ -246,8 +260,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_15",
       mass: 15,
       title: "Dominator Deus",
-      seasons: ["ot", "ap"],
-      ranks: [2],
+      seasons: ["epi", "pent"],
+      grades: gradesFrom("duplex-ii", "duplex"),
       days: ["dominica"],
       bvm: false,
       credos: [],
@@ -260,8 +274,8 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_16",
       mass: 16,
       title: "Deus genitor alme",
-      seasons: ["ot", "ap"],
-      ranks: [3],
+      seasons: ["epi", "pent"],
+      grades: gradesFrom("semiduplex", "simplex"),
       days: ["dominica"],
       bvm: false,
       credos: [],
@@ -274,12 +288,14 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_17",
       mass: 17,
       title: "Salve",
-      seasons: ["ad", "lt"],
-      ranks: [2, 3, 4],
+      seasons: ["adv", "quadp", "quad"],
+      // Advent/Lent Sundays are Semiduplex I classis — the highest dignity in
+      // these seasons — so the penitential Sunday mass must reach that far up.
+      grades: gradesFrom("semiduplex-i", "feria"),
       days: ["dominica"],
       bvm: false,
       credos: ["IV"],
-      notes: "For Sundays of Advent and Lent.",
+      notes: "For Sundays of Advent, pre-Lent, and Lent.",
     },
   ],
   [
@@ -288,12 +304,14 @@ export const MASSES: Map<number, MassEntry> = new Map([
       id: "mass_18",
       mass: 18,
       title: "Deus Genitor alme",
-      seasons: ["ad", "lt"],
-      ranks: [3, 4],
+      seasons: ["adv", "quadp", "quad"],
+      // Penitential ferias: privileged ferias (Ash Wed, Holy Week Mon–Wed)
+      // down through ordinary ferias.
+      grades: gradesFrom("feria-privilegiata", "feria"),
       days: ["feria"],
       bvm: false,
       credos: [],
-      notes: "For weekdays of Advent and Lent; penitential ferias.",
+      notes: "For weekdays of Advent, pre-Lent, and Lent; penitential ferias.",
     },
   ],
 ]);

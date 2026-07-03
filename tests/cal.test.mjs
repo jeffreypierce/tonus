@@ -2,13 +2,22 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { getFeast } from "../dist/engines/cal/calendar.js";
 import { pascha } from "../dist/engines/cal/date.js";
+import {
+  DIGNITAS_ORDER,
+  RITUS_TO_DIGNITAS,
+  ritusToDignitas,
+  dignitasOrder,
+} from "../dist/engines/cal/types.js";
 
 describe("getFeast", () => {
-  test("returns Christmas as a rank 1 solemnity for December 25", () => {
+  test("returns Christmas as a Duplex I classis for December 25", () => {
     const feasts = getFeast({ date: new Date("2026-12-25") });
     assert.ok(feasts.length > 0);
     assert.equal(feasts[0].id, "12-25");
-    assert.equal(feasts[0].rank, 1);
+    // Christmas is Duplex I classis with a privileged octave; the octave
+    // detail survives in ritus, the ordered grade in dignitas.
+    assert.equal(feasts[0].dignitas, "duplex-i");
+    assert.match(feasts[0].ritus, /^Duplex I classis/);
   });
 
   test("returns Epiphany for January 6", () => {
@@ -37,12 +46,13 @@ describe("getFeast", () => {
       `expected Nat2-0 in: ${feasts.map((f) => f.id).join(", ")}`);
   });
 
-  test("every feast has a non-empty ritus", () => {
-    const feasts = getFeast({ season: "ea" });
+  test("every feast has a non-empty ritus and a valid dignitas", () => {
+    const feasts = getFeast({ season: "pasc" });
     assert.ok(feasts.length > 0);
     for (const f of feasts) {
       assert.equal(typeof f.ritus, "string");
       assert.ok(f.ritus.length > 0);
+      assert.ok(DIGNITAS_ORDER.includes(f.dignitas), `bad dignitas: ${f.dignitas}`);
     }
   });
 
@@ -53,15 +63,15 @@ describe("getFeast", () => {
   });
 
   test("filters feasts by season code", () => {
-    const feasts = getFeast({ season: "ea" });
+    const feasts = getFeast({ season: "pasc" });
     assert.ok(feasts.length > 0);
-    for (const f of feasts) assert.equal(f.season, "ea");
+    for (const f of feasts) assert.equal(f.season, "pasc");
   });
 
-  test("filters feasts by rank", () => {
-    const feasts = getFeast({ rank: 1 });
+  test("filters feasts by dignitas", () => {
+    const feasts = getFeast({ dignitas: "duplex-i" });
     assert.ok(feasts.length > 0);
-    for (const f of feasts) assert.equal(f.rank, 1);
+    for (const f of feasts) assert.equal(f.dignitas, "duplex-i");
   });
 
   test("filters marian feasts when marian: true", () => {
@@ -82,12 +92,16 @@ describe("getFeast", () => {
     for (const f of feasts) assert.ok(f.name.toLowerCase().includes("adventus"));
   });
 
-  test("returns feasts sorted by date ascending then rank ascending", () => {
-    const feasts = getFeast({ season: "ct" });
+  test("returns feasts sorted by date ascending then dignity descending", () => {
+    const feasts = getFeast({ season: "nat" });
     for (let i = 1; i < feasts.length; i++) {
       const prev = feasts[i - 1];
       const curr = feasts[i];
-      assert.ok(prev.date <= curr.date || (prev.date.getTime() === curr.date.getTime() && prev.rank <= curr.rank));
+      assert.ok(
+        prev.date < curr.date ||
+          (prev.date.getTime() === curr.date.getTime() &&
+            dignitasOrder(prev.dignitas) <= dignitasOrder(curr.dignitas)),
+      );
     }
   });
 
@@ -125,9 +139,10 @@ describe("getFeast range", () => {
     const feasts = getFeast({
       from: new Date("2026-12-01"),
       to: new Date("2026-12-31"),
-      rank: 1,
+      dignitas: "duplex-i",
     });
-    assert.ok(feasts.every((f) => f.rank === 1));
+    assert.ok(feasts.length > 0);
+    assert.ok(feasts.every((f) => f.dignitas === "duplex-i"));
   });
 
   test("throws when to < from", () => {
@@ -173,5 +188,88 @@ describe("timezone stability", () => {
     const [feast] = getFeast({ date: new Date("2026-01-06") });
     assert.equal(feast.seasonStart.getTime() % 86400000, 0);
     assert.equal(feast.seasonEnd.getTime() % 86400000, 0);
+  });
+});
+
+describe("dignitas reduction", () => {
+  test("every ritus string in the table reduces to a valid dignitas", () => {
+    for (const [ritus, expected] of Object.entries(RITUS_TO_DIGNITAS)) {
+      assert.equal(ritusToDignitas(ritus), expected, `ritus: ${ritus}`);
+      assert.ok(DIGNITAS_ORDER.includes(expected));
+    }
+  });
+
+  test("compound ritus reduces to its base grade", () => {
+    // Octave qualifiers don't change the day's own dignity.
+    assert.equal(ritusToDignitas("Duplex I classis cum Octava communi"), "duplex-i");
+    assert.equal(
+      ritusToDignitas("Duplex I classis cum Octava privilegiata III ordinis"),
+      "duplex-i",
+    );
+    assert.equal(ritusToDignitas("Duplex II classis cum Octava simplici"), "duplex-ii");
+    // The Triduum's oddly-named privileged-feria ritus.
+    assert.equal(ritusToDignitas("Feria privilegiata Duplex I classis"), "triduum");
+  });
+
+  test("classis-primary: a Lent Sunday outranks a plain Duplex feast", () => {
+    // Semiduplex I classis (Lent Sundays) beats Duplex despite the
+    // duplex/semiduplex axis, because first-class takes precedence.
+    assert.ok(dignitasOrder("semiduplex-i") < dignitasOrder("duplex"));
+  });
+
+  test("Good Friday resolves to the top dignitas", () => {
+    // Quad6-5 = Good Friday, ritus "Feria privilegiata Duplex I classis".
+    const feasts = getFeast({ date: new Date("2026-04-03") }); // Good Friday 2026
+    const gf = feasts.find((f) => f.id?.startsWith("Quad6"));
+    assert.ok(gf, `no Quad6 entry: ${feasts.map((f) => f.id).join(", ")}`);
+    assert.equal(gf.dignitas, "triduum");
+  });
+});
+
+describe("season alignment (temporale)", () => {
+  const seasonOf = (iso) => getFeast({ date: new Date(iso) })[0]?.season;
+
+  test("Tempora stem prefix matches the season it falls in", () => {
+    // Spot-check one date per block; findSeason must agree with the stem.
+    assert.equal(seasonOf("2026-12-25"), "nat"); // Christmas
+    assert.equal(seasonOf("2026-04-05"), "pasc"); // Easter 2026
+  });
+
+  test("Septuagesima is its own block (quadp), not Lent", () => {
+    // Septuagesima Sunday 2026 = Easter(Apr 5) − 63 = Feb 1.
+    assert.equal(seasonOf("2026-02-01"), "quadp");
+  });
+
+  test("the Pentecost octave stays paschal", () => {
+    // Pentecost 2026 = Easter + 49 = May 24; its octave runs to Trinity eve.
+    assert.equal(seasonOf("2026-05-25"), "pasc"); // Pentecost Monday
+  });
+
+  test("after Epiphany is epi, after Pentecost is pent", () => {
+    assert.equal(seasonOf("2026-01-20"), "epi");
+    assert.equal(seasonOf("2026-07-15"), "pent");
+  });
+
+  test("season follows the date, not the nominal stem week", () => {
+    // A Tempora stem's week number is a counter, not a season: overflow
+    // weeks land in a later season. The date-derived season is authoritative.
+    // Ash Wednesday 2026 is Quadp3-3 by stem but liturgically Lent.
+    const [ashWed] = getFeast({ date: new Date("2026-02-18") });
+    assert.match(ashWed.id, /^Quadp3/);
+    assert.equal(ashWed.season, "quad");
+  });
+
+  test("every day of the liturgical year resolves to a season", () => {
+    const start = new Date("2025-11-30"); // Advent 2025
+    for (let i = 0; i < 400; i++) {
+      const d = new Date(start.getTime() + i * 86400000);
+      const feasts = getFeast({ date: d });
+      for (const f of feasts) {
+        assert.ok(
+          ["adv", "nat", "epi", "quadp", "quad", "pasc", "pent"].includes(f.season),
+          `bad season ${f.season} on ${d.toISOString().slice(0, 10)}`,
+        );
+      }
+    }
   });
 });

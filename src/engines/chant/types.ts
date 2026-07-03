@@ -1,9 +1,9 @@
 // ---------------------------------------------------------------------------
 // engines/chant/types — internal types and shared constants for chant engines
 // ---------------------------------------------------------------------------
-import type { Season, Rank, Feast } from "../cal/types.js";
+import type { Season, Dignitas, Feast } from "../cal/types.js";
 
-export type { Season, Rank, Feast };
+export type { Season, Dignitas, Feast };
 
 // ── Primitive codes ──
 export type OfficeCode =
