@@ -47,6 +47,15 @@ describe("tonus namespace", () => {
     assert.ok(chants.length > 0);
   });
 
+  test("ordinarium is empty for the Triduum (no Mass-ordinary cycle)", () => {
+    const goodFriday = tonus.festum({ date: new Date("2026-04-03") });
+    assert.equal(goodFriday[0].dignitas, "triduum");
+    assert.deepEqual(tonus.ordinarium({ feast: goodFriday[0] }), []);
+    // A pinned mass still works (e.g. the Vigil borrowing Lux et origo):
+    const pinned = tonus.ordinarium({ feast: goodFriday[0], mass: 1, ordinary: "ky" });
+    assert.ok(pinned.length > 0);
+  });
+
   test("ordo builds a score from a chant; archive emitters still produce output", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
     const score = tonus.notatio(chant);

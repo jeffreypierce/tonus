@@ -9,7 +9,7 @@ import tonus from "tonus";
 
 const [feast] = tonus.festum({ date: new Date("2026-12-25") });
 // { id: "12-25", name: "In Nativitate Domini",
-//   rank: 1, ritus: "Duplex I classis", season: "ct", … }
+//   ritus: "Duplex I classis", dignitas: "duplex-i", season: "nat", … }
 
 const [introit] = tonus.proprium({ feast, office: "in" });
 // "Puer natus est", mode 7, GABC notation from the Liber Usualis
@@ -24,7 +24,7 @@ const harmony = tonus.harmonia(sky);
 
 **[Interactive demo](https://jeffreypierce.github.io/tonus/)** — pick a
 date, see its feast, chants, sky, and voicing. Full reference:
-**[docs/api/](docs/api/README.md)**.
+**[docs/](docs/index.md)**.
 
 ## Install
 
@@ -36,20 +36,16 @@ ESM only. Node ≥ 20 (works in the browser via a bundler). No runtime
 dependencies, no network calls — ~5,500 chants and the full calendar ship in
 the package.
 
-## What's inside
+## Documentation
 
-| Method | Returns |
-| --- | --- |
-| `tonus.festum(query?)` | Feasts from the liturgical calendar — by date, range, name, season, or rank |
-| `tonus.cantus(query?)` | Chants across five corpora (or parse your own GABC) |
-| `tonus.proprium(query?)` | Mass propers: Introit, Gradual, Alleluia/Tract, Offertory, Communion |
-| `tonus.ordinarium(query?)` | Mass ordinary from the Kyriale (Kyrie … Ite), feast-aware mass selection |
-| `tonus.officium(query?)` | Divine Office chants for the eight canonical hours |
-| `tonus.psalmus(query?)` | Psalm and canticle verses intoned to the psalm tones (incl. tonus peregrinus) |
-| `tonus.temperamentum(input?)` | Tuning context: Pythagorean, meantone, Ptolemaic, equal, custom, or Scala files |
-| `tonus.notatio(chant, opts?)` | GABC → musical score: phrases, tuned notes, rhythm, prosody — with `pondus` (articulation) and `accentus` (phrasing) options |
-| `tonus.caelum(query?)` | Ephemeris: positions, zodiac, retrogrades, aspects for the classical planets |
-| `tonus.harmonia(cosmos, opts?)` | Musica universalis: the sky voiced as pitches and Greek vowels |
+The reference lives in [docs/](docs/index.md) — the ten-verb method index,
+shared conventions, and the error and determinism contracts — with one page
+per engine, each covering the API, its theory and historical context, and
+its sources:
+
+[calendar](docs/calendar.md) · [chant](docs/chant.md) ·
+[tuning](docs/tuning.md) · [score](docs/score.md) ·
+[heavens](docs/heavens.md)
 
 Everything is deterministic and offline: same inputs, same outputs.
 
@@ -72,8 +68,9 @@ data sources are honest about being later codifications:
   (Boethius, Nicomachus/Pythagoras, Pliny, Ptolemy) — an accurate sky heard
   through medieval ears.
 
-See [docs/REVIEW-liturgical.md](docs/REVIEW-liturgical.md) for the full
-liturgical review and [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) for sources.
+The calendar's era and its continuity with medieval usage are treated in
+[docs/calendar.md](docs/calendar.md#theory--context); sources are indexed
+in [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md).
 
 ## Dates are UTC
 

@@ -1,9 +1,34 @@
 {
   "name": "tonus",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": false,
   "type": "module",
-  "description": "Medieval music analysis — GABC, plainchant, tuning, liturgy, ephemeris",
+  "description": "Medieval music analysis — GABC plainchant, liturgical calendar, tuning systems, ephemeris, and the harmony of the spheres",
+  "author": "Jeffrey Pierce <jeffrey@jeffreypierce.net>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeffreypierce/tonus.git"
+  },
+  "homepage": "https://jeffreypierce.github.io/tonus/",
+  "bugs": "https://github.com/jeffreypierce/tonus/issues",
+  "keywords": [
+    "gregorian-chant",
+    "gabc",
+    "plainchant",
+    "liturgical-calendar",
+    "gregorian",
+    "medieval",
+    "music-theory",
+    "tuning",
+    "temperament",
+    "solfege",
+    "ephemeris",
+    "musica-universalis",
+    "harmony-of-the-spheres",
+    "boethius",
+    "divinum-officium"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -15,7 +40,8 @@
   "files": [
     "dist",
     "!dist/**/*.js.map",
-    "!dist/**/*.d.ts.map"
+    "!dist/**/*.d.ts.map",
+    "BIBLIOGRAPHY.md"
   ],
   "scripts": {
     "build": "tsc && cp src/data/psalms.json dist/data/psalms.json",

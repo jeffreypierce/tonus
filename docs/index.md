@@ -15,7 +15,7 @@ import tonus from "tonus";
 | `tonus.ordinarium(query?)` | [chant](chant.md) | `OrdinaryChant[]` — Kyriale |
 | `tonus.officium(query?)` | [chant](chant.md) | `Chant[]` — Divine Office hours |
 | `tonus.psalmus(query?)` | [chant](chant.md) | `Chant[]` — intoned psalm verses |
-| `tonus.temperamentum(input?)` | [temperamentum](temperamentum.md) | `Temperamentum` — tuning context |
+| `tonus.temperamentum(input?)` | [tuning](tuning.md) | `Temperamentum` — tuning context |
 | `tonus.notatio(chant, opts?)` | [score](score.md) | `Score` — GABC → musical score |
 | `tonus.caelum(query?)` | [heavens](heavens.md) | `Cosmos \| Cosmos[]` — ephemeris |
 | `tonus.harmonia(cosmos, opts?)` | [heavens](heavens.md) | `Harmony` — musica universalis |
@@ -24,7 +24,7 @@ import tonus from "tonus";
 
 **Query functions** are nouns — they name what you want and return arrays.
 Empty matches return `[]`, never `null`. Calendar results sort
-`day asc, rank desc`; chant results sort by rank then incipit.
+`day asc, dignity desc`; chant results sort by rank then incipit.
 
 **Builder functions** are verbs — they construct and return context objects.
 They throw `Error` on invalid input.
@@ -33,7 +33,7 @@ They throw `Error` on invalid input.
 functions as optional filters via the query object:
 
 ```js
-const feasts = tonus.festum({ season: "ea" });
+const feasts = tonus.festum({ season: "pasc" });
 tonus.proprium({ feast: feasts, office: "an" });
 
 const t = tonus.temperamentum({ tuning: "pythagorean" });

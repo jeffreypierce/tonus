@@ -52,7 +52,7 @@ duplex/semiduplex axis, so a plain Duplex feast never displaces a Lent Sunday.
 | 1 | `triduum` | Feria privilegiata Duplex I classis | Maundy Thu, Good Fri, Holy Sat |
 | 2 | `duplex-i` | Duplex I classis (+ octave variants) | Christmas, Easter, Pentecost |
 | 3 | `duplex-majus-i` | Duplex majus I classis | Low Sunday |
-| 4 | `semiduplex-i` | Semiduplex I classis | Advent & Lent Sundays, Palm Sunday |
+| 4 | `semiduplex-i` | Semiduplex I classis | Lent Sundays, Palm Sunday, Easter/Pentecost octave weekdays |
 | 5 | `feria-privilegiata` | Feria privilegiata | Ash Wednesday, Holy Week Mon–Wed |
 | 6 | `duplex-ii` | Duplex II classis (+ octave) | second-class feasts |
 | 7 | `semiduplex-ii` | Semiduplex II classis | later Advent Sundays, octave days |
@@ -66,6 +66,17 @@ duplex/semiduplex axis, so a plain Duplex feast never displaces a Lent Sunday.
 
 `dignitasOrder(d)` gives the 0-based index (0 = highest); `compareDignitas`
 is a sort comparator; `ritusToDignitas(s)` performs the reduction.
+
+**Privileged-Sunday override.** Divinum Officium's Tridentine ritus line
+under-specifies four privileged Sundays as plain `"Semiduplex"`: Advent I
+(historically first-class — it yields to nothing) and the three
+Septuagesima-block Sundays (second-class). Their precedence lived only in
+DO's numeric rank, which tonus does not use, so a small per-id override
+(`PRIVILEGED_SUNDAYS`) lifts their derived `dignitas` — Advent I to
+`semiduplex-i`, Septuagesima/Sexagesima/Quinquagesima to `semiduplex-ii` —
+matching the Sunday classes DO itself encodes for Lent and late Advent.
+`ritus` stays verbatim; without the override, St. Andrew would displace
+Advent I Sunday whenever November 30 falls on it.
 
 ## Seasons (the temporale)
 

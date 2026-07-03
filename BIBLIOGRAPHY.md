@@ -1,91 +1,68 @@
 # Bibliography
 
-Sources used in building tonus — data corpora, primary and secondary texts,
-and algorithms. Entries marked ▸ are digital projects the data was extracted
-from; the printed books they digitize are listed beneath them.
+Master index of sources used in building tonus. Full citation detail lives
+with the engine each source informs — follow the links to the `## Sources`
+section of the relevant page.
 
-## Chant corpora
+## Data corpora
 
-▸ **GregoBase** — a database of Gregorian chant scores in GABC notation.
-  <https://gregobase.selapa.net/>. Chant corpora extracted by book
-  (GregoBase source IDs 2, 3, 48, 15):
+- **GregoBase** — chant corpora in GABC, by book (the four Solesmes
+  editions: Graduale Romanum 1961, Liber Usualis 1961, Liber Antiphonarius
+  1960, Liber Hymnarius 1983) → [docs/chant.md](docs/chant.md#sources)
+- **Divinum Officium** — liturgical calendar (642 entries), Mass propers,
+  Office hours, Psalterium → [docs/calendar.md](docs/calendar.md#sources),
+  [docs/chant.md](docs/chant.md#sources)
+- **Graduale Romanum appendix (Toni Communes)** — psalm tones and
+  differentiae, incl. tonus peregrinus →
+  [docs/chant.md](docs/chant.md#sources)
 
-- *Graduale sacrosanctæ Romanæ ecclesiæ de tempore et de sanctis* (Graduale
-  Romanum). Solesmes: Desclée, 1961. — 1,344 chants (`gr`).
-- *Liber Usualis Missæ et Officii pro dominicis et festis cum cantu
-  Gregoriano*. Solesmes: Desclée, 1961. — 2,377 chants (`lu`).
-- *Liber antiphonarius pro diurnis horis* (Antiphonale Romanum). Solesmes,
-  1960. — 1,422 chants (`la`).
-- *Liber Hymnarius cum invitatoriis & aliquibus responsoriis*. Solesmes,
-  1983. — 361 chants (`lh`).
+## Chant rhythm (score engine)
 
-## Liturgical texts and calendar
+- **Carroll, *The Technique of Gregorian Chironomy* (1955)** — seven
+  rhythmic types, three melodic rules, chironomy →
+  [docs/score.md](docs/score.md#sources)
+- **Carroll, *An Applied Course in Gregorian Chant* (1956)** — compound
+  beats, ictus placement → [docs/score.md](docs/score.md#sources)
+- **Gajard, *The Rhythm of Plainsong* (1945)** — arsis/thesis synthesis →
+  [docs/score.md](docs/score.md#sources)
+- **Mocquereau, *Le nombre musical grégorien* (1908–1927)** — the Solesmes
+  school's foundation → [docs/score.md](docs/score.md#sources)
 
-▸ **Divinum Officium** — the 1570–1962 Roman Breviary and Missal in
-  machine-readable form. <https://divinumofficium.com/> /
-  <https://github.com/DivinumOfficium/divinum-officium>. Extracted:
-  liturgical calendar with feast names and ranks (642 entries, Sancti +
-  Tempora), Mass propers (926 entries), Office hours (929 days), and the
-  Psalterium (2,612 psalm + 579 canticle verses, Vulgate).
+## Tuning and music theory (temperamentum engine)
 
-- Psalm tones and differentiae follow the Graduale Romanum appendix
-  (Toni Communes), including the tonus peregrinus.
+- **Boethius, *De institutione musica*** — Pythagorean interval math;
+  also the Boethius doctrina → [docs/tuning.md](docs/tuning.md#sources),
+  [docs/heavens.md](docs/heavens.md#sources)
+- **Ptolemy, *Harmonics* I.15–16** — the three diatonic shades; *Harmonics*
+  III for the doctrina → [docs/tuning.md](docs/tuning.md#sources),
+  [docs/heavens.md](docs/heavens.md#sources)
+- **Barbour, *Tuning and Temperament* (1951)** — historical survey →
+  [docs/tuning.md](docs/tuning.md#sources)
+- **Scala scale archive / `.scl` format** (Huygens-Fokker Foundation) —
+  custom tuning input → [docs/tuning.md](docs/tuning.md#sources)
+- **Guidonian gamut, solmization, and the eight-mode system** — as
+  standardized in medieval theory →
+  [docs/tuning.md](docs/tuning.md#sources)
 
 ## Musica universalis (harmonia engine)
 
-Secondary syntheses (taxonomy, ratio derivations, vowel attestations):
+- **Godwin, *Harmonies of Heaven and Earth* (1987)** — planetary scale
+  taxonomy and analyses → [docs/heavens.md](docs/heavens.md#sources)
+- **Godwin (ed.), *The Harmony of the Spheres* (1993)** — primary-source
+  translations → [docs/heavens.md](docs/heavens.md#sources)
+- **Godwin, *The Mystery of the Seven Vowels* (1991)** — planetary vowel
+  attestations → [docs/heavens.md](docs/heavens.md#sources)
+- **Nicomachus, Plato, Pliny, Ptolemy** — the doctrina primaries (with the
+  vowel attestations: Porphyry, Marcus Gnosticus, Demetrius, Eusebius,
+  Barthélemy of Edessa) → [docs/heavens.md](docs/heavens.md#sources)
 
-- Godwin, Joscelyn. *Harmonies of Heaven and Earth: The Spiritual Dimension
-  of Music from Antiquity to the Avant-Garde*. London: Thames & Hudson,
-  1987. — Part Three ("The Music of the Spheres"): planetary scale
-  taxonomy (Types A/B/C) and per-author analyses.
-- Godwin, Joscelyn, ed. *The Harmony of the Spheres: A Sourcebook of the
-  Pythagorean Tradition in Music*. Rochester, VT: Inner Traditions, 1993.
-  — Primary-source translations used to verify ratio and tone-name claims.
-- Godwin, Joscelyn. *The Mystery of the Seven Vowels in Theory and
-  Practice*. Grand Rapids: Phanes Press, 1991. — Planetary vowel
-  attestations; the Moon→Saturn vowel order follows Nicomachus.
+## Astronomy and computus
 
-Primary sources underlying the four doctrinae (as translated/analyzed in
-Godwin; see `docs/theory/doctrines.md` for full derivations):
-
-- Boethius. *De institutione musica* I.27 (c. 524) — conjunct diatonic
-  planetary scale, transmitting Nicomachus; the medieval standard.
-- Nicomachus of Gerasa. *Manual of Harmonics* (Harmonicum enchiridion,
-  c. 100) and *Excerpta ex Nicomacho* — planetary tone assignments and
-  vowel order.
-- Plato. *Republic* X, 617b (Myth of Er) — the Sirens of the spheres.
-- Pliny the Elder. *Naturalis historia* II.xx (c. 77) — distance-based
-  chromatic planetary scale; octave closure per Censorinus and Theon of
-  Smyrna.
-- Ptolemy. *Harmonics* III and the Canobic Inscription (c. 150) — Greater
-  Perfect System tone assignments and aspect–consonance mapping.
-- Vowel–planet attestations: Porphyry, Marcus Gnosticus, Demetrius of
-  Phaleron, Eusebius of Caesarea, Barthélemy of Edessa (via Godwin 1991).
-
-## Music theory (temperamentum and score engines)
-
-- Guido of Arezzo's gamut and solmization (Gammaut–Ela, ut–la,
-  hexachordum durum/naturale/molle) as standardized in medieval theory.
-- The eight-mode system (Protus/Deuterus/Tritus/Tetrardus,
-  authentic/plagal) with finalis, tenor, and ambitus.
-- Solesmes neume nomenclature and the arsis/thesis rhythm model
-  (see `docs/theory/solesmes-rhythm.md`); after the school of Dom André
-  Mocquereau, *Le nombre musical grégorien*, 1908–1927.
-- Scala scale-file format (.scl), Manuel Op de Coul,
-  <https://www.huygens-fokker.org/scala/scl_format.html> — for custom
-  tuning input.
-
-## Astronomy (planet engine)
-
-- Standish, E. M. "Keplerian Elements for Approximate Positions of the
-  Major Planets." JPL Solar System Dynamics, 1992 (updated for DE430).
-  <https://ssd.jpl.nasa.gov/planets/approx_pos.html> — orbital elements,
-  two validity ranges per body (3000 BC–3000 AD; 1800–2050 AD), with
-  outer-planet perturbation terms.
-- Gregorian Easter: Gauss/Butcher computus. Julian Easter (pre-1583):
-  classical 19-year cycle computus with Julian→Gregorian day-number
-  conversion.
+- **Standish, "Keplerian Elements for Approximate Positions of the Major
+  Planets" (JPL, 1992/DE430)** — orbital elements →
+  [docs/heavens.md](docs/heavens.md#sources)
+- **Gauss/Butcher computus; Julian 19-year cycle** — Easter reckoning →
+  [docs/calendar.md](docs/calendar.md#sources)
 
 ---
 
