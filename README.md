@@ -1,24 +1,14 @@
 # tonus
 
-**tonus** is a TypeScript library for analyzing, performing, and modeling the
-plainchant systems and cosmology of the Latin Middle Ages[^dates]. It covers:
+**tonus** is a medieval music and cosmology library. It covers:
 
 - pitch, tuning, hexachords, and the eight church modes
 - the liturgical calendar, the feast of the day, and mass selection
-- the chant repertoire in GABC — propers, ordinary, office, and psalm tones
+- the chant repertoire in GABC: propers, ordinary, office, and psalm tones
 - chant rhythm and performance shaping, rendered to MIDI or MusicXML
-- planetary positions voiced as tuned pitch across the classical
-  doctrines — the "harmony of the spheres"
+- planetary positions voiced as tuned pitch across the classical theorists' "harmony of the spheres"
 
-**tonus** uses Boethius' theories to shape its functionality. He divided
-music into three distinct worlds: _musica instrumentalis_ (the music
-that sounds), _musica humana_ (the music that orders), _musica mundana_
-(the music of the spheres). **tonus** keeps roughly that shape: tuning and
-score produce sound, calendar and chant selection supply order, and the
-heavens turn and sound (in theory) above both[^mundana].
-
-The whole API is a single namespace of methods — no classes to
-instantiate, no configuration. Every result is deterministic: the same
+**tonus** is implemented in TypeScript and its API is a single namespace of methods. Every result is deterministic: the same
 query returns the same answer, computed locally from data that ships with
 the package, with no network calls.
 
@@ -61,7 +51,7 @@ Theory & Context section.
 
 ## The tuning engine
 
-The tuning engine stands alone; every other engine resolves its pitches
+The tuning engine is self-contained; every other engine resolves its pitches
 through it.
 
 ```js
@@ -86,7 +76,7 @@ t.tonus();
 
 ## The liturgical stack
 
-The remaining engines compose, feast to sounding sky:
+The remaining engines compose:
 
 ```js
 const [feast] = tonus.festum({ date: new Date("2026-12-25") });
@@ -117,7 +107,3 @@ pipeline — edits happen there, not here.
 
 [MIT](LICENSE). Chant and liturgical data derive from GregoBase and Divinum
 Officium; see [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) for full attribution.
-
-[^dates]: roughly, the eighth through the thirteenth century.
-
-[^mundana]: Boethius meant by _humana_ the concord of soul and body; tonus takes it in the broader medieval sense, the concord of chants and liturgy.
