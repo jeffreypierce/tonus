@@ -1,15 +1,24 @@
 # tonus
 
-tonus is a working model of the music of the Latin Middle Ages[^†] written in TypeScript. Itcomputes the pitch system the theorists taught, the calendar the Church kept, the chants the liturgy appoints, and the cosmology the era heard behind all three. Given a date, it names the feast, supplies the chants proper to it, tunes them as a medieval cantor would have, and voices the sky that stood over the day.
-[^†]: _roughly the eighth through the thirteenth century_
+**tonus** is a TypeScript library for analyzing, performing, and modeling the
+plainchant systems and cosmology of the Latin Middle Ages[^dates]. It covers:
 
-Boethius divided music into three: _musica instrumentalis_, the music
-that sounds; _musica humana_, the music that orders; _musica mundana_,
-the music of the spheres. tonus is arranged the same way — the tuning and score engines sound, the calendar and chant engines order, and the
-heavens turn above them. (Boethius meant by _humana_ the concord of soul and body; tonus takes it in the broader medieval sense, the concord ofsongs and liturgy.)
+- pitch, tuning, hexichords, and the eight church modes
+- the liturgical calendar, the feast of the day, and mass selection
+- the chant repertoire in GABC — propers, ordinary, office, and psalm tones
+- chant rhythm and performance shaping, rendered to MIDI, MusicXML, or
+  engraved score
+- planetary positions voiced as tuned pitch across multiple doctrines (the classical "harmony of the spheres")
+
+**tonus** uses Boethius' theories to shape its functionality. He divided
+music into three distinct worlds: _musica instrumentalis_ (the music
+that sounds), _musica humana_ (the music that orders), _musica mundana_
+(the music of the spheres). **tonus** keeps roughly that shape: tuning and
+score produce sound, calendar and chant selection supply order, and the
+heavens turn and sound (in theory) above both[^mundana].
 
 The API is eleven methods on a single namespace. Every result is
-deterministic: the same query returns the same answer, computed locally from data that ships with the package.
+deterministic, the same query returns the same answer, computed locally from data that ships with the package.
 
 ## Install
 
@@ -25,7 +34,7 @@ the package — 6.5 MB unpacked, 1.5 MB packed.
 
 One page per engine, in dependency order. Each page states its rules, then its theory and historical context, then its sources.
 
-- **[Index](dos/index.md)** - Table of contents and conventions.
+- **[Index](docs/index.md)** — Table of contents and conventions.
 - **[Tuning](docs/tuning.md)** — `temperamentum`. The medieval pitch system:
   temperaments, Guidonian gamut and hand,
   hexachordal solmization and mutations, eight modes, and psalm
@@ -42,6 +51,11 @@ One page per engine, in dependency order. Each page states its rules, then its t
 - **[Heavens](docs/heavens.md)** — `caelum`, `harmonia`. An ephemeris
   computed from JPL orbital elements, voiced through the planetary
   doctrines of Boethius, Nicomachus, Pliny, and Ptolemy.
+
+Sources for concepts, scolarship, and data are listed in
+[BIBLIOGRAPHY.md](BIBLIOGRAPHY.md). Where sources disagree or run out,
+**tonus** makes an editorial call, documented in the relevant page's
+Theory & Context section.
 
 ## The tuning engine
 
@@ -101,3 +115,7 @@ pipeline — edits happen there, not here.
 
 [MIT](LICENSE). Chant and liturgical data derive from GregoBase and Divinum
 Officium; see [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) for full attribution.
+
+[^dates]: roughly the eighth through the thirteenth century
+
+[^mundana]: Boethius meant by _humana_ the concord of soul and body; tonus takes it in the broader medieval sense, the concord of chants and liturgy.

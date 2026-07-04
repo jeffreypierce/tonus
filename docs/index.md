@@ -23,30 +23,39 @@ import tonus from "tonus";
 
 ## Conventions
 
-**Latin and English.** The language of a key tells you the register of its
-value. A Latin field returns authentic Latin content: `nomen`
-("In Nativitate Domini"), `ritus` ("Duplex majus"), `tempus`
-("Tempus Adventus"), `genus` ("Antiphona"), `modus` ("Modus I"),
-`ordinarium` ("Kyrie eleison"), `maneria` ("Protus"), `auctor`, `incipit`,
-`differentia`, `tabula`, `pondus`, `accentus`, `hora`. An English field
-returns a machine code or datum: `season: "adv"`, `grade: "duplex-i"`,
-`mode: "1"`, `office: "an"`, `date`, `masses`, `velocity`, `midi`, `hz`.
-Where both registers serve one concept they form a pair, as `season` with
-`tempus`, `grade` with `ritus`, `mode` with `modus`, and `name` with
-`nomen` on `Body`. Display strings live in exported maps (`SEASON_LABELS`,
-`GRADE_NAMES`), never as label fields on objects. The astronomy layer is
-modern English by design: an accurate sky, voiced through period doctrine.
-Do not Latinize the machine register.
+### Latin and English
+
+The language of a key tells you the register of its value. A Latin key
+returns authentic Latin content; an English key returns a machine code or
+datum. Where a concept has both registers, they form a pair:
+
+| English | Latin |
+| --- | --- |
+| `season` | `tempus` |
+| `grade` | `ritus` |
+| `mode` | `modus` |
+| `name` (on `Body`) | `nomen` |
+
+Other fields carry only one register. Latin-only: `genus`, `ordinarium`,
+`maneria`, `auctor`, `incipit`, `differentia`, `tabula`, `pondus`,
+`accentus`, `hora`. English-only: `office`, `date`, `masses`, `velocity`,
+`midi`, `hz`.
+
+Display strings live in exported maps (`SEASON_LABELS`, `GRADE_NAMES`),
+never as label fields on objects. The astronomy layer is modern English
+throughout — an accurate sky, voiced through period doctrine — and is
+never Latinized.
+
+### Query and builder functions
 
 **Query functions** name what you want and return arrays. Empty matches
 return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
 chant results sort by rank then incipit.
 
-**Builder functions** construct and return context objects. They throw
+**Builder functions** construct and return context objects, and throw
 `Error` on invalid input.
 
-**Context objects** are passed into query functions as filters via the
-query object:
+Context objects can be passed back into query functions as filters:
 
 ```js
 const feasts = tonus.festum({ season: "pasc" });
@@ -56,18 +65,24 @@ const t = tonus.temperamentum({ tuning: "pythagorean" });
 t.nota("D4");
 ```
 
-**Dates are UTC-canonical.** Build query dates from ISO strings
+### Dates
+
+Dates are UTC-canonical. Build query dates from ISO strings
 (`new Date("2026-01-06")`) or `Date.UTC`, and read results with UTC
 getters or `toISOString()`. Local-time constructions like
 `new Date(2026, 0, 6)` resolve to different days depending on the
-machine's timezone. `tonus.festum()` and `tonus.caelum()` called with no
-date do **not** resolve the modern day: tonus lives in the Middle Ages, so
-they default to an emblematic medieval epoch — the symbolic birthday of
-Guido d'Arezzo, **1 June 991** (his birth date is unrecorded; this is an
-editorial anchor). Pass an explicit `date` for any other day.
+machine's timezone.
 
-**Determinism contract** All pure transforms are deterministic for identical inputs and options,
-and no runtime network requests are made.
+`tonus.festum()` and `tonus.caelum()` called with no date do not resolve
+to today: tonus lives in the Middle Ages. They default to an emblematic
+medieval epoch, **1 June 991** — the symbolic birthday of Guido d'Arezzo
+(his actual birth date is unrecorded; this is an editorial anchor). Pass
+an explicit `date` for any other day.
+
+### Determinism
+
+All pure transforms are deterministic for identical inputs and options.
+No runtime network requests are made.
 
 ## Error contract
 

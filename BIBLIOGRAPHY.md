@@ -20,44 +20,44 @@ section of the relevant page.
 
 ## Chant rhythm (score engine)
 
-- **Carroll, *The Technique of Gregorian Chironomy* (1955)** — seven
+- **Carroll, _The Technique of Gregorian Chironomy_ (1955)** — seven
   rhythmic types, three melodic rules, chironomy →
   [docs/score.md](docs/score.md#sources)
-- **Carroll, *An Applied Course in Gregorian Chant* (1956)** — compound
+- **Carroll, _An Applied Course in Gregorian Chant_ (1956)** — compound
   beats, ictus placement → [docs/score.md](docs/score.md#sources)
-- **Gajard, *The Rhythm of Plainsong* (1945)** — arsis/thesis synthesis →
+- **Gajard, _The Rhythm of Plainsong_ (1945)** — arsis/thesis synthesis →
   [docs/score.md](docs/score.md#sources)
-- **Mocquereau, *Le nombre musical grégorien* (1908–1927)** — the Solesmes
+- **Mocquereau, _Le nombre musical grégorien_ (1908–1927)** — the Solesmes
   school's foundation → [docs/score.md](docs/score.md#sources)
 - **Cardine, "Semiology and the Interpretation of Gregorian Chant"** — the
   semiological approach → [docs/score.md](docs/score.md#sources)
 - **Desrocquettes, "Gregorian Musical Values"** — Solesmes rhythmic
   values → [docs/score.md](docs/score.md#sources)
-- **Apel, *Gregorian Chant* (1958)** — analytic study of the repertoire →
+- **Apel, _Gregorian Chant_ (1958)** — analytic study of the repertoire →
   [docs/chant.md](docs/chant.md#sources)
-- **Hiley, *Western Plainchant* (1993)** — the standard reference →
+- **Hiley, _Western Plainchant_ (1993)** — the standard reference →
   [docs/chant.md](docs/chant.md#sources)
-- **Treitler, *With Voice and Pen* (2003)** — orality and notation →
+- **Treitler, _With Voice and Pen_ (2003)** — orality and notation →
   [docs/chant.md](docs/chant.md#sources)
-- **Saulnier, *Gregorian Chant: A Guide*** — chant introduction →
+- **Saulnier, _Gregorian Chant: A Guide_** — chant introduction →
   [docs/chant.md](docs/chant.md#sources)
-- **Pierik, *The Spirit of Gregorian Chant* (1939) and *Gregorian Chant
-  Analyzed and Studied* (1951)** — chant interpretation →
+- **Pierik, _The Spirit of Gregorian Chant_ (1939) and _Gregorian Chant
+  Analyzed and Studied_ (1951)** — chant interpretation →
   [docs/chant.md](docs/chant.md#sources)
-- **Burkard, *Manual of Plain Chant* (1906)** — plainchant instruction →
+- **Burkard, _Manual of Plain Chant_ (1906)** — plainchant instruction →
   [docs/chant.md](docs/chant.md#sources)
-- **Kelly, *Capturing Music: The Story of Notation* (2014)** — notation
+- **Kelly, _Capturing Music: The Story of Notation_ (2014)** — notation
   history → [docs/chant.md](docs/chant.md#sources)
 
 ## Tuning and music theory (temperamentum engine)
 
-- **Boethius, *De institutione musica*** — Pythagorean interval math;
+- **Boethius, _De institutione musica_** — Pythagorean interval math;
   also the Boethius doctrina → [docs/tuning.md](docs/tuning.md#sources),
   [docs/heavens.md](docs/heavens.md#sources)
-- **Ptolemy, *Harmonics* I.15–16** — the three diatonic shades; *Harmonics*
+- **Ptolemy, _Harmonics_ I.15–16** — the three diatonic shades; _Harmonics_
   III for the doctrina → [docs/tuning.md](docs/tuning.md#sources),
   [docs/heavens.md](docs/heavens.md#sources)
-- **Atkinson, *The Critical Nexus* (2009)** — tone-system, mode, and
+- **Atkinson, _The Critical Nexus_ (2009)** — tone-system, mode, and
   notation → [docs/tuning.md](docs/tuning.md#sources)
 - **Reisenweaver, "Guido of Arezzo" (2012)** — Guido's pedagogy →
   [docs/tuning.md](docs/tuning.md#sources)
@@ -78,11 +78,11 @@ section of the relevant page.
 
 ## Musica universalis (harmonia engine)
 
-- **Godwin, *Harmonies of Heaven and Earth* (1987)** — planetary scale
+- **Godwin, _Harmonies of Heaven and Earth_ (1987)** — planetary scale
   taxonomy and analyses → [docs/heavens.md](docs/heavens.md#sources)
-- **Godwin (ed.), *The Harmony of the Spheres* (1993)** — primary-source
+- **Godwin (ed.), _The Harmony of the Spheres_ (1993)** — primary-source
   translations → [docs/heavens.md](docs/heavens.md#sources)
-- **Godwin, *The Mystery of the Seven Vowels* (1991)** — planetary vowel
+- **Godwin, _The Mystery of the Seven Vowels_ (1991)** — planetary vowel
   attestations → [docs/heavens.md](docs/heavens.md#sources)
 - **Nicomachus, Plato, Pliny, Ptolemy** — the doctrina primaries (with the
   vowel attestations: Porphyry, Marcus Gnosticus, Demetrius, Eusebius,
@@ -97,8 +97,3 @@ section of the relevant page.
   computation tutorial → [docs/heavens.md](docs/heavens.md#sources)
 - **Gauss/Butcher computus; Julian 19-year cycle** — Easter reckoning →
   [docs/calendar.md](docs/calendar.md#sources)
-
----
-
-*Sources the author consulted that are not machine-detectable from the
-repository should be added here.*
