@@ -8,6 +8,7 @@ import { detectAspects } from "./aspects.js";
 import { ORBITAL_ELEMENTS } from "./orbital.js";
 import type { Body, BodyName, PlanetName, Cosmos, CosmosQuery } from "./types.js";
 import { latinName } from "./types.js";
+import { DEFAULT_EPOCH } from "../epoch.js";
 
 const MS_PER_DAY = 86400000;
 const ALL_BODIES: BodyName[] = ["Sun", "Moon", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn"];
@@ -218,6 +219,6 @@ export function getCosmos(query: CosmosQuery = {}): Cosmos | Cosmos[] {
     return frames;
   }
 
-  const date = query.date ?? query.feast?.date ?? new Date();
+  const date = query.date ?? query.feast?.date ?? DEFAULT_EPOCH;
   return snapshotAt(date, requested, query.orbLimit);
 }

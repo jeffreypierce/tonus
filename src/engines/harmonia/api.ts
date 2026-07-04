@@ -28,7 +28,7 @@ export interface Frame {
 
 export interface Harmony {
   doctrina: Author;
-  doctrinaName: string;
+  auctor: string; // full Latin name of the doctrina's author
   date: Date;
   bodies: VoicedBody[];
   aspects: VoicedAspect[];
@@ -116,7 +116,7 @@ export function buildHarmonia(
 
   const harmony: Harmony = {
     doctrina: doctrinaKey,
-    doctrinaName: doctrina.name,
+    auctor: doctrina.name,
     date: cosmosArray[0]!.date,
     bodies: aggregateBodies,
     aspects: aggregateAspects,

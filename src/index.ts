@@ -1,4 +1,4 @@
-import { getFeast } from "./engines/cal/calendar.js";
+import { getFeast, getPascha } from "./engines/cal/calendar.js";
 import { getChants } from "./engines/chant/chant.js";
 import { getPropers } from "./engines/chant/propers.js";
 import { getOrdinary } from "./engines/chant/ordinary.js";
@@ -9,7 +9,7 @@ import { buildScore } from "./engines/score/api.js";
 import { getCosmos } from "./engines/planet/planet.js";
 import { buildHarmonia } from "./engines/harmonia/api.js";
 
-import type { FeastQuery, Feast, Season, Grade } from "./engines/cal/types.js";
+import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/types.js";
 import type {
   CantusQuery, Chant, OrdinaryChant, PropriumQuery,
   OrdinariumQuery, OfficiumQuery, PsalmusQuery,
@@ -43,6 +43,7 @@ import type {
 
 const tonus = {
   festum: getFeast,
+  pascha: getPascha,
   cantus: getChants,
   proprium: getPropers,
   ordinarium: getOrdinary,
@@ -68,7 +69,7 @@ export {
 } from "./engines/cal/types.js";
 
 export type {
-  Feast, FeastQuery, Season, Grade,
+  Feast, FeastQuery, Pascha, Season, Grade,
   Chant, CantusQuery, OrdinaryChant,
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,

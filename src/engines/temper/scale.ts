@@ -235,8 +235,16 @@ export function midiToHz(
   const pc = m % 12;
   const oct = Math.floor(m / 12) - 1;
   // Interval from A (pc=9) to target pc in cents, within the tuning.
-  // cents[] is normalized to root; cents[pc] - cents[9] gives the tuned interval from A.
-  const centsFromA = (scala.cents[pc] ?? 0) - (scala.cents[9] ?? 0);
+  // cents[] is root-normalized, and its octave folding differs by build path
+  // (the Pythagorean builder leaves below-root pcs negative; the diatonic-
+  // steps builder folds everything to [0,1200)). Place every pc in the
+  // C-register first — its height above pitch-class C within one octave —
+  // so the A→pc displacement is correct regardless of root or tuning.
+  const posC = (p: number): number => {
+    const rel = (scala.cents[p] ?? 0) - (scala.cents[0] ?? 0);
+    return ((rel % 1200) + 1200) % 1200;
+  };
+  const centsFromA = posC(pc) - posC(9);
   // A4 = midi 69, so A in this octave is midi (oct+1)*12 + 9 = m's octave A.
   const octaveShift = oct - 4; // octaves above/below A4
   const hz = scala.a4 * 2 ** (octaveShift + centsFromA / 1200);

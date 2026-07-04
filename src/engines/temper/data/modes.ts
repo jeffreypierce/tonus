@@ -11,9 +11,9 @@ export interface ModeProfile {
 
 export interface ModeData {
   mode: number;
-  name: string;       // Latin: "Protus Authenticus", etc.
+  nomen: string;      // Latin: "Protus Authenticus", etc.
   alias: string;      // Greek: "dorian", "hypodorian", etc.
-  family: string;     // "Protus" | "Deuterus" | "Tritus" | "Tetrardus"
+  maneria: string;    // "Protus" | "Deuterus" | "Tritus" | "Tetrardus"
   type: "authentic" | "plagal";
   final: number;      // finalis pitch class (C=0)
   tenor: number;      // reciting tone pitch class
@@ -42,9 +42,9 @@ export const MODES = new Map<number, ModeData>([
     1,
     {
       mode: 1,
-      name: "Protus Authenticus",
+      nomen: "Protus Authenticus",
       alias: "dorian",
-      family: "Protus",
+      maneria: "Protus",
       type: "authentic",
       final: 2,
       tenor: 9,
@@ -61,9 +61,9 @@ export const MODES = new Map<number, ModeData>([
     2,
     {
       mode: 2,
-      name: "Protus Plagalis",
+      nomen: "Protus Plagalis",
       alias: "hypodorian",
-      family: "Protus",
+      maneria: "Protus",
       type: "plagal",
       final: 2,
       tenor: 5,
@@ -80,9 +80,9 @@ export const MODES = new Map<number, ModeData>([
     3,
     {
       mode: 3,
-      name: "Deuterus Authenticus",
+      nomen: "Deuterus Authenticus",
       alias: "phrygian",
-      family: "Deuterus",
+      maneria: "Deuterus",
       type: "authentic",
       final: 4,
       tenor: 0,
@@ -99,9 +99,9 @@ export const MODES = new Map<number, ModeData>([
     4,
     {
       mode: 4,
-      name: "Deuterus Plagalis",
+      nomen: "Deuterus Plagalis",
       alias: "hypophrygian",
-      family: "Deuterus",
+      maneria: "Deuterus",
       type: "plagal",
       final: 4,
       tenor: 9,
@@ -118,9 +118,9 @@ export const MODES = new Map<number, ModeData>([
     5,
     {
       mode: 5,
-      name: "Tritus Authenticus",
+      nomen: "Tritus Authenticus",
       alias: "lydian",
-      family: "Tritus",
+      maneria: "Tritus",
       type: "authentic",
       final: 5,
       tenor: 0,
@@ -137,9 +137,9 @@ export const MODES = new Map<number, ModeData>([
     6,
     {
       mode: 6,
-      name: "Tritus Plagalis",
+      nomen: "Tritus Plagalis",
       alias: "hypolydian",
-      family: "Tritus",
+      maneria: "Tritus",
       type: "plagal",
       final: 5,
       tenor: 9,
@@ -156,9 +156,9 @@ export const MODES = new Map<number, ModeData>([
     7,
     {
       mode: 7,
-      name: "Tetrardus Authenticus",
+      nomen: "Tetrardus Authenticus",
       alias: "mixolydian",
-      family: "Tetrardus",
+      maneria: "Tetrardus",
       type: "authentic",
       final: 7,
       tenor: 2,
@@ -175,9 +175,9 @@ export const MODES = new Map<number, ModeData>([
     8,
     {
       mode: 8,
-      name: "Tetrardus Plagalis",
+      nomen: "Tetrardus Plagalis",
       alias: "hypomixolydian",
-      family: "Tetrardus",
+      maneria: "Tetrardus",
       type: "plagal",
       final: 7,
       tenor: 0,

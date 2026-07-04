@@ -18,6 +18,7 @@
 ## File structure
 
 Every source file opens with a one-line header:
+
 ```ts
 // ---------------------------------------------------------------------------
 // engines/cal/calendar — feast resolution from the liturgical calendar
@@ -25,12 +26,14 @@ Every source file opens with a one-line header:
 ```
 
 Divide files into logical sections with short dividers:
+
 ```ts
 // ── Helpers ──
 // ── Public API ──
 ```
 
 Typical module layout:
+
 1. Imports
 2. Constants and caches
 3. Internal helpers (unexported)
@@ -40,18 +43,18 @@ Typical module layout:
 
 ## Naming
 
-| Thing | Convention | Example |
-|---|---|---|
-| Public API function | noun or short verb | `cantus`, `festum`, `temperamentum`, `ordo` |
-| Public field, Latin content | Latin key | `nomen`, `ritus`, `tempus`, `genus`, `modus` |
-| Public field, machine code/datum | English key | `season`, `grade`, `mode`, `date`, `masses` |
-| Engine function | camelCase verb | `getFeast`, `buildScore`, `detectAspects` |
-| Internal helper | camelCase | `resolveMasses`, `computeSpeed` |
-| Type / interface | PascalCase | `Feast`, `Body`, `ChantMetrics` |
-| Type union | PascalCase | `Season`, `CanonicalHour`, `BodyName` |
-| Constant map/array | SCREAMING_SNAKE | `ORBITAL_ELEMENTS`, `SEASON_LABELS` |
-| Module-level cache | `_camelCase` | `_byId`, `_calCache` |
-| Options interface | noun + `Opts` | `CaelumQuery`, `TemperamentumOpts` |
+| Thing                            | Convention         | Example                                        |
+| -------------------------------- | ------------------ | ---------------------------------------------- |
+| Public API function              | Latin noun         | `cantus`, `festum`, `temperamentum`, `notatio` |
+| Public field, Latin content      | Latin key          | `nomen`, `ritus`, `tempus`, `genus`, `modus`   |
+| Public field, machine code/datum | English key        | `season`, `grade`, `mode`, `date`, `masses`    |
+| Engine function                  | camelCase verb     | `getFeast`, `buildScore`, `detectAspects`      |
+| Internal helper                  | camelCase          | `resolveMasses`, `computeSpeed`                |
+| Type / interface                 | PascalCase         | `Feast`, `Body`, `ChantMetrics`                |
+| Type union                       | PascalCase         | `Season`, `CanonicalHour`, `BodyName`          |
+| Constant map/array               | SCREAMING_SNAKE    | `ORBITAL_ELEMENTS`, `SEASON_LABELS`            |
+| Module-level cache               | `_camelCase`       | `_byId`, `_calCache`                           |
+| Options interface                | noun + `Opts`      | `CaelumQuery`, `TemperamentumOpts`             |
 
 ---
 
@@ -59,7 +62,7 @@ Typical module layout:
 
 **Engine functions** (in `src/engines/`) are internal. They follow the `getX` / `buildX` naming pattern and are never exported from `src/index.ts`.
 
-**Public API functions** are what users call. They are nouns or short verbs (`cantus()`, `festum()`, `temperamentum()`, `notatio()`), follow the query/builder contract, and are assembled in `src/index.ts`.
+**Public API functions** are what users call. They are Latin nouns (`cantus()`, `festum()`, `temperamentum()`, `notatio()`), follow the query/builder contract, and are assembled in `src/index.ts`.
 
 **Builder engines** expose their public surface through `api.ts`. **Query engines** expose theirs through a file named after the engine's primary domain (e.g. `calendar.ts`, `chant.ts`, `planet/planet.ts`). The `api.ts` pattern is reserved for engines that compose multiple internal modules into a returned context object with methods.
 
@@ -68,15 +71,17 @@ Typical module layout:
 ## Public API contract
 
 **Query functions** return arrays, never throw:
+
 ```ts
-tonus.cantus({ mode: 1 })   // → Chant[], [] on no match
-tonus.festum({ date })       // → Feast[], [] on no match
+tonus.cantus({ mode: 1 }); // → Chant[], [] on no match
+tonus.festum({ date }); // → Feast[], [] on no match
 ```
 
 **Builder functions** return context objects, throw on invalid input:
+
 ```ts
-tonus.temperamentum({ tuning: "pythagorean" })  // → Temperamentum
-tonus.ordo(chant)                         // → Score
+tonus.temperamentum({ tuning: "pythagorean" }); // → Temperamentum
+tonus.notatio(chant); // → Score
 ```
 
 `Score` and `Temperamentum` are the only types with methods — this is spec-mandated, not a general pattern.
@@ -86,20 +91,23 @@ tonus.ordo(chant)                         // → Score
 ## Data patterns
 
 **Large corpus → typed `.ts` const array** (preferred — compile-time type safety):
+
 ```ts
 export const GR: Chant[] = [ ... ];
 ```
 
 **Lazy indices** — build on first access, not at load time:
+
 ```ts
 let _byId: Map<string, Chant> | null = null;
 function byId(): Map<string, Chant> {
-  if (!_byId) _byId = new Map(GR.map(c => [c.id, c]));
+  if (!_byId) _byId = new Map(GR.map((c) => [c.id, c]));
   return _byId;
 }
 ```
 
 **Computed caches** — cache by key:
+
 ```ts
 const _calCache = new Map<number, Map<string, CalEntry[]>>();
 ```
@@ -111,11 +119,12 @@ const _calCache = new Map<number, Map<string, CalEntry[]>>();
 Only where logic is non-obvious. No docstrings on self-evident functions.
 
 Use inline trailing comments for interface fields:
+
 ```ts
 interface Note {
-  midi: number;   // MIDI note number
-  pc: number;     // pitch class 0–11
-  acc: number;    // -1 flat, 0 natural, 1 sharp
+  midi: number;
+  pc: number; // pitch class
+  acc: number; // -1 flat, 0 natural, 1 sharp
 }
 ```
 
@@ -124,15 +133,17 @@ interface Note {
 ## Error handling
 
 **Query functions** return `[]` on no match, never throw:
+
 ```ts
-tonus.cantus({ mode: 99 })   // → []
-tonus.festum({ date })        // → [] if no feast found
+tonus.cantus({ mode: 99 }); // → []
+tonus.festum({ date }); // → [] if no feast found
 ```
 
 **Builder functions** throw on invalid input. Context objects carry an `errors` field for parse-level issues:
+
 ```ts
-const score = tonus.ordo(chant);
-score.errors  // → ParseError[] from GABC parse
+const score = tonus.notatio(chant);
+score.errors; // → ParseError[] from GABC parse
 ```
 
 Callers check `.errors` before using the result. Downstream methods on a context object with errors should fail gracefully (return empty/null results, not throw).

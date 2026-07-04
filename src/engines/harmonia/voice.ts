@@ -48,7 +48,7 @@ function voiceOne(body: Body, voice: Voice, vowel: PlanetVowel, scale: Scale): V
   const pitch: Pitch = { ...toPitch(roundedMidi, scale), hz };
 
   const performance: Performance = {
-    velocity: Math.round(presence * 127),
+    velocity: presence, // 0–1, same scale as the score engine
     duration: 0,
     rhythmicShape: "arsic",
     rhythmicIndex: 1,

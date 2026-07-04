@@ -10,7 +10,10 @@ export type OfficeCode =
   | "an" | "al" | "ca" | "co" | "gr" | "hy" | "in"
   | "of" | "ps" | "re" | "rb" | "se" | "tr" | "tp" | "or";
 
-export type OrdinaryCode = "ky" | "gl" | "cr" | "sa" | "ag" | "be" | "it";
+export type OrdinaryCode =
+  | "ky" | "gl" | "cr" | "sa" | "ag" | "be" | "it"
+  | "as"   // Asperges me (sprinkle rite, outside Paschaltide)
+  | "va";  // Vidi aquam (sprinkle rite, Paschaltide)
 
 export type ChantSource = "gr" | "lu" | "la" | "lh";
 

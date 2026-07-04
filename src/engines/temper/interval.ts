@@ -8,7 +8,7 @@ export type IntervalQuality = "perfect" | "major" | "minor" | "augmented";
 export type Consonance = "perfect" | "imperfect" | "dissonant";
 
 export interface Interval {
-  name: string;
+  nomen: string;
   alias?: string;
   quality: IntervalQuality;
   class: string;
@@ -38,7 +38,7 @@ export function classifyInterval(a: number, b?: number): Interval {
   const entry = abs === 0 ? UNISONUS : (simple === 0 ? INTERVAL[0]! : INTERVAL[simple]!);
 
   return {
-    name: entry.latin,
+    nomen: entry.latin,
     alias: entry.alias,
     quality: entry.quality as IntervalQuality,
     class: entry.class,

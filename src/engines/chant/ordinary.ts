@@ -116,13 +116,28 @@ function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
   };
 }
 
-function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | null): OrdinaryChant[] {
-  // The Triduum has no Mass-ordinary cycle (Good Friday has no Mass; the
-  // Vigil's ordinary belongs to Easter). An explicitly pinned mass overrides.
-  if (feast.grade === "triduum" && pinMass == null) return [];
+// Maundy Thursday (In Cena Domini) is a Triduum exception: it retains a full
+// Mass with the Gloria (rung with bells, which then fall silent until the
+// Easter Vigil) despite Lent's penitential omission and the Triduum's
+// otherwise empty ordinary. The Credo and the Sunday sprinkle rite are not
+// part of this evening Mass. See docs/chant.md.
+const MAUNDY_THURSDAY_ID = "Quad6-4";
+// The feast carries no numbered Kyriale mass of its own (masses: []); as a
+// paschally-adjacent solemnity it draws on Mass I (Lux et origo) — the same
+// mass the Easter Vigil borrows, so both Triduum Masses share a setting.
+const MAUNDY_THURSDAY_MASS = 1;
 
-  const masses = pinMass != null
-    ? (() => { const e = MASSES.get(pinMass); return e ? [e] : []; })()
+function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | null): OrdinaryChant[] {
+  const isMaundyThursday = feast.id === MAUNDY_THURSDAY_ID;
+
+  // The Triduum has no Mass-ordinary cycle (Good Friday has no Mass; the
+  // Vigil's ordinary belongs to Easter). Maundy Thursday is the exception —
+  // it keeps its Mass. An explicitly pinned mass also overrides.
+  if (feast.grade === "triduum" && pinMass == null && !isMaundyThursday) return [];
+
+  const resolvedMass = pinMass ?? (isMaundyThursday ? MAUNDY_THURSDAY_MASS : undefined);
+  const masses = resolvedMass != null
+    ? (() => { const e = MASSES.get(resolvedMass); return e ? [e] : []; })()
     : resolveMasses(feast);
   const massNumbers = masses.map((m) => m.mass);
   const mode = filterMode ?? null;
@@ -140,23 +155,27 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
   if (ky) results.push(ky);
 
   // Gloria is omitted in penitential seasons (Advent, Septuagesima, Lent).
-  const glOmitted = PENITENTIAL_SEASONS.has(feast.season);
+  // Maundy Thursday keeps it — its Gloria is a deliberate breach of Lenten
+  // austerity, sung with the bells before they fall silent.
+  const glOmitted = PENITENTIAL_SEASONS.has(feast.season) && !isMaundyThursday;
   if (!glOmitted) {
     const gl = pick("gl");
     if (gl) results.push(gl);
   }
 
-  // Credo
-  const allowed = allowedCredos(masses);
-  const credoCode = selectCredoCode(feast, allowed);
-  if (credoCode) {
-    const credoEntries = KYRIALE.filter((e) => e.office === "cr");
-    const named = credoEntries.find((e) => e.incipit.includes(credoCode));
-    const best = named ?? selectBestChant(credoEntries, mode, highFeast, massNumbers);
-    if (best) {
-      const cr = entryToOrdinaryChant(best);
-      cr.ordinarium = `Credo ${credoCode}`;
-      results.push(cr);
+  // Credo — In Cena Domini's Mass has no Creed.
+  if (!isMaundyThursday) {
+    const allowed = allowedCredos(masses);
+    const credoCode = selectCredoCode(feast, allowed);
+    if (credoCode) {
+      const credoEntries = KYRIALE.filter((e) => e.office === "cr");
+      const named = credoEntries.find((e) => e.incipit.includes(credoCode));
+      const best = named ?? selectBestChant(credoEntries, mode, highFeast, massNumbers);
+      if (best) {
+        const cr = entryToOrdinaryChant(best);
+        cr.ordinarium = `Credo ${credoCode}`;
+        results.push(cr);
+      }
     }
   }
 
@@ -174,11 +193,14 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
   }
 
   // Sprinkle rite: Vidi aquam in Paschaltide (through the Pentecost octave),
-  // Asperges otherwise.
-  const sprinkleType = feast.season === "pasc" ? "va" : "as";
-  const sprinkleEntries = entriesForOffice(sprinkleType, massNumbers);
-  const sprinkleBest = selectBestChant(sprinkleEntries, mode, highFeast, massNumbers);
-  if (sprinkleBest) results.push(entryToOrdinaryChant(sprinkleBest));
+  // Asperges otherwise. It precedes the principal Sunday Mass only — not the
+  // evening Mass of In Cena Domini.
+  if (!isMaundyThursday) {
+    const sprinkleType = feast.season === "pasc" ? "va" : "as";
+    const sprinkleEntries = entriesForOffice(sprinkleType, massNumbers);
+    const sprinkleBest = selectBestChant(sprinkleEntries, mode, highFeast, massNumbers);
+    if (sprinkleBest) results.push(entryToOrdinaryChant(sprinkleBest));
+  }
 
   return results;
 }

@@ -14,7 +14,7 @@ describe("harmonia — defaults", () => {
     const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
     const h = tonus.harmonia(cosmos);
     assert.equal(h.doctrina, "boethius");
-    assert.ok(h.doctrinaName.includes("Boethius"));
+    assert.ok(h.auctor.includes("Boethius"));
   });
 
   test("single cosmos omits frames", () => {
@@ -97,7 +97,7 @@ describe("harmonia — voicings", () => {
       assert.ok(b.nota);
       assert.ok(typeof b.nota.pitch.hz === "number" && b.nota.pitch.hz > 0);
       assert.ok(typeof b.nota.performance.velocity === "number");
-      assert.ok(b.nota.performance.velocity >= 0 && b.nota.performance.velocity <= 127);
+      assert.ok(b.nota.performance.velocity >= 0 && b.nota.performance.velocity <= 1);
     }
   });
 });

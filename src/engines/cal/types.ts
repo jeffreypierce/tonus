@@ -262,3 +262,24 @@ export interface FeastQuery {
   marian?: boolean;
   apostolic?: boolean;
 }
+
+// The movable anchors of one liturgical year, as returned by tonus.pascha.
+// All dates are UTC midnights.
+export interface Pascha {
+  year: number;
+  septuagesima: Date;
+  ashWednesday: Date;
+  firstLentSunday: Date;
+  palmSunday: Date;
+  goodFriday: Date;
+  easter: Date;
+  ascension: Date;
+  pentecost: Date;
+  trinitySunday: Date;
+  corpusChristi: Date;
+  adventFirstSunday: Date;
+  gaudete: Date;
+  christmas: Date;
+  epiphany: Date;
+  baptism: Date;
+}

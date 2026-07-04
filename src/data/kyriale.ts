@@ -1,7 +1,7 @@
 // kyriale.ts — Mass ordinary (kyriale) chants
 // Extracted from GregoBase (GR source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-03-28T23:14:00.849Z
-// Entries: 116
+// Generated: 2026-07-04T01:42:24.971Z
+// Entries: 120
 //
 // Mass numbers are derived from GR page references (e.g. page "18*" = Mass XVIII).
 // office-part 'ky' in GregoBase covers all ordinary parts (Kyrie, Gloria, Credo,
@@ -28,6 +28,14 @@ export interface KyrialeEntry {
 }
 
 export const KYRIALE: KyrialeEntry[] = [
+  {
+    id: "gregobase:497",
+    office: "as",
+    mass: null,
+    mode: "7",
+    incipit: "Asperges me",
+    gabc: "(c2) A(cd)SPER(fvED)GES(ef) me,(g.) (,) * D\\u00f3(h!iwj)mi(ji)ne,(hg) (,) hys(h)s\\u00f3(g_[oh:h]f)po,(ef) et(gvFD') mun(e)d\\u00e1(cdc___)bor :(c.) (:) la(cd)v\\u00e1(fvED)bis(ef) me,(g.) (;) et(g!hw!ivHG) su(fe)per(d') ni(f)vem(ef) de(gvFD')al(e)b\\u00e1(cdc___)bor.(c.) (::) <i>Ps.~50.</i> Mi(cfe)se(fg)r\\u00e9(g')re(g) me(gi)i,(h) De(hg)us,(gh..) *(:) se(ge)c\\u00fan(fg~)dum(g') ma(g)gnam(g') mi(g)se(g')ri(g)c\\u00f3r(g!hwi)di(g')am(f) tu(fff)am.(dc..) (::) Gl\\u00f3(cfe)ri(fg)a(g) Pa(g)tri,(g') et(g) F\\u00ed(g)li(g)o,(g.) (,) et(g) Spi(g)r\\u00ed(gi)tu(h')i(h) San(hg~)cto :(gh..) *(:) Sic(ge)ut(fg) e(g)rat(g') in(g) prin(g)c\\u00ed(g')pi(g)o,(g.) (,) et(g) nunc,(gi) et(h) sem(hg~)per,(gh..) (:) et(ge) in(fg) sa\\u00e9(g)cu(g)la(g') sae(g)cu(g!hwi)l\\u00f3(g')rum.(f) A(fff)men.(dc..) (::)",
+  },
   {
     id: "gregobase:555",
     office: "ag",
@@ -173,6 +181,14 @@ export const KYRIALE: KyrialeEntry[] = [
     gabc: "(c4) KY(g)ri(g)e(hi!jvIHG.hie'//fvE'DC.) ~~~~~*(,) e(ghi!jvIHG.hhvGF'E)l\\u00e9(f')i(g)son.(g.) <i>iij.</i>(::)\\r\\nChri(g!ij/kjk)ste(g.jvIHG'gvFED.) (,) e(de!fg!hvvGF'E)l\\u00e9(f')i(g)son.(g.) <i>iij.</i>(::) K\\u00fd(g)ri(g)e(hi!jvIHG.hie'//fvE'DC.) ~~~~~*(,) e(ghi!jvIHG.hhvGF'E)l\\u00e9(f')i(g)son.(g.) <i>iij.</i>(::) ",
   },
   {
+    id: "gregobase:958",
+    office: "va",
+    mass: null,
+    mode: "8",
+    incipit: "Vidi aquam",
+    gabc: "(c3) VI(ef)di(fd/fe) a(efe___)quam(e.) <clear>*(,) e(e)gre(ef/hg)di(gf)\\u00e9n(hh)tem(fg) de(ef) tem(e!hh/if~)plo,(fe/fgf.) (;) a(ef) l\\u00e1(e!hhi)te(f)re(fe) dex(f/hef)tro,(ed..) (;) al(e)le(efde)l\\u00fa(ef/hfg){ia} :(fe..) (:) et(ef) o(e!fwg'!hv)mnes,(h') ad(h) quos(h) per(gf~)v\\u00e9(gh)nit(g.) (,) a(hhhg)qua(fi) i(h_g)sta,(hiH'GhvG'FEfe..) (;) sal(e!hhhi)vi(h) fa(h!iwji)cti(hvGF) sunt,(f.) (,) et(fe~) di(f/hef)cent,(ed..) (;) al(ef)le(f)l\\u00fa(fgf~){ia},(f.) (,) al(fvE~D~)le(ef/h.f!gwh)l\\u00fa(efe___){ia}.(e.) (::) \\r\\n<i>Ps. 117.</i> Con(e)fi(fe)t\\u00e9(eh)mi(h)ni(h') D\\u00f3(h)mi(h)no(h) qu\\u00f3(hg)ni(hi)am(i) bo(hi)nus :(h.) *(:) qu\\u00f3(hf)ni(fh)am(h) in(h) sa\\u00e9(h')cu(h)lum(h) mi(h)se(h)ri(h)c\\u00f3r(hhg)di(ef)a(hg) e(f)jus.(e.) (::) \\r\\nGl\\u00f3(e)ri(fe)a(eh) Pa(h)tri,(h') et(h) F\\u00ed(h)li(h)o,(h.) (,) et(h) Spi(h)r\\u00ed(hg)tu(hi)i(i) San(hi)cto.(h.) *(:) Sic(hf)ut(fh) e(h)rat(h') in(h) prin(h)c\\u00ed(h')pi(h)o,(h.) (,) et(hg) nunc,(hi) et(i) sem(hi)per,(h.) (:) et(hf) in(fh) sa\\u00e9(h)cu(h)la(h') sae(h)cu(hhg)l\\u00f3(ef)rum.(hg) A(f)men.(e.) (::)",
+  },
+  {
     id: "gregobase:1241",
     office: "ag",
     mass: 5,
@@ -301,6 +317,14 @@ export const KYRIALE: KyrialeEntry[] = [
     gabc: "(c3) GL\\u00f3(h')ri(h)a(f') in(e) ex(d)c\\u00e9l(e')sis(f) De(e.)o.(d.) (::) Et(h') in(h) ter(f')ra(e) pax(d') ho(e)m\\u00ed(f')ni(e)bus(d.) (;) bo(d')nae(e) vo(f')lun(h)t\\u00e1(i.)tis.(h.) (::) Lau(k)d\\u00e1(jvIH)mus(i.) te.(h.) (::) Be(k')ne(j)d\\u00ed(i')ci(h)mus(ij) te.(ih..) (::) Ad(h')o(h)r\\u00e1(fvED)mus(ef) te.(d.) (::) Glo(d')ri(e)fi(f)c\\u00e1(h')mus(i) te.(h.) (::) Gr\\u00e1(h')ti(i)as(j) \\u00e1(k')gi(j)mus(ij) ti(i.)bi(h.) (;) pro(h')pter(h) ma(f')gnam(e) gl\\u00f3(d')ri(e)am(f) tu(e.)am.(d.) (::) D\\u00f3(h')mi(h)ne(f') De(e)us,(d.) Rex(e') cae(f)l\\u00e9(e.)stis,(d.) (;) De(d)us(ef) Pa(h)ter(ih) o(ij)mn\\u00ed(kj)pot(ih)ens.(h.) (::) D\\u00f3(h')mi(h)ne(f') Fi(e)li(d') u(e)ni(f)g\\u00e9(h')ni(i)te(h.) (,) Je(ij)su(kj) Chri(i.)ste.(h.) (::) D\\u00f3(k')mi(j)ne(i') De(j)us,(ih) A(i')gnus(j) De(i.)i,(h.) (;) F\\u00ed(h')li(h)us(fvED) Pa(efe)tris.(d.) (::) Qui(d') tol(e)lis(f') pec(h)c\\u00e1(i')ta(h) mun(ij/kj)di,(ih..) (;) mi(h')se(h)r\\u00e9(fvED)re(ef) no(e.)bis.(d.) (::) Qui(k') tol(j)lis(i') pec(h)c\\u00e1(i')ta(j) mun(i.)di,(h.) (;) s\\u00fas(h')ci(h)pe(f.) de(e)pre(d')ca(e)ti(f')\\u00f3(h)nem(ih) no(ij/kj)stram.(ih..) (::) Qui(h') se(h)des(f') ad(e) d\\u00e9x(d')te(e)ram(f) Pa(e.)tris,(d.) (;) mi(d')se(e)r\\u00e9(f')re(h) no(i.)bis.(h.) (::) Qu\\u00f3(k')ni(j)am(i') tu(h) so(i')lus(j) san(i.)ctus.(h.) (::) Tu(k') so(j)lus(ih) D\\u00f3(ij)mi(ih)nus.(h.) (::) Tu(h) so(h')lus(f) Al(ed)t\\u00eds(ef)si(h)mus,(ih..) (,) Je(ij)su(kj) Chri(i.)ste.(h.) (::) Cum(h') San(h)cto(fvED) Sp\\u00ed(ef)ri(e)tu,(d.) (;) in(d') gl\\u00f3(e)ri(f')a(h) De(i')i(h) Pa(ij/kj)tris.(ih..) (::) A(gxhvFE'DgvFE)men.(ed..) (::)",
   },
   {
+    id: "gregobase:905",
+    office: "as",
+    mass: null,
+    mode: "7",
+    incipit: "Asperges me (ad lib.) I",
+    gabc: "(c2) A(cd)sp\\u00e9r(fe~)ges(fg) me,(g.) *(,) D\\u00f3(hhi)mi(h)ne,(g') hys(h)s\\u00f3(g_[oh:h]f)po,(ef) et(gf) mun(d)d\\u00e1(c.)bor :(c.) (:) la(cd)v\\u00e1(fe)bis(fg) me,(g.) (,) et(gh) su(f)per(fd~) ni(f)vem(ef) de(gf)al(d)b\\u00e1(c.)bor.(c.) (::)",
+  },
+  {
     id: "gregobase:1384",
     office: "sa",
     mass: 8,
@@ -411,6 +435,14 @@ export const KYRIALE: KyrialeEntry[] = [
     mode: "2",
     incipit: "Gloria XI",
     gabc: "(f3) GL\\u00f3(fi)ri(hg)a(hi) in(hg) ex(f')c\\u00e9l(g)sis(h) De(g.)o.(f.) (::) Et(e') in(f) ter(g)ra(hg) pax(f) ho(fi)m\\u00ed(i)ni(hg)bus(hi) (,) bo(hg)n\\u00e6(f') vo(g)lun(h)t\\u00e1(g.)tis.(f.) (::) Lau(fe~)d\\u00e1(g)mus(hg) te.(f.) (::) Be(f)ne(fg)d\\u00ed(g_[oh:h]f)ci(e')mus(f) te.(e.) (::) Ad(e')o(f)r\\u00e1(g)mus(hg) te.(f.) (::) Glo(f')ri(g)fi(h)c\\u00e1(i')mus(h) te.(ghG'Fggf.0) (::) Gr\\u00e1(e')ti(f)as(g) \\u00e1(h')gi(g)mus(f') ti(g)bi(f.) (,) pro(e)pter(ef~) ma(f')gnam(f) gl\\u00f3(fe)ri(g)am(hg) tu(f.)am.(f.) (::) D\\u00f3(fi)mi(hg)ne(hi) De(hg)us,(f.) (,) Rex(g') c\\u00e6(h)l\\u00e9(g.)stis,(f.) (,) De(e)us(fg) Pa(g')ter(g) o(fh)mn\\u00ed(hg)pot(ef)ens.(f.) (::) D\\u00f3(fi)mi(hg)ne(hi) Fi(hg)li(f.) (,) u(g')ni(h)g\\u00e9(g')ni(f)te(e.) (,) Je(fe)su(ghg) Chri(f.)ste.(f.) (::) D\\u00f3(fi)mi(hg)ne(hi) De(hg)us,(f.) (,) A(g')gnus(h) De(g.)i,(f.) (,) F\\u00ed(fe)li(g)us(hg) Pa(f.)tris.(f.) (::) Qui(g) tol(ef)lis(f) pec(fe)c\\u00e1(g)ta(h') mun(gff)di,(e.) (,) mi(f)se(fe)r\\u00e9(g)re(hg) no(f.)bis.(f.) (::) Qui(g) tol(ef)lis(f) pec(fe)c\\u00e1(g)ta(h') mun(gff)di,(e.) (,) s\\u00fas(g)ci(ef)pe(f') de(f)pre(f)ca(f')ti(e)\\u00f3(g)nem(hg) no(f.)stram.(f.) (::) Qui(fi) se(hg)des(hi) ad(h) d\\u00e9x(hvGF')te(g)ram(h) Pa(g.)tris,(f.) (,) mi(f)se(fe)r\\u00e9(g)re(hg) no(f.)bis.(f.) (::) Qu\\u00f3(fi)ni(hg)am(hi) tu(hvGF') so(g)lus(h) san(g.)ctus.(f.) (::) Tu(fe) so(g')lus(h) D\\u00f3(g')mi(f)nus.(e.) (::) Tu(f) so(fe)lus(g') Al(h)t\\u00eds(g')si(f)mus,(e.) (,) Je(fe)su(ghg) Chri(f.)ste.(f.) (::) Cum(g) San(ef)cto(fg) Sp\\u00ed(e')ri(f)tu,(e.) (,) in(g) gl\\u00f3(i')ri(i)a(ij) De(ivHG)i(g.) Pa(giivHFE'fw!gh)tris.(gf..) (::) A(eg/hf)men.(ef..) (::)",
+  },
+  {
+    id: "gregobase:142",
+    office: "as",
+    mass: null,
+    mode: "4",
+    incipit: "Asperges me (ad lib.) II",
+    gabc: "(c4) A(f)sp\\u00e9r(fe)ges(de) me,(e.) *(,) D\\u00f3(e')mi(g)ne,(gh) hys(ixhi)s\\u00f3(h)po,(gf) et(gh) mun(gf)d\\u00e1(ef)bor :(ed..) (:) la(cd)v\\u00e1(fe)bis(fg) me,(g.) (,) et(g) su(ixhi)per(h') ni(g)vem(gf~) de(gh)al(gf~)b\\u00e1(e.)bor.(e.) (::) <i>Ps. 50.</i> Mi(h)se(gh)r\\u00e9(h)re(h) me(g)i(h) De(i)us,(h.) *(:) se(h)c\\u00fan(h)dum(h) ma(h)gnam(h) mi(h)se(h)ri(h)c\\u00f3r(g')di(h)am(ih) tu(gf)am.(e.) (::) Gl\\u00f3(h)ri(gh)a(h) Pa(h)tri,(h') et(h) F\\u00ed(h')li(h)o,(h.) (,) et(h) Spi(h)r\\u00ed(h)tu(g)i(h) San(i)cto.(h.) *(:) Sic(h)ut(gh) e(h)rat(h') in(h) prin(h)c\\u00ed(h)pi(h)o,(h.) et(h) nunc,(g) et(h) sem(i)per,(h.) (:) et(h) in(h) s\\u01fd(h)cu(h)la(h) s\\u00e6(h)cu(g')l\\u00f3(h)rum.(ih) A(gf)men.(e.) (::)",
   },
   {
     id: "gregobase:1143",

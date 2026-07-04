@@ -45,7 +45,7 @@ export interface ChantTabulaRow {
   /** Guidonian short name (e.g. "g", "aa") — null for chromatic pitches with no gamut entry */
   name: string | null;
   /** Guidonian full compound name (e.g. "Gesolreut") — null for chromatic pitches */
-  fullName: string | null;
+  nomen: string | null;
   /** Guidonian hand position */
   hand: { finger: string; region: string } | null;
   /** Hexachord context for this pitch */
@@ -168,7 +168,7 @@ export function computeTabula(
       divisio: a.divisio,
       role: n.step.role,
       name: n.step.name,
-      fullName: n.step.compound,
+      nomen: n.step.nomen,
       hand: n.step.hand,
       hexachord: n.step.hexachord,
       solfege: n.step.solmization ?? SOLFEGE_BY_PC.get(n.pitch.pc) ?? null,

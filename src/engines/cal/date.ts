@@ -18,6 +18,10 @@ export interface RuleAnchors {
   baptism: Date;
 }
 
+// Re-exported for cal consumers; the canonical definition and rationale live
+// in engines/epoch (it is shared with the planet engine).
+export { DEFAULT_EPOCH } from "../epoch.js";
+
 // ── Date math ──
 export function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);

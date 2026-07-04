@@ -17,7 +17,7 @@ export interface StepVariant {
 export interface Step {
   pc: number;
   name: string;                                     // "d" (Guidonian) or SPN letter ("D") fallback
-  compound: string | null;                          // "Delasolre" or null (out of gamut)
+  nomen: string | null;                             // "Delasolre" or null (out of gamut)
   hexachord: "durum" | "naturale" | "molle" | null;
   solmization: string | null;
   variants: StepVariant[];
@@ -64,7 +64,7 @@ export function toStep(midi: number, scala?: Scale): Step {
   return {
     pc,
     name,
-    compound: guido.compound,
+    nomen: guido.nomen,
     hexachord: guido.hexachord,
     solmization: guido.solmization,
     variants: guido.mutations.map((m) => ({

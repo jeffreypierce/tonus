@@ -1,30 +1,24 @@
 # tonus
 
-Medieval music analysis for JavaScript/TypeScript: GABC plainchant, the
-liturgical calendar, historical tuning systems, an ephemeris, and the
-harmony of the spheres — one API, ten Latin verbs.
+tonus is a working model of the music of the Latin Middle Ages (roughly
+the eighth through the thirteenth century) written in TypeScript. It
+computes the pitch system the theorists taught, the calendar the Church
+kept, the chants the liturgy appoints, and the cosmology the era heard
+behind all three. Given a date, it names the feast, supplies the chants
+proper to it, tunes them as a medieval cantor would have, and voices the
+sky that stood over the day.
 
-```js
-import tonus from "tonus";
+Boethius divided music into three: _musica instrumentalis_, the music
+that sounds; _musica humana_, the music that orders; _musica mundana_,
+the music of the spheres. tonus is arranged the same way — the tuning and
+score engines sound, the calendar and chant engines order, and the
+heavens turn above them. (Boethius meant by _humana_ the concord of soul
+and body; tonus takes it in the broader medieval sense, the concord of
+songs and liturgy.)
 
-const [feast] = tonus.festum({ date: new Date("2026-12-25") });
-// { id: "12-25", nomen: "In Nativitate Domini",
-//   ritus: "Duplex I classis", grade: "duplex-i", tempus: "Tempus Nativitatis", … }
-
-const [introit] = tonus.proprium({ feast, office: "in" });
-// "Puer natus est", mode 7, GABC notation from the Liber Usualis
-
-const score = tonus.notatio(introit);
-// phrases, syllables, tuned pitches, arsis/thesis rhythm, prosody, imprint
-
-const sky = tonus.caelum({ date: feast.date });
-const harmony = tonus.harmonia(sky);
-// each visible planet voiced as pitch + Greek vowel, after Boethius
-```
-
-**[Interactive demo](https://jeffreypierce.github.io/tonus/)** — pick a
-date, see its feast, chants, sky, and voicing. Full reference:
-**[docs/](docs/index.md)**.
+The API is eleven methods on a single namespace. Every result is
+deterministic: the same query returns the same answer, computed locally
+from data that ships with the package.
 
 ## Install
 
@@ -32,52 +26,75 @@ date, see its feast, chants, sky, and voicing. Full reference:
 npm install tonus
 ```
 
-ESM only. Node ≥ 20 (works in the browser via a bundler). No runtime
-dependencies, no network calls — ~5,500 chants and the full calendar ship in
-the package.
+ESM only. Node ≥ 20; works in the browser through a bundler. No runtime
+dependencies. Roughly 5,500 chants and the full 642-entry calendar ship in
+the package — 6.5 MB unpacked, 1.5 MB packed.
 
 ## Documentation
 
-The reference lives in [docs/](docs/index.md) — the ten-verb method index,
-shared conventions, and the error and determinism contracts — with one page
-per engine, each covering the API, its theory and historical context, and
-its sources:
+One page per engine, in dependency order. Each page states its rules, then its theory and historical context, then its sources.
 
-[calendar](docs/calendar.md) · [chant](docs/chant.md) ·
-[tuning](docs/tuning.md) · [score](docs/score.md) ·
-[heavens](docs/heavens.md)
+- **[Index](dos/index.md)** - Table of contents and conventions.
+- **[Tuning](docs/tuning.md)** — `temperamentum`. The medieval pitch system:
+  temperaments, Guidonian gamut and hand,
+  hexachordal solmization and mutations, eight modes, and psalm
+  tones. Depends on nothing else in the library.
+- **[Calendar](docs/calendar.md)** — `festum`, `pascha`. The Tridentine
+  liturgical calendar resolved against dual-computus Easter: feasts with
+  their authentic ranks, grades, and seasons, and the movable anchors of
+  any year.
+- **[Chant](docs/chant.md)** — `cantus`, `proprium`, `ordinarium`,
+  `officium`, `psalmus`. The Solesmes books in GABC: Mass propers, the
+  Kyriale, the Office hours, the psalter.
+- **[Score](docs/score.md)** — `notatio`. GABC into tuned notes: phrases,
+  syllables, Solesmes arsis/thesis rhythm, prosody, the analytic imprint.
+- **[Heavens](docs/heavens.md)** — `caelum`, `harmonia`. An ephemeris
+  computed from JPL orbital elements, voiced through the planetary
+  doctrines of Boethius, Nicomachus, Pliny, and Ptolemy.
 
-Everything is deterministic and offline: same inputs, same outputs.
+## The tuning engine
 
-## A note on eras (read before citing)
+The tuning engine stands alone; every other engine resolves its pitches
+through it.
 
-tonus aims at the sound-world and cosmology of the Latin Middle Ages, but its
-data sources are honest about being later codifications:
+```js
+import tonus from "tonus";
 
-- **The calendar** is the **Tridentine Roman calendar (1570–1962)** via the
-  [Divinum Officium](https://github.com/DivinumOfficium/divinum-officium)
-  project — substantially continuous with late-medieval Roman usage (feast
-  ranks use the medieval-descended *duplex/semiduplex/simplex* vocabulary,
-  carried per-feast in `ritus`), but it includes feasts instituted as late
-  as the 1950s.
-- **The chant books** are Solesmes restorations (Graduale Romanum 1961,
-  Liber Usualis, Antiphonale 1960, Liber Hymnarius 1983) via
-  [GregoBase](https://gregobase.selapa.net/).
-- **The heavens** are computed from real JPL orbital elements
-  (3000 BC – 3000 AD), then voiced through historically sourced doctrines
-  (Boethius, Nicomachus/Pythagoras, Pliny, Ptolemy) — an accurate sky heard
-  through medieval ears.
+const t = tonus.temperamentum({ mode: 1 }); // Pythagorean, mode 1
 
-The calendar's era and its continuity with medieval usage are treated in
-[docs/calendar.md](docs/calendar.md#theory--context); sources are indexed
-in [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md).
+t.nota("D4");
+// 293.33 Hz — the final of mode 1, tuned through pure fifths
 
-## Dates are UTC
+t.gradus("D4");
+// Delasolre: RE of the natural hexachord, role "finalis",
+// middle finger, base joint, on the Guidonian hand
 
-Build query dates from ISO strings (`new Date("2026-01-06")`) or `Date.UTC`,
-and read results with UTC getters or `toISOString()`. Feast resolution is
-timezone-independent; `tonus.festum()` with no arguments resolves "today" as
-the current UTC day.
+t.intervallum("D4", "A4");
+// Quinta (alias Diapente), perfect — final to tenor
+
+t.tonus();
+// psalm tone 1, differentia 1g:
+// intonatio F3–A3–C4, mediatio C4–A3–G3–A3, terminatio C4–A3–G3–A3–G3
+```
+
+## The liturgical stack
+
+The remaining engines compose, feast to sounding sky:
+
+```js
+const [feast] = tonus.festum({ date: new Date("2026-12-25") });
+// nomen: "In Nativitate Domini", ritus: "Duplex I classis",
+// grade: "duplex-i", tempus: "Tempus Nativitatis"
+
+const [introit] = tonus.proprium({ feast, office: "in" });
+// "Puer natus est", mode 7, GABC from the Liber Usualis
+
+const score = tonus.notatio(introit, { temperamentum: t });
+// phrases, syllables, tuned pitches, arsis/thesis rhythm, prosody, imprint
+
+const harmony = tonus.harmonia(tonus.caelum({ date: feast.date }));
+// each visible planet voiced as pitch and Greek vowel, after Boethius
+```
 
 ## Development
 
@@ -87,7 +104,7 @@ npm test          # builds and runs the suite (node --test)
 
 The data files in `src/data/` are generated by the
 [tonus-corpus](https://github.com/jeffreypierce/tonus-corpus) extraction
-pipeline — edit there, not here.
+pipeline — edits happen there, not here.
 
 ## License
 

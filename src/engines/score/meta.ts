@@ -32,7 +32,7 @@ export function computeMeta(ir: Score, options: ChantMetaOptions = {}): ChantMet
   return {
     mode: modeData?.mode ?? null,
     modeAlias: modeData?.alias ?? null,
-    family: modeData?.family ?? null,
+    family: modeData?.maneria ?? null,
     type: modeData?.type ?? null,
     final: modeData?.final ?? null,
     tenor: modeData?.tenor ?? null,

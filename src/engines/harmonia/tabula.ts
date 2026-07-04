@@ -19,7 +19,7 @@ export interface HarmonyTabulaRow {
 
   presence: number;
   motion: number;
-  velocity: number;
+  velocity: number; // 0–1, presence-scaled (same scale as score tabula)
 
   vowelGreek: string;
   vowelPhonetic: string;

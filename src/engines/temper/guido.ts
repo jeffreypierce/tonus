@@ -36,7 +36,7 @@ export function lookupGuido(
   mode?: number,
 ): {
   name: string | null;
-  compound: string | null;
+  nomen: string | null;
   hexachord: "durum" | "naturale" | "molle" | null;
   solmization: string | null;
   mutations: { hexachord: string; solmization: string }[];
@@ -45,7 +45,7 @@ export function lookupGuido(
   const entry = lookupExact(midi) ?? lookupByPc(midi);
 
   if (!entry) {
-    return { name: null, compound: null, hexachord: null, solmization: null, mutations: [], hand: null };
+    return { name: null, nomen: null, hexachord: null, solmization: null, mutations: [], hand: null };
   }
 
   // Determine primary hexachord — prefer mode's hexachord if available
@@ -57,7 +57,7 @@ export function lookupGuido(
 
   return {
     name: entry.name[0],
-    compound: entry.name[1],
+    nomen: entry.name[1],
     hexachord: primary?.hexachord ?? null,
     solmization: primary?.solmization ?? null,
     mutations: entry.variants.map((v) => ({ hexachord: v.hexachord, solmization: v.solmization })),

@@ -12,11 +12,13 @@ import {
   nextSunday,
   pascha,
   resolveEntryId,
+  DEFAULT_EPOCH,
   type RuleAnchors,
 } from "./date.js";
 import {
   type Feast,
   type FeastQuery,
+  type Pascha,
   type Season,
   type Grade,
   TEMPUS_NAMES,
@@ -56,6 +58,38 @@ export function getAnchors(year: number): RuleAnchors {
 
   _anchorCache.set(year, anchors);
   return anchors;
+}
+
+/**
+ * The movable anchors of a liturgical year (`tonus.pascha`). Easter is
+ * computed by the Gregorian (Gauss/Butcher) computus from 1583 and by the
+ * Julian computus with day-number conversion before that; everything else
+ * anchors to it, except Advent, which anchors to November 27.
+ */
+export function getPascha(year: number): Pascha {
+  if (!Number.isFinite(year)) {
+    throw new RangeError(`pascha requires a finite year, got ${year}`);
+  }
+  const a = getAnchors(Math.trunc(year));
+  const d = (x: Date) => new Date(x.getTime());
+  return {
+    year: Math.trunc(year),
+    septuagesima: d(a.septuagesima),
+    ashWednesday: d(a.ashWednesday),
+    firstLentSunday: d(a.firstLentSunday),
+    palmSunday: subDays(a.easter, 7),
+    goodFriday: subDays(a.easter, 2),
+    easter: d(a.easter),
+    ascension: d(a.ascension),
+    pentecost: d(a.pentecost),
+    trinitySunday: addDays(a.pentecost, 7),
+    corpusChristi: addDays(a.pentecost, 11),
+    adventFirstSunday: d(a.adventFirstSunday),
+    gaudete: d(a.gaudete),
+    christmas: d(a.christmas),
+    epiphany: d(a.epiphany),
+    baptism: d(a.baptism),
+  };
 }
 
 export function buildCalendar(year: number): Map<string, CalEntry[]> {
@@ -214,7 +248,7 @@ function feastsForDate(date: Date): Feast[] {
  */
 export function getFeast(query?: FeastQuery): Feast[] {
   if (!query || Object.keys(query).length === 0) {
-    return feastsForDate(new Date());
+    return feastsForDate(DEFAULT_EPOCH);
   }
 
   let results: Feast[];
@@ -236,10 +270,11 @@ export function getFeast(query?: FeastQuery): Feast[] {
       d = addDays(d, 1);
     }
   } else {
-    // Full calendar scan for the current liturgical year range. The
-    // liturgical year begins at Advent, so before Advent the range anchors
-    // to the previous civil year's first Advent Sunday.
-    const today = startOfDay(new Date());
+    // Full calendar scan for the default liturgical year range (the year
+    // containing DEFAULT_EPOCH — Guido d'Arezzo's era). The liturgical year
+    // begins at Advent, so before Advent the range anchors to the previous
+    // civil year's first Advent Sunday.
+    const today = startOfDay(DEFAULT_EPOCH);
     let year = today.getUTCFullYear();
     if (today < getAnchors(year).adventFirstSunday) year -= 1;
     const startDate = getAnchors(year).adventFirstSunday;

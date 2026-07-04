@@ -15,6 +15,24 @@ describe("buildTemper", () => {
     assert.equal(t.tuning, "meantone");
   });
 
+  test("every builtin tuning ascends monotonically through the octave", () => {
+    // Regression: the diatonic-steps builder folded all ratios to [1,2),
+    // which placed C an octave high in the Ptolemaic presets (C4 above A4).
+    const names = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+    const tunings = ["pythagorean", "meantone", "equal",
+      "ptolemy-intense", "ptolemy-soft", "ptolemy-equable"];
+    for (const tuning of tunings) {
+      const t = buildTemper({ tuning });
+      const hz = names.map((n) => t.nota(n).hz);
+      for (let i = 1; i < hz.length; i++) {
+        assert.ok(hz[i] > hz[i - 1],
+          `${tuning}: ${names[i]} (${hz[i]}) <= ${names[i - 1]} (${hz[i - 1]})`);
+      }
+      assert.ok(Math.abs(hz[7] / hz[0] - 2) < 1e-9,
+        `${tuning}: octave does not double`);
+    }
+  });
+
   test("accepts meantone with comma fraction", () => {
     const t = buildTemper({ tuning: "meantone", comma: "1/4" });
     assert.equal(t.tuning, "meantone");
@@ -126,7 +144,7 @@ describe("intervallum", () => {
     assert.equal(iv.class, "P5");
     assert.equal(iv.direction, "up");
     assert.equal(iv.semitones, 7);
-    assert.equal(iv.name, "Quinta");
+    assert.equal(iv.nomen, "Quinta");
   });
 
   test("classifies a descending major third", () => {
@@ -232,10 +250,10 @@ describe("step", () => {
     assert.ok(step.name.length > 0);
   });
 
-  test("Step compound is string or null", () => {
+  test("Step nomen (Guidonian compound) is string or null", () => {
     const t = buildTemper({ mode: 1 });
     const step = t.gradus("D4");
-    assert.ok(step.compound === null || typeof step.compound === "string");
+    assert.ok(step.nomen === null || typeof step.nomen === "string");
   });
 });
 
@@ -435,7 +453,7 @@ describe("modus", () => {
     const t = buildTemper({ mode: 1 });
     const mode = t.modus(1);
     assert.equal(mode.mode, 1);
-    assert.equal(mode.name, "Protus Authenticus");
+    assert.equal(mode.nomen, "Protus Authenticus");
     assert.equal(mode.final, 2);
     assert.equal(mode.tenor, 9);
   });
@@ -444,7 +462,7 @@ describe("modus", () => {
     const t = buildTemper({ mode: 1 });
     const names = new Set();
     for (let m = 1; m <= 8; m++) {
-      names.add(t.modus(m).name);
+      names.add(t.modus(m).nomen);
     }
     assert.equal(names.size, 8);
   });
