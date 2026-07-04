@@ -58,6 +58,7 @@ interface IntermNote {
   degree: number;
   lyric: string;
   syllableIndex: number;
+  neumeGroup: number;
   ictus: boolean;
   accidental: AccidentalValue;
   accidentalSource: "none" | "state" | "explicit";
@@ -120,13 +121,17 @@ function parseNeume(
 
   const breaks: number[] = [];
   const intermed: IntermNote[] = [];
+  // neumeGroup: 0-based index of the neume figure within this syllable. GABC
+  // glyph separators (!, /, //) start a new figure; MusicXML slurs each figure.
+  let neumeGroup = 0;
 
   notation.forEach((rawToken, i) => {
     if (!rawToken || rawToken.length < 1) return;
 
-    // Break markers
+    // Break markers — end the current neume figure, begin the next.
     if (rawToken === "!" || rawToken === "/" || rawToken === "//") {
       breaks.push(i);
+      neumeGroup++;
       return;
     }
 
@@ -280,6 +285,7 @@ function parseNeume(
       degree,
       lyric,
       syllableIndex,
+      neumeGroup,
       ictus,
       accidental: activeAccidental as AccidentalValue,
       accidentalSource,
@@ -337,6 +343,7 @@ function parseNeume(
       step: note.step,
       lyric: note.lyric,
       syllableIndex: note.syllableIndex,
+      neumeGroup: note.neumeGroup,
       ictus: note.ictus,
       weight,
       duration,

@@ -23,6 +23,7 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
       lyric: raw.lyric,
       vowel: selectVowel(raw.lyric).vowel,
       syllableIndex: raw.syllableIndex,
+      neumeGroup: raw.neumeGroup,
       ictus: raw.ictus,
       accidentalSource: raw.accidentalSource,
       quilisma: raw.quilisma,

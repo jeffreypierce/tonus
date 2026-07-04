@@ -1,8 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { buildScore } from "../dist/engines/score/api.js";
-import { toMidi } from "../dist/engines/score/emitters/_archive/midi.js";
-import { toMusicXML } from "../dist/engines/score/emitters/_archive/musicxml.js";
 
 const KYRIE_GABC = "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (::)";
 
@@ -183,20 +181,65 @@ describe("pondus and accentus options", () => {
   });
 });
 
-describe("archived emitters (not on v1 Score API)", () => {
+describe("score emitters", () => {
   const score = buildScore(makeChant(KYRIE_GABC));
 
-  test("toMidi produces bytes", () => {
-    const midi = toMidi(score, { tempoBpm: 120, format: "file" });
-    assert.ok(midi.bytes instanceof Uint8Array);
-    assert.ok(midi.bytes.length > 0);
+  test("score.midi() produces SMF bytes", () => {
+    const bytes = score.midi({ tempoBpm: 120 });
+    assert.ok(bytes instanceof Uint8Array);
+    assert.ok(bytes.length > 0);
+    assert.deepEqual([...bytes.slice(0, 4)], [0x4d, 0x54, 0x68, 0x64]); // "MThd"
   });
 
-  test("toMusicXML produces a score-partwise document", () => {
-    const out = toMusicXML(score);
+  test("score.midi({ format: 'both' }) returns json and bytes", () => {
+    const out = score.midi({ format: "both" });
+    assert.ok(out.bytes instanceof Uint8Array);
+    assert.ok(out.json.tracks[0].events.length > 0);
+  });
+
+  test("score.musicxml() produces a score-partwise document", () => {
+    const out = score.musicxml();
     assert.ok(typeof out.xml === "string");
     assert.ok(out.xml.includes("score-partwise"));
     assert.ok(out.xml.includes("tonus"));
+  });
+
+  const countSlurs = (xml) => ({
+    start: (xml.match(/slur type="start"/g) || []).length,
+    stop: (xml.match(/slur type="stop"/g) || []).length,
+  });
+
+  test("musicxml slurs each neume figure within a syllable", () => {
+    // Ky(gh!gg): a pes (gh) then a second figure (gg), split by the ! marker.
+    const xml = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).musicxml().xml;
+    const s = countSlurs(xml);
+    assert.equal(s.start, 2, "one slur per neume figure");
+    assert.equal(s.stop, 2);
+  });
+
+  test("musicxml slurs a whole multi-note neume as one figure", () => {
+    // A torculus (ghg) is a single figure → exactly one slur.
+    const xml = buildScore(makeChant("(c4) Ky(ghg)ri(h)e(g.) (::)")).musicxml().xml;
+    assert.deepEqual(countSlurs(xml), { start: 1, stop: 1 });
+  });
+
+  test("musicxml does not slur single-note neumes", () => {
+    // Every syllable is one note → no slurs at all.
+    const xml = buildScore(makeChant("(c4) al(g)le(h)lu(g)ia(f.) (::)")).musicxml().xml;
+    assert.deepEqual(countSlurs(xml), { start: 0, stop: 0 });
+  });
+
+  test("musicxml keeps the lyric on the syllable, not each figure", () => {
+    // Ky has two figures but one lyric; ri and e one each → three <text> only.
+    const xml = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).musicxml().xml;
+    assert.equal((xml.match(/<text>/g) || []).length, 3);
+  });
+
+  test("tabula exposes neumeGroup and per-figure neumeIndex", () => {
+    const rows = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).tabula;
+    const syl0 = rows.filter((r) => r.syllableIndex === 0);
+    assert.deepEqual(syl0.map((r) => r.neumeGroup), [0, 0, 1, 1]);
+    assert.deepEqual(syl0.map((r) => r.neumeIndex), [0, 1, 0, 1]);
   });
 });
 

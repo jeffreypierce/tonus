@@ -1,24 +1,15 @@
 # tonus
 
-tonus is a working model of the music of the Latin Middle Ages (roughly
-the eighth through the thirteenth century) written in TypeScript. It
-computes the pitch system the theorists taught, the calendar the Church
-kept, the chants the liturgy appoints, and the cosmology the era heard
-behind all three. Given a date, it names the feast, supplies the chants
-proper to it, tunes them as a medieval cantor would have, and voices the
-sky that stood over the day.
+tonus is a working model of the music of the Latin Middle Ages[^†] written in TypeScript. Itcomputes the pitch system the theorists taught, the calendar the Church kept, the chants the liturgy appoints, and the cosmology the era heard behind all three. Given a date, it names the feast, supplies the chants proper to it, tunes them as a medieval cantor would have, and voices the sky that stood over the day.
+[^†]: _roughly the eighth through the thirteenth century_
 
 Boethius divided music into three: _musica instrumentalis_, the music
 that sounds; _musica humana_, the music that orders; _musica mundana_,
-the music of the spheres. tonus is arranged the same way — the tuning and
-score engines sound, the calendar and chant engines order, and the
-heavens turn above them. (Boethius meant by _humana_ the concord of soul
-and body; tonus takes it in the broader medieval sense, the concord of
-songs and liturgy.)
+the music of the spheres. tonus is arranged the same way — the tuning and score engines sound, the calendar and chant engines order, and the
+heavens turn above them. (Boethius meant by _humana_ the concord of soul and body; tonus takes it in the broader medieval sense, the concord ofsongs and liturgy.)
 
 The API is eleven methods on a single namespace. Every result is
-deterministic: the same query returns the same answer, computed locally
-from data that ships with the package.
+deterministic: the same query returns the same answer, computed locally from data that ships with the package.
 
 ## Install
 

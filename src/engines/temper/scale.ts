@@ -172,14 +172,24 @@ function buildPythagoreanRatios(commaN: number): number[] {
   return out;
 }
 
-// Expand 7 diatonic step ratios to 12 by filling chromatic gaps with pythagorean
-function expandDiatonicSteps(diatonic: number[], scalePcs: number[]): number[] {
+// The natural (white-key) pitch classes in ascending pitch order: C D E F G A B.
+// A diatonic-genus preset (Ptolemy's tetrachord divisions) describes the tuning
+// of THIS fixed gamut, not a per-mode arrangement.
+const NATURAL_PCS = [0, 2, 4, 5, 7, 9, 11];
+
+// Expand 7 diatonic step ratios to 12 by filling chromatic gaps with pythagorean.
+//
+// The seven ratios are laid onto the fixed natural gamut (C D E F G A B) in
+// pitch order — NOT onto the mode's scalePcs. A church mode is an octave
+// species of this one gamut, so its interval qualities emerge from *where the
+// final sits within the fixed tuning*, handled downstream by normalizeToRoot.
+// (Mapping degree-per-mode instead would force major-scale qualities — e.g.
+// a 5/4 major third above every final — onto every mode; see docs/tuning.md.)
+function expandDiatonicSteps(diatonic: number[]): number[] {
   const base = buildPythagoreanRatios(0);
   const out = base.slice();
-  // scalePcs are the 7 diatonic pitch classes for the mode, starting from finalis
   for (let i = 0; i < 7 && i < diatonic.length; i++) {
-    const pc = scalePcs[i]!;
-    out[pc] = foldOct(diatonic[i]!);
+    out[NATURAL_PCS[i]!] = foldOct(diatonic[i]!);
   }
   return out;
 }
@@ -204,14 +214,13 @@ export function buildRatios(opts: ScaleOpts = {}): Scale {
   const modeData = MODES.get(mode);
   const finalisPc = modeData?.final ?? 0;
   const rootPc = opts.root ?? finalisPc;
-  const scalePcs = modeData?.scalePcs ?? [0, 2, 4, 5, 7, 9, 11];
 
   let ratios: number[];
 
   if (opts.steps != null) {
     const parsed = opts.steps.map(parseStep);
     if (parsed.length === 7) {
-      ratios = expandDiatonicSteps(parsed, scalePcs);
+      ratios = expandDiatonicSteps(parsed);
     } else if (parsed.length === 12) {
       ratios = parsed;
     } else {

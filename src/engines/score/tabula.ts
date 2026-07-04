@@ -15,7 +15,9 @@ export interface ChantTabulaRow {
   phraseIndex: number;
   syllableIndex: number;
   noteIndex: number;
-  /** Index of this note within its syllable (neume group), 0-based */
+  /** 0-based index of the neume figure within the syllable (GABC break markers). */
+  neumeGroup: number;
+  /** 0-based position of this note within its neume figure. */
   neumeIndex: number;
   lyric: string;
   vowel: string;
@@ -29,6 +31,10 @@ export interface ChantTabulaRow {
   degree: number | null;
   hz: number;
   offset: number;
+  /** Scientific pitch name, e.g. "D4", "Bb3" — the MusicXML step + octave. */
+  spn: string;
+  /** 14-bit MIDI pitch bend for this note's microtuning (8192 = center). */
+  bend: number;
   /** Solesmes quality of this note's compound beat (shared across group). */
   rhythmicShape: "arsic" | "thetic";
   /** 1-based position within the compound beat. */
@@ -39,6 +45,11 @@ export interface ChantTabulaRow {
   shapedDuration: number;
   ictus: boolean;
   accidental: -1 | 0 | 1;
+  /** How this note's accidental arose — only "explicit" prints a glyph. */
+  accidentalSource: "none" | "state" | "explicit";
+  quilisma: boolean;
+  liquescent: boolean;
+  strophicus: boolean;
   divisio: string | null;
   /** Modal role: "final" | "tenor" | "mod" (modulation) | null if no mode or no match */
   role: NoteRole;
@@ -142,6 +153,18 @@ export function computeTabula(
     }
   }
 
+  // Position of each note within its neume figure — resets when the
+  // (syllableIndex, neumeGroup) pair changes.
+  const neumeIndices: number[] = [];
+  let prevKey: string | null = null;
+  let withinGroup = 0;
+  for (const a of annotated) {
+    const key = `${a.phraseIndex}:${a.syllableIndex}:${a.note.context.neumeGroup}`;
+    withinGroup = key === prevKey ? withinGroup + 1 : 0;
+    neumeIndices.push(withinGroup);
+    prevKey = key;
+  }
+
   const rows: ChantTabulaRow[] = annotated.map((a, i) => {
     const n = a.note;
 
@@ -149,7 +172,8 @@ export function computeTabula(
       phraseIndex: a.phraseIndex,
       syllableIndex: a.syllableIndex,
       noteIndex: a.noteIndex,
-      neumeIndex: a.noteIndex,
+      neumeGroup: n.context.neumeGroup,
+      neumeIndex: neumeIndices[i],
       lyric: n.context.lyric,
       vowel: n.context.vowel,
       midi: n.pitch.midi,
@@ -158,6 +182,8 @@ export function computeTabula(
       degree: n.step.degree,
       hz: n.pitch.hz,
       offset: n.pitch.offset,
+      spn: n.pitch.spn,
+      bend: n.pitch.bend,
       rhythmicShape: n.performance.rhythmicShape,
       rhythmicIndex: n.performance.rhythmicIndex,
       duration: n.performance.duration,
@@ -165,6 +191,10 @@ export function computeTabula(
       shapedDuration: shapedDurations[i],
       ictus: n.context.ictus,
       accidental: n.pitch.acc,
+      accidentalSource: n.context.accidentalSource,
+      quilisma: n.context.quilisma,
+      liquescent: n.context.liquescent,
+      strophicus: n.context.strophicus,
       divisio: a.divisio,
       role: n.step.role,
       name: n.step.name,

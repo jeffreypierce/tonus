@@ -4,14 +4,16 @@
 phrases, syllables, and neumes; every note is tuned through a
 `Temperamentum` and annotated with its Guidonian step; the Solesmes
 compound-beat classifier assigns the arsis/thesis rhythm; prosody is
-measured and an analytic imprint drawn. The score is pure data — no
-methods. Two profiles govern interpretation: `pondus` for articulation and
-`accentus` for phrasing.
+measured and an analytic imprint drawn. The score is data — its structure
+(`phrases`, `tabula`, `prosody`, `imprint`) plus two emission methods,
+`score.midi()` and `score.musicxml()`. Two profiles govern interpretation:
+`pondus` for articulation and `accentus` for phrasing.
 
 - [The score — `notatio`](#the-score--notatio)
 - [Interpretation — `pondus` and `accentus`](#interpretation--pondus-and-accentus)
 - [The note](#the-note)
 - [The tabula](#the-tabula)
+- [Emission — `midi` and `musicxml`](#emission--midi-and-musicxml)
 - [The imprint](#the-imprint)
 - [Prosody](#prosody)
 - [Theory & Context](#theory--context)
@@ -191,6 +193,7 @@ interface Context {
   lyric: string;
   vowel: string;
   syllableIndex: number;
+  neumeGroup: number; // neume figure within the syllable (0-based)
   ictus: boolean;
   accidentalSource: "none" | "state" | "explicit";
   quilisma: boolean;
@@ -211,9 +214,9 @@ thetic (resting, retractive). The classification rules are in
 analysis, visualization, or emission. Always a property, never a method.
 `Harmony` exposes the same surface for voiced bodies
 ([heavens.md](heavens.md#the-tabula)). The tabula is also the emission
-surface: `tonus.midi` and `tonus.musicxml` will consume it when they join
-the API in v1.1; `hz`, `velocity`, and the pitch-bend data exist for that
-purpose.
+surface — `score.midi()` and `score.musicxml()` ([below](#emission--midi-and-musicxml))
+consume it directly, which is why `hz`, `velocity`, `bend`, and the
+ornament flags live on each row.
 
 ```js
 score.tabula[0];
@@ -232,15 +235,22 @@ interface ChantTabulaRow {
   phraseIndex: number;
   syllableIndex: number;
   noteIndex: number;
-  neumeIndex: number;
+  neumeGroup: number;   // which neume figure within the syllable (0-based)
+  neumeIndex: number;   // position of this note within that figure
 
   // note fields
   midi: number;
   pc: number;
   octave: number;
   accidental: -1 | 0 | 1;
+  accidentalSource: "none" | "state" | "explicit";
+  quilisma: boolean;
+  liquescent: boolean;
+  strophicus: boolean;
   hz: number;
   offset: number;
+  spn: string;             // scientific pitch name, "D4"
+  bend: number;            // 14-bit MIDI pitch bend (8192 = center)
   velocity: number | null;
   duration: number;
   shapedDuration: number;
@@ -264,6 +274,51 @@ interface ChantTabulaRow {
   neume: Neume;
 }
 ```
+
+## Emission — `midi` and `musicxml`
+
+The score emits itself. Both methods consume `score.tabula`, so the
+interpretation already applied through `pondus` and `accentus` flows into
+the output — there is no separate emission-time interpretation pass.
+
+`score.midi(opts?)` returns a Standard MIDI File as a `Uint8Array` by
+default. Microtuning is carried as pitch-bend (from each row's `bend`),
+phrasing as note velocity, and phrase divisiones become rests.
+
+```js
+const score = tonus.notatio(introit, { temperamentum: t, accentus: "solemn" });
+
+const bytes = score.midi();                 // Uint8Array — write to a .mid file
+const { json } = score.midi({ format: "json" }); // inspect the event list instead
+```
+
+| `midi` option | default | effect |
+| --- | --- | --- |
+| `format` | `"file"` | `"file"` → `Uint8Array`; `"json"` → `{ json }`; `"both"` → `{ json, bytes }` |
+| `tempoBpm` | `120` | tempo meta event |
+| `ppq` | `480` | ticks per quarter note |
+| `channel` | `0` | MIDI channel |
+| `velocity` | `80` | fallback velocity when a note carries no phrasing |
+| `transpose` | `0` | semitone shift, applied then clamped to 0–127 |
+| `emitPitchBend` | `true` | emit microtuning pitch-bend around each note |
+
+`score.musicxml(opts?)` returns `{ xml, diagnostics }` — a MusicXML 4.0
+partwise document. Phrases become measures. Each **neume figure** is drawn as
+a slur — a syllable built of several figures (pes then pressus, say, split in
+GABC by `!`, `/`, or `//`) gets one arc per figure; a single-note neume gets
+none. The lyric attaches once, at the syllable's first note. Each row's
+ornament flags (`quilisma`, `liquescent`, `strophicus`) and explicit
+accidentals render as notations. `emitWeights: true` adds the arsis/thesis
+shape and index as an annotation per note.
+
+```js
+const { xml } = score.musicxml();           // MusicXML 4.0 partwise string
+```
+
+Emission is per-score by design — there is no top-level `tonus.midi`.
+`Harmony` (the voiced sky) is deliberately **not** emitted this way: voicing
+planetary bodies into playable parts is an artistic choice, out of scope for
+these mechanical exporters.
 
 ## The imprint
 

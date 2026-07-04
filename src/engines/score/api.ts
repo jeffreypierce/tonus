@@ -8,6 +8,8 @@ import { computeMeta } from "./meta.js";
 import { computeImprint, type Imprint } from "../imprint.js";
 import { computeProsody, type Prosody } from "./prosody.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
+import { toMidi, type MidiOpts, type MidiEmitResult } from "./emitters/midi.js";
+import { toMusicXML, type MusicXmlOpts, type MusicXmlEmitResult } from "./emitters/musicxml.js";
 import type { Chant } from "../chant/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import type {
@@ -48,6 +50,14 @@ export interface Score {
   tabula: ChantTabulaRow[];
   prosody: Prosody;
   imprint: Imprint;
+  /**
+   * Emit a Standard MIDI File from the score's tabula. Returns the file bytes
+   * by default; `format: "json"` returns the event structure, `"both"` an
+   * object. The score's pondus/accentus reach the output via the tabula.
+   */
+  midi(opts?: MidiOpts): Uint8Array | MidiEmitResult;
+  /** Emit a MusicXML 4.0 partwise document from the score's tabula. */
+  musicxml(opts?: MusicXmlOpts): MusicXmlEmitResult;
 }
 
 const PONDUS_TO_ARTICULATION: Record<PondusStyle, ArticulationType> = {
@@ -101,26 +111,36 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   const ir = buildIR(parsed, chant, scale);
   const meta = computeMeta(ir, { mode: modeNum });
 
+  const tabula = computeTabula(ir, {
+    mode: meta.mode ?? undefined,
+    a4Hz: opts?.temperamentum?.a4,
+    transpose: opts?.temperamentum?.transpose,
+    // Only pass phrasing when the caller asked for it, so the default
+    // tabula shaping (mode-gated) is unchanged.
+    interpretation: opts?.accentus
+      ? {
+          phrasing: ACCENTUS_TO_PHRASING[accentus.style ?? "lyrical"],
+          phrasingOverrides: accentus.overrides,
+        }
+      : undefined,
+  });
+
   return {
     chant,
     phrases: ir.phrases,
     errors: ir.errors,
-    tabula: computeTabula(ir, {
-      mode: meta.mode ?? undefined,
-      a4Hz: opts?.temperamentum?.a4,
-      transpose: opts?.temperamentum?.transpose,
-      // Only pass phrasing when the caller asked for it, so the default
-      // tabula shaping (mode-gated) is unchanged.
-      interpretation: opts?.accentus
-        ? {
-            phrasing: ACCENTUS_TO_PHRASING[accentus.style ?? "lyrical"],
-            phrasingOverrides: accentus.overrides,
-          }
-        : undefined,
-    }),
+    tabula,
     prosody: computeProsody(ir.phrases),
     imprint: computeImprint(ir.phrases, scale),
+    midi(emitOpts?: MidiOpts): Uint8Array | MidiEmitResult {
+      return toMidi(tabula, emitOpts);
+    },
+    musicxml(emitOpts?: MusicXmlOpts): MusicXmlEmitResult {
+      return toMusicXML(tabula, chant, emitOpts);
+    },
   };
 }
 
 export type { ParseError };
+export type { MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent } from "./emitters/midi.js";
+export type { MusicXmlOpts, MusicXmlEmitResult } from "./emitters/musicxml.js";

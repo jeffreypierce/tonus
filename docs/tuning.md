@@ -502,6 +502,31 @@ between them cover just, septimal, and neutral intonation:
   sound-world is closer to some Near-Eastern practice than to anything in
   the Latin tradition; Ptolemy himself presents it as an outlier.
 
+**How a genus meets the modes — one gamut, eight species.** A tetrachord
+division tunes a *single fixed gamut* — the natural notes C D E F G A B, with
+the genus ratios measured from C. A church mode is then an **octave species**
+of that one gamut: mode 1 (Dorian) reads it from D, mode 3 (Phrygian) from E,
+and so on. The tuning is *not* re-derived per mode. This is deliberate and
+historically correct — it is how the Greeks and medievals understood the
+modes — and it has a consequence worth stating plainly:
+
+- Each mode inherits its **own** interval qualities from where its final sits
+  in the gamut. Dorian's third (D–F) is a minor third; Lydian's (F–A) is
+  major; Mixolydian carries the characteristic minor seventh (G–F). A mode
+  does **not** get a 5/4 major third slapped above its final regardless of
+  quality.
+- The fixed gamut contains the famous **syntonic wolf**: because D is tuned as
+  a 9/8 whole tone but A as a 5/3 (to serve C's pure triad), the fifth **D–A
+  is a grave 40/27 (~680 ¢), not a pure 3/2**. Every honest fixed just
+  intonation has exactly one such wolf; hiding it would mean silently
+  re-tuning the gamut per mode. tonus keeps it. (C–G, C–F, C–E, C–A remain
+  pure.)
+
+If you instead want every modal interval made locally consonant against its
+final — a minor-third degree always 6/5, etc. — that is a *modern* just
+intonation, not a Greek genus, and would be supplied as a custom `scale`
+rather than under a Ptolemy name.
+
 ```js
 tonus.temperamentum({ tuning: "ptolemy-intense" });
 ```

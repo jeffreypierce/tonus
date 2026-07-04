@@ -21,6 +21,8 @@ import type {
 } from "./engines/temper/api.js";
 import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
+  MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent,
+  MusicXmlOpts, MusicXmlEmitResult,
 } from "./engines/score/api.js";
 import type { ChantTabulaRow } from "./engines/score/tabula.js";
 import type {
@@ -76,6 +78,8 @@ export type {
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
+  MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent,
+  MusicXmlOpts, MusicXmlEmitResult,
   ChantTabulaRow,
   Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
   VoicedPitch,

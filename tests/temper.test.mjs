@@ -77,41 +77,59 @@ describe("buildTemper", () => {
 });
 
 describe("ptolemaic tunings", () => {
-  test("ptolemy-intense produces pure fifth 3/2", () => {
-    const t = buildTemper({ tuning: "ptolemy-intense", mode: 1 });
-    // Mode 1 finalis = D (pc 2), fifth above = A (pc 9)
-    const fifth = t.ratios[9] / t.ratios[2];
-    assert.ok(Math.abs(fifth - 3 / 2) < 0.001);
-  });
+  // The diatonic-genus presets tune ONE fixed natural gamut (C D E F G A B);
+  // a mode is an octave species of it (Option A — see docs/tuning.md). So the
+  // genus ratios are measured against C (pc 0), not re-derived per mode. The
+  // wolf that results (D–A is a grave fifth, not 3/2) is the true, intended
+  // behaviour of syntonic just intonation, not a defect.
 
-  test("ptolemy-intense produces pure major third 5/4", () => {
+  test("ptolemy-intense tunes a pure major third 5/4 above the gamut's C", () => {
     const t = buildTemper({ tuning: "ptolemy-intense", mode: 1 });
-    // Mode 1: scalePcs = [2,4,5,7,9,11,0], ratio[2] = 5/4 → pc 5 (F)
-    // Third above D is F# but in Dorian that's a minor third...
-    // Actually: ratio index 2 (5/4) maps to scalePcs[2] = pc 5 (F)
-    // So F/D ratio should be 5/4
-    const third = t.ratios[5] / t.ratios[2];
+    // C=pc0, E=pc4 → the intense diatonic's defining pure third.
+    const third = t.ratios[4] / t.ratios[0];
     assert.ok(Math.abs(third - 5 / 4) < 0.001, `expected 5/4, got ${third}`);
   });
 
-  test("ptolemy-soft uses septimal 8/7 whole tone", () => {
+  test("ptolemy-intense preserves the syntonic wolf: D–A is 40/27, not 3/2", () => {
+    const t = buildTemper({ tuning: "ptolemy-intense", mode: 1 });
+    // D=pc2 (9/8), A=pc9 (5/3) → 5/3 ÷ 9/8 = 40/27 ≈ 680¢, the grave fifth.
+    const dToA = t.ratios[9] / t.ratios[2];
+    assert.ok(Math.abs(dToA - 40 / 27) < 0.001, `expected 40/27, got ${dToA}`);
+    // C–G, by contrast, is a pure fifth.
+    const cToG = t.ratios[7] / t.ratios[0];
+    assert.ok(Math.abs(cToG - 3 / 2) < 0.001, `C–G expected 3/2, got ${cToG}`);
+  });
+
+  test("ptolemy-intense gives each mode its own third quality (octave species)", () => {
+    // Dorian's third (D–F) is minor; Lydian's (F–A) is major — both read from
+    // the one fixed gamut, no per-mode re-tuning.
+    const dorian = buildTemper({ tuning: "ptolemy-intense", mode: 1 });
+    const dToF = 1200 * Math.log2(dorian.ratios[5] / dorian.ratios[2]);
+    assert.ok(dToF < 350, `Dorian third should be minor, got ${Math.round(dToF)}¢`);
+
+    const lydian = buildTemper({ tuning: "ptolemy-intense", mode: 5 });
+    const fToA = 1200 * Math.log2(lydian.ratios[9] / lydian.ratios[5]);
+    assert.ok(fToA > 350, `Lydian third should be major, got ${Math.round(fToA)}¢`);
+  });
+
+  test("ptolemy-soft uses its septimal 8/7 whole tone above the gamut's C", () => {
     const t = buildTemper({ tuning: "ptolemy-soft", mode: 1 });
-    // scalePcs[1] = pc 4 (E), ratio = 8/7 relative to finalis D (pc 2)
-    const second = t.ratios[4] / t.ratios[2];
+    // C=pc0, D=pc2 → the soft diatonic's first step is 8/7.
+    const second = t.ratios[2] / t.ratios[0];
     assert.ok(Math.abs(second - 8 / 7) < 0.001, `expected 8/7, got ${second}`);
   });
 
-  test("ptolemy-equable uses 12/11 neutral second", () => {
+  test("ptolemy-equable uses its 12/11 neutral second above the gamut's C", () => {
     const t = buildTemper({ tuning: "ptolemy-equable", mode: 1 });
-    const second = t.ratios[4] / t.ratios[2];
+    const second = t.ratios[2] / t.ratios[0];
     assert.ok(Math.abs(second - 12 / 11) < 0.001, `expected 12/11, got ${second}`);
   });
 
-  test("all three have pure fourth 4/3", () => {
+  test("all three genera keep a pure fourth 4/3 (C–F) on the fixed gamut", () => {
     for (const name of ["ptolemy-intense", "ptolemy-soft", "ptolemy-equable"]) {
       const t = buildTemper({ tuning: name, mode: 1 });
-      // scalePcs[3] = pc 7 (G), should be 4/3 above D
-      const fourth = t.ratios[7] / t.ratios[2];
+      // C=pc0, F=pc5 → the tetrachord boundary, a pure 4/3 in every genus.
+      const fourth = t.ratios[5] / t.ratios[0];
       assert.ok(Math.abs(fourth - 4 / 3) < 0.001, `${name}: expected 4/3, got ${fourth}`);
     }
   });
@@ -129,10 +147,29 @@ describe("ptolemaic tunings", () => {
   test("ptolemy-intense differs from pythagorean", () => {
     const just = buildTemper({ tuning: "ptolemy-intense", mode: 1 });
     const pyth = buildTemper({ tuning: "pythagorean", mode: 1 });
-    // Major third: pythagorean = 81/64 ≈ 1.2656, just = 5/4 = 1.25
+    // Dorian's minor third D–F: pythagorean 32/27 ≈ 294¢, just 6/5 ≈ 316¢ —
+    // the two systems place the same degree differently.
     const justThird = just.ratios[5] / just.ratios[2];
     const pythThird = pyth.ratios[5] / pyth.ratios[2];
     assert.ok(Math.abs(justThird - pythThird) > 0.01, "should differ from pythagorean");
+  });
+
+  test("ptolemy-intense gives each mode its authentic interval qualities", () => {
+    // Regression guard for the octave-species fix: the genus ratios must NOT
+    // be laid degree-per-mode (which would force a 5/4 major third onto every
+    // final). Each mode's third/seventh come from its position in the gamut.
+    const deg = (t, finalPc, pc) => {
+      let c = (1200 * Math.log2(t.ratios[pc] / t.ratios[finalPc])) % 1200;
+      return ((c % 1200) + 1200) % 1200;
+    };
+    const dorian = buildTemper({ tuning: "ptolemy-intense", mode: 1 });
+    assert.ok(deg(dorian, 2, 5) < 350, "Dorian third (D–F) is minor");   // 294¢
+    const phrygian = buildTemper({ tuning: "ptolemy-intense", mode: 3 });
+    assert.ok(deg(phrygian, 4, 7) < 350, "Phrygian third (E–G) is minor"); // 316¢
+    const mixolydian = buildTemper({ tuning: "ptolemy-intense", mode: 7 });
+    assert.ok(deg(mixolydian, 7, 5) < 1050, "Mixolydian seventh (G–F) is minor"); // 996¢
+    const lydian = buildTemper({ tuning: "ptolemy-intense", mode: 5 });
+    assert.ok(deg(lydian, 5, 9) > 350, "Lydian third (F–A) is major");    // 386¢
   });
 });
 
@@ -225,9 +262,11 @@ describe("ratio", () => {
   });
 
   test("returns matching Step when ratio is a scale degree", () => {
-    const r = t.ratio("3/2");
+    // In ptolemy-intense/mode 1 the tenor A sits a grave fifth (40/27) above
+    // the D finalis, not a pure 3/2 — the syntonic wolf (see docs/tuning.md).
+    const r = t.ratio("40/27");
     assert.ok(r.step !== null);
-    assert.equal(r.step.role, "tenor"); // 3/2 above D finalis = A = tenor in mode 1
+    assert.equal(r.step.role, "tenor");
   });
 
   test("returns null step when ratio does not match a scale degree", () => {

@@ -25,6 +25,8 @@ export interface Context {
   lyric: string;
   vowel: string;
   syllableIndex: number;
+  /** 0-based index of the neume figure within the syllable (GABC break markers). */
+  neumeGroup: number;
   ictus: boolean;
   accidentalSource: "none" | "state" | "explicit";
   quilisma: boolean;
@@ -131,6 +133,8 @@ export interface ParsedNote {
   step: number;
   lyric: string;
   syllableIndex: number;
+  /** 0-based index of the neume figure within the syllable (GABC break markers). */
+  neumeGroup: number;
   ictus: boolean;
   weight: number;
   duration: number;
