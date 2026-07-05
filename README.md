@@ -93,6 +93,11 @@ const harmony = tonus.harmonia(tonus.caelum({ date: feast.date }));
 // each visible planet voiced as pitch and Greek vowel, after Boethius
 ```
 
+## Roadmap
+
+Where tonus is headed — SVG chant engraving, an interactive documentation site,
+and cadence detection — is laid out in [ROADMAP.md](ROADMAP.md).
+
 ## Development
 
 ```sh
