@@ -2,6 +2,11 @@
 // engines/chant/psalm — psalm and canticle retrieval as intoned Chant[]
 // ---------------------------------------------------------------------------
 import { PSALMS, type PsalmVerse } from "../../data/psalms.js";
+import {
+  OFFICE_PSALMS,
+  type OfficePsalmEntry,
+  type OfficePsalmPortion,
+} from "../../data/office-psalms.js";
 import { intone } from "./intone.js";
 import { MODE_LABELS, type Chant, type PsalmusQuery } from "./types.js";
 
@@ -83,4 +88,27 @@ export function getPsalmRange(
       return !isNaN(n) && n >= lo && n <= hi;
     })
     .map((v) => verseToChant(v, mode));
+}
+
+/** A psalm portion — whole psalm or an inclusive verse range — intoned. */
+export function intonePortion(p: OfficePsalmPortion, mode = 8): Chant[] {
+  return p.from != null && p.to != null
+    ? getPsalmRange(p.psalm, p.from, p.to, mode)
+    : getPsalm({ psalm: p.psalm, mode });
+}
+
+/**
+ * The little-hours psalmody for one hour on a given weekday (0 = Sunday), from
+ * the extracted DO Tridentine scheme (`office-psalms.ts`). Prefers the
+ * weekday-specific entry, then the ferial default (weekday null), then the
+ * feast set; returns the psalm portions (not yet intoned).
+ */
+export function officePsalmPortions(
+  hour: OfficePsalmEntry["hour"], weekday: number,
+): OfficePsalmPortion[] {
+  const forHour = OFFICE_PSALMS.filter((e) => e.hour === hour);
+  const exact = forHour.find((e) => e.weekday === weekday && !e.festis);
+  const ferial = forHour.find((e) => e.weekday === null && !e.festis);
+  const festis = forHour.find((e) => e.festis);
+  return (exact ?? ferial ?? festis)?.psalms ?? [];
 }

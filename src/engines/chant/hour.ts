@@ -2,7 +2,7 @@
 // engines/chant/hour — Divine Office hour retrieval
 // ---------------------------------------------------------------------------
 import { resolveChant, resolveChants } from "./chant.js";
-import { getPsalm, getPsalmRange } from "./psalm.js";
+import { intonePortion, officePsalmPortions } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
 import { getFeast } from "../cal/calendar.js";
 import type { Chant, OfficiumQuery, CanonicalHour } from "./types.js";
@@ -10,15 +10,10 @@ import type { Feast } from "../cal/types.js";
 import { OFFICE_ROMAN, type OfficeDay } from "../../data/office-roman.js";
 import {
   COMPLINE_ORDINARY,
-  COMPLINE_PSALMS,
   COMPLINE_SEASONAL,
   marianAntiphonFor,
 } from "../../data/compline.js";
-import {
-  PRIME_ORDINARY,
-  PRIME_PSALMS_BY_WEEKDAY,
-  PRIME_SEASONAL,
-} from "../../data/prime.js";
+import { PRIME_ORDINARY, PRIME_SEASONAL } from "../../data/prime.js";
 
 let _roman: Map<string, OfficeDay> | null = null;
 function romanMap(): Map<string, OfficeDay> {
@@ -26,19 +21,11 @@ function romanMap(): Map<string, OfficeDay> {
   return _roman;
 }
 
-// A psalm portion — whole psalm, or an inclusive verse range — intoned. The
-// office ordos take partial psalms (Compline Ps 30:2-6; Prime Ps 118 in
-// sections), so verse ranges matter here.
-function psalmPortion(p: { psalm: number; from?: number; to?: number }): Chant[] {
-  return p.from != null && p.to != null
-    ? getPsalmRange(p.psalm, p.from, p.to)
-    : getPsalm({ psalm: p.psalm });
-}
-
 // Compline is fixed and seasonal, not per-feast: it does not use the OfficeDay
 // tables at all. The ordo is assembled from the season (Te lucis, In manus
-// tuas), the four fixed psalms, the invariable spine (Deus in adjutorium, Nunc
-// dimittis), and the date-driven Marian antiphon. See data/compline.ts.
+// tuas), the fixed psalms (from the extracted DO scheme), the invariable spine
+// (Deus in adjutorium, Nunc dimittis), and the date-driven Marian antiphon.
+// See data/compline.ts.
 function complineForFeast(feast: Feast): Chant[] {
   const seasonal = COMPLINE_SEASONAL[feast.season];
   const results: Chant[] = [];
@@ -46,7 +33,9 @@ function complineForFeast(feast: Feast): Chant[] {
   const opening = resolveChant(COMPLINE_ORDINARY.opening);
   if (opening) results.push(opening);
 
-  for (const p of COMPLINE_PSALMS) results.push(...psalmPortion(p));
+  for (const p of officePsalmPortions("Completorium", feast.weekday)) {
+    results.push(...intonePortion(p));
+  }
 
   const hymn = seasonal && resolveChant(seasonal.teLucis);
   if (hymn) results.push(hymn);
@@ -76,9 +65,9 @@ function primeForFeast(feast: Feast): Chant[] {
   const hymn = resolveChant(PRIME_ORDINARY.hymn);
   if (hymn) results.push(hymn);
 
-  const portions = PRIME_PSALMS_BY_WEEKDAY[feast.weekday]
-    ?? PRIME_PSALMS_BY_WEEKDAY[0]!;
-  for (const p of portions) results.push(...psalmPortion(p));
+  for (const p of officePsalmPortions("Prima", feast.weekday)) {
+    results.push(...intonePortion(p));
+  }
 
   const responsory = seasonal && resolveChant(seasonal.responsory);
   if (responsory) results.push(responsory);

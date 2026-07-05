@@ -14,41 +14,10 @@
 
 import type { Season } from "../engines/cal/types.js";
 
-// Prime's psalmody varies by weekday, per DO's Tridentine Psalterium (the
-// traditional pre-1911 Roman scheme). Every day opens with Ps 53, then a
-// day-proper psalm (117 on Sunday; the 21–25 rotation on ferias; none on
-// Saturday and feasts), then the first two sections of Ps 118 — vv. 1–16 and
-// 17–32, not the whole 176-verse psalm.
-//
-// A "psalm portion" is a psalm with an optional inclusive verse range.
-export interface PsalmPortion {
-  psalm: number;
-  from?: number;
-  to?: number;
-}
-
-const P118_1 = { psalm: 118, from: 1, to: 16 };
-const P118_2 = { psalm: 118, from: 17, to: 32 };
-
-/**
- * Weekday (0 = Sunday … 6 = Saturday) → the Prime psalm portions, after the
- * DO Tridentine scheme. `festis` is the set used on feasts, regardless of day.
- */
-export const PRIME_PSALMS_BY_WEEKDAY: Readonly<Record<number, PsalmPortion[]>> =
-  Object.freeze({
-    0: [{ psalm: 53 }, { psalm: 117 }, P118_1, P118_2], // Dominica
-    1: [{ psalm: 53 }, { psalm: 23 }, P118_1, P118_2],  // Feria II
-    2: [{ psalm: 53 }, { psalm: 24 }, P118_1, P118_2],  // Feria III
-    3: [{ psalm: 53 }, { psalm: 25 }, P118_1, P118_2],  // Feria IV
-    4: [{ psalm: 53 }, { psalm: 22 }, P118_1, P118_2],  // Feria V
-    5: [{ psalm: 53 }, { psalm: 21 }, P118_1, P118_2],  // Feria VI
-    6: [{ psalm: 53 }, P118_1, P118_2],                 // Sabbato
-  });
-
-/** On feasts, Prime uses the Sunday-like set without the ferial day-psalm. */
-export const PRIME_PSALMS_FESTIS: readonly PsalmPortion[] = [
-  { psalm: 53 }, P118_1, P118_2,
-];
+// Prime's psalmody (Ps 53 + a weekday-proper psalm + Ps 118 in two sections,
+// varying by weekday per DO's Tridentine scheme) is not hand-listed here — it
+// comes from the extracted scheme via `officePsalmPortions("Prima", weekday)`.
+// Only the ordo structure and the seasonal responsory rule are editorial.
 
 /** The invariable spine. */
 export const PRIME_ORDINARY = {
