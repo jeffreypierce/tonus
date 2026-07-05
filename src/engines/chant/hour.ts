@@ -21,6 +21,19 @@ function romanMap(): Map<string, OfficeDay> {
   return _roman;
 }
 
+// Hours whose result is an ordered sequence (an ordo) rather than a set of
+// chants — they keep assembly order instead of being sorted by incipit.
+const ORDERED_ORDO_HOURS: ReadonlySet<CanonicalHour> = new Set([
+  "prima", "tertia", "sexta", "nona", "completorium",
+]);
+
+// The purely seasonal/fixed hours — identical for every feast of a day, so
+// concurrent feasts collapse to one and a no-feast query resolves the default
+// epoch. (Terce/Sext/None are NOT here: their responsory breve is per-feast.)
+const SEASONAL_ORDO_HOURS: ReadonlySet<CanonicalHour> = new Set([
+  "prima", "completorium",
+]);
+
 // Compline is fixed and seasonal, not per-feast: it does not use the OfficeDay
 // tables at all. The ordo is assembled from the season (Te lucis, In manus
 // tuas), the fixed psalms (from the extracted DO scheme), the invariable spine
@@ -99,14 +112,23 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
     if (bc) results.push(bc);
     const hy = resolveChant(day.hymnLaudes);
     if (hy) results.push(hy);
-  } else if (hour === "tertia") {
-    const rb = resolveChant(day.respBreveTertia);
-    if (rb) results.push(rb);
-  } else if (hour === "sexta") {
-    const rb = resolveChant(day.respBreveSexta);
-    if (rb) results.push(rb);
-  } else if (hour === "nona") {
-    const rb = resolveChant(day.respBreveNona);
+  } else if (hour === "tertia" || hour === "sexta" || hour === "nona") {
+    // The little hours: their portion of Ps 118 (Terce vv. 33–80, Sext 81–128,
+    // None 129–176, from the extracted DO scheme), then the responsory breve.
+    // The psalmody belongs to a specific day, so it is only included for a real
+    // feast query — not the all-days survey scan (which has no date and would
+    // repeat the psalms once per feast).
+    if (feast.date) {
+      const hourName = hour === "tertia" ? "Tertia" : hour === "sexta" ? "Sexta" : "Nona";
+      for (const p of officePsalmPortions(hourName, feast.weekday)) {
+        results.push(...intonePortion(p));
+      }
+    }
+    const rb = resolveChant(
+      hour === "tertia" ? day.respBreveTertia
+        : hour === "sexta" ? day.respBreveSexta
+          : day.respBreveNona,
+    );
     if (rb) results.push(rb);
   } else if (hour === "vesperae") {
     results.push(...resolveChants(day.antVespera));
@@ -141,23 +163,23 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     // Prime and Compline are seasonal/weekday ordos, identical for every feast
     // of the day — so concurrent feasts collapse to a single ordo rather than
     // repeating it. The other hours are genuinely per-feast.
-    results =
-      hour === "prima" || hour === "completorium"
-        ? feasts[0] ? chantsForFeastHour(feasts[0], hour) : []
-        : feasts.flatMap((f) => chantsForFeastHour(f, hour));
+    results = SEASONAL_ORDO_HOURS.has(hour)
+      ? feasts[0] ? chantsForFeastHour(feasts[0], hour) : []
+      : feasts.flatMap((f) => chantsForFeastHour(f, hour));
   } else if (feasts) {
     const hours: CanonicalHour[] = [
       "matutinum", "laudes", "prima", "tertia", "sexta", "nona",
       "vesperae", "completorium",
     ];
     results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h)));
-  } else if (hour === "prima" || hour === "completorium") {
+  } else if (hour && SEASONAL_ORDO_HOURS.has(hour)) {
     // Prime and Compline are seasonal ordos, not per-feast. With no feast,
     // resolve for the default epoch (Guido d'Arezzo's era) — festum()'s anchor.
     const [feast] = getFeast();
     results = feast ? chantsForFeastHour(feast, hour) : [];
   } else if (hour) {
-    // Hour without feast — scan all office entries
+    // Hour without feast — survey per-feast content across all office entries.
+    // mockFeast has no date, so the little hours return only their responsories.
     results = OFFICE_ROMAN.flatMap((day) => {
       const mockFeast = { id: day.feastId } as Feast;
       return chantsForFeastHour(mockFeast, hour);
@@ -195,10 +217,10 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     results = results.filter((c) => ids.has(c.id));
   }
 
-  // Prime and Compline are ordered ordos — their sequence IS the content — so
-  // they keep assembly order unless the caller explicitly asks for a sort.
-  // Every other hour returns a set of chants, sorted by incipit by default.
-  const isOrderedOrdo = query.hora === "prima" || query.hora === "completorium";
+  // The little hours and Compline are ordered ordos — their sequence IS the
+  // content — so they keep assembly order unless the caller explicitly asks for
+  // a sort. The other hours return a set of chants, sorted by incipit.
+  const isOrderedOrdo = query.hora != null && ORDERED_ORDO_HOURS.has(query.hora);
   if (query.sort || !isOrderedOrdo) {
     const sort = query.sort ?? "incipit";
     results.sort((a, b) => {

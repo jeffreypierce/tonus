@@ -101,6 +101,35 @@ describe("getHour", () => {
     const chants = getHour({ feast: feasts, hora: "vesperae" });
     assert.ok(chants.length > 0);
   });
+
+  test("little hours march through Ps 118 (Terce 33–80, Sext 81–128, None 129–176)", () => {
+    const [f] = getFeast({ date: new Date("2026-12-25") });
+    const p118Range = (hora) => {
+      const verses = getHour({ feast: f, hora })
+        .filter((c) => c.id.startsWith("psalm:118:"))
+        .map((c) => parseInt(c.id.split(":")[2], 10));
+      return [Math.min(...verses), Math.max(...verses)];
+    };
+    assert.deepEqual(p118Range("tertia"), [33, 80]);
+    assert.deepEqual(p118Range("sexta"), [81, 128]);
+    assert.deepEqual(p118Range("nona"), [129, 176]);
+  });
+
+  test("little hours keep the per-feast responsory after the psalms", () => {
+    const [f] = getFeast({ date: new Date("2026-12-25") });
+    const c = getHour({ feast: f, hora: "tertia" });
+    assert.ok(c.some((x) => x.id.startsWith("psalm:")), "has psalmody");
+    assert.ok(c.some((x) => !x.id.startsWith("psalm:")), "has the responsory");
+    assert.ok(c[0].id.startsWith("psalm:"), "opens with a psalm");
+    assert.ok(!c[c.length - 1].id.startsWith("psalm:"), "ends with the responsory");
+  });
+
+  test("no-feast little-hours survey returns responsories only, no psalm explosion", () => {
+    const c = getHour({ hora: "tertia" });
+    assert.ok(c.length > 0);
+    assert.equal(c.filter((x) => x.id.startsWith("psalm:")).length, 0,
+      "the all-days survey has no per-day psalmody");
+  });
 });
 
 describe("getHour — completorium (Compline)", () => {

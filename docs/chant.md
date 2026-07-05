@@ -224,14 +224,14 @@ tonus.officium({ feast: christmas, hora: "laudes" });
 // 7 chants, beginning: A solis ortus cardine (Hymnus)
 ```
 
-| Hour                        | Content                                   |
-| --------------------------- | ----------------------------------------- |
-| `matutinum`                 | Invitatory, antiphons, hymn, responsories |
-| `laudes`                    | Antiphons, Benedictus antiphon, hymn      |
-| `tertia` / `sexta` / `nona` | Responsory breve                          |
-| `vesperae`                  | Antiphons, Magnificat antiphon, hymn      |
-| `prima`                     | The Prime ordo (sung parts) — see below   |
-| `completorium`              | The full Compline ordo — see below        |
+| Hour                        | Content                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `matutinum`                 | Invitatory, antiphons, hymn, responsories                                    |
+| `laudes`                    | Antiphons, Benedictus antiphon, hymn                                         |
+| `tertia` / `sexta` / `nona` | Ps 118 in course (Terce 33–80, Sext 81–128, None 129–176) + responsory breve |
+| `vesperae`                  | Antiphons, Magnificat antiphon, hymn                                         |
+| `prima`                     | The Prime ordo (sung parts) — see below                                      |
+| `completorium`              | The full Compline ordo — see below                                           |
 
 **Prime and Compline are ordos, not chant sets.** These two hours are
 almost **invariable**: the same
