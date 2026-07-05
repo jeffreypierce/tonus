@@ -2,10 +2,18 @@
 // engines/chant/hour — Divine Office hour retrieval
 // ---------------------------------------------------------------------------
 import { resolveChant, resolveChants } from "./chant.js";
+import { getPsalm } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
+import { getFeast } from "../cal/calendar.js";
 import type { Chant, OfficiumQuery, CanonicalHour } from "./types.js";
 import type { Feast } from "../cal/types.js";
 import { OFFICE_ROMAN, type OfficeDay } from "../../data/office-roman.js";
+import {
+  COMPLINE_ORDINARY,
+  COMPLINE_PSALMS,
+  COMPLINE_SEASONAL,
+  marianAntiphonFor,
+} from "../../data/compline.js";
 
 let _roman: Map<string, OfficeDay> | null = null;
 function romanMap(): Map<string, OfficeDay> {
@@ -13,7 +21,39 @@ function romanMap(): Map<string, OfficeDay> {
   return _roman;
 }
 
+// Compline is fixed and seasonal, not per-feast: it does not use the OfficeDay
+// tables at all. The ordo is assembled from the season (Te lucis, In manus
+// tuas), the four fixed psalms, the invariable spine (Deus in adjutorium, Nunc
+// dimittis), and the date-driven Marian antiphon. See data/compline.ts.
+function complineForFeast(feast: Feast): Chant[] {
+  const seasonal = COMPLINE_SEASONAL[feast.season];
+  const results: Chant[] = [];
+
+  const opening = resolveChant(COMPLINE_ORDINARY.opening);
+  if (opening) results.push(opening);
+
+  for (const psalm of COMPLINE_PSALMS) {
+    results.push(...getPsalm({ psalm }));
+  }
+
+  const hymn = seasonal && resolveChant(seasonal.teLucis);
+  if (hymn) results.push(hymn);
+
+  const responsory = seasonal && resolveChant(seasonal.inManusTuas);
+  if (responsory) results.push(responsory);
+
+  const canticle = resolveChant(COMPLINE_ORDINARY.canticle);
+  if (canticle) results.push(canticle);
+
+  const marian = resolveChant(marianAntiphonFor(feast.season, feast.date));
+  if (marian) results.push(marian);
+
+  return results;
+}
+
 function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
+  if (hour === "completorium") return complineForFeast(feast);
+
   const map = romanMap();
   const sunday = temporaSundayId(feast.id);
   const day = map.get(feast.id) ?? (sunday ? (map.get(sunday) ?? null) : null);
@@ -75,8 +115,15 @@ export function getHour(query?: OfficiumQuery): Chant[] {
   if (feasts && hour) {
     results = feasts.flatMap((f) => chantsForFeastHour(f, hour));
   } else if (feasts) {
-    const hours: CanonicalHour[] = ["matutinum", "laudes", "tertia", "sexta", "nona", "vesperae"];
+    const hours: CanonicalHour[] = [
+      "matutinum", "laudes", "tertia", "sexta", "nona", "vesperae", "completorium",
+    ];
     results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h)));
+  } else if (hour === "completorium") {
+    // Compline is seasonal, not per-feast. With no feast, resolve it for the
+    // default epoch (Guido d'Arezzo's era) — the same anchor festum() uses.
+    const [feast] = getFeast();
+    results = feast ? complineForFeast(feast) : [];
   } else if (hour) {
     // Hour without feast — scan all office entries
     results = OFFICE_ROMAN.flatMap((day) => {
@@ -116,16 +163,22 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     results = results.filter((c) => ids.has(c.id));
   }
 
-  const sort = query.sort ?? "incipit";
-  results.sort((a, b) => {
-    if (sort === "id") return a.id.localeCompare(b.id);
-    if (sort === "mode")
-      return (
-        String(a.mode ?? "").localeCompare(String(b.mode ?? "")) ||
-        a.incipit.localeCompare(b.incipit)
-      );
-    return a.incipit.localeCompare(b.incipit);
-  });
+  // Compline is an ordered ordo — its sequence IS the content — so it keeps
+  // assembly order unless the caller explicitly asks for a sort. Every other
+  // hour returns a set of chants, sorted by incipit by default.
+  const isOrderedOrdo = query.hora === "completorium";
+  if (query.sort || !isOrderedOrdo) {
+    const sort = query.sort ?? "incipit";
+    results.sort((a, b) => {
+      if (sort === "id") return a.id.localeCompare(b.id);
+      if (sort === "mode")
+        return (
+          String(a.mode ?? "").localeCompare(String(b.mode ?? "")) ||
+          a.incipit.localeCompare(b.incipit)
+        );
+      return a.incipit.localeCompare(b.incipit);
+    });
+  }
 
   const offset = Math.max(0, query.offset ?? 0);
   const limit = query.limit == null ? results.length : Math.max(0, query.limit);

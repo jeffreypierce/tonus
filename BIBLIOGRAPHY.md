@@ -17,6 +17,8 @@ section of the relevant page.
   [docs/chant.md](docs/chant.md#sources)
 - **Versus Psalmorum et Canticorum (Solesmes, No. 839)** — psalm-verse
   formulas → [docs/chant.md](docs/chant.md#sources)
+- **Bloomfield, _Compline_ (github.com/bbloomf/compline, public domain)**
+  — reference dates & chants for the traditional Roman Compline ordo → [docs/chant.md](docs/chant.md#sources)
 
 ## Chant rhythm (score engine)
 

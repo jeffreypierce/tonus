@@ -220,7 +220,27 @@ tonus.officium({ feast: christmas, hora: "laudes" });
 | `laudes` | Antiphons, Benedictus antiphon, hymn |
 | `tertia` / `sexta` / `nona` | Responsory breve |
 | `vesperae` | Antiphons, Magnificat antiphon, hymn |
-| `prima`, `completorium` | Not yet extracted — return empty |
+| `completorium` | The full Compline ordo — see below |
+| `prima` | Not yet extracted — returns empty |
+
+Compline is unlike the other hours: it is almost **invariable**, the same
+ordo every night, so it is not drawn from the per-feast office tables but
+assembled from a small seasonal ordo. `officium({ hora: "completorium" })`
+returns the sequence **in liturgical order** (it alone is not sorted by
+incipit, since its order is its meaning): the opening *Deus in adjutorium*,
+the four fixed psalms (4, 30, 90, 133, intoned as by `psalmus`), the seasonal
+hymn *Te lucis ante terminum*, the short responsory *In manus tuas*, the
+canticle *Nunc dimittis*, and the seasonal **Marian antiphon**. The Marian
+antiphon follows the traditional rotation — *Alma Redemptoris Mater* (Advent
+to Candlemas), *Ave Regina cælorum* (Candlemas to Holy Week), *Regina cæli*
+(Paschaltide), *Salve Regina* (after Pentecost) — in the simple tone. With no
+feast, Compline resolves for the [default epoch](index.md#dates).
+
+```js
+tonus.officium({ feast: christmas, hora: "completorium" });
+// Deus in adjutorium → Ps 4, 30, 90, 133 → Te lucis → In manus tuas
+// → Nunc dimittis → Alma Redemptoris (simple tone)
+```
 
 ```ts
 interface OfficiumQuery extends CantusQuery {

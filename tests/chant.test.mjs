@@ -103,6 +103,67 @@ describe("getHour", () => {
   });
 });
 
+describe("getHour — completorium (Compline)", () => {
+  const complineFor = (date) =>
+    getHour({ feast: getFeast({ date: new Date(date) }), hora: "completorium" });
+
+  const propers = (chants) => chants.filter((c) => !c.id.startsWith("psalm:"));
+  const incipits = (chants) => propers(chants).map((c) => c.incipit);
+
+  test("assembles the full ordo: opening, 4 psalms, hymn, responsory, canticle, Marian", () => {
+    const c = complineFor("2026-12-06"); // Advent
+    // The four fixed psalms (4, 30, 90, 133) contribute many verses.
+    const psalmVerses = c.filter((x) => x.id.startsWith("psalm:"));
+    assert.ok(psalmVerses.length > 20, "the four fixed psalms are included");
+    const names = incipits(c).join(" | ");
+    assert.ok(names.includes("Deus in adjutorium"), "opening");
+    assert.ok(names.includes("Te lucis"), "hymn");
+    assert.ok(names.includes("In manus tuas"), "short responsory");
+    assert.ok(names.includes("Nunc dimittis"), "gospel canticle");
+  });
+
+  test("preserves liturgical order (not sorted by incipit)", () => {
+    const c = complineFor("2026-12-06");
+    // First item is the opening versicle, not an alphabetically-first antiphon.
+    assert.equal(c[0].incipit, "Deus in adjutorium");
+    const names = incipits(c);
+    // Te lucis (hymn) precedes Nunc dimittis (canticle) precedes the Marian.
+    assert.ok(names.indexOf("Te lucis ante terminum (In Adventu)") <
+      names.indexOf("Nunc dimittis"));
+  });
+
+  test("Marian antiphon rotates by season and the Candlemas date boundary", () => {
+    const marian = (date) => {
+      const names = incipits(complineFor(date));
+      return names.find((n) => /Alma|Ave Regina|Regina caeli|Salve/.test(n));
+    };
+    assert.match(marian("2026-12-06"), /Alma/, "Advent → Alma");
+    assert.match(marian("2026-02-01"), /Alma/, "before Candlemas → Alma");
+    assert.match(marian("2026-02-10"), /Ave Regina/, "after Candlemas → Ave Regina");
+    assert.match(marian("2026-04-06"), /Regina caeli/, "Eastertide → Regina caeli");
+    assert.match(marian("2026-08-15"), /Salve/, "after Pentecost → Salve Regina");
+  });
+
+  test("hymn and responsory follow the season", () => {
+    assert.ok(incipits(complineFor("2026-12-06")).some((n) => n.includes("In Adventu")));
+    assert.ok(incipits(complineFor("2026-04-06")).some((n) => n.includes("Paschali")));
+  });
+
+  test("every ordo chant resolves (no dangling ids)", () => {
+    const c = complineFor("2026-08-15");
+    assert.ok(c.length > 0);
+    for (const chant of c) {
+      assert.ok(chant.gabc && chant.gabc.length > 0, `${chant.incipit} has gabc`);
+    }
+  });
+
+  test("no-feast completorium resolves to the default epoch", () => {
+    const c = getHour({ hora: "completorium" });
+    assert.ok(c.length > 0, "returns the default-epoch Compline ordo");
+    assert.equal(c[0].incipit, "Deus in adjutorium");
+  });
+});
+
 describe("getPsalm", () => {
   test("returns intoned GABC for psalm 109 in mode 1", () => {
     const chants = getPsalm({ psalm: 109, mode: 1 });
