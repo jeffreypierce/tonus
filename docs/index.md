@@ -1,7 +1,7 @@
 # tonus API
 
-The behavioral source of truth for the public API: eleven methods on the
-`tonus` namespace, no sub-namespaces.
+The behavioral source of truth for the public API: eleven methods on
+the `tonus` namespace, no sub-namespaces.
 
 ```js
 import tonus from "tonus";
@@ -29,22 +29,18 @@ The language of a key tells you the register of its value. A Latin key
 returns authentic Latin content; an English key returns a machine code or
 datum. Where a concept has both registers, they form a pair:
 
-| English | Latin |
-| --- | --- |
-| `season` | `tempus` |
-| `grade` | `ritus` |
-| `mode` | `modus` |
-| `name` (on `Body`) | `nomen` |
+| English            | Latin    |
+| ------------------ | -------- |
+| `season`           | `tempus` |
+| `grade`            | `ritus`  |
+| `mode`             | `modus`  |
+| `name` (on `Body`) | `nomen`  |
 
-Other fields carry only one register. Latin-only: `genus`, `ordinarium`,
-`maneria`, `auctor`, `incipit`, `differentia`, `tabula`, `pondus`,
-`accentus`, `hora`. English-only: `office`, `date`, `masses`, `velocity`,
-`midi`, `hz`.
+Other fields carry only one register. Latin-only, _e.g._ `genus`, `ordinarium`,
+`incipit`, `differentia`, `accentus`. English-only, _e.g._ `date`, `velocity`, `hz`.
 
-Display strings live in exported maps (`SEASON_LABELS`, `GRADE_NAMES`),
-never as label fields on objects. The astronomy layer is modern English
-throughout — an accurate sky, voiced through period doctrine — and is
-never Latinized.
+Display strings live in exported maps (_e.g._ `SEASON_LABELS`),
+never as label fields on objects.
 
 ### Query and builder functions
 
@@ -67,16 +63,12 @@ t.nota("D4");
 
 ### Dates
 
-Dates are UTC-canonical. Build query dates from ISO strings
-(`new Date("2026-01-06")`) or `Date.UTC`, and read results with UTC
-getters or `toISOString()`. Local-time constructions like
+Dates are UTC-canonical. Local-time constructions like
 `new Date(2026, 0, 6)` resolve to different days depending on the
-machine's timezone.
+machine's timezone. Prefer `new Date("2026-01-06")` instead.
 
-`tonus.festum()` and `tonus.caelum()` called with no date do not resolve
-to today: tonus lives in the Middle Ages. They default to an emblematic
-medieval epoch, **1 June 991** — the symbolic birthday of Guido d'Arezzo
-(his actual birth date is unrecorded; this is an editorial anchor). Pass
+`tonus.festum()` and `tonus.caelum()` default to an emblematic
+medieval epoch, **1 June 991**, the symbolic birthday of Guido d'Arezzo. Pass
 an explicit `date` for any other day.
 
 ### Determinism

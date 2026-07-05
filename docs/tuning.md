@@ -1,27 +1,31 @@
 # Tuning
 
 `tonus.temperamentum` is the library's model of medieval pitch. It builds
-a tuning context — a temperament, a mode, and a reference frequency — and
-answers the questions a theorist put to the monochord: what frequency a
-note sounds, where it sits on the Guidonian hand, what syllable it sings
-in which hexachord, how two notes relate, what the mode requires of a
-degree, and how a psalm verse is intoned. The engine depends on nothing
+a tuning context (temperament, mode, A4) and returns helper functions to tune and analyze pitch content. The engine depends on nothing
 else in the library and may be used alone; every pitch elsewhere in tonus
 is resolved through one of these contexts. The default tuning is
 Pythagorean, as in the treatises.
 
-- [The context — `temperamentum`](#the-context--temperamentum)
-- [Pitch input](#pitch-input)
-- [Pitches — `nota`](#pitches--nota)
-- [Steps — `gradus`](#steps--gradus)
-- [Intervals — `intervallum`](#intervals--intervallum)
-- [Neumes — `neuma`](#neumes--neuma)
-- [Ratios — `ratio`](#ratios--ratio)
-- [The gamut — `gamut`](#the-gamut--gamut)
-- [Modes — `modus`](#modes--modus)
-- [Psalm tones — `tonus`](#psalm-tones--tonus)
-- [Theory & Context](#theory--context)
-- [Sources](#sources)
+- [Tuning](#tuning)
+  - [The context — `temperamentum`](#the-context--temperamentum)
+  - [Pitch input](#pitch-input)
+  - [Pitches — `nota`](#pitches--nota)
+  - [Steps — `gradus`](#steps--gradus)
+  - [Intervals — `intervallum`](#intervals--intervallum)
+  - [Neumes — `neuma`](#neumes--neuma)
+  - [Ratios — `ratio`](#ratios--ratio)
+  - [The gamut — `gamut`](#the-gamut--gamut)
+  - [Modes — `modus`](#modes--modus)
+  - [Psalm tones — `tonus`](#psalm-tones--tonus)
+  - [Theory \& Context](#theory--context)
+    - [The commas](#the-commas)
+    - [The presets](#the-presets)
+      - [`"pythagorean"` — the medieval default](#pythagorean--the-medieval-default)
+      - [`"meantone"` — variable comma](#meantone--variable-comma)
+      - [The three Ptolemaic diatonics — antiquity's just intonations](#the-three-ptolemaic-diatonics--antiquitys-just-intonations)
+      - [`"equal"`](#equal)
+      - [Custom scales and Scala files](#custom-scales-and-scala-files)
+  - [Sources](#sources)
 
 ## The context — `temperamentum`
 
@@ -30,37 +34,37 @@ name, an options object, or nothing; with nothing, the context is
 Pythagorean, mode `"auto"`, A4 = 440 Hz. Invalid input throws.
 
 ```js
-tonus.temperamentum()                                  // pythagorean, mode auto, A4=440
-tonus.temperamentum("pythagorean")                     // string shorthand
-tonus.temperamentum({ tuning: "meantone", comma: "1/4" })
-tonus.temperamentum({ tuning: "ptolemy-intense" })     // just intonation
-tonus.temperamentum({ tuning: "equal", mode: 3, a4: 415 })
-tonus.temperamentum({ scale: ["1/1", "9/8", "5/4", /* … */] }) // custom array
-tonus.temperamentum({ scale: "! meanquar.scl\n…" })    // Scala file
+tonus.temperamentum(); // pythagorean, mode auto, A4=440
+tonus.temperamentum("pythagorean"); // string shorthand
+tonus.temperamentum({ tuning: "meantone", comma: "1/4" });
+tonus.temperamentum({ tuning: "ptolemy-intense" }); // just intonation
+tonus.temperamentum({ tuning: "equal", mode: 3, a4: 415 });
+tonus.temperamentum({ scale: ["1/1", "9/8", "5/4" /* … */] }); // custom array
+tonus.temperamentum({ scale: "! meanquar.scl\n…" }); // Scala file
 ```
 
 **`TemperamentumOpts`**
 
-| Field | Type | Default | Description |
-| --- | --- | --- | --- |
-| `tuning` | `Tuning` | `"pythagorean"` | Base temperament |
-| `mode` | `number \| "auto"` | `"auto"` | Gregorian mode (1–8); `"auto"` resolves from chant, falls back to UT (C) with no modal rotation |
-| `a4` | `number` | `440` | A4 reference frequency in Hz |
-| `root` | `number` | mode finalis | Root pitch class override (0–11) |
-| `transpose` | `number` | `0` | Output semitone transposition |
-| `comma` | `number \| string` | — | Meantone comma (`0.25`, `"1/4"`, `"1/3"`); ignored for other tunings |
-| `scale` | `string \| string[]` | — | Scala `.scl` file string or array of 7/12 ratio/cent values; implies custom tuning, name taken from the Scala description |
+| Field       | Type                 | Default         | Description                                                                                                               |
+| ----------- | -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `tuning`    | `Tuning`             | `"pythagorean"` | Base temperament                                                                                                          |
+| `mode`      | `number \| "auto"`   | `"auto"`        | Gregorian mode (1–8); `"auto"` resolves from chant, falls back to UT (C) with no modal rotation                           |
+| `a4`        | `number`             | `440`           | A4 reference frequency in Hz                                                                                              |
+| `root`      | `number`             | mode finalis    | Root pitch class override (0–11)                                                                                          |
+| `transpose` | `number`             | `0`             | Output semitone transposition                                                                                             |
+| `comma`     | `number \| string`   | —               | Meantone comma (`0.25`, `"1/4"`, `"1/3"`); ignored for other tunings                                                      |
+| `scale`     | `string \| string[]` | —               | Scala `.scl` file string or array of 7/12 ratio/cent values; implies custom tuning, name taken from the Scala description |
 
 The tuning presets:
 
-| Name | Description |
-| --- | --- |
-| `"pythagorean"` | Pure fifths (3/2), no tempering. Default |
-| `"meantone"` | Tempered fifths; `comma` controls the amount (default 1/4) |
-| `"equal"` | 12-tone equal temperament |
-| `"ptolemy-intense"` | Ptolemy's intense diatonic (*syntonon*) — classical just intonation, pure major thirds (5/4) |
-| `"ptolemy-soft"` | Ptolemy's soft diatonic (*malakon*) — septimal tuning, 8/7 whole tone |
-| `"ptolemy-equable"` | Ptolemy's equable diatonic (*homalon*) — undecimal tuning, neutral 12/11 seconds |
+| Name                | Description                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| `"pythagorean"`     | Pure fifths (3/2), no tempering. Default                                                     |
+| `"meantone"`        | Tempered fifths; `comma` controls the amount (default 1/4)                                   |
+| `"equal"`           | 12-tone equal temperament                                                                    |
+| `"ptolemy-intense"` | Ptolemy's intense diatonic (_syntonon_) — classical just intonation, pure major thirds (5/4) |
+| `"ptolemy-soft"`    | Ptolemy's soft diatonic (_malakon_) — septimal tuning, 8/7 whole tone                        |
+| `"ptolemy-equable"` | Ptolemy's equable diatonic (_homalon_) — undecimal tuning, neutral 12/11 seconds             |
 
 What each preset is, and when to choose it, is treated in
 [Theory & Context](#theory--context). Any other string is accepted as a
@@ -78,7 +82,7 @@ interface Temperamentum {
 
   // computed
   ratios: number[]; // frequency ratios relative to root, one per pitch class
-  cents: number[];  // cent values per pitch class, relative to root
+  cents: number[]; // cent values per pitch class, relative to root
 
   // methods
   nota(input: PitchInput): Pitch;
@@ -100,11 +104,11 @@ an object addresses one system explicitly. All inputs resolve to a pitch
 first; `transpose` is applied last as a uniform output shift.
 
 ```js
-t.nota(62);              // MIDI
-t.nota("D4");            // scientific pitch notation
-t.nota("293.33hz");      // frequency
-t.nota({ gabc: "d", clef: "c4" });                       // GABC letter under a clef
-t.nota({ solmization: "RE", hexachord: "naturale" });    // hexachordal address
+t.nota(62); // MIDI
+t.nota("D4"); // scientific pitch notation
+t.nota("293.33hz"); // frequency
+t.nota({ gabc: "d", clef: "c4" }); // GABC letter under a clef
+t.nota({ solmization: "RE", hexachord: "naturale" }); // hexachordal address
 ```
 
 ```ts
@@ -115,8 +119,8 @@ interface PitchObject {
   spn?: string;
   hz?: number;
   gabc?: string;
-  clef?: string;        // default "c4", only with gabc
-  solfege?: string;     // modern fixed-do: "DO" | "RE" | "MI" | "FA" | "SOL" | "LA" | "SI"
+  clef?: string; // default "c4", only with gabc
+  solfege?: string; // modern fixed-do: "DO" | "RE" | "MI" | "FA" | "SOL" | "LA" | "SI"
   solmization?: string; // medieval: "UT" | "RE" | "MI" | "FA" | "SOL" | "LA"
   hexachord?: "durum" | "naturale" | "molle"; // default "naturale", only with solmization
 }
@@ -135,9 +139,9 @@ t.nota("D4");
 // { midi: 62, pc: 2, oct: 4, acc: 0, spn: "D4",
 //   hz: 293.33, offset: -1.96, bend: 8112, ratio: 1 }
 
-tonus.temperamentum({ root: 0 }).nota("C4").hz;                       // 260.74  pythagorean
-tonus.temperamentum({ tuning: "meantone", root: 0 }).nota("C4").hz;   // 263.18  quarter-comma
-tonus.temperamentum({ tuning: "equal",    root: 0 }).nota("C4").hz;   // 261.63  equal
+tonus.temperamentum({ root: 0 }).nota("C4").hz; // 260.74  pythagorean
+tonus.temperamentum({ tuning: "meantone", root: 0 }).nota("C4").hz; // 263.18  quarter-comma
+tonus.temperamentum({ tuning: "equal", root: 0 }).nota("C4").hz; // 261.63  equal
 ```
 
 `offset` is the distance in cents from the equal-tempered pitch of the same
@@ -148,14 +152,14 @@ the tuned identity type used everywhere in tonus: in `Neume.pitches`, as
 ```ts
 interface Pitch {
   midi: number;
-  pc: number;       // pitch class 0–11
+  pc: number; // pitch class 0–11
   oct: number;
-  acc: -1 | 0 | 1;  // flat, natural, sharp
-  spn: string;      // scientific pitch name, e.g. "D4"
-  hz: number;       // frequency in Hz (through the scale)
-  offset: number;   // cents from 12-TET
-  bend: number;     // 14-bit MIDI pitch bend, 8192 = center
-  ratio: number;    // scale ratio for this pc
+  acc: -1 | 0 | 1; // flat, natural, sharp
+  spn: string; // scientific pitch name, e.g. "D4"
+  hz: number; // frequency in Hz (through the scale)
+  offset: number; // cents from 12-TET
+  bend: number; // 14-bit MIDI pitch bend, 8192 = center
+  ratio: number; // scale ratio for this pc
 }
 ```
 
@@ -187,10 +191,10 @@ for a pitch outside the gamut, they are `null`.
 
 The hand position names the joint a singer would point to:
 
-| `hand` field | values |
-| --- | --- |
-| `finger` | wrist, palm, thumb, index, middle, ring, pinky |
-| `region` | base, mid, tip, top |
+| `hand` field | values                                         |
+| ------------ | ---------------------------------------------- |
+| `finger`     | wrist, palm, thumb, index, middle, ring, pinky |
+| `region`     | base, mid, tip, top                            |
 
 ```ts
 interface StepVariant {
@@ -199,14 +203,14 @@ interface StepVariant {
 }
 
 interface Step {
-  pc: number;                // pitch class 0–11
-  name: string;              // "d" (Guidonian) or SPN letter fallback
-  nomen: string | null;      // "Delasolre"; null out of gamut
+  pc: number; // pitch class 0–11
+  name: string; // "d" (Guidonian) or SPN letter fallback
+  nomen: string | null; // "Delasolre"; null out of gamut
   hexachord: "durum" | "naturale" | "molle" | null;
   solmization: string | null; // null out of gamut
-  variants: StepVariant[];   // available mutations across hexachords
+  variants: StepVariant[]; // available mutations across hexachords
   hand: { finger: string; region: string } | null; // Guidonian hand position
-  degree: number | null;     // 1–7 diatonic degree in mode
+  degree: number | null; // 1–7 diatonic degree in mode
   role: "finalis" | "tenor" | "other" | null;
 }
 ```
@@ -228,22 +232,22 @@ t.intervallum("D4", "A4");
 (equal-tempered) terms. The tuned distance between two particular pitches
 is the ratio of their frequencies; take it from `nota`.
 
-| field | values |
-| --- | --- |
-| `class` | `P1` `m2` `M2` `m3` `M3` `P4` `TT` `P5` `m6` `M6` `m7` `M7` `P8` |
-| `quality` | perfect, major, minor, augmented |
-| `direction` | up, down, unison |
-| `consonance` | perfect, imperfect, dissonant |
+| field        | values                                                           |
+| ------------ | ---------------------------------------------------------------- |
+| `class`      | `P1` `m2` `M2` `m3` `M3` `P4` `TT` `P5` `m6` `M6` `m7` `M7` `P8` |
+| `quality`    | perfect, major, minor, augmented                                 |
+| `direction`  | up, down, unison                                                 |
+| `consonance` | perfect, imperfect, dissonant                                    |
 
 ```ts
 interface Interval {
-  nomen: string;      // e.g. "Quinta", "Semitonium"
-  alias?: string;     // e.g. "Diapente", "Diatessaron"
+  nomen: string; // e.g. "Quinta", "Semitonium"
+  alias?: string; // e.g. "Diapente", "Diatessaron"
   quality: string;
   class: string;
   direction: string;
   semitones: number;
-  cents: number;      // nominal class value
+  cents: number; // nominal class value
   consonance: string;
 }
 ```
@@ -263,15 +267,15 @@ t.neuma(["D4", "F4", "E4"]);
 
 Shapes that match no simple figure classify as `"compound"`.
 
-| `shape` | figure | `shape` | figure |
-| --- | --- | --- | --- |
-| `punctum` | a single note | `torculus resupinus` | torculus, then rising |
-| `pes` | two notes, rising | `porrectus flexus` | porrectus, then falling |
-| `clivis` | two notes, falling | `scandicus flexus` | scandicus, then falling |
-| `torculus` | three: up, down | `climacus resupinus` | climacus, then rising |
-| `porrectus` | three: down, up | `pes subpunctis` | pes, then descending points |
-| `scandicus` | three, rising | `compound` | any figure not above |
-| `climacus` | three, falling | | |
+| `shape`     | figure             | `shape`              | figure                      |
+| ----------- | ------------------ | -------------------- | --------------------------- |
+| `punctum`   | a single note      | `torculus resupinus` | torculus, then rising       |
+| `pes`       | two notes, rising  | `porrectus flexus`   | porrectus, then falling     |
+| `clivis`    | two notes, falling | `scandicus flexus`   | scandicus, then falling     |
+| `torculus`  | three: up, down    | `climacus resupinus` | climacus, then rising       |
+| `porrectus` | three: down, up    | `pes subpunctis`     | pes, then descending points |
+| `scandicus` | three, rising      | `compound`           | any figure not above        |
+| `climacus`  | three, falling     |                      |                             |
 
 ```ts
 interface Neume {
@@ -299,8 +303,8 @@ In mode 1 the pure fifth lands on the tenor; the step field says so.
 
 ```ts
 interface RatioResult {
-  ratio: number;   // decimal frequency ratio
-  cents: number;   // interval in cents
+  ratio: number; // decimal frequency ratio
+  cents: number; // interval in cents
   display: string; // colon notation, e.g. "3:2"
 }
 ```
@@ -315,14 +319,14 @@ to A4. The `chromatic` option adds the chromatic degrees; `span` sets
 explicit MIDI bounds.
 
 ```js
-const g = t.gamut();   // 12 pitches, D3 … A4 (mode 1 ambitus)
+const g = t.gamut(); // 12 pitches, D3 … A4 (mode 1 ambitus)
 t.gamut({ span: [48, 72], chromatic: true });
 ```
 
 ```ts
 interface GamutOptions {
   span?: [number, number]; // [lowest, highest] MIDI
-  chromatic?: boolean;     // include chromatic pitches, default false
+  chromatic?: boolean; // include chromatic pitches, default false
 }
 ```
 
@@ -331,7 +335,7 @@ interface GamutOptions {
 `modus` returns the full profile of one of the eight modes, as the
 medieval tonaries describe them:
 
-- its identity — Latin name, modern alias, *maneria* (the family: Protus,
+- its identity — Latin name, modern alias, _maneria_ (the family: Protus,
   Deuterus, Tritus, Tetrardus), and authentic or plagal type;
 - its structure — finalis, tenor, scale degrees, ambitus, and the species
   of fifth and fourth that build it;
@@ -355,12 +359,12 @@ interface ModeProfile {
 
 interface ModeData {
   mode: number;
-  nomen: string;   // "Protus Authenticus"
-  alias: string;   // "dorian" (modern name)
+  nomen: string; // "Protus Authenticus"
+  alias: string; // "dorian" (modern name)
   maneria: string; // "Protus" — the mode family
   type: "authentic" | "plagal";
-  final: number;      // finalis pitch class (C=0)
-  tenor: number;      // reciting tone pitch class
+  final: number; // finalis pitch class (C=0)
+  tenor: number; // reciting tone pitch class
   scalePcs: number[]; // 7 diatonic pitch classes
   hexachords: ("durum" | "naturale" | "molle")[]; // rank-ordered
   profile: ModeProfile;
@@ -416,9 +420,9 @@ interface TonusOpts {
 interface Tonus {
   mode: number;
   differentia: string;
-  intonatio: Pitch[];   // opening intonation formula
-  mediatio: Pitch[];    // mediant cadence at the verse colon
-  terminatio: Pitch[];  // termination cadence (per differentia)
+  intonatio: Pitch[]; // opening intonation formula
+  mediatio: Pitch[]; // mediant cadence at the verse colon
+  terminatio: Pitch[]; // termination cadence (per differentia)
 }
 ```
 
@@ -447,7 +451,7 @@ Two small intervals drive everything:
 #### `"pythagorean"` — the medieval default
 
 All intervals derive from the pure fifth 3/2 and the octave. Whole tone
-9/8 (~204 ¢); diatonic semitone (*limma*) 256/243 (~90 ¢); major third
+9/8 (~204 ¢); diatonic semitone (_limma_) 256/243 (~90 ¢); major third
 81/64 (~408 ¢ — a full syntonic comma wider than pure).
 
 This is the tuning of medieval theory from Boethius through the Guidonian
@@ -461,19 +465,14 @@ for the same reason the Middle Ages did.
 tonus.temperamentum(); // pythagorean, A4 = 440
 ```
 
-#### `"meantone"` — the Renaissance compromise
+#### `"meantone"` — variable comma
 
 Quarter-comma meantone (`comma: "1/4"`, the default) narrows every fifth by
 ¼ syntonic comma so that four of them stack to a **pure major third** (5/4).
-Fifths beat gently (~697 ¢ instead of 702 ¢); most thirds are perfect;
-and somewhere around G♯–E♭ lurks the *wolf* — the leftover fifth, wide by
-~36 ¢, that gave the system its keyboard limits.
-
-Historically this is the sound of the 16th–17th century organ and the
-polyphonic choir. For tonus it matters when you want chant heard as the
-Renaissance heard it — or accompanied. `comma` accepts other fractions
-(`"1/3"` gives pure minor thirds, `"1/6"` leans toward the baroque
-well-temperaments).
+Fifths beat gently (~697¢ instead of 702¢); most thirds are perfect;
+and somewhere around G♯–E♭ lurks the _wolf_ — the leftover fifth, wide by
+~36¢. Historically this is the sound of the 16th century. `comma` accepts other fractions
+(`"1/3"` gives pure minor thirds, `"1/6"` leans toward the baroque well-temperaments).
 
 ```js
 tonus.temperamentum({ tuning: "meantone", comma: "1/4" });
@@ -481,62 +480,41 @@ tonus.temperamentum({ tuning: "meantone", comma: "1/4" });
 
 #### The three Ptolemaic diatonics — antiquity's just intonations
 
-Ptolemy (*Harmonics* I.15–16, 2nd c.) catalogued tetrachord divisions by
+Ptolemy (_Harmonics_ I.15–16, 2nd c.) catalogued tetrachord divisions by
 their ratio "shades" (χρόαι). tonus implements his three diatonics, which
 between them cover just, septimal, and neutral intonation:
 
-- **`"ptolemy-intense"`** (*syntonon*) — the tense diatonic: tetrachord
+- **`"ptolemy-intense"`** (_syntonon_) — the tense diatonic: tetrachord
   steps 9/8 · 10/9 · 16/15. This is **classical just intonation**: pure
   major thirds (5/4), pure minor thirds (6/5), and two sizes of whole tone.
   Renaissance theorists (Zarlino) later canonized exactly this division as
   the "natural" scale. Choose it when you want maximally consonant vertical
   sonorities — including coherence with the Ptolemy doctrina in
   [`harmonia`](heavens.md).
-- **`"ptolemy-soft"`** (*malakon*) — the soft diatonic: 8/7 · 10/9 · 21/20.
+- **`"ptolemy-soft"`** (_malakon_) — the soft diatonic: 8/7 · 10/9 · 21/20.
   Septimal — the 7th harmonic enters, giving a large, relaxed whole tone
   (8/7, ~231 ¢) and a distinctive dark color foreign to the later Western
   canon.
-- **`"ptolemy-equable"`** (*homalon*) — the equable diatonic:
-  10/9 · 11/10 · 12/11. Undecimal — nearly equal steps around ~150–182 ¢,
-  producing *neutral* seconds and thirds (between major and minor). Its
+- **`"ptolemy-equable"`** (_homalon_) — the equable diatonic:
+  10/9 · 11/10 · 12/11. Undecimal — nearly equal steps around ~150–182¢,
+  producing _neutral_ seconds and thirds (between major and minor). Its
   sound-world is closer to some Near-Eastern practice than to anything in
   the Latin tradition; Ptolemy himself presents it as an outlier.
 
-**How a genus meets the modes — one gamut, eight species.** A tetrachord
-division tunes a *single fixed gamut* — the natural notes C D E F G A B, with
-the genus ratios measured from C. A church mode is then an **octave species**
-of that one gamut: mode 1 (Dorian) reads it from D, mode 3 (Phrygian) from E,
-and so on. The tuning is *not* re-derived per mode. This is deliberate and
-historically correct — it is how the Greeks and medievals understood the
-modes — and it has a consequence worth stating plainly:
-
-- Each mode inherits its **own** interval qualities from where its final sits
-  in the gamut. Dorian's third (D–F) is a minor third; Lydian's (F–A) is
-  major; Mixolydian carries the characteristic minor seventh (G–F). A mode
-  does **not** get a 5/4 major third slapped above its final regardless of
-  quality.
-- The fixed gamut contains the famous **syntonic wolf**: because D is tuned as
-  a 9/8 whole tone but A as a 5/3 (to serve C's pure triad), the fifth **D–A
-  is a grave 40/27 (~680 ¢), not a pure 3/2**. Every honest fixed just
-  intonation has exactly one such wolf; hiding it would mean silently
-  re-tuning the gamut per mode. tonus keeps it. (C–G, C–F, C–E, C–A remain
-  pure.)
-
-If you instead want every modal interval made locally consonant against its
-final — a minor-third degree always 6/5, etc. — that is a *modern* just
-intonation, not a Greek genus, and would be supplied as a custom `scale`
-rather than under a Ptolemy name.
+**A caution for genus tunings with modes.** Each Ptolemaic preset tunes one
+fixed scale; it is not re-derived per mode. Pairing one with a mode other
+than the default can produce interval qualities you don't expect,
+including the syntonic wolf (D–A, 40/27, ~680¢)
 
 ```js
 tonus.temperamentum({ tuning: "ptolemy-intense" });
 ```
 
-#### `"equal"` — the modern baseline
+#### `"equal"`
 
-Twelve identical semitones of 100 ¢; every fifth 2 ¢ narrow, every major
+Twelve identical semitones of 100¢; every fifth 2¢ narrow, every major
 third 14 ¢ wide, nothing pure, nothing unusable. Anachronistic for chant by
-some seven centuries, but indispensable as a reference point and for
-interoperating with modern instruments and MIDI defaults.
+some seven centuries, included as a reference point.
 
 ```js
 tonus.temperamentum({ tuning: "equal", a4: 415 }); // equal at baroque pitch
@@ -545,44 +523,43 @@ tonus.temperamentum({ tuning: "equal", a4: 415 }); // equal at baroque pitch
 #### Custom scales and Scala files
 
 Any 7- or 12-step scale can be supplied as ratios or cents, or as a
-[Scala `.scl`](https://www.huygens-fokker.org/scala/scl_format.html) file —
-the standard exchange format of the microtonal community, giving access to
-thousands of historical and experimental tunings.
+[Scala `.scl`](https://www.huygens-fokker.org/scala/scl_format.html) file.
 
 ```js
-tonus.temperamentum({ scale: ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8"] });
+tonus.temperamentum({
+  scale: ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8"],
+});
 tonus.temperamentum({ scale: sclFileString }); // name taken from the file
 ```
 
-The planetary-scale derivations in
+NB. The planetary-scale derivations in
 [heavens.md](heavens.md#theory--context) use the same Pythagorean interval
 arithmetic laid out here.
 
 ## Sources
 
-- Boethius, *De institutione musica* — the medieval transmission of
+- Boethius, _De institutione musica_ — the medieval transmission of
   Pythagorean interval math.
-- Ptolemy, *Harmonics* I.15–16 — the diatonic shades.
+- Ptolemy, _Harmonics_ I.15–16 — the diatonic shades.
 - Guido of Arezzo's gamut and solmization, and the eight-mode system, as
   standardized in medieval theory (gamut, hexachords, modes, psalm tones).
-- Atkinson, Charles M. *The Critical Nexus: Tone-System, Mode, and
-  Notation in Early Medieval Music*. New York: Oxford University Press,
-  2009.
+- Atkinson, Charles M. _The Critical Nexus: Tone-System, Mode, and
+  Notation in Early Medieval Music_. New York: Oxford University Press, 2009.
 - Reisenweaver, Anna. "Guido of Arezzo and His Influence on Music
-  Learning." *Musical Offerings* 3, no. 1 (2012).
+  Learning." _Musical Offerings_ 3, no. 1 (2012).
 - Schulter, Margo. "Pythagorean Tuning and Medieval Polyphony." Medieval
   Music & Arts Foundation —
   <https://www.medieval.org/emfaq/harmony/pyth.html>.
 - Schulter, Margo. "Hexachords, solmization, and musica ficta." Medieval
   Music & Arts Foundation —
   <https://www.medieval.org/emfaq/harmony/hex.html>.
-- Rockstro, W. S. "Modes, The Ecclesiastical." In Grove, *A Dictionary of
-  Music and Musicians* (1st ed.) —
+- Rockstro, W. S. "Modes, The Ecclesiastical." In Grove, _A Dictionary of
+  Music and Musicians_ (1st ed.) —
   <https://en.wikisource.org/wiki/A_Dictionary_of_Music_and_Musicians/Modes,_The_Ecclesiastical>.
-- Powers, Harold S., and Frans Wiering, et al. "Mode." *Grove Music
-  Online*, 2001, §§I–III (the term; medieval modal theory) —
+- Powers, Harold S., and Frans Wiering, et al. "Mode." _Grove Music
+  Online_, 2001, §§I–III (the term; medieval modal theory) —
   <https://doi.org/10.1093/gmo/9781561592630.article.43718>.
-- *The Liber Usualis, with Introduction and Rubrics in English*. Ed. the
+- _The Liber Usualis, with Introduction and Rubrics in English_. Ed. the
   Benedictines of Solesmes. Tournai: Desclée, 1961 — the introduction ("Rules for Interpretation" and the
   rubrics for the chant); the book itself is a chant corpus source
   ([chant.md](chant.md#sources)).

@@ -3,24 +3,26 @@
 `tonus.festum` resolves a date to its place in the liturgical year. It
 returns the feasts that fall on the day, ordered by precedence, each
 carrying its rank in the rubrics' own vocabulary, its season, and the
-kyriale masses appropriate to it. The calendar is that of the Tridentine
+kyriale masses appropriate to it. The calendar is the Tridentine
 Roman rite (1570–1962), extracted from
 [Divinum Officium](https://github.com/DivinumOfficium/divinum-officium):
 642 entries across the sanctorale (fixed feasts) and the temporale
 (movable feasts), resolved against dual-computus Easter anchors so that
 queries reaching into the medieval period stay correct.
 
-- [The day's feasts — `festum`](#the-days-feasts--festum)
-- [Rank — `ritus` and `grade`](#rank--ritus-and-grade)
-- [Seasons — the temporale](#seasons--the-temporale)
-- [The year's anchors — `pascha`](#the-years-anchors--pascha)
-- [Theory & Context](#theory--context)
-- [Sources](#sources)
+- [Calendar](#calendar)
+  - [The day's feasts — `festum`](#the-days-feasts--festum)
+  - [Rank — `ritus` and `grade`](#rank--ritus-and-grade)
+  - [Seasons — the temporale](#seasons--the-temporale)
+  - [The year's anchors — `pascha`](#the-years-anchors--pascha)
+  - [Theory \& Context](#theory--context)
+    - [The calendar's era](#the-calendars-era)
+  - [Sources](#sources)
 
 ## The day's feasts — `festum`
 
 `festum(query?)` returns `Feast[]`. A date query returns every entry that
-falls on the day — the primary feast first, concurrent feasts after it, in
+falls on the day: the primary feast first, concurrent feasts after it, in
 order of dignity. A range query (`from`/`to`) walks each day and flattens
 the results. A query with filters but no date scans the default liturgical
 year, Advent to Advent. With no argument at all, the day resolved is not
@@ -33,18 +35,23 @@ tonus.festum({ date: new Date("2026-12-25") });
 ```
 
 ```js
-[{
-  id: "12-25",
-  nomen: "In Nativitate Domini",
-  ritus: "Duplex I classis",
-  grade: "duplex-i",
-  season: "nat",
-  tempus: "Tempus Nativitatis",
-  seasonStart: 2026-12-25, seasonEnd: 2027-01-10,
-  date: 2026-12-25, weekday: 5,
-  masses: [3, 4],
-  marian: false, apostolic: false,
-}]
+[
+  {
+    id: "12-25",
+    nomen: "In Nativitate Domini",
+    ritus: "Duplex I classis",
+    grade: "duplex-i",
+    season: "nat",
+    tempus: "Tempus Nativitatis",
+    seasonStart: "2026-12-25",
+    seasonEnd: "2027-01-10",
+    date: "2026-12-25",
+    weekday: 5,
+    masses: [3, 4],
+    marian: false,
+    apostolic: false,
+  },
+];
 ```
 
 Precedence decides what comes first when feasts collide. On November 30,
@@ -60,9 +67,9 @@ tonus.festum({ date: new Date("2025-11-30") });
 The other query forms:
 
 ```js
-tonus.festum({ from: advent1, to: epiphany });   // range, day by day
-tonus.festum({ nomen: "Dominica I Adventus" });  // partial match, case-insensitive
-tonus.festum({ season: "pasc" });                // liturgical-year scan, filtered
+tonus.festum({ from: advent1, to: epiphany }); // range, day by day
+tonus.festum({ nomen: "Dominica I Adventus" }); // partial match, case-insensitive
+tonus.festum({ season: "pasc" }); // liturgical-year scan, filtered
 tonus.festum({ grade: "duplex-i", marian: true });
 ```
 
@@ -71,7 +78,7 @@ interface FeastQuery {
   date?: Date;
   from?: Date;
   to?: Date;
-  nomen?: string;      // partial match, case-insensitive
+  nomen?: string; // partial match, case-insensitive
   season?: Season;
   grade?: Grade;
   marian?: boolean;
@@ -79,27 +86,27 @@ interface FeastQuery {
 }
 
 interface Feast {
-  id: string;         // "MM-DD" (sancti) or DO stem, e.g. "Adv1-0" (tempora)
-  nomen: string;      // Latin feast name, "In Nativitate Domini"
-  ritus: string;      // authentic Tridentine rank, incl. octave detail
-  grade: Grade;       // canonical grade code; precedence via GRADE_ORDER
-  season: Season;     // machine code (DO Tempora stem)
-  tempus: string;     // Latin season name, "Tempus Adventus"
+  id: string; // "MM-DD" (sancti) or DO stem, e.g. "Adv1-0" (tempora)
+  nomen: string; // Latin feast name, "In Nativitate Domini"
+  ritus: string; // authentic Tridentine rank, incl. octave detail
+  grade: Grade; // canonical grade code; precedence via GRADE_ORDER
+  season: Season; // machine code (DO Tempora stem)
+  tempus: string; // Latin season name, "Tempus Adventus"
   seasonStart: Date;
   seasonEnd: Date;
   date: Date;
-  weekday: number;    // 0 = Sunday (UTC)
-  masses: number[];   // compatible kyriale mass numbers, most-fitting first
+  weekday: number; // 0 = Sunday (UTC)
+  masses: number[]; // compatible kyriale mass numbers, most-fitting first
   marian: boolean;
   apostolic: boolean;
 }
 ```
 
-The `masses` list is derived, and the derivation is partly editorial. Each
+The `masses` list is derived. Each
 of the eighteen kyriale masses carries the assignment printed over it in
-the Solesmes books — *Lux et origo* in Paschaltide, *Orbis factor* on
-ordinary Sundays, *Cum jubilo* for feasts of the Virgin, XVII and XVIII
-for Advent and Lent — encoded in tonus as constraints of season, grade,
+the Solesmes books (_Lux et origo_ in Paschaltide, _Orbis factor_ on
+ordinary Sundays, _Cum jubilo_ for feasts of the Virgin, XVII and XVIII
+for Advent and Lent), encoded in tonus as constraints of season, grade,
 and day. Those headings were always customary rather than binding, and
 where they are silent the constraint is an editorial reading; the ordering
 of the list, most fitting first, is likewise tonus's judgment. The
@@ -107,34 +114,33 @@ encoding is `src/data/masses.ts`, one commented entry per mass.
 
 ## Rank — `ritus` and `grade`
 
-Each feast carries its rank twice. `ritus` is the rank string verbatim
-from the Divinum Officium `[Rank]` line — `"Duplex majus"`, `"Semiduplex
-II classis"`, `"Duplex I classis cum Octava privilegiata I ordinis"` —
-and for the ~18 feasts with an octave it is the field that preserves the
-octave detail. `grade` is the canonical code the ritus reduces to;
-sorting, filtering, and mass selection read the grade. *Ritus* is what
-the book says; *grade* is where that ranks.
+`ritus` is the rank string verbatim
+from the Divinum Officium `[Rank]` line (`"Duplex majus"`, `"Semiduplex
+II classis"`, `"Duplex I classis cum Octava privilegiata I ordinis"`).
+It preserves the
+octave detail, if present. `grade` is the canonical code the ritus reduces to for
+sorting, filtering, and mass selection.
 
-The order is classis-primary — a first-class day outranks any
+The order is classis-primary. A first-class day outranks any
 non-first-class feast regardless of the duplex/semiduplex axis, so a plain
 Duplex feast never displaces a Lent Sunday:
 
-| # | `grade` | reduces from `ritus` | who it is |
-| --- | --- | --- | --- |
-| 1 | `triduum` | Feria privilegiata Duplex I classis | Maundy Thu, Good Fri, Holy Sat |
-| 2 | `duplex-i` | Duplex I classis (+ octave variants) | Christmas, Easter, Pentecost |
-| 3 | `duplex-majus-i` | Duplex majus I classis | Low Sunday |
-| 4 | `semiduplex-i` | Semiduplex I classis | Lent Sundays, Palm Sunday, Easter/Pentecost octave weekdays |
-| 5 | `feria-privilegiata` | Feria privilegiata | Ash Wednesday, Holy Week Mon–Wed |
-| 6 | `duplex-ii` | Duplex II classis (+ octave) | second-class feasts |
-| 7 | `semiduplex-ii` | Semiduplex II classis | later Advent Sundays, octave days |
-| 8 | `duplex-majus` | Duplex majus | |
-| 9 | `duplex` | Duplex | |
-| 10 | `semiduplex` | Semiduplex | ordinary Sundays, semiduplex feasts |
-| 11 | `simplex` | Simplex | |
-| 12 | `feria-major` | Feria major | Advent/Lent ferias, Ember days |
-| 13 | `vigilia` | Vigilia | |
-| 14 | `feria` | Feria | ordinary weekdays |
+| #   | `grade`              | reduces from `ritus`                 | who it is                                                   |
+| --- | -------------------- | ------------------------------------ | ----------------------------------------------------------- |
+| 1   | `triduum`            | Feria privilegiata Duplex I classis  | Maundy Thu, Good Fri, Holy Sat                              |
+| 2   | `duplex-i`           | Duplex I classis (+ octave variants) | Christmas, Easter, Pentecost                                |
+| 3   | `duplex-majus-i`     | Duplex majus I classis               | Low Sunday                                                  |
+| 4   | `semiduplex-i`       | Semiduplex I classis                 | Lent Sundays, Palm Sunday, Easter/Pentecost octave weekdays |
+| 5   | `feria-privilegiata` | Feria privilegiata                   | Ash Wednesday, Holy Week Mon–Wed                            |
+| 6   | `duplex-ii`          | Duplex II classis (+ octave)         | second-class feasts                                         |
+| 7   | `semiduplex-ii`      | Semiduplex II classis                | later Advent Sundays, octave days                           |
+| 8   | `duplex-majus`       | Duplex majus                         |                                                             |
+| 9   | `duplex`             | Duplex                               |                                                             |
+| 10  | `semiduplex`         | Semiduplex                           | ordinary Sundays, semiduplex feasts                         |
+| 11  | `simplex`            | Simplex                              |                                                             |
+| 12  | `feria-major`        | Feria major                          | Advent/Lent ferias, Ember days                              |
+| 13  | `vigilia`            | Vigilia                              |                                                             |
+| 14  | `feria`              | Feria                                | ordinary weekdays                                           |
 
 Four privileged Sundays receive a per-id override. Divinum Officium marks
 Advent I and the three Septuagesima-block Sundays plain `"Semiduplex"`;
@@ -151,26 +157,22 @@ season name). The codes are one-to-one with the Divinum Officium Tempora
 stems, so a date's season and the stem of any Tempora feast on it agree by
 construction.
 
-| `season` | `tempus` | English | Span |
-| --- | --- | --- | --- |
-| `adv` | Tempus Adventus | Advent | Advent I Sunday → Christmas |
-| `nat` | Tempus Nativitatis | Christmastide | Christmas → 1st Sunday after Epiphany |
-| `epi` | Tempus post Epiphaniam | Time after Epiphany | there → Septuagesima |
-| `quadp` | Tempus Septuagesimæ | Septuagesima | Septuagesima Sunday → Ash Wednesday |
-| `quad` | Tempus Quadragesimæ | Lent | Ash Wednesday → Easter |
-| `pasc` | Tempus Paschale | Paschaltide | Easter → Trinity Sunday (Pentecost octave included) |
-| `pent` | Tempus post Pentecosten | Time after Pentecost | Trinity Sunday → next Advent |
+| `season` | `tempus`                | English              | Span                                                |
+| -------- | ----------------------- | -------------------- | --------------------------------------------------- |
+| `adv`    | Tempus Adventus         | Advent               | Advent I Sunday → Christmas                         |
+| `nat`    | Tempus Nativitatis      | Christmastide        | Christmas → 1st Sunday after Epiphany               |
+| `epi`    | Tempus post Epiphaniam  | Time after Epiphany  | there → Septuagesima                                |
+| `quadp`  | Tempus Septuagesimæ     | Septuagesima         | Septuagesima Sunday → Ash Wednesday                 |
+| `quad`   | Tempus Quadragesimæ     | Lent                 | Ash Wednesday → Easter                              |
+| `pasc`   | Tempus Paschale         | Paschaltide          | Easter → Trinity Sunday (Pentecost octave included) |
+| `pent`   | Tempus post Pentecosten | Time after Pentecost | Trinity Sunday → next Advent                        |
 
-Two boundary decisions follow the data. The Pentecost octave stays
-paschal. The weeks after Epiphany run until Septuagesima. A stem's week number is only a counter — overflow
-weeks land in the season the date actually falls in, and the date-derived
-season is authoritative. A single day can therefore carry entries from two
-stem families; in early February the resumed Epiphany weekdays and the
-Septuagesima entries appear side by side, each with the season the date
-dictates.
+A feast's `id` carries a nominal week number, but `season` is always
+derived from the date; overflow entries, such as the Epiphany weeks
+resumed before Septuagesima, take the season of the day they fall on.
 
 Season drives real liturgy in the ordinary: the Gloria is omitted in the
-penitential seasons (`adv`, `quadp`, `quad`) — Septuagesima included — and
+penitential seasons (`adv`, `quadp`, `quad`) and
 the Ite gives way to the Benedicamus
 ([chant.md](chant.md#the-ordinary--ordinarium)).
 
@@ -227,8 +229,7 @@ interface Pascha {
 
 The calendar's structure is medieval: the temporale from Advent through
 the season after Pentecost, including pre-Lenten Septuagesima; the
-eight-hour office cursus; the duplex/semiduplex/simplex dignity system. A
-13th-century cleric would recognize its shape at once. The data, however,
+eight-hour office cursus; the duplex/semiduplex/simplex dignity system. The data, however,
 is the Tridentine codification (1570–1962) via Divinum Officium —
 substantially continuous with late-medieval Roman usage, yet including
 feasts instituted as late as the 1950s (Queenship of Mary 1954, Immaculate
@@ -250,6 +251,6 @@ medieval practice," not "a medieval calendar."
 - Wikipedia: [Tridentine calendar](https://en.wikipedia.org/wiki/Tridentine_calendar),
   [Ranking of liturgical days in the Roman Rite](https://en.wikipedia.org/wiki/Ranking_of_liturgical_days_in_the_Roman_Rite)
   — the grade precedence background.
-- *The Liber Usualis, with Introduction and Rubrics in English*. Ed. the
+- _The Liber Usualis, with Introduction and Rubrics in English_. Ed. the
   Benedictines of Solesmes. Tournai: Desclée, 1961 — the rubrics governing
   rank and season observance.

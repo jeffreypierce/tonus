@@ -1,28 +1,25 @@
 # Heavens
 
-`tonus.caelum` computes the sky: positions, magnitudes, phases, zodiac
+`tonus.caelum` computes positions, magnitudes, phases, zodiac
 places, and angular aspects for the classical bodies, from JPL Keplerian
-elements valid 3000 BC – 3000 AD. `tonus.harmonia` voices that sky through
-a planetary-harmony doctrina — Boethius by default — assigning each
-visible planet a tuned pitch and a Greek vowel: an accurate sky, heard
-through medieval ears. The doctrinae and their derived ratios are
+elements valid 3000 BC – 3000 AD. `tonus.harmonia` voices the bodies through
+a planetary-harmony doctrine, assigning each
+visible planet a tuned pitch and a Greek vowel. The doctrines and their derived ratios are
 summarized in [Theory & Context](#theory--context).
 
-- [The sky — `caelum`](#the-sky--caelum)
-- [Aspects](#aspects)
-- [The voiced sky — `harmonia`](#the-voiced-sky--harmonia)
-- [The planetary vowels](#the-planetary-vowels)
-- [The tabula](#the-tabula)
-- [Theory & Context](#theory--context)
-- [Sources](#sources)
+- [Heavens](#heavens)
+  - [The heavens — `caelum`](#the-heavens--caelum)
+  - [Aspects](#aspects)
+  - [The voiced heavens — `harmonia`](#the-voiced-heavens--harmonia)
+  - [The planetary vowels](#the-planetary-vowels)
+  - [The tabula](#the-tabula)
+  - [Theory \& Context](#theory--context)
+  - [Sources](#sources)
 
-## The sky — `caelum`
+## The heavens — `caelum`
 
 `caelum(query?)` returns a `Cosmos` for a single moment and `Cosmos[]` for
-a `from`/`to` range; TypeScript narrows on the presence of the range
-fields. Range snapshots fall every `step` days from `from` while within
-`to`; an inverted range, a non-positive step, or a range of more than
-10,000 frames throws. With `bodies` omitted, all eight are returned, and
+a `from`/`to` range. With `bodies` omitted, all eight are returned, and
 aspects are computed only between requested bodies. A `feast` supplies its
 date; an explicit `date` takes precedence.
 
@@ -41,20 +38,20 @@ tonus.caelum({ date: new Date("2026-12-25") });
 ```
 
 ```js
-tonus.caelum();                                   // the default epoch (991)
-tonus.caelum({ feast: feasts[0] });               // the feast's date
+tonus.caelum(); // the default epoch (991)
+tonus.caelum({ feast: feasts[0] }); // the feast's date
 tonus.caelum({ bodies: ["Sun", "Moon", "Jupiter"] });
 tonus.caelum({ from: jan1, to: dec31, step: 7 }); // weekly snapshots
 ```
 
 The eight bodies:
 
-| `name` | `nomen` | | `name` | `nomen` | |
-| --- | --- | --- | --- | --- | --- |
-| Sun | Sol | ☉ | Earth | Terra | ♁ |
-| Moon | Luna | ☾ | Mars | Mars | ♂ |
-| Mercury | Mercurius | ☿ | Jupiter | Iuppiter | ♃ |
-| Venus | Venus | ♀ | Saturn | Saturnus | ♄ |
+| `name`  | `nomen`   |     | `name`  | `nomen`  |     |
+| ------- | --------- | --- | ------- | -------- | --- |
+| Sun     | Sol       | ☉   | Earth   | Terra    | ♁   |
+| Moon    | Luna      | ☾   | Mars    | Mars     | ♂   |
+| Mercury | Mercurius | ☿   | Jupiter | Iuppiter | ♃   |
+| Venus   | Venus     | ♀   | Saturn  | Saturnus | ♄   |
 
 ```ts
 interface CosmosQuery {
@@ -62,9 +59,9 @@ interface CosmosQuery {
   feast?: Feast;
   from?: Date;
   to?: Date;
-  step?: number;      // days, default 1
+  step?: number; // days, default 1
   bodies?: BodyName[];
-  orbLimit?: number;  // max orb for aspect detection, degrees (default 8)
+  orbLimit?: number; // max orb for aspect detection, degrees (default 8)
 }
 
 interface Cosmos {
@@ -74,25 +71,25 @@ interface Cosmos {
 }
 
 interface Body {
-  name: BodyName;  // from the table above
-  nomen: string;   // Latin name
-  symbol: string;  // Unicode symbol
+  name: BodyName; // from the table above
+  nomen: string; // Latin name
+  symbol: string; // Unicode symbol
   helio: HelioPos;
   geo: GeoPos;
-  speed: number;      // deg/day (negative = retrograde)
+  speed: number; // deg/day (negative = retrograde)
   retrograde: boolean;
   magnitude: number;
   elongation: number; // deg from Sun (geocentric)
-  phase: number;      // 0–1 illuminated fraction
+  phase: number; // 0–1 illuminated fraction
   apparentDiameter: number | { equ: number; pol: number }; // arcsec
-  zodiac: number;     // sign 0–11 (Aries=0 … Pisces=11)
-  sign: string;       // "Aries", "Taurus", …
+  zodiac: number; // sign 0–11 (Aries=0 … Pisces=11)
+  sign: string; // "Aries", "Taurus", …
   distEarthRadii?: number; // Moon only
 }
 
 interface HelioPos {
-  lon: number;  // ecliptic longitude, deg (0–360)
-  lat: number;  // ecliptic latitude, deg
+  lon: number; // ecliptic longitude, deg (0–360)
+  lat: number; // ecliptic latitude, deg
   dist: number; // distance from Sun, AU
 }
 
@@ -101,7 +98,7 @@ interface GeoPos {
   lat: number;
   dist: number;
   equatorial: {
-    ra: number;  // right ascension, deg
+    ra: number; // right ascension, deg
     dec: number; // declination, deg
     dist: number;
   };
@@ -110,30 +107,30 @@ interface GeoPos {
 
 ## Aspects
 
-Aspects are geometric data: angular relationships between geocentric body
+Aspects are angular relationships between geocentric body
 longitudes, detected within the orb limit. Strength falls linearly from 1
 at the exact angle to 0 at the limit. On Christmas 2026 the sky holds
 eight, led by a Mercury–Jupiter trine 1.1° from exact.
 
-| `type` | angle |
-| --- | --- |
-| `conjunction` | 0° |
-| `sextile` | 60° |
-| `square` | 90° |
-| `trine` | 120° |
-| `opposition` | 180° |
+| `type`        | angle |
+| ------------- | ----- |
+| `conjunction` | 0°    |
+| `sextile`     | 60°   |
+| `square`      | 90°   |
+| `trine`       | 120°  |
+| `opposition`  | 180°  |
 
 ```ts
 interface Aspect {
-  type: string;     // from the table above
+  type: string; // from the table above
   bodies: [string, string];
-  angle: number;    // exact separation, deg
-  orb: number;      // degrees from exact aspect angle
+  angle: number; // exact separation, deg
+  orb: number; // degrees from exact aspect angle
   strength: number; // 0–1
 }
 ```
 
-## The voiced sky — `harmonia`
+## The voiced heavens — `harmonia`
 
 `harmonia(cosmos, opts?)` voices the sky through a doctrina. The result is
 pure data: each visible planet becomes a `VoicedBody` with a tuned pitch
@@ -144,7 +141,7 @@ its consonance grade. Range input populates `frames`, one per cosmos.
 const sky = tonus.caelum({ date: new Date("2026-12-25") });
 const h = tonus.harmonia(sky); // Boethius, pythagorean A440
 
-h.auctor;  // "Anicius Manlius Severinus Boethius"
+h.auctor; // "Anicius Manlius Severinus Boethius"
 
 h.bodies.find((b) => b.name === "Jupiter");
 // { …Body, nota: { pitch: { spn: "F4", hz: 347.65, … },
@@ -158,12 +155,12 @@ h.aspects[0];
 
 The doctrinae:
 
-| `doctrina` | Source | Span | Notable |
-| --- | --- | --- | --- |
-| `"pythagoras"` | via Plato, *Republic* X | 1 octave | Disjunct diatonic tetrachords (B durum); includes Fixed Stars |
-| `"boethius"` | *De institutione musica* | major 7th | Conjunct diatonic tetrachords (B molle); medieval default |
-| `"pliny"` | *Naturalis historia* II.xx | 1 octave | Chromatic Dorian (distance-based); Earth = proslambanomenos |
-| `"ptolemy"` | *Harmonics* III | 2 octaves | Fixed tones of the Greater Perfect System |
+| `doctrina`     | Source                     | Span      | Notable                                                       |
+| -------------- | -------------------------- | --------- | ------------------------------------------------------------- |
+| `"pythagoras"` | via Plato, _Republic_ X    | 1 octave  | Disjunct diatonic tetrachords (B durum); includes Fixed Stars |
+| `"boethius"`   | _De institutione musica_   | major 7th | Conjunct diatonic tetrachords (B molle); medieval default     |
+| `"pliny"`      | _Naturalis historia_ II.xx | 1 octave  | Chromatic Dorian (distance-based); Earth = proslambanomenos   |
+| `"ptolemy"`    | _Harmonics_ III            | 2 octaves | Fixed tones of the Greater Perfect System                     |
 
 Sphere pitches are computed directly from the doctrina's pure ratios,
 anchored at the temperamentum's A4, so historical coherence holds:
@@ -177,10 +174,10 @@ body's presence (visibility and brightness) — on the same scale the score
 engine uses. An aspect's interval is graded by class:
 
 | interval class | consonance |
-| --- | --- |
-| P1, P5, P8 | perfect |
-| m3, M3, m6, M6 | imperfect |
-| all others | dissonant |
+| -------------- | ---------- |
+| P1, P5, P8     | perfect    |
+| m3, M3, m6, M6 | imperfect  |
+| all others     | dissonant  |
 
 Bodies without a classical vowel are not voiced: Earth and the Fixed
 Stars. Pliny's Earth-as-proslambanomenos is dropped in v1 as a
@@ -195,19 +192,19 @@ const h2 = tonus.harmonia(tonus.caelum({ from, to })); // h2.frames populated
 ```ts
 interface HarmoniaOpts {
   temperamentum?: Temperamentum; // default: pythagorean A440
-  doctrina?: string;             // from the doctrinae table; default "boethius"
+  doctrina?: string; // from the doctrinae table; default "boethius"
 }
 
 interface Harmony {
   doctrina: string;
-  auctor: string;       // full Latin name of the doctrina's author
-  date: Date;           // first cosmos's date
+  auctor: string; // full Latin name of the doctrina's author
+  date: Date; // first cosmos's date
   bodies: VoicedBody[];
   aspects: VoicedAspect[];
-  frames?: Frame[];     // only when input was an array of cosmos
+  frames?: Frame[]; // only when input was an array of cosmos
 
   tabula: HarmonyTabulaRow[]; // flat iterable view
-  imprint: Imprint;           // shared analytical fingerprint — score.md
+  imprint: Imprint; // shared analytical fingerprint — score.md
 }
 
 interface VoicedPitch {
@@ -217,8 +214,8 @@ interface VoicedPitch {
 
 interface VoicedBody extends Body {
   nota: VoicedPitch;
-  presence: number;  // 0–1 (visibility + brightness)
-  motion: number;    // 0–1 (normalized speed)
+  presence: number; // 0–1 (visibility + brightness)
+  motion: number; // 0–1 (normalized speed)
   greekName: string; // position in the Greek tonal system
   vowel: PlanetVowel;
 }
@@ -237,25 +234,25 @@ interface Frame {
 ## The planetary vowels
 
 Each classical planet sounds one of the seven Greek vowels; the
-Moon→Saturn ordering follows Nicomachus (*Excerpta ex Nicomacho* 6), the
-attestations Godwin's *The Mystery of the Seven Vowels* (1991).
+Moon→Saturn ordering follows Nicomachus (_Excerpta ex Nicomacho_ 6), the
+attestations Godwin's _The Mystery of the Seven Vowels_ (1991).
 
-| Body | Greek | Name | Phonetic |
-| --- | --- | --- | --- |
-| Moon | Α / α | Alpha | a |
-| Mercury | Ε / ε | Epsilon | e |
-| Venus | Η / η | Eta | e |
-| Sun | Ι / ι | Iota | i |
-| Mars | Ο / ο | Omicron | o |
-| Jupiter | Υ / υ | Upsilon | u |
-| Saturn | Ω / ω | Omega | o |
+| Body    | Greek | Name    | Phonetic |
+| ------- | ----- | ------- | -------- |
+| Moon    | Α / α | Alpha   | a        |
+| Mercury | Ε / ε | Epsilon | e        |
+| Venus   | Η / η | Eta     | e        |
+| Sun     | Ι / ι | Iota    | i        |
+| Mars    | Ο / ο | Omicron | o        |
+| Jupiter | Υ / υ | Upsilon | u        |
+| Saturn  | Ω / ω | Omega   | o        |
 
 ```ts
 interface PlanetVowel {
-  greek: string;      // "Α"
+  greek: string; // "Α"
   greekLower: string; // "α"
-  name: string;       // "Alpha"
-  modern: string;     // "A"
+  name: string; // "Alpha"
+  modern: string; // "A"
   phonetic: "a" | "e" | "i" | "o" | "u";
   ipa: string;
 }
@@ -288,7 +285,7 @@ interface HarmonyTabulaRow {
   hz: number;
 
   presence: number; // 0–1
-  motion: number;   // 0–1
+  motion: number; // 0–1
   velocity: number; // 0–1, presence-scaled
 
   vowelGreek: string;
@@ -308,9 +305,9 @@ interface HarmonyTabulaRow {
 ## Theory & Context
 
 The doctrina ratios are reconstructed from primary texts through Joscelyn
-Godwin's syntheses: *Harmonies of Heaven and Earth* (1987) for the
-taxonomy of planetary scale types and per-author analyses, *The Harmony of
-the Spheres* (1993) for the primary translations. For each author, the
+Godwin's syntheses: _Harmonies of Heaven and Earth_ (1987) for the
+taxonomy of planetary scale types and per-author analyses, _The Harmony of
+the Spheres_ (1993) for the primary translations. For each author, the
 Greek tonal framework is identified — conjunct or disjunct tetrachords, or
 the fixed tones of the Greater Perfect System — the bodies are mapped to
 Greek tone-names from the source's explicit assignments, and the ratios
@@ -321,17 +318,17 @@ the tuning side in [tuning.md](tuning.md#theory--context).
 
 The resulting ratios, by sphere from the outermost:
 
-| body | `pythagoras` | `boethius` | `pliny` | `ptolemy` |
-| --- | --- | --- | --- | --- |
-| Fixed Stars | 3/2 | — | — | — |
-| Saturn | 3/4 | 3/4 | 4/3 | 2/1 |
-| Jupiter | 64/81 | 64/81 | 65536/59049 | 3/2 |
-| Mars | 8/9 | 8/9 | 256/243 | 9/8 |
-| Sun | 1/1 | 1/1 | 1/1 | 1/1 |
-| Venus | 9/8 | 256/243 | 16384/19683 | 3/4 |
-| Mercury | 32/27 | 32/27 | 64/81 | 9/16 |
-| Moon | 4/3 | 4/3 | 3/4 | 1/2 |
-| Earth | — | — | 2/3 | — |
+| body        | `pythagoras` | `boethius` | `pliny`     | `ptolemy` |
+| ----------- | ------------ | ---------- | ----------- | --------- |
+| Fixed Stars | 3/2          | —          | —           | —         |
+| Saturn      | 3/4          | 3/4        | 4/3         | 2/1       |
+| Jupiter     | 64/81        | 64/81      | 65536/59049 | 3/2       |
+| Mars        | 8/9          | 8/9        | 256/243     | 9/8       |
+| Sun         | 1/1          | 1/1        | 1/1         | 1/1       |
+| Venus       | 9/8          | 256/243    | 16384/19683 | 3/4       |
+| Mercury     | 32/27        | 32/27      | 64/81       | 9/16      |
+| Moon        | 4/3          | 4/3        | 3/4         | 1/2       |
+| Earth       | —            | —          | 2/3         | —         |
 
 The single pitch separating Pythagoras from Boethius is Venus: a whole
 tone above the Sun in the disjunct system (9/8, B durum), a semitone in
@@ -340,47 +337,42 @@ through all of medieval music theory.
 
 Decisions recorded from the derivation:
 
-- Boethius transmits Nicomachus; the doctrina is attributed to Boethius as
-  the medieval authority, with the Nicomachean origin acknowledged in its
-  source field.
-- Pliny closes at the octave in the corrected form of Censorinus and Theon
-  of Smyrna. His Sun sits at *hypate meson*, the junction of the
-  tetrachords, not at the Greek mese; the engine's structural center
-  remains the Sun regardless, and each voice's `greekName` preserves the
-  actual position.
-- Ptolemy follows Godwin's reading of the Canobic inscription as frequency
-  ratios; the intervals between planet pairs carry his aspect–consonance
-  mapping (Jupiter–Sun a fifth, the greater benefic; Mars–Sun a tone, the
-  lesser malefic).
+- Boethius transmits Nicomachus's ratios; tonus credits the doctrina to
+  Boethius as the medieval authority.
+- Pliny's Sun sits at _hypate meson_, not the Greek mese; tonus keeps the
+  Sun as the structural center regardless, and `greekName` reflects
+  Pliny's actual position.
+- Ptolemy's aspect–consonance mapping carries into interval grading — a
+  Jupiter–Sun aspect sounds a fifth, Mars–Sun a tone.
 - Pythagoras's Fixed Stars complete the octave in the data but are never
   voiced: no `caelum` body, no classical vowel.
 - Voices are stored in sphere order, outermost first; sort by ratio for
   scale views.
 
-The full derivations — tetrachord structures, step-by-step arithmetic,
-verification, and the manuscript questions — are archived in the
-project's working files.
+The full derivations, tetrachord structures, step-by-step arithmetic,
+verification, and the manuscript questions are archived in the
+project's working files (gitignored).
 
 ## Sources
 
-- Godwin, Joscelyn. *Harmonies of Heaven and Earth: The Spiritual Dimension
-  of Music from Antiquity to the Avant-Garde*. London: Thames & Hudson,
+- Godwin, Joscelyn. _Harmonies of Heaven and Earth: The Spiritual Dimension
+  of Music from Antiquity to the Avant-Garde_. London: Thames & Hudson,
   1987 — planetary scale taxonomy (Types A/B/C) and per-author analyses.
-- Godwin, Joscelyn, ed. *The Harmony of the Spheres: A Sourcebook of the
-  Pythagorean Tradition in Music*. Rochester, VT: Inner Traditions, 1993 —
+- Godwin, Joscelyn, ed. _The Harmony of the Spheres: A Sourcebook of the
+  Pythagorean Tradition in Music_. Rochester, VT: Inner Traditions, 1993 —
   primary-source translations used to verify ratio and tone-name claims.
-- Godwin, Joscelyn. *The Mystery of the Seven Vowels in Theory and
-  Practice*. Grand Rapids: Phanes Press, 1991 — planetary vowel
+- Godwin, Joscelyn. _The Mystery of the Seven Vowels in Theory and
+  Practice_. Grand Rapids: Phanes Press, 1991 — planetary vowel
   attestations; Moon→Saturn vowel order after Nicomachus.
-- Boethius. *De institutione musica* I.27 (c. 524) — conjunct diatonic
+- Boethius. _De institutione musica_ I.27 (c. 524) — conjunct diatonic
   planetary scale, transmitting Nicomachus; the medieval standard.
-- Nicomachus of Gerasa. *Manual of Harmonics* (c. 100) and *Excerpta ex
-  Nicomacho* — planetary tone assignments and vowel order.
-- Plato. *Republic* X, 617b (Myth of Er) — the Sirens of the spheres.
-- Pliny the Elder. *Naturalis historia* II.xx (c. 77) — distance-based
+- Nicomachus of Gerasa. _Manual of Harmonics_ (c. 100) and _Excerpta ex
+  Nicomacho_ — planetary tone assignments and vowel order.
+- Plato. _Republic_ X, 617b (Myth of Er) — the Sirens of the spheres.
+- Pliny the Elder. _Naturalis historia_ II.xx (c. 77) — distance-based
   chromatic planetary scale; octave closure per Censorinus and Theon of
   Smyrna.
-- Ptolemy. *Harmonics* III and the Canobic Inscription (c. 150) — Greater
+- Ptolemy. _Harmonics_ III and the Canobic Inscription (c. 150) — Greater
   Perfect System tone assignments and aspect–consonance mapping.
 - Vowel–planet attestations: Porphyry, Marcus Gnosticus, Demetrius of
   Phaleron, Eusebius of Caesarea, Barthélemy of Edessa (via Godwin 1991).
