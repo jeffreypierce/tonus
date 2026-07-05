@@ -13,8 +13,22 @@
 
 import type { Season } from "../engines/cal/types.js";
 
-/** The four fixed psalms of Compline (Vulgate numbering). */
-export const COMPLINE_PSALMS: readonly number[] = [4, 30, 90, 133];
+/**
+ * The four fixed psalms of Compline (Vulgate numbering), with the verse range
+ * the office actually uses. Ps 30 is only vv. 2–6 (the Compline portion, not the
+ * whole 31-verse psalm); the others are sung whole. Per DO's Tridentine
+ * Psalterium: Completorium = 4, 30(2-6), 90, 133.
+ */
+export const COMPLINE_PSALMS: ReadonlyArray<{
+  psalm: number;
+  from?: number;
+  to?: number;
+}> = [
+  { psalm: 4 },
+  { psalm: 30, from: 2, to: 6 },
+  { psalm: 90 },
+  { psalm: 133 },
+];
 
 /** The invariable spine — chants sung the same every night. */
 export const COMPLINE_ORDINARY = {

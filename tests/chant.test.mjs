@@ -162,6 +162,30 @@ describe("getHour — completorium (Compline)", () => {
     assert.ok(c.length > 0, "returns the default-epoch Compline ordo");
     assert.equal(c[0].incipit, "Deus in adjutorium");
   });
+
+  test("Compline uses the exact psalm scheme: 4, 30(2-6), 90, 133", () => {
+    const c = complineFor("2026-08-15");
+    const byPsalm = {};
+    for (const v of c.filter((x) => x.id.startsWith("psalm:"))) {
+      const p = v.id.split(":")[1];
+      byPsalm[p] = (byPsalm[p] ?? 0) + 1;
+    }
+    // Ps 30 is only vv. 2–6 (6 rows incl. the split v.3), NOT the whole psalm.
+    assert.equal(byPsalm["30"], 6, "Ps 30 is vv. 2–6 only");
+    assert.equal(byPsalm["4"], 10, "Ps 4 whole");
+    assert.equal(byPsalm["90"], 16, "Ps 90 whole");
+    assert.equal(byPsalm["133"], 4, "Ps 133 whole");
+    assert.ok(!byPsalm["31"], "no stray psalms");
+  });
+
+  test("concurrent feasts collapse to a single Compline ordo (no doubling)", () => {
+    // 2026-12-06 is both the 2nd Sunday of Advent and St Nicholas.
+    const feasts = getFeast({ date: new Date("2026-12-06") });
+    assert.ok(feasts.length >= 2, "the test date has concurrent feasts");
+    const c = getHour({ feast: feasts, hora: "completorium" });
+    assert.equal(c.filter((x) => !x.id.startsWith("psalm:")).length, 5,
+      "the seasonal ordo appears once, not once per feast");
+  });
 });
 
 describe("getHour — prima (Prime)", () => {
@@ -205,6 +229,25 @@ describe("getHour — prima (Prime)", () => {
     const c = getHour({ hora: "prima" });
     assert.ok(c.length > 0);
     assert.equal(c[0].incipit, "Deus in adjutorium");
+  });
+
+  test("Prime psalmody varies by weekday (DO Tridentine scheme)", () => {
+    const psalmsOn = (date) => {
+      const c = primeFor(date);
+      return [...new Set(
+        c.filter((x) => x.id.startsWith("psalm:")).map((x) => x.id.split(":")[1]),
+      )].sort((a, b) => a - b);
+    };
+    // Sunday (2026-12-06) uses Ps 117; Friday (2026-12-11) uses Ps 21.
+    assert.deepEqual(psalmsOn("2026-12-06"), ["53", "117", "118"], "Sunday: 53,117,118");
+    assert.deepEqual(psalmsOn("2026-12-11"), ["21", "53", "118"], "Friday: 53,21,118");
+  });
+
+  test("Prime takes only the first two sections of Ps 118 (not all 176)", () => {
+    const c = primeFor("2026-12-06");
+    const p118 = c.filter((x) => x.id.startsWith("psalm:118:"));
+    // 118(1-16) + 118(17-32) = 32 verses.
+    assert.equal(p118.length, 32, "Ps 118 vv. 1–32 only");
   });
 });
 

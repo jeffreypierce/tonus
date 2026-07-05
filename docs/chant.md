@@ -232,9 +232,10 @@ meaning, so they alone are not incipit-sorted). With no feast, each resolves
 for the [default epoch](index.md#dates).
 
 `officium({ hora: "completorium" })` returns: the opening *Deus in
-adjutorium*, the four fixed psalms (4, 30, 90, 133, intoned as by `psalmus`),
-the seasonal hymn *Te lucis ante terminum*, the short responsory *In manus
-tuas*, the canticle *Nunc dimittis*, and the seasonal **Marian antiphon**. The
+adjutorium*, the fixed psalms (4, 30 vv. 2–6, 90, 133, intoned as by
+`psalmus`), the seasonal hymn *Te lucis ante terminum*, the short responsory
+*In manus tuas*, the canticle *Nunc dimittis*, and the seasonal **Marian
+antiphon**. The
 Marian antiphon follows the traditional rotation — *Alma Redemptoris Mater*
 (Advent to Candlemas), *Ave Regina cælorum* (Candlemas to Holy Week), *Regina
 cæli* (Paschaltide), *Salve Regina* (after Pentecost) — in the simple tone.
@@ -247,10 +248,12 @@ tonus.officium({ feast: christmas, hora: "completorium" });
 
 `officium({ hora: "prima" })` returns Prime's **sung** parts: the opening, the
 hymn *Iam lucis orto sidere*, the psalmody, and the seasonal short responsory
-*Christe Fili Dei vivi*. Prime's recited parts — the Athanasian Creed
+*Christe Fili Dei vivi*. The psalmody varies by weekday, after the traditional
+(Tridentine) Roman scheme: Ps 53, then a day-proper psalm (117 on Sunday, the
+21–25 rotation on ferias, none on Saturday), then the first two sections of
+Ps 118 (vv. 1–16 and 17–32). Prime's recited parts — the Athanasian Creed
 (*Quicumque*), the martyrology, the chapter, and the collect — are not Solesmes
-chant and are not modeled. Prime's psalmody also varies by weekday; this uses a
-fixed festal scheme (Ps 117, 118, 53) as a first pass.
+chant and are not modeled.
 
 ```ts
 interface OfficiumQuery extends CantusQuery {

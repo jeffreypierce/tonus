@@ -2,7 +2,7 @@
 // engines/chant/hour — Divine Office hour retrieval
 // ---------------------------------------------------------------------------
 import { resolveChant, resolveChants } from "./chant.js";
-import { getPsalm } from "./psalm.js";
+import { getPsalm, getPsalmRange } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
 import { getFeast } from "../cal/calendar.js";
 import type { Chant, OfficiumQuery, CanonicalHour } from "./types.js";
@@ -16,7 +16,7 @@ import {
 } from "../../data/compline.js";
 import {
   PRIME_ORDINARY,
-  PRIME_PSALMS,
+  PRIME_PSALMS_BY_WEEKDAY,
   PRIME_SEASONAL,
 } from "../../data/prime.js";
 
@@ -24,6 +24,15 @@ let _roman: Map<string, OfficeDay> | null = null;
 function romanMap(): Map<string, OfficeDay> {
   if (!_roman) _roman = new Map(OFFICE_ROMAN.map((d) => [d.feastId, d]));
   return _roman;
+}
+
+// A psalm portion — whole psalm, or an inclusive verse range — intoned. The
+// office ordos take partial psalms (Compline Ps 30:2-6; Prime Ps 118 in
+// sections), so verse ranges matter here.
+function psalmPortion(p: { psalm: number; from?: number; to?: number }): Chant[] {
+  return p.from != null && p.to != null
+    ? getPsalmRange(p.psalm, p.from, p.to)
+    : getPsalm({ psalm: p.psalm });
 }
 
 // Compline is fixed and seasonal, not per-feast: it does not use the OfficeDay
@@ -37,9 +46,7 @@ function complineForFeast(feast: Feast): Chant[] {
   const opening = resolveChant(COMPLINE_ORDINARY.opening);
   if (opening) results.push(opening);
 
-  for (const psalm of COMPLINE_PSALMS) {
-    results.push(...getPsalm({ psalm }));
-  }
+  for (const p of COMPLINE_PSALMS) results.push(...psalmPortion(p));
 
   const hymn = seasonal && resolveChant(seasonal.teLucis);
   if (hymn) results.push(hymn);
@@ -69,9 +76,9 @@ function primeForFeast(feast: Feast): Chant[] {
   const hymn = resolveChant(PRIME_ORDINARY.hymn);
   if (hymn) results.push(hymn);
 
-  for (const psalm of PRIME_PSALMS) {
-    results.push(...getPsalm({ psalm }));
-  }
+  const portions = PRIME_PSALMS_BY_WEEKDAY[feast.weekday]
+    ?? PRIME_PSALMS_BY_WEEKDAY[0]!;
+  for (const p of portions) results.push(...psalmPortion(p));
 
   const responsory = seasonal && resolveChant(seasonal.responsory);
   if (responsory) results.push(responsory);
@@ -142,7 +149,13 @@ export function getHour(query?: OfficiumQuery): Chant[] {
   let results: Chant[];
 
   if (feasts && hour) {
-    results = feasts.flatMap((f) => chantsForFeastHour(f, hour));
+    // Prime and Compline are seasonal/weekday ordos, identical for every feast
+    // of the day — so concurrent feasts collapse to a single ordo rather than
+    // repeating it. The other hours are genuinely per-feast.
+    results =
+      hour === "prima" || hour === "completorium"
+        ? feasts[0] ? chantsForFeastHour(feasts[0], hour) : []
+        : feasts.flatMap((f) => chantsForFeastHour(f, hour));
   } else if (feasts) {
     const hours: CanonicalHour[] = [
       "matutinum", "laudes", "prima", "tertia", "sexta", "nona",

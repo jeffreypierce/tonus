@@ -66,3 +66,21 @@ export function getPsalm(query?: PsalmusQuery): Chant[] {
     verseToChant(v, mode, query.differentia, query.intonatio),
   );
 }
+
+/**
+ * A contiguous verse range of one psalm, intoned — e.g. `getPsalmRange(30, 2, 6)`
+ * for Ps 30, verses 2–6. Used by the fixed office ordos (Prime, Compline), whose
+ * psalmody takes only a portion of a psalm (Ps 30:2-6; Ps 118 in sections).
+ * `lo`/`hi` are inclusive verse numbers; split verses (3a/3b) are both included.
+ */
+export function getPsalmRange(
+  psalm: number, lo: number, hi: number, mode = 8,
+): Chant[] {
+  return PSALMS
+    .filter((v) => {
+      if (v.psalm !== psalm) return false;
+      const n = parseInt(v.verse, 10);
+      return !isNaN(n) && n >= lo && n <= hi;
+    })
+    .map((v) => verseToChant(v, mode));
+}
