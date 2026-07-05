@@ -164,6 +164,50 @@ describe("getHour — completorium (Compline)", () => {
   });
 });
 
+describe("getHour — prima (Prime)", () => {
+  const primeFor = (date) =>
+    getHour({ feast: getFeast({ date: new Date(date) }), hora: "prima" });
+  const propers = (chants) => chants.filter((c) => !c.id.startsWith("psalm:"));
+  const incipits = (chants) => propers(chants).map((c) => c.incipit);
+
+  test("assembles the sung ordo: opening, hymn, psalms, short responsory", () => {
+    const c = primeFor("2026-08-15");
+    const psalmVerses = c.filter((x) => x.id.startsWith("psalm:"));
+    assert.ok(psalmVerses.length > 20, "the fixed psalms are included");
+    const names = incipits(c).join(" | ");
+    assert.ok(names.includes("Deus in adjutorium"), "opening");
+    assert.ok(/[JI]am lucis/.test(names), "hymn Iam lucis");
+    assert.ok(names.includes("Christe Fili Dei"), "short responsory");
+  });
+
+  test("preserves liturgical order (opening first, not incipit-sorted)", () => {
+    const c = primeFor("2026-08-15");
+    assert.equal(c[0].incipit, "Deus in adjutorium");
+    const names = incipits(c);
+    assert.ok(names.indexOf(names.find((n) => /lucis/.test(n))) <
+      names.indexOf(names.find((n) => /Christe Fili/.test(n))),
+      "hymn precedes the responsory");
+  });
+
+  test("short responsory follows the season", () => {
+    assert.ok(incipits(primeFor("2026-12-06")).some((n) => n.includes("Adventus")));
+    assert.ok(incipits(primeFor("2026-04-06")).some((n) => n.includes("Paschali")));
+    assert.ok(incipits(primeFor("2026-08-15")).some((n) => n.includes("per Annum")));
+  });
+
+  test("every ordo chant resolves (no dangling ids)", () => {
+    for (const chant of primeFor("2026-08-15")) {
+      assert.ok(chant.gabc && chant.gabc.length > 0, `${chant.incipit} has gabc`);
+    }
+  });
+
+  test("no-feast prima resolves to the default epoch", () => {
+    const c = getHour({ hora: "prima" });
+    assert.ok(c.length > 0);
+    assert.equal(c[0].incipit, "Deus in adjutorium");
+  });
+});
+
 describe("getPsalm", () => {
   test("returns intoned GABC for psalm 109 in mode 1", () => {
     const chants = getPsalm({ psalm: 109, mode: 1 });

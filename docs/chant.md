@@ -220,27 +220,37 @@ tonus.officium({ feast: christmas, hora: "laudes" });
 | `laudes` | Antiphons, Benedictus antiphon, hymn |
 | `tertia` / `sexta` / `nona` | Responsory breve |
 | `vesperae` | Antiphons, Magnificat antiphon, hymn |
+| `prima` | The Prime ordo (sung parts) — see below |
 | `completorium` | The full Compline ordo — see below |
-| `prima` | Not yet extracted — returns empty |
 
-Compline is unlike the other hours: it is almost **invariable**, the same
-ordo every night, so it is not drawn from the per-feast office tables but
-assembled from a small seasonal ordo. `officium({ hora: "completorium" })`
-returns the sequence **in liturgical order** (it alone is not sorted by
-incipit, since its order is its meaning): the opening *Deus in adjutorium*,
-the four fixed psalms (4, 30, 90, 133, intoned as by `psalmus`), the seasonal
-hymn *Te lucis ante terminum*, the short responsory *In manus tuas*, the
-canticle *Nunc dimittis*, and the seasonal **Marian antiphon**. The Marian
-antiphon follows the traditional rotation — *Alma Redemptoris Mater* (Advent
-to Candlemas), *Ave Regina cælorum* (Candlemas to Holy Week), *Regina cæli*
-(Paschaltide), *Salve Regina* (after Pentecost) — in the simple tone. With no
-feast, Compline resolves for the [default epoch](index.md#dates).
+**Prime and Compline are ordos, not chant sets.** Unlike the other hours —
+which draw a set of chants from the per-feast office tables and return them
+sorted by incipit — these two hours are almost **invariable**, the same
+sequence each day, varying only by season. They are assembled from a small
+seasonal ordo and returned **in liturgical order** (the sequence is the
+meaning, so they alone are not incipit-sorted). With no feast, each resolves
+for the [default epoch](index.md#dates).
+
+`officium({ hora: "completorium" })` returns: the opening *Deus in
+adjutorium*, the four fixed psalms (4, 30, 90, 133, intoned as by `psalmus`),
+the seasonal hymn *Te lucis ante terminum*, the short responsory *In manus
+tuas*, the canticle *Nunc dimittis*, and the seasonal **Marian antiphon**. The
+Marian antiphon follows the traditional rotation — *Alma Redemptoris Mater*
+(Advent to Candlemas), *Ave Regina cælorum* (Candlemas to Holy Week), *Regina
+cæli* (Paschaltide), *Salve Regina* (after Pentecost) — in the simple tone.
 
 ```js
 tonus.officium({ feast: christmas, hora: "completorium" });
 // Deus in adjutorium → Ps 4, 30, 90, 133 → Te lucis → In manus tuas
 // → Nunc dimittis → Alma Redemptoris (simple tone)
 ```
+
+`officium({ hora: "prima" })` returns Prime's **sung** parts: the opening, the
+hymn *Iam lucis orto sidere*, the psalmody, and the seasonal short responsory
+*Christe Fili Dei vivi*. Prime's recited parts — the Athanasian Creed
+(*Quicumque*), the martyrology, the chapter, and the collect — are not Solesmes
+chant and are not modeled. Prime's psalmody also varies by weekday; this uses a
+fixed festal scheme (Ps 117, 118, 53) as a first pass.
 
 ```ts
 interface OfficiumQuery extends CantusQuery {

@@ -14,6 +14,11 @@ import {
   COMPLINE_SEASONAL,
   marianAntiphonFor,
 } from "../../data/compline.js";
+import {
+  PRIME_ORDINARY,
+  PRIME_PSALMS,
+  PRIME_SEASONAL,
+} from "../../data/prime.js";
 
 let _roman: Map<string, OfficeDay> | null = null;
 function romanMap(): Map<string, OfficeDay> {
@@ -51,8 +56,32 @@ function complineForFeast(feast: Feast): Chant[] {
   return results;
 }
 
+// Prime, like Compline, is a fixed+seasonal ordo, not per-feast. Covers the
+// sung parts only (see data/prime.ts): opening, fixed psalms, the hymn Iam
+// lucis, and the seasonal short responsory Christe Fili Dei.
+function primeForFeast(feast: Feast): Chant[] {
+  const seasonal = PRIME_SEASONAL[feast.season];
+  const results: Chant[] = [];
+
+  const opening = resolveChant(PRIME_ORDINARY.opening);
+  if (opening) results.push(opening);
+
+  const hymn = resolveChant(PRIME_ORDINARY.hymn);
+  if (hymn) results.push(hymn);
+
+  for (const psalm of PRIME_PSALMS) {
+    results.push(...getPsalm({ psalm }));
+  }
+
+  const responsory = seasonal && resolveChant(seasonal.responsory);
+  if (responsory) results.push(responsory);
+
+  return results;
+}
+
 function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
   if (hour === "completorium") return complineForFeast(feast);
+  if (hour === "prima") return primeForFeast(feast);
 
   const map = romanMap();
   const sunday = temporaSundayId(feast.id);
@@ -116,14 +145,15 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     results = feasts.flatMap((f) => chantsForFeastHour(f, hour));
   } else if (feasts) {
     const hours: CanonicalHour[] = [
-      "matutinum", "laudes", "tertia", "sexta", "nona", "vesperae", "completorium",
+      "matutinum", "laudes", "prima", "tertia", "sexta", "nona",
+      "vesperae", "completorium",
     ];
     results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h)));
-  } else if (hour === "completorium") {
-    // Compline is seasonal, not per-feast. With no feast, resolve it for the
-    // default epoch (Guido d'Arezzo's era) — the same anchor festum() uses.
+  } else if (hour === "prima" || hour === "completorium") {
+    // Prime and Compline are seasonal ordos, not per-feast. With no feast,
+    // resolve for the default epoch (Guido d'Arezzo's era) — festum()'s anchor.
     const [feast] = getFeast();
-    results = feast ? complineForFeast(feast) : [];
+    results = feast ? chantsForFeastHour(feast, hour) : [];
   } else if (hour) {
     // Hour without feast — scan all office entries
     results = OFFICE_ROMAN.flatMap((day) => {
@@ -163,10 +193,10 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     results = results.filter((c) => ids.has(c.id));
   }
 
-  // Compline is an ordered ordo — its sequence IS the content — so it keeps
-  // assembly order unless the caller explicitly asks for a sort. Every other
-  // hour returns a set of chants, sorted by incipit by default.
-  const isOrderedOrdo = query.hora === "completorium";
+  // Prime and Compline are ordered ordos — their sequence IS the content — so
+  // they keep assembly order unless the caller explicitly asks for a sort.
+  // Every other hour returns a set of chants, sorted by incipit by default.
+  const isOrderedOrdo = query.hora === "prima" || query.hora === "completorium";
   if (query.sort || !isOrderedOrdo) {
     const sort = query.sort ?? "incipit";
     results.sort((a, b) => {
