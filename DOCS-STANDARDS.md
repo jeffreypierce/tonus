@@ -5,8 +5,8 @@ rules stated plainly, in order, with the exception following the rule. The
 docs may be long; they may not be loud.
 
 This governs prose across all three documentation levels (interactive, API
-docs, code comments — see STANDARDS.md § Documentation). The voice is one; the
-volume changes by level. These rules are that voice.
+docs, code comments — see CODE-STANDARDS.md § Documentation). The voice is one;
+the volume changes by level. These rules are that voice.
 
 ## The rules
 
@@ -89,6 +89,6 @@ its independence or dependencies. Rubrical register.>
 
 ## Application notes
 
-The API register (key language = value register, see STANDARDS.md) governs
+The API register (key language = value register, see CODE-STANDARDS.md) governs
 names; this document governs prose. The two meet in rule 6: a Latin term is
 bolded and glossed at first use, then used without apology.
