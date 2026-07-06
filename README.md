@@ -44,10 +44,13 @@ One page per engine, in dependency order. Each page states its rules, then its t
   computed from JPL orbital elements, voiced through the planetary
   doctrines of Boethius, Nicomachus, Pliny, and Ptolemy.
 
-Sources for concepts, scholarship, and data are listed in
-[BIBLIOGRAPHY.md](BIBLIOGRAPHY.md). Where sources disagree or run out,
-**tonus** makes an editorial call, documented in the relevant page's
-Theory & Context section.
+These pages are the middle of a three-level ladder: the API docs here link down
+into the code, where the full theory, provenance, and editorial reasoning live in
+comments beside what they explain. Read as deep as you care to. Sources for
+concepts, scholarship, and data are listed in
+[BIBLIOGRAPHY.md](BIBLIOGRAPHY.md); where sources disagree or run out, **tonus**
+makes an editorial call, recorded in the code and glossed in the page's Theory &
+Context section.
 
 ## The tuning engine
 

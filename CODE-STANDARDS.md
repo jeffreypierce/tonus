@@ -155,46 +155,14 @@ interface Note {
 
 ---
 
-## Documentation — three levels, one voice
+## Documentation
 
-Documentation is a **three-level ladder**; each level is lighter than the one
-below and links down into it. A reader starts at the top and drills as far as
-they want; the code is the bottom of the well.
-
-| Level | Surface | Depth | Holds |
-| --- | --- | --- | --- |
-| **1. Interactive** | the docs site (future) | lightest | common API calls, run-it-live, limited context |
-| **2. Official API** | `docs/*.md` | medium | API focus (options, examples, interfaces) + high-level theory that links to the bibliography and to code |
-| **3. Code** | `src/` | full | how it is computed, why, and from what source: full theory, editorial decisions, provenance |
-
-Level 2 is not stripped to bare API. It keeps its high-level "what / why / when"
-framing and links down for depth. Only the **deepest** material lives in code:
-step-by-step derivations, the provenance of each figure, calibration values,
-recorded editorial decisions.
-
-**The bibliography is centralized.** `BIBLIOGRAPHY.md` is the single source of
-truth for citations; each entry has a stable kebab key (`carroll-chironomy`,
-`rockstro-grove`). Code cites by bracketed key; docs link to the anchor. Nothing
-else restates a full reference. There are no per-page `## Sources` blocks.
-
-**One voice, three volumes.** All three levels are the same author at different
-lengths — not three personalities. The voice is the rubric of a chant book (see
-`DOCS-STANDARDS.md`): present indicative, rules stated plainly with the exception
-following the rule, **no advocacy** (a decision is stated, not defended; the words
-*deliberately, simply, powerful, rich, comprehensive, beautiful* do not appear),
-bold marks a term at its definition once, italics carry Latin and titles. What
-changes across levels is volume and register, not voice:
-
-- **L1 (interactive)** — terse, inviting: a label on an instrument. One line,
-  present tense, no theory.
-- **L2 (API docs)** — the rubric proper: the reference states *what is*; Theory &
-  Context states *why and whence* (scholarly register, no meta-narration).
-- **L3 (code)** — a scholar's marginalia: the same restraint, now allowed to
-  explain fully. Explains; still does not advocate — "corrected to the Protus
-  descent (the mode-2 seed was a copy of mode 5)," not "elegantly fixed a bug."
-
-`DOCS-STANDARDS.md` at the repo root carries the full prose register (the twelve
-rules and the page template).
+Code is level 3 of a three-level documentation ladder (interactive → `docs/*.md`
+→ code), each level linking down into the next; code is the bottom of the well,
+holding the deepest material. The `## Comments` rules above are how that plays out
+in `src/`. The whole model — the three levels, the centralized bibliography, and
+the one-voice-three-volumes register — is owned by **`DOCS-STANDARDS.md`**. Read
+it before writing prose at any level, including code comments.
 
 ---
 
