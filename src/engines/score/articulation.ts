@@ -34,6 +34,9 @@ const BASE_WEIGHTS: ArticulationWeights = {
   repercussionPrevWeight: 0.5,
   repercussionPrevDuration: 0.4,
   repercussionOriscusWeight: -0.5,
+  oriscusWeight: -0.3,       // soft, light note
+  oriscusDuration: -0.15,    // taken slightly faster (accelerando)
+  oriscusPrevWeight: 0.3,    // rhythmic support on the preceding note
   breakWeight: 0.6,
   dashWeight: -0.8,
   dashDuration: -0.2,

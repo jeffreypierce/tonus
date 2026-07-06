@@ -29,14 +29,24 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
       quilisma: raw.quilisma,
       liquescent: raw.liquescent,
       strophicus: raw.strophicus,
+      oriscus: raw.oriscus,
       doubleEpisema: raw.doubleEpisema,
       weight: raw.weight,
     },
   };
 }
 
+// The salicus ictus note (its second-to-last ascending note) is prolonged —
+// Suñol, Textbook Ch. V. Modest, in the spirit of an episema lengthening.
+const SALICUS_PROLONGATION = 1.3;
+
 function makeSyllable(lyric: string, notes: Note[]): Syllable {
-  return { lyric, notes, neume: classifyNeume(notes) };
+  const neume = classifyNeume(notes);
+  if (neume.type === "salicus" && notes.length >= 2) {
+    const ictic = notes[notes.length - 2]!;
+    ictic.performance.duration *= SALICUS_PROLONGATION;
+  }
+  return { lyric, notes, neume };
 }
 
 // ── Arsis/thesis classification (Solesmes) ──

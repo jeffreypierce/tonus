@@ -32,6 +32,7 @@ export interface Context {
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
+  oriscus: boolean;
   doubleEpisema: boolean;
   weight: number;
 }
@@ -74,6 +75,9 @@ export interface ArticulationWeights {
   repercussionPrevWeight: number;
   repercussionPrevDuration: number;
   repercussionOriscusWeight: number;
+  oriscusWeight: number;
+  oriscusDuration: number;
+  oriscusPrevWeight: number;
   breakWeight: number;
   dashWeight: number;
   dashDuration: number;
@@ -143,6 +147,7 @@ export interface ParsedNote {
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
+  oriscus: boolean;
   doubleEpisema: boolean;
 }
 

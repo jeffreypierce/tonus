@@ -65,6 +65,7 @@ interface IntermNote {
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
+  oriscus: boolean;
   doubleEpisema: boolean;
   _weight: number;
   _durWeight: number;
@@ -142,6 +143,7 @@ function parseNeume(
     let isQuilisma = false;
     let isLiquescent = false;
     let isStrophicus = false;
+    let isOriscus = false;
     let isDoubleEpisema = false;
 
     // Dash prefix (weak note)
@@ -270,6 +272,16 @@ function parseNeume(
       durWeight += weights.uppercaseDuration;
     }
 
+    // Oriscus (o = soft, light note taken slightly faster; the rhythmic
+    // support falls on the note before it). Suñol, Textbook Ch. V.
+    if (modifiers.includes("o")) {
+      w += weights.oriscusWeight;
+      durWeight += weights.oriscusDuration;
+      isOriscus = true;
+      const before = intermed.length > 0 ? intermed[intermed.length - 1] : null;
+      if (before) before._weight += weights.oriscusPrevWeight;
+    }
+
     // Repercussion (same pitch as previous note)
     const prev = intermed.length > 0 ? intermed[intermed.length - 1] : null;
     if (prev && step === prev.step) {
@@ -292,6 +304,7 @@ function parseNeume(
       quilisma: isQuilisma,
       liquescent: isLiquescent,
       strophicus: isStrophicus,
+      oriscus: isOriscus,
       doubleEpisema: isDoubleEpisema,
       _weight: w,
       _durWeight: durWeight,
@@ -352,6 +365,7 @@ function parseNeume(
       quilisma: note.quilisma,
       liquescent: note.liquescent,
       strophicus: note.strophicus,
+      oriscus: note.oriscus,
       doubleEpisema: note.doubleEpisema,
     };
   });

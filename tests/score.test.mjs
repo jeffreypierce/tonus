@@ -92,6 +92,34 @@ describe("buildScore", () => {
     }
   });
 
+  test("a 4+ note salicus has its ictus on the second-to-last ascending note", () => {
+    // Four ascending notes with the ictus on the penultimate (Suñol).
+    const syl = buildScore(makeChant("(c4) Sa(fgh'i) (::)")).phrases[0].syllables[0];
+    assert.equal(syl.neume.type, "salicus");
+    // The plain 4-note ascent without that ictus is not a salicus.
+    const plain = buildScore(makeChant("(c4) Sa(fghi) (::)")).phrases[0].syllables[0];
+    assert.notEqual(plain.neume.type, "salicus");
+  });
+
+  test("the salicus ictus note is prolonged", () => {
+    const [f, g, a] = buildScore(makeChant("(c4) Sa(fg'h) (::)")).phrases[0].syllables[0].notes;
+    // The middle (ictus) note is longer than either neighbour.
+    assert.ok(g.performance.duration > f.performance.duration);
+    assert.ok(g.performance.duration > a.performance.duration);
+    // A plain scandicus does not prolong its middle note.
+    const plainG = buildScore(makeChant("(c4) Sa(fgh) (::)")).phrases[0].syllables[0].notes[1];
+    assert.ok(g.performance.duration > plainG.performance.duration);
+  });
+
+  test("oriscus is flagged and taken slightly faster", () => {
+    // Oriscus (o) on the middle note of a moving figure.
+    const row = buildScore(makeChant("(c4) O(g ho g.) (::)")).tabula.find((r) => r.oriscus);
+    assert.ok(row, "an oriscus is flagged on the tabula");
+    // The oriscus note is shorter than the same note without the oriscus mark.
+    const plain = buildScore(makeChant("(c4) O(g h g.) (::)")).tabula[1];
+    assert.ok(row.duration < plain.duration);
+  });
+
   test("doubly-dotted clivis is always thetic", () => {
     // Two descending notes with double episema (..) on the first note
     const gabc = "(c4) Cli(h..g) (::)";

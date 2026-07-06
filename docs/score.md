@@ -212,6 +212,7 @@ interface Context {
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
+  oriscus: boolean;
   weight: number; // articulation weight
 }
 ```
@@ -261,6 +262,7 @@ interface ChantTabulaRow {
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
+  oriscus: boolean;
   hz: number;
   offset: number;
   spn: string; // scientific pitch name, "D4"
@@ -325,7 +327,7 @@ partwise document. Phrases become measures. Each **neume figure** is drawn as
 a slur — a syllable built of several figures (pes then pressus, say, split in
 GABC by `!`, `/`, or `//`) gets one arc per figure; a single-note neume gets
 none. The lyric attaches once, at the syllable's first note. Each row's
-ornament flags (`quilisma`, `liquescent`, `strophicus`) and explicit
+ornament flags (`quilisma`, `liquescent`, `strophicus`, `oriscus`) and explicit
 accidentals render as notations. `emitWeights: true` adds the arsis/thesis
 shape and index as an annotation per note.
 
