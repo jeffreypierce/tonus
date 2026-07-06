@@ -5,7 +5,7 @@ phrases, syllables, and neumes; every note is tuned through a
 `Temperamentum` and annotated with its Guidonian step; the Solesmes
 compound-beat classifier assigns the arsis/thesis rhythm; prosody is
 measured and an analytic imprint drawn. The score is data: its structure
-(`phrases`, `tabula`, `prosody`, `cadences`, `imprint`) plus two emission
+(`phrases`, `tabula`, `prosody`, `cadences`, `modulations`, `imprint`) plus two emission
 methods, `score.midi()` and `score.musicxml()`.
 
 - [Score](#score)
@@ -19,6 +19,7 @@ methods, `score.midi()` and `score.musicxml()`.
   - [The imprint](#the-imprint)
   - [Prosody](#prosody)
   - [Cadences](#cadences)
+  - [Modulations](#modulations)
   - [Theory \& Context](#theory--context)
     - [The model](#the-model)
     - [The classification rules](#the-classification-rules)
@@ -60,6 +61,7 @@ interface Score {
   tabula: ChantTabulaRow[];
   prosody: Prosody;
   cadences: Cadence[];
+  modulations: Modulation[];
   imprint: Imprint;
 }
 
@@ -457,6 +459,27 @@ interface Cadence {
   steps: (number | null)[]; // diatonic steps from the target; [] with no mode
   confidence: number; // 0–1
   notes: [number, number, number][]; // [phrase, syllable, note] positions
+}
+```
+
+## Modulations
+
+`score.modulations` marks where the tonal centre leans away from the home
+mode — the local, temporal counterpart to the imprint's global modal
+affinity. Each phrase is scored against all eight modes (the imprint's
+affinity math); a run of phrases that favours a foreign mode, by a margin,
+becomes one `Modulation` span. The margin is calibrated against Suñol's
+worked examples (_Christus resurgens_ modulates toward mode 3). It's
+distribution-based: it finds where a passage leans, not a functional
+analysis, and can read a transposed mode as its untransposed twin.
+
+```ts
+interface Modulation {
+  startPhrase: number; // first phrase of the span (inclusive)
+  endPhrase: number; // last phrase (inclusive)
+  toMode: number; // the mode the passage leans toward (1–8)
+  toAlias: string; // that mode's Greek alias, e.g. "phrygian"
+  confidence: number; // 0–1, the averaged margin over the home mode
 }
 ```
 

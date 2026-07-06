@@ -64,7 +64,7 @@ function computeAttractors(
   }));
 }
 
-function computeModalAffinity(
+export function computeModalAffinity(
   pcDistribution: Record<number, number>,
 ): ModalAffinity[] {
   const results: ModalAffinity[] = [];

@@ -8,6 +8,7 @@ import { computeMeta } from "./meta.js";
 import { computeImprint, type Imprint } from "../imprint.js";
 import { computeProsody, type Prosody } from "./prosody.js";
 import { detectCadences, type Cadence } from "./cadence.js";
+import { detectModulations, type Modulation } from "./modulation.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import { MODES } from "../temper/modes.js";
 import { toMidi, type MidiOpts, type MidiEmitResult } from "./emitters/midi.js";
@@ -53,6 +54,8 @@ export interface Score {
   prosody: Prosody;
   /** Mode-specific cadence at each phrase-ending divisio. */
   cadences: Cadence[];
+  /** Passages where the tonal centre leans away from the home mode. */
+  modulations: Modulation[];
   imprint: Imprint;
   /**
    * Emit a Standard MIDI File from the score's tabula. Returns the file bytes
@@ -122,6 +125,9 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     meta.mode != null ? MODES.get(meta.mode) : undefined,
   );
 
+  // Modulation: where the tonal centre leans away from the home mode.
+  const modulations = detectModulations(ir.phrases, meta.mode ?? undefined);
+
   const tabula = computeTabula(ir, {
     mode: meta.mode ?? undefined,
     a4Hz: opts?.temperamentum?.a4,
@@ -144,6 +150,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     tabula,
     prosody: computeProsody(ir.phrases),
     cadences,
+    modulations,
     imprint: computeImprint(ir.phrases, scale),
     midi(emitOpts?: MidiOpts): Uint8Array | MidiEmitResult {
       return toMidi(tabula, emitOpts);
@@ -156,5 +163,6 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
 
 export type { ParseError };
 export type { Cadence, CadenceTarget, CadenceApproach } from "./cadence.js";
+export type { Modulation } from "./modulation.js";
 export type { MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent } from "./emitters/midi.js";
 export type { MusicXmlOpts, MusicXmlEmitResult } from "./emitters/musicxml.js";
