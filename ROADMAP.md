@@ -18,6 +18,7 @@ the public API is declared stable.
 | **0.1.1** | Prime and Compline office hours — the seasonal ordos, assembled from existing corpus chants.                                                                                                   |
 | **0.1.2** | Little-hours psalmody (Terce, Sext, None) — Ps 118 in course, from the extracted Divinum Officium Tridentine scheme. The Divine Office is now complete across all eight hours.                 |
 | **0.1.3** | Cadence detection (`score.cadences` — per-mode melodic cadence figures, after Niedermeyer & d'Ortigue); psalm tones _in directum_ and solemn mediants; Suñol-derived neum timing (salicus, oriscus); the Latin modal ethos. |
+| **0.1.4** | Modulation detection (`score.modulations` — where the tonal centre leans away from the home mode, calibrated against Suñol); richer modal affinity (degree-, ictus-, and cadence-weighted, with ranked initials after Rockstro); `modus()` tunes its finalis, tenor, and ambitus through the temperamentum. |
 
 ## Horizon 1 — SVG rendering
 
@@ -55,17 +56,17 @@ code. _Detailed design: `working/plan-docs-site.md`._
 ## Horizon 3 — Melodic analysis
 
 Read a chant's tonal structure as pure data on the score. **Cadence detection**
-(`score.cadences`) shipped in 0.1.3 — where each phrase resolves, its cadence
-figure, its melodic approach — the foundation for chironomy (SVG v4) and
-downstream analysis. What remains is the rest of the tonal picture:
+(`score.cadences`, 0.1.3) and **modulation detection** (`score.modulations`,
+0.1.4) now cover where each phrase resolves and where the tonal centre leans
+away from the home mode — the foundation for chironomy (SVG v4) and downstream
+analysis. What remains:
 
-- **v1 — Modulation detection.** Where within a chant the tonal centre shifts —
-  a "foreign" dominant pulling toward a new centre, then resolving. The local,
-  temporal counterpart to the imprint's global modal affinity, built on the
-  per-mode `modulations` data that already exists. _Detailed design:
-  `working/plan-modulation.md`._
-- **Later.** Accentual (spondaic/dactylic) cadences and tenor-resting medial
-  cadence figures — both awaiting a Latin word-accent model.
+- **Melodic-type classification.** Apel's centonization — which recurring
+  formula families a chant is assembled from. _Design: `working/plan-melodic-types.md`._
+- **Accentual cadences + tenor-resting medial figures** — both awaiting a Latin
+  word-accent model.
+- **Modulation refinements** — distinguishing a transposed mode from a genuine
+  internal modulation; finer-than-phrase granularity.
 
 > **Footnote — chant generation.** With mode, melodic, and cadence data in hand,
 > generating "authentic" GABC becomes possible: pass in text, choose ambitus /
