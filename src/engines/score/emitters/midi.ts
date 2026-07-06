@@ -47,8 +47,12 @@ export interface MidiEmitResult {
   bytes?: Uint8Array;
 }
 
-// Divisio → rest duration (in the same beat units as note durations). Mirrors
-// DIVISIO_DURATIONS in parse.ts; a phrase's terminal divisio becomes a rest.
+// Divisio → rest duration (in the same beat units as note durations); a phrase's
+// terminal divisio becomes a rest of this length. This is the *durational*
+// reading of the divisio hierarchy (canonical table in docs/score.md), distinct
+// from prosody.ts's analytic weights and phrasing.ts's shaping strengths — three
+// readings of the same bar-lines, each for its own purpose. Values mirror
+// DIVISIO_DURATIONS in parse.ts (the source of the fractional beat lengths).
 const DIVISIO_REST: Record<string, number> = {
   ",": 0.54, "`": 0.33, ";": 0.8, ":": 1.1, "::": 1.8,
 };

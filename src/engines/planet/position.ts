@@ -1,6 +1,23 @@
 // ---------------------------------------------------------------------------
 // engines/planet/position — Julian date, astro state, helio/geo position engine
 // ---------------------------------------------------------------------------
+// Two source models sit side by side, and which one runs depends on the body:
+//
+//   • Planets — the JPL/Standish Keplerian element tables [biblio: standish-jpl]
+//     in orbital.ts, solved with the iterative Newton kepler() solver. See
+//     planetPos.
+//   • Sun and Moon — Paul Schlyter's tutorial formulae [biblio:
+//     schlyter-positions], a lighter model with its own constants, a one-step
+//     eccentric-anomaly approximation (the Sun), and a named perturbation series
+//     (the Moon). See sunPos / moonPos.
+//
+// The split is deliberate: the JPL tables don't include the Moon, and Schlyter's
+// Sun is accurate enough at the Sun's tiny eccentricity to skip Newton iteration.
+// So the reader should not expect the same constants or solver across bodies.
+//
+// A few time-scale models here are standard astronomy but not yet catalogued in
+// BIBLIOGRAPHY.md (marked "source TBD" at each): the ΔT (TT−UT) polynomial and
+// the mean-obliquity expansion.
 import { sinDeg, cosDeg, atan2Deg, kepler, wrapAngle, toAu, toCartesian, toSpherical, toEquatorial } from "./math.js";
 import { ORBITAL_ELEMENTS } from "./orbital.js";
 
@@ -20,6 +37,10 @@ export interface AstroState {
   eps: number; // mean obliquity of the ecliptic, deg
 }
 
+// Mean obliquity of the ecliptic (the tilt used to rotate ecliptic → equatorial
+// coordinates), in degrees. eps0 is the J2000 value 23°26′21.406″; the arcsecond
+// series is the standard IAU 2006 expansion in Julian centuries T from J2000.
+// (Standard astronomy; source not yet catalogued — TBD.)
 function meanObliquity(T: number): number {
   const eps0 = 23 + 26 / 60 + 21.406 / 3600;
   const sec =
@@ -32,8 +53,14 @@ function meanObliquity(T: number): number {
 }
 
 export function getState(ts: number): AstroState {
+  // 2440587.5 is the Julian Date of the Unix epoch; 2451545 is J2000.0 and 36525
+  // days is a Julian century — so _T is centuries from J2000 in UT.
   const JD = 2440587.5 + ts / MS_PER_DAY;
   const _T = (JD - 2451545) / 36525;
+  // ΔT (TT − UT), in seconds: the drift between civil UT and the uniform
+  // Terrestrial Time the ephemerides are reckoned in. This is a coarse local fit
+  // valid near the present, not a long-baseline model — a limitation for deep
+  // medieval dates. (Standard-form polynomial; source not yet catalogued — TBD.)
   const dT = 64.7 + 64.7 * _T - 0.6 * _T * _T; // seconds
   const TT = JD + dT / 86400;
   const J = TT - 2451545.0;
@@ -66,12 +93,16 @@ export interface MoonPos extends ComputedPos {
   distEarthRadii: number;
 }
 
-// ── Sun position ──
+// ── Sun position ── (Schlyter's solar elements [biblio: schlyter-positions])
 export function sunPos(state: AstroState): SunPos {
   const { J, eps } = state;
+  // omega = longitude of perihelion, e = eccentricity, M = mean anomaly, all as
+  // Schlyter's linear-in-J elements (J = days from J2000).
   const omega = 282.9404 + 4.70935e-5 * J;
   const e = 0.016709 - 1.151e-9 * J;
   const M = 356.047 + 0.9856002585 * J;
+  // Eccentric anomaly by a single first-order step, not Newton iteration: the
+  // Sun's eccentricity is small enough (~0.017) that one correction suffices.
   const E = M + (180 / Math.PI) * e * sinDeg(M) * (1 + e * cosDeg(M));
   const xp = cosDeg(E) - e;
   const yp = Math.sqrt(1 - e * e) * sinDeg(E);
@@ -97,9 +128,13 @@ export function sunPos(state: AstroState): SunPos {
   };
 }
 
-// ── Moon position ──
+// ── Moon position ── (Schlyter's lunar elements [biblio: schlyter-positions])
 export function moonPos(state: AstroState, sun: SunPos): MoonPos {
   const { J, eps } = state;
+  // Orbital elements (J = days from J2000): Omega = ascending node, I =
+  // inclination, omega = argument of perigee, a = semi-major axis IN EARTH RADII
+  // (not AU — the Moon is measured from Earth; the AU conversion happens at the
+  // end via EARTH_RADIUS_AU), e = eccentricity, M = mean anomaly.
   const Omega = wrapAngle(125.1228 - 0.0529538083 * J);
   const I = 5.1454;
   const omega = wrapAngle(318.0634 + 0.1643573223 * J);
@@ -121,13 +156,19 @@ export function moonPos(state: AstroState, sun: SunPos): MoonPos {
 
   const [lonE, latE, distE] = toSpherical(x, y, z);
 
+  // The perturbation arguments: Lm = Moon's mean longitude, Ms/Ls = Sun's mean
+  // anomaly/longitude, D = mean elongation (Moon − Sun), F = argument of latitude
+  // (Moon − node). The Sun's disturbing pull is expressed as sines of these.
   const Lm = wrapAngle(Omega + omega + M);
   const Ms = sun.orbit.M;
   const Ls = sun.orbit.L;
   const D = wrapAngle(Lm - Ls);
   const F = wrapAngle(Lm - Omega);
 
-  // Lunar perturbations
+  // Lunar perturbations, in degrees — Schlyter's truncated series of the classical
+  // named terms. The three largest in longitude are the evection (−1.274·sin(M−2D),
+  // the Sun stretching the Moon's ellipse), the variation (+0.658·sin(2D)), and
+  // the annual equation (−0.186·sin Ms); the remainder are smaller corrections.
   const lonPerturb =
     -1.274 * sinDeg(M - 2 * D) + 0.658 * sinDeg(2 * D) - 0.186 * sinDeg(Ms) -
     0.059 * sinDeg(2 * M - 2 * D) - 0.057 * sinDeg(M - 2 * D + Ms) +
@@ -172,14 +213,19 @@ export function planetPos(name: string, state: AstroState, sun: SunPos): PlanetP
 
   const { J, T, eps } = state;
   const oe = body.datasets;
-  // Use higher-precision dataset (1800–2050) if in range, otherwise long-range dataset
+  // Two Standish element sets per body (see orbital.ts): [1] is fitted tightly
+  // for 1800–2050, [0] trades accuracy for 3000 BC–3000 AD coverage. The bounds
+  // are J (days from J2000): −73048.5 ≈ 1800, 18626.5 ≈ 2050. Inside the window
+  // use the precise set, outside fall back to the long-range one.
   const dataset = J > -73048.5 && J < 18626.5 ? oe[1] : oe[0];
   const [a, e, I, L, wBar, Omega] = dataset.map(([x0, x1]) => x0 + x1 * T);
 
   const omega = wBar - Omega; // argument of periapsis
   let M = L - wBar;           // mean anomaly
 
-  // Perturbation correction for outer planets
+  // Standish's great-inequality correction for the outer planets (Jupiter–Neptune):
+  // a secular b·T² plus a long-period cos/sin term at frequency f. Only bodies
+  // that carry a datasets[2] (see orbital.ts) get it. [biblio: standish-jpl]
   if (oe[2]) {
     const [b, c, s, f] = oe[2];
     M += b * T * T + c * cosDeg(f * T) + s * sinDeg(f * T);

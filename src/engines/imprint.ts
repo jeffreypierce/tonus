@@ -33,6 +33,9 @@ export interface Imprint {
 }
 
 const DEFAULT_TOP = 5;
+// Attractors are pitch *classes*; they're rendered at a fixed octave (4) purely
+// so they carry a concrete Pitch for display. The octave is not meaningful — do
+// not read it as register.
 const DEFAULT_MIDI_OCTAVE = 4;
 const VOWELS = ["a", "e", "i", "o", "u"];
 
@@ -104,7 +107,10 @@ function computeVowelAttractors(phrases: Phrase[], scale: Scale): VowelAttractor
 // A note's contribution to the pc-distribution is raised where it carries more
 // structural weight: on an ictus (the rhythmic footfall) and, above all, when it
 // is a cadence's resolution. Cadence notes are passed in — the imprint sits below
-// the score engine, so it cannot detect them itself.
+// the score engine, so it cannot detect them itself. The principle that ictus and
+// cadence notes are the modally load-bearing ones is Solesmes doctrine [biblio:
+// mocquereau-nombre]; the magnitudes (1.5×, 2×) are a tuned editorial weighting,
+// not a figure from any source — cadence weighted above ictus by intent.
 const ICTUS_WEIGHT = 1.5;
 const CADENCE_WEIGHT = 2;
 
