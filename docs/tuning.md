@@ -349,15 +349,11 @@ an English gloss: _gravis_ (grave), _tristis_ (sad), _mysticus_ (mystic),
 _harmonicus_ (harmonious), _laetus_ (joyful), _devotus_ (devout), _angelicus_
 (angelic), _perfectus_ (perfect), after Niedermeyer & d'Ortigue.
 
-The `modulations` fields — `regular`, `conceded`, and `initials` — follow
-Rockstro's table in Grove (see Sources). Each list is **ordered by
-importance**: Rockstro's own principle is that a mode's characteristic notes
-are given "in the order in which we have mentioned them." So `regular` runs
-final, dominant, then lesser centres; `initials` runs from the most
-characteristic opening pitch downward (some are, in Rockstro's footnotes,
-"barely used" or used "chiefly in polyphonic music"). tonus's modal-affinity
-scoring reads this order — a chant opening on a mode's primary initial
-counts for more than one opening on a low-ranked initial.
+The `modulations` fields — `regular`, `conceded`, and `initials` — are the
+mode's tonal centres and valid openings, each list **ordered by importance**
+(after Rockstro's Grove table [`rockstro-grove`](../BIBLIOGRAPHY.md)). The
+modal-affinity scorer reads that order; the reasoning is documented at the
+data, in [`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
 
 `modus` resolves the mode's structural pitches through its own
 temperamentum: the **finalis** and **reciting** tone as tuned notes (pitch +
@@ -433,16 +429,9 @@ interface Modus extends ModeData {
 ### Cadence figures
 
 Each mode carries the melodic figures its phrases characteristically close
-on, in `profile.cadences`. A figure is stored as **diatonic steps relative
-to the final**: `0` is the final, `-1` the step below, `+2` a third above,
-and so on — the resolution step (`0`) comes last. Steps rather than absolute
-pitches because the treatises describe cadences that way, and because a
-step-figure matches a chant whether it sits on its regular final or a
-transposed one. The score engine reads these to name a phrase's cadence
-([score.md](score.md#cadences)).
-
-The catalogued figures, by _maneria_ (both modes of a pair share them, as
-the source classes cadences by maneria, not by the eight modes):
+on, in `profile.cadences` — the shapes by which a chant comes to rest, stored
+as diatonic steps relative to the final. The score engine reads them to name a
+phrase's cadence ([score.md](score.md#cadences)).
 
 | Maneria (final) | Figures (solmization → final)     |
 | --------------- | --------------------------------- |
@@ -450,6 +439,10 @@ the source classes cadences by maneria, not by the eight modes):
 | Deuterus (Mi)   | fa-mi, re-mi, sol-fa-mi           |
 | Tritus (Fa)     | mi-fa, fa-mi-fa, la-sol-fa        |
 | Tetrardus (Sol) | la-sol, fa-sol, ut-sol, ut-ti-sol |
+
+The step encoding, the catalogue's sources, and its known gaps are documented
+at the data — see `CadenceFigure` in
+[`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
 
 The catalogue is an editorial synthesis, drawn chiefly from Niedermeyer &
 d'Ortigue and cross-checked against Bragers. It covers the **final**

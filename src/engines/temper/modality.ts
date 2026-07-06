@@ -21,10 +21,11 @@ const REGULAR_MOD_WEIGHT = 1;
 const CONCEDED_MOD_WEIGHT = 0.5;
 
 // A chant's opening note is a modal signal: each mode lists its valid initials
-// in rank order (the first is the most characteristic). Opening on a mode's
-// primary initial boosts it more than opening on a lower-ranked one — which is
-// what separates an authentic mode from its plagal partner, since the two share
-// a finalis but rank the same opening pitch differently.
+// in rank order, most characteristic first (Rockstro's Grove ordering
+// [biblio: rockstro-grove]). Opening on a mode's primary initial boosts it more
+// than opening on a lower-ranked one — which is what separates an authentic mode
+// from its plagal partner, since the two share a finalis but rank the same
+// opening pitch differently.
 const INITIAL_BONUS = 0.3;
 
 /**
