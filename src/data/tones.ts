@@ -14,6 +14,7 @@ export interface PsalmTone {
   intonation: number[];
   flex: number[];
   mediant: number[];
+  solemnMediant?: number[]; // ornamented mediant for solemn occasions (Suñol)
   defaultDiff: string;
   differentiae: Differentia[];
 }

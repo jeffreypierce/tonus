@@ -113,6 +113,10 @@ export interface PsalmusQuery {
   mode?: number;
   differentia?: string;
   intonatio?: boolean;
+  /** Sing in directum: straight through to the termination, no mediant. */
+  inDirectum?: boolean;
+  /** Use the ornamented solemn mediant, where the tone has one. */
+  solemn?: boolean;
 }
 
 export interface PsalmVerse {

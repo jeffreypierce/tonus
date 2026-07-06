@@ -37,8 +37,10 @@ function verseToChant(
   mode: number,
   differentia?: string,
   intonation?: boolean,
+  inDirectum?: boolean,
+  solemn?: boolean,
 ): Chant {
-  const gabc = intone(v, { mode, differentia, intonation });
+  const gabc = intone(v, { mode, differentia, intonation, inDirectum, solemn });
   return {
     id: `psalm:${v.psalm}:${v.verse}`,
     incipit: v.half1.slice(0, 40),
@@ -68,7 +70,7 @@ export function getPsalm(query?: PsalmusQuery): Chant[] {
 
   const mode = query.mode ?? 8;
   return verses.map((v) =>
-    verseToChant(v, mode, query.differentia, query.intonatio),
+    verseToChant(v, mode, query.differentia, query.intonatio, query.inDirectum, query.solemn),
   );
 }
 

@@ -30,8 +30,7 @@ describe("detectCadences", () => {
   test("final :: cadence lands on the finalis and matches the mode figure", () => {
     const score = buildScore(makeChant(MODE1_FINAL, "1"));
     const last = score.cadences.at(-1);
-    assert.equal(last.divisio, "::");
-    assert.equal(last.kind, "final");
+    assert.equal(last.divisio, "::"); // divisio finalis — the final cadence
     assert.equal(last.target, "finalis");
     assert.equal(last.approach, "descending");
     // f g f e d → the ending E-D is mi-re, a Protus final cadence.
@@ -45,7 +44,6 @@ describe("detectCadences", () => {
     const score = buildScore(makeChant(MODE1_MEDIAL, "1"));
     const medial = score.cadences.find((c) => c.divisio === ";");
     assert.ok(medial, "a cadence exists at the semicolon");
-    assert.equal(medial.kind, "medial");
     assert.equal(medial.target, "tenor");
     assert.equal(medial.pcs.at(-1), 9); // rests on A (pc 9), the mode-1 tenor
     assert.equal(medial.steps.at(-1), 0); // step 0 relative to the tenor target
@@ -87,9 +85,9 @@ describe("detectCadences", () => {
     assert.equal(score.cadences.length, divisioPhrases);
   });
 
-  test("no catalog: still classifies target/kind/approach, but names no figure", () => {
+  test("no catalog: still classifies target/approach, but names no figure", () => {
     // detectCadences with no ModeData — the graceful-degradation path. Note
-    // target/kind/approach come from per-note data already on the tree, so
+    // target/approach come from per-note data already on the tree, so
     // they survive; only figure-naming needs the catalog.
     const score = buildScore(makeChant(MODE1_FINAL, "1"));
     const cadences = detectCadences(score.phrases, undefined);
@@ -97,7 +95,6 @@ describe("detectCadences", () => {
     for (const c of cadences) {
       assert.equal(c.formula, null); // no catalog → no named figure
       assert.ok(["finalis", "tenor", "other"].includes(c.target));
-      assert.ok(["medial", "final"].includes(c.kind));
       assert.ok(["descending", "ascending", "unison"].includes(c.approach));
     }
     // The final cadence still knows it landed on the finalis, just unnamed.

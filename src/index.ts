@@ -21,7 +21,7 @@ import type {
 } from "./engines/temper/api.js";
 import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
-  Cadence, CadenceKind, CadenceTarget, CadenceApproach,
+  Cadence, CadenceTarget, CadenceApproach,
   MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent,
   MusicXmlOpts, MusicXmlEmitResult,
 } from "./engines/score/api.js";
@@ -79,7 +79,7 @@ export type {
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, CadenceFigure, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
-  Cadence, CadenceKind, CadenceTarget, CadenceApproach,
+  Cadence, CadenceTarget, CadenceApproach,
   MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent,
   MusicXmlOpts, MusicXmlEmitResult,
   ChantTabulaRow,

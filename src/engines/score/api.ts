@@ -155,6 +155,6 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
 }
 
 export type { ParseError };
-export type { Cadence, CadenceKind, CadenceTarget, CadenceApproach } from "./cadence.js";
+export type { Cadence, CadenceTarget, CadenceApproach } from "./cadence.js";
 export type { MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent } from "./emitters/midi.js";
 export type { MusicXmlOpts, MusicXmlEmitResult } from "./emitters/musicxml.js";

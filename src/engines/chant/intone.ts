@@ -60,6 +60,10 @@ export interface IntoneOpts {
   mode?: number;
   differentia?: string;
   intonation?: boolean;
+  /** Sing in directum: recite straight through to the termination, no mediant. */
+  inDirectum?: boolean;
+  /** Use the tone's ornamented mediant for solemn occasions, where it has one. */
+  solemn?: boolean;
 }
 
 export function intone(text: string | PsalmVerse, opts: IntoneOpts = {}): string {
@@ -76,14 +80,18 @@ export function intone(text: string | PsalmVerse, opts: IntoneOpts = {}): string
   const diff = getDifferentia(tone, opts.differentia);
 
   const tenorLetter = midiToGabc(tone.tenor, clef);
-  const mediantLetters = midiListToLetters(tone.mediant, clef);
+  const mediant = opts.solemn && tone.solemnMediant ? tone.solemnMediant : tone.mediant;
+  const mediantLetters = midiListToLetters(mediant, clef);
   const terminationLetters = midiListToLetters(diff.termination, clef);
   const intonationLetters = midiListToLetters(tone.intonation, clef);
 
-  const starIdx = rawText.indexOf(" * ");
+  // In directum ignores the verse's mediant split: the whole verse recites to
+  // the termination as one phrase (a psalm sung with no antiphon framing).
+  const starIdx = opts.inDirectum ? -1 : rawText.indexOf(" * ");
 
   if (starIdx === -1) {
-    const syllables = syllabifyPhrase(rawText.trim());
+    const text = opts.inDirectum ? rawText.replace(" * ", " ") : rawText;
+    const syllables = syllabifyPhrase(text.trim());
     const body = buildHalf(syllables, tenorLetter, terminationLetters);
     return CLEF + body + "(::)";
   }

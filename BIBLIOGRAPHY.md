@@ -43,6 +43,9 @@ section of the relevant page.
   cadences → [docs/score.md](docs/score.md#sources)
 - **Murray, "Accentual Cadences in Gregorian Chant" (1958)** — spondaic and
   dactylic verbal cadences → [docs/score.md](docs/score.md#sources)
+- **Suñol, _Textbook of Gregorian Chant According to the Solesmes Method_
+  (1930)** — modes, dominants, psalmody, the Solesmes rhythm doctrine →
+  [docs/tuning.md](docs/tuning.md#sources)
 - **Apel, _Gregorian Chant_ (1958)** — analytic study of the repertoire →
   [docs/chant.md](docs/chant.md#sources)
 - **Hiley, _Western Plainchant_ (1993)** — the standard reference →

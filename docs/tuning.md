@@ -606,6 +606,9 @@ arithmetic laid out here.
   cadence figures and the modal ethos epithets.
 - Bragers, Achille P. _A Short Treatise on Gregorian Accompaniment_. New
   York: J. Fischer & Bro., 1934 — cadence figures, cross-check.
+- Suñol, Dom Gregory. _Textbook of Gregorian Chant According to the Solesmes
+  Method_. Trans. from the 6th French ed. Tournai: Desclée, 1930 — the
+  modes, their dominants, psalmody, and the Solesmes rhythm doctrine.
 - _The Liber Usualis, with Introduction and Rubrics in English_. Ed. the
   Benedictines of Solesmes. Tournai: Desclée, 1961 — the introduction ("Rules for Interpretation" and the
   rubrics for the chant); the book itself is a chant corpus source

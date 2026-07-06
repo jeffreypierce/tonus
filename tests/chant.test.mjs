@@ -287,4 +287,14 @@ describe("getPsalm", () => {
     assert.equal(chants[0].office, "ps");
     assert.ok(chants[0].gabc.startsWith("(c4)"));
   });
+
+  test("in directum recites straight through, with no mediant bar", () => {
+    const [normal] = getPsalm({ psalm: 109, mode: 1 });
+    const [direct] = getPsalm({ psalm: 109, mode: 1, inDirectum: true });
+    // The normal tone splits the verse at the mediant "(:) "; in directum
+    // recites the whole verse to the termination as one phrase.
+    assert.ok(normal.gabc.includes("(:) "));
+    assert.ok(!direct.gabc.includes("(:) "));
+    assert.ok(direct.gabc.endsWith("(::)"));
+  });
 });

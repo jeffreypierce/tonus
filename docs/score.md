@@ -438,17 +438,16 @@ interface CadenceDistribution {
 
 `score.cadences` names the melodic close of each phrase — where prosody
 only counts the divisio bars, this identifies the figure. One `Cadence` per
-phrase-ending divisio: its resolution `target`, whether it is `medial` or
-`final`, the melodic `approach`, and — when the ending matches one of the
-mode's cadence figures ([tuning.md](tuning.md#cadence-figures)) — the named
-`formula`. Each note that forms a cadence carries a `cadenceRef` back-index
-on the tabula.
+phrase-ending divisio: its resolution `target`, the melodic `approach`, and —
+when the ending matches one of the mode's cadence figures
+([tuning.md](tuning.md#cadence-figures)) — the named `formula`. The `divisio`
+tells medial from final (the double bar `::` is the final cadence). Each note
+that forms a cadence carries a `cadenceRef` back-index on the tabula.
 
 ```ts
 interface Cadence {
   phraseIndex: number;
-  divisio: string; // the bar that ends the phrase
-  kind: "medial" | "final"; // final = divisio finalis (::)
+  divisio: string; // the bar that ends the phrase ("::" = final cadence)
   target: "finalis" | "tenor" | "other";
   approach: "descending" | "ascending" | "unison";
   formula: string | null; // matched figure id, e.g. "la-sol"; null if unmatched
