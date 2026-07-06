@@ -7,6 +7,7 @@ import {
 } from "./phrasing.js";
 import { inferMode } from "./infer.js";
 import { CHROMA_TO_SOLFEGE as SOLFEGE_BY_PC } from "../temper/data/constants.js";
+import type { Cadence } from "./cadence.js";
 import type { ChantType, InterpretationOptions } from "./types.js";
 
 export type NoteRole = "finalis" | "tenor" | "other" | null;
@@ -51,6 +52,8 @@ export interface ChantTabulaRow {
   liquescent: boolean;
   strophicus: boolean;
   divisio: string | null;
+  /** Index into score.cadences[] when this note forms a cadence; null otherwise. */
+  cadenceRef: number | null;
   /** Modal role: "final" | "tenor" | "mod" (modulation) | null if no mode or no match */
   role: NoteRole;
   /** Guidonian short name (e.g. "g", "aa") — null for chromatic pitches with no gamut entry */
@@ -73,6 +76,8 @@ export interface TabulaOptions {
   interpretation?: InterpretationOptions;
   a4Hz?: number;
   transpose?: number;
+  /** Detected cadences; used to stamp each row's cadenceRef. */
+  cadences?: Cadence[];
 }
 
 export function computeTabula(
@@ -153,6 +158,16 @@ export function computeTabula(
     }
   }
 
+  // Map each cadence's constituent notes back to its index, keyed by position.
+  const cadenceRefByPos = new Map<string, number>();
+  if (options.cadences) {
+    for (let ci = 0; ci < options.cadences.length; ci++) {
+      for (const [pi, si, ni] of options.cadences[ci]!.notes) {
+        cadenceRefByPos.set(`${pi}:${si}:${ni}`, ci);
+      }
+    }
+  }
+
   // Position of each note within its neume figure — resets when the
   // (syllableIndex, neumeGroup) pair changes.
   const neumeIndices: number[] = [];
@@ -196,6 +211,8 @@ export function computeTabula(
       liquescent: n.context.liquescent,
       strophicus: n.context.strophicus,
       divisio: a.divisio,
+      cadenceRef:
+        cadenceRefByPos.get(`${a.phraseIndex}:${a.syllableIndex}:${a.noteIndex}`) ?? null,
       role: n.step.role,
       name: n.step.name,
       nomen: n.step.nomen,

@@ -7,7 +7,9 @@ import { buildRatios } from "../temper/scale.js";
 import { computeMeta } from "./meta.js";
 import { computeImprint, type Imprint } from "../imprint.js";
 import { computeProsody, type Prosody } from "./prosody.js";
+import { detectCadences, type Cadence } from "./cadence.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
+import { MODES } from "../temper/modes.js";
 import { toMidi, type MidiOpts, type MidiEmitResult } from "./emitters/midi.js";
 import { toMusicXML, type MusicXmlOpts, type MusicXmlEmitResult } from "./emitters/musicxml.js";
 import type { Chant } from "../chant/types.js";
@@ -49,6 +51,8 @@ export interface Score {
   errors: ParseError[];
   tabula: ChantTabulaRow[];
   prosody: Prosody;
+  /** Mode-specific cadence at each phrase-ending divisio. */
+  cadences: Cadence[];
   imprint: Imprint;
   /**
    * Emit a Standard MIDI File from the score's tabula. Returns the file bytes
@@ -111,10 +115,18 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   const ir = buildIR(parsed, chant, scale);
   const meta = computeMeta(ir, { mode: modeNum });
 
+  // Cadence detection runs here, where the resolved mode (and its cadence
+  // figures) is in hand. Pure data — mirrors the arsis/thesis pass in ir.ts.
+  const cadences = detectCadences(
+    ir.phrases,
+    meta.mode != null ? MODES.get(meta.mode) : undefined,
+  );
+
   const tabula = computeTabula(ir, {
     mode: meta.mode ?? undefined,
     a4Hz: opts?.temperamentum?.a4,
     transpose: opts?.temperamentum?.transpose,
+    cadences,
     // Only pass phrasing when the caller asked for it, so the default
     // tabula shaping (mode-gated) is unchanged.
     interpretation: opts?.accentus
@@ -131,6 +143,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     errors: ir.errors,
     tabula,
     prosody: computeProsody(ir.phrases),
+    cadences,
     imprint: computeImprint(ir.phrases, scale),
     midi(emitOpts?: MidiOpts): Uint8Array | MidiEmitResult {
       return toMidi(tabula, emitOpts);
@@ -142,5 +155,6 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
 }
 
 export type { ParseError };
+export type { Cadence, CadenceKind, CadenceTarget, CadenceApproach } from "./cadence.js";
 export type { MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent } from "./emitters/midi.js";
 export type { MusicXmlOpts, MusicXmlEmitResult } from "./emitters/musicxml.js";

@@ -5,8 +5,8 @@ phrases, syllables, and neumes; every note is tuned through a
 `Temperamentum` and annotated with its Guidonian step; the Solesmes
 compound-beat classifier assigns the arsis/thesis rhythm; prosody is
 measured and an analytic imprint drawn. The score is data: its structure
-(`phrases`, `tabula`, `prosody`, `imprint`) plus two emission methods,
-`score.midi()` and `score.musicxml()`.
+(`phrases`, `tabula`, `prosody`, `cadences`, `imprint`) plus two emission
+methods, `score.midi()` and `score.musicxml()`.
 
 - [Score](#score)
   - [The score — `notatio`](#the-score--notatio)
@@ -18,6 +18,7 @@ measured and an analytic imprint drawn. The score is data: its structure
     - [MusicXML](#musicxml)
   - [The imprint](#the-imprint)
   - [Prosody](#prosody)
+  - [Cadences](#cadences)
   - [Theory \& Context](#theory--context)
     - [The model](#the-model)
     - [The classification rules](#the-classification-rules)
@@ -58,6 +59,7 @@ interface Score {
   errors: ParseError[];
   tabula: ChantTabulaRow[];
   prosody: Prosody;
+  cadences: Cadence[];
   imprint: Imprint;
 }
 
@@ -432,6 +434,31 @@ interface CadenceDistribution {
 }
 ```
 
+## Cadences
+
+`score.cadences` names the melodic close of each phrase — where prosody
+only counts the divisio bars, this identifies the figure. One `Cadence` per
+phrase-ending divisio: its resolution `target`, whether it is `medial` or
+`final`, the melodic `approach`, and — when the ending matches one of the
+mode's cadence figures ([tuning.md](tuning.md#cadence-figures)) — the named
+`formula`. Each note that forms a cadence carries a `cadenceRef` back-index
+on the tabula.
+
+```ts
+interface Cadence {
+  phraseIndex: number;
+  divisio: string; // the bar that ends the phrase
+  kind: "medial" | "final"; // final = divisio finalis (::)
+  target: "finalis" | "tenor" | "other";
+  approach: "descending" | "ascending" | "unison";
+  formula: string | null; // matched figure id, e.g. "la-sol"; null if unmatched
+  pcs: number[]; // observed pitch classes, resolution last
+  steps: (number | null)[]; // diatonic steps from the target; [] with no mode
+  confidence: number; // 0–1
+  notes: [number, number, number][]; // [phrase, syllable, note] positions
+}
+```
+
 ## Theory & Context
 
 The rhythm model is the Solesmes school's arsis/thesis synthesis, taken
@@ -471,10 +498,10 @@ thetic, as a cadential figure.
 
 ### Modeled and not
 
-tonus models the compound-beat classification and the per-note rhythmic
-index. It does not yet model Carroll's textual rules (word-accent → arsic,
-word-final → thetic), mode-specific cadence formulas, or
-incise classifiers.
+tonus models the compound-beat classification, the per-note rhythmic
+index, and mode-specific cadence figures ([above](#cadences)). It does not
+yet model Carroll's textual rules (word-accent → arsic, word-final →
+thetic), accentual (spondaic vs. dactylic) cadences, or incise classifiers.
 
 ## Sources
 
@@ -493,3 +520,8 @@ incise classifiers.
   the semiological position the `"restrained"` pondus style reflects.
 - Desrocquettes, Jean Hébert. "Gregorian Musical Values" — the Solesmes
   school's rhythmic values, from Mocquereau's collaborator.
+- Homan, Frederic W. _Cadence in Gregorian Chant_. Ph.D. diss., Indiana
+  University, 1961 — the analytic study of chant cadences.
+- Murray, Gregory. "Accentual Cadences in Gregorian Chant." _The Downside
+  Review_, 1958 — the spondaic and dactylic verbal cadences (not yet
+  modeled; see [Modeled and not](#modeled-and-not)).

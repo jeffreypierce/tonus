@@ -5,7 +5,7 @@
 import { MODES } from "./data/modes.js";
 import type { ModeData } from "./data/modes.js";
 
-export type { ModeProfile, ModeData } from "./data/modes.js";
+export type { ModeProfile, ModeData, CadenceFigure } from "./data/modes.js";
 export { MODES } from "./data/modes.js";
 
 /** Return ModeData for mode 1–8. Throws on unknown mode. */

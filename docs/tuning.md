@@ -16,6 +16,7 @@ Pythagorean, as in the treatises.
   - [Ratios — `ratio`](#ratios--ratio)
   - [The gamut — `gamut`](#the-gamut--gamut)
   - [Modes — `modus`](#modes--modus)
+    - [Cadence figures](#cadence-figures)
   - [Psalm tones — `tonus`](#psalm-tones--tonus)
   - [Theory \& Context](#theory--context)
     - [The commas](#the-commas)
@@ -339,22 +340,37 @@ medieval tonaries describe them:
   Deuterus, Tritus, Tetrardus), and authentic or plagal type;
 - its structure — finalis, tenor, scale degrees, ambitus, and the species
   of fifth and fourth that build it;
-- its practice — hexachords in rank order, melodic profile, cadence
-  degrees, and permitted modulations.
+- its practice — hexachords in rank order, melodic profile, its cadence
+  figures, and permitted modulations.
+
+Each mode also carries its traditional **ethos** — the character the
+medieval theorists ascribed to it. tonus records both the Latin epithet and
+an English gloss: _gravis_ (grave), _tristis_ (sad), _mysticus_ (mystic),
+_harmonicus_ (harmonious), _laetus_ (joyful), _devotus_ (devout), _angelicus_
+(angelic), _perfectus_ (perfect), after Niedermeyer & d'Ortigue.
 
 ```js
 t.modus(1);
 // { mode: 1, nomen: "Protus Authenticus", alias: "dorian",
 //   maneria: "Protus", type: "authentic",
-//   final: 2, tenor: 9, … }
+//   final: 2, tenor: 9,
+//   profile: { mood: "serious", ethos: "gravis", … }, … }
 ```
 
 ```ts
 interface ModeProfile {
-  mood: string;
+  mood: string; // English gloss of the ethos, e.g. "serious"
+  ethos: string; // traditional Latin epithet, e.g. "gravis"
   phrasing: "recitative" | "lyrical" | "hymnic" | "solemn";
   melodic: "rising" | "falling" | "arch" | "neutral";
   tendency: "melismatic" | "neumatic" | "syllabic" | "neutral";
+}
+
+interface CadenceFigure {
+  id: string; // e.g. "protus-final-redore"
+  on: "finalis" | "tenor"; // the degree it resolves onto
+  steps: number[]; // diatonic steps relative to `on`; resolution (0) last
+  source?: string; // citation for the figure
 }
 
 interface ModeData {
@@ -368,7 +384,7 @@ interface ModeData {
   scalePcs: number[]; // 7 diatonic pitch classes
   hexachords: ("durum" | "naturale" | "molle")[]; // rank-ordered
   profile: ModeProfile;
-  cadences: { final: number[]; tenor: number[] };
+  cadences: CadenceFigure[]; // characteristic cadence figures
   modulations: {
     regular: number[];
     conceded: number[];
@@ -385,6 +401,31 @@ interface ModeData {
   };
 }
 ```
+
+### Cadence figures
+
+Each mode carries the melodic figures its phrases characteristically close
+on, in `profile.cadences`. A figure is stored as **diatonic steps relative
+to the note it resolves onto** (`on`): `0` is that note, `-1` the step
+below, `+2` a third above, and so on — the resolution step (`0`) comes
+last. Steps rather than absolute pitches because the treatises describe
+cadences that way, and because a step-figure matches a chant whether it
+sits on its regular final or a transposed one. The score engine reads these
+to name a phrase's cadence ([score.md](score.md#cadences)).
+
+The catalogued figures, by _maneria_ (both modes of a pair share them, as
+the source classes cadences by maneria, not by the eight modes):
+
+| Maneria (final) | Figures (solmization → final)     |
+| --------------- | --------------------------------- |
+| Protus (Re)     | mi-re, ut-re, sol-fa-re, mi-fa-re |
+| Deuterus (Mi)   | fa-mi, re-mi, sol-fa-mi           |
+| Tritus (Fa)     | mi-fa, fa-mi-fa, la-sol-fa        |
+| Tetrardus (Sol) | la-sol, fa-sol, ut-sol, ut-ti-sol |
+
+The catalogue is an editorial synthesis, drawn chiefly from Niedermeyer &
+d'Ortigue and cross-checked against Bragers; It covers the **final** cadences; medial cadences that rest on
+the tenor are not yet catalogued.
 
 ## Psalm tones — `tonus`
 
@@ -559,6 +600,12 @@ arithmetic laid out here.
 - Powers, Harold S., and Frans Wiering, et al. "Mode." _Grove Music
   Online_, 2001, §§I–III (the term; medieval modal theory) —
   <https://doi.org/10.1093/gmo/9781561592630.article.43718>.
+- Niedermeyer, Louis, and Joseph d'Ortigue. _Gregorian Accompaniment: A
+  Theoretical and Practical Treatise upon the Accompaniment of Plainsong_.
+  Trans. Wallace Goodrich. New York: Novello, Ewer & Co. — the per-mode
+  cadence figures and the modal ethos epithets.
+- Bragers, Achille P. _A Short Treatise on Gregorian Accompaniment_. New
+  York: J. Fischer & Bro., 1934 — cadence figures, cross-check.
 - _The Liber Usualis, with Introduction and Rubrics in English_. Ed. the
   Benedictines of Solesmes. Tournai: Desclée, 1961 — the introduction ("Rules for Interpretation" and the
   rubrics for the chant); the book itself is a chant corpus source

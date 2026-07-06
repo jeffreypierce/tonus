@@ -35,6 +35,14 @@ section of the relevant page.
   semiological approach → [docs/score.md](docs/score.md#sources)
 - **Desrocquettes, "Gregorian Musical Values"** — Solesmes rhythmic
   values → [docs/score.md](docs/score.md#sources)
+- **Niedermeyer & d'Ortigue, _Gregorian Accompaniment_ (trans. Goodrich)** —
+  the per-mode cadence figures → [docs/tuning.md](docs/tuning.md#sources)
+- **Bragers, _A Short Treatise on Gregorian Accompaniment_ (1934)** —
+  cadence figures, cross-check → [docs/tuning.md](docs/tuning.md#sources)
+- **Homan, _Cadence in Gregorian Chant_ (1961)** — analytic study of
+  cadences → [docs/score.md](docs/score.md#sources)
+- **Murray, "Accentual Cadences in Gregorian Chant" (1958)** — spondaic and
+  dactylic verbal cadences → [docs/score.md](docs/score.md#sources)
 - **Apel, _Gregorian Chant_ (1958)** — analytic study of the repertoire →
   [docs/chant.md](docs/chant.md#sources)
 - **Hiley, _Western Plainchant_ (1993)** — the standard reference →

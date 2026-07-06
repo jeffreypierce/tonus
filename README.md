@@ -95,8 +95,8 @@ const harmony = tonus.harmonia(tonus.caelum({ date: feast.date }));
 
 ## Roadmap
 
-Where tonus is headed — SVG chant engraving, an interactive documentation site,
-and cadence detection — is laid out in [ROADMAP.md](ROADMAP.md).
+SVG chant engraving, an interactive documentation site,
+and cadence detection is laid out in [ROADMAP.md](ROADMAP.md).
 
 ## Development
 
