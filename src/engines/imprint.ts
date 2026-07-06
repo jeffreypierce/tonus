@@ -8,8 +8,10 @@ import type { Phrase } from "./score/types.js";
 import type { Pitch } from "./temper/pitch.js";
 import type { Scale } from "./temper/scale.js";
 import { toPitch } from "./temper/pitch.js";
-import { MODES } from "./temper/modes.js";
+import { computeModalAffinity, type ModalAffinity } from "./temper/modality.js";
 import type { VoicedBody } from "./harmonia/voice.js";
+
+export type { ModalAffinity };
 
 export interface Attractor {
   pc: number;
@@ -21,12 +23,6 @@ export interface VowelAttractor {
   vowel: string;
   weight: number;
   pitch: Pitch;
-}
-
-export interface ModalAffinity {
-  mode: number;
-  alias: string;
-  score: number;
 }
 
 export interface Imprint {
@@ -64,24 +60,6 @@ function computeAttractors(
   }));
 }
 
-export function computeModalAffinity(
-  pcDistribution: Record<number, number>,
-): ModalAffinity[] {
-  const results: ModalAffinity[] = [];
-  for (let m = 1; m <= 8; m++) {
-    const data = MODES.get(m);
-    if (!data) continue;
-    const structural = new Set<number>([
-      data.final,
-      data.tenor,
-      ...data.modulations.regular,
-    ]);
-    let score = 0;
-    for (const pc of structural) score += pcDistribution[pc] ?? 0;
-    results.push({ mode: m, alias: data.alias, score });
-  }
-  return results.sort((a, b) => b.score - a.score);
-}
 
 function computeVowelAttractors(phrases: Phrase[], scale: Scale): VowelAttractor[] {
   const vowelPcMap = new Map<string, Map<number, number>>();
@@ -123,28 +101,53 @@ function computeVowelAttractors(phrases: Phrase[], scale: Scale): VowelAttractor
   return results.sort((a, b) => b.weight - a.weight);
 }
 
-/** Build an Imprint from chant phrases (unweighted pc counts). */
-export function computeImprint(phrases: Phrase[], scale: Scale): Imprint {
+// A note's contribution to the pc-distribution is raised where it carries more
+// structural weight: on an ictus (the rhythmic footfall) and, above all, when it
+// is a cadence's resolution. Cadence notes are passed in — the imprint sits below
+// the score engine, so it cannot detect them itself.
+const ICTUS_WEIGHT = 1.5;
+const CADENCE_WEIGHT = 2;
+
+export interface ImprintOptions {
+  /** Positions "phrase:syllable:note" of cadence resolution notes, weighted up. */
+  cadenceNotes?: Set<string>;
+}
+
+/** Build an Imprint from chant phrases, weighting structural notes more. */
+export function computeImprint(
+  phrases: Phrase[],
+  scale: Scale,
+  opts: ImprintOptions = {},
+): Imprint {
+  const cadenceNotes = opts.cadenceNotes;
   const pcCounts = new Array<number>(12).fill(0);
   let total = 0;
-  for (const phrase of phrases) {
-    for (const syl of phrase.syllables) {
-      for (const note of syl.notes) {
-        pcCounts[note.pitch.pc]++;
-        total++;
+  for (let pi = 0; pi < phrases.length; pi++) {
+    const phrase = phrases[pi]!;
+    for (let si = 0; si < phrase.syllables.length; si++) {
+      const notes = phrase.syllables[si]!.notes;
+      for (let ni = 0; ni < notes.length; ni++) {
+        const note = notes[ni]!;
+        let w = 1;
+        if (note.context.ictus) w *= ICTUS_WEIGHT;
+        if (cadenceNotes?.has(`${pi}:${si}:${ni}`)) w *= CADENCE_WEIGHT;
+        pcCounts[note.pitch.pc] += w;
+        total += w;
       }
     }
   }
   const pcDistribution: Record<number, number> = {};
   for (let pc = 0; pc < 12; pc++) {
-    pcDistribution[pc] = total > 0 ? pcCounts[pc] / total : 0;
+    pcDistribution[pc] = total > 0 ? pcCounts[pc]! / total : 0;
   }
+
+  const firstNotePc = phrases[0]?.syllables[0]?.notes[0]?.pitch.pc;
 
   return {
     pcDistribution,
     attractors: computeAttractors(pcDistribution, scale),
     vowelAttractors: computeVowelAttractors(phrases, scale),
-    modalAffinity: computeModalAffinity(pcDistribution),
+    modalAffinity: computeModalAffinity(pcDistribution, firstNotePc),
   };
 }
 

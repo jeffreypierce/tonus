@@ -478,7 +478,6 @@ interface Modulation {
   startPhrase: number; // first phrase of the span (inclusive)
   endPhrase: number; // last phrase (inclusive)
   toMode: number; // the mode the passage leans toward (1–8)
-  toAlias: string; // that mode's Greek alias, e.g. "phrygian"
   confidence: number; // 0–1, the averaged margin over the home mode
 }
 ```

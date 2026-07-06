@@ -29,10 +29,12 @@ export interface ModeData {
   hexachords: ("durum" | "naturale" | "molle")[];
   profile: ModeProfile;
   cadences: CadenceFigure[];   // characteristic cadence figures
+  // Tonal centres and openings, each list in order of importance (after
+  // Rockstro's Grove table — see docs/tuning.md). >12 = upper octave.
   modulations: {
-    regular: number[];   // principal tonal centers; >12 = upper octave
-    conceded: number[];  // permitted secondary points
-    initials: number[];  // valid chant opening pitches
+    regular: number[];   // principal tonal centres (final, dominant, then others)
+    conceded: number[];  // secondary centres, permitted but less characteristic
+    initials: number[];  // valid opening pitches, most characteristic first
   };
   ambitus: {
     lowest: number;

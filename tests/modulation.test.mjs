@@ -47,14 +47,14 @@ describe("detectModulations", () => {
       assert.ok(m.endPhrase >= m.startPhrase); // a span, not inverted
       assert.ok(m.toMode >= 1 && m.toMode <= 8);
       assert.notEqual(m.toMode, 8); // never "modulates" to the home mode
-      assert.ok(typeof m.toAlias === "string" && m.toAlias.length > 0);
       assert.ok(m.confidence > 0 && m.confidence <= 1);
     }
   });
 
-  test("a single-mode chant modulates nowhere", () => {
-    // A short phrase built only from the mode-1 scale, resting on its final.
-    const score = buildScore(makeChant("(c4) so(d) li(f) da(e) re(d.) (::)", "1"));
+  test("a firmly mode-1 phrase modulates nowhere", () => {
+    // Centred on the mode-1 poles — the final D and the tenor A — so no foreign
+    // mode outscores home.
+    const score = buildScore(makeChant("(c4) a(d) b(a) c(g) d(a) e(d.) (::)", "1"));
     assert.equal(score.modulations.length, 0);
   });
 

@@ -7,18 +7,15 @@
 // flags runs of phrases that lean on a foreign mode — a modulation. Detection
 // only; distribution-based, no functional/harmonic analysis.
 import type { Phrase } from "./types.js";
-import { computeModalAffinity } from "../imprint.js";
-import { MODES } from "../temper/modes.js";
+import { computeModalAffinity } from "../temper/modality.js";
 
 export interface Modulation {
   /** Phrase index where the modulation begins (inclusive). */
   startPhrase: number;
   /** Phrase index where it ends (inclusive). */
   endPhrase: number;
-  /** The mode the passage leans toward. */
+  /** The mode the passage leans toward (1–8). */
   toMode: number;
-  /** Greek alias of that mode, e.g. "phrygian". */
-  toAlias: string;
   /** 0–1: how strongly the foreign mode outscored the home mode, averaged. */
   confidence: number;
 }
@@ -77,13 +74,11 @@ export function detectModulations(
 
   const flush = () => {
     if (!run) return;
-    const modeData = MODES.get(run.mode);
     const avg = run.margins.reduce((s, m) => s + m, 0) / run.margins.length;
     modulations.push({
       startPhrase: run.start,
       endPhrase: run.start + run.margins.length - 1,
       toMode: run.mode,
-      toAlias: modeData?.alias ?? "",
       confidence: Math.min(1, Math.round(avg * 100) / 100),
     });
     run = null;

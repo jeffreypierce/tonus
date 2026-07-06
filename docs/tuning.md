@@ -349,6 +349,16 @@ an English gloss: _gravis_ (grave), _tristis_ (sad), _mysticus_ (mystic),
 _harmonicus_ (harmonious), _laetus_ (joyful), _devotus_ (devout), _angelicus_
 (angelic), _perfectus_ (perfect), after Niedermeyer & d'Ortigue.
 
+The `modulations` fields — `regular`, `conceded`, and `initials` — follow
+Rockstro's table in Grove (see Sources). Each list is **ordered by
+importance**: Rockstro's own principle is that a mode's characteristic notes
+are given "in the order in which we have mentioned them." So `regular` runs
+final, dominant, then lesser centres; `initials` runs from the most
+characteristic opening pitch downward (some are, in Rockstro's footnotes,
+"barely used" or used "chiefly in polyphonic music"). tonus's modal-affinity
+scoring reads this order — a chant opening on a mode's primary initial
+counts for more than one opening on a low-ranked initial.
+
 ```js
 t.modus(1);
 // { mode: 1, nomen: "Protus Authenticus", alias: "dorian",

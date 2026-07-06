@@ -151,7 +151,15 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     prosody: computeProsody(ir.phrases),
     cadences,
     modulations,
-    imprint: computeImprint(ir.phrases, scale),
+    imprint: computeImprint(ir.phrases, scale, {
+      // Each cadence's resolution note (its last) is the strongest modal anchor.
+      cadenceNotes: new Set(
+        cadences.map((c) => {
+          const [pi, si, ni] = c.notes[c.notes.length - 1]!;
+          return `${pi}:${si}:${ni}`;
+        }),
+      ),
+    }),
     midi(emitOpts?: MidiOpts): Uint8Array | MidiEmitResult {
       return toMidi(tabula, emitOpts);
     },
