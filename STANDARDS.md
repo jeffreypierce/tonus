@@ -114,9 +114,34 @@ const _calCache = new Map<number, Map<string, CalEntry[]>>();
 
 ---
 
-## Comments
+## Comments — the code is authoritative
 
-Only where logic is non-obvious. No docstrings on self-evident functions.
+The code is the authoritative source for **how a thing is calculated, why, and
+from what source.** The theory behind an algorithm, the editorial decisions, and
+the provenance of data (which treatise a figure came from, why a value was
+chosen) live in the code, next to the code they explain — not in a separate
+document that drifts. Two forms, by weight:
+
+- **Module-header doc-comments** carry the big-picture theory or doctrine for a
+  file — e.g. the Solesmes arsis/thesis model atop the rhythm classifier, the
+  derivation methodology atop a data module.
+- **Inline blocks** sit at specific non-obvious decisions — e.g. the Grove
+  ordering rationale next to the `modulations` data, the margin calibration next
+  to the modulation threshold.
+
+Data files carry the provenance of their data next to the data. Judgment governs
+which detail goes where.
+
+This is not license to comment the self-evident (`i++ // increment`). It is the
+*reasoning and sourcing* a maintainer or curious reader needs, at the code. A
+comment still never merely restates a signature.
+
+Cite sources by key into the central bibliography (see Documentation):
+
+```ts
+// Cadence figures, after Niedermeyer & d'Ortigue [biblio: niedermeyer-ortigue],
+// cross-checked against Bragers [biblio: bragers-treatise].
+```
 
 Use inline trailing comments for interface fields:
 
@@ -127,6 +152,49 @@ interface Note {
   acc: number; // -1 flat, 0 natural, 1 sharp
 }
 ```
+
+---
+
+## Documentation — three levels, one voice
+
+Documentation is a **three-level ladder**; each level is lighter than the one
+below and links down into it. A reader starts at the top and drills as far as
+they want; the code is the bottom of the well.
+
+| Level | Surface | Depth | Holds |
+| --- | --- | --- | --- |
+| **1. Interactive** | the docs site (future) | lightest | common API calls, run-it-live, limited context |
+| **2. Official API** | `docs/*.md` | medium | API focus (options, examples, interfaces) + high-level theory that links to the bibliography and to code |
+| **3. Code** | `src/` | full | how it is computed, why, and from what source: full theory, editorial decisions, provenance |
+
+Level 2 is not stripped to bare API. It keeps its high-level "what / why / when"
+framing and links down for depth. Only the **deepest** material lives in code:
+step-by-step derivations, the provenance of each figure, calibration values,
+recorded editorial decisions.
+
+**The bibliography is centralized.** `BIBLIOGRAPHY.md` is the single source of
+truth for citations; each entry has a stable kebab key (`carroll-chironomy`,
+`rockstro-grove`). Code cites by bracketed key; docs link to the anchor. Nothing
+else restates a full reference. There are no per-page `## Sources` blocks.
+
+**One voice, three volumes.** All three levels are the same author at different
+lengths — not three personalities. The voice is the rubric of a chant book (see
+`DOCS-STANDARDS.md`): present indicative, rules stated plainly with the exception
+following the rule, **no advocacy** (a decision is stated, not defended; the words
+*deliberately, simply, powerful, rich, comprehensive, beautiful* do not appear),
+bold marks a term at its definition once, italics carry Latin and titles. What
+changes across levels is volume and register, not voice:
+
+- **L1 (interactive)** — terse, inviting: a label on an instrument. One line,
+  present tense, no theory.
+- **L2 (API docs)** — the rubric proper: the reference states *what is*; Theory &
+  Context states *why and whence* (scholarly register, no meta-narration).
+- **L3 (code)** — a scholar's marginalia: the same restraint, now allowed to
+  explain fully. Explains; still does not advocate — "corrected to the Protus
+  descent (the mode-2 seed was a copy of mode 5)," not "elegantly fixed a bug."
+
+`DOCS-STANDARDS.md` at the repo root carries the full prose register (the twelve
+rules and the page template).
 
 ---
 
