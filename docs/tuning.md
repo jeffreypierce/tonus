@@ -367,10 +367,8 @@ interface ModeProfile {
 }
 
 interface CadenceFigure {
-  id: string; // e.g. "protus-final-redore"
-  on: "finalis" | "tenor"; // the degree it resolves onto
-  steps: number[]; // diatonic steps relative to `on`; resolution (0) last
-  source?: string; // citation for the figure
+  id: string; // solmization, e.g. "sol-fa-re"
+  steps: number[]; // diatonic steps relative to the final; resolution (0) last
 }
 
 interface ModeData {
@@ -406,12 +404,12 @@ interface ModeData {
 
 Each mode carries the melodic figures its phrases characteristically close
 on, in `profile.cadences`. A figure is stored as **diatonic steps relative
-to the note it resolves onto** (`on`): `0` is that note, `-1` the step
-below, `+2` a third above, and so on — the resolution step (`0`) comes
-last. Steps rather than absolute pitches because the treatises describe
-cadences that way, and because a step-figure matches a chant whether it
-sits on its regular final or a transposed one. The score engine reads these
-to name a phrase's cadence ([score.md](score.md#cadences)).
+to the final**: `0` is the final, `-1` the step below, `+2` a third above,
+and so on — the resolution step (`0`) comes last. Steps rather than absolute
+pitches because the treatises describe cadences that way, and because a
+step-figure matches a chant whether it sits on its regular final or a
+transposed one. The score engine reads these to name a phrase's cadence
+([score.md](score.md#cadences)).
 
 The catalogued figures, by _maneria_ (both modes of a pair share them, as
 the source classes cadences by maneria, not by the eight modes):
@@ -424,8 +422,8 @@ the source classes cadences by maneria, not by the eight modes):
 | Tetrardus (Sol) | la-sol, fa-sol, ut-sol, ut-ti-sol |
 
 The catalogue is an editorial synthesis, drawn chiefly from Niedermeyer &
-d'Ortigue and cross-checked against Bragers; It covers the **final** cadences; medial cadences that rest on
-the tenor are not yet catalogued.
+d'Ortigue and cross-checked against Bragers. It covers the **final**
+cadences; medial cadences that rest on the tenor are not yet catalogued.
 
 ## Psalm tones — `tonus`
 

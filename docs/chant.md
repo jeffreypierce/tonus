@@ -258,8 +258,10 @@ interface OfficiumQuery extends CantusQuery {
 GABC pointed to a psalm tone, modes 1–8 or the tonus peregrinus (mode 0).
 `differentia` selects the cadential variant; `intonatio` controls whether
 the opening formula is included, as it is for a psalm's first verse.
-Canticles are addressed by name: `benedictus`, `magnificat`,
-`nunc dimittis`, `te deum`, `benedicite`.
+`inDirectum` recites a verse straight through to the termination with no
+mediant, as a psalm sung without an antiphon; `solemn` uses a tone's
+ornamented mediant where it has one. Canticles are addressed by name:
+`benedictus`, `magnificat`, `nunc dimittis`, `te deum`, `benedicite`.
 
 ```js
 tonus.psalmus({ psalm: 109, verse: "1a", mode: 1 });
@@ -291,6 +293,8 @@ interface PsalmusQuery {
   mode?: number;
   differentia?: string; // differentia code, e.g. "6F", "4e"
   intonatio?: boolean; // include opening intonation formula, default true
+  inDirectum?: boolean; // recite straight through, no mediant
+  solemn?: boolean; // use the ornamented solemn mediant where the tone has one
 }
 ```
 
