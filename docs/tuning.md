@@ -26,7 +26,6 @@ Pythagorean, as in the treatises.
       - [The three Ptolemaic diatonics — antiquity's just intonations](#the-three-ptolemaic-diatonics--antiquitys-just-intonations)
       - [`"equal"`](#equal)
       - [Custom scales and Scala files](#custom-scales-and-scala-files)
-  - [Sources](#sources)
 
 ## The context — `temperamentum`
 
@@ -600,42 +599,8 @@ arithmetic laid out here.
 
 ## Sources
 
-- Boethius, _De institutione musica_ — the medieval transmission of
-  Pythagorean interval math.
-- Ptolemy, _Harmonics_ I.15–16 — the diatonic shades.
-- Guido of Arezzo's gamut and solmization, and the eight-mode system, as
-  standardized in medieval theory (gamut, hexachords, modes, psalm tones).
-- Atkinson, Charles M. _The Critical Nexus: Tone-System, Mode, and
-  Notation in Early Medieval Music_. New York: Oxford University Press, 2009.
-- Reisenweaver, Anna. "Guido of Arezzo and His Influence on Music
-  Learning." _Musical Offerings_ 3, no. 1 (2012).
-- Schulter, Margo. "Pythagorean Tuning and Medieval Polyphony." Medieval
-  Music & Arts Foundation —
-  <https://www.medieval.org/emfaq/harmony/pyth.html>.
-- Schulter, Margo. "Hexachords, solmization, and musica ficta." Medieval
-  Music & Arts Foundation —
-  <https://www.medieval.org/emfaq/harmony/hex.html>.
-- Rockstro, W. S. "Modes, The Ecclesiastical." In Grove, _A Dictionary of
-  Music and Musicians_ (1st ed.) —
-  <https://en.wikisource.org/wiki/A_Dictionary_of_Music_and_Musicians/Modes,_The_Ecclesiastical>.
-- Powers, Harold S., and Frans Wiering, et al. "Mode." _Grove Music
-  Online_, 2001, §§I–III (the term; medieval modal theory) —
-  <https://doi.org/10.1093/gmo/9781561592630.article.43718>.
-- Niedermeyer, Louis, and Joseph d'Ortigue. _Gregorian Accompaniment: A
-  Theoretical and Practical Treatise upon the Accompaniment of Plainsong_.
-  Trans. Wallace Goodrich. New York: Novello, Ewer & Co. — the per-mode
-  cadence figures and the modal ethos epithets.
-- Bragers, Achille P. _A Short Treatise on Gregorian Accompaniment_. New
-  York: J. Fischer & Bro., 1934 — cadence figures, cross-check.
-- Suñol, Dom Gregory. _Textbook of Gregorian Chant According to the Solesmes
-  Method_. Trans. from the 6th French ed. Tournai: Desclée, 1930 — the
-  modes, their dominants, psalmody, and the Solesmes rhythm doctrine.
-- _The Liber Usualis, with Introduction and Rubrics in English_. Ed. the
-  Benedictines of Solesmes. Tournai: Desclée, 1961 — the introduction ("Rules for Interpretation" and the
-  rubrics for the chant); the book itself is a chant corpus source
-  ([chant.md](chant.md#sources)).
-- Wikipedia: [Pythagorean tuning](https://en.wikipedia.org/wiki/Pythagorean_tuning),
-  [Meantone temperament](https://en.wikipedia.org/wiki/Meantone_temperament),
-  [Gregorian mode](https://en.wikipedia.org/wiki/Gregorian_mode).
-- Scala scale archive and `.scl` format, Manuel Op de Coul, Huygens-Fokker
-  Foundation — <https://www.huygens-fokker.org/scala/scl_format.html>.
+Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+`boethius-institutione`, `ptolemy-harmonics`, `guidonian-gamut`,
+`atkinson-nexus`, `reisenweaver-guido`, `schulter-harmony`, `rockstro-grove`,
+`powers-wiering-mode`, `niedermeyer-ortigue`, `bragers-treatise`,
+`sunol-textbook`, `liber-usualis`, `scala-format`, `wikipedia-tuning`.

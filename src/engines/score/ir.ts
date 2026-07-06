@@ -2,9 +2,11 @@
 // engines/score/ir — scored representation + Solesmes arsis/thesis rhythm
 // ---------------------------------------------------------------------------
 // buildIR turns parsed GABC into the phrase/syllable/note tree and classifies
-// its rhythm. The rhythm model is the Solesmes school's arsis/thesis synthesis,
-// from Gajard's 1935 lectures [biblio: gajard-rhythm] and Carroll's chironomy
-// manuals [biblio: carroll-chironomy, carroll-applied], founded on Mocquereau
+// its rhythm. It builds on the ictus and grouping already assigned in parse.ts
+// from the Liber Usualis rules [biblio: liber-usualis]; this layer adds the
+// Solesmes school's arsis/thesis synthesis, from Gajard's 1935 lectures
+// [biblio: gajard-rhythm] and Carroll's chironomy manuals [biblio:
+// carroll-chironomy, carroll-applied], founded on Mocquereau
 // [biblio: mocquereau-nombre].
 //
 // Arsis (rising, active) and thesis (resting, retractive) are qualities of the

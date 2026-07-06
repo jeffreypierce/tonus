@@ -1,6 +1,35 @@
 // ---------------------------------------------------------------------------
 // engines/score/parse — GABC notation parser
 // ---------------------------------------------------------------------------
+// GABC (the Gregorio project's plain-text chant notation) encodes a melody as
+// lyric syllables, each followed by a parenthesized note group: `Pu(g)er(gh)`.
+// The parser is built around that pairing because it is what makes the encoding
+// tractable — text and neumes stay aligned syllable by syllable, so syllables,
+// neumes, and prosody reconstruct without images. Pitch letters (a–m) have no
+// absolute value; they are read against the clef declaration (c1–c4, f1–f4),
+// which fixes where `do`/`fa` sit on the staff — hence CLEF_OFFSETS below. The
+// note group is where every performance mark lives (episema, quilisma,
+// liquescent, dot) and the syllable boundary is where lyric-driven prosody is
+// recovered; the parser walks group by group and reads each into IR events.
+//
+// The rhythm/ictus model was designed from the Liber Usualis "Rules for
+// Interpretation" [biblio: liber-usualis]; the rules below are its.
+//
+// Ictus (the rhythmic footfall) is assigned by the Liber's three rules, in
+// priority order:
+//   1. an ictus falls on any note bearing a vertical episema (GABC ' or _);
+//   2. on sustained/doubled elements — distropha, tristropha, bivirga, pressus,
+//      oriscus, a dotted note, the note before a quilisma;
+//   3. otherwise on the first note of each group, unless displaced by 1 or 2.
+// Where more than three simple notes fall between ictus, a subdivision ictus is
+// inserted (the compound beat prefers 2- or 3-note groups).
+//
+// Accidental scope follows the Liber: a flat holds for the rest of the word, or
+// until the next bar line (even a quarter-bar), and is cancelled by a natural —
+// so `bmolle` resets at word and bar boundaries. The neume taxonomy (punctum,
+// virga, podatus, clivis, scandicus, salicus, climacus, torculus, porrectus and
+// their compounds) and the liquescent/quilisma/pressus treatments are the
+// Liber's; each is classified where it is read below.
 import type {
   ArticulationProfile,
   ParseOptions,
@@ -17,6 +46,11 @@ const DEFAULT_OPTIONS: Required<Pick<ParseOptions, "oct" | "useVowelAccent">> =
     useVowelAccent: true,
   };
 
+// Per-clef diatonic-step offset. A GABC clef names the staff line it sits on
+// (c1–c4, f1–f4; the `b` variants also declare a flat), which fixes which pitch
+// the letters a–m read as. The value is subtracted from the letter's position
+// when anchoring it onto the gamut (see `pos` below), so the same letter reads
+// higher or lower depending on the clef in force.
 const CLEF_OFFSETS = new Map<string, number>([
   ["c1", -3],
   ["c2", -1],
