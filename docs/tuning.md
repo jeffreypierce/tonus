@@ -92,7 +92,7 @@ interface Temperamentum {
   ratio(input: string): RatioResult & { step: Step | null };
   neuma(inputs: PitchInput[]): Neume;
   gamut(opts?: GamutOptions): Pitch[];
-  modus(mode: number): ModeData;
+  modus(mode: number): Modus;
   tonus(opts?: TonusOpts): Tonus;
 }
 ```
@@ -359,11 +359,20 @@ characteristic opening pitch downward (some are, in Rockstro's footnotes,
 scoring reads this order — a chant opening on a mode's primary initial
 counts for more than one opening on a low-ranked initial.
 
+`modus` resolves the mode's structural pitches through its own
+temperamentum: the **finalis** and **reciting** tone as tuned notes (pitch +
+Guidonian step), and **ambitusNotes**, the mode's diatonic range walked out
+note by note. The raw `ModeData` fields (`final`, `tenor`, `cadences`, …)
+remain alongside — `Modus` extends `ModeData`.
+
 ```js
 t.modus(1);
 // { mode: 1, nomen: "Protus Authenticus", alias: "dorian",
 //   maneria: "Protus", type: "authentic",
 //   final: 2, tenor: 9,
+//   finalis: { pitch: <D3 293.33 Hz>, step: { … role: "finalis" } },
+//   reciting: { pitch: <A3>, step: { … role: "tenor" } },
+//   ambitusNotes: [ <D3>, <E3>, <F3>, … ],
 //   profile: { mood: "serious", ethos: "gravis", … }, … }
 ```
 
@@ -407,6 +416,17 @@ interface ModeData {
     fifth: [number, number];
     fourth: [number, number];
   };
+}
+
+interface TunedNote {
+  pitch: Pitch; // tuned through the temperamentum
+  step: Step; // Guidonian annotation
+}
+
+interface Modus extends ModeData {
+  finalis: TunedNote; // the final, tuned
+  reciting: TunedNote; // the tenor / reciting tone, tuned
+  ambitusNotes: TunedNote[]; // every diatonic step across the mode's range
 }
 ```
 

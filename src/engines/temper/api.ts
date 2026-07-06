@@ -47,6 +47,24 @@ export interface Tonus {
   terminatio: Pitch[];  // termination cadence (per differentia)
 }
 
+/** A pitch resolved through the tuning, with its Guidonian annotation. */
+export interface TunedNote {
+  pitch: Pitch;
+  step: Step;
+}
+
+/**
+ * A mode's reference data (ModeData), enriched with its structural pitches
+ * tuned through the temperamentum that returned it. `modus()`. Cadence figures
+ * stay in their diatonic-step form on `cadences` — they are transposition-
+ * relative by design.
+ */
+export interface Modus extends ModeData {
+  finalis: TunedNote;         // the final, tuned
+  reciting: TunedNote;        // the tenor / reciting tone, tuned
+  ambitusNotes: TunedNote[];  // every diatonic step across the mode's range
+}
+
 export interface Temperamentum {
   tuning: Tuning;
   mode: number | "auto";
@@ -63,7 +81,7 @@ export interface Temperamentum {
   neuma(inputs: PitchInput[]): Neume;
   ratio(input: string): RatioResult & { step: Step | null };
   gamut(opts?: GamutOptions): Pitch[];
-  modus(mode: number): ModeData;
+  modus(mode: number): Modus;
   tonus(opts?: TonusOpts): Tonus;
 }
 
@@ -177,8 +195,27 @@ export function buildTemper(input?: TemperamentumInput): Temperamentum {
       return buildGamut(scala, gamutOpts);
     },
 
-    modus(mode: number): ModeData {
-      return getMode(mode);
+    modus(mode: number): Modus {
+      const data = getMode(mode);
+      // The mode's degrees are stored as semitone offsets from C (pc 0), with
+      // values past 12 in the upper octave. Anchor them at C4 (MIDI 60).
+      const tuned = (offset: number): TunedNote => ({
+        pitch: toPitch(60 + offset, scala),
+        step: toStep(60 + offset, scala),
+      });
+
+      const scaleSet = new Set(data.scalePcs);
+      const ambitusNotes: TunedNote[] = [];
+      for (let off = data.ambitus.lowest; off <= data.ambitus.highest; off++) {
+        if (scaleSet.has(((off % 12) + 12) % 12)) ambitusNotes.push(tuned(off));
+      }
+
+      return {
+        ...data,
+        finalis: tuned(data.final),
+        reciting: tuned(data.tenor),
+        ambitusNotes,
+      };
     },
 
     tonus(tonusOpts?: TonusOpts): Tonus {

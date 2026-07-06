@@ -513,6 +513,40 @@ describe("modus", () => {
     assert.equal(t.modus(5).final, t.modus(6).final); // Tritus
     assert.equal(t.modus(7).final, t.modus(8).final); // Tetrardus
   });
+
+  test("tunes the finalis and tenor through the temperamentum", () => {
+    const m = buildTemper({ mode: 3 }).modus(3);
+    // Deuterus: final Mi = E4, tenor C4.
+    assert.equal(m.finalis.pitch.spn, "E4");
+    assert.equal(m.finalis.step.role, "finalis");
+    assert.equal(m.reciting.pitch.spn, "C4");
+    assert.equal(m.reciting.step.role, "tenor");
+  });
+
+  test("the temperament reaches the tuned mode data", () => {
+    const pyth = buildTemper({ mode: 3, tuning: "pythagorean" }).modus(3);
+    const equal = buildTemper({ mode: 3, tuning: "equal" }).modus(3);
+    // Same note name, different tuned frequency.
+    assert.equal(pyth.finalis.pitch.spn, equal.finalis.pitch.spn);
+    assert.notEqual(pyth.finalis.pitch.hz, equal.finalis.pitch.hz);
+  });
+
+  test("ambitusNotes walk the mode's diatonic range", () => {
+    const m = buildTemper({ mode: 3 }).modus(3);
+    // Deuterus authentic: E4 up to E5, diatonic.
+    const spns = m.ambitusNotes.map((n) => n.pitch.spn);
+    assert.equal(spns[0], "E4");
+    assert.equal(spns.at(-1), "E5");
+    // Every note is in the mode's scale (a Guidonian step with a degree).
+    for (const n of m.ambitusNotes) assert.ok(n.step.degree >= 1 && n.step.degree <= 7);
+  });
+
+  test("keeps the raw ModeData fields (Modus extends ModeData)", () => {
+    const m = buildTemper({ mode: 1 }).modus(1);
+    assert.equal(m.nomen, "Protus Authenticus");
+    assert.equal(m.final, 2); // raw pc still present
+    assert.ok(Array.isArray(m.cadences)); // diatonic cadence figures untouched
+  });
 });
 
 describe("tonus", () => {

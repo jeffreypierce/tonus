@@ -17,7 +17,7 @@ import type {
 import type {
   TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts,
   Pitch, PitchInput, Step, Neume, NeumeShape,
-  Interval, ModeData, CadenceFigure, GamutOptions, Tonus, TonusOpts,
+  Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
 } from "./engines/temper/api.js";
 import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
@@ -77,7 +77,7 @@ export type {
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
-  Interval, ModeData, CadenceFigure, GamutOptions, Tonus, TonusOpts,
+  Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   Cadence, CadenceTarget, CadenceApproach, Modulation,
   MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent,
