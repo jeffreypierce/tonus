@@ -22,8 +22,8 @@ export interface Modulation {
 
 // How much a foreign mode must outscore the home mode (in normalised affinity)
 // before a phrase counts as leaning away. Calibrated against Suñol's worked
-// examples: at 0.25 the modulations he names in Christus resurgens (to mode 3)
-// register, while incidental modal colouring below that does not.
+// examples [biblio: sunol-textbook]: at 0.25 the modulations he names in Christus
+// resurgens (to mode 3) register, while incidental colouring below that does not.
 const MARGIN = 0.25;
 
 /** The pitch-class distribution of one phrase's notes (fractions summing to 1). */

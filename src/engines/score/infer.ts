@@ -5,6 +5,10 @@ import type { ChantType, Score, OrdinaryCode, OfficeCode } from "./types.js";
 import { OFFICE_LABELS } from "../chant/types.js";
 import { MODES } from "../temper/modes.js";
 
+// Identify an ordinary chant by its opening words. Two movements have a second,
+// interior incipit because they are conventionally intoned from their second
+// phrase: the Gloria's "Et in terra pax" (the celebrant sings "Gloria in
+// excelsis") and the Credo's "Patrem omnipotentem" ("Credo in unum Deum").
 const ORDINARY_INCIPITS: Array<[RegExp, OrdinaryCode]> = [
   [/^kyrie/i, "ky"],
   [/^gloria/i, "gl"],
@@ -44,6 +48,9 @@ export function inferMode(ir: Score): number | undefined {
   }
   if (midis.length === 0) return undefined;
 
+  // The finalis is the last note of the chant — the fundamental assumption of
+  // modal analysis: a chant comes to rest on its mode's final [biblio:
+  // liber-usualis]. That pitch class picks the maneria (mode pair).
   const finalisPc = ((midis[midis.length - 1] % 12) + 12) % 12;
 
   const candidates: number[] = [];
@@ -53,7 +60,12 @@ export function inferMode(ir: Score): number | undefined {
   if (candidates.length === 0) return undefined;
   if (candidates.length === 1) return candidates[0];
 
-  // Authentic vs plagal: melody mean above finalis → authentic
+  // Within a maneria the authentic mode ranges a fifth-and-more ABOVE the final,
+  // the plagal one straddles it (roughly a fourth below to a fifth above) [biblio:
+  // sunol-textbook]. So the mean pitch's height above the final separates them.
+  // The thresholds are asymmetric and tuned: a melody must sit a clear +3
+  // semitones above the final to read authentic, but only dip −1 below to read
+  // plagal (plagal melodies dip under the final; authentic ones rarely do).
   const finalisStep = midis[midis.length - 1];
   const mean = midis.reduce((s, v) => s + v, 0) / midis.length;
   const offset = mean - finalisStep;

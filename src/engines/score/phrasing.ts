@@ -86,6 +86,9 @@ export function buildPhrasing(
   };
 }
 
+// Authentic modes reach a fifth or more above the final and pull harder toward
+// their tenor/reciting note; plagal modes straddle the final and pull less
+// [biblio: sunol-textbook]. These nudge the tenor and cadence gains accordingly.
 const MODE_TYPE_TENOR_MULTIPLIER: Record<ModeData["type"], number> = {
   authentic: 1.08,
   plagal: 0.92,
@@ -96,6 +99,7 @@ const MODE_TYPE_CADENCE_MULTIPLIER: Record<ModeData["type"], number> = {
   plagal: 0.95,
 };
 
+// A more melismatic mode leans into its cadences; a syllabic one under-plays them.
 const MODE_TENDENCY_CADENCE_MULTIPLIER: Record<
   ModeData["profile"]["tendency"],
   number
@@ -106,6 +110,13 @@ const MODE_TENDENCY_CADENCE_MULTIPLIER: Record<
   neutral: 1.0,
 };
 
+// The modal ethos → performance mapping. Each mode carries a mood epithet (the
+// Niedermeyer & d'Ortigue tradition [biblio: niedermeyer-ortigue], stored on
+// ModeProfile in modes.ts); these translate that mood into small shaping deltas.
+// The interpretation is tonus's own — the epithets are sourced, these numbers
+// are a tuned editorial gesture, deliberately small. Note the coherence: sadder
+// moods drop the velocity floor AND deepen the phrase curve (below), so they
+// read quieter and more arched; brighter moods do the reverse.
 const MODE_MOOD_BASE_VELOCITY_DELTA: Record<string, number> = {
   neutral: 0,
   serious: -0.01,
@@ -211,11 +222,19 @@ const DURATION_MIN = 0.2;
 const DURATION_MAX = 4.0;
 
 const TENOR_GAIN = 0.05;
+// Tenor pull falls linearly with pitch-class distance from the reciting tone and
+// reaches zero at 6 semitones (a tritone) — the far side of the octave, past
+// which a note no longer reads as gravitating to the tenor.
 const TENOR_DISTANCE_DIVISOR = 6;
 
 const CADENCE_VELOCITY_FACTOR = 0.5;
 const CADENCE_DURATION_FACTOR = 0.6;
 
+// The phrasing-side reading of the divisio (bar-line) hierarchy. This is the same
+// bar hierarchy tabulated canonically in docs/score.md and weighted for analysis
+// by prosody.ts's cadenceWeight ladder — but here the weights differ on purpose:
+// this is a *shaping* factor, so the virgula (`) gets 0 (a breath, no cadential
+// stress), where the analytic ladder still counts it. Do not unify the three.
 const DIVISIO_STRENGTH: Record<string, number> = {
   "::": 1.0,
   ":": 0.7,
@@ -300,9 +319,16 @@ export function applyPhrasing(
       const arsisRelative = (arsis - minArsis) / arsisSpan;
       const contourRelative = (note.pitch.midi - minStep) / stepSpan;
 
+      // A raised-cosine (Hann) window over the phrase: 0 at the ends, 1 at the
+      // middle, so each phrase swells and subsides — the Solesmes grand rythme,
+      // the phrase-arch [biblio: mocquereau-nombre]. `t` is the note's fractional
+      // position through the phrase.
       const t = (order + 0.5) / (noteEntries.length + 0.0001);
       const arch = 0.5 - 0.5 * Math.cos(2 * Math.PI * t);
 
+      // Blend the note's intrinsic arsic weight against its positional arch;
+      // `curve` is the mix knob (0 = follow the note's own weight, 1 = follow the
+      // phrase arch). The result is then re-centred on 0.5 and spread by velSpread.
       let velocity = arsisRelative * (1 - profile.curve) + arch * profile.curve;
       velocity += (contourRelative - VELOCITY_CENTER) * profile.contourVel;
       velocity =

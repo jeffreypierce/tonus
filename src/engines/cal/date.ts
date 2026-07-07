@@ -63,6 +63,11 @@ export function parseMonthDay(year: number, mmdd: string): Date {
 }
 
 // ── Easter ──
+// Split at the Gregorian reform (1583): from 1583 on, the Gauss/Butcher
+// Gregorian computus; before it, the classical 19-year Julian cycle with a
+// Julian→Gregorian day-number conversion [biblio: computus]. This keeps Easter
+// correct for date queries reaching back into the medieval period — the era the
+// calendar is built for (see the era note in ./calendar.ts).
 export function pascha(year: number): Date {
   if (year < 1583) return paschaJulian(year);
   const t = Math.trunc;

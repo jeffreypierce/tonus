@@ -14,7 +14,6 @@ summarized in [Theory & Context](#theory--context).
   - [The planetary vowels](#the-planetary-vowels)
   - [The tabula](#the-tabula)
   - [Theory \& Context](#theory--context)
-  - [Sources](#sources)
 
 ## The heavens — `caelum`
 
@@ -132,10 +131,13 @@ interface Aspect {
 
 ## The voiced heavens — `harmonia`
 
-`harmonia(cosmos, opts?)` voices the sky through a doctrina. The result is
-pure data: each visible planet becomes a `VoicedBody` with a tuned pitch
-and a Greek vowel; each aspect gains the `Interval` its angle sounds, with
-its consonance grade. Range input populates `frames`, one per cosmos.
+This is the music of the spheres: the old idea that each planet sounds a tone
+and the heavens together make a chord. `harmonia(cosmos, opts?)` gives each
+body a pitch and a Greek vowel according to a **doctrina** — a named historical
+scheme for who sounds what (Pythagoras, Boethius, Pliny, Ptolemy). The result
+is pure data: each visible planet becomes a `VoicedBody` with a tuned pitch and
+a Greek vowel; each aspect gains the `Interval` its angle sounds, with its
+consonance grade. Range input populates `frames`, one per cosmos.
 
 ```js
 const sky = tonus.caelum({ date: new Date("2026-12-25") });
@@ -304,17 +306,14 @@ interface HarmonyTabulaRow {
 
 ## Theory & Context
 
-The doctrina ratios are reconstructed from primary texts through Joscelyn
-Godwin's syntheses: _Harmonies of Heaven and Earth_ (1987) for the
-taxonomy of planetary scale types and per-author analyses, _The Harmony of
-the Spheres_ (1993) for the primary translations. For each author, the
-Greek tonal framework is identified — conjunct or disjunct tetrachords, or
-the fixed tones of the Greater Perfect System — the bodies are mapped to
-Greek tone-names from the source's explicit assignments, and the ratios
-are derived by Pythagorean interval arithmetic (tone 9/8, limma 256/243,
-fourth 4/3, fifth 3/2), normalized to the mese (Sun = 1/1), and verified
-computationally for span and closure. The same arithmetic is laid out from
-the tuning side in [tuning.md](tuning.md#theory--context).
+The doctrina ratios are reconstructed from the primary texts through
+Joscelyn Godwin's syntheses, mapping each body to a Greek tone-name and
+deriving its ratio by Pythagorean interval arithmetic normalized to the
+mese (Sun = 1/1). The full method, the taxonomy, and the decisions taken
+along the way are documented at the data — see `DOCTRINAE` in
+[`harmonia/data/doctrines.ts`](../src/engines/harmonia/data/doctrines.ts).
+The same arithmetic is laid out from the tuning side in
+[tuning.md](tuning.md#theory--context).
 
 The resulting ratios, by sphere from the outermost:
 
@@ -332,53 +331,15 @@ The resulting ratios, by sphere from the outermost:
 
 The single pitch separating Pythagoras from Boethius is Venus: a whole
 tone above the Sun in the disjunct system (9/8, B durum), a semitone in
-the conjunct (256/243, B molle) — the origin of the distinction that runs
-through all of medieval music theory.
-
-Decisions recorded from the derivation:
-
-- Boethius transmits Nicomachus's ratios; tonus credits the doctrina to
-  Boethius as the medieval authority.
-- Pliny's Sun sits at _hypate meson_, not the Greek mese; tonus keeps the
-  Sun as the structural center regardless, and `greekName` reflects
-  Pliny's actual position.
-- Ptolemy's aspect–consonance mapping carries into interval grading — a
-  Jupiter–Sun aspect sounds a fifth, Mars–Sun a tone.
-- Pythagoras's Fixed Stars complete the octave in the data but are never
-  voiced: no `caelum` body, no classical vowel.
-- Voices are stored in sphere order, outermost first; sort by ratio for
-  scale views.
-
-The full derivations, tetrachord structures, step-by-step arithmetic,
-verification, and the manuscript questions are archived in the
-project's working files (gitignored).
+the conjunct (256/243, B molle) — the origin of the durum/molle
+distinction that runs through all of medieval music theory. The editorial
+decisions behind the table (why Boethius carries Nicomachus's ratios, how
+Pliny's off-mese Sun is handled, the Fixed Stars left unvoiced) are
+recorded in the code beside the data.
 
 ## Sources
 
-- Godwin, Joscelyn. _Harmonies of Heaven and Earth: The Spiritual Dimension
-  of Music from Antiquity to the Avant-Garde_. London: Thames & Hudson,
-  1987 — planetary scale taxonomy (Types A/B/C) and per-author analyses.
-- Godwin, Joscelyn, ed. _The Harmony of the Spheres: A Sourcebook of the
-  Pythagorean Tradition in Music_. Rochester, VT: Inner Traditions, 1993 —
-  primary-source translations used to verify ratio and tone-name claims.
-- Godwin, Joscelyn. _The Mystery of the Seven Vowels in Theory and
-  Practice_. Grand Rapids: Phanes Press, 1991 — planetary vowel
-  attestations; Moon→Saturn vowel order after Nicomachus.
-- Boethius. _De institutione musica_ I.27 (c. 524) — conjunct diatonic
-  planetary scale, transmitting Nicomachus; the medieval standard.
-- Nicomachus of Gerasa. _Manual of Harmonics_ (c. 100) and _Excerpta ex
-  Nicomacho_ — planetary tone assignments and vowel order.
-- Plato. _Republic_ X, 617b (Myth of Er) — the Sirens of the spheres.
-- Pliny the Elder. _Naturalis historia_ II.xx (c. 77) — distance-based
-  chromatic planetary scale; octave closure per Censorinus and Theon of
-  Smyrna.
-- Ptolemy. _Harmonics_ III and the Canobic Inscription (c. 150) — Greater
-  Perfect System tone assignments and aspect–consonance mapping.
-- Vowel–planet attestations: Porphyry, Marcus Gnosticus, Demetrius of
-  Phaleron, Eusebius of Caesarea, Barthélemy of Edessa (via Godwin 1991).
-- Standish, E. M. "Keplerian Elements for Approximate Positions of the
-  Major Planets." JPL Solar System Dynamics, 1992 (updated for DE430).
-  <https://ssd.jpl.nasa.gov/planets/approx_pos.html>.
-- Schlyter, Paul. "Computing planetary positions — a tutorial with worked
-  examples." Stjärnhimlen —
-  <https://www.stjarnhimlen.se/comp/tutorial.html>.
+Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+`godwin-harmonies`, `godwin-spheres`, `godwin-vowels`, `boethius-institutione`,
+`doctrina-primaries` (Nicomachus, Plato, Pliny, Ptolemy, and the vowel
+attestations), `standish-jpl`, `schlyter-positions`.

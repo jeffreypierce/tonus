@@ -17,7 +17,6 @@ queries reaching into the medieval period stay correct.
   - [The year's anchors — `pascha`](#the-years-anchors--pascha)
   - [Theory \& Context](#theory--context)
     - [The calendar's era](#the-calendars-era)
-  - [Sources](#sources)
 
 ## The day's feasts — `festum`
 
@@ -227,30 +226,17 @@ interface Pascha {
 
 ### The calendar's era
 
-The calendar's structure is medieval: the temporale from Advent through
-the season after Pentecost, including pre-Lenten Septuagesima; the
-eight-hour office cursus; the duplex/semiduplex/simplex dignity system. The data, however,
-is the Tridentine codification (1570–1962) via Divinum Officium —
-substantially continuous with late-medieval Roman usage, yet including
-feasts instituted as late as the 1950s (Queenship of Mary 1954, Immaculate
-Heart 1944). tonus keeps these rather than adjudicate each feast's
-century. The accurate description is "Tridentine Roman, continuous with
-medieval practice," not "a medieval calendar."
+The calendar's structure is medieval: the temporale from Advent through the
+season after Pentecost (Septuagesima included), the eight-hour office cursus,
+and the duplex/semiduplex/simplex dignity system. The data, though, is the
+Tridentine codification (1570–1962) via Divinum Officium, continuous with
+late-medieval usage but carrying feasts as recent as the 1950s. The accurate
+description is "Tridentine Roman, continuous with medieval practice," not "a
+medieval calendar." Why those later feasts are kept rather than pruned is
+recorded in the code — see the era note at
+[`cal/calendar.ts`](../src/engines/cal/calendar.ts).
 
 ## Sources
 
-- **Divinum Officium** — the 1570–1962 Roman Breviary and Missal in
-  machine-readable form.
-  <https://github.com/DivinumOfficium/divinum-officium>. Source of the
-  calendar entries, feast names, ranks (`ritus`), and the Tempora stem
-  structure the seasons follow.
-- Easter computus: the Gregorian algorithm (Gauss/Butcher) and, before
-  1583, the classical 19-year Julian cycle with Julian→Gregorian
-  day-number conversion — see
-  [Computus](https://en.wikipedia.org/wiki/Computus).
-- Wikipedia: [Tridentine calendar](https://en.wikipedia.org/wiki/Tridentine_calendar),
-  [Ranking of liturgical days in the Roman Rite](https://en.wikipedia.org/wiki/Ranking_of_liturgical_days_in_the_Roman_Rite)
-  — the grade precedence background.
-- _The Liber Usualis, with Introduction and Rubrics in English_. Ed. the
-  Benedictines of Solesmes. Tournai: Desclée, 1961 — the rubrics governing
-  rank and season observance.
+Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+`divinum-officium`, `computus`, `liber-usualis`, `wikipedia-calendar`.

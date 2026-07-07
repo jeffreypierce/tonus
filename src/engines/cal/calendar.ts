@@ -1,6 +1,21 @@
 // ---------------------------------------------------------------------------
 // engines/cal/calendar — liturgical feast lookup
 // ---------------------------------------------------------------------------
+// The era, and why it is what it is. The calendar's *structure* is medieval —
+// the temporale from Advent through the season after Pentecost (Septuagesima
+// included), the eight-hour office cursus, the duplex/semiduplex/simplex
+// dignity system. The *data* is the Tridentine codification (1570–1962) drawn
+// from Divinum Officium [biblio: divinum-officium], substantially continuous
+// with late-medieval Roman usage but carrying feasts instituted as late as the
+// 1950s (Queenship of Mary 1954, Immaculate Heart 1944).
+//
+// Decision: those post-medieval feasts are KEPT, not pruned. Pruning would
+// break the DO data's integrity and demand per-feast historical adjudication;
+// instead tonus states its actual era plainly. The honest description is
+// "Tridentine Roman, continuous with medieval practice" — not "a medieval
+// calendar." (Per-feast era metadata — medieval / tridentine / modern — is
+// noted as future work.) The rank system this data carries is documented at
+// `ritus`/`Grade` in ./types.ts; Easter reckoning at pascha() in ./date.ts.
 import { CAL, type CalEntry } from "../../data/cal.js";
 import { MASSES } from "../../data/masses.js";
 import {

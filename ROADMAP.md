@@ -81,4 +81,7 @@ analysis. What remains:
   concern: extracting Hildegard von Bingen's chant once the `hildegabc` critical
   edition is ready. It would likely surface in tonus as a new `hildegardis()`
   method as composer-specific retrieval.
+- **Fludd and Kepler doctrinae.** Two more planetary-harmony systems for
+  `harmonia` — heliocentric frames working from monochord string-length data,
+  where the four current doctrinae are geocentric and interval-based.
 - **Out of scope.** NABC / St. Gall / Leon notation; polyphony and organum (for now).

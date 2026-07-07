@@ -43,9 +43,9 @@ export interface Cadence {
   notes: Array<[number, number, number]>;
 }
 
-// Cadence formulae run four to ten notes (Homan, Cadence in Gregorian Chant,
-// 1961, p. xiii). Take a window at the upper end so the longest figures fit,
-// with room for the approach; tail-matching ignores the extra leading notes.
+// Cadence formulae run four to ten notes [biblio: homan-cadence, p. xiii]. Take
+// a window at the upper end so the longest figures fit, with room for the
+// approach; tail-matching ignores the extra leading notes.
 const WINDOW = 8;
 
 interface WindowNote {

@@ -2,6 +2,10 @@
 // engines/temper/data/modes — eight Gregorian modes (I–VIII)
 // ---------------------------------------------------------------------------
 
+// The character medieval theory ascribed to each mode. The Latin epithets —
+// gravis, tristis, mysticus, harmonicus, laetus, devotus, angelicus, perfectus —
+// are Niedermeyer & d'Ortigue's [biblio: niedermeyer-ortigue]; `mood` is their
+// English gloss. `phrasing`/`melodic`/`tendency` shape score interpretation.
 export interface ModeProfile {
   mood: string;    // English gloss of the ethos
   ethos: string;   // traditional Latin epithet: gravis, tristis, mysticus, …
@@ -10,8 +14,27 @@ export interface ModeProfile {
   tendency: "melismatic" | "neumatic" | "syllabic" | "neutral";
 }
 
-// A melodic cadence figure — see docs/tuning.md#cadence-figures.
-// Figures resolve onto the finalis; `id` is the solmization ("sol-fa-re").
+// A melodic cadence figure: a shape a mode's phrases characteristically close
+// on. `id` is the solmization ("sol-fa-re"); `steps` are DIATONIC steps relative
+// to the final — 0 is the final, -1 the note below, +2 a third above — the
+// resolution (0) last. Steps, not absolute pitches, for two reasons: the
+// treatises write cadences that way ("re-do-re"), and a step-figure matches a
+// chant whether it sits on its regular final or a transposed one. The score
+// engine (score/cadence.ts) reads these to name a phrase's cadence.
+//
+// The catalogue is an editorial synthesis, not a transcription of any one book —
+// drawn chiefly from Niedermeyer & d'Ortigue [biblio: niedermeyer-ortigue], who
+// give cadences in square notation per mode, and cross-checked against Bragers
+// [biblio: bragers-treatise]; Suñol [biblio: sunol-textbook] corroborates the
+// dominants. All four maneriae are populated (see the per-maneria comments
+// below). The figures are shared across each authentic/plagal pair, because the
+// source classes cadences by maneria, not by the eight modes.
+//
+// Two known gaps. Every figure resolves onto the FINALIS; genuine tenor-resting
+// medial cadences are not yet catalogued (they need Homan's genre-by-mode tables
+// [biblio: homan-cadence], which we don't have in full). And a chromatic cadence
+// note — the subsemitonium, B-flat vs B-natural — falls outside `scalePcs`, so
+// the matcher drops it; a later refinement.
 export interface CadenceFigure {
   id: string;        // solmization, e.g. "sol-fa-re"
   steps: number[];   // diatonic steps relative to the final; resolution (0) last
@@ -29,8 +52,16 @@ export interface ModeData {
   hexachords: ("durum" | "naturale" | "molle")[];
   profile: ModeProfile;
   cadences: CadenceFigure[];   // characteristic cadence figures
-  // Tonal centres and openings, each list in order of importance (after
-  // Rockstro's Grove table — see docs/tuning.md). >12 = upper octave.
+  // Tonal centres and openings, after Rockstro's Grove table
+  // [biblio: rockstro-grove]. Each list is ORDERED BY IMPORTANCE — Rockstro's
+  // principle is that a mode's characteristic notes are given "in the order in
+  // which we have mentioned them." So `regular` runs final, dominant, then lesser
+  // centres; `initials` from the most characteristic opening downward (Rockstro
+  // footnotes some as "barely used" or used "chiefly in polyphonic music"). The
+  // modal-affinity scorer (score/modality.ts) reads this order: a chant opening
+  // on a mode's primary initial counts for more than one on a low-ranked initial,
+  // which is what separates an authentic mode from its plagal twin on a shared
+  // finalis. Pitch classes, C=0; a value >12 is the upper octave.
   modulations: {
     regular: number[];   // principal tonal centres (final, dominant, then others)
     conceded: number[];  // secondary centres, permitted but less characteristic
@@ -85,6 +116,9 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [2, 4, 5, 7, 9, 11, 0],
       hexachords: ["naturale"],
       profile: { mood: "sad", ethos: "tristis", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
+      // Shared with mode 1 (both Protus). An earlier seed here was wrong — a copy
+      // of mode 5's figures, landing on F with an Ab outside hypodorian's scale;
+      // Suñol's tables surfaced it, and it was corrected to the Protus descent.
       cadences: [
         { id: "mi-re", steps: [1, 0] },
         { id: "ut-re", steps: [-1, 0] },

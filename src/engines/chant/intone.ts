@@ -1,6 +1,11 @@
 // ---------------------------------------------------------------------------
 // engines/chant/intone — GABC generation for psalm verses sung to psalm tones
 // ---------------------------------------------------------------------------
+// Psalmody structure follows the Liber Usualis rules [biblio: liber-usualis]:
+// each verse is intonation → tenor (reciting note) → mediation → final cadence,
+// with the flex a subdivision of a long first half. The intonation is sung on
+// the first verse only (unless repeated, as in the Magnificat) — see the
+// `intonation` option; `inDirectum` recites straight through with no mediant.
 import { syllabifyPhrase } from "./syllabify.js";
 import { getTone, getDifferentia } from "../../data/tones.js";
 import { midiToGabc } from "../temper/gabc.js";

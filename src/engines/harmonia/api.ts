@@ -1,6 +1,13 @@
 // ---------------------------------------------------------------------------
-// engines/harmonia/api — voice the sky through a planetary-harmony doctrina
+// engines/harmonia/api — the music of the spheres
 // ---------------------------------------------------------------------------
+// This is the "harmony of the spheres" (musica universalis): the ancient idea
+// that each planet sounds a tone, and the heavens together make a chord. harmonia
+// takes a Cosmos (the planets' positions at a moment, from the planet engine) and
+// gives each body a pitch and a Greek vowel, according to a chosen *doctrina* — a
+// named historical scheme for who sounds what, handed down from Pythagoras,
+// Boethius (the default), Pliny, or Ptolemy. The per-scheme details live in
+// data/doctrines.ts; this file voices a Cosmos through the one selected.
 import type { Cosmos } from "../planet/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import { buildTemper } from "../temper/api.js";
@@ -53,6 +60,14 @@ function resolveScale(temper: Temperamentum | undefined): Scale {
   return buildRatios();
 }
 
+// Reduce a time range's per-frame voicings to one aggregate body list for the
+// top-level `bodies`. Note the deliberate asymmetry: the DYNAMICS (presence,
+// motion) are mean-averaged across the range, but the REPRESENTATIVE identity —
+// pitch, vowel, zodiac, retrograde — is taken from the first frame, not averaged
+// (a pitch has no meaningful mean, and averaging a wrapping zodiac longitude is
+// nonsense). So an aggregate body sounds the range's *starting* pitch with its
+// *mean* loudness. Callers wanting the pitch to track the range should read the
+// per-frame `frames` instead. (Aspects are likewise taken from frame 0; see below.)
 function averageBodies(frames: VoicedBody[][]): VoicedBody[] {
   if (frames.length === 0) return [];
   if (frames.length === 1) return frames[0]!;
@@ -111,6 +126,9 @@ export function buildHarmonia(
   }
 
   const aggregateBodies = averageBodies(perCosmosBodies);
+  // Aspects are the first frame's, not merged across the range — an aspect forms
+  // and dissolves over time, so there is no meaningful "average" set. Like the
+  // representative pitch above, this reflects the range's start.
   const aggregateAspects = frames[0]?.aspects ?? [];
   const imprint = computeImprintFromBodies(aggregateBodies, scale);
 

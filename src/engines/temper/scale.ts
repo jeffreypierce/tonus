@@ -1,6 +1,24 @@
 // ---------------------------------------------------------------------------
 // engines/temper/scale — tuning ratio builder
 // ---------------------------------------------------------------------------
+// Builds the 12 pitch-class ratios for a temperament. The default is pure
+// Pythagorean — all intervals from the 3/2 fifth and the octave — because that
+// is the tuning of medieval theory from Boethius through the Guidonian gamut
+// [biblio: boethius-institutione, guidonian-gamut], and it is correct for
+// unaccompanied chant: melodic fifths/fourths are perfect, the narrow limma
+// (256/243) gives half-steps a keen leading quality, and the wide Pythagorean
+// third (81/64) never has to serve as a consonance.
+//
+// `comma` tempers the fifth toward meantone by narrowing it by a fraction of
+// the syntonic comma (81/80, the gap between the Pythagorean and pure 5/4
+// third): comma "1/4" stacks four fifths to a pure major third — quarter-comma
+// meantone, the 16th-century sound.
+//
+// The `steps` presets supply just-intonation genera in place of the tempered
+// fifth: the three Ptolemaic diatonics (intense/soft/equable, his χρόαι
+// "shades") come straight from Ptolemy's tetrachord divisions [biblio:
+// ptolemy-harmonics, Harmonics I.15–16]. See expandDiatonicSteps for how a
+// 7-ratio genus is laid onto the fixed gamut, and why.
 
 import { MODES } from "./modes.js";
 
@@ -146,8 +164,15 @@ export function parseScala(input: string): ScalaFile {
 
 const PURE_FIFTH = 3 / 2;
 const SYNTONIC_COMMA = 81 / 80;
+// The circle of fifths, as chromatic pitch classes: C G D A E B F♯ … stacking
+// twelve 3/2s. buildPythagoreanRatios walks this and octave-folds each.
 const FIFTH_TO_CHROM = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 
+// Ptolemy's three diatonic genera [biblio: ptolemy-harmonics, Harmonics I.15–16],
+// each a tetrachord (1/1 … 4/3) doubled up a 3/2 to fill the octave:
+//   intense (syntonon)  — classical just intonation: pure 5/4 major, 6/5 minor.
+//   soft (malakon)      — septimal: the 7th harmonic gives a large 8/7 whole tone.
+//   equable (homalon)   — undecimal: near-equal ~150–182¢ steps.
 const PTOLEMAIC: Record<string, string[]> = {
   "ptolemy-intense": ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8"],
   "ptolemy-soft":    ["1/1", "8/7", "80/63", "4/3", "3/2", "12/7", "40/21"],
@@ -183,8 +208,14 @@ const NATURAL_PCS = [0, 2, 4, 5, 7, 9, 11];
 // pitch order — NOT onto the mode's scalePcs. A church mode is an octave
 // species of this one gamut, so its interval qualities emerge from *where the
 // final sits within the fixed tuning*, handled downstream by normalizeToRoot.
-// (Mapping degree-per-mode instead would force major-scale qualities — e.g.
-// a 5/4 major third above every final — onto every mode; see docs/tuning.md.)
+// This yields the authentic per-mode qualities (a Dorian minor third, a
+// Mixolydian ♭7) and the honest syntonic wolf (D–A = 40/27 under
+// ptolemy-intense).
+//
+// Mapping the genus degree-per-mode onto scalePcs instead would force
+// major-scale qualities — a 5/4 major third above *every* final — onto every
+// mode. Re-deriving a per-mode just intonation would attribute a modern just
+// tuning to Ptolemy, who described tetrachord divisions, not modal scales.
 function expandDiatonicSteps(diatonic: number[]): number[] {
   const base = buildPythagoreanRatios(0);
   const out = base.slice();

@@ -98,6 +98,11 @@ export function computeProsody(phrases: Phrase[]): Prosody {
     }
 
     if (phrase.divisio) {
+      // Analytic bar-importance weights, one rung per divisio in the bar-line
+      // hierarchy (the canonical table is in docs/score.md). These are a
+      // MEASUREMENT — every divisio counts, including the virgula (`) — distinct
+      // from phrasing.ts's DIVISIO_STRENGTH, which zeroes the virgula because it
+      // is a shaping factor, not a count.
       const d = phrase.divisio.divisio;
       if      (d === "::") { cadDist.doubleBar++; cadenceWeight += 1.5; }
       else if (d === ":")  { cadDist.colon++;     cadenceWeight += 1.0; }
