@@ -7,6 +7,7 @@ import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
 import { LH_DATA, LH_SOURCE } from "../../data/lh.js";
+import { AM_DATA, AM_SOURCE } from "../../data/am.js";
 
 function modusOf(mode: string | null): string | null {
   return mode != null ? (MODE_LABELS[mode] ?? null) : null;
@@ -75,6 +76,7 @@ const CORPUS: Chant[] = [
   ...LU_DATA.map((c) => withLabels(c, LU_SOURCE)),
   ...LA_DATA.map((c) => withLabels(c, LA_SOURCE)),
   ...LH_DATA.map((c) => withLabels(c, LH_SOURCE)),
+  ...AM_DATA.map((c) => withLabels(c, AM_SOURCE)),
 ];
 
 let _byId: Map<string, Chant> | null = null;
