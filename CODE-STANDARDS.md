@@ -114,9 +114,34 @@ const _calCache = new Map<number, Map<string, CalEntry[]>>();
 
 ---
 
-## Comments
+## Comments — the code is authoritative
 
-Only where logic is non-obvious. No docstrings on self-evident functions.
+The code is the authoritative source for **how a thing is calculated, why, and
+from what source.** The theory behind an algorithm, the editorial decisions, and
+the provenance of data (which treatise a figure came from, why a value was
+chosen) live in the code, next to the code they explain — not in a separate
+document that drifts. Two forms, by weight:
+
+- **Module-header doc-comments** carry the big-picture theory or doctrine for a
+  file — e.g. the Solesmes arsis/thesis model atop the rhythm classifier, the
+  derivation methodology atop a data module.
+- **Inline blocks** sit at specific non-obvious decisions — e.g. the Grove
+  ordering rationale next to the `modulations` data, the margin calibration next
+  to the modulation threshold.
+
+Data files carry the provenance of their data next to the data. Judgment governs
+which detail goes where.
+
+This is not license to comment the self-evident (`i++ // increment`). It is the
+*reasoning and sourcing* a maintainer or curious reader needs, at the code. A
+comment still never merely restates a signature.
+
+Cite sources by key into the central bibliography (see Documentation):
+
+```ts
+// Cadence figures, after Niedermeyer & d'Ortigue [biblio: niedermeyer-ortigue],
+// cross-checked against Bragers [biblio: bragers-treatise].
+```
 
 Use inline trailing comments for interface fields:
 
@@ -127,6 +152,17 @@ interface Note {
   acc: number; // -1 flat, 0 natural, 1 sharp
 }
 ```
+
+---
+
+## Documentation
+
+Code is level 3 of a three-level documentation ladder (interactive → `docs/*.md`
+→ code), each level linking down into the next; code is the bottom of the well,
+holding the deepest material. The `## Comments` rules above are how that plays out
+in `src/`. The whole model — the three levels, the centralized bibliography, and
+the one-voice-three-volumes register — is owned by **`DOCS-STANDARDS.md`**. Read
+it before writing prose at any level, including code comments.
 
 ---
 

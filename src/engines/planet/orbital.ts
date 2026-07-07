@@ -1,8 +1,15 @@
 // ---------------------------------------------------------------------------
 // engines/planet/orbital — JPL Keplerian elements for 8 solar system bodies
 // ---------------------------------------------------------------------------
-// Source: Standish 1992 / DE430
-// Two datasets per body: [0] = 3000 BC–3000 AD, [1] = 1800–2050 AD (preferred)
+// Standish's Keplerian element tables [biblio: standish-jpl] (1992 / DE430).
+//
+// Two element sets per body, a coverage-vs-accuracy trade: [0] is fitted across
+// 3000 BC–3000 AD (broad enough for tonus's medieval epoch, looser residuals);
+// [1] is fitted tightly for 1800–2050. planetPos (position.ts) picks [1] inside
+// that window and falls back to [0] outside it. Uranus and Neptune are present in
+// the tables but only the classical seven are voiced (ALL_BODIES stops at Saturn);
+// their elements are kept for completeness. The outer planets also carry a third
+// slot — the great-inequality perturbation coefficients, applied in position.ts.
 export interface OrbitalElements {
   name: string;
   symbol: string;

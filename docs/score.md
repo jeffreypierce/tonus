@@ -24,7 +24,6 @@ methods, `score.midi()` and `score.musicxml()`.
     - [The model](#the-model)
     - [The classification rules](#the-classification-rules)
     - [Modeled and not](#modeled-and-not)
-  - [Sources](#sources)
 
 ## The score — `notatio`
 
@@ -52,6 +51,11 @@ notation, signs of punctuation rather than measure:
 | `;`     | divisio minor (half bar)     |
 | `:`     | divisio maior (full bar)     |
 | `::`    | divisio finalis (double bar) |
+
+This hierarchy is read three ways in the engine, each weighting the bars for its
+own end: an analytic cadence weight (prosody), a phrasing strength (which zeroes
+the virgula), and a rest duration (MIDI). The differences are intentional and
+documented at each table in the code.
 
 ```ts
 interface Score {
@@ -442,9 +446,9 @@ interface CadenceDistribution {
 
 `score.cadences` names the melodic close of each phrase — where prosody
 only counts the divisio bars, this identifies the figure. One `Cadence` per
-phrase-ending divisio: its resolution `target`, the melodic `approach`, and —
-when the ending matches one of the mode's cadence figures
-([tuning.md](tuning.md#cadence-figures)) — the named `formula`. The `divisio`
+phrase-ending divisio: its resolution `target`, the melodic `approach`, and the
+named `formula` when the ending matches one of the mode's cadence figures
+([tuning.md](tuning.md#cadence-figures)). The `divisio`
 tells medial from final (the double bar `::` is the final cadence). Each note
 that forms a cadence carries a `cadenceRef` back-index on the tabula.
 
@@ -486,9 +490,9 @@ interface Modulation {
 
 The rhythm model is the Solesmes school's arsis/thesis synthesis, taken
 from Gajard's lectures and Carroll's chironomy manuals. The full
-treatise-level notes behind this section, including Le Guennant's seven
-rhythmic types and a complete glossary, are archived in the project's
-working files.
+treatise-level model lives at the classifier in
+[`score/ir.ts`](../src/engines/score/ir.ts); Le Guennant's seven rhythmic
+types are a planned extension (see the roadmap).
 
 ### The model
 
@@ -528,23 +532,6 @@ thetic), accentual (spondaic vs. dactylic) cadences, or incise classifiers.
 
 ## Sources
 
-- Carroll, Joseph Robert. _The Technique of Gregorian Chironomy_. Toledo,
-  OH: Gregorian Institute of America, 1955.
-- Carroll, Joseph Robert. _An Applied Course in Gregorian Chant_. Toledo,
-  OH: Gregorian Institute of America, 1956.
-- Gajard, Joseph (trans. Aldhelm Dean). _The Rhythm of Plainsong According
-  to the Solesmes School_. New York: J. Fischer & Bro., 1945.
-- Mocquereau, André. _Le nombre musical grégorien_, 1908–1927 — the school
-  whose synthesis the above codify.
-- Williams, Richard. "What the heck are arsis and thesis?" Musica Sacra
-  forum, 2011 — plain-English gloss only.
-- Cardine, Eugène. "Semiology and the Interpretation of Gregorian Chant."
-  Trans. Virginia A. Schubert; from the Festschrift for Joseph Lennards —
-  the semiological position the `"restrained"` pondus style reflects.
-- Desrocquettes, Jean Hébert. "Gregorian Musical Values" — the Solesmes
-  school's rhythmic values, from Mocquereau's collaborator.
-- Homan, Frederic W. _Cadence in Gregorian Chant_. Ph.D. diss., Indiana
-  University, 1961 — the analytic study of chant cadences.
-- Murray, Gregory. "Accentual Cadences in Gregorian Chant." _The Downside
-  Review_, 1958 — the spondaic and dactylic verbal cadences (not yet
-  modeled; see [Modeled and not](#modeled-and-not)).
+Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+`carroll-chironomy`, `carroll-applied`, `gajard-rhythm`, `mocquereau-nombre`,
+`cardine-semiology`, `desrocquettes-values`, `homan-cadence`, `murray-accentual`.

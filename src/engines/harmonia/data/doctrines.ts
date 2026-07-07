@@ -10,12 +10,38 @@
 // center, not a voiced body (except Pliny, where Earth is a boundary tone).
 // The Sun holds the mese position in all four systems.
 //
-// Source: Joscelyn Godwin, "Harmonies of Heaven and Earth" (1987), Part Three;
+// The ratios are reconstructed from the primary texts [biblio:
+// doctrina-primaries] through Godwin's syntheses [biblio: godwin-harmonies,
+// godwin-spheres]: for each author the Greek tonal framework is identified
+// (conjunct/disjunct tetrachords, or the fixed Greater Perfect System),
+// bodies are mapped to Greek tone-names from the source's explicit
+// assignments, and ratios are derived by Pythagorean interval arithmetic
+// (tone 9/8, limma 256/243, fourth 4/3, fifth 3/2) normalized to the mese
+// (Sun = 1/1), then verified computationally for span and closure.
 //
 // Taxonomy follows Godwin's classification:
 //   Type A — intervals represent distances between spheres
 //   Type B — intervals represent speeds/symbolic scale degrees
 //   Type C — intervals map to fixed tones of the Greater Perfect System
+//
+// Decisions recorded from the derivation:
+//   1. Boethius transmits Nicomachus's ratios; tonus credits the doctrina to
+//      Boethius as the medieval authority.
+//   2. Pliny's Sun sits at hypate meson, not the Greek mese; tonus keeps the
+//      Sun as the structural center regardless, and greekName reflects
+//      Pliny's actual position.
+//   3. Ptolemy's aspect–consonance mapping carries into interval grading — a
+//      Jupiter–Sun aspect sounds a fifth, Mars–Sun a tone.
+//   4. Pythagoras's Fixed Stars complete the octave in the data but are never
+//      voiced: no caelum body, no classical vowel.
+//   5. Voices are stored in sphere order, outermost first; sort by ratio for
+//      scale views.
+//
+// The single pitch that separates Pythagoras from Boethius is Venus — the
+// diagnostic of the whole tradition: a whole tone above the Sun in the
+// disjunct system (9/8, B durum), a semitone in the conjunct (256/243, B
+// molle). This is the same durum/molle distinction the GABC parser tracks as
+// the `bmolle` accidental. See the per-doctrina notes below.
 // ---------------------------------------------------------------------------
 
 export type Author = "pythagoras" | "boethius" | "pliny" | "ptolemy";

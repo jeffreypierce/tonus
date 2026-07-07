@@ -20,7 +20,6 @@ carries page-level provenance back to its book.
     - [The Mass: proper and ordinary](#the-mass-proper-and-ordinary)
     - [The Office: the daily cursus](#the-office-the-daily-cursus)
     - [Psalm tones](#psalm-tones)
-  - [Sources](#sources)
 
 ## The corpora
 
@@ -384,37 +383,8 @@ finalis per mode, are on the tuning page
 
 ## Sources
 
-- **GregoBase** — <https://gregobase.selapa.net/>. Chant corpora extracted
-  by book (GregoBase source IDs 2, 3, 48, 15):
-  - _Graduale sacrosanctæ Romanæ ecclesiæ de tempore et de sanctis_
-    (Graduale Romanum). Ed. Solesmes. Tournai: Desclée, 1961 — 1,344
-    chants (`gr`).
-  - _Liber Usualis Missæ et Officii pro dominicis et festis cum cantu
-    Gregoriano_. Ed. Solesmes. Tournai: Desclée, 1961 — 2,377 chants
-    (`lu`).
-  - _Liber antiphonarius pro diurnis horis_ (Antiphonale Romanum).
-    Solesmes, 1960 — 1,422 chants (`la`).
-  - _Liber Hymnarius cum invitatoriis & aliquibus responsoriis_. Solesmes,
-    1983 — 361 chants (`lh`).
-- **Divinum Officium** — <https://divinumofficium.com/> — Mass propers
-  (926 entries), Office hours (929 days), and the Psalterium (2,612 psalm +
-  579 canticle verses, Vulgate).
-- Psalm tones and differentiae: Graduale Romanum appendix (Toni Communes),
-  including the tonus peregrinus.
-- GABC notation: the Gregorio project,
-  <https://gregorio-project.github.io/>.
-- _Versus Psalmorum et Canticorum_ (No. 839). Solesmes — the psalm-verse
-  formulas for the tones.
-- Apel, Willi. _Gregorian Chant_. Bloomington: Indiana University Press,
-  1958 — the analytic study of the repertoire.
-- Hiley, David. _Western Plainchant: A Handbook_. Oxford: Clarendon Press,
-  1993 — the standard modern reference.
-- Treitler, Leo. _With Voice and Pen: Coming to Know Medieval Song and How
-  It Was Made_. Oxford: Oxford University Press, 2003.
-- Saulnier, Daniel. _Gregorian Chant: A Guide_. CMAA edition.
-- Pierik, Marie. _The Spirit of Gregorian Chant_. Milwaukee: Bruce, 1939.
-- Pierik, Marie. _Gregorian Chant Analyzed and Studied_. St. Meinrad, IN:
-  Grail, 1951.
-- Burkard, Dom Sisbert. _Manual of Plain Chant_. 1906.
-- Kelly, Thomas Forrest. _Capturing Music: The Story of Notation_. New
-  York: W. W. Norton, 2014.
+Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+`gregobase` (the four corpus books), `divinum-officium`,
+`graduale-toni-communes`, `gregorio-gabc`, `versus-psalmorum`, `apel-chant`,
+`hiley-plainchant`, `treitler-voice-pen`, `saulnier-guide`, `pierik-spirit`,
+`burkard-manual`, `kelly-capturing`.

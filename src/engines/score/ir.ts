@@ -1,6 +1,33 @@
 // ---------------------------------------------------------------------------
-// engines/score/ir — build scored representation from parsed GABC
+// engines/score/ir — scored representation + Solesmes arsis/thesis rhythm
 // ---------------------------------------------------------------------------
+// buildIR turns parsed GABC into the phrase/syllable/note tree and classifies
+// its rhythm. It builds on the ictus and grouping already assigned in parse.ts
+// from the Liber Usualis rules [biblio: liber-usualis]; this layer adds the
+// Solesmes school's arsis/thesis synthesis, from Gajard's 1935 lectures
+// [biblio: gajard-rhythm] and Carroll's chironomy manuals [biblio:
+// carroll-chironomy, carroll-applied], founded on Mocquereau
+// [biblio: mocquereau-nombre].
+//
+// Arsis (rising, active) and thesis (resting, retractive) are qualities of the
+// COMPOUND BEAT — the group of notes between one ictus and the next — not of
+// single notes. Every note in a group shares its quality. The ictus marks the
+// grouping and is NOT an accent; it is a measuring point with no inherent
+// intensity (Gajard). That is why tonus stores the quality as
+// Performance.rhythmicShape rather than as a velocity signal — the rhythm is a
+// shape, not a stress. A phrase, bounded by any divisio, is the "incise," the
+// unit within which rhythm is judged.
+//
+// classifyGroup applies Carroll's three melodic rules in priority order
+// (Chironomy Ch. 4), with two conventional overrides (Ch. 5–6). Both are
+// documented at the function. The first compound beat of an incise is always
+// arsic (an incise never begins with thesis — Carroll p. 43); when the rules
+// tie, the shape alternates from the previous group.
+//
+// Modeled: the compound-beat classification and the per-note rhythmic index.
+// Not yet: Carroll's textual rules (word-accent → arsic, word-final → thetic —
+// they need a Latin accent model), and Le Guennant's seven rhythmic types (a
+// corpus-level metric — spec in working/plan-rhythmic-types.md).
 import type { ArsisThesis, Score, ParsedNote, Note, ParseResult, Phrase, Syllable } from "./types.js";
 import type { Scale } from "../temper/scale.js";
 import { toPitch } from "../temper/pitch.js";
@@ -36,8 +63,8 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
   };
 }
 
-// The salicus ictus note (its second-to-last ascending note) is prolonged —
-// Suñol, Textbook Ch. V. Modest, in the spirit of an episema lengthening.
+// The salicus ictus note (its second-to-last ascending note) is prolonged
+// [biblio: sunol-textbook, Ch. V]. Modest, in the spirit of an episema.
 const SALICUS_PROLONGATION = 1.3;
 
 function makeSyllable(lyric: string, notes: Note[]): Syllable {
@@ -49,15 +76,13 @@ function makeSyllable(lyric: string, notes: Note[]): Syllable {
   return { lyric, notes, neume };
 }
 
-// ── Arsis/thesis classification (Solesmes) ──
-// Arsis and thesis are qualities of a compound beat (the group of notes between
-// one ictus and the next). Every note in a group shares the group's shape.
-// Rules from Carroll, Technique of Gregorian Chironomy (1955), Ch. 4:
-//   Rule 1 (incise unity): ictuses up to the melodic apex are arsic; after thetic
+// ── Arsis/thesis classification ── (the model is in the module header above)
+// Carroll's three melodic rules, in priority order [biblio: carroll-chironomy, Ch. 4]:
+//   Rule 1 (incise unity): ictuses up to the melodic apex are arsic; after, thetic
 //   Rule 2 (relative ictus pitch): higher ictus → arsic; lower → thetic
 //   Rule 3 (neume slope): rising notes → arsic; falling → thetic
-// Conventional overrides (Ch. 5–6):
-//   salicus always arsic; doubly-dotted clivis always thetic
+// Conventional overrides (Ch. 5–6): salicus always arsic; doubly-dotted clivis
+// always thetic (a cadential figure).
 
 interface AnnotatedNote {
   note: Note;

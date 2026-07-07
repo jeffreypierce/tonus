@@ -19,14 +19,7 @@ Pythagorean, as in the treatises.
     - [Cadence figures](#cadence-figures)
   - [Psalm tones — `tonus`](#psalm-tones--tonus)
   - [Theory \& Context](#theory--context)
-    - [The commas](#the-commas)
     - [The presets](#the-presets)
-      - [`"pythagorean"` — the medieval default](#pythagorean--the-medieval-default)
-      - [`"meantone"` — variable comma](#meantone--variable-comma)
-      - [The three Ptolemaic diatonics — antiquity's just intonations](#the-three-ptolemaic-diatonics--antiquitys-just-intonations)
-      - [`"equal"`](#equal)
-      - [Custom scales and Scala files](#custom-scales-and-scala-files)
-  - [Sources](#sources)
 
 ## The context — `temperamentum`
 
@@ -343,21 +336,16 @@ medieval tonaries describe them:
 - its practice — hexachords in rank order, melodic profile, its cadence
   figures, and permitted modulations.
 
-Each mode also carries its traditional **ethos** — the character the
-medieval theorists ascribed to it. tonus records both the Latin epithet and
-an English gloss: _gravis_ (grave), _tristis_ (sad), _mysticus_ (mystic),
-_harmonicus_ (harmonious), _laetus_ (joyful), _devotus_ (devout), _angelicus_
-(angelic), _perfectus_ (perfect), after Niedermeyer & d'Ortigue.
+Each mode also carries its traditional **ethos** — the character medieval
+theory ascribed to it — as both a Latin epithet (`gravis`, `tristis`, …) and an
+English gloss. The full set and its source are at the data, in
+[`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
 
-The `modulations` fields — `regular`, `conceded`, and `initials` — follow
-Rockstro's table in Grove (see Sources). Each list is **ordered by
-importance**: Rockstro's own principle is that a mode's characteristic notes
-are given "in the order in which we have mentioned them." So `regular` runs
-final, dominant, then lesser centres; `initials` runs from the most
-characteristic opening pitch downward (some are, in Rockstro's footnotes,
-"barely used" or used "chiefly in polyphonic music"). tonus's modal-affinity
-scoring reads this order — a chant opening on a mode's primary initial
-counts for more than one opening on a low-ranked initial.
+The `modulations` fields — `regular`, `conceded`, and `initials` — are the
+mode's tonal centres and valid openings, each list **ordered by importance**
+(after Rockstro's Grove table [`rockstro-grove`](../BIBLIOGRAPHY.md)). The
+modal-affinity scorer reads that order; the reasoning is documented at the
+data, in [`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
 
 `modus` resolves the mode's structural pitches through its own
 temperamentum: the **finalis** and **reciting** tone as tuned notes (pitch +
@@ -433,16 +421,9 @@ interface Modus extends ModeData {
 ### Cadence figures
 
 Each mode carries the melodic figures its phrases characteristically close
-on, in `profile.cadences`. A figure is stored as **diatonic steps relative
-to the final**: `0` is the final, `-1` the step below, `+2` a third above,
-and so on — the resolution step (`0`) comes last. Steps rather than absolute
-pitches because the treatises describe cadences that way, and because a
-step-figure matches a chant whether it sits on its regular final or a
-transposed one. The score engine reads these to name a phrase's cadence
-([score.md](score.md#cadences)).
-
-The catalogued figures, by _maneria_ (both modes of a pair share them, as
-the source classes cadences by maneria, not by the eight modes):
+on, in `profile.cadences` — the shapes by which a chant comes to rest, stored
+as diatonic steps relative to the final. The score engine reads them to name a
+phrase's cadence ([score.md](score.md#cadences)).
 
 | Maneria (final) | Figures (solmization → final)     |
 | --------------- | --------------------------------- |
@@ -451,9 +432,10 @@ the source classes cadences by maneria, not by the eight modes):
 | Tritus (Fa)     | mi-fa, fa-mi-fa, la-sol-fa        |
 | Tetrardus (Sol) | la-sol, fa-sol, ut-sol, ut-ti-sol |
 
-The catalogue is an editorial synthesis, drawn chiefly from Niedermeyer &
-d'Ortigue and cross-checked against Bragers. It covers the **final**
-cadences; medial cadences that rest on the tenor are not yet catalogued.
+The catalogue is an editorial synthesis covering the final cadences; its step
+encoding, sources, and known gaps (medial cadences are not yet included) are
+documented at the data — see `CadenceFigure` in
+[`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
 
 ## Psalm tones — `tonus`
 
@@ -503,96 +485,52 @@ reference A4. The presets fill that table from history: the Pythagorean
 division the treatises teach, the meantone compromise of the Renaissance,
 Ptolemy's three diatonic shades, and the modern equal division.
 
-### The commas
-
-Two small intervals drive everything:
-
-- **Pythagorean comma** (~23.46 ¢): twelve pure fifths overshoot seven
-  octaves by this much. `(3/2)¹² ≈ 129.75` vs `2⁷ = 128`. Any tuning built
-  from pure fifths cannot close the circle.
-- **Syntonic comma** (81/80, ~21.51 ¢): the gap between the Pythagorean
-  third (81/64, four stacked fifths) and the pure third (5/4). This is the
-  comma that meantone "means to" distribute — `comma: "1/4"` narrows each
-  fifth by a quarter of it.
-
 ### The presets
 
-#### `"pythagorean"` — the medieval default
+Five ways to fill the table, four historical and one modern. Each has a
+character; the interval arithmetic, the commas that drive it, and the
+editorial choices behind it are documented at the builder, in
+[`temper/scale.ts`](../src/engines/temper/scale.ts).
 
-All intervals derive from the pure fifth 3/2 and the octave. Whole tone
-9/8 (~204 ¢); diatonic semitone (_limma_) 256/243 (~90 ¢); major third
-81/64 (~408 ¢ — a full syntonic comma wider than pure).
+- **`"pythagorean"`** — the medieval default. All intervals from the pure
+  fifth and the octave: perfect melodic fifths and fourths, a narrow keen
+  semitone, a wide third that never has to be a consonance. Correct for
+  unaccompanied chant, and the tuning the treatises teach.
 
-This is the tuning of medieval theory from Boethius through the Guidonian
-gamut: the monochord divisions taught in every treatise are Pythagorean.
-For unaccompanied chant it is correct — melodic fifths and fourths are
-perfect, the narrow limma gives half-steps a keen, leading quality, and the
-wide third never has to serve as a consonance. tonus makes it the default
-for the same reason the Middle Ages did.
+  ```js
+  tonus.temperamentum(); // pythagorean, A4 = 440
+  ```
 
-```js
-tonus.temperamentum(); // pythagorean, A4 = 440
-```
+- **`"meantone"`** — the Renaissance compromise. Narrows each fifth to buy
+  purer thirds; `comma` sets how far (`"1/4"`, the default, gives pure major
+  thirds and the 16th-century sound; `"1/3"` pure minor thirds; `"1/6"` leans
+  baroque). One fifth is left over as the _wolf_.
 
-#### `"meantone"` — variable comma
+  ```js
+  tonus.temperamentum({ tuning: "meantone", comma: "1/4" });
+  ```
 
-Quarter-comma meantone (`comma: "1/4"`, the default) narrows every fifth by
-¼ syntonic comma so that four of them stack to a **pure major third** (5/4).
-Fifths beat gently (~697¢ instead of 702¢); most thirds are perfect;
-and somewhere around G♯–E♭ lurks the _wolf_ — the leftover fifth, wide by
-~36¢. Historically this is the sound of the 16th century. `comma` accepts other fractions
-(`"1/3"` gives pure minor thirds, `"1/6"` leans toward the baroque well-temperaments).
+- **The three Ptolemaic diatonics** — antiquity's just intonations, Ptolemy's
+  three "shades" of the diatonic. `"ptolemy-intense"` is classical just
+  intonation (pure thirds; coherent with the Ptolemy doctrina in
+  [`harmonia`](heavens.md)); `"ptolemy-soft"` is septimal and dark;
+  `"ptolemy-equable"` has neutral, near-equal steps outside the Latin tradition.
+  Each tunes one fixed scale, so pairing one with a non-default mode can surface
+  unexpected intervals, including a wolf.
 
-```js
-tonus.temperamentum({ tuning: "meantone", comma: "1/4" });
-```
+  ```js
+  tonus.temperamentum({ tuning: "ptolemy-intense" });
+  ```
 
-#### The three Ptolemaic diatonics — antiquity's just intonations
+- **`"equal"`** — twelve identical semitones; nothing pure, nothing unusable.
+  Anachronistic for chant by some seven centuries, included as a reference point.
 
-Ptolemy (_Harmonics_ I.15–16, 2nd c.) catalogued tetrachord divisions by
-their ratio "shades" (χρόαι). tonus implements his three diatonics, which
-between them cover just, septimal, and neutral intonation:
+  ```js
+  tonus.temperamentum({ tuning: "equal", a4: 415 }); // equal at baroque pitch
+  ```
 
-- **`"ptolemy-intense"`** (_syntonon_) — the tense diatonic: tetrachord
-  steps 9/8 · 10/9 · 16/15. This is **classical just intonation**: pure
-  major thirds (5/4), pure minor thirds (6/5), and two sizes of whole tone.
-  Renaissance theorists (Zarlino) later canonized exactly this division as
-  the "natural" scale. Choose it when you want maximally consonant vertical
-  sonorities — including coherence with the Ptolemy doctrina in
-  [`harmonia`](heavens.md).
-- **`"ptolemy-soft"`** (_malakon_) — the soft diatonic: 8/7 · 10/9 · 21/20.
-  Septimal — the 7th harmonic enters, giving a large, relaxed whole tone
-  (8/7, ~231 ¢) and a distinctive dark color foreign to the later Western
-  canon.
-- **`"ptolemy-equable"`** (_homalon_) — the equable diatonic:
-  10/9 · 11/10 · 12/11. Undecimal — nearly equal steps around ~150–182¢,
-  producing _neutral_ seconds and thirds (between major and minor). Its
-  sound-world is closer to some Near-Eastern practice than to anything in
-  the Latin tradition; Ptolemy himself presents it as an outlier.
-
-**A caution for genus tunings with modes.** Each Ptolemaic preset tunes one
-fixed scale; it is not re-derived per mode. Pairing one with a mode other
-than the default can produce interval qualities you don't expect,
-including the syntonic wolf (D–A, 40/27, ~680¢)
-
-```js
-tonus.temperamentum({ tuning: "ptolemy-intense" });
-```
-
-#### `"equal"`
-
-Twelve identical semitones of 100¢; every fifth 2¢ narrow, every major
-third 14 ¢ wide, nothing pure, nothing unusable. Anachronistic for chant by
-some seven centuries, included as a reference point.
-
-```js
-tonus.temperamentum({ tuning: "equal", a4: 415 }); // equal at baroque pitch
-```
-
-#### Custom scales and Scala files
-
-Any 7- or 12-step scale can be supplied as ratios or cents, or as a
-[Scala `.scl`](https://www.huygens-fokker.org/scala/scl_format.html) file.
+Any 7- or 12-step scale can also be supplied directly as ratios or cents, or as
+a [Scala `.scl`](https://www.huygens-fokker.org/scala/scl_format.html) file:
 
 ```js
 tonus.temperamentum({
@@ -601,48 +539,10 @@ tonus.temperamentum({
 tonus.temperamentum({ scale: sclFileString }); // name taken from the file
 ```
 
-NB. The planetary-scale derivations in
-[heavens.md](heavens.md#theory--context) use the same Pythagorean interval
-arithmetic laid out here.
-
 ## Sources
 
-- Boethius, _De institutione musica_ — the medieval transmission of
-  Pythagorean interval math.
-- Ptolemy, _Harmonics_ I.15–16 — the diatonic shades.
-- Guido of Arezzo's gamut and solmization, and the eight-mode system, as
-  standardized in medieval theory (gamut, hexachords, modes, psalm tones).
-- Atkinson, Charles M. _The Critical Nexus: Tone-System, Mode, and
-  Notation in Early Medieval Music_. New York: Oxford University Press, 2009.
-- Reisenweaver, Anna. "Guido of Arezzo and His Influence on Music
-  Learning." _Musical Offerings_ 3, no. 1 (2012).
-- Schulter, Margo. "Pythagorean Tuning and Medieval Polyphony." Medieval
-  Music & Arts Foundation —
-  <https://www.medieval.org/emfaq/harmony/pyth.html>.
-- Schulter, Margo. "Hexachords, solmization, and musica ficta." Medieval
-  Music & Arts Foundation —
-  <https://www.medieval.org/emfaq/harmony/hex.html>.
-- Rockstro, W. S. "Modes, The Ecclesiastical." In Grove, _A Dictionary of
-  Music and Musicians_ (1st ed.) —
-  <https://en.wikisource.org/wiki/A_Dictionary_of_Music_and_Musicians/Modes,_The_Ecclesiastical>.
-- Powers, Harold S., and Frans Wiering, et al. "Mode." _Grove Music
-  Online_, 2001, §§I–III (the term; medieval modal theory) —
-  <https://doi.org/10.1093/gmo/9781561592630.article.43718>.
-- Niedermeyer, Louis, and Joseph d'Ortigue. _Gregorian Accompaniment: A
-  Theoretical and Practical Treatise upon the Accompaniment of Plainsong_.
-  Trans. Wallace Goodrich. New York: Novello, Ewer & Co. — the per-mode
-  cadence figures and the modal ethos epithets.
-- Bragers, Achille P. _A Short Treatise on Gregorian Accompaniment_. New
-  York: J. Fischer & Bro., 1934 — cadence figures, cross-check.
-- Suñol, Dom Gregory. _Textbook of Gregorian Chant According to the Solesmes
-  Method_. Trans. from the 6th French ed. Tournai: Desclée, 1930 — the
-  modes, their dominants, psalmody, and the Solesmes rhythm doctrine.
-- _The Liber Usualis, with Introduction and Rubrics in English_. Ed. the
-  Benedictines of Solesmes. Tournai: Desclée, 1961 — the introduction ("Rules for Interpretation" and the
-  rubrics for the chant); the book itself is a chant corpus source
-  ([chant.md](chant.md#sources)).
-- Wikipedia: [Pythagorean tuning](https://en.wikipedia.org/wiki/Pythagorean_tuning),
-  [Meantone temperament](https://en.wikipedia.org/wiki/Meantone_temperament),
-  [Gregorian mode](https://en.wikipedia.org/wiki/Gregorian_mode).
-- Scala scale archive and `.scl` format, Manuel Op de Coul, Huygens-Fokker
-  Foundation — <https://www.huygens-fokker.org/scala/scl_format.html>.
+Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+`boethius-institutione`, `ptolemy-harmonics`, `guidonian-gamut`,
+`atkinson-nexus`, `reisenweaver-guido`, `schulter-harmony`, `rockstro-grove`,
+`powers-wiering-mode`, `niedermeyer-ortigue`, `bragers-treatise`,
+`sunol-textbook`, `liber-usualis`, `scala-format`, `wikipedia-tuning`.
