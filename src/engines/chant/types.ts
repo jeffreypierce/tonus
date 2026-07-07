@@ -15,7 +15,7 @@ export type OrdinaryCode =
   | "as"   // Asperges me (sprinkle rite, outside Paschaltide)
   | "va";  // Vidi aquam (sprinkle rite, Paschaltide)
 
-export type ChantSource = "gr" | "lu" | "la" | "lh";
+export type ChantSource = "gr" | "lu" | "la" | "lh" | "am";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"

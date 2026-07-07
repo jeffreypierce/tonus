@@ -33,6 +33,11 @@ propers, office, and psalter:
 | `lu`   | Liber Usualis       | ed. Solesmes; Tournai: Desclée, 1961 | 2,377  |
 | `la`   | Liber Antiphonarius | ed. Solesmes, 1960                   | 1,422  |
 | `lh`   | Liber Hymnarius     | Solesmes, 1983                       | 361    |
+| `am`   | Antiphonale Monasticum | ed. Solesmes, 1934               | 1,429  |
+
+The first four are the Roman repertoire; `am` is the monastic (Benedictine)
+antiphonary — the 1934 Solesmes edition, which carries the same rhythmic markings
+the score engine reads.
 
 ## Retrieval — `cantus`
 

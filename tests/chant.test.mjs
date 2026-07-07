@@ -26,6 +26,18 @@ describe("getChants", () => {
     for (const c of chants) assert.equal(c.source.code, "gr");
   });
 
+  test("serves the Antiphonale Monasticum (source am)", () => {
+    const am = getChants({ source: "am" });
+    assert.ok(am.length > 1000, `expected the full AM corpus, got ${am.length}`);
+    for (const c of am) {
+      assert.equal(c.source.code, "am");
+      assert.equal(c.source.book, "Antiphonale Monasticum");
+    }
+    // AM is an antiphonary — antiphons dominate.
+    const antiphons = am.filter((c) => c.office === "an");
+    assert.ok(antiphons.length > am.length / 2);
+  });
+
   test("accepts array values for mode, office, and source", () => {
     const chants = getChants({ mode: [1, 2], office: ["an", "hy"], limit: 10 });
     assert.ok(chants.length > 0);
