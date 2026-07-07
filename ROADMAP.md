@@ -56,10 +56,11 @@ code. _Detailed design: `working/plan-docs-site.md`._
 ## Horizon 3 — Melodic analysis
 
 Read a chant's tonal structure as pure data on the score. **Cadence detection**
-(`score.cadences`, 0.1.3) and **modulation detection** (`score.modulations`,
-0.1.4) now cover where each phrase resolves and where the tonal centre leans
-away from the home mode — the foundation for chironomy (SVG v4) and downstream
-analysis. What remains:
+(`score.cadences`, 0.1.3), **modulation detection** (`score.modulations`, 0.1.4),
+and **rhythmic types** (`phrase.rhythmicType` + `beats`, Le Guennant/Carroll IV–VIII)
+now cover where each phrase resolves, where the tonal centre leans away from the
+home mode, and how each incise's compound beats chain — the foundation for
+chironomy (SVG v4) and downstream analysis. What remains:
 
 - **Melodic-type classification.** Apel's centonization — which recurring
   formula families a chant is assembled from. _Design: `working/plan-melodic-types.md`._

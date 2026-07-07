@@ -38,7 +38,7 @@ import type {
 } from "./engines/harmonia/api.js";
 import type { HarmonyTabulaRow } from "./engines/harmonia/tabula.js";
 import type { PlanetVowel } from "./engines/harmonia/data/vowels.js";
-import type { Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis } from "./engines/score/types.js";
+import type { Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis, RhythmicType, CompoundBeat } from "./engines/score/types.js";
 import type { VoicedPitch } from "./engines/harmonia/voice.js";
 import type {
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
@@ -84,6 +84,7 @@ export type {
   MusicXmlOpts, MusicXmlEmitResult,
   ChantTabulaRow,
   Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
+  RhythmicType, CompoundBeat,
   VoicedPitch,
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
   Imprint, Attractor, VowelAttractor, ModalAffinity,
