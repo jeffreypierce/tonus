@@ -490,9 +490,9 @@ interface Modulation {
 
 The rhythm model is the Solesmes school's arsis/thesis synthesis, taken
 from Gajard's lectures and Carroll's chironomy manuals. The full
-treatise-level notes behind this section, including Le Guennant's seven
-rhythmic types and a complete glossary, are archived in the project's
-working files.
+treatise-level model lives at the classifier in
+[`score/ir.ts`](../src/engines/score/ir.ts); Le Guennant's seven rhythmic
+types are a planned extension (see the roadmap).
 
 ### The model
 
