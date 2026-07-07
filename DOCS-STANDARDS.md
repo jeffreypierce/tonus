@@ -1,11 +1,7 @@
 # tonus — Documentation Standards
 
-How tonus documentation is written. The model is the rubric of a chant book:
-rules stated plainly, in order, with the exception following the rule. The
-docs may be long; they may not be loud.
-
-This document owns the whole documentation model — the three levels, the
-centralized bibliography, and the one voice — as well as the prose rules that
+This document owns the whole documentation model: the three levels, the
+centralized bibliography, and the one voice as well as the prose rules that
 follow. CODE-STANDARDS.md governs the code itself and cross-references here.
 
 ## The model — three levels, one voice
@@ -14,20 +10,19 @@ Documentation is a **three-level ladder**; each level is lighter than the one
 below and links down into it. A reader starts at the top and drills as far as
 they want; the code is the bottom of the well.
 
-| Level | Surface | Depth | Holds |
-| --- | --- | --- | --- |
-| **1. Interactive** | the docs site (future) | lightest | common API calls, run-it-live, limited context |
-| **2. Official API** | `docs/*.md` | medium | API focus (options, examples, interfaces) + high-level theory that links to the bibliography and to code |
-| **3. Code** | `src/` | full | how it is computed, why, and from what source: full theory, editorial decisions, provenance |
+| Level               | Surface                | Depth    | Holds                                                                                                    |
+| ------------------- | ---------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| **1. Interactive**  | the docs site (future) | lightest | common API calls, run-it-live, limited context                                                           |
+| **2. Official API** | `docs/*.md`            | medium   | API focus (options, examples, interfaces) + high-level theory that links to the bibliography and to code |
+| **3. Code**         | `src/`                 | full     | how it is computed, why, and from what source: full theory, editorial decisions, provenance              |
 
-Level 2 is not stripped to bare API. It keeps its high-level "what / why / when"
-framing and links down for depth. Only the **deepest** material lives in code:
+Only the **deepest** material lives in code:
 step-by-step derivations, the provenance of each figure, calibration values,
-recorded editorial decisions. (What belongs *in the code* is CODE-STANDARDS.md
+recorded editorial decisions. (What belongs _in the code_ is CODE-STANDARDS.md
 § Comments.)
 
 **The bibliography is centralized.** `BIBLIOGRAPHY.md` is the single source of
-truth for citations, and it carries the full citation — author, title,
+truth for citations, and it carries the full citation: author, title,
 translator, place, publisher, year, and URL. Each entry has a stable kebab key
 (`carroll-chironomy`, `rockstro-grove`). Code cites by bracketed key
 (`[biblio: key]`); docs pages link to the entry's anchor and keep a short
@@ -35,7 +30,7 @@ translator, place, publisher, year, and URL. Each entry has a stable kebab key
 restates a full reference; there are no per-page source lists.
 
 **One voice, three volumes.** All three levels are the same author at different
-lengths — not three personalities. The voice is the rubric of a chant book (the
+lengths, not three personalities. The voice is the rubric of a chant book (the
 rules below): present indicative, rules stated plainly with the exception
 following the rule, no advocacy (a decision is stated, not defended), bold marks
 a term at its definition once, italics carry Latin and titles. What changes
@@ -43,8 +38,8 @@ across levels is volume and register, not voice:
 
 - **L1 (interactive)** — terse, inviting: a label on an instrument. One line,
   present tense, no theory.
-- **L2 (API docs)** — the rubric proper: the reference states *what is*; Theory
-  & Context states *why and whence* (scholarly register, no meta-narration).
+- **L2 (API docs)** — the rubric proper: the reference states _what is_; Theory
+  & Context states _why and whence_ (scholarly register, no meta-narration).
 - **L3 (code)** — a scholar's marginalia: the same restraint, now allowed to
   explain fully. Explains; still does not advocate — "corrected to the Protus
   descent (the mode-2 seed was a copy of mode 5)," not "elegantly fixed a bug."
@@ -55,19 +50,19 @@ across levels is volume and register, not voice:
 section states what the function does, in the present indicative. It does
 not inventory features.
 
-> *Not:* "The tuning engine: historical temperaments, the Guidonian gamut,
+> _Not:_ "The tuning engine: historical temperaments, the Guidonian gamut,
 > the eight modes, and psalm tones."
-> *But:* "`tonus.temperamentum` builds a tuning context. Every pitch in
+> _But:_ "`tonus.temperamentum` builds a tuning context. Every pitch in
 > tonus is resolved through one."
 
 **2. One rule per sentence; the exception follows the rule.** Compound
 qualifications are split into rule, then exception, each in its own
 sentence.
 
-> *Not:* "Gloria is omitted in penitential seasons (though Maundy Thursday
-> historically keeps it — a known simplification)."
-> *But:* "The Gloria is omitted in Advent, Septuagesima, and Lent. Maundy
-> Thursday keeps it; tonus does not yet model this."
+> _Not:_ "The proper falls back to the Commune when a feast lacks its own,
+> unless it is a Sunday, in which case the season's formulary is used first."
+> _But:_ "A feast uses its own proper. When it has none, the season's
+> formulary is tried, then the Commune Sanctorum."
 
 **3. Show before tell.** A section introduces functionality with working
 code and its actual result, then explains what returned. Values shown in
@@ -76,8 +71,8 @@ examples are real outputs, not invented ones.
 **4. Types appear where their method appears.** The type block follows the
 example that produces it. There is no end-of-page type dump.
 
-**5. No advocacy.** The words *deliberately, honest(ly), simply, powerful,
-rich, comprehensive, beautiful* — and their relatives — do not appear in
+**5. No advocacy.** The words _deliberately, honest(ly), simply, powerful,
+rich, comprehensive, beautiful_ — and their relatives — do not appear in
 reference prose. A decision is stated, not defended. Defenses live in
 Theory & Context.
 
@@ -85,7 +80,7 @@ Theory & Context.
 emphasis. Italics carry Latin and titles.
 
 **7. Em dashes are rationed.** Prefer parentheses or a new sentence for
-appositives (established in the 2026-07 simplification pass); at most one
+appositives; at most one
 dash per paragraph, never chained.
 
 **8. Long is acceptable; disoriented is not.** Every page opens with a
@@ -106,7 +101,7 @@ codes). Interfaces remain code blocks; a pure code list never appears as
 TypeScript.
 
 **12. The three registers of a page.** The reference states what is.
-Theory & Context states why and whence. Sources points to whom — a short list
+Theory & Context states why and whence. Sources points to whom, a short list
 of bibliography keys, not full citations (those live in `BIBLIOGRAPHY.md`).
 Content that argues belongs to the second; content that cites belongs to the third.
 

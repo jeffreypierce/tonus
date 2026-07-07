@@ -1,15 +1,5 @@
 # Bibliography
 
-The single source of truth for the sources tonus is built from. Every entry has
-a stable **key** in `code font` at its head, then a full citation, then — after
-the em-dash — the editorial reason tonus uses it. Code cites a source by that key
-in a bracket — `[biblio: carroll-chironomy]` — and the documentation links to the
-entry's anchor. Nothing outside this file restates a full citation.
-
-Page scans of the accompaniment treatises behind the cadence figures
-(`niedermeyer-ortigue`, `bragers-treatise`) are kept out of the repo, at
-`~/Documents/tonus-sources/`.
-
 ## Data corpora
 
 - `gregobase` — **GregoBase.** <https://gregobase.selapa.net/>. Chant corpora in
@@ -45,8 +35,7 @@ Page scans of the accompaniment treatises behind the cadence figures
   Chant_. Toledo, OH: Gregorian Institute of America, 1956.** Compound beats,
   ictus placement.
 - `gajard-rhythm` — **Gajard, Joseph (trans. Aldhelm Dean). _The Rhythm of
-  Plainsong According to the Solesmes School_. New York: J. Fischer & Bro.,
-  1945.** The arsis/thesis synthesis.
+  Plainsong According to the Solesmes School_. New York: J. Fischer & Bro., 1945.** The arsis/thesis synthesis.
 - `mocquereau-nombre` — **Mocquereau, André. _Le nombre musical grégorien_,
   1908–1927.** The Solesmes school's foundation.
 - `cardine-semiology` — **Cardine, Eugène. "Semiology and the Interpretation of
@@ -65,8 +54,7 @@ Page scans of the accompaniment treatises behind the cadence figures
 - `murray-accentual` — **Murray, Gregory. "Accentual Cadences in Gregorian
   Chant." _The Downside Review_, 1958.** The spondaic and dactylic verbal cadences.
 - `sunol-textbook` — **Suñol, Dom Gregory. _Textbook of Gregorian Chant According
-  to the Solesmes Method_. Trans. from the 6th French ed. Tournai: Desclée,
-  1930.** Modes, dominants, psalmody, and the Solesmes rhythm doctrine.
+  to the Solesmes Method_. Trans. from the 6th French ed. Tournai: Desclée, 1930.** Modes, dominants, psalmody, and the Solesmes rhythm doctrine.
 - `apel-chant` — **Apel, Willi. _Gregorian Chant_. Bloomington: Indiana
   University Press, 1958.** The analytic study of the repertoire.
 - `hiley-plainchant` — **Hiley, David. _Western Plainchant: A Handbook_. Oxford:
@@ -96,8 +84,7 @@ Page scans of the accompaniment treatises behind the cadence figures
   for the tuning presets; the Greater Perfect System tone assignments and
   aspect–consonance mapping for the doctrina.
 - `atkinson-nexus` — **Atkinson, Charles M. _The Critical Nexus: Tone-System,
-  Mode, and Notation in Early Medieval Music_. New York: Oxford University Press,
-  2009.** Tone-system, mode, and notation.
+  Mode, and Notation in Early Medieval Music_. New York: Oxford University Press, 2009.** Tone-system, mode, and notation.
 - `reisenweaver-guido` — **Reisenweaver, Anna. "Guido of Arezzo and His Influence
   on Music Learning." _Musical Offerings_ 3, no. 1 (2012).** Guido's pedagogy.
 - `schulter-harmony` — **Schulter, Margo. Medieval Music & Arts Foundation harmony

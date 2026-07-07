@@ -1,6 +1,13 @@
 // ---------------------------------------------------------------------------
-// engines/harmonia/api — voice the sky through a planetary-harmony doctrina
+// engines/harmonia/api — the music of the spheres
 // ---------------------------------------------------------------------------
+// This is the "harmony of the spheres" (musica universalis): the ancient idea
+// that each planet sounds a tone, and the heavens together make a chord. harmonia
+// takes a Cosmos (the planets' positions at a moment, from the planet engine) and
+// gives each body a pitch and a Greek vowel, according to a chosen *doctrina* — a
+// named historical scheme for who sounds what, handed down from Pythagoras,
+// Boethius (the default), Pliny, or Ptolemy. The per-scheme details live in
+// data/doctrines.ts; this file voices a Cosmos through the one selected.
 import type { Cosmos } from "../planet/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import { buildTemper } from "../temper/api.js";

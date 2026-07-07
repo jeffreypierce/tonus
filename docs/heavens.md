@@ -131,10 +131,13 @@ interface Aspect {
 
 ## The voiced heavens — `harmonia`
 
-`harmonia(cosmos, opts?)` voices the sky through a doctrina. The result is
-pure data: each visible planet becomes a `VoicedBody` with a tuned pitch
-and a Greek vowel; each aspect gains the `Interval` its angle sounds, with
-its consonance grade. Range input populates `frames`, one per cosmos.
+This is the music of the spheres: the old idea that each planet sounds a tone
+and the heavens together make a chord. `harmonia(cosmos, opts?)` gives each
+body a pitch and a Greek vowel according to a **doctrina** — a named historical
+scheme for who sounds what (Pythagoras, Boethius, Pliny, Ptolemy). The result
+is pure data: each visible planet becomes a `VoicedBody` with a tuned pitch and
+a Greek vowel; each aspect gains the `Interval` its angle sounds, with its
+consonance grade. Range input populates `frames`, one per cosmos.
 
 ```js
 const sky = tonus.caelum({ date: new Date("2026-12-25") });
