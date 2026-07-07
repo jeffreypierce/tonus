@@ -446,9 +446,9 @@ interface CadenceDistribution {
 
 `score.cadences` names the melodic close of each phrase — where prosody
 only counts the divisio bars, this identifies the figure. One `Cadence` per
-phrase-ending divisio: its resolution `target`, the melodic `approach`, and —
-when the ending matches one of the mode's cadence figures
-([tuning.md](tuning.md#cadence-figures)) — the named `formula`. The `divisio`
+phrase-ending divisio: its resolution `target`, the melodic `approach`, and the
+named `formula` when the ending matches one of the mode's cadence figures
+([tuning.md](tuning.md#cadence-figures)). The `divisio`
 tells medial from final (the double bar `::` is the final cadence). Each note
 that forms a cadence carries a `cadenceRef` back-index on the tabula.
 

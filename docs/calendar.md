@@ -226,9 +226,9 @@ interface Pascha {
 
 ### The calendar's era
 
-The calendar's structure is medieval — the temporale from Advent through
-the season after Pentecost (Septuagesima included), the eight-hour office
-cursus, the duplex/semiduplex/simplex dignity system — while the data is the
+The calendar's structure is medieval: the temporale from Advent through the
+season after Pentecost (Septuagesima included), the eight-hour office cursus,
+and the duplex/semiduplex/simplex dignity system. The data, though, is the
 Tridentine codification (1570–1962) via Divinum Officium, continuous with
 late-medieval usage but carrying feasts as recent as the 1950s. The accurate
 description is "Tridentine Roman, continuous with medieval practice," not "a
