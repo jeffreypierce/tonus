@@ -11,6 +11,32 @@ import type { OfficeCode, OrdinaryCode } from "../chant/types.js";
 // Carroll, Technique of Gregorian Chironomy (1955), Chapters 2–4.
 export type ArsisThesis = "arsic" | "thetic";
 
+// RhythmicType — Le Guennant's taxonomy of how compound beats chain into an
+// incise, as presented by Carroll [biblio: carroll-chironomy, pp. 22–26]. One
+// level above the per-note arsis/thesis: where ArsisThesis says "this beat is
+// arsic," the type says "this whole incise makes an A–A–T shape." Only the
+// observable types are modeled (IV–VIII); I–III use non-ictic sub-beat cells
+// that never surface in isolation (Carroll p. 24). `null` when no type fits.
+//   IV   — developed simple rhythm: A–T (one arsis, one thesis)
+//   V    — compound rhythm: A(–A…)–T (two or more arses to one thesis)
+//   VI   — compound rhythm: A–T(–T…) (one arsis to two or more theses)
+//   VII  — compound rhythm: A–T–A–T… (regular alternation)
+//   VIII — contraction: an incise whose rhythms overlap at a shared ictus (a
+//          thetic beat immediately followed by an arsic one, mid-incise) —
+//          Suñol's "composite rhythm by contraction" [biblio: sunol-textbook],
+//          the local reading of Carroll's "overlapping" Type VIII.
+export type RhythmicType = "IV" | "V" | "VI" | "VII" | "VIII" | null;
+
+// One compound beat, reduced to what incise-level analysis needs: its shape and
+// its span in note indices (into the phrase's flat note list). This is the
+// intermediate structure that classifyCompoundBeats computes and otherwise
+// discards; recovering it feeds both the rhythmic-type classifier and (later)
+// the chironomy renderer's arc chaining.
+export interface CompoundBeat {
+  shape: ArsisThesis;
+  noteCount: number;
+}
+
 // Performance — per-event interpretation layer.
 // Used by harmonia voicing and by the score engine.
 export interface Performance {
@@ -184,6 +210,10 @@ export interface Syllable {
 export interface Phrase {
   syllables: Syllable[];
   divisio?: RestEvent;
+  /** The phrase's compound beats in order — the A/T sequence of the incise. */
+  beats: CompoundBeat[];
+  /** Le Guennant/Carroll rhythmic type of the incise; null if none fits. */
+  rhythmicType: RhythmicType;
 }
 
 export interface Score {

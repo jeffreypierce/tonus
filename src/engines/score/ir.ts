@@ -28,7 +28,7 @@
 // Not yet: Carroll's textual rules (word-accent → arsic, word-final → thetic —
 // they need a Latin accent model), and Le Guennant's seven rhythmic types (a
 // corpus-level metric — spec in working/plan-rhythmic-types.md).
-import type { ArsisThesis, Score, ParsedNote, Note, ParseResult, Phrase, Syllable } from "./types.js";
+import type { ArsisThesis, CompoundBeat, RhythmicType, Score, ParsedNote, Note, ParseResult, Phrase, Syllable } from "./types.js";
 import type { Scale } from "../temper/scale.js";
 import { toPitch } from "../temper/pitch.js";
 import { toStep } from "../temper/step.js";
@@ -171,8 +171,11 @@ function classifyGroup(
   return prev.shape === "arsic" ? "thetic" : "arsic";
 }
 
-function classifyCompoundBeats(annotated: AnnotatedNote[]): void {
-  if (annotated.length === 0) return;
+// Classify each compound beat, stamp its notes, and return the beat sequence —
+// the A/T shape of the incise, which the rhythmic-type classifier and (later)
+// the chironomy renderer both read.
+function classifyCompoundBeats(annotated: AnnotatedNote[]): CompoundBeat[] {
+  if (annotated.length === 0) return [];
 
   const groups = partitionByIctus(annotated);
 
@@ -181,6 +184,7 @@ function classifyCompoundBeats(annotated: AnnotatedNote[]): void {
     .filter((a) => a.note.context.ictus)
     .reduce((max, a) => Math.max(max, a.note.pitch.midi), -Infinity);
 
+  const beats: CompoundBeat[] = [];
   for (let gi = 0; gi < groups.length; gi++) {
     const group = groups[gi]!;
     const prev = gi > 0 ? groups[gi - 1]! : null;
@@ -189,7 +193,41 @@ function classifyCompoundBeats(annotated: AnnotatedNote[]): void {
       group.notes[ni]!.performance.rhythmicShape = group.shape;
       group.notes[ni]!.performance.rhythmicIndex = ni + 1;
     }
+    beats.push({ shape: group.shape, noteCount: group.notes.length });
   }
+  return beats;
+}
+
+// Le Guennant's rhythmic types (IV–VIII) from the beat sequence — how the incise's
+// compound beats chain [biblio: carroll-chironomy, pp. 22–26]. A type is emitted
+// only when the sequence genuinely fits; ambiguous shapes stay null (a wrong
+// analytic label is worse than none). Contraction (Type VIII) is Suñol's local
+// reading [biblio: sunol-textbook]: a thesis immediately followed by an arsis
+// mid-incise means two simple rhythms overlap at a shared ictus.
+export function classifyRhythmicType(beats: CompoundBeat[]): RhythmicType {
+  if (beats.length < 2) return null; // a lone beat has no chaining; needs ≥ A–T
+  const seq = beats.map((b) => b.shape);
+  if (seq[0] !== "arsic") return null; // an incise never begins thetic (Carroll p. 43)
+
+  const hasSeam = seq.some((s, i) => i > 0 && seq[i - 1] === "thetic" && s === "arsic");
+
+  if (!hasSeam) {
+    // A single rise-and-fall: arses, then theses, no interior thesis→arsis.
+    const arses = seq.filter((s) => s === "arsic").length;
+    const theses = seq.length - arses;
+    if (theses === 0) return null;               // all arsic, no resolution
+    if (arses === 1 && theses === 1) return "IV"; // A–T
+    if (arses >= 2 && theses === 1) return "V";   // A–A…–T
+    if (arses === 1 && theses >= 2) return "VI";  // A–T–T…
+    return null;
+  }
+
+  // There is at least one thesis→arsis seam, so the incise chains multiple simple
+  // rhythms. Strict alternation A–T–A–T(…) is Carroll's Type VII; any other seam
+  // pattern is a contraction (Suñol) — Carroll's Type VIII.
+  const alternating = seq.every((s, i) => s === (i % 2 === 0 ? "arsic" : "thetic"));
+  if (alternating && seq.length >= 4) return "VII";
+  return "VIII";
 }
 
 function applyCompoundBeats(phrases: Phrase[]): void {
@@ -200,7 +238,8 @@ function applyCompoundBeats(phrases: Phrase[]): void {
         annotated.push({ note, neumeType: syl.neume.type });
       }
     }
-    classifyCompoundBeats(annotated);
+    phrase.beats = classifyCompoundBeats(annotated);
+    phrase.rhythmicType = classifyRhythmicType(phrase.beats);
   }
 }
 
@@ -210,7 +249,7 @@ export function buildIR(
   scale: Scale,
 ): Score {
   const phrases: Phrase[] = [];
-  let currentPhrase: Phrase = { syllables: [] };
+  let currentPhrase: Phrase = { syllables: [], beats: [], rhythmicType: null };
   let currentNotes: Note[] = [];
   let currentLyric: string | null = null;
 
@@ -234,7 +273,7 @@ export function buildIR(
       }
       currentPhrase.divisio = event;
       phrases.push(currentPhrase);
-      currentPhrase = { syllables: [] };
+      currentPhrase = { syllables: [], beats: [], rhythmicType: null };
     }
   }
 
