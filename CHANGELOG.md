@@ -2,6 +2,13 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.1.5
+
+- **Rhythmic types** (`phrase.rhythmicType`, `phrase.beats`) — Le Guennant/Carroll
+  incise classification IV–VIII over the compound-beat sequence, with Type VIII
+  (contraction) after Suñol. The `beats` sequence is the shared derivation the
+  chironomy renderer will read.
+
 ## 0.1.4
 
 - **Modulation detection** (`score.modulations`) — where the tonal centre leans
