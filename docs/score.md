@@ -23,6 +23,7 @@ methods, `score.midi()` and `score.musicxml()`.
   - [Theory \& Context](#theory--context)
     - [The model](#the-model)
     - [The classification rules](#the-classification-rules)
+    - [Rhythmic types](#rhythmic-types)
     - [Modeled and not](#modeled-and-not)
 
 ## The score — `notatio`
@@ -491,8 +492,8 @@ interface Modulation {
 The rhythm model is the Solesmes school's arsis/thesis synthesis, taken
 from Gajard's lectures and Carroll's chironomy manuals. The full
 treatise-level model lives at the classifier in
-[`score/ir.ts`](../src/engines/score/ir.ts); Le Guennant's seven rhythmic
-types are a planned extension (see the roadmap).
+[`score/ir.ts`](../src/engines/score/ir.ts), which also derives Le Guennant's
+incise rhythmic types ([above](#rhythmic-types)).
 
 ### The model
 
@@ -523,12 +524,25 @@ precede the rules: the **salicus** (ascending three-note group with a
 middle ictus) is always arsic, and the **doubly-dotted clivis** is always
 thetic, as a cadential figure.
 
+### Rhythmic types
+
+Above the per-beat arsis/thesis, each phrase carries a `rhythmicType` — Le
+Guennant's taxonomy (via Carroll) of how the incise's compound beats chain, and
+the `beats` sequence it reads. The observable types are modeled: **IV** (a single
+arsis to a single thesis), **V** (several arses to one thesis), **VI** (one arsis
+to several theses), **VII** (regular A–T alternation), and **VIII** (a
+contraction — two simple rhythms overlapping at a shared ictus, after Suñol).
+Types I–III use sub-beat cells that never surface in isolation and are not
+labeled; an incise that fits no type is `null`. The classification rules live at
+the data — see `classifyRhythmicType` in
+[`score/ir.ts`](../src/engines/score/ir.ts).
+
 ### Modeled and not
 
-tonus models the compound-beat classification, the per-note rhythmic
-index, and mode-specific cadence figures ([above](#cadences)). It does not
-yet model Carroll's textual rules (word-accent → arsic, word-final →
-thetic), accentual (spondaic vs. dactylic) cadences, or incise classifiers.
+tonus models the compound-beat classification, the per-note rhythmic index,
+mode-specific cadence figures ([above](#cadences)), and the incise rhythmic types
+(above). It does not yet model Carroll's textual rules (word-accent → arsic,
+word-final → thetic) or accentual (spondaic vs. dactylic) cadences.
 
 ## Sources
 
