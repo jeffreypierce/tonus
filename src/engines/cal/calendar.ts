@@ -261,9 +261,24 @@ function feastsForDate(date: Date): Feast[] {
  * the current liturgical year. Dates are UTC-canonical: build them from
  * ISO strings or `Date.UTC`.
  */
+const FEAST_QUERY_KEYS = new Set([
+  "date", "from", "to", "nomen", "season", "grade", "marian", "apostolic",
+]);
+
 export function getFeast(query?: FeastQuery): Feast[] {
   if (!query || Object.keys(query).length === 0) {
     return feastsForDate(DEFAULT_EPOCH);
+  }
+
+  // Reject unknown keys rather than silently falling through to the default
+  // epoch — `festum({ month: 12, day: 25 })` (a natural guess) would otherwise
+  // return a plausible-looking wrong answer. Fail loudly on the typo instead.
+  const unknown = Object.keys(query).filter((k) => !FEAST_QUERY_KEYS.has(k));
+  if (unknown.length > 0) {
+    throw new Error(
+      `festum: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
+      `(expected ${[...FEAST_QUERY_KEYS].join(", ")})`,
+    );
   }
 
   let results: Feast[];

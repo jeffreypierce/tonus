@@ -129,8 +129,19 @@ describe("getCorpus", () => {
     assert.ok(am.unique > am.total * 0.9, "AM is >90% its own repertoire");
   });
 
-  test("unknown code throws", () => {
+  test("overlap is null (unmeasured) for a non-GregoBase book, not a false zero", () => {
+    // nr (Nocturnale) is outside GregoBase, so its overlap was never measured.
+    // It must report null — distinct from a measured "shares nothing" ([]/0).
+    const nr = getCorpus("nr");
+    assert.equal(nr.total, null);
+    assert.equal(nr.unique, null);
+    assert.equal(nr.shared, null);
+    assert.ok(nr.count > 0, "count is still real (chants tonus stores)");
+  });
+
+  test("unknown code throws (message lists the known codes)", () => {
     assert.throws(() => getCorpus("zz"), /Unknown corpus code/);
+    assert.throws(() => getCorpus("zz"), /nr/); // derived list includes nr now
   });
 });
 

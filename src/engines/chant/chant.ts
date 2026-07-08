@@ -107,7 +107,7 @@ export function getCorpus(code: ChantSource): Corpus {
   if (cached) return cached;
 
   const src = SOURCES[code];
-  if (!src) throw new Error(`Unknown corpus code: "${code}" (expected gr, lu, la, lh, or am)`);
+  if (!src) throw new Error(`Unknown corpus code: "${code}" (expected ${Object.keys(SOURCES).join(", ")})`);
 
   const chants = CORPUS.filter((c) => c.source.code === code);
 
@@ -137,11 +137,15 @@ export function getCorpus(code: ChantSource): Corpus {
   if (otherModes > 0) modes.push({ mode: null, modus: null, count: otherModes });
 
   // Pre-dedup relationships (precomputed in tonus-corpus — tonus can't derive
-  // them, since it stores only one copy of each shared chant).
+  // them, since it stores only one copy of each shared chant). Measured only for
+  // the GregoBase-sourced books; a book outside GregoBase (e.g. `nr`) has no
+  // entry, so overlap is reported as *unmeasured* (null) rather than a false zero.
   const ov = CORPUS_OVERLAP[code];
-  const shared: SharedCount[] = Object.entries(ov?.shared ?? {})
-    .map(([c, count]) => ({ code: c as ChantSource, count }))
-    .sort((a, b) => b.count - a.count);
+  const shared: SharedCount[] | null = ov
+    ? Object.entries(ov.shared)
+        .map(([c, count]) => ({ code: c as ChantSource, count }))
+        .sort((a, b) => b.count - a.count)
+    : null;
 
   const result: Corpus = {
     code,
@@ -152,8 +156,8 @@ export function getCorpus(code: ChantSource): Corpus {
     editor: src.editor,
     scanSource: src.scanSource ?? null,
     count: chants.length,
-    total: ov?.total ?? chants.length,
-    unique: ov?.unique ?? chants.length,
+    total: ov?.total ?? null,
+    unique: ov?.unique ?? null,
     shared,
     genera,
     modes,

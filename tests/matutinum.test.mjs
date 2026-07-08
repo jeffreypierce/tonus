@@ -54,6 +54,21 @@ describe("getMatins — structured Roman Matins", () => {
     assert.equal(m.nocturns.length, 3);
   });
 
+  test("the invitatory and hymn are lifted out of the nocturns", () => {
+    const m = getMatins({ feast: { id: "12-25" } }); // Nativity
+    // Both open the hour, before the first nocturn — not responsories.
+    assert.equal(m.invitatorium?.office, "in");
+    assert.equal(m.hymnus?.office, "hy");
+    // Every nocturn's responsories are now genuinely responsories only.
+    for (const n of m.nocturns) {
+      for (const r of n.responsories) assert.equal(r.office, "re");
+    }
+    // Nativity: 3 / 3 / 2 responsories (the third of nocturn 3 is the Te Deum).
+    assert.deepEqual(m.nocturns.map((n) => n.responsories.length), [3, 3, 2]);
+    // Nocturn 3 carries its three antiphons.
+    assert.equal(m.nocturns[2].antiphons.length, 3);
+  });
+
   test("the monastic rite is not served (returns null)", () => {
     assert.equal(getMatins({ feast: { id: "Adv1-0" }, rite: "monasticum" }), null);
   });

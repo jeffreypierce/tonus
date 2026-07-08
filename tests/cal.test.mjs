@@ -68,6 +68,13 @@ describe("getFeast", () => {
     for (const f of feasts) assert.equal(f.season, "pasc");
   });
 
+  test("throws on an unknown query key instead of silently returning the epoch", () => {
+    // A natural-but-wrong guess must fail loudly, not resolve a plausible default.
+    assert.throws(() => getFeast({ month: 12, day: 25 }), /unknown query key/);
+    // A valid key mixed with an unknown one still throws.
+    assert.throws(() => getFeast({ date: new Date("2026-12-25"), foo: 1 }), /unknown query key/);
+  });
+
   test("filters feasts by grade", () => {
     const feasts = getFeast({ grade: "duplex-i" });
     assert.ok(feasts.length > 0);
