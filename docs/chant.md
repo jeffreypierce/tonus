@@ -14,6 +14,7 @@ carries page-level provenance back to its book.
   - [The Mass propers — `proprium`](#the-mass-propers--proprium)
   - [The ordinary — `ordinarium`](#the-ordinary--ordinarium)
   - [The Office — `officium`](#the-office--officium)
+  - [Matins nocturns — `matutinum`](#matins-nocturns--matutinum)
   - [Psalms — `psalmus`](#psalms--psalmus)
   - [Theory \& Context](#theory--context)
     - [The Solesmes restoration](#the-solesmes-restoration)
@@ -24,9 +25,9 @@ carries page-level provenance back to its book.
 
 ## The corpora
 
-Four Solesmes books, extracted from
+Five Solesmes books, extracted from
 [GregoBase](https://gregobase.selapa.net/), joined by the Divinum Officium
-propers, office, and psalter:
+propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 
 | Source | Book                | Edition                              | Chants |
 | ------ | ------------------- | ------------------------------------ | ------ |
@@ -35,10 +36,13 @@ propers, office, and psalter:
 | `la`   | Liber Antiphonarius | ed. Solesmes, 1960                   | 1,422  |
 | `lh`   | Liber Hymnarius     | Solesmes, 1983                       | 361    |
 | `am`   | Antiphonale Monasticum | ed. Solesmes, 1934               | 1,429  |
+| `nr`   | Nocturnale Romanum  | Sandhofe restitution, 2002           | 1,564  |
 
 The first four are the Roman repertoire; `am` is the monastic (Benedictine)
 antiphonary — the 1934 Solesmes edition, which carries the same rhythmic markings
-the score engine reads.
+the score engine reads. `nr` is the Roman **Matins** repertoire (responsories,
+antiphons) from the [Nocturnale Romanum](https://github.com/Nocturnale-Romanum/nocturnale-romanum)
+community restitution — the source behind `matutinum`; see [Matins nocturns](#matins-nocturns--matutinum).
 
 ## The books — `corpus`
 
@@ -321,7 +325,55 @@ tonus.officium({ feast: benedict, hora: "vesperae", rite: "monasticum" });
 Matins is served flat (its antiphons and responsories, no nocturn grouping); the
 monastic three-nocturn / twelve-psalm structure is not yet modeled. A monastic
 feast absent from the Roman calendar is reachable by its `feastId` but not by a
-date query.
+date query. For the **Roman** night office with its nocturn structure, see
+`matutinum` below.
+
+## Matins nocturns — `matutinum`
+
+`officium({ hora: "matutinum" })` returns Matins as a flat chant list.
+`matutinum(query?)` instead returns the **structured** Roman night office: the
+nocturns, each with its great responsories (and antiphons where the source
+carries them). It is a separate accessor — the flat `officium` path is unchanged.
+
+```js
+const advent1 = tonus.festum({ date: new Date("2026-11-29") }); // Dominica I Adventus
+const m = tonus.matutinum({ feast: advent1 });
+// m.nocturns[0].responsories[0].incipit === "Aspiciens a longe"
+// three nocturns of three responsories — the opening of the liturgical year
+```
+
+```ts
+interface Matins {
+  feastId: string;              // the tonus feast id resolved
+  name: string;                 // Latin name, e.g. "Dominica I Adventus"
+  rank: string;                 // "I. classis - Semiduplex", "Feria", …
+  nocturns: Nocturn[];          // one (simple) or three (festal)
+  redirectedFrom: string | null; // feast/commune the chants were borrowed from
+}
+interface Nocturn {
+  n: number;                    // 1–3
+  responsories: Chant[];        // the nocturn's great responsories, in order
+  antiphons: Chant[];           // its antiphons, where present
+}
+```
+
+The chants and structure come from the **Nocturnale Romanum** (`nr` source), the
+only machine-readable Roman Matins — a community restitution built on Holger
+Peter Sandhofe's 2002 edition, Hartker-derived, carrying episema/quilisma/mora
+rhythmic markings. Every responsory resolves to full GABC.
+
+A **sanctorale** feast with no proper Matins draws it from its commune, recorded
+in `redirectedFrom` (`CONP` Common of a Confessor, `APEX` Common of Apostles, …):
+
+```js
+tonus.matutinum({ feast: tonus.festum({ date: new Date("2026-07-15") }) });
+// S. Henrici — three nocturns via CONP; m.redirectedFrom === "CONP"
+```
+
+**Coverage.** The bridge from the Nocturnale's feast ids to the tonus calendar
+covers the **sanctorale** (all months) and **Advent** today; the other temporal
+seasons (Nativity, Lent, Passiontide, Paschaltide, after Pentecost) are not yet
+mapped. A feast with no match — or any rite other than Roman — returns `null`.
 
 ## Psalms — `psalmus`
 
