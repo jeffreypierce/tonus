@@ -13,8 +13,8 @@ import {
   COMPLINE_ORDINARY,
   COMPLINE_SEASONAL,
   marianAntiphonFor,
-} from "../../data/compline.js";
-import { PRIME_ORDINARY, PRIME_SEASONAL } from "../../data/prime.js";
+} from "./data/compline.js";
+import { PRIME_ORDINARY, PRIME_SEASONAL } from "./data/prime.js";
 
 let _roman: Map<string, OfficeDay> | null = null;
 let _monastic: Map<string, OfficeDay> | null = null;
@@ -44,7 +44,7 @@ const SEASONAL_ORDO_HOURS: ReadonlySet<CanonicalHour> = new Set([
 // tables at all. The ordo is assembled from the season (Te lucis, In manus
 // tuas), the fixed psalms (from the extracted DO scheme), the invariable spine
 // (Deus in adjutorium, Nunc dimittis), and the date-driven Marian antiphon.
-// See data/compline.ts.
+// See ./data/compline.ts.
 function complineForFeast(feast: Feast, rite: Rite): Chant[] {
   const seasonal = COMPLINE_SEASONAL[feast.season];
   const results: Chant[] = [];
@@ -75,7 +75,7 @@ function complineForFeast(feast: Feast, rite: Rite): Chant[] {
 }
 
 // Prime, like Compline, is a fixed+seasonal ordo, not per-feast. Covers the
-// sung parts only (see data/prime.ts): opening, fixed psalms, the hymn Iam
+// sung parts only (see ./data/prime.ts): opening, fixed psalms, the hymn Iam
 // lucis, and the seasonal short responsory Christe Fili Dei.
 function primeForFeast(feast: Feast, rite: Rite): Chant[] {
   const seasonal = PRIME_SEASONAL[feast.season];

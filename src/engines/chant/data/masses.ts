@@ -6,7 +6,7 @@ import {
   type Season,
   type Grade,
   GRADE_ORDER,
-} from "../engines/cal/types.js";
+} from "../../cal/types.js";
 
 export interface MassEntry {
   id: string;

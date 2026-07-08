@@ -11,7 +11,7 @@
 // the Marian rotation follow standard practice, cross-checked against
 // bbloomf/compline (public domain). See docs/chant.md and BIBLIOGRAPHY.md.
 
-import type { Season } from "../engines/cal/types.js";
+import type { Season } from "../../cal/types.js";
 
 // Compline's psalmody (Ps 4, 30 vv. 2–6, 90, 133) is not hand-listed here — it
 // comes from the extracted DO Tridentine scheme via
