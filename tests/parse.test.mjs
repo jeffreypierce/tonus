@@ -145,6 +145,22 @@ describe("parseGABC", () => {
     assert.equal(n[0].ictus, true);
   });
 
+  test("mora vocis: a single dot is mora 1, a double dot is mora 2", () => {
+    assert.equal(notes("(c4) A(g)")[0].mora, 0);   // no dot
+    assert.equal(notes("(c4) A(g.)")[0].mora, 1);  // punctum morae
+    assert.equal(notes("(c4) A(g..)")[0].mora, 2);  // double mora (major cadence)
+  });
+
+  test("the double mora lengthens the note that carries it, more than a single mora", () => {
+    const dur = (gabc) => notes(gabc).at(-1).duration;
+    assert.ok(dur("(c4) A(g..)") > dur("(c4) A(g.)"),
+      "double mora must exceed single mora");
+    // On a multi-note neume the dots belong to the last note, not the first.
+    const neume = notes("(c4) A(fgf..)");
+    assert.equal(neume.at(-1).mora, 2);
+    assert.equal(neume[0].mora, 0);
+  });
+
   test("quilisma flag is set by w modifier", () => {
     const n = notes("(c4) A(gw)");
     assert.ok(n.some((e) => e.quilisma === true));
