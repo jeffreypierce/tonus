@@ -357,17 +357,24 @@ are comparable.
 
 ```js
 score.imprint.attractors[0];
-// { pc: 0, weight: 0.42, pitch: { spn: "C4", … } }
+// { pc: 0, weight: 0.39, pitch: { spn: "C4", … } }
 
 score.imprint.modalAffinity.slice(0, 2);
-// [ { mode: 4, alias: "hypophrygian", score: 0.64 },
-//   { mode: 3, alias: "phrygian",     score: 0.64 } ]
+// [ { mode: 7, alias: "mixolydian",     score: 2.54 },
+//   { mode: 8, alias: "hypomixolydian", score: 2.09 } ]
 ```
 
-`modalAffinity` is a measurement, not a confirmation: _Puer natus est_
-declares mode 7, and its pitch-class distribution still ranks the
-Phrygian pair first. Conformance against the declared mode is read
-directly:
+The ranking reads three signals beyond the pitch-class distribution: the
+**opening note** (each mode's initials, Rockstro's ordering), the **closing
+note** (a chant rests on its final — the treatises' first determinant of mode),
+and the **tessitura** (how high the melody sits above its final, the classical
+authentic/plagal separator). Together these rank the labelled mode first for
+~73% of the corpus, its plagal/authentic twin usually second — _Puer natus est_
+(mode 7) leads with 7, then its plagal twin 8.
+
+It remains a measurement, not a confirmation: a transposed or mislabelled chant
+will not rank its nominal mode first, which is itself a useful signal.
+Conformance against the declared mode is read directly:
 
 ```js
 const declared = parseInt(score.chant.mode, 10);

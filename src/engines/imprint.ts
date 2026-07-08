@@ -128,6 +128,10 @@ export function computeImprint(
   const cadenceNotes = opts.cadenceNotes;
   const pcCounts = new Array<number>(12).fill(0);
   let total = 0;
+  // For the tessitura signal: the mean MIDI of every note, and the last note.
+  let midiSum = 0;
+  let noteCount = 0;
+  let lastNote: { pc: number; midi: number } | null = null;
   for (let pi = 0; pi < phrases.length; pi++) {
     const phrase = phrases[pi]!;
     for (let si = 0; si < phrase.syllables.length; si++) {
@@ -139,6 +143,9 @@ export function computeImprint(
         if (cadenceNotes?.has(`${pi}:${si}:${ni}`)) w *= CADENCE_WEIGHT;
         pcCounts[note.pitch.pc] += w;
         total += w;
+        midiSum += note.pitch.midi;
+        noteCount++;
+        lastNote = { pc: note.pitch.pc, midi: note.pitch.midi };
       }
     }
   }
@@ -148,12 +155,18 @@ export function computeImprint(
   }
 
   const firstNotePc = phrases[0]?.syllables[0]?.notes[0]?.pitch.pc;
+  // Tessitura = the melody's mean height above where it comes to rest.
+  const tessitura = lastNote && noteCount > 0 ? midiSum / noteCount - lastNote.midi : undefined;
 
   return {
     pcDistribution,
     attractors: computeAttractors(pcDistribution, scale),
     vowelAttractors: computeVowelAttractors(phrases, scale),
-    modalAffinity: computeModalAffinity(pcDistribution, firstNotePc),
+    modalAffinity: computeModalAffinity(pcDistribution, {
+      firstNotePc,
+      lastNotePc: lastNote?.pc,
+      tessitura,
+    }),
   };
 }
 
