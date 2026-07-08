@@ -3,6 +3,7 @@ import { getChants, getCorpus } from "./engines/chant/chant.js";
 import { getPropers } from "./engines/chant/propers.js";
 import { getOrdinary } from "./engines/chant/ordinary.js";
 import { getHour } from "./engines/chant/hour.js";
+import { getMatins } from "./engines/chant/matutinum.js";
 import { getPsalm } from "./engines/chant/psalm.js";
 import { buildTemper } from "./engines/temper/api.js";
 import { buildScore } from "./engines/score/api.js";
@@ -15,6 +16,7 @@ import type {
   OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
   Corpus, GenusCount, ModeCount, SharedCount,
 } from "./engines/chant/types.js";
+import type { Matins, Nocturn } from "./engines/chant/matutinum.js";
 import type {
   TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts,
   Pitch, PitchInput, Step, Neume, NeumeShape,
@@ -53,6 +55,7 @@ const tonus = {
   proprium: getPropers,
   ordinarium: getOrdinary,
   officium: getHour,
+  matutinum: getMatins,
   psalmus: getPsalm,
   temperamentum: buildTemper,
   notatio: buildScore,
@@ -78,6 +81,7 @@ export type {
   Chant, CantusQuery, OrdinaryChant,
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
   Corpus, GenusCount, ModeCount, SharedCount,
+  Matins, Nocturn,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
