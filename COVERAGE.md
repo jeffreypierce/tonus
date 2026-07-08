@@ -58,6 +58,18 @@ Core six slots: **2022 / 4134** (48.9%).
 Coverage today is the **sanctorale** (all months) and **Advent**; the other
 temporal seasons are not yet bridged. See `docs/chant.md` → *Matins nocturns*.
 
+## Monastic Matins — not available
+
+tonus serves **Roman** Matins (above); the **monastic** (Benedictine) night
+office is not modelled. This is a source gap, not a tooling one: the nocturn
+structure differs (nocturns 1–2 of six psalms, a third of three OT canticles,
+four responsories each), but that is a tractable template variant. The blocker
+is that **no machine-readable source for the monastic Matins responsory
+melodies is known to exist.** The printed *Nocturnale Monasticum* (Le Barroux /
+La Garde) is text-only; a GABC edition is reportedly in progress upstream but
+unpublished. When such a source lands, the structure work is already scaffolded
+(see the `feat/matins` branch).
+
 ## Chant source usage
 
 Total unique chant ids referenced by propers, office, and Matins: **2842**.
