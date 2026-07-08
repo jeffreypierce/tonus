@@ -68,7 +68,15 @@ export interface Chant {
   modus: string | null;      // Latin mode name, "Modus I"–"Modus VIII";
                              // "Tonus Peregrinus" for psalm tone P
   pages: { page: string; sequence: number; extent: number }[];
-  source: { book: string; year: number | null; editor: string | null; code?: ChantSource | "user" };
+  source: {
+    book: string;
+    fullTitle?: string | null;   // full Latin title (from GregoBase), where it has one
+    edition?: string | null;     // edition note, e.g. "US edition"
+    year: number | null;
+    editor: string | null;
+    scanSource?: string | null;  // scan attribution (from GregoBase)
+    code?: ChantSource | "user";
+  };
   ordinary?: OrdinaryCode;   // machine code; present for kyriale chants
   ordinarium?: string;       // Latin ordinary name, e.g. "Kyrie eleison"
   mass?: number;
@@ -78,6 +86,35 @@ export interface OrdinaryChant extends Chant {
   ordinary: OrdinaryCode;
   ordinarium: string;
   mass: number;
+}
+
+// One genre's chant count within a book (office code + its Latin label).
+export interface GenusCount {
+  office: OfficeCode;
+  genus: string;
+  count: number;
+}
+
+// One mode's chant count within a book. `mode`/`modus` are null for the
+// aggregate "other/none" bucket (chants without a mode 1–8).
+export interface ModeCount {
+  mode: string | null;
+  modus: string | null;
+  count: number;
+}
+
+// A book's bibliographic identity and a breakdown of its contents (`corpus`).
+export interface Corpus {
+  code: ChantSource;
+  book: string;                  // short title
+  fullTitle: string | null;      // full Latin title, where the source has one
+  edition: string | null;        // edition note, else null
+  year: number | null;
+  editor: string | null;
+  scanSource: string | null;     // scan attribution
+  count: number;                 // total chants
+  genera: GenusCount[];          // genre breakdown, descending by count
+  modes: ModeCount[];            // mode breakdown, 1–8 then the other/none bucket
 }
 
 export interface CantusQuery {

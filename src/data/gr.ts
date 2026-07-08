@@ -1,13 +1,16 @@
 // gr.ts — Graduale Romanum 1961 corpus
 // Extracted from GregoBase (source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-04T01:42:24.971Z
+// Generated: 2026-07-08T11:54:16.949Z
 // Chants: 1344
 import type { Chant } from "./types.js";
 
 export const GR_SOURCE: Chant["source"] = {
   book: "Graduale Romanum",
+  fullTitle: "Graduale Sacrosanctae Romanae Ecclesiae, de Tempore et de Sanctis",
+  edition: null,
   year: 1961,
   editor: "Solesmes",
+  scanSource: "Scans courtesy of the Church Music Association of America",
   code: "gr",
 };
 

@@ -1,14 +1,17 @@
 // la.ts — Liber antiphonarius 1960 corpus (Roman office)
 // Extracted from GregoBase (source ID 48) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-04T01:42:24.971Z
+// Generated: 2026-07-08T11:54:16.949Z
 // Chants: 1422
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
 export const LA_SOURCE: Chant["source"] = {
   book: "Liber antiphonarius",
+  fullTitle: "Antiphonale Sacrosanctae Romanae Ecclesiae pro diurnis horis",
+  edition: null,
   year: 1960,
   editor: "Solesmes",
+  scanSource: "Scans courtesy of the Church Music Association of America",
   code: "la",
 };
 
