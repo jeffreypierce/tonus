@@ -9,6 +9,7 @@ import { computeImprint, type Imprint } from "../imprint.js";
 import { computeProsody, type Prosody } from "./prosody.js";
 import { detectCadences, type Cadence } from "./cadence.js";
 import { detectModulations, type Modulation } from "./modulation.js";
+import { detectFormulas, type FormulaMatch } from "./formula.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import { MODES } from "../temper/modes.js";
 import { toMidi, type MidiOpts, type MidiEmitResult } from "./emitters/midi.js";
@@ -56,6 +57,8 @@ export interface Score {
   cadences: Cadence[];
   /** Passages where the tonal centre leans away from the home mode. */
   modulations: Modulation[];
+  /** Apel standard-phrase formulae each phrase realises (Tier-1 genres only). */
+  formulas: FormulaMatch[];
   imprint: Imprint;
   /**
    * Emit a Standard MIDI File from the score's tabula. Returns the file bytes
@@ -128,6 +131,14 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   // Modulation: where the tonal centre leans away from the home mode.
   const modulations = detectModulations(ir.phrases, meta.mode ?? undefined);
 
+  // Melodic formulae: which of Apel's standard phrases each phrase realises.
+  // Keyed by genre × mode; only the Tier-1 tabulatable genres have a catalogue.
+  const formulas = detectFormulas(
+    ir.phrases,
+    meta.mode != null ? MODES.get(meta.mode) : undefined,
+    chant.office,
+  );
+
   const tabula = computeTabula(ir, {
     mode: meta.mode ?? undefined,
     a4Hz: opts?.temperamentum?.a4,
@@ -151,6 +162,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     prosody: computeProsody(ir.phrases),
     cadences,
     modulations,
+    formulas,
     imprint: computeImprint(ir.phrases, scale, {
       // Each cadence's resolution note (its last) is the strongest modal anchor.
       cadenceNotes: new Set(
@@ -172,5 +184,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
 export type { ParseError };
 export type { Cadence, CadenceTarget, CadenceApproach } from "./cadence.js";
 export type { Modulation } from "./modulation.js";
+export type { FormulaMatch } from "./formula.js";
+export type { Formula, FormulaSlot } from "./data/formulas.js";
 export type { MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent } from "./emitters/midi.js";
 export type { MusicXmlOpts, MusicXmlEmitResult } from "./emitters/musicxml.js";

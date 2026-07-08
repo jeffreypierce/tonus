@@ -28,14 +28,40 @@ const CONCEDED_MOD_WEIGHT = 0.5;
 // opening pitch differently.
 const INITIAL_BONUS = 0.3;
 
+// The last note is the treatises' first determinant of mode: a chant comes to
+// rest on its final. Landing on a mode's final is the single strongest signal.
+const FINAL_NOTE_BONUS = 0.5;
+
+// Tessitura — how high the melody sits above its final — is the classical
+// authentic/plagal separator (an authentic mode ranges a fifth-and-more above the
+// final; its plagal partner straddles it). Calibrated over the corpus (n≈6,666):
+// mean-pitch-minus-final is ~4.0 semitones for authentic, ~1.7 for plagal, with
+// clean separation. The bonus peaks when the observed tessitura matches the
+// mode's expected value and falls off linearly over TESSITURA_TOLERANCE.
+const TESSITURA_AUTHENTIC = 4.0;
+const TESSITURA_PLAGAL = 1.7;
+const TESSITURA_TOLERANCE = 3;
+const TESSITURA_WEIGHT = 1.0;
+
+export interface ModalAffinityOpts {
+  /** The chant's opening pitch class — applies the rank-weighted initials bonus. */
+  firstNotePc?: number;
+  /** The chant's closing pitch class — applies the final-note and tessitura bonuses. */
+  lastNotePc?: number;
+  /** Mean note MIDI minus the last note's MIDI — the melody's height above its close. */
+  tessitura?: number;
+}
+
 /**
  * Rank a pitch-class distribution against the eight modes, best fit first.
- * `firstNotePc`, when given, applies the rank-weighted initials bonus.
+ * The optional signals sharpen the ranking: the opening note (initials bonus),
+ * the closing note (final-note bonus), and the tessitura (authentic/plagal).
  */
 export function computeModalAffinity(
   pcDistribution: Record<number, number>,
-  firstNotePc?: number,
+  opts: ModalAffinityOpts = {},
 ): ModalAffinity[] {
+  const { firstNotePc, lastNotePc, tessitura } = opts;
   const results: ModalAffinity[] = [];
   for (let m = 1; m <= 8; m++) {
     const data = MODES.get(m);
@@ -60,6 +86,18 @@ export function computeModalAffinity(
       const initials = data.modulations.initials;
       const rank = initials.findIndex((pc) => pc % 12 === firstNotePc);
       if (rank !== -1) score += (INITIAL_BONUS * (initials.length - rank)) / initials.length;
+    }
+
+    // Final-note + tessitura: only apply when the chant actually rests on this
+    // mode's final. The tessitura then separates the mode from its authentic/
+    // plagal partner (which share the final but sit at different heights).
+    if (lastNotePc != null && lastNotePc === data.final % 12) {
+      score += FINAL_NOTE_BONUS;
+      if (tessitura != null) {
+        const expected = data.type === "authentic" ? TESSITURA_AUTHENTIC : TESSITURA_PLAGAL;
+        const fit = Math.max(0, 1 - Math.abs(tessitura - expected) / TESSITURA_TOLERANCE);
+        score += TESSITURA_WEIGHT * fit;
+      }
     }
 
     results.push({ mode: m, alias: data.alias, score });
