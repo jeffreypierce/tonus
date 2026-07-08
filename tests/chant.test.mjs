@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { getChants } from "../dist/engines/chant/chant.js";
+import { getChants, getCorpus } from "../dist/engines/chant/chant.js";
 import { getPropers } from "../dist/engines/chant/propers.js";
 import { getOrdinary } from "../dist/engines/chant/ordinary.js";
 import { getHour } from "../dist/engines/chant/hour.js";
@@ -70,6 +70,67 @@ describe("getChants", () => {
     assert.equal(page1.length, 3);
     assert.equal(page2.length, 3);
     assert.notEqual(page1[0].id, page2[0].id);
+  });
+});
+
+describe("getCorpus", () => {
+  test("returns book metadata for a corpus code", () => {
+    const am = getCorpus("am");
+    assert.equal(am.code, "am");
+    assert.equal(am.book, "Antiphonale Monasticum");
+    assert.equal(am.year, 1934);
+    assert.equal(am.editor, "Solesmes");
+    assert.equal(am.edition, "Pro Diurnis Horis"); // GregoBase description, normalized
+    assert.ok(am.count > 1000);
+  });
+
+  test("exposes the full Latin title where GregoBase has one", () => {
+    // gr's description contains "Ecclesiae" → full title; am's does not → null.
+    assert.match(getCorpus("gr").fullTitle, /Ecclesiae/);
+    assert.equal(getCorpus("am").fullTitle, null);
+  });
+
+  test("genera are the office distribution, descending by count", () => {
+    const am = getCorpus("am");
+    assert.equal(am.genera[0].office, "an"); // an antiphonary — antiphons dominate
+    assert.equal(am.genera[0].genus, "Antiphona");
+    for (let i = 1; i < am.genera.length; i++) {
+      assert.ok(am.genera[i - 1].count >= am.genera[i].count, "descending");
+    }
+  });
+
+  test("mode counts reconcile with the total (the other/none bucket)", () => {
+    for (const code of ["gr", "lu", "la", "lh", "am"]) {
+      const c = getCorpus(code);
+      const sum = c.modes.reduce((s, m) => s + m.count, 0);
+      assert.equal(sum, c.count, `${code}: modes sum to count`);
+    }
+  });
+
+  test("overlap: full total ≥ stored count, and unique ≤ total", () => {
+    const la = getCorpus("la");
+    // The stored (deduped) count is ≤ what the book actually holds.
+    assert.ok(la.total >= la.count, "full total is at least the deduped count");
+    // Unique chants are a subset of the total; the rest are shared with ≥1 book.
+    assert.ok(la.unique <= la.total);
+    assert.ok(la.shared.length > 0 && la.unique < la.total, "LA shares with others");
+    // shared is descending by count.
+    for (let i = 1; i < la.shared.length; i++) {
+      assert.ok(la.shared[i - 1].count >= la.shared[i].count, "descending");
+    }
+  });
+
+  test("overlap: LU is the omnibus (shares heavily with GR and LA); AM is nearly its own", () => {
+    const lu = getCorpus("lu");
+    const shareOf = (c, code) => c.shared.find((s) => s.code === code)?.count ?? 0;
+    assert.ok(shareOf(lu, "la") > 500, "LU overlaps LA heavily");
+    assert.ok(shareOf(lu, "gr") > 500, "LU overlaps GR heavily");
+    const am = getCorpus("am");
+    assert.ok(am.unique > am.total * 0.9, "AM is >90% its own repertoire");
+  });
+
+  test("unknown code throws", () => {
+    assert.throws(() => getCorpus("zz"), /Unknown corpus code/);
   });
 });
 

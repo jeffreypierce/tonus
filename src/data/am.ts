@@ -1,14 +1,17 @@
 // am.ts — Antiphonale Monasticum 1934 corpus (monastic office)
 // Extracted from GregoBase (source ID 7) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-07T23:11:24.158Z
+// Generated: 2026-07-08T11:54:16.949Z
 // Chants: 1429
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
 export const AM_SOURCE: Chant["source"] = {
   book: "Antiphonale Monasticum",
+  fullTitle: null,
+  edition: "Pro Diurnis Horis",
   year: 1934,
   editor: "Solesmes",
+  scanSource: "Scans courtesy of Corpus Christi Watershed",
   code: "am",
 };
 

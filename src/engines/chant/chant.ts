@@ -1,8 +1,11 @@
 // ---------------------------------------------------------------------------
 // engines/chant/chant — corpus query
 // ---------------------------------------------------------------------------
-import type { Chant, CantusQuery, OfficeCode, ChantSource } from "./types.js";
+import type {
+  Chant, CantusQuery, OfficeCode, ChantSource, Corpus, GenusCount, ModeCount, SharedCount,
+} from "./types.js";
 import { OFFICE_LABELS, MODE_LABELS } from "./types.js";
+import { CORPUS_OVERLAP } from "../../data/corpus-overlap.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
@@ -83,6 +86,78 @@ let _byId: Map<string, Chant> | null = null;
 function byId(): Map<string, Chant> {
   if (!_byId) _byId = new Map(CORPUS.map((c) => [c.id, c]));
   return _byId;
+}
+
+const SOURCES: Record<ChantSource, Chant["source"]> = {
+  gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE,
+};
+
+// Tally a book's genre and mode distribution — computed once per code, cached.
+const _corpusCache = new Map<ChantSource, Corpus>();
+
+/**
+ * Metadata and content breakdown for one corpus book (`tonus.corpus`). Pass a
+ * source code; get the book's bibliographic identity plus its genre and mode
+ * distributions. Computed on first access from the loaded corpus, then cached.
+ */
+export function getCorpus(code: ChantSource): Corpus {
+  const cached = _corpusCache.get(code);
+  if (cached) return cached;
+
+  const src = SOURCES[code];
+  if (!src) throw new Error(`Unknown corpus code: "${code}" (expected gr, lu, la, lh, or am)`);
+
+  const chants = CORPUS.filter((c) => c.source.code === code);
+
+  // Genre distribution — count by office code, descending by count.
+  const officeCounts = new Map<OfficeCode, number>();
+  // Mode distribution — count by mode 1–8; everything else (p/d/e, null) into one bucket.
+  const modeCounts = new Map<string, number>();
+  let otherModes = 0;
+  for (const c of chants) {
+    officeCounts.set(c.office, (officeCounts.get(c.office) ?? 0) + 1);
+    if (c.mode != null && MODE_LABELS[c.mode]) {
+      modeCounts.set(c.mode, (modeCounts.get(c.mode) ?? 0) + 1);
+    } else {
+      otherModes++;
+    }
+  }
+
+  const genera: GenusCount[] = [...officeCounts.entries()]
+    .map(([office, count]) => ({ office, genus: OFFICE_LABELS[office] ?? office, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const modes: ModeCount[] = [];
+  for (const m of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
+    const count = modeCounts.get(m);
+    if (count) modes.push({ mode: m, modus: MODE_LABELS[m], count });
+  }
+  if (otherModes > 0) modes.push({ mode: null, modus: null, count: otherModes });
+
+  // Pre-dedup relationships (precomputed in tonus-corpus — tonus can't derive
+  // them, since it stores only one copy of each shared chant).
+  const ov = CORPUS_OVERLAP[code];
+  const shared: SharedCount[] = Object.entries(ov?.shared ?? {})
+    .map(([c, count]) => ({ code: c as ChantSource, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const result: Corpus = {
+    code,
+    book: src.book,
+    fullTitle: src.fullTitle ?? null,
+    edition: src.edition ?? null,
+    year: src.year,
+    editor: src.editor,
+    scanSource: src.scanSource ?? null,
+    count: chants.length,
+    total: ov?.total ?? chants.length,
+    unique: ov?.unique ?? chants.length,
+    shared,
+    genera,
+    modes,
+  };
+  _corpusCache.set(code, result);
+  return result;
 }
 
 function toArray<T>(v: T | T[] | undefined): T[] | undefined {
