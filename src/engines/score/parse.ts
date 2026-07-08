@@ -100,7 +100,7 @@ interface IntermNote {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
-  doubleEpisema: boolean;
+  mora: 0 | 1 | 2; // mora vocis count: 0 none, 1 dot '.', 2 double dot '..'
   _weight: number;
   _durWeight: number;
 }
@@ -178,7 +178,7 @@ function parseNeume(
     let isLiquescent = false;
     let isStrophicus = false;
     let isOriscus = false;
-    let isDoubleEpisema = false;
+    let mora: 0 | 1 | 2 = 0;
 
     // Dash prefix (weak note)
     if (token[0] === "-") {
@@ -242,15 +242,19 @@ function parseNeume(
       ictus = true;
     }
 
-    // Episema (horizontal lengthening '.')
+    // Mora vocis — the GABC dot '.' lengthens THIS note (a held note before a
+    // pause). A double dot '..' is the double mora (a stronger lengthening at a
+    // major cadence); it adds to this note's duration, not the neume's first
+    // note — the dots belong to the note that carries them. (The horizontal
+    // episema is '_', handled with the ictus markers above.)
     if (modifiers.includes(".")) {
       w += weights.episemaWeight;
       durWeight += weights.episemaDuration;
       ictus = true;
-      // Double episema '..' — boost first note of neume
+      mora = 1;
       if (modifiers.includes("..")) {
-        isDoubleEpisema = true;
-        if (intermed[0]) intermed[0]._durWeight += weights.episemaDoubleDuration;
+        mora = 2;
+        durWeight += weights.episemaDoubleDuration;
       }
     }
 
@@ -339,7 +343,7 @@ function parseNeume(
       liquescent: isLiquescent,
       strophicus: isStrophicus,
       oriscus: isOriscus,
-      doubleEpisema: isDoubleEpisema,
+      mora,
       _weight: w,
       _durWeight: durWeight,
     });
@@ -400,7 +404,7 @@ function parseNeume(
       liquescent: note.liquescent,
       strophicus: note.strophicus,
       oriscus: note.oriscus,
-      doubleEpisema: note.doubleEpisema,
+      mora: note.mora,
     };
   });
 

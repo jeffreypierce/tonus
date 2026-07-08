@@ -52,6 +52,8 @@ export interface ChantTabulaRow {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  /** Mora vocis count: 0 none, 1 dot '.', 2 double dot '..' (a stronger cadential hold). */
+  mora: 0 | 1 | 2;
   divisio: string | null;
   /** Index into score.cadences[] when this note forms a cadence; null otherwise. */
   cadenceRef: number | null;
@@ -212,6 +214,7 @@ export function computeTabula(
       liquescent: n.context.liquescent,
       strophicus: n.context.strophicus,
       oriscus: n.context.oriscus,
+      mora: n.context.mora,
       divisio: a.divisio,
       cadenceRef:
         cadenceRefByPos.get(`${a.phraseIndex}:${a.syllableIndex}:${a.noteIndex}`) ?? null,

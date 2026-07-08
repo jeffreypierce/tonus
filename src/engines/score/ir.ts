@@ -57,7 +57,7 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
       liquescent: raw.liquescent,
       strophicus: raw.strophicus,
       oriscus: raw.oriscus,
-      doubleEpisema: raw.doubleEpisema,
+      mora: raw.mora,
       weight: raw.weight,
     },
   };
@@ -92,7 +92,7 @@ interface AnnotatedNote {
 interface Group {
   notes: Note[];
   neumeTypes: Set<string>;
-  hasDoubleEpisema: boolean;
+  hasDoubleMora: boolean;
   ictusMidi: number | undefined;
   shape: ArsisThesis;
 }
@@ -104,15 +104,15 @@ function partitionByIctus(annotated: AnnotatedNote[]): Group[] {
 
   const closeGroup = (items: AnnotatedNote[], ictusMidi: number | undefined): Group => {
     const neumeTypes = new Set<string>();
-    let hasDoubleEpisema = false;
+    let hasDoubleMora = false;
     for (const a of items) {
       neumeTypes.add(a.neumeType);
-      if (a.note.context.doubleEpisema) hasDoubleEpisema = true;
+      if (a.note.context.mora === 2) hasDoubleMora = true;
     }
     return {
       notes: items.map((a) => a.note),
       neumeTypes,
-      hasDoubleEpisema,
+      hasDoubleMora,
       ictusMidi,
       shape: "arsic",
     };
@@ -144,7 +144,7 @@ function classifyGroup(
   // Conventional overrides: specific neume shapes have fixed rhythmic quality
   // regardless of melodic context.
   if (group.neumeTypes.has("salicus")) return "arsic";
-  if (group.hasDoubleEpisema && group.neumeTypes.has("clivis")) return "thetic";
+  if (group.hasDoubleMora && group.neumeTypes.has("clivis")) return "thetic";
 
   const groupIctusMidi = group.ictusMidi ?? group.notes[0]!.pitch.midi;
 
