@@ -20,6 +20,7 @@ methods, `score.midi()` and `score.musicxml()`.
   - [Prosody](#prosody)
   - [Cadences](#cadences)
   - [Modulations](#modulations)
+  - [Melodic formulae](#melodic-formulae)
   - [Theory \& Context](#theory--context)
     - [The model](#the-model)
     - [The classification rules](#the-classification-rules)
@@ -495,6 +496,30 @@ interface Modulation {
   confidence: number; // 0–1, the averaged margin over the home mode
 }
 ```
+
+## Melodic formulae
+
+`score.formulas` reads each phrase against Apel's centonization catalogue: the
+responsorial-melismatic chants (Graduals, Tracts, Great Responsories) are not
+freely composed but assembled from a stock of standard phrases shared across a
+mode. Each phrase is expressed as a step-skeleton relative to the final and
+matched against the catalogue for its genre × mode, tolerating the melismatic
+filling that varies a formula to fit its text.
+
+```ts
+interface FormulaMatch {
+  phraseIndex: number;
+  formula: string | null;   // Apel's symbol (e.g. "F10"), or null if none fits
+  slot: FormulaSlot | null; // opening | intonation | flex | mediant | termination | close
+  confidence: number;       // 0–1: how completely the phrase realises the formula
+  steps: (number | null)[]; // the phrase's step-skeleton — the evidence
+}
+```
+
+Only the Tier-1 tabulatable genres carry a catalogue; other genres — and any
+chant with no mode — return `formula: null` (the step-skeleton is still computed).
+The catalogue is transcribed from Apel's plates and grows genre × mode; see
+`score/data/formulas.ts`.
 
 ## Theory & Context
 
