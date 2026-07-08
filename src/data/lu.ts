@@ -1,15 +1,18 @@
 // lu.ts — Liber Usualis 1961 corpus (primary antiphon/hymn source)
 // Extracted from GregoBase (source ID 3) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-04T01:42:24.971Z
+// Generated: 2026-07-08T11:54:16.949Z
 // Chants: 2377
 // LA fills gaps for chant IDs not present here.
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
 export const LU_SOURCE: Chant["source"] = {
-  book: "Liber Usualis",
+  book: "The Liber Usualis",
+  fullTitle: null,
+  edition: "US edition",
   year: 1961,
   editor: "Solesmes",
+  scanSource: "Scans courtesy of the Church Music Association of America",
   code: "lu",
 };
 

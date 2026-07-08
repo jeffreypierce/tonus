@@ -2,6 +2,18 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.1.7
+
+- **`corpus(code)`** — metadata and analytics for a corpus book. Returns its
+  bibliographic identity (title, full Latin title, edition, year, editor, scan
+  attribution — drawn from GregoBase's catalogue) plus a breakdown of its
+  contents: genre distribution, mode distribution (I–VIII with a null bucket),
+  and cross-book **overlap** — the book's full pre-dedup `total`, its `unique`
+  count, and how many chants it `shared` with each other book. The overlap shows,
+  e.g., that the Liber Usualis is largely the Graduale and Antiphonarius combined,
+  while the Antiphonale Monasticum is nearly its own repertoire.
+- The `*_SOURCE` objects now carry `fullTitle`, `edition`, and `scanSource`.
+
 ## 0.1.6
 
 - **The monastic Office.** `officium({ rite: "monasticum" })` assembles the
