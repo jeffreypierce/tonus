@@ -1,6 +1,6 @@
 # tonus API
 
-The behavioral source of truth for the public API: eleven methods on
+The behavioral source of truth for the public API: thirteen methods on
 the `tonus` namespace, no sub-namespaces.
 
 ```js
@@ -12,14 +12,31 @@ import tonus from "tonus";
 | `tonus.festum(query?)`          | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
 | `tonus.pascha(year)`            | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
 | `tonus.cantus(query?)`          | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
+| `tonus.corpus(code)`            | [chant](chant.md)       | `Corpus` — one book's metadata + content breakdown      |
 | `tonus.proprium(query?)`        | [chant](chant.md)       | `Chant[]` — Mass propers                                |
 | `tonus.ordinarium(query?)`      | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
 | `tonus.officium(query?)`        | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |
+| `tonus.matutinum(query?)`       | [chant](chant.md)       | `Matins \| null` — structured Roman Matins nocturns     |
 | `tonus.psalmus(query?)`         | [chant](chant.md)       | `Chant[]` — intoned psalm verses                        |
 | `tonus.temperamentum(input?)`   | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
 | `tonus.notatio(chant, opts?)`   | [score](score.md)       | `Score` — GABC → musical score                          |
 | `tonus.caelum(query?)`          | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
 | `tonus.harmonia(cosmos, opts?)` | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
+
+## Theory & stance
+
+tonus is a music-analysis and data library. It treats the chant repertoire as
+musical and historical material — modes, tuning, neumes, prosody, the analytic
+imprint — not as liturgy to be performed. The liturgical scaffolding is here
+because that is how this music was transmitted and indexed for a thousand years:
+the calendar is a retrieval key, the feast a filter, the office an ordering. They
+are the catalogue, not the point.
+
+The music came to us through the Church because that is who kept the books — but
+this is a library for the music. Half the cantors who wrote it down likely held
+a working musician's skepticism toward the institution around them; many still
+do. tonus takes no theological position and asks none of its users. What it
+models is the sound and its structure.
 
 ## Conventions
 
