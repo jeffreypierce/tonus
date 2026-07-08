@@ -174,7 +174,7 @@ t.gradus("D4");
 //   variants: [ { hexachord: "durum",    solmization: "SOL" },
 //               { hexachord: "naturale", solmization: "RE"  },
 //               { hexachord: "molle",    solmization: "LA"  } ],
-//   hand: { finger: "middle", region: "base" },
+//   hand: { finger: "middle", region: "tip" },
 //   degree: 1, role: "finalis" }
 ```
 
@@ -183,12 +183,14 @@ contains it; these are the mutations a medieval singer had available at
 that step. With a mode set, `degree` and `role` are filled; without one, or
 for a pitch outside the gamut, they are `null`.
 
-The hand position names the joint a singer would point to:
+The hand position names the joint a singer would point to. The loci follow the
+canonical counter-clockwise spiral (Γ ut at the thumb tip, across the finger
+bases, up the little finger, back across the tips, in), not a linear fill:
 
-| `hand` field | values                                         |
-| ------------ | ---------------------------------------------- |
-| `finger`     | wrist, palm, thumb, index, middle, ring, pinky |
-| `region`     | base, mid, tip, top                            |
+| `hand` field | values                              |
+| ------------ | ----------------------------------- |
+| `finger`     | thumb, index, middle, ring, pinky   |
+| `region`     | base, mid, top, tip, super          |
 
 ```ts
 interface StepVariant {

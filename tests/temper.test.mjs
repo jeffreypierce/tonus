@@ -397,6 +397,23 @@ describe("gradus", () => {
     assert.ok(typeof step.hand.region === "string");
   });
 
+  test("hand loci follow the canonical Guidonian spiral", () => {
+    // Anchors of the spiral: Γ at the thumb tip, the finger bases (C–F index→
+    // little), and the upper octave (confirmed against the design plate). If the
+    // linear-fill bug ever returns, these move.
+    const at = (spn) => t.gradus(spn).hand;
+    assert.deepEqual(at("G2"), { finger: "thumb", region: "tip" });  // Γ Gammaut
+    assert.deepEqual(at("C3"), { finger: "index", region: "base" }); // C Cefaut
+    assert.deepEqual(at("F3"), { finger: "pinky", region: "base" }); // F Fefaut
+    assert.deepEqual(at("G4"), { finger: "index", region: "mid" });  // g (the finalis)
+    assert.deepEqual(at("E5"), { finger: "middle", region: "super" }); // ee, floats above
+    // wrist/palm no longer exist anywhere in the gamut.
+    for (const spn of ["G2","A2","B2","C3","D3","E3","F3","G3","A3","C4","D4","E4","F4","G4"]) {
+      const f = t.gradus(spn).hand?.finger;
+      assert.ok(f !== "wrist" && f !== "palm", `${spn} still on ${f}`);
+    }
+  });
+
   test("chromatic pitch returns null degree", () => {
     const step = t.gradus("F#4"); // not in mode 1 diatonic scale
     assert.equal(step.degree, null);
