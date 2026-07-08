@@ -26,13 +26,13 @@ import tonus from "tonus";
 ## Theory & stance
 
 tonus is a music-analysis and data library. It treats the chant repertoire as
-musical and historical material — modes, tuning, neumes, prosody, the analytic
-imprint — not as liturgy to be performed. The liturgical scaffolding is here
+musical and historical material (modes, tuning, neumes, prosody, the analytic
+imprint) not as liturgy to be performed. The liturgical scaffolding is here
 because that is how this music was transmitted and indexed for a thousand years:
 the calendar is a retrieval key, the feast a filter, the office an ordering. They
 are the catalogue, not the point.
 
-The music came to us through the Church because that is who kept the books — but
+The music came to us through the Church because that is who kept the books, but
 this is a library for the music. Half the cantors who wrote it down likely held
 a working musician's skepticism toward the institution around them; many still
 do. tonus takes no theological position and asks none of its users. What it
