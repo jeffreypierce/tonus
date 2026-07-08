@@ -7,7 +7,7 @@
 // the first verse only (unless repeated, as in the Magnificat) — see the
 // `intonation` option; `inDirectum` recites straight through with no mediant.
 import { syllabifyPhrase } from "./syllabify.js";
-import { getTone, getDifferentia } from "../../data/tones.js";
+import { getTone, getDifferentia } from "../temper/data/tones.js";
 import { midiToGabc } from "../temper/gabc.js";
 import type { PsalmVerse } from "./types.js";
 

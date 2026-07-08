@@ -6,8 +6,11 @@ import { lookupGuido } from "./guido.js";
 import { SHARP_SPELLING, FLAT_SPELLING, PREFER_FLAT_PCS } from "./data/constants.js";
 import type { Scale } from "./scale.js";
 
-export type Finger = "wrist" | "palm" | "thumb" | "index" | "middle" | "ring" | "pinky";
-export type Region = "base" | "mid" | "tip" | "top";
+// The five fingers of the Guidonian hand. (No wrist/palm — those served the old
+// invented linear layout; the canonical spiral is finger-only. See guido.ts.)
+export type Finger = "thumb" | "index" | "middle" | "ring" | "pinky";
+// Position along a finger, low to high; "super" = ee floating above the fingertip.
+export type Region = "base" | "mid" | "top" | "tip" | "super";
 
 export interface StepVariant {
   hexachord: "durum" | "naturale" | "molle";
@@ -58,7 +61,7 @@ export function toStep(midi: number, scala?: Scale): Step {
   const name = guido.name ?? spnLetterForPc(pc);
 
   const hand: Step["hand"] = guido.hand
-    ? { finger: guido.hand.finger as Finger, region: guido.hand.region as Region }
+    ? { finger: guido.hand.finger, region: guido.hand.region }
     : null;
 
   return {

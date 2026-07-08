@@ -126,7 +126,7 @@ describe("buildScore", () => {
     const score = buildScore(makeChant(gabc));
     const syl = score.phrases[0].syllables[0];
     assert.equal(syl.neume.type, "clivis");
-    assert.ok(syl.notes.some((n) => n.context.doubleEpisema));
+    assert.ok(syl.notes.some((n) => n.context.mora === 2));
     for (const n of syl.notes) {
       assert.equal(n.performance.rhythmicShape, "thetic");
     }

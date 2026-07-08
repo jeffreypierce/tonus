@@ -5,6 +5,7 @@
 import { MODES } from "./modes.js";
 import { GUIDONIAN_DATA } from "./data/guido.js";
 import type { GuidonianEntry } from "./data/guido.js";
+import type { Finger, Region } from "./step.js";
 
 export type { GuidonianVariant, GuidonianEntry } from "./data/guido.js";
 
@@ -40,7 +41,7 @@ export function lookupGuido(
   hexachord: "durum" | "naturale" | "molle" | null;
   solmization: string | null;
   mutations: { hexachord: string; solmization: string }[];
-  hand: { finger: string; region: string } | null;
+  hand: { finger: Finger; region: Region } | null;
 } {
   const entry = lookupExact(midi) ?? lookupByPc(midi);
 

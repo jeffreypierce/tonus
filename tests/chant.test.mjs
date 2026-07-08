@@ -26,6 +26,18 @@ describe("getChants", () => {
     for (const c of chants) assert.equal(c.source.code, "gr");
   });
 
+  test("serves the Antiphonale Monasticum (source am)", () => {
+    const am = getChants({ source: "am" });
+    assert.ok(am.length > 1000, `expected the full AM corpus, got ${am.length}`);
+    for (const c of am) {
+      assert.equal(c.source.code, "am");
+      assert.equal(c.source.book, "Antiphonale Monasticum");
+    }
+    // AM is an antiphonary — antiphons dominate.
+    const antiphons = am.filter((c) => c.office === "an");
+    assert.ok(antiphons.length > am.length / 2);
+  });
+
   test("accepts array values for mode, office, and source", () => {
     const chants = getChants({ mode: [1, 2], office: ["an", "hy"], limit: 10 });
     assert.ok(chants.length > 0);
@@ -129,6 +141,40 @@ describe("getHour", () => {
     assert.ok(c.length > 0);
     assert.equal(c.filter((x) => x.id.startsWith("psalm:")).length, 0,
       "the all-days survey has no per-day psalmody");
+  });
+});
+
+describe("getHour — the monastic rite", () => {
+  test("rite defaults to romanum (no change to existing callers)", () => {
+    const feasts = getFeast({ date: new Date("2026-12-25") });
+    const def = getHour({ feast: feasts, hora: "vesperae" });
+    const roman = getHour({ feast: feasts, hora: "vesperae", rite: "romanum" });
+    assert.deepEqual(def.map((c) => c.id), roman.map((c) => c.id));
+  });
+
+  test("monastic Compline uses the three-psalm scheme (4, 90, 133)", () => {
+    const [f] = getFeast({ date: new Date("2026-12-25") });
+    const psalms = (rite) =>
+      getHour({ feast: f, hora: "completorium", rite })
+        .filter((c) => c.id.startsWith("psalm:"))
+        .map((c) => parseInt(c.id.split(":")[1], 10));
+    const monastic = [...new Set(psalms("monasticum"))];
+    // Monastic Compline is Ps 4, 90, 133 — no Ps 30 (which the Roman rite adds).
+    assert.deepEqual(monastic, [4, 90, 133]);
+    assert.ok(psalms("romanum").includes(30), "Roman Compline keeps Ps 30");
+  });
+
+  test("monastic office chants come from the Antiphonale Monasticum", () => {
+    // A feast with monastic Vespers antiphons; assert none silently bind to LU.
+    const survey = getHour({ hora: "vesperae", rite: "monasticum" });
+    const antiphons = survey.filter((c) => c.office === "an");
+    assert.ok(antiphons.length > 0, "monastic Vespers survey returns antiphons");
+    // The AM-first pools mean antiphons resolve to am (or the la/lh gap-fillers),
+    // never to lu — the guard against the short-incipit mis-link risk.
+    for (const c of antiphons) {
+      assert.notEqual(c.source.code, "lu",
+        `monastic antiphon ${c.incipit} mis-bound to LU`);
+    }
   });
 });
 

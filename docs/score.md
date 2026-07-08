@@ -220,6 +220,7 @@ interface Context {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
   weight: number; // articulation weight
 }
 ```
@@ -270,6 +271,7 @@ interface ChantTabulaRow {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
   hz: number;
   offset: number;
   spn: string; // scientific pitch name, "D4"
@@ -286,7 +288,7 @@ interface ChantTabulaRow {
   role: "finalis" | "tenor" | "other" | null;
   name: string | null; // Guidonian short name
   nomen: string | null; // Guidonian compound name, "Delasolre"
-  hand: { finger: string; region: string } | null;
+  hand: { finger: Finger; region: Region } | null;
   hexachord: "durum" | "naturale" | "molle" | null;
   solfege: string | null;
 

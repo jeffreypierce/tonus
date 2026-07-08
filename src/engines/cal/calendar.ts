@@ -17,7 +17,7 @@
 // noted as future work.) The rank system this data carries is documented at
 // `ritus`/`Grade` in ./types.ts; Easter reckoning at pascha() in ./date.ts.
 import { CAL, type CalEntry } from "../../data/cal.js";
-import { MASSES } from "../../data/masses.js";
+import { MASSES } from "../chant/data/masses.js";
 import {
   isoDate,
   startOfDay,

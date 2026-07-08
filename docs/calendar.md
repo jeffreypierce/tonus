@@ -109,7 +109,7 @@ for Advent and Lent), encoded in tonus as constraints of season, grade,
 and day. Those headings were always customary rather than binding, and
 where they are silent the constraint is an editorial reading; the ordering
 of the list, most fitting first, is likewise tonus's judgment. The
-encoding is `src/data/masses.ts`, one commented entry per mass.
+encoding is `src/engines/chant/data/masses.ts`, one commented entry per mass.
 
 ## Rank — `ritus` and `grade`
 

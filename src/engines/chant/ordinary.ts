@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // engines/chant/ordinary — Mass ordinary (kyriale) selection
 // ---------------------------------------------------------------------------
-import { MASSES, AD_LIB, type MassEntry } from "../../data/masses.js";
+import { MASSES, AD_LIB, type MassEntry } from "./data/masses.js";
 import { KYRIALE, type KyrialeEntry } from "../../data/kyriale.js";
 import {
   MODE_LABELS,

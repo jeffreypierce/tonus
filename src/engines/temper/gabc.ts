@@ -23,8 +23,13 @@ const CLEFS: Record<string, { doMidi: number; doIdx: number }> = {
   c2: { doMidi: 60, doIdx: 5 },
   c3: { doMidi: 60, doIdx: 7 },
   c4: { doMidi: 60, doIdx: 9 },
-  f3: { doMidi: 53, doIdx: 5 },
-  f4: { doMidi: 53, doIdx: 3 },
+  // f-clefs anchor fa on the named line. Staff lines (bottom→top) sit at
+  // letters d/f/h/j (per the Gregorio spec: 2-line staff = a–i, 3-line = a–k,
+  // 4-line = a–m, pinning the lines at slots 3/5/7/9), so f3 puts fa at 'h'
+  // (7) and f4 at 'j' (9). Previous values (5 and 3) were off by a third and
+  // read every f-clef chant at the wrong staff position.
+  f3: { doMidi: 53, doIdx: 7 },
+  f4: { doMidi: 53, doIdx: 9 },
 };
 
 export function midiToGabc(midi: number, clef = "c4"): string {
