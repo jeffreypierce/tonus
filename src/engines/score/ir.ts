@@ -203,7 +203,8 @@ function classifyCompoundBeats(annotated: AnnotatedNote[]): CompoundBeat[] {
 // only when the sequence genuinely fits; ambiguous shapes stay null (a wrong
 // analytic label is worse than none). Contraction (Type VIII) is Suñol's local
 // reading [biblio: sunol-textbook]: a thesis immediately followed by an arsis
-// mid-incise means two simple rhythms overlap at a shared ictus.
+// mid-incise means two simple rhythms overlap at a shared ictus — and, being two
+// *complete* rhythms, the incise still resolves thetic; an unresolved seam is null.
 export function classifyRhythmicType(beats: CompoundBeat[]): RhythmicType {
   if (beats.length < 2) return null; // a lone beat has no chaining; needs ≥ A–T
   const seq = beats.map((b) => b.shape);
@@ -227,7 +228,11 @@ export function classifyRhythmicType(beats: CompoundBeat[]): RhythmicType {
   // pattern is a contraction (Suñol) — Carroll's Type VIII.
   const alternating = seq.every((s, i) => s === (i % 2 === 0 ? "arsic" : "thetic"));
   if (alternating && seq.length >= 4) return "VII";
-  return "VIII";
+  // Contraction is two *complete* rhythms overlapping at a shared ictus — so the
+  // whole must resolve (end thetic). A seam that leaves the incise hanging arsic
+  // (e.g. A–T–A) is no contraction; label it null rather than force a wrong VIII.
+  if (seq[seq.length - 1] === "thetic") return "VIII";
+  return null;
 }
 
 function applyCompoundBeats(phrases: Phrase[]): void {

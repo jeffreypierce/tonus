@@ -69,9 +69,9 @@ interface Corpus {
   editor: string | null;
   scanSource: string | null;   // scan attribution
   count: number;               // chants tonus stores (after dedup)
-  total: number;               // chants the book holds (before dedup)
-  unique: number;              // chants in this book alone
-  shared: { code: ChantSource; count: number }[]; // shared with each book, descending
+  total: number | null;        // chants the book holds (before dedup); null if unmeasured
+  unique: number | null;       // chants in this book alone; null if unmeasured
+  shared: { code: ChantSource; count: number }[] | null; // shared per book, desc; null if unmeasured
   genera: { office: OfficeCode; genus: string; count: number }[]; // descending
   modes:  { mode: string | null; modus: string | null; count: number }[];
 }
@@ -89,6 +89,11 @@ chants a book alone has, and `shared` how many it holds in common with each othe
 book (by GregoBase chant id). These reveal, for instance, that the Liber Usualis
 is largely the Graduale and the Antiphonarius bound together (it shares hundreds
 of chants with each), while the Antiphonale Monasticum is almost entirely its own.
+
+Overlap is measured only for the GregoBase-sourced books. The Nocturnale (`nr`)
+comes from a separate source, so its overlap is **unmeasured**: `total`, `unique`,
+and `shared` are `null` — deliberately distinct from a measured zero, so a
+consumer never mistakes "not compared" for "shares nothing".
 
 ## Retrieval — `cantus`
 
@@ -347,6 +352,8 @@ interface Matins {
   feastId: string;              // the tonus feast id resolved
   name: string;                 // Latin name, e.g. "Dominica I Adventus"
   rank: string;                 // "I. classis - Semiduplex", "Feria", …
+  invitatorium: Chant | null;   // opens the hour, before the first nocturn
+  hymnus: Chant | null;         // the Matins hymn, after the invitatory
   nocturns: Nocturn[];          // one (simple) or three (festal)
   redirectedFrom: string | null; // feast/commune the chants were borrowed from
 }

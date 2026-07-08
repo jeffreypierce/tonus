@@ -27,11 +27,12 @@ describe("classifyRhythmicType", () => {
     assert.equal(typeOf("ATATAT"), "VII");
   });
 
-  test("VIII — contraction: an irregular thesis→arsis seam (Suñol overlap)", () => {
-    // A–T–A–A: alternation broken by a second arsis → a contraction, not VII.
-    assert.equal(typeOf("ATAA"), "VIII");
-    // A–A–T–A–T: the run of arses before the first seam is not strict alternation.
+  test("VIII — contraction: an irregular seam that still resolves (ends thetic)", () => {
+    // A–A–T–A–T: a run of arses before the first seam is not strict alternation,
+    // but the incise resolves (ends thetic) — two rhythms overlapping at an ictus.
     assert.equal(typeOf("AATAT"), "VIII");
+    // A–T–A–T–T: alternation broken by a doubled final thesis, still resolved.
+    assert.equal(typeOf("ATATT"), "VIII");
   });
 
   test("null — shapes that fit no type", () => {
@@ -41,10 +42,12 @@ describe("classifyRhythmicType", () => {
     assert.equal(typeOf(""), null);       // empty
   });
 
-  test("a single A–T seam that is not strict alternation is VIII, not VII", () => {
-    // ATAT is VII (strict); a 2-beat AT is IV; but ATA (odd, ends arsic) has an
-    // interior seam and is not a clean alternation of length ≥4 → VIII.
-    assert.equal(typeOf("ATA"), "VIII");
+  test("a seam that leaves the incise hanging arsic is null, not a forced VIII", () => {
+    // Contraction needs two *complete* rhythms sharing an ictus, so the whole
+    // must end thetic. A–T–A ends arsic — unresolved — so it is no contraction;
+    // likewise A–T–A–A. A wrong label is worse than none [biblio: carroll-chironomy].
+    assert.equal(typeOf("ATA"), null);
+    assert.equal(typeOf("ATAA"), null);
   });
 });
 

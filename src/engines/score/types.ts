@@ -21,10 +21,12 @@ export type ArsisThesis = "arsic" | "thetic";
 //   V    — compound rhythm: A(–A…)–T (two or more arses to one thesis)
 //   VI   — compound rhythm: A–T(–T…) (one arsis to two or more theses)
 //   VII  — compound rhythm: A–T–A–T… (regular alternation)
-//   VIII — contraction: an incise whose rhythms overlap at a shared ictus (a
-//          thetic beat immediately followed by an arsic one, mid-incise) —
-//          Suñol's "composite rhythm by contraction" [biblio: sunol-textbook],
-//          the local reading of Carroll's "overlapping" Type VIII.
+//   VIII — contraction: two complete rhythms overlapping at a shared ictus (a
+//          thetic beat immediately followed by an arsic one, mid-incise) — so
+//          the incise still resolves, ending thetic. Suñol's "composite rhythm
+//          by contraction" [biblio: sunol-textbook], the local reading of
+//          Carroll's "overlapping" Type VIII. A seam that leaves the incise
+//          hanging arsic (e.g. A–T–A) is unresolved and stays null, not VIII.
 export type RhythmicType = "IV" | "V" | "VI" | "VII" | "VIII" | null;
 
 // One compound beat, reduced to what incise-level analysis needs: its shape and

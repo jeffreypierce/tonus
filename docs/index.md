@@ -95,7 +95,9 @@ No runtime network requests are made.
 
 ## Error contract
 
-- Query functions return `[]` on no match, never throw.
+- Query functions return `[]` on no match, never throw — but an **unknown query
+  key** throws (a mistyped filter is a bug, not an empty result): `festum({ month:
+  12 })` throws rather than silently resolving the default epoch.
 - Builder functions throw `Error` with a descriptive message on invalid input.
 - `notatio` throws on invalid `Chant` input.
 - `temperamentum.tonus()` throws if `mode` is `"auto"` — mode must be set

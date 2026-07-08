@@ -119,9 +119,12 @@ export interface Corpus {
   editor: string | null;
   scanSource: string | null;     // scan attribution
   count: number;                 // chants tonus stores for this book (after dedup)
-  total: number;                 // chants the book actually holds (before dedup)
-  unique: number;                // chants in this book alone (in no other book)
-  shared: SharedCount[];         // chants shared with each other book, descending
+  // Cross-book overlap is measured only for the GregoBase-sourced books. For a
+  // book outside GregoBase (e.g. the Nocturnale, `nr`) it is *unmeasured*: these
+  // are null, distinct from a measured zero (`unique === count`, `shared === []`).
+  total: number | null;          // chants the book actually holds (before dedup)
+  unique: number | null;         // chants in this book alone (in no other book)
+  shared: SharedCount[] | null;  // chants shared with each other book, descending
   genera: GenusCount[];          // genre breakdown, descending by count
   modes: ModeCount[];            // mode breakdown, 1–8 then the other/none bucket
 }

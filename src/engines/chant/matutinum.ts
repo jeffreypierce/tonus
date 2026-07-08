@@ -36,6 +36,10 @@ export interface Matins {
   name: string;
   /** The rank/class, e.g. "I. classis", "Feria". */
   rank: string;
+  /** The invitatory, which opens Matins before the first nocturn (else null). */
+  invitatorium: Chant | null;
+  /** The Matins hymn, which follows the invitatory before the nocturns (else null). */
+  hymnus: Chant | null;
   /** One nocturn (simple) or three (festal). */
   nocturns: Nocturn[];
   /** The feast whose chants were borrowed by rubric, if any (provenance). */
@@ -52,21 +56,36 @@ function byFeast(): Map<string, MatinsDay> {
 }
 
 function resolveDay(day: MatinsDay): Matins {
+  // The invitatory and hymn precede the first nocturn rubrically — they are not
+  // responsories. Lift them out; a nocturn holds only responsories and antiphons.
+  let invitatorium: Chant | null = null;
+  let hymnus: Chant | null = null;
+
   const nocturns: Nocturn[] = day.nocturns.map((noc) => {
     const responsories: Chant[] = [];
     const antiphons: Chant[] = [];
     for (const c of noc.chants) {
       const chant = resolveChant(c.id);
       if (!chant) continue;
-      if (c.type === "A") antiphons.push(chant);
-      else responsories.push(chant); // R (and I invitatory) resolve as responsories
+      // Type "I" (invitatory) and any hymn (office "hy") open Matins, not a nocturn.
+      if (c.type === "I" || chant.office === "hy") {
+        if (c.type === "I") invitatorium ??= chant;
+        else hymnus ??= chant;
+      } else if (c.type === "A") {
+        antiphons.push(chant);
+      } else {
+        responsories.push(chant);
+      }
     }
     return { n: noc.n, responsories, antiphons };
   });
+
   return {
     feastId: day.tonusFeastId!,
     name: day.name,
     rank: day.rank,
+    invitatorium,
+    hymnus,
     nocturns,
     redirectedFrom: day.redirectedFrom,
   };
@@ -84,11 +103,14 @@ function matinsForFeastId(feastId: string): Matins | null {
 }
 
 /**
- * Structured Roman Matins (`tonus.matutinum`) for a feast: the nocturns with
- * their responsories (and antiphons where present), assembled from the
- * Nocturnale Romanum. Without a feast, resolves the default epoch's feast (as
+ * Structured Roman Matins (`tonus.matutinum`) for a feast: the invitatory and
+ * hymn that open the hour, then the nocturns with their responsories (and
+ * antiphons where present), assembled from the Nocturnale Romanum. Without a
+ * feast, resolves the default epoch's feast (as
  * `officium` does). Only the Roman rite is served today; other rites return
  * null (the monastic night office is not yet modelled — see office-matins-roman).
+ * The query's `feast` and `rite` are read; `hora` is ignored (Matins *is* the
+ * hour) as are the other `CantusQuery` filters.
  * @returns the Matins structure, or null when no Nocturnale match exists.
  */
 export function getMatins(query?: OfficiumQuery): Matins | null {
