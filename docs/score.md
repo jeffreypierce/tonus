@@ -286,7 +286,7 @@ interface ChantTabulaRow {
   role: "finalis" | "tenor" | "other" | null;
   name: string | null; // Guidonian short name
   nomen: string | null; // Guidonian compound name, "Delasolre"
-  hand: { finger: string; region: string } | null;
+  hand: { finger: Finger; region: Region } | null;
   hexachord: "durum" | "naturale" | "molle" | null;
   solfege: string | null;
 
