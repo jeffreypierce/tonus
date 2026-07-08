@@ -13,7 +13,7 @@ import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/typ
 import type {
   CantusQuery, Chant, OrdinaryChant, PropriumQuery,
   OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
-  Corpus, GenusCount, ModeCount,
+  Corpus, GenusCount, ModeCount, SharedCount,
 } from "./engines/chant/types.js";
 import type {
   TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts,
@@ -77,7 +77,7 @@ export type {
   Feast, FeastQuery, Pascha, Season, Grade,
   Chant, CantusQuery, OrdinaryChant,
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
-  Corpus, GenusCount, ModeCount,
+  Corpus, GenusCount, ModeCount, SharedCount,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,

@@ -2,9 +2,10 @@
 // engines/chant/chant — corpus query
 // ---------------------------------------------------------------------------
 import type {
-  Chant, CantusQuery, OfficeCode, ChantSource, Corpus, GenusCount, ModeCount,
+  Chant, CantusQuery, OfficeCode, ChantSource, Corpus, GenusCount, ModeCount, SharedCount,
 } from "./types.js";
 import { OFFICE_LABELS, MODE_LABELS } from "./types.js";
+import { CORPUS_OVERLAP } from "../../data/corpus-overlap.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
@@ -133,6 +134,13 @@ export function getCorpus(code: ChantSource): Corpus {
   }
   if (otherModes > 0) modes.push({ mode: null, modus: null, count: otherModes });
 
+  // Pre-dedup relationships (precomputed in tonus-corpus — tonus can't derive
+  // them, since it stores only one copy of each shared chant).
+  const ov = CORPUS_OVERLAP[code];
+  const shared: SharedCount[] = Object.entries(ov?.shared ?? {})
+    .map(([c, count]) => ({ code: c as ChantSource, count }))
+    .sort((a, b) => b.count - a.count);
+
   const result: Corpus = {
     code,
     book: src.book,
@@ -142,6 +150,9 @@ export function getCorpus(code: ChantSource): Corpus {
     editor: src.editor,
     scanSource: src.scanSource ?? null,
     count: chants.length,
+    total: ov?.total ?? chants.length,
+    unique: ov?.unique ?? chants.length,
+    shared,
     genera,
     modes,
   };

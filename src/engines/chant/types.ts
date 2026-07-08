@@ -103,6 +103,12 @@ export interface ModeCount {
   count: number;
 }
 
+// How many chants one book shares with another (by GregoBase chant id).
+export interface SharedCount {
+  code: ChantSource;
+  count: number;
+}
+
 // A book's bibliographic identity and a breakdown of its contents (`corpus`).
 export interface Corpus {
   code: ChantSource;
@@ -112,7 +118,10 @@ export interface Corpus {
   year: number | null;
   editor: string | null;
   scanSource: string | null;     // scan attribution
-  count: number;                 // total chants
+  count: number;                 // chants tonus stores for this book (after dedup)
+  total: number;                 // chants the book actually holds (before dedup)
+  unique: number;                // chants in this book alone (in no other book)
+  shared: SharedCount[];         // chants shared with each other book, descending
   genera: GenusCount[];          // genre breakdown, descending by count
   modes: ModeCount[];            // mode breakdown, 1–8 then the other/none bucket
 }

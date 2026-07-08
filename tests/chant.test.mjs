@@ -107,6 +107,28 @@ describe("getCorpus", () => {
     }
   });
 
+  test("overlap: full total ≥ stored count, and unique ≤ total", () => {
+    const la = getCorpus("la");
+    // The stored (deduped) count is ≤ what the book actually holds.
+    assert.ok(la.total >= la.count, "full total is at least the deduped count");
+    // Unique chants are a subset of the total; the rest are shared with ≥1 book.
+    assert.ok(la.unique <= la.total);
+    assert.ok(la.shared.length > 0 && la.unique < la.total, "LA shares with others");
+    // shared is descending by count.
+    for (let i = 1; i < la.shared.length; i++) {
+      assert.ok(la.shared[i - 1].count >= la.shared[i].count, "descending");
+    }
+  });
+
+  test("overlap: LU is the omnibus (shares heavily with GR and LA); AM is nearly its own", () => {
+    const lu = getCorpus("lu");
+    const shareOf = (c, code) => c.shared.find((s) => s.code === code)?.count ?? 0;
+    assert.ok(shareOf(lu, "la") > 500, "LU overlaps LA heavily");
+    assert.ok(shareOf(lu, "gr") > 500, "LU overlaps GR heavily");
+    const am = getCorpus("am");
+    assert.ok(am.unique > am.total * 0.9, "AM is >90% its own repertoire");
+  });
+
   test("unknown code throws", () => {
     assert.throws(() => getCorpus("zz"), /Unknown corpus code/);
   });
