@@ -64,7 +64,10 @@ interface Corpus {
   year: number | null;
   editor: string | null;
   scanSource: string | null;   // scan attribution
-  count: number;               // total chants
+  count: number;               // chants tonus stores (after dedup)
+  total: number;               // chants the book holds (before dedup)
+  unique: number;              // chants in this book alone
+  shared: { code: ChantSource; count: number }[]; // shared with each book, descending
   genera: { office: OfficeCode; genus: string; count: number }[]; // descending
   modes:  { mode: string | null; modus: string | null; count: number }[];
 }
@@ -74,6 +77,14 @@ The metadata is drawn from GregoBase's own catalogue. The `genera` list is the
 office distribution (descending by count); `modes` counts modes I–VIII, with a
 final `mode: null` bucket for chants outside the eight modes (psalm tones and the
 like) so the counts reconcile with `count`.
+
+**Overlap.** tonus keeps one copy of each chant (the Liber Usualis is the primary
+source; the Antiphonarius and Hymnarius fill gaps), so a book's stored `count`
+undercounts what it holds. `total` is the full pre-dedup count, `unique` the
+chants a book alone has, and `shared` how many it holds in common with each other
+book (by GregoBase chant id). These reveal, for instance, that the Liber Usualis
+is largely the Graduale and the Antiphonarius bound together (it shares hundreds
+of chants with each), while the Antiphonale Monasticum is almost entirely its own.
 
 ## Retrieval — `cantus`
 
