@@ -19,8 +19,8 @@ npm install tonus
 ```
 
 ESM only. Node ≥ 20; works in the browser through a bundler. No runtime
-dependencies. Roughly 5,500 chants and the full 642-entry calendar ship in
-the package — 6.5 MB unpacked, 1.5 MB packed.
+dependencies. Roughly 8,500 chants and the full 642-entry calendar ship in
+the package — 9.1 MB unpacked, 2.2 MB packed.
 
 ## Documentation
 
@@ -36,8 +36,8 @@ One page per engine, in dependency order. Each page states its rules, then its t
   their authentic ranks, grades, and seasons, and the movable anchors of
   any year.
 - **[Chant](docs/chant.md)** — `cantus`, `proprium`, `ordinarium`,
-  `officium`, `psalmus`. The Solesmes books in GABC: Mass propers, the
-  Kyriale, the Office hours, the psalter.
+  `officium`, `matutinum`, `psalmus`. The Solesmes books in GABC: Mass propers,
+  the Kyriale, the Office hours, the psalter, and the Roman Matins nocturns.
 - **[Score](docs/score.md)** — `notatio`. GABC into tuned notes: phrases,
   syllables, Solesmes arsis/thesis rhythm, prosody, the analytic imprint.
 - **[Heavens](docs/heavens.md)** — `caelum`, `harmonia`. An ephemeris
