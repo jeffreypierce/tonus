@@ -1,7 +1,7 @@
-// office-psalms.ts — little-hours psalmody (Prime, Terce, Sext, None, Compline)
+// office-psalms-roman.ts — Roman little-hours psalmody (Prime, Terce, Sext, None, Compline)
 // Extracted from Divinum Officium (Psalterium, [Tridentinum] section) by
 // scripts/extract-office-psalms.mjs
-// Generated: 2026-07-05T01:25:28.943Z
+// Generated: 2026-07-08T04:45:29.223Z
 // Entries: 15
 //
 // The traditional (pre-1911) Roman little-hours psalm distribution. Each entry

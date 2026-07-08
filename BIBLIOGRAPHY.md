@@ -12,6 +12,10 @@
     1960 — 1,422 chants (`la`).
   - _Liber Hymnarius cum invitatoriis & aliquibus responsoriis_. Solesmes, 1983
     — 361 chants (`lh`).
+  - _Antiphonale Monasticum pro diurnis horis_ (the monastic antiphonary).
+    Solesmes, 1934 — 1,429 chants (`am`). The classic Solesmes monastic edition,
+    carrying the rhythmic marks the score engine reads (not the 2005–07
+    restoration).
 - `divinum-officium` — **Divinum Officium.** The 1570–1962 Roman Breviary and
   Missal in machine-readable form. <https://github.com/DivinumOfficium/divinum-officium>;
   <https://divinumofficium.com/> — the liturgical calendar (642 entries), Mass

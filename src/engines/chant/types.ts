@@ -15,7 +15,7 @@ export type OrdinaryCode =
   | "as"   // Asperges me (sprinkle rite, outside Paschaltide)
   | "va";  // Vidi aquam (sprinkle rite, Paschaltide)
 
-export type ChantSource = "gr" | "lu" | "la" | "lh";
+export type ChantSource = "gr" | "lu" | "la" | "lh" | "am";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"
@@ -102,9 +102,14 @@ export interface OrdinariumQuery extends CantusQuery {
   mass?: number;
 }
 
+/** Which rite's Office to assemble. `romanum` (default) is the Tridentine Roman
+ *  cursus; `monasticum` is the Benedictine cursus (Antiphonale Monasticum). */
+export type Rite = "romanum" | "monasticum";
+
 export interface OfficiumQuery extends CantusQuery {
   feast?: Feast | Feast[];
   hora?: CanonicalHour;
+  rite?: Rite;
 }
 
 export interface PsalmusQuery {

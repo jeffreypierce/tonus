@@ -59,7 +59,7 @@ export interface Context {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
-  doubleEpisema: boolean;
+  mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
   weight: number;
 }
 
@@ -174,7 +174,7 @@ export interface ParsedNote {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
-  doubleEpisema: boolean;
+  mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
 }
 
 export interface RestEvent {
