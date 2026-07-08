@@ -8,11 +8,11 @@
 // Solesmes chant and are not in the corpus, so they are out of scope; this is a
 // chant ordo, not a full Breviary Prime.
 //
-// Like data/compline.ts and data/masses.ts this is a hand-authored table that
+// Like compline.ts and masses.ts (its siblings here) this is a hand-authored table that
 // references chants already in the corpus by id; it carries no GABC of its own.
 // See docs/chant.md and BIBLIOGRAPHY.md.
 
-import type { Season } from "../engines/cal/types.js";
+import type { Season } from "../../cal/types.js";
 
 // Prime's psalmody (Ps 53 + a weekday-proper psalm + Ps 118 in two sections,
 // varying by weekday per DO's Tridentine scheme) is not hand-listed here — it

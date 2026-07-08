@@ -15,7 +15,7 @@ import { buildGamut } from "./gamut.js";
 import type { GamutOptions } from "./gamut.js";
 import { getMode } from "./modes.js";
 import type { ModeData, ModeProfile, CadenceFigure } from "./modes.js";
-import { getTone, getDifferentia } from "../../data/tones.js";
+import { getTone, getDifferentia } from "./data/tones.js";
 import type { GuidonianEntry, GuidonianVariant } from "./guido.js";
 
 export type BuiltinTuning =
