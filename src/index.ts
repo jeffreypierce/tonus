@@ -12,7 +12,7 @@ import { buildHarmonia } from "./engines/harmonia/api.js";
 import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/types.js";
 import type {
   CantusQuery, Chant, OrdinaryChant, PropriumQuery,
-  OrdinariumQuery, OfficiumQuery, PsalmusQuery,
+  OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
 } from "./engines/chant/types.js";
 import type {
   TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts,
@@ -74,7 +74,7 @@ export {
 export type {
   Feast, FeastQuery, Pascha, Season, Grade,
   Chant, CantusQuery, OrdinaryChant,
-  PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
+  PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,

@@ -253,8 +253,28 @@ tonus.officium({ feast: christmas, hora: "completorium" });
 interface OfficiumQuery extends CantusQuery {
   feast?: Feast | Feast[];
   hora?: CanonicalHour;
+  rite?: "romanum" | "monasticum"; // default "romanum"
 }
 ```
+
+### The monastic rite
+
+`rite: "monasticum"` assembles the Benedictine cursus instead of the Roman.
+The chants come from the Antiphonale Monasticum (`am` source); the psalmody
+follows the monastic distribution (the little hours vary across the psalter by
+weekday, and Compline is the three psalms 4, 90, 133 — the Roman rite adds Ps 30).
+The two rites share a calendar, so the same feast query returns each rite's
+proper office.
+
+```js
+tonus.officium({ feast: benedict, hora: "vesperae", rite: "monasticum" });
+// the monastic Vespers antiphons, sourced from the Antiphonale Monasticum
+```
+
+Matins is served flat (its antiphons and responsories, no nocturn grouping); the
+monastic three-nocturn / twelve-psalm structure is not yet modeled. A monastic
+feast absent from the Roman calendar is reachable by its `feastId` but not by a
+date query.
 
 ## Psalms — `psalmus`
 

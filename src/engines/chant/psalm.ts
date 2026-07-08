@@ -7,8 +7,9 @@ import {
   type OfficePsalmEntry,
   type OfficePsalmPortion,
 } from "../../data/office-psalms.js";
+import { OFFICE_PSALMS_MONASTIC } from "../../data/office-psalms-monastic.js";
 import { intone } from "./intone.js";
-import { MODE_LABELS, type Chant, type PsalmusQuery } from "./types.js";
+import { MODE_LABELS, type Chant, type PsalmusQuery, type Rite } from "./types.js";
 
 const CANTICLE_NAMES: Record<string, number> = {
   benedictus: 231,
@@ -106,9 +107,10 @@ export function intonePortion(p: OfficePsalmPortion, mode = 8): Chant[] {
  * feast set; returns the psalm portions (not yet intoned).
  */
 export function officePsalmPortions(
-  hour: OfficePsalmEntry["hour"], weekday: number,
+  hour: OfficePsalmEntry["hour"], weekday: number, rite: Rite = "romanum",
 ): OfficePsalmPortion[] {
-  const forHour = OFFICE_PSALMS.filter((e) => e.hour === hour);
+  const scheme = rite === "monasticum" ? OFFICE_PSALMS_MONASTIC : OFFICE_PSALMS;
+  const forHour = scheme.filter((e) => e.hour === hour);
   const exact = forHour.find((e) => e.weekday === weekday && !e.festis);
   const ferial = forHour.find((e) => e.weekday === null && !e.festis);
   const festis = forHour.find((e) => e.festis);

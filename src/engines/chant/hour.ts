@@ -5,9 +5,10 @@ import { resolveChant, resolveChants } from "./chant.js";
 import { intonePortion, officePsalmPortions } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
 import { getFeast } from "../cal/calendar.js";
-import type { Chant, OfficiumQuery, CanonicalHour } from "./types.js";
+import type { Chant, OfficiumQuery, CanonicalHour, Rite } from "./types.js";
 import type { Feast } from "../cal/types.js";
 import { OFFICE_ROMAN, type OfficeDay } from "../../data/office-roman.js";
+import { OFFICE_MONASTIC } from "../../data/office-monastic.js";
 import {
   COMPLINE_ORDINARY,
   COMPLINE_SEASONAL,
@@ -16,7 +17,12 @@ import {
 import { PRIME_ORDINARY, PRIME_SEASONAL } from "../../data/prime.js";
 
 let _roman: Map<string, OfficeDay> | null = null;
-function romanMap(): Map<string, OfficeDay> {
+let _monastic: Map<string, OfficeDay> | null = null;
+function officeMap(rite: Rite): Map<string, OfficeDay> {
+  if (rite === "monasticum") {
+    if (!_monastic) _monastic = new Map(OFFICE_MONASTIC.map((d) => [d.feastId, d]));
+    return _monastic;
+  }
   if (!_roman) _roman = new Map(OFFICE_ROMAN.map((d) => [d.feastId, d]));
   return _roman;
 }
@@ -39,14 +45,17 @@ const SEASONAL_ORDO_HOURS: ReadonlySet<CanonicalHour> = new Set([
 // tuas), the fixed psalms (from the extracted DO scheme), the invariable spine
 // (Deus in adjutorium, Nunc dimittis), and the date-driven Marian antiphon.
 // See data/compline.ts.
-function complineForFeast(feast: Feast): Chant[] {
+function complineForFeast(feast: Feast, rite: Rite): Chant[] {
   const seasonal = COMPLINE_SEASONAL[feast.season];
   const results: Chant[] = [];
 
   const opening = resolveChant(COMPLINE_ORDINARY.opening);
   if (opening) results.push(opening);
 
-  for (const p of officePsalmPortions("Completorium", feast.weekday)) {
+  // Monastic Compline uses a fixed three-psalm set (4, 90, 133); the Roman rite
+  // adds Ps 30 vv. 2–6. The difference is entirely in the psalm scheme — the
+  // rest of the ordo (spine, hymn, In manus tuas, Marian antiphon) is shared.
+  for (const p of officePsalmPortions("Completorium", feast.weekday, rite)) {
     results.push(...intonePortion(p));
   }
 
@@ -68,7 +77,7 @@ function complineForFeast(feast: Feast): Chant[] {
 // Prime, like Compline, is a fixed+seasonal ordo, not per-feast. Covers the
 // sung parts only (see data/prime.ts): opening, fixed psalms, the hymn Iam
 // lucis, and the seasonal short responsory Christe Fili Dei.
-function primeForFeast(feast: Feast): Chant[] {
+function primeForFeast(feast: Feast, rite: Rite): Chant[] {
   const seasonal = PRIME_SEASONAL[feast.season];
   const results: Chant[] = [];
 
@@ -78,7 +87,9 @@ function primeForFeast(feast: Feast): Chant[] {
   const hymn = resolveChant(PRIME_ORDINARY.hymn);
   if (hymn) results.push(hymn);
 
-  for (const p of officePsalmPortions("Prima", feast.weekday)) {
+  // The monastic Prime psalmody is weekday-varied across the psalter (vs. the
+  // Roman Ps-118 pattern) — a psalm-scheme difference; the ordo spine is shared.
+  for (const p of officePsalmPortions("Prima", feast.weekday, rite)) {
     results.push(...intonePortion(p));
   }
 
@@ -88,11 +99,11 @@ function primeForFeast(feast: Feast): Chant[] {
   return results;
 }
 
-function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
-  if (hour === "completorium") return complineForFeast(feast);
-  if (hour === "prima") return primeForFeast(feast);
+function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chant[] {
+  if (hour === "completorium") return complineForFeast(feast, rite);
+  if (hour === "prima") return primeForFeast(feast, rite);
 
-  const map = romanMap();
+  const map = officeMap(rite);
   const sunday = temporaSundayId(feast.id);
   const day = map.get(feast.id) ?? (sunday ? (map.get(sunday) ?? null) : null);
   if (!day) return [];
@@ -120,7 +131,7 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
     // repeat the psalms once per feast).
     if (feast.date) {
       const hourName = hour === "tertia" ? "Tertia" : hour === "sexta" ? "Sexta" : "Nona";
-      for (const p of officePsalmPortions(hourName, feast.weekday)) {
+      for (const p of officePsalmPortions(hourName, feast.weekday, rite)) {
         results.push(...intonePortion(p));
       }
     }
@@ -156,6 +167,7 @@ export function getHour(query?: OfficiumQuery): Chant[] {
 
   const feasts = toArray(query.feast);
   const hour = query.hora;
+  const rite = query.rite ?? "romanum";
 
   let results: Chant[];
 
@@ -164,25 +176,27 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     // of the day — so concurrent feasts collapse to a single ordo rather than
     // repeating it. The other hours are genuinely per-feast.
     results = SEASONAL_ORDO_HOURS.has(hour)
-      ? feasts[0] ? chantsForFeastHour(feasts[0], hour) : []
-      : feasts.flatMap((f) => chantsForFeastHour(f, hour));
+      ? feasts[0] ? chantsForFeastHour(feasts[0], hour, rite) : []
+      : feasts.flatMap((f) => chantsForFeastHour(f, hour, rite));
   } else if (feasts) {
     const hours: CanonicalHour[] = [
       "matutinum", "laudes", "prima", "tertia", "sexta", "nona",
       "vesperae", "completorium",
     ];
-    results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h)));
+    results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h, rite)));
   } else if (hour && SEASONAL_ORDO_HOURS.has(hour)) {
     // Prime and Compline are seasonal ordos, not per-feast. With no feast,
     // resolve for the default epoch (Guido d'Arezzo's era) — festum()'s anchor.
     const [feast] = getFeast();
-    results = feast ? chantsForFeastHour(feast, hour) : [];
+    results = feast ? chantsForFeastHour(feast, hour, rite) : [];
   } else if (hour) {
-    // Hour without feast — survey per-feast content across all office entries.
-    // mockFeast has no date, so the little hours return only their responsories.
-    results = OFFICE_ROMAN.flatMap((day) => {
+    // Hour without feast — survey per-feast content across the office entries of
+    // the chosen rite. mockFeast has no date, so the little hours return only
+    // their responsories.
+    const table = rite === "monasticum" ? OFFICE_MONASTIC : OFFICE_ROMAN;
+    results = table.flatMap((day) => {
       const mockFeast = { id: day.feastId } as Feast;
-      return chantsForFeastHour(mockFeast, hour);
+      return chantsForFeastHour(mockFeast, hour, rite);
     });
   } else {
     return [];
