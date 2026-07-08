@@ -6,7 +6,7 @@ import {
   OFFICE_PSALMS,
   type OfficePsalmEntry,
   type OfficePsalmPortion,
-} from "../../data/office-psalms.js";
+} from "../../data/office-psalms-roman.js";
 import { OFFICE_PSALMS_MONASTIC } from "../../data/office-psalms-monastic.js";
 import { intone } from "./intone.js";
 import { MODE_LABELS, type Chant, type PsalmusQuery, type Rite } from "./types.js";
@@ -102,7 +102,7 @@ export function intonePortion(p: OfficePsalmPortion, mode = 8): Chant[] {
 
 /**
  * The little-hours psalmody for one hour on a given weekday (0 = Sunday), from
- * the extracted DO Tridentine scheme (`office-psalms.ts`). Prefers the
+ * the extracted DO Tridentine scheme (`office-psalms-roman.ts`). Prefers the
  * weekday-specific entry, then the ferial default (weekday null), then the
  * feast set; returns the psalm portions (not yet intoned).
  */
