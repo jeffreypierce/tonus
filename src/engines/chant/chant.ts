@@ -11,6 +11,7 @@ import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
 import { LH_DATA, LH_SOURCE } from "../../data/lh.js";
 import { AM_DATA, AM_SOURCE } from "../../data/am.js";
+import { NR_DATA, NR_SOURCE } from "../../data/nocturnale-romanum.js";
 
 function modusOf(mode: string | null): string | null {
   return mode != null ? (MODE_LABELS[mode] ?? null) : null;
@@ -80,6 +81,7 @@ const CORPUS: Chant[] = [
   ...LA_DATA.map((c) => withLabels(c, LA_SOURCE)),
   ...LH_DATA.map((c) => withLabels(c, LH_SOURCE)),
   ...AM_DATA.map((c) => withLabels(c, AM_SOURCE)),
+  ...NR_DATA.map((c) => withLabels(c, NR_SOURCE)),
 ];
 
 let _byId: Map<string, Chant> | null = null;
@@ -89,7 +91,7 @@ function byId(): Map<string, Chant> {
 }
 
 const SOURCES: Record<ChantSource, Chant["source"]> = {
-  gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE,
+  gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
 };
 
 // Tally a book's genre and mode distribution — computed once per code, cached.
