@@ -1,5 +1,5 @@
 import { getFeast, getPascha } from "./engines/cal/calendar.js";
-import { getChants } from "./engines/chant/chant.js";
+import { getChants, getCorpus } from "./engines/chant/chant.js";
 import { getPropers } from "./engines/chant/propers.js";
 import { getOrdinary } from "./engines/chant/ordinary.js";
 import { getHour } from "./engines/chant/hour.js";
@@ -13,6 +13,7 @@ import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/typ
 import type {
   CantusQuery, Chant, OrdinaryChant, PropriumQuery,
   OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
+  Corpus, GenusCount, ModeCount,
 } from "./engines/chant/types.js";
 import type {
   TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts,
@@ -48,6 +49,7 @@ const tonus = {
   festum: getFeast,
   pascha: getPascha,
   cantus: getChants,
+  corpus: getCorpus,
   proprium: getPropers,
   ordinarium: getOrdinary,
   officium: getHour,
@@ -75,6 +77,7 @@ export type {
   Feast, FeastQuery, Pascha, Season, Grade,
   Chant, CantusQuery, OrdinaryChant,
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
+  Corpus, GenusCount, ModeCount,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,

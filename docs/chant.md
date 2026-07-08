@@ -9,6 +9,7 @@ carries page-level provenance back to its book.
 
 - [Chant](#chant)
   - [The corpora](#the-corpora)
+  - [The books — `corpus`](#the-books--corpus)
   - [Retrieval — `cantus`](#retrieval--cantus)
   - [The Mass propers — `proprium`](#the-mass-propers--proprium)
   - [The ordinary — `ordinarium`](#the-ordinary--ordinarium)
@@ -38,6 +39,41 @@ propers, office, and psalter:
 The first four are the Roman repertoire; `am` is the monastic (Benedictine)
 antiphonary — the 1934 Solesmes edition, which carries the same rhythmic markings
 the score engine reads.
+
+## The books — `corpus`
+
+`corpus(code)` returns one book's bibliographic identity and a breakdown of what
+it holds — how many chants, in what genres, in what modes.
+
+```js
+tonus.corpus("am");
+// { code: "am", book: "Antiphonale Monasticum", fullTitle: null,
+//   edition: "Pro Diurnis Horis", year: 1934, editor: "Solesmes",
+//   scanSource: "Scans courtesy of Corpus Christi Watershed", count: 1429,
+//   genera: [ { office: "an", genus: "Antiphona", count: 1045 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 319 }, …,
+//             { mode: null, modus: null, count: 58 } ] }
+```
+
+```ts
+interface Corpus {
+  code: ChantSource;
+  book: string;                // short title
+  fullTitle: string | null;    // full Latin title, where the edition records one
+  edition: string | null;      // edition note, else null
+  year: number | null;
+  editor: string | null;
+  scanSource: string | null;   // scan attribution
+  count: number;               // total chants
+  genera: { office: OfficeCode; genus: string; count: number }[]; // descending
+  modes:  { mode: string | null; modus: string | null; count: number }[];
+}
+```
+
+The metadata is drawn from GregoBase's own catalogue. The `genera` list is the
+office distribution (descending by count); `modes` counts modes I–VIII, with a
+final `mode: null` bucket for chants outside the eight modes (psalm tones and the
+like) so the counts reconcile with `count`.
 
 ## Retrieval — `cantus`
 

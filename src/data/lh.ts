@@ -1,14 +1,17 @@
 // lh.ts — Liber Hymnarius 1983 corpus
 // Extracted from GregoBase (source ID 15) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-04T01:42:24.971Z
+// Generated: 2026-07-08T11:54:16.949Z
 // Chants: 361
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
 export const LH_SOURCE: Chant["source"] = {
   book: "Liber Hymnarius",
+  fullTitle: null,
+  edition: null,
   year: 1983,
   editor: "Solesmes",
+  scanSource: "Scan courtesy of Dominique Crochu",
   code: "lh",
 };
 
