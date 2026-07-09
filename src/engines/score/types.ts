@@ -50,6 +50,13 @@ export interface Performance {
   rhythmicIndex: number;         // 1-based position within the compound beat
 }
 
+// Written note shape as encoded in GABC (gregorio's S_* vocabulary,
+// simplified): uppercase letters are puncta inclinata; suffixes v/V/o/s/r/=
+// select virga, oriscus, strophicus, cavum, linea; w marks the quilisma.
+export type WrittenShape =
+  | "punctum" | "inclinatum" | "virga" | "virgaReversa"
+  | "quilisma" | "oriscus" | "strophicus" | "cavum" | "linea";
+
 // Context — position, lyric, and ornamentation within a score.
 export interface Context {
   lyric: string;
@@ -57,7 +64,17 @@ export interface Context {
   syllableIndex: number;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
+  /** Raw GABC pitch letter a–m — the staff slot for square-note rendering. */
+  staffLetter: string;
+  /** Active GABC clef when this note sounded, e.g. "c4", "fb3". */
+  clef: string;
+  /** Written note shape (punctum, virga, inclinatum, …). */
+  shape: WrittenShape;
   ictus: boolean;
+  /** Written vertical episema / ictus mark ('), distinct from the analytical `ictus`. */
+  ictusSign: boolean;
+  /** Written horizontal episema (_), distinct from `mora`. */
+  episema: boolean;
   accidentalSource: "none" | "state" | "explicit";
   quilisma: boolean;
   liquescent: boolean;
@@ -169,7 +186,17 @@ export interface ParsedNote {
   syllableIndex: number;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
+  /** Raw GABC pitch letter a–m — the staff slot for square-note rendering. */
+  staffLetter: string;
+  /** Active GABC clef when this note sounded, e.g. "c4", "fb3". */
+  clef: string;
+  /** Written note shape (punctum, virga, inclinatum, …). */
+  shape: WrittenShape;
   ictus: boolean;
+  /** Written vertical episema / ictus mark ('), distinct from analytical `ictus`. */
+  ictusSign: boolean;
+  /** Written horizontal episema (_), distinct from `mora`. */
+  episema: boolean;
   weight: number;
   duration: number;
   accidental: -1 | 0 | 1;

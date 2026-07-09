@@ -7,11 +7,19 @@ import {
 } from "./phrasing.js";
 import { inferMode } from "./infer.js";
 import { CHROMA_TO_SOLFEGE as SOLFEGE_BY_PC } from "../temper/data/constants.js";
+import { staffPositionForLetter } from "../../data/gabc-glyphs.js";
 import type { Cadence } from "./cadence.js";
-import type { ChantType, InterpretationOptions } from "./types.js";
+import type { ChantType, InterpretationOptions, WrittenShape } from "./types.js";
 
 export type NoteRole = "finalis" | "tenor" | "other" | null;
 
+// ChantTabulaRow is the DENORMALIZED projection of one note: everything an
+// emitter or analysis pass needs in a flat row, so consumers never re-walk the
+// phrase tree. The normalized source of truth is still Score.phrases (the
+// composed Note + syllable/phrase structure); this is its flattening, plus
+// context-derived conveniences (staffPosition, solfege, role, the sign flags).
+// New fields belong here when a consumer wants them per-row without grouping —
+// carry the datum, don't add interpretation (see the pure-data convention).
 export interface ChantTabulaRow {
   phraseIndex: number;
   syllableIndex: number;
@@ -22,6 +30,8 @@ export interface ChantTabulaRow {
   neumeIndex: number;
   lyric: string;
   vowel: string;
+  /** True when this note's syllable is the first of its word. */
+  wordStart: boolean;
   /** MIDI pitch number (after transpose, clamped 0–127) */
   midi: number;
   /** Pitch class 0–11 (C=0) */
@@ -32,8 +42,16 @@ export interface ChantTabulaRow {
   degree: number | null;
   hz: number;
   offset: number;
-  /** Scientific pitch name, e.g. "D4", "Bb3" — the MusicXML step + octave. */
+  /** Scientific pitch name, e.g. "D4", "Bb3" — the step + octave. */
   spn: string;
+  /** Raw GABC pitch letter a–m — the square-note staff slot. */
+  staffLetter: string;
+  /** Staff position in half-spaces from the bottom line (a=−2 … g=4 … m=10). */
+  staffPosition: number;
+  /** Active GABC clef when this note sounded, e.g. "c4", "fb3". */
+  clef: string;
+  /** Written note shape (punctum, virga, inclinatum, …). */
+  shape: WrittenShape;
   /** 14-bit MIDI pitch bend for this note's microtuning (8192 = center). */
   bend: number;
   /** Solesmes quality of this note's compound beat (shared across group). */
@@ -45,6 +63,10 @@ export interface ChantTabulaRow {
   velocity: number | null;
   shapedDuration: number;
   ictus: boolean;
+  /** Written vertical episema / ictus mark ('), distinct from the analytical `ictus`. */
+  ictusSign: boolean;
+  /** Written horizontal episema (_), distinct from `mora`. */
+  episema: boolean;
   accidental: -1 | 0 | 1;
   /** How this note's accidental arose — only "explicit" prints a glyph. */
   accidentalSource: "none" | "state" | "explicit";
@@ -194,6 +216,11 @@ export function computeTabula(
       neumeIndex: neumeIndices[i],
       lyric: n.context.lyric,
       vowel: n.context.vowel,
+      // wordStart reads the note's CONTEXT syllable index (the parser's, which
+      // resets to 0 at each word boundary — so 0 = word start), NOT the row's
+      // own `syllableIndex` above (a global per-phrase counter). Two indices,
+      // two meanings; the per-word one is what marks words.
+      wordStart: n.context.syllableIndex === 0,
       midi: n.pitch.midi,
       pc: n.pitch.pc,
       octave: n.pitch.oct,
@@ -201,6 +228,10 @@ export function computeTabula(
       hz: n.pitch.hz,
       offset: n.pitch.offset,
       spn: n.pitch.spn,
+      staffLetter: n.context.staffLetter,
+      staffPosition: staffPositionForLetter(n.context.staffLetter) ?? 0,
+      clef: n.context.clef,
+      shape: n.context.shape,
       bend: n.pitch.bend,
       rhythmicShape: n.performance.rhythmicShape,
       rhythmicIndex: n.performance.rhythmicIndex,
@@ -208,6 +239,8 @@ export function computeTabula(
       velocity: velocities[i],
       shapedDuration: shapedDurations[i],
       ictus: n.context.ictus,
+      ictusSign: n.context.ictusSign,
+      episema: n.context.episema,
       accidental: n.pitch.acc,
       accidentalSource: n.context.accidentalSource,
       quilisma: n.context.quilisma,
