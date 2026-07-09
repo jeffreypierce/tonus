@@ -416,3 +416,31 @@ describe("getPsalm", () => {
     assert.ok(direct.gabc.endsWith("(::)"));
   });
 });
+
+describe("corpus data integrity", () => {
+  const BOOKS = ["gr", "lu", "la", "lh", "am", "nr"];
+  const allChants = BOOKS.flatMap((source) => getChants({ source, limit: 100000 }));
+
+  test("no gabc field carries a literal \\uXXXX escape (the double-escape guard)", () => {
+    // The extractor once JSON-sliced instead of JSON-parsing the DB gabc, so
+    // non-ASCII was stored as six literal characters (é) rather than the
+    // decoded glyph — which made detectVowelAccent dead across the corpus.
+    // This asserts the decode holds: real accents, never the escape sequence.
+    const offenders = allChants.filter((c) => /\\u[0-9a-fA-F]{4}/.test(c.gabc ?? ""));
+    assert.equal(
+      offenders.length,
+      0,
+      `gabc must not contain literal \\uXXXX escapes; ${offenders.length} do` +
+        (offenders[0] ? ` (first: ${offenders[0].id})` : ""),
+    );
+  });
+
+  test("accented syllables are real characters, so accent detection can fire", () => {
+    // At least one chant carries a genuine accented vowel in its gabc lyric text
+    // — proving the decode produced á/é/… rather than the escape sequence.
+    assert.ok(
+      allChants.some((c) => /[áéíóúǽæœ]/i.test(c.gabc ?? "")),
+      "corpus should contain decoded accented characters",
+    );
+  });
+});
