@@ -288,3 +288,45 @@ describe("score.tabula property", () => {
     assert.equal(typeof row.lyric, "string");
   });
 });
+
+describe("tabula written-sign fields (engraving substrate)", () => {
+  // The three written marks are distinct: `_` horizontal episema, `'` vertical
+  // episema (ictus mark), `.` mora dot. They share ictus weight but must render
+  // apart, so each note surfaces its own flag.
+  const score = buildScore(makeChant("(c4) Do(g_)mi(h')nus(i.) (::)"));
+  const [ep, ic, mo] = score.tabula;
+
+  test("horizontal episema (_) sets episema, not ictusSign or mora", () => {
+    assert.equal(ep.episema, true);
+    assert.equal(ep.ictusSign, false);
+    assert.equal(ep.mora, 0);
+  });
+
+  test("vertical episema (') sets ictusSign, not episema", () => {
+    assert.equal(ic.ictusSign, true);
+    assert.equal(ic.episema, false);
+  });
+
+  test("mora dot (.) sets mora, not episema or ictusSign", () => {
+    assert.equal(mo.mora, 1);
+    assert.equal(mo.episema, false);
+    assert.equal(mo.ictusSign, false);
+  });
+
+  test("rows carry the engraving substrate: staff position, clef, shape", () => {
+    for (const r of score.tabula) {
+      assert.equal(typeof r.staffLetter, "string");
+      assert.equal(typeof r.staffPosition, "number");
+      assert.equal(typeof r.clef, "string");
+      assert.ok(["punctum", "inclinatum", "virga", "virgaReversa", "quilisma",
+        "oriscus", "strophicus", "cavum", "linea"].includes(r.shape));
+    }
+  });
+
+  test("wordStart marks a word's first syllable, via the per-word index", () => {
+    // "Do-mi-nus" is one word → only its first syllable is a word start.
+    const starts = score.tabula.filter((r) => r.wordStart);
+    assert.ok(starts.length >= 1);
+    assert.equal(starts[0].lyric.toLowerCase().startsWith("do"), true);
+  });
+});
