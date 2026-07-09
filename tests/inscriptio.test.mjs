@@ -205,3 +205,48 @@ describe("inscriptio — multi-system layout", () => {
     assert.equal((svg.match(/class="custos"/g) || []).length, 0);
   });
 });
+
+describe("inscriptio — front matter", () => {
+  // A chant with real meta so annotation:auto has something to derive from.
+  const score = buildScore({
+    id: "t", incipit: "Puer natus", gabc: "(c4) Pu(g)er(h) na(g.)tus(f.) (::)",
+    office: "in", genus: "Introitus", mode: "7", modus: "Modus VII",
+    pages: [], source: { book: "Graduale Romanum", year: 1961, editor: "Solesmes" },
+  });
+
+  test("title renders a headline and pushes the first system down", () => {
+    const withTitle = inscriptio(score, { title: "Puer natus est" });
+    assert.ok(/class="title"[^>]*>Puer natus est</.test(withTitle.svg));
+    // The header band offsets the first note below where it sits bare.
+    const bare = inscriptio(score);
+    assert.ok(withTitle.geometry[0].y > bare.geometry[0].y);
+  });
+
+  test("annotation:auto derives the rubric from genus · modus · book", () => {
+    const { svg } = inscriptio(score, { annotation: "auto" });
+    const rubric = svg.match(/class="rubric"[^>]*>([^<]*)</)?.[1];
+    assert.equal(rubric, "Introitus · Modus VII · Graduale Romanum");
+  });
+
+  test("an explicit rubric overrides the auto one", () => {
+    const { svg } = inscriptio(score, { rubric: "In Nativitate Domini" });
+    assert.ok(svg.includes(">In Nativitate Domini<"));
+  });
+
+  test("dropcap draws a rubricated initial from the first lyric", () => {
+    const { svg } = inscriptio(score, { dropcap: true });
+    assert.ok(/class="dropcap"[^>]*fill="#9E2B25"[^>]*>P</.test(svg));
+  });
+
+  test("rubrica sets the liturgical red", () => {
+    const { svg } = inscriptio(score, { dropcap: true, rubrica: "#c00" });
+    assert.ok(/class="dropcap"[^>]*fill="#c00"/.test(svg));
+  });
+
+  test("no front-matter options → no header band (bare score)", () => {
+    const { svg } = inscriptio(score);
+    assert.ok(!svg.includes('class="title"'));
+    assert.ok(!svg.includes('class="rubric"'));
+    assert.ok(!svg.includes('class="dropcap"'));
+  });
+});
