@@ -152,3 +152,56 @@ describe("inscriptio — the geometry contract", () => {
     assert.throws(() => inscriptio(score, { notation: "gothic" }), /unknown notation/);
   });
 });
+
+describe("inscriptio — multi-system layout", () => {
+  // A long chant that must wrap at a modest width.
+  const long = buildScore(makeChant(
+    "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (:) " +
+    "Chri(g)ste(h) e(gh)le(hg)i(f)son.(g.) (:) " +
+    "Ký(g)ri(h)e(gh) e(hg)lé(fg)i(gf)son.(g.) (::)",
+  ));
+
+  test("no width renders a single system (system 0 only)", () => {
+    const { geometry } = inscriptio(long);
+    assert.deepEqual([...new Set(geometry.map((g) => g.system))], [0]);
+  });
+
+  test("a width wraps into multiple systems, each x re-based near the margin", () => {
+    const { svg, geometry } = inscriptio(long, { width: 250 });
+    const systems = [...new Set(geometry.map((g) => g.system))].sort((a, b) => a - b);
+    assert.ok(systems.length >= 2, "wrapped into 2+ systems");
+    // Every system after the first re-bases x near the left margin (not the
+    // running total from earlier systems).
+    for (const s of systems) {
+      const first = geometry.find((g) => g.system === s);
+      assert.ok(first.x < 120, `system ${s} starts near the margin (x=${first.x})`);
+    }
+    // Four staff lines per system.
+    assert.equal((svg.match(/<line/g) || []).length, 4 * systems.length);
+  });
+
+  test("systemY steps down by a constant per system, and geometry carries it", () => {
+    const { geometry } = inscriptio(long, { width: 250 });
+    const bySystem = new Map();
+    for (const g of geometry) bySystem.set(g.system, g.systemY);
+    const offsets = [...bySystem.entries()].sort((a, b) => a[0] - b[0]).map((e) => e[1]);
+    assert.equal(offsets[0], 0);
+    // Uniform step between consecutive systems.
+    const step = offsets[1] - offsets[0];
+    for (let i = 2; i < offsets.length; i++) {
+      assert.ok(Math.abs(offsets[i] - offsets[i - 1] - step) < 0.01, "uniform system step");
+    }
+  });
+
+  test("a custos guides the eye at each system break", () => {
+    const { svg } = inscriptio(long, { width: 250 });
+    const systems = [...new Set(inscriptio(long, { width: 250 }).geometry.map((g) => g.system))];
+    // One custos per break — one fewer than the number of systems.
+    assert.equal((svg.match(/class="custos"/g) || []).length, systems.length - 1);
+  });
+
+  test("custos: false suppresses the guides", () => {
+    const { svg } = inscriptio(long, { width: 250, custos: false });
+    assert.equal((svg.match(/class="custos"/g) || []).length, 0);
+  });
+});

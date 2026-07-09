@@ -71,10 +71,11 @@ export interface Inscriptio {
   geometry: NoteGeometry[];
 }
 
-// Options the underlying square-note emitter understands today. The layout /
-// front-matter / accidental options are accepted but inert until their phase.
+// Options the underlying square-note emitter understands today. The front-matter
+// and accidental options are accepted but inert until their phase.
 const EMITTER_KEYS = [
   "staffHeight", "noteScale", "padding", "noteColor", "staffLineColor",
+  "width", "systemGap", "custos",
 ] as const;
 
 /**
