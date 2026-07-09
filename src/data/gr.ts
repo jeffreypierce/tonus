@@ -1,6 +1,6 @@
 // gr.ts — Graduale Romanum 1961 corpus
 // Extracted from GregoBase (source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-09T13:15:09.840Z
+// Generated: 2026-07-09T16:55:18.793Z
 // Chants: 1344
 import type { Chant } from "./types.js";
 
@@ -13410,7 +13410,7 @@ export const GR_DATA: ChantData[] = [
   {
     id: "gregobase:16236",
     incipit: "Benedicite Dominum",
-    gabc: "(c4)BE(g|ta)NE(g|ta)DI(hj|peShg)CI(j|vihg)TE(j|vihg) Dó(ij|vslsc2)mi(j|tahg)num(j.|tahg) *(,) \r\no(j|pe~hg)mnes(j|tahg) An(j|tahg)ge(jjj_h|//dshh//cl-hhlss3lsi9)li(hk|peShilse4lss2) e(kj~|cl~hh)jus:(jkjji.|//toS2hh/cl-hhlse4) (;) \r\npo(g|talsi8)tén(gh~|pe~)tes(h|ta) vir(h|ta)tú(jj|pe``vi-hg)te,(i_h|/tolst2) (;) \r\nqui(gfg|//polsi1) fá(hg/ji|//pflsc2)ci(j|vi)tis(j|vi) ver(hj~|cl~lsl2lsi8)bum(jj|bv>lsi8) e(gh~|pe~lsi8)jus,(hih.___|//toS) (:) \r\nad(g|ta) au(h|vi)di(hkj|//tohhlse4lss2)én(i|tahg)dam(jj//jj|////ds-hh/ds>hhlsi6) vo(h_g|/cl-)cem(g_f|/cl-) (,) \r\nser(fh~|pe~lse4lsl2)mó(h_g/jjvHG|/cl-///tgS3hh)num(g_e|/cl-) e(fgFE|///to>)jus.(e.|ta) (::Z)\r\n\r\n<i>Ps.</i> \r\nBé(g)ne(hj)dic(j) á(j)ni(j)ma(j) me(k)a(j) Dó(j)mi(ih)no:(jjj) (:) \r\net(ig) ó(hj)mni(j)a(j) quæ(j) in(j)tra(j) me(j) sunt,(j.) (,) \r\nnó(j)mi(j)ni(jji) sanc(hg)to(h) e(i)jus.(gh..) (::) \r\n\r\n\r\n",
+    gabc: "(c4)BE(g)NE(g)DI(hj)CI(j)TE(j) Dó(ij)mi(j)num(j.) *(,) \r\no(j)mnes(j) An(j)ge(jjj_h)li(hk) e(kj~)jus:(jkjji.) (;) \r\npo(g)tén(gh~)tes(h) vir(h)tú(jj)te,(i_h) (;) \r\nqui(gfg) fá(hg/ji)ci(j)tis(j) ver(hj~)bum(jj) e(gh~)jus,(hih.___) (:) \r\nad(g) au(h)di(hkj)én(i)dam(jj//jj) vo(h_g)cem(g_f) (,) \r\nser(fh~)mó(h_g/jjvHG)num(g_e) e(fgFE)jus.(e.) (::Z)\r\n\r\n<i>Ps.</i> \r\nBé(g)ne(hj)dic(j) á(j)ni(j)ma(j) me(k)a(j) Dó(j)mi(ih)no:(jjj) (:) \r\net(ig) ó(hj)mni(j)a(j) quæ(j) in(j)tra(j) me(j) sunt,(j.) (,) \r\nnó(j)mi(j)ni(jji) sanc(hg)to(h) e(i)jus.(gh..) (::) \r\n\r\n\r\n",
     office: "in",
     mode: "3",
     pages: [
@@ -13430,7 +13430,7 @@ export const GR_DATA: ChantData[] = [
   {
     id: "gregobase:17992",
     incipit: "Paratum cor meum",
-    gabc: "(c4) AL(eef|sa>)le(dg|peS)lú(g_[oh:h]i_[oh:h]g_[oh:h]/|toS|h!iwjjk|qlppt1pq>){ia}.(i.|vi-) \r\n*(;) <i>ij.</i>(g.h!iwj_h//|ql!cl-ppt2|jh|cllsc2|ig.|cllst2) (,) (g.h!iwj_h//|ql!cl-ppt2|jh/ig|pflsc2|ge.|pilst2) (,) (e!f'g|sa-|hghFE|////posu2lsc2|f_gffe.|pq//pr) (::) <sp>V/</sp>. Pa(c.d!ewff|qlppt2``vi)rá(f|vi)tum(fg~|pe~) cor(g_[oh:h]f|cl-) me(ixf!gwh!iv|qippt1vihk)um,(hg~|cl~) De(ghGFg|peSsu2vi)us,(gf..|cl-) (;) pa(f.0h!iwjj|qlppt2``vi)rá(j|cl-)tum(ixjjvIG|////prvi) cor(g!jjj|clhhlsc2ts-hjpp2) me(ix!j_h|cl-hh|iih|prhh)um :(h.|vi-) (:) can(fh|ta)tá(h/jhhfg|vi-clhk!pihklsc2)bo,(gv.ff|vi-ds-|ded.|to) (,) et(d|talsc3) psal(ff|bv-)lam(ghGFg|vi-ciShklsc2vihh) ti(ixg/hig)bi(g.) (;) gló(ixfh|pe-|ig|cllsc2|hh//|dshh|gg|ds|hfg.,|po-1lsc2|ixgj|pe-|jh|pilst2|ig|cllsc2|hh//|dshh|gg|ds|hfg.,|po-1lsc2|ixjj|ds|jh/ig|pflsc2|hh|dshh|gg|ds|hfg.,|po-1lsc2)<nlba>(ef/ghg|toS2pp2)</nlba>(fv.|vi|efd.1,|to-1|de!fv/ghg|clppt4lsc2)ri(f_e|cl-|fvEDe|ci-vihh)a(ed..|cl-) *(;) me(ff|bv-|g_[oh:h]f|cllst2|hgh|polsc2)a.(hhf.|prlst2) (,) (h_g|cl-|hvFD|ciS|gf|cl|ffvEC//|tg1|g|vi-|gf|cl|ghd|to|dc|cl|da..|cl) (,) (cd!fv|vi-pp2|fvDC|ci-|d!ff|tsM|gff|cl/or|ded.|to) (::)",
+    gabc: "(c4) AL(eef)le(dg)lú(g_[oh:h]i_[oh:h]g_[oh:h]/){ia}.(i.) \r\n*(;) <i>ij.</i>(g.h!iwj_h//) (,) (g.h!iwj_h//) (,) (e!f'g) (::) <sp>V/</sp>. Pa(c.d!ewff)rá(f)tum(fg~) cor(g_[oh:h]f) me(ixf!gwh!iv)um,(hg~) De(ghGFg)us,(gf..) (;) pa(f.0h!iwjj)rá(j)tum(ixjjvIG) cor(g!jjj) me(ix!j_h)um :(h.) (:) can(fh)tá(h/jhhfg)bo,(gv.ff) (,) et(d) psal(ff)lam(ghGFg) ti(ixg/hig)bi(g.) (;) gló(ixfh)<nlba>(ef/ghg)</nlba>(fv.)ri(f_e)a(ed..) *(;) me(ff)a.(hhf.) (,) (h_g) (,) (cd!fv) (::)",
     office: "al",
     mode: "3",
     pages: [
@@ -13440,7 +13440,7 @@ export const GR_DATA: ChantData[] = [
   {
     id: "gregobase:17993",
     incipit: "Memento verbi tui",
-    gabc: "(c4) ME(f|vilss2)mén(gh|pe)to(hg|cllsc2lss9) <sp>*</sp> ver(h|vi)bi(hg|cllsc2lss9) tu(h|``pelse4)i(hf|clMlsc2lsi8) ser(g|vi)vo(gd|clMlsc2lsi8) tu(f|vi)o,(f.|vi) Dó(e|ta)mi(egff|tr)ne(eef.|sa) (;) in(d|talsi8) quo(fhg|tolss4lst2) mi(h|vi)hi(g_[oh:h]f|cl-) spem(gh|peS) de(g|vi)dí(egff|tosthh)sti :(fe..|cl-) (:) haec(g|vilsl2) me(gh!ivih|vi-pp2cl) con(h|ta)so(hg|cl)lá(h|vi)ta(gh_G_FEf|toSsu2vi) est(fe..|cl-) (;) in(efe|to) hu(d|ta)mi(efe|to)li(d|ta)tá(e!f'g|sa)te(f|vi) me(egff|tosthh)a.(fe..|cl-) (::)",
+    gabc: "(c4) ME(f)mén(gh)to(hg) <sp>*</sp> ver(h)bi(hg) tu(h)i(hf) ser(g)vo(gd) tu(f)o,(f.) Dó(e)mi(egff)ne(eef.) (;) in(d) quo(fhg) mi(h)hi(g_[oh:h]f) spem(gh) de(g)dí(egff)sti :(fe..) (:) haec(g) me(gh!ivih) con(h)so(hg)lá(h)ta(gh_G_FEf) est(fe..) (;) in(efe) hu(d)mi(efe)li(d)tá(e!f'g)te(f) me(egff)a.(fe..) (::)",
     office: "co",
     mode: "4",
     pages: [
@@ -13450,7 +13450,7 @@ export const GR_DATA: ChantData[] = [
   {
     id: "gregobase:17998",
     incipit: "Statuit",
-    gabc: "(c4) STá(ixdh!iv|pevihh)tu(h|ta)it(h|ta) <sp>*</sp> e(h|ta)i(h|ta) Dó(hjjh|pelss2cl-lse2)mi(ixihig|//////pf1lsc2)nus(hg..|cl-) (;) te(ixhig|////tolsm2)sta(f|ta)mén(fg|peSlse4)tum(ghFEf|pesu2lsc2vi>lsi8) pa(d_[oh:h]e_[oh:h]d_[oh:h]|toS)cis,(d.|ta) (:) et(d|talse4) prín(df!gh~|pe~hhppt2lse7lss2)ci(g|ta)pem(g|ta) fe(ixhig|////tolsl2)cit(f|ta) e(f!g'h|sa)um :(h.|vi) (;) ut(h|vilse4) sit(jj|bv) il(jk|//pe>1hhlss6)li(h.|ta) (,) sa(jj|bv)cer(j|vi)dó(j|vi)ti(j)i(kvJIj|////pesu2lsc2or) dí(h|ta)gni(h_[oh:h]i_[oh:h]h_[oh:h]|toShh)tas(h.|ta) (;) in(de!fg//e!f'h|pqhhpp2lsi7salsi7lst2) <sp>ae</sp>(hghf/gvFE|////cl!po-1su2lsm2)tér(d!ewfef|ql!poppt1)num.(ed..|cl-) (::)\r\n\r\n<i>Ps.</i> Me(f)mén(gh~)to(h) Dó(hj)mi(h)ne(h) Da(hg)vid :(gh..) *(:) et(gf) o(gh)mnis(h) man(h)su(h)e(h)tú(hjh)di(g)nis(f) e(fff)jus.(d.) (::) Gló(f)ri(gh)a(h) Pa(h)tri.(h) (::) E(h) u(hjh) o(g) u(f) a(fff) e.(d.) (::)",
+    gabc: "(c4) STá(ixdh!iv)tu(h)it(h) <sp>*</sp> e(h)i(h) Dó(hjjh)mi(ixihig)nus(hg..) (;) te(ixhig)sta(f)mén(fg)tum(ghFEf) pa(d_[oh:h]e_[oh:h]d_[oh:h])cis,(d.) (:) et(d) prín(df!gh~)ci(g)pem(g) fe(ixhig)cit(f) e(f!g'h)um :(h.) (;) ut(h) sit(jj) il(jk)li(h.) (,) sa(jj)cer(j)dó(j)ti(j)i(kvJIj) dí(h)gni(h_[oh:h]i_[oh:h]h_[oh:h])tas(h.) (;) in(de!fg//e!f'h) <sp>ae</sp>(hghf/gvFE)tér(d!ewfef)num.(ed..) (::)\r\n\r\n<i>Ps.</i> Me(f)mén(gh~)to(h) Dó(hj)mi(h)ne(h) Da(hg)vid :(gh..) *(:) et(gf) o(gh)mnis(h) man(h)su(h)e(h)tú(hjh)di(g)nis(f) e(fff)jus.(d.) (::) Gló(f)ri(gh)a(h) Pa(h)tri.(h) (::) E(h) u(hjh) o(g) u(f) a(fff) e.(d.) (::)",
     office: "in",
     mode: "1",
     pages: [

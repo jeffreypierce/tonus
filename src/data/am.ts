@@ -1,6 +1,6 @@
 // am.ts — Antiphonale Monasticum 1934 corpus (monastic office)
 // Extracted from GregoBase (source ID 7) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-09T13:15:09.840Z
+// Generated: 2026-07-09T16:55:18.793Z
 // Chants: 1429
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
@@ -13069,7 +13069,7 @@ export const AM_DATA: ChantData[] = [
   {
     id: "gregobase:14224",
     incipit: "Tolle quod tuum",
-    gabc: "(c4)\r\nTOl(j_|pehi)le(ji|cllsc3) *()\r\nquod(hg~|vi>) tu(h|vi)um(gf|cllsc3) est,(gh|pe) et(h>|vi>) va(g.|ta)de:(g.|ta) (;)\r\nqui(g|vi)a(e|ta) e(g'|vi)go(g|vihg) bo(f'|vi)nus(e|vi) sum,(d'_|ta) di(f|vi)cit(gh~|ta>) Dó(g|vi)mi(fg|pe)nus.(g.|ta) (::)",
+    gabc: "(c4)\r\nTOl(j_)le(ji) *()\r\nquod(hg~) tu(h)um(gf) est,(gh) et(h>) va(g.)de:(g.) (;)\r\nqui(g)a(e) e(g')go(g) bo(f')nus(e) sum,(d'_) di(f)cit(gh~) Dó(g)mi(fg)nus.(g.) (::)",
     office: "an",
     mode: "8",
     pages: [
@@ -13079,7 +13079,7 @@ export const AM_DATA: ChantData[] = [
   {
     id: "gregobase:14225",
     incipit: "Non licet mihi",
-    gabc: "(c3)\r\nNON(e|ta) li(eh|pe)cet(f'|ta) mi(f|vi)hi(e'|ta) *()\r\nfá(f|vi)ce(ed|cllsc3)re(ef|pe) quod(f>|vi>) vo(e.|ta)lo?(e.|ta-lsx6) (;)\r\nan(e|ta) ó(ig/ij|cllss2lsc2pe)cu(i|vi)lus(h'|ta) tu(i|vi)us(h'|ta) ne(i|vi)quam(h|ta) est?(hg/hih'_15|cllsc3tohg) (,)\r\nqui(h|vi)a(f'|ta) e(h|vi)go(e'|ta) bo(f|vi)nus(e|ta) sum,(ed~|vi>) di(ef|vi)cit(f>'|vi>lsl2) Dó(e|vi)mi(de|pe)nus.(e.|ta) (::)",
+    gabc: "(c3)\r\nNON(e) li(eh)cet(f') mi(f)hi(e') *()\r\nfá(f)ce(ed)re(ef) quod(f>) vo(e.)lo?(e.) (;)\r\nan(e) ó(ig/ij)cu(i)lus(h') tu(i)us(h') ne(i)quam(h) est?(hg/hih'_15) (,)\r\nqui(h)a(f') e(h)go(e') bo(f)nus(e) sum,(ed~) di(ef)cit(f>') Dó(e)mi(de)nus.(e.) (::)",
     office: "an",
     mode: "8",
     pages: [
@@ -13089,7 +13089,7 @@ export const AM_DATA: ChantData[] = [
   {
     id: "gregobase:14226",
     incipit: "Sic erunt novissimi",
-    gabc: "(c4)\r\nSIC(h|vi) e(f_g|peS)runt(g'_|vi-) *()\r\nno(g|vi)vís(h'|vihh)si(g|vihg)mi(f|ta) pri(g_h|peS)mi:(h'_|vi-) (,)\r\net(j|vihg) pri(j'|vihh)mi(k|vihi) no(jh|cllsc3)vís(j'|vihg)si(j|vihg)mi;(i.|ta-lsx6) (;)\r\nmul(j|vi)ti(j|vihg) e(j|vihg)nim(j|vi) sunt(i>'|vi>) vo(h|vi)cá(g_i|peSlsi8)ti,(h.|ta) (,)\r\npau(h|vi)ci(g|vi) ve(e_f|peS)ro(gh|pe) e(h|vi)léc(g.|ta)ti.(g.|ta) (::)",
+    gabc: "(c4)\r\nSIC(h) e(f_g)runt(g'_) *()\r\nno(g)vís(h')si(g)mi(f) pri(g_h)mi:(h'_) (,)\r\net(j) pri(j')mi(k) no(jh)vís(j')si(j)mi;(i.) (;)\r\nmul(j)ti(j) e(j)nim(j) sunt(i>') vo(h)cá(g_i)ti,(h.) (,)\r\npau(h)ci(g) ve(e_f)ro(gh) e(h)léc(g.)ti.(g.) (::)",
     office: "an",
     mode: "8",
     pages: [
@@ -13129,7 +13129,7 @@ export const AM_DATA: ChantData[] = [
   {
     id: "gregobase:15064",
     incipit: "Ego sum qui testimonium",
-    gabc: "(c4)\r\nE(g|vilsew3)GO(g|vihg) sum(g|vi-hh) *()\r\nqui(fd|cl) te(e|vi)sti(f|vihg)mó(gh|pe)ni(h|vihg)um(g'_|ta) per(g|ta)hí(gh|pe)be(g|tahg)o(g|tahg) de(h_i|peS) me(gh|pe)í(g|vihg)pso:(f.|ta-) (;)\r\net(g|vi) te(g'|vi)sti(g|vi)mó(gh|pe)ni(g|vi)um(f'|ta) pér(g|vi)hi(h|vihg)bet(j'|vihh) de(j|vihg) me,(i'_|vi) (,)\r\nqui(g|ta) mi(i_j|peS)sit(h'|ta) me(h|vi) Pa(g.|ta)ter.(g.|ta) (::)",
+    gabc: "(c4)\r\nE(g)GO(g) sum(g) *()\r\nqui(fd) te(e)sti(f)mó(gh)ni(h)um(g'_) per(g)hí(gh)be(g)o(g) de(h_i) me(gh)í(g)pso:(f.) (;)\r\net(g) te(g')sti(g)mó(gh)ni(g)um(f') pér(g)hi(h)bet(j') de(j) me,(i'_) (,)\r\nqui(g) mi(i_j)sit(h') me(h) Pa(g.)ter.(g.) (::)",
     office: "an",
     mode: "8",
     pages: [
@@ -13139,7 +13139,7 @@ export const AM_DATA: ChantData[] = [
   {
     id: "gregobase:15083",
     incipit: "Vos ascendite ad diem",
-    gabc: "(c4)\r\nVOS(c|ta) a(d|vi)scén(f'|vihg)di(f|or)te(e'|ta) *()\r\nad(f|vi) di(g'|vihh)em(e|ta) fes(gh|pe)tum(fe|cl) hunc:(d.|ta) (;)\r\ne(fv_fv_|bv-)go(d!ewf_EC.|ql-ppt1su2) non(f|vi) a(f|vihg)scén(h_i|pe>1hg)dam,(gh..|pq) (;)\r\nqui(h|vihg)a(g|ta) tem(fg|pe)pus(f'|ta) me(f|ta)um(f|vi) non(e_f|peS)dum(g|vihh) ad(fe~|vi>hg)vé(d.|ta)nit.(d.|ta) (::)",
+    gabc: "(c4)\r\nVOS(c) a(d)scén(f')di(f)te(e') *()\r\nad(f) di(g')em(e) fes(gh)tum(fe) hunc:(d.) (;)\r\ne(fv_fv_)go(d!ewf_EC.) non(f) a(f)scén(h_i)dam,(gh..) (;)\r\nqui(h)a(g) tem(fg)pus(f') me(f)um(f) non(e_f)dum(g) ad(fe~)vé(d.)nit.(d.) (::)",
     office: "an",
     mode: "1",
     pages: [
@@ -13599,7 +13599,7 @@ export const AM_DATA: ChantData[] = [
   {
     id: "gregobase:16495",
     incipit: "Super muros tuos ",
-    gabc: "(c4)\r\nSU(c|gr-)per(d>'|ta>lsl2) mu(f|vi)ros(fe|cllsc3) tu(d|ta)os,(de|pelsi3) *()\r\nJe(dc|cllsc3)rú(d|vi)sa(fe|cllss2lsc2)lem,(ddc.|pr-) (;)\r\ncon(f|vihglsl2)stí(gh|pehglss2)tu(g|vihg)i(fe|cllsc3) cu(cd|pelsi8)stó(d.|vi-)des:(d.|vi-lsx9) (:)\r\nto(f|vilsl2)ta(gh|pe) di(h|vi)e(gh|pe) et(f>|vi>lsi2) to(gh|pe)ta(fe|cllsc3) no(de|pehh)cte(c.|ta) (;)\r\nnon(c|gr) ta(d!ewf|viqlhi)cé(ffg|vi-hgpehi)bunt(f.|talsew6) (,)\r\nlau(f|ta)dá(f|ta)re(gh|pelss3) no(ed|cllsc3)men(fe~|cl>) Dó(d|vi)mi(cd|pe)ni.(d.|ta) (::)",
+    gabc: "(c4)\r\nSU(c)per(d>') mu(f)ros(fe) tu(d)os,(de) *()\r\nJe(dc)rú(d)sa(fe)lem,(ddc.) (;)\r\ncon(f)stí(gh)tu(g)i(fe) cu(cd)stó(d.)des:(d.) (:)\r\nto(f)ta(gh) di(h)e(gh) et(f>) to(gh)ta(fe) no(de)cte(c.) (;)\r\nnon(c) ta(d!ewf)cé(ffg)bunt(f.) (,)\r\nlau(f)dá(f)re(gh) no(ed)men(fe~) Dó(d)mi(cd)ni.(d.) (::)",
     office: "an",
     mode: "1",
     pages: [
@@ -13809,7 +13809,7 @@ export const AM_DATA: ChantData[] = [
   {
     id: "gregobase:17177",
     incipit: "Domine salva nos",
-    gabc: "(c4)\r\nDO(f|ta)mi(gh|pe)ne,(h.|vi-hg) *(,)\r\nsal(f'|ta)va(g|vi) nos,(h|vi) per(gf|cl)í(g_f|cl-hg)mus:(d.|ta-) (;)\r\ním(d|ta)pe(g|vihh)ra,(f.|vilsc3) (,)\r\net(ef|pe) fac(d|vihg) De(c|ta)us(d|vi) tran(e_f)quil(g)li(fe)tá(d.)tem.(d.) (::) E(h) u(h) o(g) u(f) a(g) e.(ghg.) (::)",
+    gabc: "(c4)\r\nDO(f)mi(gh)ne,(h.) *(,)\r\nsal(f')va(g) nos,(h) per(gf)í(g_f)mus:(d.) (;)\r\ním(d)pe(g)ra,(f.) (,)\r\net(ef) fac(d) De(c)us(d) tran(e_f)quil(g)li(fe)tá(d.)tem.(d.) (::) E(h) u(h) o(g) u(f) a(g) e.(ghg.) (::)",
     office: "an",
     mode: "1",
     pages: [
@@ -13819,7 +13819,7 @@ export const AM_DATA: ChantData[] = [
   {
     id: "gregobase:17425",
     incipit: "Dixit autem paterfamilias",
-    gabc: "(c3)\r\nDI(e!fwh|qlppt1)xit(f'|ta) au(f|vi)tem(e'|ta) *()\r\npa(f|vi)ter(e'|vi)fa(d|ta)mí(ef|pe)li(f|or)as:(e.|ta) (;)\r\nA(e|ta)mí(ig/ij|cllsal2pe)ce,(i'_|ta) (,)\r\nnon(i|ta) fá(j'|vihg)ci(i|vi)o(h'|ta) ti(i|vi)bi(h'|ta) in(h>|or>)jú(g/h'i|sa)ri(g|vi)am:(e.|ta) (:)\r\nnon(ehhi|pepe>hi)ne(h'|ta) ex(h|ta) de(h|ta)ná(ij|pe)ri(i|ta)o(h'_|talsx6) con(h>|vi>)ve(f'|ta)ní(h|vi)sti(e'|ta) me(f|vi)cum?(e.|ta) (;)\r\ntol(e_c~|vi>)le(e'|vihg) quod(e|vihi) tu(d'|vi)um(c|vi) est,(b.|vihilsl3) (,)\r\net(ef~|ta>) va(e.|ta)de.(e.|ta) (::)\r\n",
+    gabc: "(c3)\r\nDI(e!fwh)xit(f') au(f)tem(e') *()\r\npa(f)ter(e')fa(d)mí(ef)li(f)as:(e.) (;)\r\nA(e)mí(ig/ij)ce,(i'_) (,)\r\nnon(i) fá(j')ci(i)o(h') ti(i)bi(h') in(h>)jú(g/h'i)ri(g)am:(e.) (:)\r\nnon(ehhi)ne(h') ex(h) de(h)ná(ij)ri(i)o(h'_) con(h>)ve(f')ní(h)sti(e') me(f)cum?(e.) (;)\r\ntol(e_c~)le(e') quod(e) tu(d')um(c) est,(b.) (,)\r\net(ef~) va(e.)de.(e.) (::)\r\n",
     office: "an",
     mode: "8",
     pages: [
