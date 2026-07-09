@@ -159,11 +159,38 @@ interface NotePlacement {
   row: ChantTabulaRow;
   inkLeft: number;
   inkRight: number;
+  /** Notehead anchor in svg user units — the geometry contract's x/y. */
+  x: number;
+  y: number;
+}
+
+/**
+ * One entry per tabula row, in tabula order — the TRACK CONTRACT. Analysis
+ * overlays (chironomy, tonarium) consume score data + this geometry to place
+ * marks against notes, without scraping the SVG for coordinates.
+ */
+export interface NoteGeometry {
+  phraseIndex: number;
+  syllableIndex: number;
+  neumeGroup: number;
+  noteIndex: number;
+  /** Which system (staff line) the note landed in — 0 for the single-system MVP. */
+  system: number;
+  /** Notehead anchor in svg user units. */
+  x: number;
+  y: number;
+  /** The system's top offset within the svg — 0 until multi-system layout (Phase 3c). */
+  systemY: number;
+}
+
+export interface SvgResult {
+  svg: string;
+  geometry: NoteGeometry[];
 }
 
 export function toSvg(
   rows: ChantTabulaRow[], chant: Chant, options: SvgOpts = {},
-): string {
+): SvgResult {
   const r = resolveOpts(options);
   const L = makeLayout(r);
 
@@ -211,7 +238,7 @@ export function toSvg(
     if (!p) return null;
     ledger(row.staffPosition, p.inkLeft, p.inkRight);
     body.push(p.svg);
-    placements.push({ row, inkLeft: p.inkLeft, inkRight: p.inkRight });
+    placements.push({ row, inkLeft: p.inkLeft, inkRight: p.inkRight, x: atX, y });
     return p;
   };
 
@@ -331,8 +358,8 @@ export function toSvg(
           ledger(figure[0]!.staffPosition, swash.inkLeft, swash.inkRight);
           ledger(figure[1]!.staffPosition, swash.inkLeft, swash.inkRight);
           body.push(swash.svg);
-          placements.push({ row: figure[0]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight });
-          placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight });
+          placements.push({ row: figure[0]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[0]!.staffPosition, L, r) });
+          placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[1]!.staffPosition, L, r) });
           const upWidth = (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale;
           const upper = placeNote(figure[2]!, Math.max(atX, swash.inkRight - upWidth));
           if (figure[2]!.staffPosition - figure[1]!.staffPosition > 1) {
@@ -530,10 +557,24 @@ export function toSvg(
   }
 
   const title = chant.incipit ? `<title>${esc(chant.incipit)}</title>` : "";
-  return (
+  const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" ` +
     `width="${width}" height="${height}" class="tonus-chant">${title}` +
     staffLines.join("") + behind.join("") + body.join("") + lyricSvgs.join("") +
-    `</svg>`
-  );
+    `</svg>`;
+
+  // The geometry contract: one entry per placed note, in tabula order. The MVP
+  // is single-system, so system/systemY are 0; Phase 3c populates them.
+  const geometry: NoteGeometry[] = placements.map((pl) => ({
+    phraseIndex: pl.row.phraseIndex,
+    syllableIndex: pl.row.syllableIndex,
+    neumeGroup: pl.row.neumeGroup,
+    noteIndex: pl.row.neumeIndex,
+    system: 0,
+    x: Number(pl.x.toFixed(2)),
+    y: Number(pl.y.toFixed(2)),
+    systemY: 0,
+  }));
+
+  return { svg, geometry };
 }

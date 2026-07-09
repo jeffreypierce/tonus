@@ -7,6 +7,7 @@ import { getMatins } from "./engines/chant/matutinum.js";
 import { getPsalm } from "./engines/chant/psalm.js";
 import { buildTemper } from "./engines/temper/api.js";
 import { buildScore } from "./engines/score/api.js";
+import { inscriptio } from "./engines/score/inscriptio.js";
 import { getCosmos } from "./engines/planet/planet.js";
 import { buildHarmonia } from "./engines/harmonia/api.js";
 import { buildVoice } from "./engines/voice/api.js";
@@ -27,8 +28,8 @@ import type {
 import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
-  SvgOpts,
 } from "./engines/score/api.js";
+import type { InscriptioOpts, Inscriptio, NoteGeometry } from "./engines/score/inscriptio.js";
 import type { ChantTabulaRow } from "./engines/score/tabula.js";
 import type {
   Imprint, Attractor, VowelAttractor, ModalAffinity,
@@ -71,6 +72,7 @@ const tonus = {
   psalmus: getPsalm,
   temperamentum: buildTemper,
   notatio: buildScore,
+  inscriptio,
   caelum: getCosmos,
   harmonia: buildHarmonia,
   vox: buildVoice,
@@ -101,7 +103,7 @@ export type {
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
-  SvgOpts,
+  InscriptioOpts, Inscriptio, NoteGeometry,
   ChantTabulaRow,
   Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
   RhythmicType, CompoundBeat,

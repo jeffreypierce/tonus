@@ -12,7 +12,6 @@ import { detectModulations, type Modulation } from "./modulation.js";
 import { detectFormulas, type FormulaMatch } from "./formula.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import { MODES } from "../temper/modes.js";
-import { toSvg, type SvgOpts } from "./emitters/svg.js";
 import type { Chant } from "../chant/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import type {
@@ -59,11 +58,6 @@ export interface Score {
   /** Apel standard-phrase formulae each phrase realises (Tier-1 genres only). */
   formulas: FormulaMatch[];
   imprint: Imprint;
-  /**
-   * Render the score as a self-contained SVG string — a square-note chant staff
-   * with SMuFL glyphs (single line; MVP). See docs/score.md.
-   */
-  svg(opts?: SvgOpts): string;
 }
 
 const PONDUS_TO_ARTICULATION: Record<PondusStyle, ArticulationType> = {
@@ -168,9 +162,6 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
         }),
       ),
     }),
-    svg(emitOpts?: SvgOpts): string {
-      return toSvg(tabula, chant, emitOpts);
-    },
   };
 }
 
@@ -179,4 +170,3 @@ export type { Cadence, CadenceTarget, CadenceApproach } from "./cadence.js";
 export type { Modulation } from "./modulation.js";
 export type { FormulaMatch } from "./formula.js";
 export type { Formula, FormulaSlot } from "./data/formulas.js";
-export type { SvgOpts } from "./emitters/svg.js";
