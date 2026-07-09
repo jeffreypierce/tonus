@@ -41,6 +41,12 @@ export interface SvgOpts {
   noteColor?: string;
   /** Font-family for lyric text. Default a serif stack. */
   fontFamily?: string;
+  /** Wrap systems to this px width. Absent = a single system. */
+  width?: number;
+  /** Vertical gap between systems, px. Default 24. */
+  systemGap?: number;
+  /** Draw a custos (line-end guide note) at each system break. Default true when wrapping. */
+  custos?: boolean;
 }
 
 interface Resolved {
@@ -58,6 +64,9 @@ interface Resolved {
   interSyllable: number;  // base gap between syllables
   interWord: number;      // extra gap between words
   lyricSize: number;      // px
+  width: number | null;   // wrap width, or null for single system
+  systemGap: number;      // vertical gap between systems
+  custos: boolean;        // draw line-end guide notes
 }
 
 function resolveOpts(o: SvgOpts): Resolved {
@@ -89,6 +98,9 @@ function resolveOpts(o: SvgOpts): Resolved {
     interSyllable: staffInterval * 1.85,
     interWord: staffInterval * 1.15,
     lyricSize: staffInterval * 2.2,
+    width: o.width ?? null,
+    systemGap: o.systemGap ?? 24,
+    custos: o.custos ?? (o.width != null),
   };
 }
 
@@ -100,26 +112,41 @@ const esc = (s: string): string =>
 // Staff positions: 1 = bottom line, 3, 5, 7 = top line; even = spaces.
 
 interface Layout {
-  topY: number;       // y of the top staff line (position 7)
-  bottomY: number;    // y of the bottom staff line (position 1)
-  baselineY: number;  // y of staff position 0
-  lyricY: number;     // lyric text baseline
+  topY: number;       // y of the top staff line (position 7), system-local
+  bottomY: number;    // y of the bottom staff line (position 1), system-local
+  baselineY: number;  // y of staff position 0, system-local
+  lyricY: number;     // lyric text baseline, system-local
+  /** Vertical offset of the current system. 0 for the first; bumped at each break. */
+  systemY: number;
+  /** Full height of one system (staff + lyric room) + the inter-system gap. */
+  systemHeight: number;
 }
 
 function makeLayout(r: Resolved): Layout {
   const topY = r.staffInterval * 5; // room for high notes + episema above
+  const lyricY = topY + r.staffInterval * 8.5 + r.lyricSize * 0.8;
   return {
     topY,
     bottomY: topY + r.staffInterval * 6,
     baselineY: topY + r.staffInterval * 7,
     // Lyric baseline sits ~1.25 staff spaces below the bottom line — close to
     // the staff, but clear of notes hanging below it and their descenders.
-    lyricY: topY + r.staffInterval * 8.5 + r.lyricSize * 0.8,
+    lyricY,
+    systemY: 0,
+    systemHeight: Math.ceil(lyricY + r.lyricSize * 0.6) + r.systemGap,
   };
 }
 
+// The y for a staff position, offset into the current system.
 function yFor(pos: number, L: Layout, r: Resolved): number {
-  return L.baselineY - pos * r.staffInterval;
+  return L.systemY + L.baselineY - pos * r.staffInterval;
+}
+
+// The y for a staff position in a SPECIFIC system — used by the post-passes
+// (episema, rhythmic signs) that run after layout, when notes may live in
+// different systems than the current L.systemY.
+function yAt(pos: number, systemY: number, L: Layout, r: Resolved): number {
+  return systemY + L.baselineY - pos * r.staffInterval;
 }
 
 // A placed glyph with its page-coordinate ink extents.
@@ -162,6 +189,9 @@ interface NotePlacement {
   /** Notehead anchor in svg user units — the geometry contract's x/y. */
   x: number;
   y: number;
+  /** Which system this note landed in, and that system's top offset. */
+  system: number;
+  systemY: number;
 }
 
 /**
@@ -196,9 +226,15 @@ export function toSvg(
 
   const body: string[] = [];      // glyphs and stems
   const behind: string[] = [];    // ledger lines (render under glyphs)
-  const lyrics: Array<{ cx: number; text: string; wordStart: boolean }> = [];
+  const lyrics: Array<{ cx: number; text: string; wordStart: boolean; systemY: number }> = [];
   const placements: NotePlacement[] = [];
   let x = r.padding;
+
+  // Multi-system layout state. Everything is emitted with the CURRENT system's Y
+  // baked in (via yFor + L.systemY); we also record where each system starts so
+  // the staff lines can be drawn per system at the end.
+  let system = 0;
+  const systemMaxX: number[] = []; // rightmost x reached in each finished system
 
   const dataAttrs = (row: ChantTabulaRow): string =>
     ` data-note-index="${row.phraseIndex}.${row.syllableIndex}.${row.neumeGroup}.${row.neumeIndex}"` +
@@ -238,7 +274,7 @@ export function toSvg(
     if (!p) return null;
     ledger(row.staffPosition, p.inkLeft, p.inkRight);
     body.push(p.svg);
-    placements.push({ row, inkLeft: p.inkLeft, inkRight: p.inkRight, x: atX, y });
+    placements.push({ row, inkLeft: p.inkLeft, inkRight: p.inkRight, x: atX, y, system, systemY: L.systemY });
     return p;
   };
 
@@ -358,8 +394,8 @@ export function toSvg(
           ledger(figure[0]!.staffPosition, swash.inkLeft, swash.inkRight);
           ledger(figure[1]!.staffPosition, swash.inkLeft, swash.inkRight);
           body.push(swash.svg);
-          placements.push({ row: figure[0]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[0]!.staffPosition, L, r) });
-          placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[1]!.staffPosition, L, r) });
+          placements.push({ row: figure[0]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[0]!.staffPosition, L, r), system, systemY: L.systemY });
+          placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[1]!.staffPosition, L, r), system, systemY: L.systemY });
           const upWidth = (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale;
           const upper = placeNote(figure[2]!, Math.max(atX, swash.inkRight - upWidth));
           if (figure[2]!.staffPosition - figure[1]!.staffPosition > 1) {
@@ -458,7 +494,7 @@ export function toSvg(
       const text = figure[0]!.lyric.replace(/^-+/, "").replace(/-+$/, "").trim();
       if (text) {
         const cx = (figureStartX + x) / 2;
-        lyrics.push({ cx, text, wordStart: figure[0]!.wordStart });
+        lyrics.push({ cx, text, wordStart: figure[0]!.wordStart, systemY: L.systemY });
         prevLyricRight = cx + estLyricW(text) / 2;
       }
     }
@@ -476,6 +512,32 @@ export function toSvg(
       }
       x += r.staffInterval * 2.1;
       afterDivisio = true;
+
+      // ── System break ── When wrapping, a divisio is a legal break point.
+      // Break if the next phrase would overflow the width — but never on the
+      // last divisio (nothing follows). A custos guides the eye to the next
+      // system's first pitch.
+      const moreToCome = j < rows.length;
+      if (r.width != null && moreToCome && x > r.width - r.padding) {
+        if (r.custos) {
+          // A line-end guide to the next system's first pitch. Drawn as a small
+          // punctum at that pitch (no dedicated custos glyph in the bake yet).
+          const nextPos = rows[j]!.staffPosition;
+          const p = placeGlyph(GLYPH.punctum, x + r.interGlyph, yFor(nextPos, L, r), r, "custos", "", r.noteScale * 0.85);
+          if (p) body.push(p.svg);
+        }
+        systemMaxX.push(x + r.padding);
+        system++;
+        L.systemY += L.systemHeight;
+        x = r.padding;
+        // The clef repeats at the head of every system.
+        x = drawClef(activeClef, x);
+        afterDivisio = false; // a fresh system starts clean, not "after a divisio"
+        // Forget the previous system's rightmost lyric — otherwise the lyric-
+        // column rule would shove this system's first syllable across the page
+        // to clear a lyric that is now a line above.
+        prevLyricRight = -Infinity;
+      }
     }
 
     prevSyllable = syllableIndex;
@@ -484,18 +546,19 @@ export function toSvg(
 
   // ── Episema: one bar per neume group, spanning the group's ink ──
   {
-    const groups = new Map<string, { l: number; rr: number; top: number; has: boolean }>();
+    const groups = new Map<string, { l: number; rr: number; top: number; has: boolean; systemY: number }>();
     for (const pl of placements){
       const key = `${pl.row.phraseIndex}.${pl.row.syllableIndex}.${pl.row.neumeGroup}`;
-      const g = groups.get(key) ?? { l: Infinity, rr: -Infinity, top: -Infinity, has: false };
+      const g = groups.get(key) ?? { l: Infinity, rr: -Infinity, top: -Infinity, has: false, systemY: pl.systemY };
       g.l = Math.min(g.l, pl.inkLeft); g.rr = Math.max(g.rr, pl.inkRight);
       g.top = Math.max(g.top, pl.row.staffPosition);
+      g.systemY = pl.systemY;
       if (pl.row.episema) g.has = true;
       groups.set(key, g);
     }
     for (const g of groups.values()){
       if (!g.has) continue;
-      const y = yFor(g.top, L, r) - r.staffInterval * 1.35;
+      const y = yAt(g.top, g.systemY, L, r) - r.staffInterval * 1.35;
       body.push(`<rect class="episema" x="${g.l.toFixed(2)}" y="${y.toFixed(2)}" ` +
         `width="${(g.rr - g.l).toFixed(2)}" height="${(r.lineWeight * 1.7).toFixed(2)}" fill="${r.noteColor}"/>`);
     }
@@ -513,7 +576,7 @@ export function toSvg(
         ? row.staffPosition + (fromAbove ? -1 : 1)
         : row.staffPosition;
       const p = placeGlyph(GLYPH.mora, pl.inkRight + r.staffInterval * 0.3,
-        yFor(dotPos, L, r) + r.staffInterval * 0.33, r, "mora", "", r.noteScale);
+        yAt(dotPos, pl.systemY, L, r) + r.staffInterval * 0.33, r, "mora", "", r.noteScale);
       if (p) body.push(p.svg);
     }
     if (row.ictusSign) {
@@ -524,33 +587,42 @@ export function toSvg(
       const g = GLYPHS[code];
       const w = (g ? (g.bbox[2] - g.bbox[0]) : 0) * r.glyphScale * r.noteScale;
       const clearance = r.noteheadH * 0.45;
-      const y = yFor(row.staffPosition, L, r) + (below ? clearance : -clearance);
+      const y = yAt(row.staffPosition, pl.systemY, L, r) + (below ? clearance : -clearance);
       const p = placeGlyph(code, midX - w / 2, y, r, "ictus", "", r.noteScale);
       if (p) body.push(p.svg);
     }
   }
 
-  const width = Math.ceil(x + r.padding);
-  const height = Math.ceil(L.lyricY + r.lyricSize * 0.6);
+  // Close the final system; width is the widest system, height reaches the last.
+  systemMaxX.push(x + r.padding);
+  const width = Math.ceil(Math.max(...systemMaxX));
+  const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6);
 
-  // Staff lines (positions 1, 3, 5, 7).
+  // Staff lines (positions 1, 3, 5, 7), once per system. A system's rightmost
+  // ink bounds its staff so a short final line doesn't stretch to the page edge.
   const staffLines: string[] = [];
-  for (const pos of [1, 3, 5, 7]) {
-    const ly = yFor(pos, L, r);
-    staffLines.push(
-      `<line x1="${r.padding}" y1="${ly.toFixed(2)}" x2="${(width - r.padding).toFixed(2)}" ` +
-      `y2="${ly.toFixed(2)}" stroke="${r.staffLineColor}" stroke-width="${r.lineWeight.toFixed(2)}"/>`,
-    );
+  for (let s = 0; s <= system; s++) {
+    const sysY = s * L.systemHeight;
+    const right = (systemMaxX[s] ?? width) - r.padding;
+    for (const pos of [1, 3, 5, 7]) {
+      const ly = sysY + L.baselineY - pos * r.staffInterval;
+      staffLines.push(
+        `<line x1="${r.padding}" y1="${ly.toFixed(2)}" x2="${right.toFixed(2)}" ` +
+        `y2="${ly.toFixed(2)}" stroke="${r.staffLineColor}" stroke-width="${r.lineWeight.toFixed(2)}"/>`,
+      );
+    }
   }
 
-  // Lyrics; syllables within a word carry a trailing hyphen ("Ký- ri- e").
+  // Lyrics; syllables within a word carry a trailing hyphen ("Ký- ri- e"). Each
+  // lyric sits under its own system.
   const lyricSvgs: string[] = [];
   for (let k = 0; k < lyrics.length; k++) {
     const ly = lyrics[k]!;
     const next = lyrics[k + 1];
     const text = next && !next.wordStart ? `${ly.text}-` : ly.text;
+    const y = ly.systemY + L.lyricY;
     lyricSvgs.push(
-      `<text class="lyric" x="${ly.cx.toFixed(2)}" y="${L.lyricY.toFixed(2)}" ` +
+      `<text class="lyric" x="${ly.cx.toFixed(2)}" y="${y.toFixed(2)}" ` +
       `text-anchor="middle" font-family="${esc(r.fontFamily)}" ` +
       `font-size="${r.lyricSize.toFixed(1)}" fill="${r.noteColor}">${esc(text)}</text>`,
     );
@@ -563,17 +635,17 @@ export function toSvg(
     staffLines.join("") + behind.join("") + body.join("") + lyricSvgs.join("") +
     `</svg>`;
 
-  // The geometry contract: one entry per placed note, in tabula order. The MVP
-  // is single-system, so system/systemY are 0; Phase 3c populates them.
+  // The geometry contract: one entry per placed note, in tabula order, carrying
+  // which system it landed in and that system's top offset.
   const geometry: NoteGeometry[] = placements.map((pl) => ({
     phraseIndex: pl.row.phraseIndex,
     syllableIndex: pl.row.syllableIndex,
     neumeGroup: pl.row.neumeGroup,
     noteIndex: pl.row.neumeIndex,
-    system: 0,
+    system: pl.system,
     x: Number(pl.x.toFixed(2)),
     y: Number(pl.y.toFixed(2)),
-    systemY: 0,
+    systemY: Number(pl.systemY.toFixed(2)),
   }));
 
   return { svg, geometry };
