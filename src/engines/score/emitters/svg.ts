@@ -85,10 +85,10 @@ function resolveOpts(o: SvgOpts): Resolved {
     lineWeight: Math.max(0.5, staffInterval * 0.11),
     stemWeight: Math.max(0.6, staffInterval * 0.14),
     noteheadH,
-    interGlyph: staffInterval * 0.5,
-    interSyllable: staffInterval * 1.6,
-    interWord: staffInterval * 1.0,
-    lyricSize: staffInterval * 1.9,
+    interGlyph: staffInterval * 0.62,
+    interSyllable: staffInterval * 1.85,
+    interWord: staffInterval * 1.15,
+    lyricSize: staffInterval * 2.2,
   };
 }
 
@@ -206,7 +206,8 @@ export function toSvg(
   const placeNote = (row: ChantTabulaRow, atX: number, code?: string, dyFont = 0): PlacedGlyph | null => {
     const glyphCode = code ?? SHAPE_GLYPH[row.shape] ?? GLYPH.punctum;
     const y = yFor(row.staffPosition, L, r);
-    const p = placeGlyph(glyphCode, atX, y, r, "note", dataAttrs(row), r.noteScale, dyFont);
+    const sc = row.liquescent ? r.noteScale * 0.66 : r.noteScale;
+    const p = placeGlyph(glyphCode, atX, y, r, "note", dataAttrs(row), sc, dyFont);
     if (!p) return null;
     ledger(row.staffPosition, p.inkLeft, p.inkRight);
     body.push(p.svg);
@@ -238,8 +239,7 @@ export function toSvg(
       if (!lower) return cx;
       const upWidth = (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale;
       const upX = Math.max(cx, lower.inkRight - upWidth);
-      const upper = placeNote(hi, upX);
-      body.push(stem(lower.inkRight, lo.staffPosition, hi.staffPosition));
+      const upper = placeNote(hi, upX);          /* stacked, stemless (Solesmes) */
       return Math.max(lower.inkRight, upper?.inkRight ?? 0);
     }
     // Authentic stacked pes: base-registered components re-centered on pitch.
@@ -270,6 +270,8 @@ export function toSvg(
     for (let i = 0; i < figure.length; i++) {
       const row = figure[i]!;
       cx += placeAccidental(row, cx);
+      if (prev && prev.pos === row.staffPosition)
+        cx += r.staffInterval * 0.55;          /* strophae breathe (Solesmes) */
       const p = placeNote(row, cx);
       if (!p) continue;
       if (prev && !inclinata && Math.abs(prev.pos - row.staffPosition) > 1) {
@@ -386,6 +388,7 @@ export function toSvg(
   // ── Walk figures grouped by (syllableIndex, neumeGroup) ──
   let i = 0;
   let prevSyllable = -1;
+  let afterDivisio = false;
   while (i < rows.length) {
     const { syllableIndex, neumeGroup } = rows[i]!;
     let j = i;
@@ -404,8 +407,9 @@ export function toSvg(
 
     const newSyllable = syllableIndex !== prevSyllable;
     if (newSyllable && prevSyllable !== -1) {
-      x += r.interSyllable;
-      if (figure[0]!.wordStart) x += r.interWord;
+      x += afterDivisio ? 0 : r.interSyllable;
+      if (figure[0]!.wordStart && !afterDivisio) x += r.interWord;
+      afterDivisio = false;
       // Column rule: don't let this syllable's lyric collide with the last.
       const lyricText = figure[0]!.lyric.replace(/^-+/, "").replace(/-+$/, "").trim();
       if (lyricText) {
@@ -417,7 +421,7 @@ export function toSvg(
         }
       }
     } else if (!newSyllable && prevSyllable !== -1) {
-      x += r.interGlyph;
+      x += figure[0]!.quilisma ? r.staffInterval * 0.12 : r.interGlyph;
     }
 
     const figureStartX = x;
@@ -436,36 +440,53 @@ export function toSvg(
     const div = figure[figure.length - 1]!.divisio;
     const phraseEnds = j >= rows.length || rows[j]!.phraseIndex !== figure[0]!.phraseIndex;
     if (div && phraseEnds) {
-      x += r.staffInterval * 1.8;
+      x += r.staffInterval * 2.1;
       const code = DIVISIO_GLYPH[div];
       if (code) {
         // Divisiones register at the staff center (position 4).
         const p = placeGlyph(code, x, yFor(4, L, r), r, "divisio");
         if (p) { body.push(p.svg); x = p.inkRight; }
       }
-      x += r.staffInterval * 1.2;
+      x += r.staffInterval * 2.1;
+      afterDivisio = true;
     }
 
     prevSyllable = syllableIndex;
     i = j;
   }
 
+  // ── Episema: one bar per neume group, spanning the group's ink ──
+  {
+    const groups = new Map<string, { l: number; rr: number; top: number; has: boolean }>();
+    for (const pl of placements){
+      const key = `${pl.row.phraseIndex}.${pl.row.syllableIndex}.${pl.row.neumeGroup}`;
+      const g = groups.get(key) ?? { l: Infinity, rr: -Infinity, top: -Infinity, has: false };
+      g.l = Math.min(g.l, pl.inkLeft); g.rr = Math.max(g.rr, pl.inkRight);
+      g.top = Math.max(g.top, pl.row.staffPosition);
+      if (pl.row.episema) g.has = true;
+      groups.set(key, g);
+    }
+    for (const g of groups.values()){
+      if (!g.has) continue;
+      const y = yFor(g.top, L, r) - r.staffInterval * 1.35;
+      body.push(`<rect class="episema" x="${g.l.toFixed(2)}" y="${y.toFixed(2)}" ` +
+        `width="${(g.rr - g.l).toFixed(2)}" height="${(r.lineWeight * 1.7).toFixed(2)}" fill="${r.noteColor}"/>`);
+    }
+  }
+
   // ── Rhythmic signs, per placed notehead ──
-  for (const pl of placements) {
+  for (let k = 0; k < placements.length; k++) {
+    const pl = placements[k]!;
     const { row } = pl;
     const midX = (pl.inkLeft + pl.inkRight) / 2;
     if (row.mora) {
-      // Dot after the note; a note on a line dots into the space above.
-      const dotPos = row.staffPosition % 2 !== 0 ? row.staffPosition + 1 : row.staffPosition;
+      const prevRow = k > 0 ? placements[k - 1]!.row : null;
+      const fromAbove = prevRow != null && prevRow.staffPosition > row.staffPosition;
+      const dotPos = row.staffPosition % 2 !== 0
+        ? row.staffPosition + (fromAbove ? -1 : 1)
+        : row.staffPosition;
       const p = placeGlyph(GLYPH.mora, pl.inkRight + r.staffInterval * 0.3,
         yFor(dotPos, L, r) + r.staffInterval * 0.33, r, "mora", "", r.noteScale);
-      if (p) body.push(p.svg);
-    }
-    if (row.episema) {
-      // Horizontal bar; baked 1 half-space above its origin. Flip below for
-      // very high notes.
-      const originPos = row.staffPosition >= 8 ? row.staffPosition - 2.4 : row.staffPosition;
-      const p = placeGlyph(GLYPH.episema, pl.inkLeft, yFor(originPos, L, r), r, "episema", "", r.noteScale);
       if (p) body.push(p.svg);
     }
     if (row.ictusSign) {
