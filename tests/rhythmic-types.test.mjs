@@ -49,6 +49,17 @@ describe("classifyRhythmicType", () => {
     assert.equal(typeOf("ATA"), null);
     assert.equal(typeOf("ATAA"), null);
   });
+
+  test("an alternation hanging arsic is null, not a forced VII", () => {
+    // The same resolution gate applies to Type VII: in juxtaposition each arsis
+    // begins a rhythm that a thesis must close [biblio: sunol-textbook], so
+    // A–T–A–T–A opens a rhythm it never closes — the odd-length sibling of
+    // A–T–A, which was already null. Even-length alternation is unaffected.
+    assert.equal(typeOf("ATATA"), null);
+    assert.equal(typeOf("ATATATA"), null);
+    assert.equal(typeOf("ATAT"), "VII");   // still VII — the gate changes nothing resolved
+    assert.equal(typeOf("AATATA"), null);  // irregular seam, hanging arsic — still null
+  });
 });
 
 // Integration: the field is populated end-to-end on a built Score, and the beat

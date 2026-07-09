@@ -26,7 +26,9 @@ export type ArsisThesis = "arsic" | "thetic";
 //          the incise still resolves, ending thetic. Suñol's "composite rhythm
 //          by contraction" [biblio: sunol-textbook], the local reading of
 //          Carroll's "overlapping" Type VIII. A seam that leaves the incise
-//          hanging arsic (e.g. A–T–A) is unresolved and stays null, not VIII.
+//          hanging arsic is unresolved and stays null — never a forced VIII
+//          (A–T–A), and never a forced VII either (A–T–A–T–A: the
+//          alternation opens a rhythm it never closes).
 export type RhythmicType = "IV" | "V" | "VI" | "VII" | "VIII" | null;
 
 // One compound beat, reduced to what incise-level analysis needs: its shape and
