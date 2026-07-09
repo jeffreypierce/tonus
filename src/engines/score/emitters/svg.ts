@@ -22,6 +22,9 @@ import type { ChantTabulaRow } from "../tabula.js";
 import type { Chant } from "../../chant/types.js";
 import { GLYPHS, GLYPH_UPM, type SmuflGlyph } from "../../../data/smufl-glyphs.js";
 import {
+  computeAccidentals, type AccidentalMode, type CentsBaseline, type AccidentalMark,
+} from "./accidentals.js";
+import {
   GLYPH,
   SHAPE_GLYPH,
   DIVISIO_GLYPH,
@@ -58,6 +61,10 @@ export interface SvgOpts {
   dropcap?: boolean;
   /** The liturgical red for dropcap and annotations. Default a sober red. */
   rubrica?: string;
+  /** The intonation channel: standard accidentals, HEJI commas, or cents labels. */
+  accidentals?: AccidentalMode;
+  /** Baseline for the cents channel; the chant's home intonation by default. */
+  centsBaseline?: CentsBaseline;
 }
 
 interface Resolved {
@@ -286,6 +293,13 @@ export function toSvg(
   let system = 0;
   const systemMaxX: number[] = []; // rightmost x reached in each finished system
 
+  // Intonation channel: precompute each row's accidental/cents mark once (the
+  // repeat-suppression and heji guard live in the engine), keyed by identity.
+  const accMode: AccidentalMode = options.accidentals ?? "standard";
+  const marks = computeAccidentals(rows, accMode, options.centsBaseline ?? "pythagorean");
+  const markByRow = new Map<ChantTabulaRow, AccidentalMark>();
+  rows.forEach((row, i) => { const m = marks[i]; if (m) markByRow.set(row, m); });
+
   const dataAttrs = (row: ChantTabulaRow): string =>
     ` data-note-index="${row.phraseIndex}.${row.syllableIndex}.${row.neumeGroup}.${row.neumeIndex}"` +
     ` data-staff="${row.staffLetter}"`;
@@ -328,12 +342,22 @@ export function toSvg(
     return p;
   };
 
-  // Explicit accidental before a note; returns the advance consumed.
+  // The note's intonation mark before/above it; returns the advance consumed.
+  // A glyph (standard accidental or HEJI comma) precedes the head; a cents label
+  // floats above it (and consumes no horizontal advance).
   const placeAccidental = (row: ChantTabulaRow, atX: number): number => {
-    if (row.accidentalSource !== "explicit") return 0;
-    const code = row.accidental === -1 ? GLYPH.flat
-      : row.accidental === 1 ? GLYPH.sharp : GLYPH.natural;
-    const p = placeGlyph(code, atX, yFor(row.staffPosition, L, r), r,
+    const mark = markByRow.get(row);
+    if (!mark) return 0;
+    if (mark.kind === "cents") {
+      const y = yFor(row.staffPosition, L, r) - r.noteheadH * 0.9;
+      body.push(
+        `<text class="cents" x="${atX.toFixed(2)}" y="${y.toFixed(2)}" ` +
+        `font-family="${esc(r.fontFamily)}" font-size="${(r.lyricSize * 0.5).toFixed(1)}" ` +
+        `fill="${r.noteColor}">${esc(mark.label ?? "")}</text>`,
+      );
+      return 0;
+    }
+    const p = placeGlyph(mark.glyph!, atX, yFor(row.staffPosition, L, r), r,
       "accidental", "", r.noteScale * 0.62);
     if (!p) return 0;
     body.push(p.svg);

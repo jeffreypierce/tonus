@@ -78,6 +78,7 @@ const EMITTER_KEYS = [
   "staffHeight", "noteScale", "padding", "noteColor", "staffLineColor",
   "width", "systemGap", "custos",
   "title", "rubric", "annotation", "dropcap", "rubrica",
+  "accidentals", "centsBaseline",
 ] as const;
 
 /**
