@@ -16,6 +16,7 @@
 // wired in through InscriptioOpts as they land (Phases 3c–5); the options are
 // defined in full here so those phases fill them without a signature change.
 import { toSvg, type NoteGeometry, type SvgResult } from "./emitters/svg.js";
+import { toModerna } from "./emitters/moderna.js";
 import type { Score } from "./api.js";
 import type { ChantTabulaRow } from "./tabula.js";
 
@@ -98,7 +99,9 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
   const emitterOpts: Record<string, unknown> = {};
   for (const k of EMITTER_KEYS) if (opts[k] !== undefined) emitterOpts[k] = opts[k];
 
-  const result: SvgResult = toSvg(score.tabula, score.chant, emitterOpts);
+  // Dispatch to the species' own renderer — each owns its spacing pass.
+  const render = opts.notation === "moderna" ? toModerna : toSvg;
+  const result: SvgResult = render(score.tabula, score.chant, emitterOpts);
   return { svg: result.svg, geometry: result.geometry };
 }
 
