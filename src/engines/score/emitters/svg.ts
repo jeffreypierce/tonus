@@ -47,6 +47,17 @@ export interface SvgOpts {
   systemGap?: number;
   /** Draw a custos (line-end guide note) at each system break. Default true when wrapping. */
   custos?: boolean;
+  // ── front matter ──
+  /** A headline above the score. */
+  title?: string;
+  /** A right-corner annotation line (feast, page cite). */
+  rubric?: string;
+  /** Derive the rubric block from chant meta (genus · modus · book). */
+  annotation?: "auto";
+  /** Draw a rubricated initial from the first lyric; the first system indents. */
+  dropcap?: boolean;
+  /** The liturgical red for dropcap and annotations. Default a sober red. */
+  rubrica?: string;
 }
 
 interface Resolved {
@@ -67,6 +78,10 @@ interface Resolved {
   width: number | null;   // wrap width, or null for single system
   systemGap: number;      // vertical gap between systems
   custos: boolean;        // draw line-end guide notes
+  title: string | null;   // headline
+  rubric: string | null;  // corner annotation, or "auto"-derived
+  dropcap: boolean;       // rubricated initial
+  rubrica: string;        // liturgical red
 }
 
 function resolveOpts(o: SvgOpts): Resolved {
@@ -101,6 +116,11 @@ function resolveOpts(o: SvgOpts): Resolved {
     width: o.width ?? null,
     systemGap: o.systemGap ?? 24,
     custos: o.custos ?? (o.width != null),
+    title: o.title ?? null,
+    // "auto" is resolved in toSvg where the chant meta is in hand.
+    rubric: typeof o.rubric === "string" ? o.rubric : null,
+    dropcap: o.dropcap ?? false,
+    rubrica: o.rubrica ?? "#9E2B25",
   };
 }
 
@@ -223,6 +243,36 @@ export function toSvg(
 ): SvgResult {
   const r = resolveOpts(options);
   const L = makeLayout(r);
+
+  // ── Front matter ── Title, rubric annotation, and dropcap sit in a header band
+  // above the first system. Everything below offsets down by the band's height.
+  const autoRubric = options.annotation === "auto"
+    ? [chant.genus, chant.modus, chant.source?.book].filter(Boolean).join(" · ")
+    : null;
+  const rubricText = r.rubric ?? autoRubric;
+  const header: string[] = [];
+  let headerY = 0;
+  if (r.title) {
+    const size = r.lyricSize * 1.5;
+    headerY += size * 1.4;
+    header.push(
+      `<text class="title" x="${r.padding}" y="${(size).toFixed(2)}" ` +
+      `font-family="${esc(r.fontFamily)}" font-size="${size.toFixed(1)}" ` +
+      `fill="${r.noteColor}">${esc(r.title)}</text>`,
+    );
+  }
+  if (rubricText) {
+    const size = r.lyricSize * 0.85;
+    const ry = (r.title ? headerY : size * 1.3);
+    if (!r.title) headerY += size * 1.6;
+    header.push(
+      `<text class="rubric" x="${r.padding}" y="${ry.toFixed(2)}" ` +
+      `font-family="${esc(r.fontFamily)}" font-size="${size.toFixed(1)}" ` +
+      `font-style="italic" fill="${r.rubrica}">${esc(rubricText)}</text>`,
+    );
+  }
+  // Push all systems below the header band.
+  L.systemY = headerY;
 
   const body: string[] = [];      // glyphs and stems
   const behind: string[] = [];    // ledger lines (render under glyphs)
@@ -602,7 +652,7 @@ export function toSvg(
   // ink bounds its staff so a short final line doesn't stretch to the page edge.
   const staffLines: string[] = [];
   for (let s = 0; s <= system; s++) {
-    const sysY = s * L.systemHeight;
+    const sysY = headerY + s * L.systemHeight;
     const right = (systemMaxX[s] ?? width) - r.padding;
     for (const pos of [1, 3, 5, 7]) {
       const ly = sysY + L.baselineY - pos * r.staffInterval;
@@ -628,11 +678,30 @@ export function toSvg(
     );
   }
 
-  const title = chant.incipit ? `<title>${esc(chant.incipit)}</title>` : "";
+  // Dropcap — a large rubricated initial from the first lyric, in the left
+  // margin beside the first system. A book's illuminated capital, kept simple.
+  const dropcapSvgs: string[] = [];
+  if (r.dropcap && lyrics.length > 0) {
+    const first = lyrics[0]!.text;
+    const initial = first.charAt(0).toUpperCase();
+    if (initial) {
+      const size = r.staffInterval * 7; // ~ one staff tall
+      const y = headerY + L.baselineY;
+      dropcapSvgs.push(
+        `<text class="dropcap" x="${(r.padding).toFixed(2)}" y="${y.toFixed(2)}" ` +
+        `font-family="${esc(r.fontFamily)}" font-size="${size.toFixed(1)}" ` +
+        `fill="${r.rubrica}">${esc(initial)}</text>`,
+      );
+    }
+  }
+
+  const svgTitle = chant.incipit ? `<title>${esc(chant.incipit)}</title>` : "";
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" ` +
-    `width="${width}" height="${height}" class="tonus-chant">${title}` +
+    `width="${width}" height="${height}" class="tonus-chant">${svgTitle}` +
+    header.join("") +
     staffLines.join("") + behind.join("") + body.join("") + lyricSvgs.join("") +
+    dropcapSvgs.join("") +
     `</svg>`;
 
   // The geometry contract: one entry per placed note, in tabula order, carrying
