@@ -64,6 +64,12 @@ describe("getChants", () => {
     assert.equal(chants.length, 0);
   });
 
+  test("throws on an empty or unknown-key query (not a silent empty result)", () => {
+    // A real search that finds nothing returns []; a malformed query is a bug.
+    assert.throws(() => getChants({}), /empty query/);
+    assert.throws(() => getChants({ mdoe: 1 }), /unknown query key/);
+  });
+
   test("respects limit and offset for pagination", () => {
     const page1 = getChants({ mode: 1, limit: 3, offset: 0 });
     const page2 = getChants({ mode: 1, limit: 3, offset: 3 });
@@ -441,6 +447,18 @@ describe("corpus data integrity", () => {
     assert.ok(
       allChants.some((c) => /[áéíóúǽæœ]/i.test(c.gabc ?? "")),
       "corpus should contain decoded accented characters",
+    );
+  });
+
+  test("no gabc field carries a NABC pipe (the neume layer is stripped)", () => {
+    // A note group is `(notes)` — never `(notes|nabc)`. The pipe is the St-Gall
+    // NABC layer, which tonus does not model; the extractor strips it.
+    const offenders = allChants.filter((c) => (c.gabc ?? "").includes("|"));
+    assert.equal(
+      offenders.length,
+      0,
+      `gabc must not contain a NABC pipe; ${offenders.length} do` +
+        (offenders[0] ? ` (first: ${offenders[0].id})` : ""),
     );
   });
 });

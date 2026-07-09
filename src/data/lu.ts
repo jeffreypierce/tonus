@@ -1,6 +1,6 @@
 // lu.ts — Liber Usualis 1961 corpus (primary antiphon/hymn source)
 // Extracted from GregoBase (source ID 3) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-09T13:15:09.840Z
+// Generated: 2026-07-09T16:55:18.793Z
 // Chants: 2377
 // LA fills gaps for chant IDs not present here.
 import type { Chant } from "./types.js";
@@ -23780,7 +23780,7 @@ export const LU_DATA: ChantData[] = [
   {
     id: "gregobase:18314",
     incipit: "In monte Oliveti",
-    gabc: "(c4) In(g|ta) mon(g_0[uh:l]//hgh|ta-//po)te(gf|cllsc3) *()\r\nO(g|vi-)li(h!iwj|vi-qlhj)vé(j.i!jwkjk|cl-ql!po)ti(kj..|cl-) (;)\r\no(j|ta)rá(j_i_2/jv_IHij|cl-ci-vs)vit(i|ta)\r\nad(i!jwkJ_I_H_/!iwjIH|ql!vsppt1sut2qi-su2)\r\nPa(gh!ivHGh|vi-pp2su2vi)trem :(hg..|cl-) (:)\r\nPa(jjk|vi-////pe)ter,(j_|ta) (,)\r\nsi(j|ta) fí(jk|////pe)e(j|vi)ri(i.h!iwj|cl-ql)\r\npot(g_0[uh:l]//hjh_i|toS2ppu1``vi-)est,(hg..|cl-) (;)\r\ntráns(gh~|pe~)e(g|ta)at(g|ta) a(g|ta) me(hi_[oh:h]HG//hih|pe-su2to)\r\nca(ghf|to)lix(g_[uh:l]h|peS) i(h!iwj.h/hwihi|vi-ql!cl-qi!po)ste :(ih..|cl-) (:)\r\n<sp>*</sp> Spí(jjk|vi-pe)ri(j|ta)tus(j|ta) qui(jji|pr)dem(jk|////pe>)\r\nprom(j_k|////pe>1)ptus(ij_I_3HGh|toSsu2vi) est,(hg..|cl-) (;)\r\nca(hih|to)ro(hg|cllsc3) au(h|vi)tem(j|vi)\r\nin(i!jwkJ_I_H_/!iwjIH|ql!vsppt1sut2qi-su2)fír(gh!ivHGh|vi-pp2su2vi)ma.(hg..|cl-) (::) \r\n<sp>V/</sp>. Vi(j)gi(j)lá(ji)te,(jkj/iji/hhg.) (,) et(ij) o(hi)rá(g!hwi_[oh:h]h)te,(hg..) (;) ut(g) non(fg) in(g)tré(gh)tis(g_[oh:h]) (,) in(g) ten(hi_[oh:h]HG/hih~)ta(ghf)ti(g_[uh:l]h)ó(h!iwji/jkJ_4IH)nem.(h_iHG/hg..) (::) * Spí(jjk)ri(j)tus.(j) (::)",
+    gabc: "(c4) In(g) mon(g_0[uh:l]//hgh)te(gf) *()\r\nO(g)li(h!iwj)vé(j.i!jwkjk)ti(kj..) (;)\r\no(j)rá(j_i_2/jv_IHij)vit(i)\r\nad(i!jwkJ_I_H_/!iwjIH)\r\nPa(gh!ivHGh)trem :(hg..) (:)\r\nPa(jjk)ter,(j_) (,)\r\nsi(j) fí(jk)e(j)ri(i.h!iwj)\r\npot(g_0[uh:l]//hjh_i)est,(hg..) (;)\r\ntráns(gh~)e(g)at(g) a(g) me(hi_[oh:h]HG//hih)\r\nca(ghf)lix(g_[uh:l]h) i(h!iwj.h/hwihi)ste :(ih..) (:)\r\n<sp>*</sp> Spí(jjk)ri(j)tus(j) qui(jji)dem(jk)\r\nprom(j_k)ptus(ij_I_3HGh) est,(hg..) (;)\r\nca(hih)ro(hg) au(h)tem(j)\r\nin(i!jwkJ_I_H_/!iwjIH)fír(gh!ivHGh)ma.(hg..) (::) \r\n<sp>V/</sp>. Vi(j)gi(j)lá(ji)te,(jkj/iji/hhg.) (,) et(ij) o(hi)rá(g!hwi_[oh:h]h)te,(hg..) (;) ut(g) non(fg) in(g)tré(gh)tis(g_[oh:h]) (,) in(g) ten(hi_[oh:h]HG/hih~)ta(ghf)ti(g_[uh:l]h)ó(h!iwji/jkJ_4IH)nem.(h_iHG/hg..) (::) * Spí(jjk)ri(j)tus.(j) (::)",
     office: "re",
     mode: "8",
     pages: [

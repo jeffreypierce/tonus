@@ -185,8 +185,26 @@ export function resolveChants(ids: string[]): Chant[] {
  * A `gabc` field bypasses the corpus and returns a single user
  * chant parsed from raw GABC (body or full file with headers).
  */
+const CANTUS_QUERY_KEYS = new Set([
+  "id", "gabc", "incipit", "mode", "office", "source", "limit", "offset", "sort",
+]);
+
 export function getChants(query?: CantusQuery): Chant[] {
-  if (!query || Object.keys(query).length === 0) return [];
+  // A no-match returns []; a malformed query is a caller bug and throws with
+  // guidance (the reconciled query contract — see CODE-STANDARDS → Boundaries).
+  if (!query || Object.keys(query).length === 0) {
+    throw new Error(
+      "cantus: an empty query matches nothing meaningful — pass a filter " +
+      `(one of ${[...CANTUS_QUERY_KEYS].join(", ")}), or a gabc string to parse.`,
+    );
+  }
+  const unknown = Object.keys(query).filter((k) => !CANTUS_QUERY_KEYS.has(k));
+  if (unknown.length > 0) {
+    throw new Error(
+      `cantus: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
+      `(expected ${[...CANTUS_QUERY_KEYS].join(", ")}).`,
+    );
+  }
 
   if (query.gabc) return chantFromGABC(query);
 

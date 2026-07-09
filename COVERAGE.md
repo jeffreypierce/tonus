@@ -62,6 +62,10 @@ Core six slots: **2022 / 4134** (48.9%).
 Coverage today is the **sanctorale** (all months) and **Advent**; the other
 temporal seasons are not yet bridged. See `docs/chant.md` → *Matins nocturns*.
 
+Note: a great feast's third nocturn shows two great responsories, not three —
+the Te Deum takes the third slot (e.g. Nativity, 12-25). This is the rubric,
+not a data gap.
+
 ## Monastic Matins — not available
 
 tonus serves **Roman** Matins (above); the **monastic** (Benedictine) night

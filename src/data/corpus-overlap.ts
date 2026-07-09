@@ -1,6 +1,6 @@
 // corpus-overlap.ts — pre-dedup chant-count relationships between the books
 // Extracted from GregoBase (chant-id sets) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-09T13:15:09.840Z
+// Generated: 2026-07-09T16:55:18.793Z
 //
 // tonus stores one copy of each chant (LU primary; LA/LH gap-fill), so a book's
 // stored count is less than what it holds. This records, per book: its full
