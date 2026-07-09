@@ -5,17 +5,15 @@ phrases, syllables, and neumes; every note is tuned through a
 `Temperamentum` and annotated with its Guidonian step; the Solesmes
 compound-beat classifier assigns the arsis/thesis rhythm; prosody is
 measured and an analytic imprint drawn. The score is data: its structure
-(`phrases`, `tabula`, `prosody`, `cadences`, `modulations`, `imprint`) plus two emission
-methods, `score.midi()` and `score.musicxml()`.
+(`phrases`, `tabula`, `prosody`, `cadences`, `modulations`, `imprint`) plus SVG
+rendering (`score.svg()`, which graduates to a standalone `inscriptio()` in 0.2).
 
 - [Score](#score)
   - [The score — `notatio`](#the-score--notatio)
   - [Interpretation — `pondus` and `accentus`](#interpretation--pondus-and-accentus)
   - [The note](#the-note)
   - [The tabula](#the-tabula)
-  - [Emission — `midi` and `musicxml`](#emission--midi-and-musicxml)
-    - [midi](#midi)
-    - [MusicXML](#musicxml)
+  - [Rendering](#rendering)
   - [The imprint](#the-imprint)
   - [Prosody](#prosody)
   - [Cadences](#cadences)
@@ -242,10 +240,9 @@ thetic (resting, retractive). The classification rules are in
 analysis, visualization, or emission.
 
 `Harmony` exposes the same surface for voiced bodies
-([heavens.md](heavens.md#the-tabula)). The tabula is also the emission
-surface — `score.midi()` and `score.musicxml()` ([below](#emission--midi-and-musicxml))
-consume it directly, which is why `hz`, `velocity`, `bend`, and the
-ornament flags live on each row.
+([heavens.md](heavens.md#the-tabula)). The tabula is also the rendering
+surface — the SVG renderer ([below](#rendering)) consumes it directly, which is
+why `hz`, `velocity`, `bend`, and the ornament flags live on each row.
 
 ```js
 score.tabula[0];
@@ -306,53 +303,22 @@ interface ChantTabulaRow {
 }
 ```
 
-## Emission — `midi` and `musicxml`
+## Rendering
 
-The score has built-in emitters. Both consume `score.tabula`, so the
-interpretation already applied through `pondus` and `accentus` flows into
-the output — there is no separate emission-time interpretation pass.
+The score is drawn as **SVG** — a self-contained, square-note chant staff with
+SMuFL glyphs baked as inline paths (no external font). It consumes `score.tabula`,
+so the interpretation applied through `pondus` and `accentus` is already in the
+geometry.
 
-### midi
+> **Retired in 0.2:** the MusicXML and MIDI emitters (`score.musicxml()`,
+> `score.midi()`) were removed. tonus emits one format — SVG. Microtuning still
+> lives on each tabula row's `bend`/`hz`/`offset` for a Web-Audio player to read
+> directly (microtonally exact, which MIDI never was); it is simply no longer
+> serialized to a MIDI file here.
 
-`score.midi(opts?)` returns a Standard MIDI File as a `Uint8Array` by
-default. Microtuning is carried as pitch-bend (from each row's `bend`),
-phrasing as note velocity, and phrase divisiones become rests.
-
-```js
-const score = tonus.notatio(introit, { temperamentum: t, accentus: "solemn" });
-
-const bytes = score.midi(); // Uint8Array — write to a .mid file
-const { json } = score.midi({ format: "json" }); // inspect the event list instead
-```
-
-| `midi` option   | default  | effect                                                                       |
-| --------------- | -------- | ---------------------------------------------------------------------------- |
-| `format`        | `"file"` | `"file"` → `Uint8Array`; `"json"` → `{ json }`; `"both"` → `{ json, bytes }` |
-| `tempoBpm`      | `120`    | tempo meta event                                                             |
-| `ppq`           | `480`    | ticks per quarter note                                                       |
-| `channel`       | `0`      | MIDI channel                                                                 |
-| `velocity`      | `80`     | fallback velocity when a note carries no phrasing                            |
-| `transpose`     | `0`      | semitone shift, applied then clamped to 0–127                                |
-| `emitPitchBend` | `true`   | emit microtuning pitch-bend around each note                                 |
-
-### MusicXML
-
-`score.musicxml(opts?)` returns `{ xml, diagnostics }` — a MusicXML 4.0
-partwise document. Phrases become measures. Each **neume figure** is drawn as
-a slur — a syllable built of several figures (pes then pressus, say, split in
-GABC by `!`, `/`, or `//`) gets one arc per figure; a single-note neume gets
-none. The lyric attaches once, at the syllable's first note. Each row's
-ornament flags (`quilisma`, `liquescent`, `strophicus`, `oriscus`) and explicit
-accidentals render as notations. `emitWeights: true` adds the arsis/thesis
-shape and index as an annotation per note.
-
-```js
-const { xml } = score.musicxml(); // MusicXML 4.0 partwise string
-```
-
-Emission is per-score by design, _e.g._ there is no top-level `tonus.midi`.
-`Harmony` (the voiced sky) is deliberately **not** emitted this way. Voicing
-planetary bodies into playable parts is out of scope for this library.
+The renderer graduates to a standalone `inscriptio()` — see that section for the
+options, the multi-system layout, and the geometry contract downstream tracks
+consume.
 
 ## The imprint
 

@@ -131,48 +131,13 @@ describe("tonus namespace", () => {
     );
   });
 
-  test("score.midi() and score.musicxml() emit from the tabula", () => {
-    const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
-    const score = tonus.notatio(chant);
-    assert.ok(score.phrases.length > 0);
-    assert.ok(score.prosody.noteCount > 0);
-
-    // midi() returns the file bytes directly, starting with the SMF "MThd" header.
-    const bytes = score.midi();
-    assert.ok(bytes instanceof Uint8Array);
-    assert.deepEqual([...bytes.slice(0, 4)], [0x4d, 0x54, 0x68, 0x64]);
-
-    // format: "json" returns the event structure instead.
-    const { json } = score.midi({ format: "json" });
-    assert.ok(json.tracks[0].events.some((e) => e.type === "noteOn"));
-
-    const xml = score.musicxml();
-    assert.ok(xml.xml.includes("score-partwise"));
-  });
-
-  test("score.midi() carries the score's accentus into note velocities", () => {
+  test("interpretation reaches the tabula: two phrasings differ note-for-note", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) e(f)le(g)i(h)son(g.) (::)" });
     const solemn = tonus.notatio(chant, { accentus: "solemn" });
     const flat = tonus.notatio(chant, { accentus: "recitative" });
-
-    const vels = (score) =>
-      score.midi({ format: "json" }).json.tracks[0].events
-        .filter((e) => e.type === "noteOn")
-        .map((e) => e.velocity);
-
-    const solemnVels = vels(solemn);
-    const flatVels = vels(flat);
-    // Interpretation reaches the MIDI: the two phrasings differ note-for-note.
-    assert.notDeepEqual(solemnVels, flatVels);
-  });
-
-  test("score.musicxml() renders quilisma ornament markup from the tabula", () => {
-    // 'w' marks a quilisma in GABC.
-    const [chant] = tonus.cantus({ gabc: "(c4) Ky(gwh)ri(h)e(g.) (::)" });
-    const score = tonus.notatio(chant);
-    const { xml } = score.musicxml();
-    assert.ok(xml.includes("quilisma"), "quilisma other-technical annotation present");
-    assert.ok(xml.includes('notehead'), "quilisma diamond notehead present");
+    const vels = (s) => s.tabula.map((r) => r.velocity);
+    // The accentus shapes note velocities on the tabula.
+    assert.notDeepEqual(vels(solemn), vels(flat));
   });
 
   test("notatio accepts pondus and accentus as style strings or opts", () => {
@@ -186,13 +151,12 @@ describe("tonus namespace", () => {
     assert.ok(s2.phrases.length > 0);
   });
 
-  test("full pipeline: feast → proprium → ordo → midi", () => {
+  test("full pipeline: feast → proprium → notatio", () => {
     const feasts = tonus.festum({ date: new Date("2026-12-25") });
     const propers = tonus.proprium({ feast: feasts, office: "in" });
     assert.ok(propers.length > 0);
     const score = tonus.notatio(propers[0]);
-    const bytes = score.midi({ tempoBpm: 120 });
-    assert.ok(bytes instanceof Uint8Array);
-    assert.ok(bytes.length > 0);
+    assert.ok(score.phrases.length > 0);
+    assert.ok(score.tabula.length > 0);
   });
 });

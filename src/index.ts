@@ -27,8 +27,7 @@ import type {
 import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
-  MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent,
-  MusicXmlOpts, MusicXmlEmitResult, SvgOpts,
+  SvgOpts,
 } from "./engines/score/api.js";
 import type { ChantTabulaRow } from "./engines/score/tabula.js";
 import type {
@@ -102,8 +101,7 @@ export type {
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
-  MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent,
-  MusicXmlOpts, MusicXmlEmitResult, SvgOpts,
+  SvgOpts,
   ChantTabulaRow,
   Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
   RhythmicType, CompoundBeat,
