@@ -224,15 +224,18 @@ export function classifyRhythmicType(beats: CompoundBeat[]): RhythmicType {
   }
 
   // There is at least one thesis→arsis seam, so the incise chains multiple simple
-  // rhythms. Strict alternation A–T–A–T(…) is Carroll's Type VII; any other seam
-  // pattern is a contraction (Suñol) — Carroll's Type VIII.
+  // rhythms — and a chain of *complete* rhythms must still resolve (end thetic).
+  // In juxtaposition "each thesis marks the end of one and each arsis the
+  // beginning of another" [biblio: sunol-textbook], so a chain left hanging arsic
+  // (A–T–A, A–T–A–T–A) has opened a rhythm it never closes: null, whatever the
+  // seam pattern. This gate applies to VII exactly as to VIII.
+  if (seq[seq.length - 1] !== "thetic") return null;
+  // Strict alternation A–T–A–T(…) is Carroll's Type VII; any other seam
+  // pattern is a contraction (Suñol) — Carroll's Type VIII, two (or more)
+  // complete rhythms overlapping at a shared ictus.
   const alternating = seq.every((s, i) => s === (i % 2 === 0 ? "arsic" : "thetic"));
   if (alternating && seq.length >= 4) return "VII";
-  // Contraction is two *complete* rhythms overlapping at a shared ictus — so the
-  // whole must resolve (end thetic). A seam that leaves the incise hanging arsic
-  // (e.g. A–T–A) is no contraction; label it null rather than force a wrong VIII.
-  if (seq[seq.length - 1] === "thetic") return "VIII";
-  return null;
+  return "VIII";
 }
 
 function applyCompoundBeats(phrases: Phrase[]): void {
