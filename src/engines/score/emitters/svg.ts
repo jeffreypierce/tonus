@@ -663,19 +663,26 @@ export function toSvg(
     }
   }
 
-  // Lyrics; syllables within a word carry a trailing hyphen ("Ký- ri- e"). Each
-  // lyric sits under its own system.
+  // Lyrics. Within a word, syllables are joined by a hyphen floated CENTRED in
+  // the gap between them (Vendome practice, matching moderna) rather than a
+  // dash appended to the text — only when both syllables share a system.
   const lyricSvgs: string[] = [];
+  const lyricText = (cx: number, systemY: number, text: string): string =>
+    `<text class="lyric" x="${cx.toFixed(2)}" y="${(systemY + L.lyricY).toFixed(2)}" ` +
+    `text-anchor="middle" font-family="${esc(r.fontFamily)}" ` +
+    `font-size="${r.lyricSize.toFixed(1)}" fill="${r.noteColor}">${esc(text)}</text>`;
   for (let k = 0; k < lyrics.length; k++) {
     const ly = lyrics[k]!;
     const next = lyrics[k + 1];
-    const text = next && !next.wordStart ? `${ly.text}-` : ly.text;
-    const y = ly.systemY + L.lyricY;
-    lyricSvgs.push(
-      `<text class="lyric" x="${ly.cx.toFixed(2)}" y="${y.toFixed(2)}" ` +
-      `text-anchor="middle" font-family="${esc(r.fontFamily)}" ` +
-      `font-size="${r.lyricSize.toFixed(1)}" fill="${r.noteColor}">${esc(text)}</text>`,
-    );
+    lyricSvgs.push(lyricText(ly.cx, ly.systemY, ly.text));
+    // Continuing syllable in the same system → a centred hyphen in the gap.
+    if (next && !next.wordStart && next.systemY === ly.systemY) {
+      const thisRight = ly.cx + estLyricW(ly.text) / 2;
+      const nextLeft = next.cx - estLyricW(next.text) / 2;
+      if (nextLeft - thisRight > r.lyricSize * 0.4) {
+        lyricSvgs.push(lyricText((thisRight + nextLeft) / 2, ly.systemY, "-"));
+      }
+    }
   }
 
   // Dropcap — a large rubricated initial from the first lyric, in the left

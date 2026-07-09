@@ -96,11 +96,14 @@ describe("inscriptio — square-note SVG (single-system)", () => {
     assert.equal((svg.match(/class="ictus"/g) || []).length, 1);
   });
 
-  test("inscriptio(score).svg hyphenates syllables within a word", () => {
-    // Ky- ri- e | e- ia: hyphens are appended to intra-word syllables.
-    const svg = inscriptio(buildScore(makeChant("(c4) Ky(g)ri(h)e(g) e(f)ia(g) (::)"))).svg;
-    assert.equal((svg.match(/-<\/text>/g) || []).length, 3);
-    assert.ok(svg.includes(">Ky-<"), "hyphen rides the syllable text");
+  test("inscriptio(score).svg joins intra-word syllables with a centred hyphen", () => {
+    // Melismatic syllables leave a gap wide enough for a floating hyphen,
+    // centred in the space (Vendome practice, not a dash on the text).
+    const svg = inscriptio(buildScore(makeChant("(c4) Al(gh)le(hg)lu(gh)ia.(g) (::)"))).svg;
+    // Intra-word joins Al-le, le-lu, lu-ia → floating hyphens.
+    assert.ok((svg.match(/>-<\/text>/g) || []).length >= 2, "floating hyphens present");
+    // The syllable text carries no trailing dash.
+    assert.equal((svg.match(/>[A-Za-z]+-<\/text>/g) || []).length, 0, "no appended dashes");
   });
 
   test("inscriptio(score).svg uses the quilisma glyph when a note is a quilisma", () => {
