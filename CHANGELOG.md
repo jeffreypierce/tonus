@@ -2,6 +2,63 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.2.0
+
+The "wrap-up" release — tonus as a finished library. Rendering becomes a first-
+class engine, the per-chant analysis chart is completed, a synthetic voice
+joins, and the emitter surface is settled on one format.
+
+### Added
+
+- **`inscriptio(score, opts?)`** — the standalone SVG renderer. Draws a `Score`
+  and returns `{ svg, geometry }`. Two notation species, each with its own
+  spacing pass: `"quadrata"` (square-note, SMuFL glyphs baked inline) and
+  `"moderna"` (modern round-note transcription — treble-8 clef, engraved slurs,
+  after the Lomer practice). A multi-system **layout engine** (`width`,
+  `systemGap`, `custos`, `until`), **front matter** (`title`, `rubric` /
+  `annotation: "auto"`, `dropcap`, `rubrica`), and a `highlight` hook.
+- **The geometry contract** — `geometry: NoteGeometry[]`, one entry per note in
+  tabula order (system, x, y, systemY). A public API: downstream analysis tracks
+  build on it instead of scraping the SVG.
+- **The intonation channel** — `accidentals: "standard" | "heji" | "cents"`.
+  HEJI comma accidentals are baselined on the Pythagorean chain (tonus's default
+  tuning), so a Pythagorean chant renders clean and syntonic-comma arrows bloom
+  only under a just preset; meantone is not just, so `heji` throws under it.
+  `cents` labels signed deviations against `"pythagorean"` (default) or `"et"`.
+- **Score metrics** on `prosody`: interval statistics (histogram, maxLeap,
+  leapRate, step/skip/leap `motus`), `tessitura`, the melodic `arcus`
+  (initial/peak/final + arch index), `melismaCadential`; and conveniences
+  `phrase.noteCount` / `phrase.syllableCount` / `syllable.melisma`.
+- **`vox` and `chorus`** — a synthetic singing voice as formant and spectrum
+  data, and seeded ensembles.
+
+### Changed
+
+- **Corpus double-escape fixed.** Every `gabc` field stored its non-ASCII as a
+  literal `\uXXXX` escape, which had silently disabled accent detection across
+  the whole corpus — so note weights, prosody, rhythm, and imprint were computed
+  accent-blind. The extractor now decodes correctly; **computed accent weights
+  shift corpus-wide** as a result. A guard test asserts no gabc carries an escape.
+- **`cantus({})` throws.** An empty or unknown-key chant query is a caller bug,
+  not an empty result; it throws with guidance (matching the `festum` contract).
+- NABC pipes stripped from the corpus (`(notes|nabc)` → `(notes)`), with a
+  corpus-wide guard test.
+
+### Removed
+
+- **The MusicXML and MIDI emitters** (`score.musicxml()`, `score.midi()`).
+  tonus emits one format now: SVG. Microtuning still lives on the tabula
+  (`bend`/`hz`/`offset`) for a Web-Audio player to read directly — microtonally
+  exact, which MIDI never was.
+
+## 0.1.8
+
+- **Roman Matins.** `matutinum({ feast })` assembles the structured Roman night
+  office — the nocturns with their great responsories — from the community
+  *Nocturnale Romanum* (new `nr` chant source, 1,564 chants). Sanctorale feasts
+  draw Matins from their commune; coverage is the sanctorale and Advent today
+  (see COVERAGE.md). A separate accessor; the flat `officium` path is unchanged.
+
 ## 0.1.7
 
 - **`corpus(code)`** — metadata and analytics for a corpus book. Returns its

@@ -5,8 +5,8 @@ phrases, syllables, and neumes; every note is tuned through a
 `Temperamentum` and annotated with its Guidonian step; the Solesmes
 compound-beat classifier assigns the arsis/thesis rhythm; prosody is
 measured and an analytic imprint drawn. The score is data: its structure
-(`phrases`, `tabula`, `prosody`, `cadences`, `modulations`, `imprint`) plus SVG
-rendering (`score.svg()`, which graduates to a standalone `inscriptio()` in 0.2).
+(`phrases`, `tabula`, `prosody`, `cadences`, `modulations`, `imprint`), drawn to
+SVG by the standalone `tonus.inscriptio(score)`.
 
 - [Score](#score)
   - [The score — `notatio`](#the-score--notatio)
@@ -316,9 +316,67 @@ geometry.
 > directly (microtonally exact, which MIDI never was); it is simply no longer
 > serialized to a MIDI file here.
 
-The renderer graduates to a standalone `inscriptio()` — see that section for the
-options, the multi-system layout, and the geometry contract downstream tracks
-consume.
+### inscriptio — the standalone renderer
+
+`tonus.inscriptio(score, opts?)` draws a `Score` and returns `{ svg, geometry }`.
+Rendering is a standalone function that _takes_ a score, not a method on one — the
+score analyzes, `inscriptio` inks. It throws on a non-Score or an unknown
+notation species (the builder-function contract).
+
+```js
+const score = tonus.notatio(introit);
+const { svg, geometry } = tonus.inscriptio(score, { width: 680, title: "Puer natus est" });
+```
+
+Two notation species, each with its own spacing pass:
+
+| `notation` | look |
+| --- | --- |
+| `"quadrata"` (default) | square-note chant staff, SMuFL glyphs baked inline |
+| `"moderna"` | modern round-note transcription: treble-8 clef, engraved slurs |
+
+Options, by group (all optional):
+
+- **layout** — `width` wraps systems to fit (absent = a single line); `systemGap`,
+  `custos` (line-end guides), `breaks`, `until` (render the first N phrases).
+- **front matter** — `title`, `rubric` (or `annotation: "auto"` to derive
+  _genus · modus · book_ from the chant), `dropcap` (a rubricated initial),
+  `rubrica` (the liturgical red).
+- **intonation** — `accidentals: "standard" | "heji" | "cents"` and
+  `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
+- **scale & ink** — `staffHeight`, `noteScale`, `padding`, `noteColor`,
+  `staffLineColor`, and lyric `lyricFont` / `lyricSize` / `lyricWeight`.
+- **emphasis** — `highlight(row) → color | null`, emit-time per-note coloring.
+
+**The geometry contract (public API).** `geometry` is one `NoteGeometry` per note,
+in tabula order — the interface downstream analysis _tracks_ (chironomy,
+tonarium) build on, so they place marks by index and coordinate instead of
+scraping the SVG:
+
+```ts
+interface NoteGeometry {
+  phraseIndex: number; syllableIndex: number; neumeGroup: number; noteIndex: number;
+  system: number;      // which wrapped system the note landed in
+  x: number; y: number; // notehead anchor, svg user units
+  systemY: number;      // the system's top offset within the svg
+}
+```
+
+### The intonation channel
+
+`accidentals` chooses how a note's tuning shows on the staff:
+
+- `"standard"` (default) — plain performance accidentals (♭ ♮ ♯), a mark stated
+  once and suppressed on an immediate repeat of the same pitch.
+- `"heji"` — Extended Helmholtz–Ellis comma accidentals. HEJI's baseline is the
+  **Pythagorean chain of pure fifths** — which is also tonus's default tuning — so
+  a Pythagorean chant renders clean; comma arrows bloom only where the tuning
+  departs from the pure-fifth chain (a just preset shows syntonic commas, ±21.5¢).
+  Meantone tempers by fractional commas — not just — so `heji` **throws** under it.
+- `"cents"` — signed cent deviations, for any tuning. `centsBaseline: "pythagorean"`
+  (default) reads against the chant's home intonation — so changing the tuning
+  shows what each temperament _does_ to the chant; `"et"` reads against equal
+  temperament, the modern-reader instinct.
 
 ## The imprint
 
