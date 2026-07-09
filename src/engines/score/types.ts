@@ -236,11 +236,17 @@ export interface Syllable {
   lyric: string;
   notes: Note[];
   neume: Neume;
+  /** Notes sung on this syllable — its melisma. 1 = syllabic, >1 = melismatic. */
+  melisma: number;
 }
 
 export interface Phrase {
   syllables: Syllable[];
   divisio?: RestEvent;
+  /** Total notes across this phrase's syllables. */
+  noteCount: number;
+  /** Sung syllables in this phrase (syllables carrying at least one note). */
+  syllableCount: number;
   /** The phrase's compound beats in order — the A/T sequence of the incise. */
   beats: CompoundBeat[];
   /** Le Guennant/Carroll rhythmic type of the incise; null if none fits. */
