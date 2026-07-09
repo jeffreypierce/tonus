@@ -78,7 +78,7 @@ function makeSyllable(lyric: string, notes: Note[]): Syllable {
     const ictic = notes[notes.length - 2]!;
     ictic.performance.duration *= SALICUS_PROLONGATION;
   }
-  return { lyric, notes, neume };
+  return { lyric, notes, neume, melisma: notes.length };
 }
 
 // ── Arsis/thesis classification ── (the model is in the module header above)
@@ -253,6 +253,10 @@ function applyCompoundBeats(phrases: Phrase[]): void {
     }
     phrase.beats = classifyCompoundBeats(annotated);
     phrase.rhythmicType = classifyRhythmicType(phrase.beats);
+    // Phrase-level conveniences: a sung syllable carries at least one note.
+    const sung = phrase.syllables.filter((s) => s.notes.length > 0);
+    phrase.syllableCount = sung.length;
+    phrase.noteCount = sung.reduce((n, s) => n + s.notes.length, 0);
   }
 }
 
@@ -262,7 +266,7 @@ export function buildIR(
   scale: Scale,
 ): Score {
   const phrases: Phrase[] = [];
-  let currentPhrase: Phrase = { syllables: [], beats: [], rhythmicType: null };
+  let currentPhrase: Phrase = { syllables: [], noteCount: 0, syllableCount: 0, beats: [], rhythmicType: null };
   let currentNotes: Note[] = [];
   let currentLyric: string | null = null;
 
@@ -286,7 +290,7 @@ export function buildIR(
       }
       currentPhrase.divisio = event;
       phrases.push(currentPhrase);
-      currentPhrase = { syllables: [], beats: [], rhythmicType: null };
+      currentPhrase = { syllables: [], noteCount: 0, syllableCount: 0, beats: [], rhythmicType: null };
     }
   }
 

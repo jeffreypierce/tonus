@@ -74,12 +74,17 @@ interface Score {
 interface Phrase {
   syllables: Syllable[];
   divisio?: RestEvent;
+  noteCount: number;        // notes across the phrase
+  syllableCount: number;    // sung syllables in the phrase
+  beats: CompoundBeat[];    // the incise's arsis/thesis sequence
+  rhythmicType: RhythmicType; // Le Guennant/Carroll type, or null
 }
 
 interface Syllable {
   lyric: string;
   notes: Note[];
   neume: Neume;
+  melisma: number;          // notes on this syllable (1 = syllabic, >1 melismatic)
 }
 
 interface RestEvent {
@@ -412,9 +417,10 @@ interface ModalAffinity {
 ## Prosody
 
 `score.prosody` measures the chant's shape — counts, range, melisma,
-rhythm, cadence. It is chant-specific; `Harmony` has no prosody. For
-_Puer natus est_: ambitus 10 semitones, melisma ratio 2.04 notes per
-syllable, ictus on 44% of notes, 80 arsic against 79 thetic.
+melodic motion, contour, tessitura, rhythm, cadence. It is chant-specific;
+`Harmony` has no prosody. For _Puer natus est_: ambitus 10 semitones, melisma
+ratio 2.04 notes per syllable, tessitura ~5 semitones above the final, a near-
+perfect melodic arch, mostly stepwise motion (leap rate ~5%).
 
 ```ts
 interface Prosody {
@@ -423,12 +429,30 @@ interface Prosody {
   phraseCount: number;
   noteRange: NoteRange | null;
   ambitus: number | null;
-  melismaRatio: number;
-  melismaByPhrase: number[];
+  melismaRatio: number;         // notes ÷ syllables, whole score
+  melismaByPhrase: number[];    // per-phrase melisma density
+  melismaCadential: number;     // mean notes on each phrase's final syllable
+  tessitura: number | null;     // mean pitch − final, in semitones
+  intervals: IntervalStats;     // melodic motion over adjacent within-phrase notes
+  arcus: Arcus | null;          // the melodic arch
   ictusRate: number;
   rhythmicProfile: RhythmicProfile;
   cadenceWeight: number;
   cadenceDistribution: CadenceDistribution;
+}
+
+interface IntervalStats {
+  histogram: Record<number, number>; // signed semitone interval → count
+  maxLeap: number;                   // largest absolute interval (semitones)
+  leapRate: number;                  // fraction of motions that are leaps (a 4th+)
+  motus: { step: number; skip: number; leap: number }; // 1–2 st / 3–4 / 5+
+}
+
+interface Arcus {
+  initial: number;   // first note MIDI
+  peak: number;      // highest note MIDI
+  final: number;     // last note MIDI
+  archIndex: number; // signed: +1 rises and returns, 0 flat/monotonic
 }
 
 interface NoteRange {
