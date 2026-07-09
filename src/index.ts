@@ -9,6 +9,8 @@ import { buildTemper } from "./engines/temper/api.js";
 import { buildScore } from "./engines/score/api.js";
 import { getCosmos } from "./engines/planet/planet.js";
 import { buildHarmonia } from "./engines/harmonia/api.js";
+import { buildVoice } from "./engines/voice/api.js";
+import { buildChorus } from "./engines/voice/chorus.js";
 
 import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/types.js";
 import type {
@@ -46,6 +48,17 @@ import type { VoicedPitch } from "./engines/harmonia/voice.js";
 import type {
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
 } from "./engines/planet/types.js";
+import type { Vox, VoxInput } from "./engines/voice/api.js";
+import type {
+  Vowel, Latinitas, VoxParams, Formant, Locus,
+} from "./engines/voice/types.js";
+import type { PersonaName, Persona } from "./engines/voice/data/personae.js";
+import type { Coda } from "./engines/voice/data/liquescentia.js";
+import type { Lattice, AccordatioOpts } from "./engines/voice/accordatio.js";
+import type {
+  Chorus, ChorusOpts, Dispersio,
+} from "./engines/voice/chorus.js";
+import type { ConsortiumName, Voces } from "./engines/voice/data/consortia.js";
 
 const tonus = {
   festum: getFeast,
@@ -61,6 +74,8 @@ const tonus = {
   notatio: buildScore,
   caelum: getCosmos,
   harmonia: buildHarmonia,
+  vox: buildVoice,
+  chorus: buildChorus,
 };
 
 export default tonus;
@@ -98,4 +113,7 @@ export type {
   Prosody, RhythmicProfile, NoteRange, CadenceDistribution,
   Harmony, HarmoniaOpts, VoicedBody, VoicedAspect,
   Frame, Author, HarmonyTabulaRow, PlanetVowel,
+  Vox, VoxInput, Vowel, Latinitas, VoxParams, Formant, Locus,
+  PersonaName, Persona, Coda, Lattice, AccordatioOpts,
+  Chorus, ChorusOpts, Dispersio, ConsortiumName, Voces,
 };
