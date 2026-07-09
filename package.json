@@ -46,7 +46,7 @@
     "BIBLIOGRAPHY.md"
   ],
   "scripts": {
-    "build": "tsc && cp src/data/psalms.json dist/data/psalms.json",
+    "build": "tsc && cp src/data/psalms.json dist/data/psalms.json && cp src/data/smufl-glyphs.json dist/data/smufl-glyphs.json",
     "clean": "rm -rf dist",
     "test": "npm run build && node --test --test-reporter=spec tests/*.test.mjs",
     "prepublishOnly": "npm run clean && npm run build"

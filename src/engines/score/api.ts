@@ -14,6 +14,7 @@ import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import { MODES } from "../temper/modes.js";
 import { toMidi, type MidiOpts, type MidiEmitResult } from "./emitters/midi.js";
 import { toMusicXML, type MusicXmlOpts, type MusicXmlEmitResult } from "./emitters/musicxml.js";
+import { toSvg, type SvgOpts } from "./emitters/svg.js";
 import type { Chant } from "../chant/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import type {
@@ -68,6 +69,11 @@ export interface Score {
   midi(opts?: MidiOpts): Uint8Array | MidiEmitResult;
   /** Emit a MusicXML 4.0 partwise document from the score's tabula. */
   musicxml(opts?: MusicXmlOpts): MusicXmlEmitResult;
+  /**
+   * Render the score as a self-contained SVG string — a square-note chant staff
+   * with SMuFL glyphs (single line; MVP). See docs/score.md.
+   */
+  svg(opts?: SvgOpts): string;
 }
 
 const PONDUS_TO_ARTICULATION: Record<PondusStyle, ArticulationType> = {
@@ -178,6 +184,9 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     musicxml(emitOpts?: MusicXmlOpts): MusicXmlEmitResult {
       return toMusicXML(tabula, chant, emitOpts);
     },
+    svg(emitOpts?: SvgOpts): string {
+      return toSvg(tabula, chant, emitOpts);
+    },
   };
 }
 
@@ -188,3 +197,4 @@ export type { FormulaMatch } from "./formula.js";
 export type { Formula, FormulaSlot } from "./data/formulas.js";
 export type { MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent } from "./emitters/midi.js";
 export type { MusicXmlOpts, MusicXmlEmitResult } from "./emitters/musicxml.js";
+export type { SvgOpts } from "./emitters/svg.js";
