@@ -68,14 +68,52 @@ Typical module layout:
 
 ---
 
+## Boundaries
+
+Two lines mark what belongs in the library at all. When a feature is proposed,
+it is measured against these before anything else.
+
+**The analysis boundary — tonus computes one chant, one moment.** Everything
+derivable from a single chant (or a single instant) with received theory,
+deterministically, belongs here: prosody, imprint, cadences, modulations,
+rhythmic types, the ephemeris and harmonia, temperament interval analysis.
+Anything that requires the **corpus** or an **editorial judgment** — family
+vocabularies, thresholds calibrated across many chants, "genus average"
+baselines — does **not** live in tonus. It lives in `tonus-enodatio` (the
+corpus observatory, a sibling repo pinned to a tonus version) and re-enters tonus
+only as **generated data tables with provenance headers** — the corpus-data
+separation pattern (`src/data/` holds generated data; hand-built editorial tables
+live beside the engine that owns them). The library never runs a census; it cites
+one. A curated figure taken *from a treatise* (not from a census) is received
+theory and may be hand-authored here, with its `[biblio:]` citation.
+
+**The rendering boundary — `score` analyzes, `inscriptio` draws.** Rendering is
+not a property of an analysis result; it is a standalone function that *takes* a
+`Score`. tonus inks **the score itself** — both notation species, layout, lyrics,
+declarative highlighting — and nothing else. Analysis *tracks* (chironomy waves,
+tonarium lanes, anything drawn above or below the staff systems) are downstream
+components in the publication, built on the geometry contract `inscriptio`
+returns. One emitter format: SVG. The crisp rule: `inscriptio` inks the score;
+anything outside the staff systems is a track, and tracks live downstream.
+
+---
+
 ## Public API contract
 
-**Query functions** return arrays, never throw:
+**Query functions** return arrays. A *no-match* returns `[]` — an empty result is
+data, never an error. But a *malformed query* — an empty `{}` or an unknown key —
+is a caller bug, not a search that found nothing, and throws with guidance:
 
 ```ts
 tonus.cantus({ mode: 1 }); // → Chant[], [] on no match
-tonus.festum({ date }); // → Feast[], [] on no match
+tonus.cantus({ mode: 99 }); // → [] (a real search, no results)
+tonus.cantus({}); // throws — an empty query is a mistake, not "everything"
+tonus.festum({ nonsense: 1 }); // throws — unknown key, likely a typo
 ```
+
+The distinction: `[]` means "I searched and found nothing"; a throw means "I
+can't tell what you asked for." Silently resolving a malformed query to a
+plausible-looking answer hides the bug.
 
 **Builder functions** return context objects, throw on invalid input:
 
@@ -168,11 +206,14 @@ it before writing prose at any level, including code comments.
 
 ## Error handling
 
-**Query functions** return `[]` on no match, never throw:
+**Query functions** return `[]` on no match. A malformed query (empty `{}` or an
+unknown key) throws with guidance — see *Public API contract* above for the
+no-match-vs-caller-bug distinction:
 
 ```ts
-tonus.cantus({ mode: 99 }); // → []
+tonus.cantus({ mode: 99 }); // → [] (searched, found nothing)
 tonus.festum({ date }); // → [] if no feast found
+tonus.festum({ month: 12 }); // throws — unknown key
 ```
 
 **Builder functions** throw on invalid input. Context objects carry an `errors` field for parse-level issues:
