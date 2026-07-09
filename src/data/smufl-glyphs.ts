@@ -10,6 +10,8 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface SmuflGlyph {
+  /** The font's glyph name (Bravura names by SMuFL codepoint, e.g. "uniE2C0"). */
+  name?: string;
   /** SVG path `d` in font units, y-up. */
   path: string;
   /** Advance width in font units. */

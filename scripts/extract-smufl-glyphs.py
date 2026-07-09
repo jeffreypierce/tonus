@@ -65,7 +65,20 @@ CODEPOINTS = [
     0xE9E0, 0xE9E1, 0xE9E2, 0xE9E3, 0xE9E4, 0xE9E5,
     # accidentals: standard (flat, natural, sharp) as fallbacks
     0xE260, 0xE261, 0xE262,
+    # ── notatio moderna (Phase 4): a modern round-note transcription ──
+    0xE052,          # gClef8vb — treble clef with 8 below (male chant range)
+    0xE0A3, 0xE0A4,  # noteheadHalf (hollow, = double mora), noteheadBlack
+    0xE1E7,          # augmentationDot (mora / dotted note)
+    0xEA20,          # medRenQuilismaCMN — the fused quilisma squiggle
 ]
+
+# ── HEJI intonation channel (Phase 5): Extended Helmholtz–Ellis accidentals ──
+# The just-intonation notation whose baseline IS the Pythagorean chain (a clean
+# staff under the default tuning; comma arrows bloom only for just tunings).
+# The Bravura block is U+E2C0–E2FF; names are resolved from the font's own SMuFL
+# metadata below, NOT guessed by codepoint, so the map is authoritative.
+HEJI_RANGE = range(0xE2C0, 0xE300)
+CODEPOINTS += list(HEJI_RANGE)
 
 
 def find_bravura():
@@ -98,7 +111,12 @@ def main():
         bounds_pen = BoundsPen(glyph_set)
         glyph_set[name].draw(bounds_pen)
         bbox = list(bounds_pen.bounds) if bounds_pen.bounds else [0, 0, 0, 0]
-        glyphs[f"{cp:04X}"] = {"path": path, "advance": advance, "bbox": bbox}
+        # Record the font's own glyph name (Bravura names its glyphs by their
+        # SMuFL canonical name), so downstream mappings — especially the HEJI
+        # accidentals — bind to a named glyph, not a bare codepoint read by eye.
+        glyphs[f"{cp:04X}"] = {
+            "name": name, "path": path, "advance": advance, "bbox": bbox,
+        }
 
     if missing:
         print(f"  warning: {len(missing)} codepoints missing from Bravura: "
