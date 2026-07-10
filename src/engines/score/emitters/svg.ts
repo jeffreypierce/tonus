@@ -31,6 +31,85 @@ import {
   ligaturaDesc,
 } from "../../../data/gabc-glyphs.js";
 
+/** A font face to embed into the SVG itself: the CALLER's bytes, base64.
+ * tonus ships no font files — it is a conduit for data the consumer supplies,
+ * so the consumer also carries the face's license terms. */
+export interface FontEmbed {
+  base64: string;
+  format?: "opentype" | "truetype" | "woff" | "woff2";
+}
+
+/** One text role's face: a family string, or a family with weight, a size
+ * factor (the "bit of tweaks" a display hand needs — e.g. a Gothic lyric face
+ * usually wants scale ~1.15 to match the serif's apparent size), and an
+ * optional `embed`. Without `embed`, the SVG carries a font-family REFERENCE
+ * and the host page supplies the face (@font-face); with it, the face rides
+ * inside the SVG's own <style> and the file is self-contained. */
+export type FontSlot =
+  | string
+  | { family: string; weight?: number; scale?: number; embed?: FontEmbed };
+
+/** Per-role faces. Anything unset falls back to `fontFamily` (the house serif). */
+export interface FontSpec {
+  dropcap?: FontSlot;
+  title?: FontSlot;
+  annotation?: FontSlot;
+  lyric?: FontSlot;
+}
+
+interface ResolvedFont {
+  family: string;
+  weight: number | null;
+  scale: number;
+  embed: FontEmbed | null;
+}
+interface ResolvedFonts {
+  dropcap: ResolvedFont;
+  title: ResolvedFont;
+  annotation: ResolvedFont;
+  lyric: ResolvedFont;
+}
+
+function resolveFont(slot: FontSlot | undefined, fallback: string): ResolvedFont {
+  if (!slot) return { family: fallback, weight: null, scale: 1, embed: null };
+  if (typeof slot === "string") return { family: slot, weight: null, scale: 1, embed: null };
+  return {
+    family: slot.family,
+    weight: slot.weight ?? null,
+    scale: slot.scale ?? 1,
+    embed: slot.embed ?? null,
+  };
+}
+
+const EMBED_MIME: Record<string, string> = {
+  opentype: "font/otf", truetype: "font/ttf", woff: "font/woff", woff2: "font/woff2",
+};
+
+/** One @font-face rule per embedded (family, weight); deduped across slots. */
+export function fontFaceCss(fonts: ResolvedFont[]): string {
+  const seen = new Set<string>();
+  const rules: string[] = [];
+  for (const f of fonts) {
+    if (!f.embed) continue;
+    const key = `${f.family}::${f.weight ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const format = f.embed.format ?? "opentype";
+    rules.push(
+      `@font-face{font-family:${JSON.stringify(f.family)};` +
+      (f.weight != null ? `font-weight:${f.weight};` : "") +
+      `src:url(data:${EMBED_MIME[format] ?? "font/otf"};base64,${f.embed.base64}) ` +
+      `format("${format}")}`,
+    );
+  }
+  return rules.length ? `<defs><style>${rules.join("")}</style></defs>` : "";
+}
+
+/** font-family (+ optional font-weight) attributes for a resolved slot. */
+function fontAttrs(f: ResolvedFont): string {
+  return `font-family="${esc(f.family)}"` + (f.weight != null ? ` font-weight="${f.weight}"` : "");
+}
+
 export interface SvgOpts {
   /** Height of the 4-line staff in px (line 1 to line 4). Default 40. */
   staffHeight?: number;
@@ -44,6 +123,7 @@ export interface SvgOpts {
   noteColor?: string;
   /** Font-family for lyric text. Default a serif stack. */
   fontFamily?: string;
+  fonts?: FontSpec;
   /** Wrap systems to this px width. Absent = a single system. */
   width?: number;
   /** Vertical gap between systems, px. Default 24. */
@@ -73,6 +153,7 @@ interface Resolved {
   staffLineColor: string;
   noteColor: string;
   fontFamily: string;
+  fonts: ResolvedFonts;
   glyphScale: number;     // font units → px at SMuFL nominal: staffSpace / (upm/4)
   noteScale: number;      // calibration factor for noteheads/signs
   lineWeight: number;     // staff line weight (px)
@@ -109,8 +190,13 @@ function resolveOpts(o: SvgOpts): Resolved {
     // option for later, but for now everything is one ink).
     staffLineColor: o.staffLineColor ?? noteColor,
     noteColor,
-    fontFamily: o.fontFamily ??
-      "'Crimson Pro', 'Crimson Text', 'EB Garamond', Garamond, Georgia, serif",
+    fontFamily: o.fontFamily ?? HOUSE_SERIF,
+    fonts: {
+      dropcap: resolveFont(o.fonts?.dropcap, o.fontFamily ?? HOUSE_SERIF),
+      title: resolveFont(o.fonts?.title, o.fontFamily ?? HOUSE_SERIF),
+      annotation: resolveFont(o.fonts?.annotation, o.fontFamily ?? HOUSE_SERIF),
+      lyric: resolveFont(o.fonts?.lyric, o.fontFamily ?? HOUSE_SERIF),
+    },
     glyphScale,
     noteScale,
     lineWeight: Math.max(0.5, staffInterval * 0.11),
@@ -130,6 +216,9 @@ function resolveOpts(o: SvgOpts): Resolved {
     rubricaColor: o.rubricaColor ?? "#9E2B25",
   };
 }
+
+const HOUSE_SERIF =
+  "'Crimson Pro', 'Crimson Text', 'EB Garamond', Garamond, Georgia, serif";
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -264,7 +353,7 @@ export function toSvg(
     headerY += size * 1.4;
     header.push(
       `<text class="title" x="${r.padding}" y="${(size).toFixed(2)}" ` +
-      `font-family="${esc(r.fontFamily)}" font-size="${size.toFixed(1)}" ` +
+      `${fontAttrs(r.fonts.title)} font-size="${(size * r.fonts.title.scale).toFixed(1)}" ` +
       `fill="${r.noteColor}">${esc(r.title)}</text>`,
     );
   }
@@ -274,7 +363,7 @@ export function toSvg(
     if (!r.title) headerY += size * 1.6;
     header.push(
       `<text class="rubric" x="${r.padding}" y="${ry.toFixed(2)}" ` +
-      `font-family="${esc(r.fontFamily)}" font-size="${size.toFixed(1)}" ` +
+      `${fontAttrs(r.fonts.annotation)} font-size="${(size * r.fonts.annotation.scale).toFixed(1)}" ` +
       `font-style="italic" fill="${r.rubricaColor}">${esc(rubricText)}</text>`,
     );
   }
@@ -285,7 +374,20 @@ export function toSvg(
   const behind: string[] = [];    // ledger lines (render under glyphs)
   const lyrics: Array<{ cx: number; text: string; wordStart: boolean; systemY: number }> = [];
   const placements: NotePlacement[] = [];
-  let x = r.padding;
+
+  // Dropcap column — the book's illuminated capital owns the left margin of
+  // the FIRST system only: its staff, clef, and lyric all start past the cap;
+  // later systems return to the full margin (Solesmes practice).
+  const capInitial = r.dropcap
+    ? (rows.find((row) => row.lyric.trim())?.lyric.trim().charAt(0) ?? "")
+    : "";
+  // Sized to span staff + lyric (the book initial), sitting close to the staff.
+  const capSize = r.staffInterval * 10;
+  const capIndent = capInitial
+    ? capSize * r.fonts.dropcap.scale * 0.72 + r.staffInterval * 0.45
+    : 0;
+
+  let x = r.padding + capIndent;
 
   // Multi-system layout state. Everything is emitted with the CURRENT system's Y
   // baked in (via yFor + L.systemY); we also record where each system starts so
@@ -296,7 +398,9 @@ export function toSvg(
   // Intonation channel: precompute each row's accidental/cents mark once (the
   // repeat-suppression and heji guard live in the engine), keyed by identity.
   const accMode: AccidentalMode = options.accidentals ?? "standard";
-  const marks = computeAccidentals(rows, accMode, options.centsBaseline ?? "pythagorean");
+  // Square notation writes its own accidentals: b rotundum / b quadratum /
+  // croix — the medieval glyph set, not the modern transcription's ♭ ♮ ♯.
+  const marks = computeAccidentals(rows, accMode, options.centsBaseline ?? "pythagorean", "medieval");
   const markByRow = new Map<ChantTabulaRow, AccidentalMark>();
   rows.forEach((row, i) => { const m = marks[i]; if (m) markByRow.set(row, m); });
 
@@ -684,10 +788,11 @@ export function toSvg(
   for (let s = 0; s <= system; s++) {
     const sysY = headerY + s * L.systemHeight;
     const right = (systemMaxX[s] ?? width) - r.padding;
+    const left = r.padding + (s === 0 ? capIndent : 0); // the cap owns system 0's margin
     for (const pos of [1, 3, 5, 7]) {
       const ly = sysY + L.baselineY - pos * r.staffInterval;
       staffLines.push(
-        `<line x1="${r.padding}" y1="${ly.toFixed(2)}" x2="${right.toFixed(2)}" ` +
+        `<line x1="${left.toFixed(2)}" y1="${ly.toFixed(2)}" x2="${right.toFixed(2)}" ` +
         `y2="${ly.toFixed(2)}" stroke="${r.staffLineColor}" stroke-width="${r.lineWeight.toFixed(2)}"/>`,
       );
     }
@@ -696,11 +801,16 @@ export function toSvg(
   // Lyrics. Within a word, syllables are joined by a hyphen floated CENTRED in
   // the gap between them (Vendome practice, matching moderna) rather than a
   // dash appended to the text — only when both syllables share a system.
+  // The dropcap owns the first letter — the lyric line carries the remainder
+  // (strip BEFORE rendering; the cap itself is drawn later, over the margin).
+  if (capInitial && lyrics.length > 0) lyrics[0]!.text = lyrics[0]!.text.slice(1);
+
   const lyricSvgs: string[] = [];
+  const lyricFontSize = r.lyricSize * r.fonts.lyric.scale;
   const lyricText = (cx: number, systemY: number, text: string): string =>
     `<text class="lyric" x="${cx.toFixed(2)}" y="${(systemY + L.lyricY).toFixed(2)}" ` +
-    `text-anchor="middle" font-family="${esc(r.fontFamily)}" ` +
-    `font-size="${r.lyricSize.toFixed(1)}" fill="${r.noteColor}">${esc(text)}</text>`;
+    `text-anchor="middle" ${fontAttrs(r.fonts.lyric)} ` +
+    `font-size="${lyricFontSize.toFixed(1)}" fill="${r.noteColor}">${esc(text)}</text>`;
   for (let k = 0; k < lyrics.length; k++) {
     const ly = lyrics[k]!;
     const next = lyrics[k + 1];
@@ -715,27 +825,24 @@ export function toSvg(
     }
   }
 
-  // Dropcap — a large rubricated initial from the first lyric, in the left
-  // margin beside the first system. A book's illuminated capital, kept simple.
+  // Dropcap — the large rubricated initial in its own left column beside the
+  // first system. The initial IS the lyric's first letter, so the lyric line
+  // carries the remainder only (the book prints "K yrie" as cap + "yrie").
   const dropcapSvgs: string[] = [];
-  if (r.dropcap && lyrics.length > 0) {
-    const first = lyrics[0]!.text;
-    const initial = first.charAt(0).toUpperCase();
-    if (initial) {
-      const size = r.staffInterval * 7; // ~ one staff tall
-      const y = headerY + L.baselineY;
-      dropcapSvgs.push(
-        `<text class="dropcap" x="${(r.padding).toFixed(2)}" y="${y.toFixed(2)}" ` +
-        `font-family="${esc(r.fontFamily)}" font-size="${size.toFixed(1)}" ` +
-        `fill="${r.rubricaColor}">${esc(initial)}</text>`,
-      );
-    }
+  if (capInitial && lyrics.length > 0) {
+    const y = headerY + L.lyricY; // bottom-aligned with the first lyric baseline
+    dropcapSvgs.push(
+      `<text class="dropcap" x="${r.padding.toFixed(2)}" y="${y.toFixed(2)}" ` +
+      `${fontAttrs(r.fonts.dropcap)} font-size="${(capSize * r.fonts.dropcap.scale).toFixed(1)}" ` +
+      `fill="${r.rubricaColor}">${esc(capInitial.toUpperCase())}</text>`,
+    );
   }
 
   const svgTitle = chant.incipit ? `<title>${esc(chant.incipit)}</title>` : "";
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" ` +
     `width="${width}" height="${height}" class="tonus-chant">${svgTitle}` +
+    fontFaceCss([r.fonts.dropcap, r.fonts.title, r.fonts.annotation, r.fonts.lyric]) +
     header.join("") +
     staffLines.join("") + behind.join("") + body.join("") + lyricSvgs.join("") +
     dropcapSvgs.join("") +

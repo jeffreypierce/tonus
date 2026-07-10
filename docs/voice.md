@@ -97,20 +97,18 @@ tenor.iter("a", "i", 0.5).map((f) => Math.round(f.freqHz));
 // [ 545, 1895, 2940, 3496, 4134 ] — halfway from "a" toward "i"
 ```
 
-To tune the voice to a temperament, pass a lattice to `formantes` — an array of
-target frequencies in Hz, or an `(hz) => hz` snapping function. Each formant
-centre is drawn toward the nearest lattice frequency, the way a soprano tunes a
-formant onto a harmonic to carry. A temperament's gamut supplies the lattice;
-the optional `vis` weights the pull, from 0 (phonetic truth) to 1 (fully
-tuned), and defaults to 1.
+To tune the voice to a temperament, hand it to `formantes` directly: each
+formant centre is drawn toward the nearest pitch of the tuning, unfolded
+across the formant octaves, the way a soprano tunes a formant onto a harmonic
+to carry. The optional third argument `vis` weights the pull, from 0
+(phonetic truth) to 1 (fully tuned), and defaults to 1.
 
 ```js
 const temper = tonus.temperamentum({ tuning: "pythagorean" });
-const lattice = temper.gamut({ span: [48, 108] }).map((p) => p.hz);
 
-tenor.formantes("a", { ad: lattice }).map((f) => Math.round(f.freqHz));
-// [ 782, 1320, 2781, 3129, 3960 ] — locked onto the Pythagorean lattice
-tenor.formantes("a", { ad: lattice, vis: 0.5 }); // half-way toward the tuning
+tenor.formantes("a", temper).map((f) => Math.round(f.freqHz));
+// [ 782, 1320, 2781, 3129, 3960 ] — locked onto the Pythagorean tuning
+tenor.formantes("a", temper, 0.5); // half-way: vis 0 (phonetic) … 1 (locked)
 ```
 
 `formantes` and `iter` throw on an argument that is not one of `a e i o u`.

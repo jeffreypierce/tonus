@@ -5,3 +5,7 @@ dist/
 .DS_Store
 working/
 archive/
+.claude/settings.local.json
+
+# Obsidian vault config (any depth)
+**/.obsidian/

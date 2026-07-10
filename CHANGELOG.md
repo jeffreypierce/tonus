@@ -33,7 +33,9 @@ one format (SVG).
   (initial/peak/final + arch index), `melismaCadential`; and conveniences
   `phrase.noteCount` / `phrase.syllableCount` / `syllable.melisma`.
 - **`vox` and `chorus`** — a singing voice modelled as formant and spectrum
-  data, and seeded ensembles.
+  data, and seeded ensembles. `formantes` tunes to a temperament directly:
+  `tenor.formantes("a", temper, vis?)` — `vis` weights the pull, 0 (phonetic
+  truth) to 1 (fully tuned, the default).
 - **The generation surface** — reference data and helpers ship as named exports
   beside the namespace: `MODES`, `TONES` / `getTone` / `getDifferentia`,
   `midiToGabc` / `gabcToMidi`, `syllabifyWord` / `syllabifyPhrase` /
@@ -41,9 +43,18 @@ one format (SVG).
   generator imports everything from `"tonus"`, never from `dist/` internals.
 - **`docs/` ships in the package** — the documentation renders from the
   installed tarball, pinned to the version it describes.
+- **Per-role text faces** — `inscriptio`'s `fonts` option assigns a face to
+  the `dropcap`, `title`, `annotation`, and `lyric` roles (family, optional
+  weight, optional size scale). By default the SVG carries references and
+  the host page supplies the face; a slot may instead `embed` the caller's
+  own font bytes (base64) into the SVG's `<style>` for a self-contained
+  file. tonus bundles no font files either way.
 
 ### Changed
 
+- **License: PolyForm Noncommercial 1.0.0** (was MIT through 0.1.x, which
+  remain MIT). Free for any noncommercial purpose; commercial use by
+  arrangement with the author.
 - **Corpus double-escape fixed.** Every `gabc` field stored its non-ASCII as a
   literal `\uXXXX` escape, which had silently disabled accent detection across
   the whole corpus — so note weights, prosody, rhythm, and imprint were computed

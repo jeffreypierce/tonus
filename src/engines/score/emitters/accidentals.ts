@@ -43,8 +43,16 @@ export interface AccidentalMark {
 // heji channel for every flatted chant under the default tuning.
 const PYTH_BASELINE: number[] = pythagoreanCentsByPc();
 
-// Standard accidental glyphs (Bravura, already baked).
-const STD_GLYPH: Record<number, string> = { [-1]: "E260", 0: "E261", 1: "E262" };
+// Accidental glyph sets (Bravura, already baked). The modern set is the
+// transcription's ♭ ♮ ♯; the medieval set is what square notation itself
+// wrote: the round soft b (b rotundum) for the flat, the square hard b
+// (b quadratum) for the natural, and the croix for the rare sharp
+// [SMuFL medieval & Renaissance accidentals, U+E9E0–].
+export type AccidentalGlyphSet = "modern" | "medieval";
+const GLYPHS_BY_SET: Record<AccidentalGlyphSet, Record<number, string>> = {
+  modern: { [-1]: "E260", 0: "E261", 1: "E262" },
+  medieval: { [-1]: "E9E0", 0: "E9E1", 1: "E9E3" },
+};
 
 // HEJI comma glyphs (Extended Helmholtz–Ellis, U+E2C0–). The syntonic-comma
 // arrows: one comma down / up. Higher-order commas are out of scope for 0.2.
@@ -66,6 +74,7 @@ export function computeAccidentals(
   rows: ChantTabulaRow[],
   mode: AccidentalMode,
   centsBaseline: CentsBaseline = "pythagorean",
+  glyphSet: AccidentalGlyphSet = "modern",
 ): (AccidentalMark | null)[] {
   if (mode === "standard") {
     // A glyph before any note whose pitch is explicitly inflected — but not on
@@ -75,7 +84,7 @@ export function computeAccidentals(
       const repeat = row.pc === prevPc;
       prevPc = row.pc;
       if (row.accidentalSource !== "explicit" || repeat) return null;
-      return { kind: "glyph", glyph: STD_GLYPH[row.accidental] };
+      return { kind: "glyph", glyph: GLYPHS_BY_SET[glyphSet][row.accidental] };
     });
   }
 

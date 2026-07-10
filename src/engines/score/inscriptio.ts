@@ -15,7 +15,10 @@
 // The multi-system layout engine, front matter, and the accidental channels are
 // wired in through InscriptioOpts as they land (Phases 3c–5); the options are
 // defined in full here so those phases fill them without a signature change.
-import { toSvg, type NoteGeometry, type SvgResult } from "./emitters/svg.js";
+import {
+  toSvg, type NoteGeometry, type SvgResult,
+  type FontSpec, type FontSlot, type FontEmbed,
+} from "./emitters/svg.js";
 import { toModerna } from "./emitters/moderna.js";
 import type { Score } from "./api.js";
 
@@ -51,6 +54,22 @@ export interface InscriptioOpts {
   /** Derive the rubric block from chant meta (feast / genus / modus / source). */
   annotation?: "auto";
   dropcap?: boolean;
+
+  // ── faces ──
+  /**
+   * Per-role text faces: `dropcap`, `title`, `annotation`, `lyric` — each a
+   * font-family string or `{ family, weight?, scale? }` (scale adjusts the
+   * role's size for faces whose apparent size differs from the house serif).
+   * By default the SVG carries font-family REFERENCES and the host page
+   * supplies the face (`@font-face`). A slot may instead carry `embed`
+   * ({ base64, format? }) — the CALLER's font bytes — and the face then
+   * rides inside the SVG's own `<style>`, making the file self-contained
+   * (at the cost of its size). tonus never bundles font files; with embed
+   * it is a conduit for data the consumer supplies, and the consumer
+   * carries the face's license terms. Anything unset falls back to the
+   * house serif.
+   */
+  fonts?: FontSpec;
 }
 // Queued past 0.2 (declared here once wired, not before): `breaks` / `until`
 // (partial rendering for incipits), lyric font overrides, and an emit-time
@@ -66,7 +85,7 @@ export interface Inscriptio {
 const EMITTER_KEYS = [
   "staffHeight", "noteScale", "padding", "noteColor", "staffLineColor",
   "width", "systemGap", "custos",
-  "title", "rubric", "annotation", "dropcap", "rubricaColor",
+  "title", "rubric", "annotation", "dropcap", "rubricaColor", "fonts",
   "accidentals", "centsBaseline",
 ] as const;
 
@@ -107,3 +126,4 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
 }
 
 export type { NoteGeometry } from "./emitters/svg.js";
+export type { FontSpec, FontSlot, FontEmbed } from "./emitters/svg.js";

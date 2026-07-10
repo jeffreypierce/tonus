@@ -17,7 +17,7 @@ import { computeTable, formantsAt, locusOf } from "./formant.js";
 import { spectrumOf, claritasOf } from "./spectrum.js";
 import { shiftLocus } from "./data/latinitas.js";
 import { liquescentTarget, type Coda } from "./data/liquescentia.js";
-import { accord, type AccordatioOpts } from "./accordatio.js";
+import { accord, type TuningLike } from "./accordatio.js";
 
 export type VoxInput = PersonaName | "vetus" | Persona;
 
@@ -30,7 +30,7 @@ export interface Vox {
    * Five formants at a cardinal vowel or anywhere on the plane. Passing
    * accordatio opts pulls each formant centre toward a tuning lattice.
    */
-  formantes(where: Vowel | Locus, acc?: AccordatioOpts): Formant[];
+  formantes(where: Vowel | Locus, ad?: TuningLike, vis?: number): Formant[];
   /** Five formants at the point t of the way along the path a→b. */
   iter(a: Vowel, b: Vowel, t: number): Formant[];
   /** The first `nHarmonics` harmonic amplitudes of `f0` on `vowel`. */
@@ -111,9 +111,13 @@ export function buildVoice(input?: VoxInput, overrides?: Persona): Vox {
       return locusOf(vowel);
     },
 
-    formantes(where: Vowel | Locus, acc?: AccordatioOpts): Formant[] {
+    formantes(where: Vowel | Locus, ad?: TuningLike, vis?: number): Formant[] {
+      // Tune to a temperament: each band is drawn toward the tuning's nearest
+      // pitch, weighted by vis (0 phonetic truth … 1 locked, default 1). The
+      // temperament is duck-typed (anything with gamut()) — this engine
+      // imports nothing from temper. Snapping math lives in accordatio.ts.
       const f = at(where);
-      return acc ? accord(f, acc) : f;
+      return ad === undefined ? f : accord(f, ad, vis);
     },
 
     iter(a: Vowel, b: Vowel, t: number): Formant[] {

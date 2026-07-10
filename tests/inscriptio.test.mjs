@@ -272,3 +272,86 @@ describe("inscriptio — figures never merge across phrases (grouping regression
     assert.ok(accidentals >= 1, "the flat on the upper note must not vanish");
   });
 });
+
+describe("inscriptio — the fonts option (references only, never bundled)", () => {
+  const opts = {
+    title: "Kyrie", annotation: "auto", dropcap: true,
+    fonts: {
+      dropcap: { family: "Pfeffer Simpelgotisch", weight: 700 },
+      title: "Pfeffer Mediaeval",
+      lyric: { family: "Pfeffer Mediaeval", scale: 1.15 },
+    },
+  };
+
+  test("each role carries its face; unset roles keep the house serif", () => {
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), opts);
+    assert.match(svg, /class="dropcap" [^>]*font-family="Pfeffer Simpelgotisch" font-weight="700"/);
+    assert.match(svg, /class="title" [^>]*font-family="Pfeffer Mediaeval"/);
+    assert.match(svg, /class="lyric" [^>]*font-family="Pfeffer Mediaeval"/);
+    assert.match(svg, /class="rubric" [^>]*font-family="'Crimson Pro'/); // annotation unset → serif
+  });
+
+  test("the lyric scale factor resizes the lyric text", () => {
+    const plain = inscriptio(buildScore(makeChant(KYRIE_GABC))).svg;
+    const scaled = inscriptio(buildScore(makeChant(KYRIE_GABC)), opts).svg;
+    const size = (svg) => parseFloat(svg.match(/class="lyric" [^>]*font-size="([\d.]+)"/)[1]);
+    assert.ok(Math.abs(size(scaled) / size(plain) - 1.15) < 0.01);
+  });
+
+  test("moderna honours the lyric slot", () => {
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      notation: "moderna", fonts: { lyric: { family: "Pfeffer Mediaeval", weight: 400, scale: 1.1 } },
+    });
+    assert.match(svg, /class="lyric" [^>]*font-family="Pfeffer Mediaeval"/);
+    assert.match(svg, /class="lyric" [^>]*font-size="16.5"/);
+  });
+
+  test("no fonts option → byte-identical to before (pure fallback)", () => {
+    const a = inscriptio(buildScore(makeChant(KYRIE_GABC))).svg;
+    const b = inscriptio(buildScore(makeChant(KYRIE_GABC)), { fonts: {} }).svg;
+    assert.equal(a, b);
+  });
+});
+
+describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", () => {
+  const FAKE = Buffer.from("not-a-real-font").toString("base64");
+
+  test("an embed slot writes one @font-face into the SVG's own style", () => {
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      dropcap: true,
+      fonts: { dropcap: { family: "Pfeffer Simpelgotisch", weight: 700, embed: { base64: FAKE } } },
+    });
+    assert.match(svg, /<defs><style>@font-face\{font-family:"Pfeffer Simpelgotisch";font-weight:700;src:url\(data:font\/otf;base64,/);
+    assert.ok(svg.includes(FAKE));
+  });
+
+  test("the same face in two slots embeds once (dedupe by family + weight)", () => {
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      title: "Kyrie", dropcap: true,
+      fonts: {
+        dropcap: { family: "Pfeffer Mediaeval", embed: { base64: FAKE } },
+        title: { family: "Pfeffer Mediaeval", embed: { base64: FAKE } },
+      },
+    });
+    assert.equal((svg.match(/@font-face/g) ?? []).length, 1);
+  });
+
+  test("no embed → no style block; format woff2 carries its own mime", () => {
+    const plain = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      fonts: { lyric: "Pfeffer Mediaeval" },
+    }).svg;
+    assert.ok(!plain.includes("@font-face"));
+    const woff2 = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      fonts: { lyric: { family: "X", embed: { base64: FAKE, format: "woff2" } } },
+    }).svg;
+    assert.match(woff2, /data:font\/woff2;base64,.*format\("woff2"\)/);
+  });
+
+  test("moderna embeds the lyric face too", () => {
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      notation: "moderna",
+      fonts: { lyric: { family: "Pfeffer Mediaeval", weight: 400, embed: { base64: FAKE } } },
+    });
+    assert.match(svg, /@font-face\{font-family:"Pfeffer Mediaeval";font-weight:400;/);
+  });
+});
