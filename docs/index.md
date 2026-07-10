@@ -10,7 +10,7 @@ import tonus from "tonus";
 
 - [The methods](#the-methods) — by engine
 - [Full contents](#full-contents) — every method and section
-- [Conventions](#conventions) — Latin/English, dates, determinism, error contracts
+- [Conventions](#conventions) — Latin/English, dates, determinism, error contracts, bibiliography
 
 ## The methods
 
@@ -184,7 +184,7 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 
 ### The bibliography — [`BIBLIOGRAPHY.md`](../BIBLIOGRAPHY.md)
 
-The single source of truth for citations, each with a stable kebab key. Code
+The single source of truth for citations, each with a stables key. Code
 cites by bracketed key (`[biblio: key]`); each page keeps a short `## Sources`
 line pointing to the keys it draws on. Nothing outside `BIBLIOGRAPHY.md` restates
 a full reference.
