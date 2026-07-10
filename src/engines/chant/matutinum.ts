@@ -4,7 +4,8 @@
 // The flat `officium({ hora: "matutinum" })` returns Matins chants as an
 // undifferentiated Chant[] (the best-effort flat view, unchanged). This module
 // adds the STRUCTURED night office for the Roman rite: the 3-nocturn assembly
-// from the Nocturnale Romanum, joined to the tonus calendar by feast id.
+// from the Nocturnale Romanum [biblio: nocturnale-romanum], joined to the tonus
+// calendar by feast id.
 //
 // It is additive and separate — a distinct accessor (`tonus.matutinum`), not a
 // reshape of getHour — so the flat path and every other rite stay as they are.
@@ -33,9 +34,9 @@ export interface Matins {
   /** The tonus feast id this Matins was resolved for. */
   feastId: string;
   /** The feast's Latin name from the Nocturnale. */
-  name: string;
-  /** The rank/class, e.g. "I. classis", "Feria". */
-  rank: string;
+  nomen: string;
+  /** The Latin rank/class from the Nocturnale, e.g. "I. classis", "Feria". */
+  ritus: string;
   /** The invitatory, which opens Matins before the first nocturn (else null). */
   invitatorium: Chant | null;
   /** The Matins hymn, which follows the invitatory before the nocturns (else null). */
@@ -82,8 +83,8 @@ function resolveDay(day: MatinsDay): Matins {
 
   return {
     feastId: day.tonusFeastId!,
-    name: day.name,
-    rank: day.rank,
+    nomen: day.name,
+    ritus: day.rank,
     invitatorium,
     hymnus,
     nocturns,
@@ -122,6 +123,10 @@ export function getMatins(query?: OfficiumQuery): Matins | null {
     : null;
   const feast: Feast | undefined = feasts ? feasts[0] : getFeast()[0];
   if (!feast) return null;
+  if (typeof feast !== "object" || typeof feast.id !== "string")
+    throw new Error(
+      "matutinum: feast must be a Feast (from tonus.festum) — got " + typeof feast,
+    );
 
   return matinsForFeastId(feast.id);
 }

@@ -1,20 +1,19 @@
 # tonus — Documentation Standards
 
-This document owns the whole documentation model: the three levels, the
+This document owns the whole documentation model: the two levels, the
 centralized bibliography, and the one voice as well as the prose rules that
 follow. CODE-STANDARDS.md governs the code itself and cross-references here.
 
-## The model — three levels, one voice
+## The model — two levels, one voice
 
-Documentation is a **three-level ladder**; each level is lighter than the one
-below and links down into it. A reader starts at the top and drills as far as
-they want; the code is the bottom of the well.
+Documentation is a **two-level ladder**; the top level is lighter and links down
+into the bottom. A reader starts at the top and drills as far as they want; the
+code is the bottom of the well.
 
-| Level               | Surface                | Depth    | Holds                                                                                                    |
-| ------------------- | ---------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
-| **1. Interactive**  | the docs site (future) | lightest | common API calls, run-it-live, limited context                                                           |
-| **2. Official API** | `docs/*.md`            | medium   | API focus (options, examples, interfaces) + high-level theory that links to the bibliography and to code |
-| **3. Code**         | `src/`                 | full     | how it is computed, why, and from what source: full theory, editorial decisions, provenance              |
+| Level               | Surface     | Depth  | Holds                                                                                                    |
+| ------------------- | ----------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| **1. Official API** | `docs/*.md` | medium | API focus (options, examples, interfaces) + high-level theory that links to the bibliography and to code |
+| **2. Code**         | `src/`      | full   | how it is computed, why, and from what source: full theory, editorial decisions, provenance              |
 
 Only the **deepest** material lives in code:
 step-by-step derivations, the provenance of each figure, calibration values,
@@ -29,18 +28,16 @@ translator, place, publisher, year, and URL. Each entry has a stable kebab key
 `## Sources` pointer listing the keys they use. Nothing outside `BIBLIOGRAPHY.md`
 restates a full reference; there are no per-page source lists.
 
-**One voice, three volumes.** All three levels are the same author at different
-lengths, not three personalities. The voice is the rubric of a chant book (the
+**One voice, two volumes.** Both levels are the same author at different
+lengths, not two personalities. The voice is the rubric of a chant book (the
 rules below): present indicative, rules stated plainly with the exception
 following the rule, no advocacy (a decision is stated, not defended), bold marks
 a term at its definition once, italics carry Latin and titles. What changes
 across levels is volume and register, not voice:
 
-- **L1 (interactive)** — terse, inviting: a label on an instrument. One line,
-  present tense, no theory.
-- **L2 (API docs)** — the rubric proper: the reference states _what is_; Theory
+- **L1 (API docs)** — the rubric proper: the reference states _what is_; Theory
   & Context states _why and whence_ (scholarly register, no meta-narration).
-- **L3 (code)** — a scholar's marginalia: the same restraint, now allowed to
+- **L2 (code)** — a scholar's marginalia: the same restraint, now allowed to
   explain fully. Explains; still does not advocate — "corrected to the Protus
   descent (the mode-2 seed was a copy of mode 5)," not "elegantly fixed a bug."
 

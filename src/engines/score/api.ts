@@ -12,8 +12,6 @@ import { detectModulations, type Modulation } from "./modulation.js";
 import { detectFormulas, type FormulaMatch } from "./formula.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import { MODES } from "../temper/modes.js";
-import { toMidi, type MidiOpts, type MidiEmitResult } from "./emitters/midi.js";
-import { toMusicXML, type MusicXmlOpts, type MusicXmlEmitResult } from "./emitters/musicxml.js";
 import type { Chant } from "../chant/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import type {
@@ -60,14 +58,6 @@ export interface Score {
   /** Apel standard-phrase formulae each phrase realises (Tier-1 genres only). */
   formulas: FormulaMatch[];
   imprint: Imprint;
-  /**
-   * Emit a Standard MIDI File from the score's tabula. Returns the file bytes
-   * by default; `format: "json"` returns the event structure, `"both"` an
-   * object. The score's pondus/accentus reach the output via the tabula.
-   */
-  midi(opts?: MidiOpts): Uint8Array | MidiEmitResult;
-  /** Emit a MusicXML 4.0 partwise document from the score's tabula. */
-  musicxml(opts?: MusicXmlOpts): MusicXmlEmitResult;
 }
 
 const PONDUS_TO_ARTICULATION: Record<PondusStyle, ArticulationType> = {
@@ -101,6 +91,10 @@ function resolveAccentus(input?: AccentusInput): AccentusOpts {
  * @throws Error on invalid Chant input or unparseable GABC.
  */
 export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
+  if (!chant || typeof chant !== "object" || typeof (chant as Chant).gabc !== "string")
+    throw new Error(
+      "notatio needs a Chant with a gabc string — build one with tonus.cantus({ gabc })",
+    );
   const pondus = resolvePondus(opts?.pondus);
   const accentus = resolveAccentus(opts?.accentus);
   const parsed = parseGABC(chant.gabc, {
@@ -172,12 +166,6 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
         }),
       ),
     }),
-    midi(emitOpts?: MidiOpts): Uint8Array | MidiEmitResult {
-      return toMidi(tabula, emitOpts);
-    },
-    musicxml(emitOpts?: MusicXmlOpts): MusicXmlEmitResult {
-      return toMusicXML(tabula, chant, emitOpts);
-    },
   };
 }
 
@@ -186,5 +174,3 @@ export type { Cadence, CadenceTarget, CadenceApproach } from "./cadence.js";
 export type { Modulation } from "./modulation.js";
 export type { FormulaMatch } from "./formula.js";
 export type { Formula, FormulaSlot } from "./data/formulas.js";
-export type { MidiOpts, MidiEmitResult, MidiJsonResult, MidiJsonEvent } from "./emitters/midi.js";
-export type { MusicXmlOpts, MusicXmlEmitResult } from "./emitters/musicxml.js";

@@ -284,6 +284,10 @@ export function getFeast(query?: FeastQuery): Feast[] {
   let results: Feast[];
 
   if (query.date) {
+    if (!(query.date instanceof Date) || Number.isNaN(query.date.getTime()))
+      throw new Error(
+        `festum: date must be a Date — e.g. new Date("2026-12-25") (UTC-canonical)`,
+      );
     results = feastsForDate(query.date);
   } else if (query.from != null || query.to != null) {
     if (query.from == null || query.to == null) {

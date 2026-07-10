@@ -4,12 +4,13 @@ import { detectFormulas } from "../dist/engines/score/formula.js";
 import { MODES } from "../dist/engines/temper/data/modes.js";
 
 // Build a minimal phrase whose notes carry the step data the matcher reads. The
-// matcher expresses each note as a diatonic step relative to the mode's final,
-// via note.step.pc against the mode's scalePcs — so we set pc values directly.
+// matcher expresses each note as an octave-aware diatonic step relative to the
+// final's register, from note.pitch.midi against the mode's scalePcs — so the
+// fixture derives a coherent midi (octave 4) from each pc.
 function phraseFromPcs(pcs) {
   return {
     syllables: [
-      { notes: pcs.map((pc) => ({ step: { pc, role: null }, pitch: { pc, midi: 60 } })) },
+      { notes: pcs.map((pc) => ({ step: { pc, role: null }, pitch: { pc, midi: 60 + pc } })) },
     ],
     divisio: undefined,
     beats: [],

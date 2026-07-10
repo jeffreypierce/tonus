@@ -35,6 +35,7 @@ import type {
   ParseOptions,
   ParseResult,
   RestEvent,
+  WrittenShape,
 } from "./types.js";
 import { buildArticulation } from "./articulation.js";
 import { detectVowelAccent } from "../chant/syllabify.js";
@@ -93,7 +94,12 @@ interface IntermNote {
   lyric: string;
   syllableIndex: number;
   neumeGroup: number;
+  staffLetter: string;      // raw GABC pitch letter a–m (drives staff position)
+  clef: string;             // the active clef, for the renderer's position math
+  shape: WrittenShape;      // the written notehead shape (gregorio S_* vocabulary)
   ictus: boolean;
+  ictusSign: boolean;       // the written vertical episema / ictus mark (')
+  episema: boolean;         // the written horizontal episema (_) — distinct from ictus
   accidental: AccidentalValue;
   accidentalSource: "none" | "state" | "explicit";
   quilisma: boolean;
@@ -187,10 +193,13 @@ function parseNeume(
       durWeight += weights.dashDuration;
     }
 
-    const letter = token[0]?.toLowerCase();
+    const rawLetter = token[0];
+    const letter = rawLetter?.toLowerCase();
     if (!letter) return;
     const pitchOffset = letter.charCodeAt(0) - "a".charCodeAt(0);
     if (pitchOffset < 0 || pitchOffset > 12) return;
+    // An uppercase pitch letter is a punctum inclinatum (the small diamond).
+    const isInclinatum = rawLetter !== letter;
 
     const clefOffset = CLEF_OFFSETS.get(clef) ?? 0;
     const pos = pitchOffset - 6 - clefOffset;
@@ -235,8 +244,12 @@ function parseNeume(
           ? "state"
           : "none";
 
-    // Ictus markers (' and _)
-    if (modifiers.includes("'") || modifiers.includes("_")) {
+    // Ictus markers (' and _). Both signal the rhythmic footfall (weight
+    // unchanged), but they are DISTINCT written marks the renderer must draw
+    // apart: ' is the vertical episema (ictus mark), _ the horizontal episema.
+    const hasIctusSign = modifiers.includes("'");
+    const hasEpisema = modifiers.includes("_");
+    if (hasIctusSign || hasEpisema) {
       w += weights.ictusWeight;
       durWeight += weights.ictusDuration;
       ictus = true;
@@ -330,13 +343,31 @@ function parseNeume(
       }
     }
 
+    // Written note shape (gregorio's S_* vocabulary, simplified) — what the
+    // renderer draws. Priority: the inclinatum diamond and the ornamental
+    // shapes win over the plain punctum/virga forms.
+    let shape: WrittenShape = "punctum";
+    if (isInclinatum) shape = "inclinatum";
+    else if (isQuilisma) shape = "quilisma";
+    else if (isStrophicus) shape = "strophicus";
+    else if (modifiers.includes("V")) shape = "virgaReversa";
+    else if (modifiers.includes("v")) shape = "virga";
+    else if (isOriscus) shape = "oriscus";
+    else if (modifiers.includes("r")) shape = "cavum";
+    else if (modifiers.includes("=")) shape = "linea";
+
     intermed.push({
       step,
       degree,
       lyric,
       syllableIndex,
       neumeGroup,
+      staffLetter: letter,
+      clef,
+      shape,
       ictus,
+      ictusSign: hasIctusSign,
+      episema: hasEpisema,
       accidental: activeAccidental as AccidentalValue,
       accidentalSource,
       quilisma: isQuilisma,
@@ -395,7 +426,12 @@ function parseNeume(
       lyric: note.lyric,
       syllableIndex: note.syllableIndex,
       neumeGroup: note.neumeGroup,
+      staffLetter: note.staffLetter,
+      clef: note.clef,
+      shape: note.shape,
       ictus: note.ictus,
+      ictusSign: note.ictusSign,
+      episema: note.episema,
       weight,
       duration,
       accidental: note.accidental,

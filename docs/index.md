@@ -1,42 +1,129 @@
 # tonus API
 
-The behavioral source of truth for the public API: thirteen methods on
-the `tonus` namespace, no sub-namespaces.
+The technical center of tonus: the full public API, the conventions every method
+obeys, the error contract, and the standards the code and docs are held to. The
+API is **sixteen methods on the `tonus` namespace**, no sub-namespaces.
 
 ```js
 import tonus from "tonus";
 ```
 
-| Method                          | Page                    | Returns                                                 |
-| ------------------------------- | ----------------------- | ------------------------------------------------------- |
-| `tonus.festum(query?)`          | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
-| `tonus.pascha(year)`            | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
-| `tonus.cantus(query?)`          | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
-| `tonus.corpus(code)`            | [chant](chant.md)       | `Corpus` — one book's metadata + content breakdown      |
-| `tonus.proprium(query?)`        | [chant](chant.md)       | `Chant[]` — Mass propers                                |
-| `tonus.ordinarium(query?)`      | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
-| `tonus.officium(query?)`        | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |
-| `tonus.matutinum(query?)`       | [chant](chant.md)       | `Matins \| null` — structured Roman Matins nocturns     |
-| `tonus.psalmus(query?)`         | [chant](chant.md)       | `Chant[]` — intoned psalm verses                        |
-| `tonus.temperamentum(input?)`   | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
-| `tonus.notatio(chant, opts?)`   | [score](score.md)       | `Score` — GABC → musical score                          |
-| `tonus.caelum(query?)`          | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
-| `tonus.harmonia(cosmos, opts?)` | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
+- [The methods](#the-methods) — by engine
+- [Full contents](#full-contents) — every method and section
+- [Conventions](#conventions) — Latin/English, dates, determinism, error contracts
 
-## Theory & stance
+## The methods
 
-tonus is a music-analysis and data library. It treats the chant repertoire as
-musical and historical material (modes, tuning, neumes, prosody, the analytic
-imprint) not as liturgy to be performed. The liturgical scaffolding is here
-because that is how this music was transmitted and indexed for a thousand years:
-the calendar is a retrieval key, the feast a filter, the office an ordering. They
-are the catalogue, not the point.
+| Method                             | Page                    | Returns                                                 |
+| ---------------------------------- | ----------------------- | ------------------------------------------------------- |
+| `tonus.festum(query?)`             | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
+| `tonus.pascha(year)`               | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
+| `tonus.cantus(query?)`             | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
+| `tonus.corpus(code)`               | [chant](chant.md)       | `Corpus` — one book's metadata + content breakdown      |
+| `tonus.proprium(query?)`           | [chant](chant.md)       | `Chant[]` — Mass propers                                |
+| `tonus.ordinarium(query?)`         | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
+| `tonus.officium(query?)`           | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |
+| `tonus.matutinum(query?)`          | [chant](chant.md)       | `Matins \| null` — structured Roman Matins nocturns     |
+| `tonus.psalmus(query?)`            | [chant](chant.md)       | `Chant[]` — intoned psalm verses                        |
+| `tonus.temperamentum(input?)`      | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
+| `tonus.notatio(chant, opts?)`      | [score](score.md)       | `Score` — GABC → musical score                          |
+| `tonus.inscriptio(score, opts?)`   | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
+| `tonus.caelum(query?)`             | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
+| `tonus.harmonia(cosmos, opts?)`    | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
+| `tonus.vox(persona?, over?)`       | [voice](voice.md)       | `Vox` — one singing voice, as data                      |
+| `tonus.chorus(consortium?, opts?)` | [voice](voice.md)       | `Chorus` — a seeded ensemble of voices                  |
 
-The music came to us through the Church because that is who kept the books, but
-this is a library for the music. Half the cantors who wrote it down likely held
-a working musician's skepticism toward the institution around them; many still
-do. tonus takes no theological position and asks none of its users. What it
-models is the sound and its structure.
+### Query and builder functions
+
+**Query functions** (`festum`, `pascha`, `cantus`,
+`corpus`, `proprium`, `ordinarium`, `officium`, `matutinum`, `psalmus`, `caelum`) name what you want and return arrays. Empty matches
+return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
+chant results sort by rank then incipit.
+
+**Builder functions** (`temperamentum`,
+`notatio`, `harmonia`, `vox`, `chorus`, and the pure transform `inscriptio`) construct and return context objects, and throw
+`Error` on invalid input.
+
+Context objects can be passed back into query functions as filters:
+
+```js
+const feasts = tonus.festum({ season: "pasc" });
+tonus.proprium({ feast: feasts, office: "an" });
+
+const t = tonus.temperamentum({ tuning: "pythagorean" });
+t.nota("D4");
+```
+
+## Full contents
+
+Every method and every section, page by page, in dependency order. Pages later in
+the list resolve their pitches through the ones before.
+
+**[Tuning](tuning.md)** — the medieval pitch system; depends on nothing else.
+
+- [The context — `temperamentum`](tuning.md#the-context--temperamentum)
+- [Pitch input](tuning.md#pitch-input)
+- [Pitches — `nota`](tuning.md#pitches--nota)
+- [Steps — `gradus`](tuning.md#steps--gradus)
+- [Intervals — `intervallum`](tuning.md#intervals--intervallum)
+- [Neumes — `neuma`](tuning.md#neumes--neuma)
+- [Ratios — `ratio`](tuning.md#ratios--ratio)
+- [The gamut — `gamut`](tuning.md#the-gamut--gamut)
+- [Modes — `modus`](tuning.md#modes--modus) · [Cadence figures](tuning.md#cadence-figures)
+- [Psalm tones — `tonus`](tuning.md#psalm-tones--tonus)
+- [Theory & Context](tuning.md#theory--context) · [Sources](tuning.md#sources)
+
+**[Calendar](calendar.md)** — the Tridentine calendar against Julian/Gregorian-computus Easter.
+
+- [The day's feasts — `festum`](calendar.md#the-days-feasts--festum)
+- [Rank — `ritus` and `grade`](calendar.md#rank--ritus-and-grade)
+- [Seasons — the temporale](calendar.md#seasons--the-temporale)
+- [The year's anchors — `pascha`](calendar.md#the-years-anchors--pascha)
+- [Theory & Context](calendar.md#theory--context) · [Sources](calendar.md#sources)
+
+**[Chant](chant.md)** — the Solesmes books in GABC.
+
+- [The corpora](chant.md#the-corpora)
+- [The books — `corpus`](chant.md#the-books--corpus)
+- [Retrieval — `cantus`](chant.md#retrieval--cantus)
+- [The Mass propers — `proprium`](chant.md#the-mass-propers--proprium)
+- [The ordinary — `ordinarium`](chant.md#the-ordinary--ordinarium)
+- [The Office — `officium`](chant.md#the-office--officium)
+- [Matins nocturns — `matutinum`](chant.md#matins-nocturns--matutinum)
+- [Psalms — `psalmus`](chant.md#psalms--psalmus)
+- [Theory & Context](chant.md#theory--context) · [Sources](chant.md#sources)
+
+**[Score](score.md)** — GABC parsed into tuned, rhythmicized, drawable notes.
+
+- [The score — `notatio`](score.md#the-score--notatio)
+- [Interpretation — `pondus` and `accentus`](score.md#interpretation--pondus-and-accentus)
+- [The note](score.md#the-note)
+- [The tabula](score.md#the-tabula)
+- [Rendering](score.md#rendering) · [inscriptio — the standalone renderer](score.md#inscriptio--the-standalone-renderer) · [The intonation channel](score.md#the-intonation-channel)
+- [The imprint](score.md#the-imprint)
+- [Prosody](score.md#prosody)
+- [Cadences](score.md#cadences)
+- [Modulations](score.md#modulations)
+- [Melodic formulae](score.md#melodic-formulae)
+- [Theory & Context](score.md#theory--context) · [Sources](score.md#sources)
+
+**[Voice](voice.md)** — a singing voice modelled as formant and spectrum data.
+
+- [The singer — `vox`](voice.md#the-singer--vox)
+- [Vowels and formants — `formantes`, `iter`](voice.md#vowels-and-formants--formantes-iter)
+- [Spectrum and brightness — `spectrum`, `claritas`](voice.md#spectrum-and-brightness--spectrum-claritas)
+- [Liquescents — `liquescentia`](voice.md#liquescents--liquescentia)
+- [The ensemble — `chorus`](voice.md#the-ensemble--chorus)
+- [Theory & Context](voice.md#theory--context) · [Sources](voice.md#sources)
+
+**[Heavens](heavens.md)** — an ephemeris voiced through the planetary doctrines.
+
+- [The heavens — `caelum`](heavens.md#the-heavens--caelum)
+- [Aspects](heavens.md#aspects)
+- [The voiced heavens — `harmonia`](heavens.md#the-voiced-heavens--harmonia)
+- [The planetary vowels](heavens.md#the-planetary-vowels)
+- [The tabula](heavens.md#the-tabula)
+- [Theory & Context](heavens.md#theory--context) · [Sources](heavens.md#sources)
 
 ## Conventions
 
@@ -59,25 +146,6 @@ Other fields carry only one register. Latin-only, _e.g._ `genus`, `ordinarium`,
 Display strings live in exported maps (_e.g._ `SEASON_LABELS`),
 never as label fields on objects.
 
-### Query and builder functions
-
-**Query functions** name what you want and return arrays. Empty matches
-return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
-chant results sort by rank then incipit.
-
-**Builder functions** construct and return context objects, and throw
-`Error` on invalid input.
-
-Context objects can be passed back into query functions as filters:
-
-```js
-const feasts = tonus.festum({ season: "pasc" });
-tonus.proprium({ feast: feasts, office: "an" });
-
-const t = tonus.temperamentum({ tuning: "pythagorean" });
-t.nota("D4");
-```
-
 ### Dates
 
 Dates are UTC-canonical. Local-time constructions like
@@ -91,17 +159,32 @@ an explicit `date` for any other day.
 ### Determinism
 
 All pure transforms are deterministic for identical inputs and options.
-No runtime network requests are made.
+No runtime network requests are made. Where variation is wanted (the scatter of
+an ensemble) it is seeded, so the same seed yields byte-identical output.
 
-## Error contract
+### Error contract
 
-- Query functions return `[]` on no match, never throw — but an **unknown query
-  key** throws (a mistyped filter is a bug, not an empty result): `festum({ month:
-  12 })` throws rather than silently resolving the default epoch.
+- Query functions return `[]` on no match, never throw — but an **empty or
+  unknown-key query** throws (a mistyped filter is a bug, not an empty result):
+  `festum({ month: 12 })` and `cantus({})` throw rather than silently resolving a
+  plausible-looking answer.
 - Builder functions throw `Error` with a descriptive message on invalid input.
 - `notatio` throws on invalid `Chant` input.
+- `inscriptio` throws on a non-`Score` argument or an unknown notation species.
 - `temperamentum.tonus()` throws if `mode` is `"auto"` — mode must be set
   explicitly.
 - Malformed `comma`, ratio, or Scala input throws `RangeError`; custom scales
   must supply 7 or 12 steps.
 - `pascha` throws `RangeError` on a non-finite year.
+- `caelum` in range mode (`{ from, to, step }`) throws `RangeError` on a missing
+  bound, `to` before `from`, a non-positive step, or a range exceeding the frame cap.
+- `harmonia` throws `RangeError` on an unknown doctrina.
+- `vox` throws on an unknown persona; `chorus` throws on an unknown
+  consortium or persona, or an empty roster.
+
+### The bibliography — [`BIBLIOGRAPHY.md`](../BIBLIOGRAPHY.md)
+
+The single source of truth for citations, each with a stable kebab key. Code
+cites by bracketed key (`[biblio: key]`); each page keeps a short `## Sources`
+line pointing to the keys it draws on. Nothing outside `BIBLIOGRAPHY.md` restates
+a full reference.

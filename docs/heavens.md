@@ -1,10 +1,9 @@
 # Heavens
 
-`tonus.caelum` computes positions, magnitudes, phases, zodiac
-places, and angular aspects for the classical bodies, from JPL Keplerian
-elements valid 3000 BC – 3000 AD. `tonus.harmonia` voices the bodies through
-a planetary-harmony doctrine, assigning each
-visible planet a tuned pitch and a Greek vowel. The doctrines and their derived ratios are
+`tonus.caelum` computes the classical bodies' places for a single moment, from
+JPL Keplerian elements valid 3000 BC – 3000 AD. `tonus.harmonia` voices those
+bodies through a planetary-harmony doctrine, assigning each visible planet a
+tuned pitch and a Greek vowel. The doctrines and their derived ratios are
 summarized in [Theory & Context](#theory--context).
 
 - [Heavens](#heavens)
@@ -131,10 +130,9 @@ interface Aspect {
 
 ## The voiced heavens — `harmonia`
 
-This is the music of the spheres: the old idea that each planet sounds a tone
-and the heavens together make a chord. `harmonia(cosmos, opts?)` gives each
-body a pitch and a Greek vowel according to a **doctrina** — a named historical
-scheme for who sounds what (Pythagoras, Boethius, Pliny, Ptolemy). The result
+`harmonia(cosmos, opts?)` gives each body a pitch and a Greek vowel according to
+a **doctrina** (a named historical scheme for who sounds what: Pythagoras,
+Boethius, Pliny, Ptolemy). The result
 is pure data: each visible planet becomes a `VoicedBody` with a tuned pitch and
 a Greek vowel; each aspect gains the `Interval` its angle sounds, with its
 consonance grade. Range input populates `frames`, one per cosmos.
@@ -171,9 +169,9 @@ gives pure Ptolemaic intervals throughout — Sun→Jupiter a pure 3/2,
 Sun→Saturn a pure 2/1. The temperamentum's scale governs pitch naming and
 the imprint.
 
-Each voiced body's `nota` carries its velocity as a 0–1 factor — the
-body's presence (visibility and brightness) — on the same scale the score
-engine uses. An aspect's interval is graded by class:
+Each voiced body's `nota` carries its velocity as a 0–1 factor: the body's
+presence (visibility and brightness), on the same scale the score engine uses.
+An aspect's interval is graded by class:
 
 | interval class | consonance |
 | -------------- | ---------- |

@@ -27,6 +27,34 @@ export interface RhythmicProfile {
   maxGroupSize: number;
 }
 
+/** Melodic-motion statistics over adjacent notes (within a phrase). */
+export interface IntervalStats {
+  /** Signed semitone interval → count. Movement across a divisio is excluded. */
+  histogram: Record<number, number>;
+  /** Largest absolute interval, in semitones. */
+  maxLeap: number;
+  /** Fraction of motions that are leaps (≥ a fourth, 5+ semitones). */
+  leapRate: number;
+  /** Motion by class: step (1–2 st), skip (a third, 3–4), leap (a fourth+, 5+). */
+  motus: { step: number; skip: number; leap: number };
+}
+
+/** The melodic arch of the piece: where it begins, peaks, and ends, and its shape. */
+export interface Arcus {
+  /** First note's MIDI. */
+  initial: number;
+  /** Highest note's MIDI. */
+  peak: number;
+  /** Last note's MIDI. */
+  final: number;
+  /**
+   * Signed arch index: how much the melody rises to its peak versus where it
+   * settles. +1 a full arch (rises high, returns low), 0 flat/monotonic,
+   * negative when it ends above where it began relative to the climb.
+   */
+  archIndex: number;
+}
+
 export interface Prosody {
   noteCount: number;
   syllableCount: number;
@@ -35,6 +63,14 @@ export interface Prosody {
   ambitus: number | null;
   melismaRatio: number;
   melismaByPhrase: number[];
+  /** Mean notes-per-syllable of each phrase's FINAL syllable — the cadential melisma. */
+  melismaCadential: number;
+  /** Mean pitch minus the final note, in semitones — how high the melody sits above its rest. */
+  tessitura: number | null;
+  /** Melodic-interval statistics over adjacent within-phrase notes. */
+  intervals: IntervalStats;
+  /** The melodic arch: initial/peak/final and a signed arch index. */
+  arcus: Arcus | null;
   ictusRate: number;
   rhythmicProfile: RhythmicProfile;
   cadenceWeight: number;
@@ -62,6 +98,21 @@ export function computeProsody(phrases: Phrase[]): Prosody {
   let cadenceWeight = 0;
   const melismaByPhrase: number[] = [];
 
+  // Interval statistics — adjacent notes WITHIN a phrase; prevMidi resets to null
+  // at each phrase so a breath across a divisio is not counted as a leap.
+  const histogram: Record<number, number> = {};
+  let motions = 0, stepCount = 0, skipCount = 0, leapCount = 0, maxLeap = 0;
+  let prevMidi: number | null = null;
+
+  // Tessitura + arch: running MIDI sum, the first note, the peak, the last note.
+  let midiSum = 0;
+  let firstMidi: number | null = null;
+  let lastMidi = 0;
+  let peakMidi = -Infinity;
+
+  // Cadential melisma — the note count of each phrase's final sung syllable.
+  const cadentialMelismas: number[] = [];
+
   const closeGroup = () => {
     if (currentGroupSize > 0) {
       groupSizes.push(currentGroupSize);
@@ -73,20 +124,43 @@ export function computeProsody(phrases: Phrase[]): Prosody {
     phraseCount++;
     let phraseNotes = 0;
     let phraseSyllables = 0;
+    let lastSylNotes = 0; // notes on this phrase's most recent sung syllable
+    prevMidi = null;      // intervals never cross a phrase boundary (a breath)
 
     for (const syl of phrase.syllables) {
       if (syl.notes.length === 0) continue;
       phraseSyllables++;
       syllableCount++;
+      lastSylNotes = syl.notes.length;
 
       for (const note of syl.notes) {
+        const midi = note.pitch.midi;
         noteCount++;
         phraseNotes++;
-        if (note.pitch.midi < minMidi) minMidi = note.pitch.midi;
-        if (note.pitch.midi > maxMidi) maxMidi = note.pitch.midi;
+        if (midi < minMidi) minMidi = midi;
+        if (midi > maxMidi) maxMidi = midi;
         if (note.context.ictus) ictusCount++;
         if (note.performance.rhythmicShape === "arsic") arsicCount++;
         else theticCount++;
+
+        // Tessitura + arch running values.
+        midiSum += midi;
+        if (firstMidi === null) firstMidi = midi;
+        if (midi > peakMidi) peakMidi = midi;
+        lastMidi = midi;
+
+        // Adjacent-note interval, within the phrase only.
+        if (prevMidi !== null) {
+          const iv = midi - prevMidi;
+          histogram[iv] = (histogram[iv] ?? 0) + 1;
+          const abs = Math.abs(iv);
+          motions++;
+          if (abs > maxLeap) maxLeap = abs;
+          if (abs <= 2) stepCount++;
+          else if (abs <= 4) skipCount++;
+          else leapCount++;
+        }
+        prevMidi = midi;
 
         if (note.performance.rhythmicIndex === 1) {
           closeGroup();
@@ -96,6 +170,8 @@ export function computeProsody(phrases: Phrase[]): Prosody {
         }
       }
     }
+
+    if (phraseSyllables > 0) cadentialMelismas.push(lastSylNotes);
 
     if (phrase.divisio) {
       // Analytic bar-importance weights, one rung per divisio in the bar-line
@@ -124,6 +200,29 @@ export function computeProsody(phrases: Phrase[]): Prosody {
     ? groupSizes.reduce((s, n) => s + n, 0) / groupSizes.length
     : 0;
 
+  // Tessitura: mean height above the resting (final) note, in semitones.
+  const tessitura = noteCount > 0 ? midiSum / noteCount - lastMidi : null;
+
+  // Arch: the climb to the peak vs. the descent to the close, normalized by the
+  // total climb so a full rise-and-return reads ~+1 and a monotone rise reads ~0.
+  let arcus: Arcus | null = null;
+  if (firstMidi !== null) {
+    const climb = peakMidi - firstMidi;
+    const archIndex = climb > 0 ? (peakMidi - lastMidi) / climb : 0;
+    arcus = { initial: firstMidi, peak: peakMidi, final: lastMidi, archIndex };
+  }
+
+  const intervals: IntervalStats = {
+    histogram,
+    maxLeap,
+    leapRate: motions > 0 ? leapCount / motions : 0,
+    motus: { step: stepCount, skip: skipCount, leap: leapCount },
+  };
+
+  const melismaCadential = cadentialMelismas.length > 0
+    ? cadentialMelismas.reduce((s, n) => s + n, 0) / cadentialMelismas.length
+    : 0;
+
   return {
     phraseCount,
     noteCount,
@@ -132,6 +231,10 @@ export function computeProsody(phrases: Phrase[]): Prosody {
     ambitus: noteRange?.span ?? null,
     melismaRatio: syllableCount > 0 ? noteCount / syllableCount : 0,
     melismaByPhrase,
+    melismaCadential,
+    tessitura,
+    intervals,
+    arcus,
     ictusRate: noteCount > 0 ? ictusCount / noteCount : 0,
     rhythmicProfile: {
       arsic: arsicCount,

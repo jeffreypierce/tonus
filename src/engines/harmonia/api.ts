@@ -106,6 +106,12 @@ export function buildHarmonia(
   if (cosmosArray.length === 0) {
     throw new RangeError("harmonia requires at least one Cosmos");
   }
+  for (const c of cosmosArray) {
+    if (!c || typeof c !== "object" || !Array.isArray((c as Cosmos).bodies))
+      throw new Error(
+        "harmonia: input must be a Cosmos (from tonus.caelum) — its bodies are what get voiced",
+      );
+  }
 
   const temper = opts.temperamentum ?? buildTemper();
   const scale = resolveScale(temper);

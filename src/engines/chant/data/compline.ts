@@ -9,7 +9,8 @@
 //
 // Ordo structure after the traditional Roman Compline; seasonal assignment and
 // the Marian rotation follow standard practice, cross-checked against
-// bbloomf/compline (public domain). See docs/chant.md and BIBLIOGRAPHY.md.
+// [biblio: bloomfield-compline] (public domain). See docs/chant.md and
+// BIBLIOGRAPHY.md.
 
 import type { Season } from "../../cal/types.js";
 
