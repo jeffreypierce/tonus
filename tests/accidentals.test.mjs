@@ -60,12 +60,14 @@ describe("accidentals — standard channel", () => {
   });
 });
 
-describe("accidentals — rendered through inscriptio", () => {
+describe("accidentals — rendered through inscriptio (moderna carries the channel)", () => {
+  // HEJI and cents are modern analytical overlays; they render on the modern
+  // (moderna) staff, not on historical square notation.
   test("heji arrows appear in the SVG only under a just tuning", () => {
-    const pyth = tonus.inscriptio(tonus.notatio(chant()), { accidentals: "heji" });
+    const pyth = tonus.inscriptio(tonus.notatio(chant()), { notation: "moderna", accidentals: "heji" });
     const just = tonus.inscriptio(
       tonus.notatio(chant(), { temperamentum: tonus.temperamentum({ tuning: "ptolemy-intense" }) }),
-      { accidentals: "heji" },
+      { notation: "moderna", accidentals: "heji" },
     );
     const arrows = (svg) => (svg.match(/class="accidental"/g) || []).length;
     assert.equal(arrows(pyth.svg), 0);
@@ -75,13 +77,52 @@ describe("accidentals — rendered through inscriptio", () => {
   test("cents labels render as floating superscripts", () => {
     const just = tonus.inscriptio(
       tonus.notatio(chant(), { temperamentum: tonus.temperamentum({ tuning: "ptolemy-intense" }) }),
-      { accidentals: "cents" },
+      { notation: "moderna", accidentals: "cents" },
     );
     assert.ok((just.svg.match(/class="cents"/g) || []).length > 0);
   });
 
   test("heji under meantone surfaces the guard as a thrown error", () => {
     const meantone = tonus.notatio(chant(), { temperamentum: tonus.temperamentum({ tuning: "meantone" }) });
-    assert.throws(() => tonus.inscriptio(meantone, { accidentals: "heji" }), /just-expressible/);
+    assert.throws(() => tonus.inscriptio(meantone, { notation: "moderna", accidentals: "heji" }), /just-expressible/);
+  });
+});
+
+describe("accidentals — quadrata carries only GABC accidentals", () => {
+  // Square notation is historical; the modern intonation overlays don't belong.
+  test("quadrata rejects the heji overlay, pointing at moderna", () => {
+    const just = tonus.notatio(chant(), { temperamentum: tonus.temperamentum({ tuning: "ptolemy-intense" }) });
+    assert.throws(() => tonus.inscriptio(just, { accidentals: "heji" }), /moderna-only/);
+    assert.throws(() => tonus.inscriptio(just, { notation: "quadrata", accidentals: "heji" }), /moderna-only/);
+  });
+
+  test("quadrata rejects the cents overlay, pointing at moderna", () => {
+    assert.throws(() => tonus.inscriptio(tonus.notatio(chant()), { accidentals: "cents" }), /moderna-only/);
+  });
+
+  test("quadrata still renders the GABC flat (standard accidentals stay)", () => {
+    const flatted = tonus.notatio({ ...chant(), gabc: "(c3) A(gxg)b(h) (::)" });
+    const svg = tonus.inscriptio(flatted, { accidentals: "standard" }).svg;
+    assert.ok((svg.match(/class="accidental"/g) || []).length >= 1, "the GABC flat is drawn");
+    // The default (unset accidentals) also renders it — standard is the default.
+    const dflt = tonus.inscriptio(flatted).svg;
+    assert.ok((dflt.match(/class="accidental"/g) || []).length >= 1);
+  });
+});
+
+describe("accidentals — b molle under the default tuning (chain regression)", () => {
+  // Regression: the baseline table once disagreed with the engine's chain, so
+  // heji THREW and cents printed +29.3 on the single most common accidental in
+  // the repertoire. The baseline now derives from the chain itself.
+  const flatted = () => tonus.notatio(tonus.cantus({ gabc: "(c3) A(gxg)b(h) (::)" })[0]);
+
+  test("heji: a flatted chant under Pythagorean renders clean (no arrows, no throw)", () => {
+    const marks = computeAccidentals(flatted().tabula, "heji").filter(Boolean);
+    assert.equal(marks.length, 0);
+  });
+
+  test("cents: the flat's deviation from its own home intonation is zero", () => {
+    const marks = computeAccidentals(flatted().tabula, "cents").filter(Boolean);
+    for (const m of marks) assert.ok(Math.abs(parseFloat(m.label)) < 0.5, `label ${m.label}`);
   });
 });

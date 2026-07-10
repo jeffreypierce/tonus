@@ -79,7 +79,7 @@ export interface ChantTabulaRow {
   divisio: string | null;
   /** Index into score.cadences[] when this note forms a cadence; null otherwise. */
   cadenceRef: number | null;
-  /** Modal role: "final" | "tenor" | "mod" (modulation) | null if no mode or no match */
+  /** Modal role: "finalis" | "tenor" | "other" | null if no mode or no match */
   role: NoteRole;
   /** Guidonian short name (e.g. "g", "aa") — null for chromatic pitches with no gamut entry */
   name: string | null;

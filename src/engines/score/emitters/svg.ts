@@ -60,7 +60,7 @@ export interface SvgOpts {
   /** Draw a rubricated initial from the first lyric; the first system indents. */
   dropcap?: boolean;
   /** The liturgical red for dropcap and annotations. Default a sober red. */
-  rubrica?: string;
+  rubricaColor?: string;
   /** The intonation channel: standard accidentals, HEJI commas, or cents labels. */
   accidentals?: AccidentalMode;
   /** Baseline for the cents channel; the chant's home intonation by default. */
@@ -88,7 +88,7 @@ interface Resolved {
   title: string | null;   // headline
   rubric: string | null;  // corner annotation, or "auto"-derived
   dropcap: boolean;       // rubricated initial
-  rubrica: string;        // liturgical red
+  rubricaColor: string;   // liturgical red
 }
 
 function resolveOpts(o: SvgOpts): Resolved {
@@ -127,7 +127,7 @@ function resolveOpts(o: SvgOpts): Resolved {
     // "auto" is resolved in toSvg where the chant meta is in hand.
     rubric: typeof o.rubric === "string" ? o.rubric : null,
     dropcap: o.dropcap ?? false,
-    rubrica: o.rubrica ?? "#9E2B25",
+    rubricaColor: o.rubricaColor ?? "#9E2B25",
   };
 }
 
@@ -275,7 +275,7 @@ export function toSvg(
     header.push(
       `<text class="rubric" x="${r.padding}" y="${ry.toFixed(2)}" ` +
       `font-family="${esc(r.fontFamily)}" font-size="${size.toFixed(1)}" ` +
-      `font-style="italic" fill="${r.rubrica}">${esc(rubricText)}</text>`,
+      `font-style="italic" fill="${r.rubricaColor}">${esc(rubricText)}</text>`,
     );
   }
   // Push all systems below the header band.
@@ -368,7 +368,6 @@ export function toSvg(
 
   const renderPes = (lo: ChantTabulaRow, hi: ChantTabulaRow, atX: number): number => {
     let cx = atX;
-    cx += placeAccidental(lo, cx);
     if (lo.shape !== "punctum") {
       // Quilisma/special lower note: keep its glyph, stack a punctum above
       // sharing the right column, joined by a stem.
@@ -392,7 +391,6 @@ export function toSvg(
   // Clivis: a left stem, then two abutting square notes descending.
   const renderClivis = (hi: ChantTabulaRow, lo: ChantTabulaRow, atX: number): number => {
     let cx = atX;
-    cx += placeAccidental(hi, cx);
     body.push(stem(cx + r.stemWeight, hi.staffPosition, lo.staffPosition));
     const first = placeNote(hi, cx);
     if (!first) return cx;
@@ -406,7 +404,6 @@ export function toSvg(
     const inclinata = figure.every((f, i) => i === 0 || f.shape === "inclinatum");
     for (let i = 0; i < figure.length; i++) {
       const row = figure[i]!;
-      cx += placeAccidental(row, cx);
       if (prev && prev.pos === row.staffPosition)
         cx += r.staffInterval * 0.55;          /* strophae breathe (Solesmes) */
       const p = placeNote(row, cx);
@@ -425,10 +422,15 @@ export function toSvg(
     return prev?.inkRight ?? cx;
   };
 
-  const renderFigure = (figure: ChantTabulaRow[], atX: number): number => {
+  const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
+    // Solesmes practice: an accidental inflecting ANY note of a ligature is
+    // printed BEFORE the whole figure, at the inflected note's staff position —
+    // never interleaved mid-ligature. (Placing only the first note's mark
+    // silently dropped a flat on the upper note of a pes.)
+    let atX = atXIn;
+    for (const row of figure) atX += placeAccidental(row, atX);
     if (figure.length === 1) {
-      let cx = atX;
-      cx += placeAccidental(figure[0]!, cx);
+      const cx = atX;
       const p = placeNote(figure[0]!, cx);
       return p?.inkRight ?? cx;
     }
@@ -442,8 +444,7 @@ export function toSvg(
     }
     if (figure.length === 3 && dirs[0] === 1 && dirs[1] === -1) {
       // Torculus: three abutting notes with stems at both junctions.
-      let cx = atX;
-      cx += placeAccidental(figure[0]!, cx);
+      const cx = atX;
       const first = placeNote(figure[0]!, cx);
       if (!first) return cx;
       body.push(stem(first.inkRight + r.stemWeight, figure[0]!.staffPosition, figure[1]!.staffPosition));
@@ -458,8 +459,7 @@ export function toSvg(
       // note stacked at its end.
       const drop = figure[0]!.staffPosition - figure[1]!.staffPosition;
       if (drop >= 1 && drop <= 4) {
-        let cx = atX;
-        cx += placeAccidental(figure[0]!, cx);
+        const cx = atX;
         const swash = placeGlyph(
           ligaturaDesc(drop + 1), cx, yFor(figure[0]!.staffPosition, L, r), r,
           "note swash", dataAttrs(figure[0]!), r.noteScale,
@@ -482,8 +482,7 @@ export function toSvg(
     }
     if (figure.length === 3 && dirs[0] === 1 && dirs[1] === 1) {
       // Scandicus: first note, then a stacked pes on top.
-      let cx = atX;
-      cx += placeAccidental(figure[0]!, cx);
+      const cx = atX;
       const first = placeNote(figure[0]!, cx);
       if (!first) return cx;
       if (figure[1]!.staffPosition - figure[0]!.staffPosition > 1) {
@@ -522,15 +521,21 @@ export function toSvg(
   const minLyricGap = r.lyricSize * 0.25;
   let prevLyricRight = -Infinity;
 
-  // ── Walk figures grouped by (syllableIndex, neumeGroup) ──
+  // ── Walk figures grouped by (phraseIndex, syllableIndex, neumeGroup) ──
+  // syllableIndex resets per phrase, so the phrase must be part of the key:
+  // without it, phrase N's last figure and phrase N+1's first merge whenever
+  // the indices collide, silently dropping the second figure's lyric and the
+  // divisio between them.
   let i = 0;
   let prevSyllable = -1;
+  let prevPhrase = -1;
   let afterDivisio = false;
   while (i < rows.length) {
-    const { syllableIndex, neumeGroup } = rows[i]!;
+    const { phraseIndex, syllableIndex, neumeGroup } = rows[i]!;
     let j = i;
     while (
       j < rows.length &&
+      rows[j]!.phraseIndex === phraseIndex &&
       rows[j]!.syllableIndex === syllableIndex &&
       rows[j]!.neumeGroup === neumeGroup
     ) j++;
@@ -542,7 +547,7 @@ export function toSvg(
       x = drawClef(activeClef, x + r.interGlyph);
     }
 
-    const newSyllable = syllableIndex !== prevSyllable;
+    const newSyllable = syllableIndex !== prevSyllable || phraseIndex !== prevPhrase;
     if (newSyllable && prevSyllable !== -1) {
       x += afterDivisio ? 0 : r.interSyllable;
       if (figure[0]!.wordStart && !afterDivisio) x += r.interWord;
@@ -615,6 +620,7 @@ export function toSvg(
     }
 
     prevSyllable = syllableIndex;
+    prevPhrase = phraseIndex;
     i = j;
   }
 
@@ -721,7 +727,7 @@ export function toSvg(
       dropcapSvgs.push(
         `<text class="dropcap" x="${(r.padding).toFixed(2)}" y="${y.toFixed(2)}" ` +
         `font-family="${esc(r.fontFamily)}" font-size="${size.toFixed(1)}" ` +
-        `fill="${r.rubrica}">${esc(initial)}</text>`,
+        `fill="${r.rubricaColor}">${esc(initial)}</text>`,
       );
     }
   }

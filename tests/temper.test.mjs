@@ -69,10 +69,13 @@ describe("buildTemper", () => {
     assert.equal(note.midi, 62); // C4=60 + 2
   });
 
-  test("unknown tuning name falls through without error", () => {
-    const t = buildTemper({ tuning: "my-custom-tuning" });
+  test("an unknown tuning name throws with guidance (the builder contract)", () => {
+    // A label with no scale would otherwise resolve a silent Pythagorean under
+    // a custom name — the plausible-looking answer the error contract forbids.
+    // A custom NAME is legitimate when it arrives WITH a scale:
+    assert.throws(() => buildTemper({ tuning: "my-custom-tuning" }), /Unknown tuning/);
+    const t = buildTemper({ tuning: "my-custom-tuning", scale: ["9/8", "5/4", "4/3", "3/2", "5/3", "15/8", "2/1"] });
     assert.equal(t.tuning, "my-custom-tuning");
-    assert.equal(t.ratios.length, 12);
   });
 });
 
@@ -147,11 +150,14 @@ describe("ptolemaic tunings", () => {
   test("ptolemy-intense differs from pythagorean", () => {
     const just = buildTemper({ tuning: "ptolemy-intense", mode: 1 });
     const pyth = buildTemper({ tuning: "pythagorean", mode: 1 });
-    // Dorian's minor third D–F: pythagorean 32/27 ≈ 294¢, just 6/5 ≈ 316¢ —
-    // the two systems place the same degree differently.
-    const justThird = just.ratios[5] / just.ratios[2];
-    const pythThird = pyth.ratios[5] / pyth.ratios[2];
-    assert.ok(Math.abs(justThird - pythThird) > 0.01, "should differ from pythagorean");
+    // The classic syntonic difference is the THIRD ABOVE C: just 5/4 (386¢)
+    // vs pythagorean 81/64 (408¢) — one comma apart. (D–F is the wrong probe:
+    // both systems tune D = 9/8 and F = 4/3, so that third is 32/27 in each;
+    // the old assertion only "passed" while the chain misspelled F as E♯.)
+    const justE = just.ratios[4] / just.ratios[0];
+    const pythE = pyth.ratios[4] / pyth.ratios[0];
+    assert.ok(Math.abs(justE - pythE) > 0.01, "should differ from pythagorean");
+    assert.ok(Math.abs(justE * (justE < 1 ? 2 : 1) - 5 / 4) < 1e-9, "just E is 5/4 above C");
   });
 
   test("ptolemy-intense gives each mode its authentic interval qualities", () => {
@@ -580,5 +586,43 @@ describe("tonus", () => {
   test("throws when mode is auto", () => {
     const t = buildTemper();
     assert.throws(() => t.tonus(), /explicit mode/);
+  });
+});
+
+describe("the Pythagorean chain spelling (E♭–G♯)", () => {
+  // Regression: an ascending-only chain from C once spelled F as E♯ — a wolf
+  // ut–fa of 521.5¢ — and b molle as A♯, which broke the heji baseline and
+  // contradicted harmonia's own pure F.
+  test("ut–fa is a pure fourth (F is F, not E♯)", () => {
+    const t = buildTemper({ tuning: "pythagorean" });
+    const ratio = t.nota("F4").hz / t.nota("C4").hz;
+    assert.ok(Math.abs(ratio - 4 / 3) < 1e-9, `C–F = ${ratio}, expected 4/3`);
+  });
+
+  test("b molle sits on the flat side of the chain", () => {
+    const t = buildTemper({ tuning: "pythagorean" });
+    // B♭ a pure fourth over F (chain …E♭–B♭–F–C…): offset ≈ −9.78¢ from ET.
+    const bb = t.nota(70); // B♭4 as MIDI (integer stays 12-TET? no — nota resolves through the tuning)
+    assert.ok(Math.abs(bb.offset - -9.78) < 0.05, `B♭ offset ${bb.offset}, expected ≈ −9.78 (flat side)`);
+  });
+});
+
+describe("the ratio table contract (fold regression)", () => {
+  // Regression: after the E♭–G♯ respell, the normalized table came out
+  // octave-scrambled (A read 0.75, ratio() never matched a step) until the
+  // build folds every pitch class into [1, 2) above the root.
+  test("ratios sit in [1, 2) and cents ascend per pitch class", () => {
+    const t = buildTemper({ root: 0 });
+    for (const r of t.ratios) assert.ok(r >= 1 && r < 2, `ratio ${r}`);
+    for (let i = 1; i < 12; i++) assert.ok(t.cents[i] > t.cents[i - 1], `cents[${i}]`);
+  });
+
+  test("ratio('3/2') lands on the tenor of mode 1", () => {
+    const t = buildTemper({ mode: 1 });
+    const r = t.ratio("3/2");
+    assert.equal(r.step?.nomen, "Alamire");
+    assert.equal(r.step?.degree, 5);
+    assert.equal(r.step?.role, "tenor");
+    assert.equal(t.nota("A4").ratio, 1.5);
   });
 });

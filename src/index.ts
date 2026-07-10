@@ -92,6 +92,19 @@ export {
   ritusToGrade,
 } from "./engines/cal/types.js";
 
+// The generation surface: reference data and helpers for code that builds on
+// tonus rather than querying it. A downstream generator imports these from
+// "tonus", never from dist/ internals.
+export { MODES } from "./engines/temper/data/modes.js";
+export { TONES, getTone, getDifferentia } from "./engines/temper/data/tones.js";
+export { midiToGabc, gabcToMidi } from "./engines/temper/gabc.js";
+export {
+  syllabifyWord,
+  syllabifyPhrase,
+  selectVowel,
+} from "./engines/chant/syllabify.js";
+export type { PsalmTone, Differentia } from "./engines/temper/data/tones.js";
+
 export type {
   Feast, FeastQuery, Pascha, Season, Grade,
   Chant, CantusQuery, OrdinaryChant,

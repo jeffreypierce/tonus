@@ -164,9 +164,16 @@ export function parseScala(input: string): ScalaFile {
 
 const PURE_FIFTH = 3 / 2;
 const SYNTONIC_COMMA = 81 / 80;
-// The circle of fifths, as chromatic pitch classes: C G D A E B F♯ … stacking
-// twelve 3/2s. buildPythagoreanRatios walks this and octave-folds each.
-const FIFTH_TO_CHROM = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+// The chain of fifths as chromatic pitch classes, running E♭–G♯:
+//   E♭ B♭ F C G D A E B F♯ C♯ G♯
+// The naturals sit F–B (ut–fa is a pure 4/3 — b molle exists precisely to make
+// that fourth over F), b molle and E♭ take the flat side, the ficta sharps
+// (F♯ C♯ G♯) the sharp side. This is the received medieval dodecachord; an
+// ascending-only chain from C would spell F as E♯ (a wolf ut–fa of 521.5¢)
+// and b molle as A♯. buildPythagoreanRatios walks this and octave-folds each.
+// The heji/cents baseline in score/emitters/accidentals.ts derives from this
+// same chain via pythagoreanCentsByPc() — keep them coupled.
+const FIFTH_TO_CHROM = [3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8];
 
 // Ptolemy's three diatonic genera [biblio: ptolemy-harmonics, Harmonics I.15–16],
 // each a tetrachord (1/1 … 4/3) doubled up a 3/2 to fill the octave:
@@ -183,6 +190,19 @@ export function getPtolemaicRatios(tuning: string): string[] | undefined {
   return PTOLEMAIC[tuning];
 }
 
+/**
+ * The pure-fifth chain's ET-cents deviation per pitch class, anchored A = 0
+ * (the a4-reference anchor `offset` carries under the default tuning). The
+ * heji/cents accidental baseline reads THIS, so the emitters and the engine
+ * can never disagree about the chain's spelling.
+ */
+export function pythagoreanCentsByPc(): number[] {
+  const ratios = buildPythagoreanRatios(0); // C-anchored, folded to [1, 2)
+  const cents = ratios.map((r, pc) => 1200 * Math.log2(r) - 100 * pc);
+  const anchor = cents[9]!;
+  return cents.map((c) => Math.round((c - anchor) * 100) / 100);
+}
+
 function buildPythagoreanRatios(commaN: number): number[] {
   const tf = commaN === 0
     ? PURE_FIFTH
@@ -192,8 +212,12 @@ function buildPythagoreanRatios(commaN: number): number[] {
     const pc = FIFTH_TO_CHROM[k]!;
     out[pc] = foldOct(tf ** k);
   }
+  // Anchor on C and fold each pitch class into the C-register [1, 2): the
+  // table's contract is "ascending within the C octave, then normalized to
+  // root". The E♭–G♯ chain reaches some pcs below C, so without this fold the
+  // table comes out octave-scrambled (A at 27/32, a broken ratio() matcher).
   const root = out[0] ?? 1;
-  for (let i = 0; i < 12; i++) out[i] = (out[i] ?? 1) / root;
+  for (let i = 0; i < 12; i++) out[i] = foldOct((out[i] ?? 1) / root);
   return out;
 }
 

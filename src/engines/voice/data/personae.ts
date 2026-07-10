@@ -35,7 +35,7 @@ export const PERSONAE: Record<PersonaName, Persona> = {
   baritonus: { tract: 1.12 },
   tenor: { tract: 1.02, cantoris: 0.7 }, // chant workhorse; strong cantoris
   contratenor: { tract: 0.98, nisus: 0.3, cantoris: 0.55 }, // falsettist, heady
-  altus: { tract: 0.94 },
+  altus: { tract: 0.84 },
   superius: { tract: 0.9, cantoris: 0.6 }, // highest adult voice; open, carrying
   puer: { tract: 0.82, aetas: 0.12, nisus: 0.45 }, // boy treble; bright, young
 };

@@ -1,5 +1,35 @@
 # tonus — Code Standards
 
+## Code standards
+
+- **The two API layers.** Engine functions (`getX` / `buildX`, in `src/engines/`)
+  are internal and never exported; the public API is the Latin nouns assembled in
+  `src/index.ts`. Only `Score` and `Temperamentum` are classes with methods,
+  spec-mandated rather than a pattern to copy.
+- **The two boundaries.** tonus computes what is derivable from one chant or one
+  moment with received theory (the analysis boundary); corpus-scale census and
+  editorial calibration live in the sibling `tonus-enodatio` and re-enter only as
+  generated data with provenance. And `score` analyzes while `inscriptio` draws
+  (the rendering boundary): rendering is a standalone function taking a `Score`,
+  and analysis tracks live downstream.
+- **The query/builder contract.** A no-match is `[]`; a malformed query throws.
+  Builders throw on invalid input and carry an `errors` field for parse-level
+  issues.
+- **Naming and register.** Public methods are Latin nouns; Latin keys carry
+  authentic Latin content, English keys carry machine codes and data; engine
+  internals and outputs are English. Types are PascalCase, constant maps
+  SCREAMING_SNAKE, module caches `_camelCase`.
+- **Data patterns.** Large corpora are typed `const` arrays; indices and caches
+  build lazily on first access, never at load. Generated data lives in `src/data/`
+  and is never hand-edited; hand-built editorial tables live beside the engine
+  that owns them.
+- **Comments carry the reasoning.** Theory, provenance, and editorial decisions
+  sit in the code next to what they explain: module headers for a file's doctrine,
+  inline blocks at specific non-obvious choices. A comment never restates a
+  signature.
+- **Tests.** `node:test` + `node:assert/strict`, one file per public method,
+  importing from `dist/` not `src/`. Green tests and clean `tsc` at every commit.
+
 ---
 
 ## TypeScript
@@ -43,18 +73,18 @@ Typical module layout:
 
 ## Naming
 
-| Thing                            | Convention         | Example                                        |
-| -------------------------------- | ------------------ | ---------------------------------------------- |
-| Public API function              | Latin noun         | `cantus`, `festum`, `temperamentum`, `notatio` |
-| Public field, Latin content      | Latin key          | `nomen`, `ritus`, `tempus`, `genus`, `modus`   |
-| Public field, machine code/datum | English key        | `season`, `grade`, `mode`, `date`, `masses`    |
-| Engine function                  | camelCase verb     | `getFeast`, `buildScore`, `detectAspects`      |
-| Internal helper                  | camelCase          | `resolveMasses`, `computeSpeed`                |
-| Type / interface                 | PascalCase         | `Feast`, `Body`, `ChantMetrics`                |
-| Type union                       | PascalCase         | `Season`, `CanonicalHour`, `BodyName`          |
-| Constant map/array               | SCREAMING_SNAKE    | `ORBITAL_ELEMENTS`, `SEASON_LABELS`            |
-| Module-level cache               | `_camelCase`       | `_byId`, `_calCache`                           |
-| Options interface                | noun + `Opts`      | `CaelumQuery`, `TemperamentumOpts`             |
+| Thing                            | Convention      | Example                                        |
+| -------------------------------- | --------------- | ---------------------------------------------- |
+| Public API function              | Latin noun      | `cantus`, `festum`, `temperamentum`, `notatio` |
+| Public field, Latin content      | Latin key       | `nomen`, `ritus`, `tempus`, `genus`, `modus`   |
+| Public field, machine code/datum | English key     | `season`, `grade`, `mode`, `date`, `masses`    |
+| Engine function                  | camelCase verb  | `getFeast`, `buildScore`, `detectAspects`      |
+| Internal helper                  | camelCase       | `resolveMasses`, `computeSpeed`                |
+| Type / interface                 | PascalCase      | `Feast`, `Body`, `ChantMetrics`                |
+| Type union                       | PascalCase      | `Season`, `CanonicalHour`, `BodyName`          |
+| Constant map/array               | SCREAMING_SNAKE | `ORBITAL_ELEMENTS`, `SEASON_LABELS`            |
+| Module-level cache               | `_camelCase`    | `_byId`, `_calCache`                           |
+| Options interface                | noun + `Opts`   | `CaelumQuery`, `TemperamentumOpts`             |
 
 ---
 
@@ -84,13 +114,13 @@ corpus observatory, a sibling repo pinned to a tonus version) and re-enters tonu
 only as **generated data tables with provenance headers** — the corpus-data
 separation pattern (`src/data/` holds generated data; hand-built editorial tables
 live beside the engine that owns them). The library never runs a census; it cites
-one. A curated figure taken *from a treatise* (not from a census) is received
+one. A curated figure taken _from a treatise_ (not from a census) is received
 theory and may be hand-authored here, with its `[biblio:]` citation.
 
 **The rendering boundary — `score` analyzes, `inscriptio` draws.** Rendering is
-not a property of an analysis result; it is a standalone function that *takes* a
+not a property of an analysis result; it is a standalone function that _takes_ a
 `Score`. tonus inks **the score itself** — both notation species, layout, lyrics,
-declarative highlighting — and nothing else. Analysis *tracks* (chironomy waves,
+declarative highlighting — and nothing else. Analysis _tracks_ (chironomy waves,
 tonarium lanes, anything drawn above or below the staff systems) are downstream
 components in the publication, built on the geometry contract `inscriptio`
 returns. One emitter format: SVG. The crisp rule: `inscriptio` inks the score;
@@ -100,8 +130,8 @@ anything outside the staff systems is a track, and tracks live downstream.
 
 ## Public API contract
 
-**Query functions** return arrays. A *no-match* returns `[]` — an empty result is
-data, never an error. But a *malformed query* — an empty `{}` or an unknown key —
+**Query functions** return arrays. A _no-match_ returns `[]` — an empty result is
+data, never an error. But a _malformed query_ — an empty `{}` or an unknown key —
 is a caller bug, not a search that found nothing, and throws with guidance:
 
 ```ts
@@ -171,7 +201,7 @@ Data files carry the provenance of their data next to the data. Judgment governs
 which detail goes where.
 
 This is not license to comment the self-evident (`i++ // increment`). It is the
-*reasoning and sourcing* a maintainer or curious reader needs, at the code. A
+_reasoning and sourcing_ a maintainer or curious reader needs, at the code. A
 comment still never merely restates a signature.
 
 Cite sources by key into the central bibliography (see Documentation):
@@ -195,19 +225,19 @@ interface Note {
 
 ## Documentation
 
-Code is level 3 of a three-level documentation ladder (interactive → `docs/*.md`
-→ code), each level linking down into the next; code is the bottom of the well,
-holding the deepest material. The `## Comments` rules above are how that plays out
-in `src/`. The whole model — the three levels, the centralized bibliography, and
-the one-voice-three-volumes register — is owned by **`DOCS-STANDARDS.md`**. Read
-it before writing prose at any level, including code comments.
+Code is level 2 of a two-level documentation ladder (`docs/*.md` → code), the top
+level linking down into it; code is the bottom of the well, holding the deepest
+material. The `## Comments` rules above are how that plays out in `src/`. The
+whole model — the two levels, the centralized bibliography, and the
+one-voice-two-volumes register — is owned by **`DOCS-STANDARDS.md`**. Read it
+before writing prose at any level, including code comments.
 
 ---
 
 ## Error handling
 
 **Query functions** return `[]` on no match. A malformed query (empty `{}` or an
-unknown key) throws with guidance — see *Public API contract* above for the
+unknown key) throws with guidance — see _Public API contract_ above for the
 no-match-vs-caller-bug distinction:
 
 ```ts
@@ -223,7 +253,7 @@ const score = tonus.notatio(chant);
 score.errors; // → ParseError[] from GABC parse
 ```
 
-Callers check `.errors` before using the result. Downstream methods on a context object with errors should fail gracefully (return empty/null results, not throw).
+Callers check `.errors` before using the result. Downstream methods on a context object with errors should fail soft: return empty/null results, not throw.
 
 TypeScript handles type-level mistakes at compile time — no runtime guards needed for wrong argument types.
 

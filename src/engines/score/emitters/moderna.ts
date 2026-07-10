@@ -18,6 +18,9 @@
 // It returns the same { svg, geometry } contract as quadrata, so downstream
 // tracks and inscriptio treat both species uniformly.
 import { GLYPHS, GLYPH_UPM } from "../../../data/smufl-glyphs.js";
+import {
+  computeAccidentals, type AccidentalMode, type AccidentalMark,
+} from "./accidentals.js";
 import type { NoteGeometry, SvgResult, SvgOpts } from "./svg.js";
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Chant } from "../../chant/types.js";
@@ -62,6 +65,14 @@ function glyph(name: string, x: number, y: number, scale = SCALE): string {
     `<path d="${g.path}" fill="#111"/></g>`;
 }
 
+/** A glyph carrying an SVG class (so downstream tracks / tests can select it). */
+function classedGlyph(cls: string, name: string, x: number, y: number, scale = SCALE): string {
+  const g = GLYPHS[name];
+  if (!g) return "";
+  return `<g class="${cls}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})">` +
+    `<path d="${g.path}" fill="#111"/></g>`;
+}
+
 function notehead(x: number, y: number, small: boolean, half: boolean): string {
   const s = SCALE * (small ? 0.68 : 1.0);
   const w = 295 * s;
@@ -95,6 +106,22 @@ function quilismaMark(x: number, y: number): string {
   const s = SCALE * 0.92;
   const w = 416 * s;
   return glyph(G.quilisma, x - NH_W / 2 - w - 1.2, y + 149 * s, s);
+}
+
+// Accidental glyph scale (matches quadrata's noteScale * 0.62 factor).
+const ACC_SCALE = SCALE * 0.62;
+const ACC_GAP = 1.2; // trailing air between accidental and notehead (as quilisma)
+
+/** Horizontal room an accidental glyph reserves left of the notehead. */
+function accidentalWidth(code: string): number {
+  const g = GLYPHS[code];
+  if (!g) return 0;
+  return g.advance * ACC_SCALE + ACC_GAP;
+}
+
+/** Draw a standard/HEJI accidental glyph left of the notehead at (x, y). */
+function accidentalMark(x: number, y: number, code: string): string {
+  return classedGlyph("accidental", code, x - NH_W / 2 - accidentalWidth(code), y, ACC_SCALE);
 }
 
 const DIV_KIND: Record<string, string> = {
@@ -134,6 +161,13 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const width = options.width ?? null;
   const systemGap = options.systemGap ?? SYSTEM_GAP_DEFAULT;
   const systemHeight = LYRIC_Y + 24 + systemGap;
+
+  // Intonation channel: precompute each row's accidental/cents mark once (the
+  // repeat-suppression and heji guard live in the engine), keyed by identity.
+  const accMode: AccidentalMode = options.accidentals ?? "standard";
+  const marks = computeAccidentals(rows, accMode, options.centsBaseline ?? "pythagorean");
+  const markByRow = new Map<Row, AccidentalMark>();
+  rows.forEach((row, i) => { const m = marks[i]; if (m) markByRow.set(row, m); });
 
   const body: string[] = [];
   const slurs: string[] = [];
@@ -180,6 +214,8 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     const notePos: Array<{ mx: number; my: number; steps: number }> = [];
     for (const r of srows) {
       if (r.quilisma) nx += 9.6;      // room for the fused squiggle
+      const mk = markByRow.get(r);
+      if (mk?.kind === "glyph") nx += accidentalWidth(mk.glyph!); // room for the accidental
       const { y, steps } = writtenY(r.spn, systemY);
       notePos.push({ mx: nx, my: y, steps });
       nx += ADV + 4.6 * r.mora;
@@ -192,6 +228,13 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       const { mx, my, steps } = notePos[i]!;
       const onLine = steps % 2 === 0;
       if (r.quilisma) body.push(quilismaMark(mx, my));
+      const mk = markByRow.get(r);
+      if (mk?.kind === "glyph") body.push(accidentalMark(mx, my, mk.glyph!));
+      else if (mk?.kind === "cents")
+        body.push(
+          `<text class="cents" x="${mx.toFixed(2)}" y="${(my - MSP).toFixed(2)}" ` +
+          `font-size="7.5" fill="#111" font-family="'Crimson Pro', Georgia, serif">${esc(mk.label ?? "")}</text>`,
+        );
       body.push(notehead(mx, my, r.liquescent, r.mora === 2));
       if (r.mora === 1) body.push(moraDots(mx, my, onLine));
       placements.push({ row: r, x: mx, y: my, system, systemY });

@@ -83,3 +83,34 @@ test("accordatio: partial vis moves partway to the lattice", () => {
   const half = v.formantes("a", { ad: [plain + 200], vis: 0.5 })[0].freqHz;
   assert.ok(Math.abs(half - (plain + 100)) < 1e-9);
 });
+
+test("accordatio: vis defaults to 1 (fully tuned)", () => {
+  const v = tonus.vox("tenor");
+  const lattice = [500, 1000, 2000, 3000, 4000];
+  assert.deepEqual(
+    v.formantes("i", { ad: lattice }),
+    v.formantes("i", { ad: lattice, vis: 1 }),
+  );
+});
+
+test("accordatio: a non-lattice ad throws with guidance", () => {
+  const v = tonus.vox("tenor");
+  const temperShaped = { tuning: "pythagorean" }; // not a lattice
+  assert.throws(() => v.formantes("a", { ad: temperShaped }), /array of target Hz/);
+  assert.throws(() => v.formantes("a", { ad: [440, NaN] }), /non-finite/);
+});
+
+test("liquescentia: formants stay ascending under every coda at full depth", () => {
+  const v = tonus.vox("tenor");
+  for (const vowel of ["a", "e", "i", "o", "u"]) {
+    for (const coda of ["m", "n", "l", "j", "w"]) {
+      const bands = v.liquescentia(vowel, coda, 1);
+      for (let i = 1; i < bands.length; i++) {
+        assert.ok(
+          bands[i].freqHz > bands[i - 1].freqHz,
+          `${vowel}/${coda}: F${i} ${bands[i - 1].freqHz} !< F${i + 1} ${bands[i].freqHz}`,
+        );
+      }
+    }
+  }
+});

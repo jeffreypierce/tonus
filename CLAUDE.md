@@ -18,16 +18,19 @@ working in the repo; the detailed rules live in the standards docs below.
   downstream, built on the geometry contract `inscriptio` returns. One emitter
   format: SVG.
 
-Both are stated in full in `CODE-STANDARDS.md` → *Boundaries*.
+Both are stated in full in `.claude/standards/CODE-STANDARDS.md` → *Boundaries*.
 
 ## Standards docs — the source of truth
 
-- **`CODE-STANDARDS.md`** — TypeScript/ESM rules, naming, the two API layers, the
-  query/builder contract (query = returns `[]` on no-match but **throws on a
-  malformed query**; builder = throws on invalid input), data patterns, comment
-  doctrine ("the code is authoritative").
-- **`DOCS-STANDARDS.md`** — the three-level documentation ladder (interactive →
-  `docs/*.md` → code), the centralized bibliography, and the one-voice register.
+The two standards live in `.claude/standards/` (agent-facing, tracked, off the
+public doc surface):
+
+- **`.claude/standards/CODE-STANDARDS.md`** — TypeScript/ESM rules, naming, the
+  two API layers, the query/builder contract (query = returns `[]` on no-match but
+  **throws on a malformed query**; builder = throws on invalid input), data
+  patterns, comment doctrine ("the code is authoritative").
+- **`.claude/standards/DOCS-STANDARDS.md`** — the two-level documentation ladder
+  (`docs/*.md` → code), the centralized bibliography, and the one-voice register.
   Read it before writing prose at any level, including code comments.
 - **`BIBLIOGRAPHY.md`** — the keyed bibliography; cite as `[biblio: key]`.
 
@@ -45,7 +48,7 @@ Engine internals are English (`getFeast`, `buildScore`). Output data is English.
   from `dist/`, never `src/`** — always build before testing (the test script
   does).
 - `npx tsc --noEmit` — typecheck without emit.
-- Green tests **and** clean `tsc` at every commit. (Current floor: 355 tests.)
+- Green tests **and** clean `tsc` at every commit. (Current floor: 457 tests.)
 
 ## The corpus pipeline (sibling repo)
 

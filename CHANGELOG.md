@@ -4,9 +4,9 @@ All notable changes to tonus. Newest first.
 
 ## 0.2.0
 
-The "wrap-up" release — tonus as a finished library. Rendering becomes a first-
-class engine, the per-chant analysis chart is completed, a synthetic voice
-joins, and the emitter surface is settled on one format.
+Rendering becomes a standalone engine (`inscriptio`), the per-chant analysis
+chart is completed, a voice engine is added, and the emitter surface settles on
+one format (SVG).
 
 ### Added
 
@@ -15,22 +15,32 @@ joins, and the emitter surface is settled on one format.
   spacing pass: `"quadrata"` (square-note, SMuFL glyphs baked inline) and
   `"moderna"` (modern round-note transcription — treble-8 clef, engraved slurs,
   after the Lomer practice). A multi-system **layout engine** (`width`,
-  `systemGap`, `custos`, `until`), **front matter** (`title`, `rubric` /
-  `annotation: "auto"`, `dropcap`, `rubrica`), and a `highlight` hook.
+  `systemGap`, `custos`) and **front matter** (`title`, `rubric` /
+  `annotation: "auto"`, `dropcap`, `rubricaColor`).
 - **The geometry contract** — `geometry: NoteGeometry[]`, one entry per note in
   tabula order (system, x, y, systemY). A public API: downstream analysis tracks
   build on it instead of scraping the SVG.
-- **The intonation channel** — `accidentals: "standard" | "heji" | "cents"`.
-  HEJI comma accidentals are baselined on the Pythagorean chain (tonus's default
-  tuning), so a Pythagorean chant renders clean and syntonic-comma arrows bloom
-  only under a just preset; meantone is not just, so `heji` throws under it.
-  `cents` labels signed deviations against `"pythagorean"` (default) or `"et"`.
+- **The intonation channel** — `accidentals: "standard" | "heji" | "cents"`, a
+  **moderna** overlay. HEJI comma accidentals are baselined on the Pythagorean
+  chain (tonus's default tuning), so a Pythagorean chant renders clean and
+  syntonic-comma arrows bloom only under a just preset; meantone is not just, so
+  `heji` throws under it. `cents` labels signed deviations against `"pythagorean"`
+  (default) or `"et"`. Square notation (`quadrata`) carries only the accidentals
+  GABC itself expresses (flat / natural / sharp) — the HEJI and cents overlays are
+  modern analytical marks, so quadrata throws when asked for them.
 - **Score metrics** on `prosody`: interval statistics (histogram, maxLeap,
   leapRate, step/skip/leap `motus`), `tessitura`, the melodic `arcus`
   (initial/peak/final + arch index), `melismaCadential`; and conveniences
   `phrase.noteCount` / `phrase.syllableCount` / `syllable.melisma`.
-- **`vox` and `chorus`** — a synthetic singing voice as formant and spectrum
+- **`vox` and `chorus`** — a singing voice modelled as formant and spectrum
   data, and seeded ensembles.
+- **The generation surface** — reference data and helpers ship as named exports
+  beside the namespace: `MODES`, `TONES` / `getTone` / `getDifferentia`,
+  `midiToGabc` / `gabcToMidi`, `syllabifyWord` / `syllabifyPhrase` /
+  `selectVowel`, with the types `PsalmTone` and `Differentia`. A downstream
+  generator imports everything from `"tonus"`, never from `dist/` internals.
+- **`docs/` ships in the package** — the documentation renders from the
+  installed tarball, pinned to the version it describes.
 
 ### Changed
 
@@ -43,6 +53,37 @@ joins, and the emitter surface is settled on one format.
   not an empty result; it throws with guidance (matching the `festum` contract).
 - NABC pipes stripped from the corpus (`(notes|nabc)` → `(notes)`), with a
   corpus-wide guard test.
+
+### Fixed (pre-release review)
+
+- **The Pythagorean chain is the medieval dodecachord (E♭–G♯).** The chain had
+  stacked twelve fifths ascending from C, spelling F as E♯ — a 521.5¢ wolf
+  ut–fa — and b molle as A♯, so `temperamentum` disagreed with `harmonia`'s own
+  pure F. The naturals now sit F–B with b molle and E♭ on the flat side, the
+  ficta sharps on the sharp side; the heji/cents baseline derives from the same
+  chain constant, so a flatted chant under the default tuning renders clean
+  (it had thrown).
+- **Quadrata figure grouping is phrase-aware.** A single-syllable phrase
+  followed by another phrase merged figures across the divisio, silently
+  dropping the second lyric and the divisio itself. An accidental inflecting
+  any note of a ligature now prints before the whole figure (Solesmes
+  practice) instead of vanishing on non-initial notes.
+- **Canticles by name resolve their own texts.** `magnificat` and
+  `nunc dimittis` pointed at the wrong psalter rows (one returned the Symbolum
+  Athanasium); `te deum` is withdrawn — the Te Deum is not psalmody.
+- **Formula step-skeletons count Apel's degrees.** Octave-aware relative to the
+  final's register: the mode-5 tenor reads +4, where the old ±half-octave fold
+  read −3. (Cadence figures keep their deliberate local-contour fold.)
+- **The register doctrine at the seams.** `Matins.nomen` / `Matins.ritus`
+  (were `name` / `rank`), `PsalmTone.nomen`, and `rubricaColor` (was `rubrica`,
+  a Latin key that took a CSS color string).
+- **The error contract enforced across the surface.** `notatio`, `festum`,
+  `caelum`, `matutinum`, `harmonia`, `proprium`, `temperamentum`, and `vox`
+  throw with guidance on junk input instead of raw TypeErrors or silent
+  fallbacks; a bare `chorus()` sings (the schola is the default); `psalmus`
+  no longer stamps the wall-clock year into `source.year` (determinism);
+  `iter` honours the `latinitas` shift; a user-GABC `office-part` header
+  normalizes to its OfficeCode.
 
 ### Removed
 
@@ -101,7 +142,7 @@ joins, and the emitter surface is settled on one format.
 
 - **Modulation detection** (`score.modulations`) — where the tonal centre leans
   away from the home mode, calibrated against Suñol.
-- **Richer modal affinity** — degree-, ictus-, and cadence-weighted, with ranked
+- **Modal affinity** — degree-, ictus-, and cadence-weighted, with ranked
   initials after Rockstro.
 - **`modus()`** tunes its finalis, tenor, and ambitus through the temperamentum.
 

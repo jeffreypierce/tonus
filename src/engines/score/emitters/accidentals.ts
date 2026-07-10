@@ -22,6 +22,7 @@
 // chain per pitch class — subtracting it yields the deviation FROM Pythagorean,
 // which is what heji and cents-pythagorean render.
 import type { ChantTabulaRow } from "../tabula.js";
+import { pythagoreanCentsByPc } from "../../temper/scale.js";
 
 export type AccidentalMode = "standard" | "heji" | "cents";
 export type CentsBaseline = "pythagorean" | "et";
@@ -36,13 +37,11 @@ export interface AccidentalMark {
   label?: string;
 }
 
-// The Pythagorean chain's ET-cents deviation per pitch class (C=0). A fixed
-// mathematical fact: the pure-fifth chain read against equal temperament.
-// Matches the offsets a note carries under the default (Pythagorean) tuning.
-const PYTH_BASELINE: Record<number, number> = {
-  0: -5.87, 1: -9.78, 2: -1.96, 3: -13.69, 4: 1.96, 5: 15.64,
-  6: -7.82, 7: -3.91, 8: -11.73, 9: 0.0, 10: -15.64, 11: 3.91,
-};
+// The Pythagorean chain's ET-cents deviation per pitch class, derived from the
+// SAME E♭–G♯ chain the engine tunes with (temper/scale.ts) so baseline and
+// engine can never disagree — a hardcoded copy once drifted and broke the
+// heji channel for every flatted chant under the default tuning.
+const PYTH_BASELINE: number[] = pythagoreanCentsByPc();
 
 // Standard accidental glyphs (Bravura, already baked).
 const STD_GLYPH: Record<number, string> = { [-1]: "E260", 0: "E261", 1: "E262" };

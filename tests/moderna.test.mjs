@@ -2,6 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { buildScore } from "../dist/engines/score/api.js";
 import { inscriptio } from "../dist/engines/score/inscriptio.js";
+import { buildTemper } from "../dist/engines/temper/api.js";
 import { GLYPHS } from "../dist/data/smufl-glyphs.js";
 
 function makeChant(gabc, mode = "7") {
@@ -75,5 +76,42 @@ describe("inscriptio — moderna species", () => {
 
   test("an unknown notation still throws (guard from inscriptio)", () => {
     assert.throws(() => inscriptio(score, { notation: "neume" }), /unknown notation/);
+  });
+
+  // ── the intonation channel (moderna carries the full channel) ──
+  // A diatonic scale exercises every pitch class's tuning deviation.
+  const SCALE = "(c4) c(g)d(h)e(i)f(j)g(k)a(l)b(m) (::)";
+  const just = () =>
+    buildScore(makeChant(SCALE), { temperamentum: buildTemper({ tuning: "ptolemy-intense" }) });
+
+  test("an explicit accidental renders its glyph before the head", () => {
+    // (gxg) flats the B (Bb) with accidentalSource "explicit".
+    const flat = inscriptio(buildScore(makeChant("(c3) A(gxg)b(h) (::)")), { notation: "moderna" }).svg;
+    assert.ok(flat.includes(pathOf("E260")), "the flat glyph (E260) is drawn");
+    assert.ok((flat.match(/class="accidental"/g) || []).length >= 1, "tagged class=accidental");
+  });
+
+  test("HEJI comma arrows bloom under a just tuning, none under Pythagorean", () => {
+    const arrows = (svg) => (svg.match(/class="accidental"/g) || []).length;
+    const pyth = inscriptio(buildScore(makeChant(SCALE)), { notation: "moderna", accidentals: "heji" }).svg;
+    const jst = inscriptio(just(), { notation: "moderna", accidentals: "heji" }).svg;
+    assert.equal(arrows(pyth), 0, "the Pythagorean baseline blooms no arrows");
+    assert.ok(arrows(jst) > 0, "just intonation raises comma arrows");
+  });
+
+  test("cents labels float above the head under a tempered tuning", () => {
+    const svg = inscriptio(just(), { notation: "moderna", accidentals: "cents" }).svg;
+    assert.ok((svg.match(/class="cents"/g) || []).length > 0);
+  });
+
+  test("heji under meantone surfaces the engine guard as a throw", () => {
+    const meantone = buildScore(makeChant(SCALE), { temperamentum: buildTemper({ tuning: "meantone" }) });
+    assert.throws(() => inscriptio(meantone, { notation: "moderna", accidentals: "heji" }), /just-expressible/);
+  });
+
+  test("an accidental reserves room — its head sits right of the unflatted note", () => {
+    const flatted = inscriptio(buildScore(makeChant("(c3) A(gxg)b(h) (::)")), { notation: "moderna" }).geometry;
+    const plain = inscriptio(buildScore(makeChant("(c3) A(g)b(h) (::)")), { notation: "moderna" }).geometry;
+    assert.ok(flatted[0].x > plain[0].x, "the accidental pushes the head right");
   });
 });
