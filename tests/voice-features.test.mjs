@@ -53,51 +53,46 @@ test("liquescentia: an unknown coda throws", () => {
 });
 
 // ── accordatio ──
+// The public shape: formantes(vowel, temper, vis?) — a Temperamentum only,
+// vis 0 (phonetic truth) … 1 (fully tuned, default). No lattice plumbing.
 
 test("accordatio: vis 0 leaves formants unchanged", () => {
   const v = tonus.vox("tenor");
-  const plain = v.formantes("e");
-  const acc = v.formantes("e", { ad: [440, 880, 1320], vis: 0 });
-  assert.deepEqual(acc, plain);
+  const temper = tonus.temperamentum({ tuning: "pythagorean" });
+  assert.deepEqual(v.formantes("e", temper, 0), v.formantes("e"));
 });
 
-test("accordatio: vis 1 snaps a formant onto the nearest lattice value", () => {
+test("accordatio: vis 1 snaps every band onto the tuning's pitches", () => {
   const v = tonus.vox("tenor");
-  const acc = v.formantes("i", { ad: [500, 1000, 2000, 3000, 4000], vis: 1 });
-  for (const band of acc) {
-    assert.ok([500, 1000, 2000, 3000, 4000].includes(band.freqHz));
+  const temper = tonus.temperamentum({ tuning: "pythagorean" });
+  const hzSet = temper.gamut({ span: [36, 120] }).map((p) => p.hz);
+  for (const band of v.formantes("i", temper, 1)) {
+    assert.ok(hzSet.some((hz) => Math.abs(hz - band.freqHz) < 1e-6),
+      `band ${band.freqHz} sits on the tuning`);
   }
 });
 
-test("accordatio: a snapping function is accepted (interop without dependency)", () => {
+test("accordatio: partial vis moves partway toward the tuning", () => {
   const v = tonus.vox("tenor");
-  // Snap to the nearest multiple of 100 Hz — stands in for a temperament lattice.
-  const snap = (hz) => Math.round(hz / 100) * 100;
-  const acc = v.formantes("a", { ad: snap, vis: 1 });
-  for (const band of acc) assert.equal(band.freqHz % 100, 0);
-});
-
-test("accordatio: partial vis moves partway to the lattice", () => {
-  const v = tonus.vox("tenor");
+  const temper = tonus.temperamentum({ tuning: "pythagorean" });
   const plain = v.formantes("a")[0].freqHz;
-  const half = v.formantes("a", { ad: [plain + 200], vis: 0.5 })[0].freqHz;
-  assert.ok(Math.abs(half - (plain + 100)) < 1e-9);
+  const locked = v.formantes("a", temper, 1)[0].freqHz;
+  const half = v.formantes("a", temper, 0.5)[0].freqHz;
+  assert.ok(Math.abs(half - (plain + locked) / 2) < 1e-9);
 });
 
 test("accordatio: vis defaults to 1 (fully tuned)", () => {
   const v = tonus.vox("tenor");
-  const lattice = [500, 1000, 2000, 3000, 4000];
-  assert.deepEqual(
-    v.formantes("i", { ad: lattice }),
-    v.formantes("i", { ad: lattice, vis: 1 }),
-  );
+  const temper = tonus.temperamentum({ tuning: "pythagorean" });
+  assert.deepEqual(v.formantes("i", temper), v.formantes("i", temper, 1));
 });
 
-test("accordatio: a non-lattice ad throws with guidance", () => {
+test("accordatio: a non-Temperamentum tuning throws with guidance", () => {
   const v = tonus.vox("tenor");
-  const temperShaped = { tuning: "pythagorean" }; // not a lattice
-  assert.throws(() => v.formantes("a", { ad: temperShaped }), /array of target Hz/);
-  assert.throws(() => v.formantes("a", { ad: [440, NaN] }), /non-finite/);
+  assert.throws(() => v.formantes("a", { tuning: "pythagorean" }), /must be a Temperamentum/);
+  assert.throws(() => v.formantes("a", [440, 880]), /must be a Temperamentum/);
+  const temper = tonus.temperamentum({ tuning: "pythagorean" });
+  assert.throws(() => v.formantes("a", temper, NaN), /finite 0\.\.1/);
 });
 
 test("liquescentia: formants stay ascending under every coda at full depth", () => {

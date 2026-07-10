@@ -29,7 +29,9 @@ import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
 } from "./engines/score/api.js";
-import type { InscriptioOpts, Inscriptio, NoteGeometry } from "./engines/score/inscriptio.js";
+import type {
+  InscriptioOpts, Inscriptio, NoteGeometry, FontSpec, FontSlot, FontEmbed,
+} from "./engines/score/inscriptio.js";
 import type { ChantTabulaRow } from "./engines/score/tabula.js";
 import type {
   Imprint, Attractor, VowelAttractor, ModalAffinity,
@@ -54,7 +56,7 @@ import type {
 } from "./engines/voice/types.js";
 import type { PersonaName, Persona } from "./engines/voice/data/personae.js";
 import type { Coda } from "./engines/voice/data/liquescentia.js";
-import type { Lattice, AccordatioOpts } from "./engines/voice/accordatio.js";
+import type { TuningLike } from "./engines/voice/accordatio.js";
 import type {
   Chorus, ChorusOpts, Dispersio,
 } from "./engines/voice/chorus.js";
@@ -116,7 +118,7 @@ export type {
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
-  InscriptioOpts, Inscriptio, NoteGeometry,
+  InscriptioOpts, Inscriptio, NoteGeometry, FontSpec, FontSlot, FontEmbed,
   ChantTabulaRow,
   Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
   RhythmicType, CompoundBeat,
@@ -127,6 +129,6 @@ export type {
   Harmony, HarmoniaOpts, VoicedBody, VoicedAspect,
   Frame, Author, HarmonyTabulaRow, PlanetVowel,
   Vox, VoxInput, Vowel, Latinitas, VoxParams, Formant, Locus,
-  PersonaName, Persona, Coda, Lattice, AccordatioOpts,
+  PersonaName, Persona, Coda, TuningLike,
   Chorus, ChorusOpts, Dispersio, ConsortiumName, Voces,
 };

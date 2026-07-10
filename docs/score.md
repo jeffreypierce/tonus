@@ -357,6 +357,17 @@ Options, by group (all optional):
   `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
 - **scale & ink** — `staffHeight`, `noteScale`, `padding`, `noteColor`,
   `staffLineColor`.
+- **faces** — `fonts: { dropcap?, title?, annotation?, lyric? }`, each a
+  font-family string or `{ family, weight?, scale? }` (`scale` adjusts that
+  role's size, for a face whose apparent size differs from the serif). The
+  SVG carries font-family *references* by default — the page that hosts the
+  SVG embeds the face (`@font-face`). A slot may instead carry
+  `embed: { base64, format? }` — the caller's own font bytes — and the face
+  then rides inside the SVG's `<style>`, making the file self-contained (at
+  the cost of its size; one `@font-face` per family + weight, deduped).
+  tonus never bundles font files; with `embed` it is a conduit for data the
+  consumer supplies, so the consumer carries the face's license terms.
+  Unset roles keep the house serif. `moderna` honours the `lyric` slot.
 
 **The geometry contract (public API).** `geometry` is one `NoteGeometry` per note,
 in tabula order — the interface downstream analysis _tracks_ (chironomy,

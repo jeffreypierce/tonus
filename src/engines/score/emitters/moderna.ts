@@ -18,6 +18,7 @@
 // It returns the same { svg, geometry } contract as quadrata, so downstream
 // tracks and inscriptio treat both species uniformly.
 import { GLYPHS, GLYPH_UPM } from "../../../data/smufl-glyphs.js";
+import { fontFaceCss } from "./svg.js";
 import {
   computeAccidentals, type AccidentalMode, type AccidentalMark,
 } from "./accidentals.js";
@@ -157,6 +158,21 @@ type Row = ChantTabulaRow;
  * otherwise. Returns the shared { svg, geometry } contract.
  */
 export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): SvgResult {
+  // The fonts option's lyric slot applies here too; moderna keeps its own
+  // engraved defaults for everything else. References only — never bundled.
+  const lyricSlot = options.fonts?.lyric;
+  const lyricFace = !lyricSlot
+    ? "'Crimson Pro', Georgia, serif"
+    : typeof lyricSlot === "string" ? lyricSlot : lyricSlot.family;
+  const lyricWeight = typeof lyricSlot === "object" && lyricSlot.weight != null
+    ? lyricSlot.weight
+    : 518;
+  const lyricScale = typeof lyricSlot === "object" && lyricSlot.scale != null
+    ? lyricSlot.scale
+    : 1;
+  const lyricEmbed = typeof lyricSlot === "object" && lyricSlot.embed
+    ? fontFaceCss([{ family: lyricFace, weight: lyricWeight, scale: 1, embed: lyricSlot.embed }])
+    : "";
   const padding = options.padding ?? 14;
   const width = options.width ?? null;
   const systemGap = options.systemGap ?? SYSTEM_GAP_DEFAULT;
@@ -172,6 +188,9 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const body: string[] = [];
   const slurs: string[] = [];
   const lyricSvgs: string[] = [];
+  const lyricRuns: Array<{
+    x: number; systemY: number; text: string; wordStart: boolean;
+  }> = [];
   const placements: Array<{ row: Row; x: number; y: number; system: number; systemY: number }> = [];
   const systemMaxX: number[] = [];
 
@@ -263,13 +282,11 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       }
     }
 
-    // Lyric (hyphens added in a second pass).
+    // Lyric — collected here, emitted (with centred hyphens between same-word
+    // syllables, matching quadrata's Vendôme practice) after the walk.
     const tx = notePos[0]!.mx - NH_W / 2;
     if (lyr) {
-      lyricSvgs.push(
-        `<text class="lyric" x="${tx.toFixed(2)}" y="${(systemY + LYRIC_Y).toFixed(2)}" font-size="15" ` +
-        `font-weight="518" fill="#111" font-family="'Crimson Pro', Georgia, serif">${esc(lyr)}</text>`,
-      );
+      lyricRuns.push({ x: tx, systemY, text: lyr, wordStart: srows[0]!.wordStart });
     }
 
     x += sylW + SYL_GAP;
@@ -303,9 +320,36 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   }
 
   const svgTitle = chant.incipit ? `<title>${esc(chant.incipit)}</title>` : "";
+
+  // Second pass: lyric texts, with a centred hyphen in the gap between
+  // syllables of one word when both sit in the same system.
+  const lyricSize = 15 * lyricScale;
+  const estW = (t: string): number => t.length * lyricSize * 0.52;
+  for (let k = 0; k < lyricRuns.length; k++) {
+    const run = lyricRuns[k]!;
+    lyricSvgs.push(
+      `<text class="lyric" x="${run.x.toFixed(2)}" y="${(run.systemY + LYRIC_Y).toFixed(2)}" ` +
+      `font-size="${lyricSize.toFixed(1)}" ` +
+      `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">${esc(run.text)}</text>`,
+    );
+    const next = lyricRuns[k + 1];
+    if (next && !next.wordStart && next.systemY === run.systemY) {
+      const thisRight = run.x + estW(run.text);
+      if (next.x - thisRight > lyricSize * 0.25) {
+        const hx = (thisRight + next.x) / 2;
+        lyricSvgs.push(
+          `<text class="lyric hyphen" x="${hx.toFixed(2)}" y="${(run.systemY + LYRIC_Y).toFixed(2)}" ` +
+          `text-anchor="middle" font-size="${lyricSize.toFixed(1)}" ` +
+          `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">-</text>`,
+        );
+      }
+    }
+  }
+
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${height}" ` +
     `width="${W}" height="${height}" class="tonus-chant moderna">${svgTitle}` +
+    lyricEmbed +
     staff.join("") + clefSvgs.join("") + body.join("") + slurs.join("") + lyricSvgs.join("") +
     `</svg>`;
 

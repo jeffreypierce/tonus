@@ -115,3 +115,12 @@ describe("inscriptio — moderna species", () => {
     assert.ok(flatted[0].x > plain[0].x, "the accidental pushes the head right");
   });
 });
+
+test("moderna joins same-word syllables with centred hyphens (Vendôme, as quadrata)", () => {
+  const kyrie = buildScore(makeChant("(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (::)", "1"));
+  const { svg } = inscriptio(kyrie, { notation: "moderna" });
+  const texts = [...svg.matchAll(/class="lyric[^"]*"[^>]*>([^<]*)</g)].map((m) => m[1]);
+  const joined = texts.join("");
+  assert.ok(joined.includes("Ky-ri-e"), `hyphens inside Kyrie: ${joined}`);
+  assert.ok(!joined.includes("e-e"), "no hyphen across the word boundary");
+});
