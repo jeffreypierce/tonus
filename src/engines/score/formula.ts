@@ -11,9 +11,10 @@
 // Responsories); everything else — and any chant with no mode — returns an empty
 // result, the score's graceful-degradation convention.
 //
-// The matcher expresses each phrase as diatonic steps relative to the mode's
-// final (reusing cadence.ts's encoding), reduces it to its structural skeleton,
-// and aligns it against the catalogue with tolerance: a formula is a skeleton,
+// The matcher expresses each phrase as octave-aware diatonic steps relative to
+// the final's register (0 = final, +4 = the fifth, +7 = the octave — Apel's own
+// degree count, NOT cadence.ts's folded local contour), reduces it to its
+// structural skeleton, and aligns it against the catalogue with tolerance: a formula is a skeleton,
 // and a real phrase varies it with melismatic filling (Apel's +/underline/small-
 // caps notation), so the match is a contour-subsequence, not an exact run.
 import type { Phrase } from "./types.js";
@@ -41,31 +42,65 @@ const MIN_SKELETON = 3;
 const MIN_CONFIDENCE = 0.6;
 
 /**
- * Signed diatonic step of pitch class `pc` relative to the final `on`, within the
- * mode's 7-note scale (0 = final, +1 = one scale-step above, wrapping by octave).
- * Null for a pc outside the scale. (Same definition as cadence.ts's diatonicStep;
- * duplicated to keep the two detection passes independent.)
+ * Signed diatonic step of a note relative to the final's REGISTER, octave-aware
+ * (0 = the final itself, +4 = the fifth above, +7 = the octave; negative below).
+ * Unlike cadence.ts's diatonicStep — a deliberately folded local-contour
+ * heuristic for figures that never exceed a fifth — a formula is a whole
+ * standard phrase that routinely recites on the tenor, so its skeleton must
+ * count Apel's actual scale degrees: a fold to ±half-octave would read the
+ * mode-5 tenor (+4) as −3 and mangle every climbing verse formula.
+ * Null for a pitch class outside the mode's scale (chromatic inflection).
  */
-function diatonicStep(pc: number, on: number, scalePcs: number[]): number | null {
-  const iPc = scalePcs.indexOf(((pc % 12) + 12) % 12);
-  const iOn = scalePcs.indexOf(((on % 12) + 12) % 12);
-  if (iPc === -1 || iOn === -1) return null;
-  const n = scalePcs.length;
-  let d = iPc - iOn;
-  while (d > n / 2) d -= n;
-  while (d < -n / 2) d += n;
-  return d;
+function diatonicStep(midi: number, finalMidi: number, scalePcs: number[]): number | null {
+  const pc = ((midi % 12) + 12) % 12;
+  const d = scalePcs.indexOf(pc); // scalePcs is ordered from the final: index = degree
+  if (d === -1) return null;
+  const finalPc = ((finalMidi % 12) + 12) % 12;
+  const within = (pc - finalPc + 12) % 12;
+  return d + (7 * (midi - finalMidi - within)) / 12;
 }
 
 /** Every note of a phrase as a diatonic step relative to the final, in order. */
-function phraseSteps(phrase: Phrase, finalPc: number, scalePcs: number[]): Array<number | null> {
+function phraseSteps(phrase: Phrase, finalMidi: number, scalePcs: number[]): Array<number | null> {
   const steps: Array<number | null> = [];
   for (const syl of phrase.syllables) {
     for (const note of syl.notes) {
-      steps.push(diatonicStep(note.step.pc, finalPc, scalePcs));
+      steps.push(diatonicStep(note.pitch.midi, finalMidi, scalePcs));
     }
   }
   return steps;
+}
+
+/**
+ * The final's sounding register for this chant. The chant's own last note is
+ * the strongest witness when it IS the final (the normal case); otherwise the
+ * final's octave is placed so the mode's ambitus (± a tone of licence) covers
+ * as many of the chant's notes as possible.
+ */
+function finalReference(phrases: Phrase[], modeData: ModeData): number | null {
+  const midis: number[] = [];
+  for (const ph of phrases) {
+    for (const syl of ph.syllables) for (const note of syl.notes) midis.push(note.pitch.midi);
+  }
+  if (midis.length === 0) return null;
+  const finalPc = ((modeData.final % 12) + 12) % 12;
+  const last = midis[midis.length - 1]!;
+  if (((last % 12) + 12) % 12 === finalPc) return last;
+  const lo = Math.min(...midis);
+  const hi = Math.max(...midis);
+  const relLow = modeData.ambitus.lowest - modeData.final - 2;
+  const relHigh = modeData.ambitus.highest - modeData.final + 2;
+  let best: number | null = null;
+  let bestCover = -1;
+  for (let m = lo - 12; m <= hi + 12; m++) {
+    if (((m % 12) + 12) % 12 !== finalPc) continue;
+    const cover = midis.filter((x) => x >= m + relLow && x <= m + relHigh).length;
+    if (cover > bestCover) {
+      bestCover = cover;
+      best = m;
+    }
+  }
+  return best;
 }
 
 /**
@@ -131,6 +166,7 @@ export function detectFormulas(
 ): FormulaMatch[] {
   const matches: FormulaMatch[] = [];
   const formulae = modeData ? formulaeFor(office, modeData.mode) : [];
+  const finalMidi = modeData ? finalReference(phrases, modeData) : null;
 
   for (let pi = 0; pi < phrases.length; pi++) {
     const phrase = phrases[pi]!;
@@ -140,8 +176,8 @@ export function detectFormulas(
     let slot: FormulaSlot | null = null;
     let confidence = 0;
 
-    if (modeData) {
-      steps = skeleton(phraseSteps(phrase, modeData.final, modeData.scalePcs));
+    if (modeData && finalMidi !== null) {
+      steps = skeleton(phraseSteps(phrase, finalMidi, modeData.scalePcs));
       if (formulae.length > 0 && steps.length >= MIN_SKELETON) {
         const best = bestFormula(steps, formulae);
         if (best) {

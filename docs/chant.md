@@ -29,18 +29,18 @@ Five Solesmes books, extracted from
 [GregoBase](https://gregobase.selapa.net/), joined by the Divinum Officium
 propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 
-| Source | Book                | Edition                              | Chants |
-| ------ | ------------------- | ------------------------------------ | ------ |
-| `gr`   | Graduale Romanum    | ed. Solesmes; Tournai: Desclée, 1961 | 1,344  |
-| `lu`   | Liber Usualis       | ed. Solesmes; Tournai: Desclée, 1961 | 2,377  |
-| `la`   | Liber Antiphonarius | ed. Solesmes, 1960                   | 1,422  |
-| `lh`   | Liber Hymnarius     | Solesmes, 1983                       | 361    |
-| `am`   | Antiphonale Monasticum | ed. Solesmes, 1934               | 1,429  |
-| `nr`   | Nocturnale Romanum  | Sandhofe restitution, 2002           | 1,564  |
+| Source | Book                   | Edition             | Chants |
+| ------ | ---------------------- | ------------------- | ------ |
+| `gr`   | Graduale Romanum       | Solesmes, 1961      | 1,344  |
+| `lu`   | Liber Usualis          | Solesmes, 1961      | 2,377  |
+| `la`   | Liber Antiphonarius    | Solesmes, 1960      | 1,422  |
+| `lh`   | Liber Hymnarius        | Solesmes, 1983      | 361    |
+| `am`   | Antiphonale Monasticum | Solesmes, 1934      | 1,429  |
+| `nr`   | Nocturnale Romanum     | Sandhofe, 2002      | 1,564  |
 
 The first four are the Roman repertoire; `am` is the monastic (Benedictine)
 antiphonary — the 1934 Solesmes edition, which carries the same rhythmic markings
-the score engine reads. `nr` is the Roman **Matins** repertoire (responsories,
+the score engine reads. `nr` is the Roman Matins repertoire (responsories,
 antiphons) from the [Nocturnale Romanum](https://github.com/Nocturnale-Romanum/nocturnale-romanum)
 community restitution — the source behind `matutinum`; see [Matins nocturns](#matins-nocturns--matutinum).
 
@@ -92,8 +92,8 @@ of chants with each), while the Antiphonale Monasticum is almost entirely its ow
 
 Overlap is measured only for the GregoBase-sourced books. The Nocturnale (`nr`)
 comes from a separate source, so its overlap is **unmeasured**: `total`, `unique`,
-and `shared` are `null` — deliberately distinct from a measured zero, so a
-consumer never mistakes "not compared" for "shares nothing".
+and `shared` are `null`, distinct from a measured zero, so a consumer never
+mistakes "not compared" for "shares nothing".
 
 ## Retrieval — `cantus`
 
@@ -164,7 +164,7 @@ interface Chant {
   gabc: string;
   office: OfficeCode; // genre code
   genus: string; // Latin genre name, "Antiphona", "Introitus" …
-  mode: string | null; // raw from source: "1"–"8", "*", "†" …
+  mode: string | null; // raw from source: "1"–"8", differentia forms ("2d", "8g"), "p"/"d"/"e" …
   modus: string | null; // Latin mode name, "Modus I"–"Modus VIII"
   pages: { page: string; sequence: number; extent: number }[];
   source: {
@@ -172,6 +172,9 @@ interface Chant {
     year: number | null;
     editor: string | null;
     code?: ChantSource | "user";
+    fullTitle?: string; // the book's full Latin title
+    edition?: string;
+    scanSource?: string; // scan attribution (GregoBase catalogue)
   };
 }
 
@@ -200,9 +203,9 @@ tonus.proprium({ feast, office: "in" });
 // Puer natus est — Introitus, Modus VII, Liber Usualis p. 408
 ```
 
-Coverage is 926 entries, 523 Sancti and 403 Tempora. When a feast has no
-dedicated proper for a slot, the Commune Sanctorum (formularies for classes of saints) supplies it through 31 commune sets and 387
-feast-to-commune mappings.
+Coverage is 689 proper formularies. When a feast has no dedicated proper for a
+slot, the Commune Sanctorum (formularies for classes of saints) supplies it
+through 31 commune sets and 254 feast-to-commune mappings.
 
 ```ts
 interface PropriumQuery extends CantusQuery {
@@ -228,15 +231,19 @@ tonus.ordinarium({ feast: easter });
 // sa  Sanctus II    (mass 2)
 // ag  Agnus Dei II  (mass 2)
 // it  Ite IIb       (mass 2)
+// va  Vidi aquam    (mass 0) — the Paschaltide sprinkling antiphon rides along
 ```
 
 The Gloria is omitted in the penitential seasons (Advent, Septuagesima,
-and Lent) and the Ite gives way to the Benedicamus. The Triduum returns
+and Lent), and with it the `it` row: at a Gloria-less Mass the dismissal is
+the Benedicamus Domino, and the Kyriale carries a `be` setting only in
+Masses 2 and 59 — so unless one of those is selected, the dismissal row is
+simply absent rather than substituted. The Triduum returns
 no ordinary at all: Good Friday has no Mass, and the Vigil's ordinary
 belongs to Easter. A pinned `mass` overrides the Triduum rule.
 
 **Maundy Thursday** (In Cena Domini) is the Triduum's exception: it keeps a
-full Mass with the **Gloria**, its ordinary fixed to Mass I (Lux et origo).
+full Mass with the Gloria, its ordinary fixed to Mass I (Lux et origo).
 
 The sprinkle rite (aspersion before the principal Sunday Mass) is appended
 and selected by season: **Vidi aquam** (`va`) in Paschaltide, **Asperges
@@ -294,9 +301,9 @@ tonus.officium({ feast: christmas, hora: "laudes" });
 | `completorium`              | The full Compline ordo — see below                                           |
 
 **Prime and Compline are ordos, not chant sets.** These two hours are
-almost **invariable**: the same
+almost invariable: the same
 sequence each day, varying only by season. They are assembled from a small
-seasonal ordo and returned **in liturgical order**. With no feast, each resolves
+seasonal ordo and returned in liturgical order. With no feast, each resolves
 for the [default epoch](index.md#dates).
 
 ```js
@@ -330,13 +337,13 @@ tonus.officium({ feast: benedict, hora: "vesperae", rite: "monasticum" });
 Matins is served flat (its antiphons and responsories, no nocturn grouping); the
 monastic three-nocturn / twelve-psalm structure is not yet modeled. A monastic
 feast absent from the Roman calendar is reachable by its `feastId` but not by a
-date query. For the **Roman** night office with its nocturn structure, see
+date query. For the Roman night office with its nocturn structure, see
 `matutinum` below.
 
 ## Matins nocturns — `matutinum`
 
 `officium({ hora: "matutinum" })` returns Matins as a flat chant list.
-`matutinum(query?)` instead returns the **structured** Roman night office: the
+`matutinum(query?)` instead returns the structured Roman night office: the
 nocturns, each with its great responsories (and antiphons where the source
 carries them). It is a separate accessor — the flat `officium` path is unchanged.
 
@@ -350,8 +357,8 @@ const m = tonus.matutinum({ feast: advent1 });
 ```ts
 interface Matins {
   feastId: string;              // the tonus feast id resolved
-  name: string;                 // Latin name, e.g. "Dominica I Adventus"
-  rank: string;                 // "I. classis - Semiduplex", "Feria", …
+  nomen: string;                // Latin name, e.g. "Dominica I Adventus"
+  ritus: string;                // "I. classis - Semiduplex", "Feria", …
   invitatorium: Chant | null;   // opens the hour, before the first nocturn
   hymnus: Chant | null;         // the Matins hymn, after the invitatory
   nocturns: Nocturn[];          // one (simple) or three (festal)
@@ -369,7 +376,7 @@ only machine-readable Roman Matins — a community restitution built on Holger
 Peter Sandhofe's 2002 edition, Hartker-derived, carrying episema/quilisma/mora
 rhythmic markings. Every responsory resolves to full GABC.
 
-A **sanctorale** feast with no proper Matins draws it from its commune, recorded
+A sanctorale feast with no proper Matins draws it from its commune, recorded
 in `redirectedFrom` (`CONP` Common of a Confessor, `APEX` Common of Apostles, …):
 
 ```js
@@ -378,9 +385,9 @@ tonus.matutinum({ feast: tonus.festum({ date: new Date("2026-07-15") }) });
 ```
 
 **Coverage.** The bridge from the Nocturnale's feast ids to the tonus calendar
-covers the **sanctorale** (all months) and **Advent** today; the other temporal
+covers the sanctorale (all months) and Advent today; the other temporal
 seasons (Nativity, Lent, Passiontide, Paschaltide, after Pentecost) are not yet
-mapped. A feast with no match — or any rite other than Roman — returns `null`.
+mapped. A feast with no match (or any rite other than Roman) returns `null`.
 
 ## Psalms — `psalmus`
 
@@ -391,7 +398,8 @@ the opening formula is included, as it is for a psalm's first verse.
 `inDirectum` recites a verse straight through to the termination with no
 mediant, as a psalm sung without an antiphon; `solemn` uses a tone's
 ornamented mediant where it has one. Canticles are addressed by name:
-`benedictus`, `magnificat`, `nunc dimittis`, `te deum`, `benedicite`.
+`benedictus`, `magnificat`, `nunc dimittis`, `benedicite`. (The Te Deum
+is not psalmody — it carries its own melody and is not addressable here.)
 
 ```js
 tonus.psalmus({ psalm: 109, verse: "1a", mode: 1 });
@@ -515,7 +523,7 @@ finalis per mode, are on the tuning page
 ## Sources
 
 Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
-`gregobase` (the four corpus books), `divinum-officium`,
+`gregobase` (the five Solesmes books), `nocturnale-romanum`, `divinum-officium`,
 `graduale-toni-communes`, `gregorio-gabc`, `versus-psalmorum`, `apel-chant`,
 `hiley-plainchant`, `treitler-voice-pen`, `saulnier-guide`, `pierik-spirit`,
 `burkard-manual`, `kelly-capturing`.

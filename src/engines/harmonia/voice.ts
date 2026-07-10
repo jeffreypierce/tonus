@@ -13,8 +13,8 @@ import { computePresence, computeMotion } from "./presence.js";
 
 // VoicedPitch — a tuned Pitch with a Performance layer, sized for harmonia.
 // Planetary bodies don't have a modal step or score context (yet), so this
-// is a partial Note shape. Velocity is 0–127 (MIDI byte), not the 0–1 shaping
-// factor used in the score engine.
+// is a partial Note shape. Velocity is 0–1, presence-scaled — the same scale
+// the score engine uses.
 export interface VoicedPitch {
   pitch: Pitch;
   performance: Performance;

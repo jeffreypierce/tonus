@@ -209,60 +209,7 @@ describe("pondus and accentus options", () => {
   });
 });
 
-describe("score emitters", () => {
-  const score = buildScore(makeChant(KYRIE_GABC));
-
-  test("score.midi() produces SMF bytes", () => {
-    const bytes = score.midi({ tempoBpm: 120 });
-    assert.ok(bytes instanceof Uint8Array);
-    assert.ok(bytes.length > 0);
-    assert.deepEqual([...bytes.slice(0, 4)], [0x4d, 0x54, 0x68, 0x64]); // "MThd"
-  });
-
-  test("score.midi({ format: 'both' }) returns json and bytes", () => {
-    const out = score.midi({ format: "both" });
-    assert.ok(out.bytes instanceof Uint8Array);
-    assert.ok(out.json.tracks[0].events.length > 0);
-  });
-
-  test("score.musicxml() produces a score-partwise document", () => {
-    const out = score.musicxml();
-    assert.ok(typeof out.xml === "string");
-    assert.ok(out.xml.includes("score-partwise"));
-    assert.ok(out.xml.includes("tonus"));
-  });
-
-  const countSlurs = (xml) => ({
-    start: (xml.match(/slur type="start"/g) || []).length,
-    stop: (xml.match(/slur type="stop"/g) || []).length,
-  });
-
-  test("musicxml slurs each neume figure within a syllable", () => {
-    // Ky(gh!gg): a pes (gh) then a second figure (gg), split by the ! marker.
-    const xml = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).musicxml().xml;
-    const s = countSlurs(xml);
-    assert.equal(s.start, 2, "one slur per neume figure");
-    assert.equal(s.stop, 2);
-  });
-
-  test("musicxml slurs a whole multi-note neume as one figure", () => {
-    // A torculus (ghg) is a single figure → exactly one slur.
-    const xml = buildScore(makeChant("(c4) Ky(ghg)ri(h)e(g.) (::)")).musicxml().xml;
-    assert.deepEqual(countSlurs(xml), { start: 1, stop: 1 });
-  });
-
-  test("musicxml does not slur single-note neumes", () => {
-    // Every syllable is one note → no slurs at all.
-    const xml = buildScore(makeChant("(c4) al(g)le(h)lu(g)ia(f.) (::)")).musicxml().xml;
-    assert.deepEqual(countSlurs(xml), { start: 0, stop: 0 });
-  });
-
-  test("musicxml keeps the lyric on the syllable, not each figure", () => {
-    // Ky has two figures but one lyric; ri and e one each → three <text> only.
-    const xml = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).musicxml().xml;
-    assert.equal((xml.match(/<text>/g) || []).length, 3);
-  });
-
+describe("tabula figure grouping", () => {
   test("tabula exposes neumeGroup and per-figure neumeIndex", () => {
     const rows = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).tabula;
     const syl0 = rows.filter((r) => r.syllableIndex === 0);
@@ -286,5 +233,47 @@ describe("score.tabula property", () => {
     assert.ok(typeof row.hz === "number");
     assert.ok(["arsic", "thetic"].includes(row.rhythmicShape));
     assert.equal(typeof row.lyric, "string");
+  });
+});
+
+describe("tabula written-sign fields (engraving substrate)", () => {
+  // The three written marks are distinct: `_` horizontal episema, `'` vertical
+  // episema (ictus mark), `.` mora dot. They share ictus weight but must render
+  // apart, so each note surfaces its own flag.
+  const score = buildScore(makeChant("(c4) Do(g_)mi(h')nus(i.) (::)"));
+  const [ep, ic, mo] = score.tabula;
+
+  test("horizontal episema (_) sets episema, not ictusSign or mora", () => {
+    assert.equal(ep.episema, true);
+    assert.equal(ep.ictusSign, false);
+    assert.equal(ep.mora, 0);
+  });
+
+  test("vertical episema (') sets ictusSign, not episema", () => {
+    assert.equal(ic.ictusSign, true);
+    assert.equal(ic.episema, false);
+  });
+
+  test("mora dot (.) sets mora, not episema or ictusSign", () => {
+    assert.equal(mo.mora, 1);
+    assert.equal(mo.episema, false);
+    assert.equal(mo.ictusSign, false);
+  });
+
+  test("rows carry the engraving substrate: staff position, clef, shape", () => {
+    for (const r of score.tabula) {
+      assert.equal(typeof r.staffLetter, "string");
+      assert.equal(typeof r.staffPosition, "number");
+      assert.equal(typeof r.clef, "string");
+      assert.ok(["punctum", "inclinatum", "virga", "virgaReversa", "quilisma",
+        "oriscus", "strophicus", "cavum", "linea"].includes(r.shape));
+    }
+  });
+
+  test("wordStart marks a word's first syllable, via the per-word index", () => {
+    // "Do-mi-nus" is one word → only its first syllable is a word start.
+    const starts = score.tabula.filter((r) => r.wordStart);
+    assert.ok(starts.length >= 1);
+    assert.equal(starts[0].lyric.toLowerCase().startsWith("do"), true);
   });
 });

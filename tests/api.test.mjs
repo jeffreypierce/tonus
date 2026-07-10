@@ -131,48 +131,13 @@ describe("tonus namespace", () => {
     );
   });
 
-  test("score.midi() and score.musicxml() emit from the tabula", () => {
-    const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
-    const score = tonus.notatio(chant);
-    assert.ok(score.phrases.length > 0);
-    assert.ok(score.prosody.noteCount > 0);
-
-    // midi() returns the file bytes directly, starting with the SMF "MThd" header.
-    const bytes = score.midi();
-    assert.ok(bytes instanceof Uint8Array);
-    assert.deepEqual([...bytes.slice(0, 4)], [0x4d, 0x54, 0x68, 0x64]);
-
-    // format: "json" returns the event structure instead.
-    const { json } = score.midi({ format: "json" });
-    assert.ok(json.tracks[0].events.some((e) => e.type === "noteOn"));
-
-    const xml = score.musicxml();
-    assert.ok(xml.xml.includes("score-partwise"));
-  });
-
-  test("score.midi() carries the score's accentus into note velocities", () => {
+  test("interpretation reaches the tabula: two phrasings differ note-for-note", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) e(f)le(g)i(h)son(g.) (::)" });
     const solemn = tonus.notatio(chant, { accentus: "solemn" });
     const flat = tonus.notatio(chant, { accentus: "recitative" });
-
-    const vels = (score) =>
-      score.midi({ format: "json" }).json.tracks[0].events
-        .filter((e) => e.type === "noteOn")
-        .map((e) => e.velocity);
-
-    const solemnVels = vels(solemn);
-    const flatVels = vels(flat);
-    // Interpretation reaches the MIDI: the two phrasings differ note-for-note.
-    assert.notDeepEqual(solemnVels, flatVels);
-  });
-
-  test("score.musicxml() renders quilisma ornament markup from the tabula", () => {
-    // 'w' marks a quilisma in GABC.
-    const [chant] = tonus.cantus({ gabc: "(c4) Ky(gwh)ri(h)e(g.) (::)" });
-    const score = tonus.notatio(chant);
-    const { xml } = score.musicxml();
-    assert.ok(xml.includes("quilisma"), "quilisma other-technical annotation present");
-    assert.ok(xml.includes('notehead'), "quilisma diamond notehead present");
+    const vels = (s) => s.tabula.map((r) => r.velocity);
+    // The accentus shapes note velocities on the tabula.
+    assert.notDeepEqual(vels(solemn), vels(flat));
   });
 
   test("notatio accepts pondus and accentus as style strings or opts", () => {
@@ -186,13 +151,88 @@ describe("tonus namespace", () => {
     assert.ok(s2.phrases.length > 0);
   });
 
-  test("full pipeline: feast → proprium → ordo → midi", () => {
+  test("full pipeline: feast → proprium → notatio", () => {
     const feasts = tonus.festum({ date: new Date("2026-12-25") });
     const propers = tonus.proprium({ feast: feasts, office: "in" });
     assert.ok(propers.length > 0);
     const score = tonus.notatio(propers[0]);
-    const bytes = score.midi({ tempoBpm: 120 });
-    assert.ok(bytes instanceof Uint8Array);
-    assert.ok(bytes.length > 0);
+    assert.ok(score.phrases.length > 0);
+    assert.ok(score.tabula.length > 0);
+  });
+});
+
+describe("the generation surface (named exports)", () => {
+  test("everything a downstream generator needs imports from the package root", async () => {
+    const m = await import("../dist/index.js");
+    const { MODES, TONES, getTone, getDifferentia, midiToGabc, gabcToMidi,
+      syllabifyWord, syllabifyPhrase, selectVowel } = m;
+    assert.ok(MODES instanceof Map && MODES.get(1).nomen === "Protus Authenticus");
+    assert.equal(TONES.length, 9); // eight tones + Tonus Peregrinus
+    assert.equal(getTone(1).nomen, "Tonus I");
+    assert.ok(getDifferentia(getTone(1)).termination.length > 0);
+    assert.equal(midiToGabc(57), "h");
+    assert.equal(gabcToMidi("h"), 57);
+    assert.deepEqual(syllabifyWord("Dóminus"), ["Dó", "mi", "nus"]);
+    assert.ok(syllabifyPhrase("Glória Patri").length >= 4);
+    assert.deepEqual(selectVowel("Dó"), { vowel: "o", accent: true });
+  });
+});
+
+describe("guided throws on junk input (the error contract)", () => {
+  test("festum rejects a non-Date date", () => {
+    assert.throws(() => tonus.festum({ date: "xmas" }), /date must be a Date/);
+  });
+  test("caelum rejects a non-Date date", () => {
+    assert.throws(() => tonus.caelum({ date: "solstice" }), /date must be a Date/);
+  });
+  test("matutinum rejects a non-Feast feast", () => {
+    assert.throws(() => tonus.matutinum({ feast: 42 }), /must be a Feast/);
+  });
+  test("harmonia rejects a non-Cosmos input", () => {
+    assert.throws(() => tonus.harmonia(null), /Cosmos/);
+    assert.throws(() => tonus.harmonia({ doctrina: "freud" }), /Cosmos/);
+  });
+  test("notatio rejects a non-Chant input", () => {
+    assert.throws(() => tonus.notatio(null), /needs a Chant/);
+    assert.throws(() => tonus.notatio({ gabc: 123 }), /needs a Chant/);
+    assert.throws(() => tonus.notatio("(c4) A(g)"), /needs a Chant/);
+  });
+  test("proprium rejects unknown query keys like festum and cantus do", () => {
+    assert.throws(() => tonus.proprium({ bogus: 1 }), /unknown query key/);
+  });
+  test("temperamentum rejects a junk mode and a non-string tuning", () => {
+    assert.throws(() => tonus.temperamentum({ mode: 99 }), /Unknown mode/);
+    assert.throws(() => tonus.temperamentum({ tuning: 42 }), /tuning must be a string/);
+  });
+  test("vox rejects sliders that would resolve NaN formants", () => {
+    assert.throws(() => tonus.vox("tenor", { tract: 0 }), /physical range/);
+    assert.throws(() => tonus.vox("tenor", { aetas: 20 }), /0\.\.1 slider/);
+  });
+  test("a bare chorus() sings — the schola is the default", () => {
+    const c = tonus.chorus();
+    assert.ok(c.size > 0);
+    assert.deepEqual(c.dispersio(), tonus.chorus("schola").dispersio());
+  });
+});
+
+describe("formula steps are octave-aware (Apel degree count)", () => {
+  test("the mode-5 tenor reads +4, not −3", () => {
+    // A rising sixth F→D in mode 5: degrees 0 1 2 3 4 5 — the old ±half-octave
+    // fold read the fifth (C, the tenor) as −3 and mangled every climbing
+    // verse formula.
+    const [chant] = tonus.cantus({ gabc: "(c3) A(e)B(f)C(g)D(h)E(i)F(j) (::)", mode: 5, office: "gr" });
+    const score = tonus.notatio(chant);
+    const steps = score.formulas[0].steps;
+    assert.ok(steps.includes(4), `steps ${JSON.stringify(steps)} must count the fifth as +4`);
+    assert.ok(!steps.includes(-3), `steps ${JSON.stringify(steps)} must not fold to −3`);
+  });
+});
+
+describe("feast filters reject non-Feast input everywhere", () => {
+  test("proprium, ordinarium, officium, caelum all throw with guidance", () => {
+    assert.throws(() => tonus.proprium({ feast: 42 }), /must be a Feast/);
+    assert.throws(() => tonus.ordinarium({ feast: {} }), /must be a Feast/);
+    assert.throws(() => tonus.officium({ feast: "adv1", hora: "laudes" }), /must be a Feast/);
+    assert.throws(() => tonus.caelum({ feast: 42 }), /must be a Feast/);
   });
 });

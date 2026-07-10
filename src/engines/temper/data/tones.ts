@@ -9,7 +9,7 @@ export interface Differentia {
 
 export interface PsalmTone {
   mode: number; // 1–8; 0 = Tonus Peregrinus
-  name: string;
+  nomen: string;
   tenor: number;
   intonation: number[];
   flex: number[];
@@ -25,7 +25,7 @@ const d3 = 50, e3 = 52; // below c4 clef range, needed for Tone II
 export const TONES: PsalmTone[] = [
   {
     mode: 1,
-    name: "Tonus I",
+    nomen: "Tonus I",
     tenor: h,                     // A3
     intonation: [f, h, j],        // F-A-C
     flex: [h, g],                 // A-G
@@ -42,7 +42,7 @@ export const TONES: PsalmTone[] = [
 
   {
     mode: 2,
-    name: "Tonus II",
+    nomen: "Tonus II",
     tenor: f,                     // F3
     intonation: [d3, f],          // D3-F3
     flex: [f, e3],                // F-E
@@ -58,7 +58,7 @@ export const TONES: PsalmTone[] = [
 
   {
     mode: 3,
-    name: "Tonus III",
+    nomen: "Tonus III",
     tenor: i,                     // B3
     intonation: [g, i, j],        // G-B-C
     flex: [i, h],                 // B-A
@@ -73,7 +73,7 @@ export const TONES: PsalmTone[] = [
 
   {
     mode: 4,
-    name: "Tonus IV",
+    nomen: "Tonus IV",
     tenor: h,                     // A3
     intonation: [f, g, h],        // F-G-A
     flex: [h, f],                 // A-F
@@ -89,7 +89,7 @@ export const TONES: PsalmTone[] = [
 
   {
     mode: 5,
-    name: "Tonus V",
+    nomen: "Tonus V",
     tenor: j,                     // C4
     intonation: [h, j],           // A-C
     flex: [j, i],                 // C-B
@@ -104,7 +104,7 @@ export const TONES: PsalmTone[] = [
 
   {
     mode: 6,
-    name: "Tonus VI",
+    nomen: "Tonus VI",
     tenor: f,                     // F3
     intonation: [d3, e3, f],      // D-E-F
     flex: [f, e3],                // F-E
@@ -119,7 +119,7 @@ export const TONES: PsalmTone[] = [
 
   {
     mode: 7,
-    name: "Tonus VII",
+    nomen: "Tonus VII",
     tenor: j,                     // C4
     intonation: [h, i, j],        // A-B-C
     flex: [j, i],                 // C-B
@@ -135,7 +135,7 @@ export const TONES: PsalmTone[] = [
 
   {
     mode: 8,
-    name: "Tonus VIII",
+    nomen: "Tonus VIII",
     tenor: j,                     // C4
     intonation: [h, j],           // A-C
     flex: [j, h],                 // C-A
@@ -152,7 +152,7 @@ export const TONES: PsalmTone[] = [
   // ── Tonus Peregrinus ── irregular: two different tenors
   {
     mode: 0,
-    name: "Tonus Peregrinus",
+    nomen: "Tonus Peregrinus",
     tenor: j,                     // C4 (first half tenor)
     intonation: [h, i, j],        // A-B-C
     flex: [j, i],

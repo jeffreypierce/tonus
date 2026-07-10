@@ -7,8 +7,8 @@ kyriale masses appropriate to it. The calendar is the Tridentine
 Roman rite (1570–1962), extracted from
 [Divinum Officium](https://github.com/DivinumOfficium/divinum-officium):
 642 entries across the sanctorale (fixed feasts) and the temporale
-(movable feasts), resolved against dual-computus Easter anchors so that
-queries reaching into the medieval period stay correct.
+(movable feasts), resolved against Easter computed by the Gregorian computus
+from 1583 and the Julian computus before it.
 
 - [Calendar](#calendar)
   - [The day's feasts — `festum`](#the-days-feasts--festum)
@@ -50,8 +50,26 @@ tonus.festum({ date: new Date("2026-12-25") });
     marian: false,
     apostolic: false,
   },
+  {
+    id: "Adv4-5",
+    nomen: "Feria VI infra Hebdomadam IV Adventus",
+    ritus: "Feria major",
+    grade: "feria-major",
+    season: "nat",
+    tempus: "Tempus Nativitatis",
+    seasonStart: "2026-12-25",
+    seasonEnd: "2027-01-10",
+    date: "2026-12-25",
+    weekday: 5,
+    masses: [],
+    marian: false,
+    apostolic: false,
+  },
 ];
 ```
+
+The privileged feast leads; the concurrent Advent feria follows with no proper
+mass of its own (`masses: []`).
 
 Precedence decides what comes first when feasts collide. On November 30,
 2025, St. Andrew falls on the first Sunday of Advent; the privileged
@@ -170,10 +188,10 @@ A feast's `id` carries a nominal week number, but `season` is always
 derived from the date; overflow entries, such as the Epiphany weeks
 resumed before Septuagesima, take the season of the day they fall on.
 
-Season drives real liturgy in the ordinary: the Gloria is omitted in the
-penitential seasons (`adv`, `quadp`, `quad`) and
-the Ite gives way to the Benedicamus
-([chant.md](chant.md#the-ordinary--ordinarium)).
+Season drives real liturgy in the ordinary: in the penitential seasons
+(`adv`, `quadp`, `quad`) the Gloria is omitted, and the Ite with it — the
+Benedicamus dismissal appears only where the selected mass carries a
+setting ([chant.md](chant.md#the-ordinary--ordinarium)).
 
 ## The year's anchors — `pascha`
 

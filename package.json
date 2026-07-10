@@ -1,11 +1,11 @@
 {
   "name": "tonus",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "description": "Medieval music analysis and performance: GABC plainchant exports, liturgical calendar, tuning systems, ephemeris, and the harmony of the spheres",
   "author": "Jeffrey Pierce <jeffrey@jeffreypierce.net>",
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jeffreypierce/tonus.git"
@@ -39,6 +39,7 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
+    "docs",
     "!dist/**/*.js.map",
     "!dist/**/*.d.ts.map",
     "LICENSE",
@@ -46,10 +47,11 @@
     "BIBLIOGRAPHY.md"
   ],
   "scripts": {
-    "build": "tsc && cp src/data/psalms.json dist/data/psalms.json",
+    "build": "tsc && cp src/data/psalms.json dist/data/psalms.json && cp src/data/smufl-glyphs.json dist/data/smufl-glyphs.json",
     "clean": "rm -rf dist",
     "test": "npm run build && node --test --test-reporter=spec tests/*.test.mjs",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "npm run clean && npm run build",
+    "lab": "npm run build && node scripts/render-lab.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -47,10 +47,22 @@ function chantFromGABC(query: CantusQuery): Chant[] {
 
   const incipit = query.incipit ?? name ?? "";
   const mode = query.mode != null ? String(query.mode) : headerMode;
+  // The office-part header carries either a code ("in") or a Latin genre name
+  // ("Introitus", any casing) — normalize to the OfficeCode vocabulary so user
+  // chants honour the same contract as corpus chants; unrecognized values fall
+  // to "or" like an absent header.
+  const officeFromHeader = ((): OfficeCode | null => {
+    if (!officePart) return null;
+    const v = officePart.trim().toLowerCase();
+    for (const [code, label] of Object.entries(OFFICE_LABELS)) {
+      if (v === code || v === label.toLowerCase()) return code as OfficeCode;
+    }
+    return null;
+  })();
   const office = (
     query.office
       ? (Array.isArray(query.office) ? query.office[0] : query.office)
-      : (officePart as OfficeCode | null) ?? "or"
+      : officeFromHeader ?? "or"
   ) as OfficeCode;
 
   return [{
@@ -185,8 +197,26 @@ export function resolveChants(ids: string[]): Chant[] {
  * A `gabc` field bypasses the corpus and returns a single user
  * chant parsed from raw GABC (body or full file with headers).
  */
+const CANTUS_QUERY_KEYS = new Set([
+  "id", "gabc", "incipit", "mode", "office", "source", "limit", "offset", "sort",
+]);
+
 export function getChants(query?: CantusQuery): Chant[] {
-  if (!query || Object.keys(query).length === 0) return [];
+  // A no-match returns []; a malformed query is a caller bug and throws with
+  // guidance (the reconciled query contract — see CODE-STANDARDS → Boundaries).
+  if (!query || Object.keys(query).length === 0) {
+    throw new Error(
+      "cantus: an empty query matches nothing meaningful — pass a filter " +
+      `(one of ${[...CANTUS_QUERY_KEYS].join(", ")}), or a gabc string to parse.`,
+    );
+  }
+  const unknown = Object.keys(query).filter((k) => !CANTUS_QUERY_KEYS.has(k));
+  if (unknown.length > 0) {
+    throw new Error(
+      `cantus: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
+      `(expected ${[...CANTUS_QUERY_KEYS].join(", ")}).`,
+    );
+  }
 
   if (query.gabc) return chantFromGABC(query);
 

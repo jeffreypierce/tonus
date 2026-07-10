@@ -42,7 +42,7 @@ tonus.temperamentum({ scale: "! meanquar.scl\n…" }); // Scala file
 | Field       | Type                 | Default         | Description                                                                                                               |
 | ----------- | -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `tuning`    | `Tuning`             | `"pythagorean"` | Base temperament                                                                                                          |
-| `mode`      | `number \| "auto"`   | `"auto"`        | Gregorian mode (1–8); `"auto"` resolves from chant, falls back to UT (C) with no modal rotation                           |
+| `mode`      | `number \| "auto"`   | `"auto"`        | Gregorian mode (1–8); `"auto"` resolves from chant, falls back to mode 1 (final D)                                        |
 | `a4`        | `number`             | `440`           | A4 reference frequency in Hz                                                                                              |
 | `root`      | `number`             | mode finalis    | Root pitch class override (0–11)                                                                                          |
 | `transpose` | `number`             | `0`             | Output semitone transposition                                                                                             |
@@ -93,14 +93,15 @@ interface Temperamentum {
 ## Pitch input
 
 Every method that takes a pitch accepts the same forms. A number is a MIDI
-note; a string is scientific pitch notation, a GABC letter, or a frequency;
-an object addresses one system explicitly. All inputs resolve to a pitch
+note (a non-integer or a value past 127 reads as a frequency in Hz); a
+string is scientific pitch notation or a GABC letter; an object addresses
+one system explicitly (`{ hz: 293.33 }` for an exact frequency). All inputs resolve to a pitch
 first; `transpose` is applied last as a uniform output shift.
 
 ```js
 t.nota(62); // MIDI
 t.nota("D4"); // scientific pitch notation
-t.nota("293.33hz"); // frequency
+t.nota(293.33); // frequency (any non-integer, or > 127)
 t.nota({ gabc: "d", clef: "c4" }); // GABC letter under a clef
 t.nota({ solmization: "RE", hexachord: "naturale" }); // hexachordal address
 ```
@@ -180,8 +181,9 @@ t.gradus("D4");
 
 The `variants` array lists the step's solmization in every hexachord that
 contains it; these are the mutations a medieval singer had available at
-that step. With a mode set, `degree` and `role` are filled; without one, or
-for a pitch outside the gamut, they are `null`.
+that step. `degree` and `role` read against the resolved mode (`"auto"`
+falls back to mode 1); for a chromatic pitch outside the mode's scale they
+are `null`.
 
 The hand position names the joint a singer would point to. The loci follow the
 canonical counter-clockwise spiral (Γ ut at the thumb tip, across the finger
@@ -338,12 +340,12 @@ medieval tonaries describe them:
 - its practice — hexachords in rank order, melodic profile, its cadence
   figures, and permitted modulations.
 
-Each mode also carries its traditional **ethos** — the character medieval
-theory ascribed to it — as both a Latin epithet (`gravis`, `tristis`, …) and an
-English gloss. The full set and its source are at the data, in
+Each mode also carries its traditional **ethos** (the character medieval theory
+ascribed to it) as both a Latin epithet (`gravis`, `tristis`, …) and an English
+gloss. The full set and its source are at the data, in
 [`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
 
-The `modulations` fields — `regular`, `conceded`, and `initials` — are the
+The `modulations` fields (`regular`, `conceded`, and `initials`) are the
 mode's tonal centres and valid openings, each list **ordered by importance**
 (after Rockstro's Grove table [`rockstro-grove`](../BIBLIOGRAPHY.md)). The
 modal-affinity scorer reads that order; the reasoning is documented at the
@@ -360,9 +362,9 @@ t.modus(1);
 // { mode: 1, nomen: "Protus Authenticus", alias: "dorian",
 //   maneria: "Protus", type: "authentic",
 //   final: 2, tenor: 9,
-//   finalis: { pitch: <D3 293.33 Hz>, step: { … role: "finalis" } },
-//   reciting: { pitch: <A3>, step: { … role: "tenor" } },
-//   ambitusNotes: [ <D3>, <E3>, <F3>, … ],
+//   finalis: { pitch: <D4 293.33 Hz>, step: { … role: "finalis" } },
+//   reciting: { pitch: <A4>, step: { … role: "tenor" } },
+//   ambitusNotes: [ <D4>, <E4>, <F4>, … ],
 //   profile: { mood: "serious", ethos: "gravis", … }, … }
 ```
 
@@ -423,7 +425,7 @@ interface Modus extends ModeData {
 ### Cadence figures
 
 Each mode carries the melodic figures its phrases characteristically close
-on, in `profile.cadences` — the shapes by which a chant comes to rest, stored
+on, in `modus(n).cadences` — the shapes by which a chant comes to rest, stored
 as diatonic steps relative to the final. The score engine reads them to name a
 phrase's cadence ([score.md](score.md#cadences)).
 

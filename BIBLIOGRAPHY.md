@@ -29,22 +29,29 @@
 - `bloomfield-compline` — **Bloomfield, _Compline_.** <https://github.com/bbloomf/compline>
   (public domain). Reference dates and chants for the traditional Roman Compline
   ordo.
+- `nocturnale-romanum` — **_Nocturnale Romanum_ — Matins of the Roman Rite.**
+  Community restitution after Holger Peter Sandhofe (2002 base), Hartker-derived.
+  <https://github.com/Nocturnale-Romanum/nocturnale-romanum>. The Roman Matins
+  chant corpus — responsories, antiphons, and hymns of the night office (1,564
+  chants, `nr`) — behind `matutinum`; the NABC neume layer is stripped to match
+  tonus's square-note books.
 
 ## Chant rhythm (score engine)
 
 - `carroll-chironomy` — **Carroll, Joseph Robert. _The Technique of Gregorian
   Chironomy_. Toledo, OH: Gregorian Institute of America, 1955.** Seven rhythmic
   types, three melodic rules, chironomy.
-- `carroll-applied` — **Carroll, Joseph Robert. _An Applied Course in Gregorian
-  Chant_. Toledo, OH: Gregorian Institute of America, 1956.** Compound beats,
-  ictus placement.
+- `carroll-applied` — **Carroll, Joseph Robert (trans./ed., from the official
+  course syllabus of the Gregorian Institute of Paris). _An Applied Course in
+  Gregorian Chant_. Toledo, OH: Gregorian Institute of America, 1956.** Compound
+  beats, ictus placement.
 - `gajard-rhythm` — **Gajard, Joseph (trans. Aldhelm Dean). _The Rhythm of
   Plainsong According to the Solesmes School_. New York: J. Fischer & Bro., 1945.** The arsis/thesis synthesis.
 - `mocquereau-nombre` — **Mocquereau, André. _Le nombre musical grégorien_,
   1908–1927.** The Solesmes school's foundation.
 - `cardine-semiology` — **Cardine, Eugène. "Semiology and the Interpretation of
   Gregorian Chant." Trans. Virginia A. Schubert; from the Festschrift for Joseph
-  Lennards.** The semiological approach the `restrained` pondus style reflects.
+  Lennards.** The semiological approach to neume interpretation.
 - `desrocquettes-values` — **Desrocquettes, Jean Hébert. "Gregorian Musical
   Values."** The Solesmes school's rhythmic values, from Mocquereau's collaborator.
 - `niedermeyer-ortigue` — **Niedermeyer, Louis, and Joseph d'Ortigue. _Gregorian
@@ -52,7 +59,7 @@
   Plainsong_. Trans. Wallace Goodrich. New York: Novello, Ewer & Co.** The
   per-mode cadence figures and the modal ethos epithets.
 - `bragers-treatise` — **Bragers, Achille P. _A Short Treatise on Gregorian
-  Accompaniment_. New York: J. Fischer & Bro., 1934.** Cadence figures, cross-check.
+  Accompaniment_. New York: Carl Fischer, 1934.** Cadence figures, cross-check.
 - `homan-cadence` — **Homan, Frederic W. _Cadence in Gregorian Chant_. Ph.D.
   diss., Indiana University, 1961.** The analytic study of chant cadences.
 - `murray-accentual` — **Murray, Gregory. "Accentual Cadences in Gregorian
@@ -68,19 +75,24 @@
   Orality and notation.
 - `saulnier-guide` — **Saulnier, Daniel. _Gregorian Chant: A Guide_. CMAA
   edition.** Chant introduction.
-- `pierik-spirit` — **Pierik, Marie. _The Spirit of Gregorian Chant_. Milwaukee:
-  Bruce, 1939; and _Gregorian Chant Analyzed and Studied_. St. Meinrad, IN:
-  Grail, 1951.** Chant interpretation.
+- `pierik-spirit` — **Pierik, Marie. _The Spirit of Gregorian Chant_. Boston:
+  Bruce Humphries, 1939; and _Gregorian Chant Analyzed and Studied_. St.
+  Meinrad, IN: Grail, 1951.** Chant interpretation.
 - `burkard-manual` — **Burkard, Dom Sisbert. _Manual of Plain Chant_. 1906.**
   Plainchant instruction.
 - `kelly-capturing` — **Kelly, Thomas Forrest. _Capturing Music: The Story of
   Notation_. New York: W. W. Norton, 2014.** Notation history.
 - `gregorio-gabc` — **The Gregorio project.** <https://gregorio-project.github.io/>.
   The GABC plain-text chant notation the corpora are encoded in and the parser reads.
+- `bravura-smufl` — **Spreadbury, Daniel. _Bravura_ music font and the SMuFL
+  (Standard Music Font Layout) specification. Steinberg, 2013–.**
+  <https://www.smufl.org/> and <https://github.com/steinbergmedia/bravura>
+  (SIL Open Font License). The reference SMuFL font; the notation glyphs the
+  score engine engraves into SVG.
 
 ## Tuning and music theory (temperamentum engine)
 
-- `boethius-institutione` — **Boethius. _De institutione musica_ (c. 524),
+- `boethius-institutione` — **Boethius. _De institutione musica_ (c. 500–510),
   esp. I.27.** The medieval transmission of Pythagorean interval math; also the
   Boethius doctrina (conjunct diatonic planetary scale, transmitting Nicomachus).
 - `ptolemy-harmonics` — **Ptolemy. _Harmonics_ I.15–16 (the three diatonic
@@ -105,12 +117,9 @@
   <https://doi.org/10.1093/gmo/9781561592630.article.43718>. Medieval modal theory.
 - `liber-usualis` — **_The Liber Usualis, with Introduction and Rubrics in
   English_. Ed. the Benedictines of Solesmes. Tournai: Desclée, 1961.** The
-  introduction's "Rules for Interpretation" and rubrics — the original design
-  source for the GABC parser and rhythm model: the notation and neume taxonomy,
-  the three ictus rules, accidental scope, bar-line/breathing semantics, psalmody
-  structure, and Latin diction. (A structured extract is kept at
-  `~/Documents/Projects/Liber_Parsed/`. The book itself is also a chant corpus
-  source — see `gregobase`.)
+  introduction's "Rules for Interpretation" and rubrics: the notation and neume
+  taxonomy, ictus rules, accidental scope, bar-line semantics, psalmody, and Latin
+  diction the parser and rhythm model follow.
 - `scala-format` — **Scala scale archive and `.scl` format. Manuel Op de Coul,
   Huygens-Fokker Foundation.** <https://www.huygens-fokker.org/scala/scl_format.html>.
   Custom tuning input.
@@ -140,6 +149,30 @@
   octave closure per Censorinus and Theon of Smyrna); Ptolemy, _Harmonics_ III.
   With the vowel–planet attestations: Porphyry, Marcus Gnosticus, Demetrius of
   Phaleron, Eusebius of Caesarea, Barthélemy of Edessa (via `godwin-vowels`).
+
+## Voice acoustics (voice engine)
+
+- `sundberg-singing` — **Sundberg, Johan. _The Science of the Singing Voice_.
+  DeKalb, IL: Northern Illinois University Press, 1987.** The source–filter model,
+  formant frequencies of the sung vowels, the glottal-source spectral tilt, and
+  the singer's-formant cluster (~2.8–3.2 kHz).
+- `stevens-acoustic-phonetics` — **Stevens, Kenneth N. _Acoustic Phonetics_.
+  Cambridge, MA: MIT Press, 1998.** The measured formant acoustics of consonants:
+  nasal murmurs, the lateral's lowered third formant, and the glide transitions
+  the liquescent coda targets bend toward.
+- `peterson-barney` — **Peterson, Gordon E., and Harold L. Barney. "Control
+  Methods Used in a Study of the Vowels." _The Journal of the Acoustical Society
+  of America_ 24, no. 2 (1952): 175–184.** The corner-vowel formant measurements
+  the base tables are cross-checked against.
+- `ternstrom-choir` — **Ternström, Sten. "Choir Acoustics: An Overview of
+  Scientific Research Published to Date." _International Journal of Research in
+  Choral Singing_ 1, no. 1 (2003): 3–12; with "Perceptual Evaluations of Voice
+  Scatter in Unison Choir Sounds," _Journal of Voice_ 7, no. 2 (1993): 129–135.**
+  The measured order of tuning and timing scatter among unison choral voices, the
+  ensemble-scatter envelope.
+- `copeman-latin` — **Copeman, Harold. _Singing in Latin, or Pronunciation
+  Explor'd_. Oxford: Copeman, 1990.** The regional Latin vowel colour of the
+  Roman, Germanic, and Gallican pronunciations.
 
 ## Astronomy and computus
 

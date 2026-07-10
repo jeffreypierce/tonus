@@ -64,6 +64,12 @@ describe("getChants", () => {
     assert.equal(chants.length, 0);
   });
 
+  test("throws on an empty or unknown-key query (not a silent empty result)", () => {
+    // A real search that finds nothing returns []; a malformed query is a bug.
+    assert.throws(() => getChants({}), /empty query/);
+    assert.throws(() => getChants({ mdoe: 1 }), /unknown query key/);
+  });
+
   test("respects limit and offset for pagination", () => {
     const page1 = getChants({ mode: 1, limit: 3, offset: 0 });
     const page2 = getChants({ mode: 1, limit: 3, offset: 3 });
@@ -414,5 +420,84 @@ describe("getPsalm", () => {
     assert.ok(normal.gabc.includes("(:) "));
     assert.ok(!direct.gabc.includes("(:) "));
     assert.ok(direct.gabc.endsWith("(::)"));
+  });
+});
+
+describe("corpus data integrity", () => {
+  const BOOKS = ["gr", "lu", "la", "lh", "am", "nr"];
+  const allChants = BOOKS.flatMap((source) => getChants({ source, limit: 100000 }));
+
+  test("no gabc field carries a literal \\uXXXX escape (the double-escape guard)", () => {
+    // The extractor once JSON-sliced instead of JSON-parsing the DB gabc, so
+    // non-ASCII was stored as six literal characters (é) rather than the
+    // decoded glyph — which made detectVowelAccent dead across the corpus.
+    // This asserts the decode holds: real accents, never the escape sequence.
+    const offenders = allChants.filter((c) => /\\u[0-9a-fA-F]{4}/.test(c.gabc ?? ""));
+    assert.equal(
+      offenders.length,
+      0,
+      `gabc must not contain literal \\uXXXX escapes; ${offenders.length} do` +
+        (offenders[0] ? ` (first: ${offenders[0].id})` : ""),
+    );
+  });
+
+  test("accented syllables are real characters, so accent detection can fire", () => {
+    // At least one chant carries a genuine accented vowel in its gabc lyric text
+    // — proving the decode produced á/é/… rather than the escape sequence.
+    assert.ok(
+      allChants.some((c) => /[áéíóúǽæœ]/i.test(c.gabc ?? "")),
+      "corpus should contain decoded accented characters",
+    );
+  });
+
+  test("no gabc field carries a NABC pipe (the neume layer is stripped)", () => {
+    // A note group is `(notes)` — never `(notes|nabc)`. The pipe is the St-Gall
+    // NABC layer, which tonus does not model; the extractor strips it.
+    const offenders = allChants.filter((c) => (c.gabc ?? "").includes("|"));
+    assert.equal(
+      offenders.length,
+      0,
+      `gabc must not contain a NABC pipe; ${offenders.length} do` +
+        (offenders[0] ? ` (first: ${offenders[0].id})` : ""),
+    );
+  });
+});
+
+describe("canticles by name (number-map regression)", () => {
+  // Regression: the name map once pointed magnificat at the Symbolum
+  // Athanasium and nunc dimittis at an empty row.
+  test("each canticle resolves to its own text", () => {
+    const cases = [
+      ["benedictus", "Benedíctus"],
+      ["magnificat", "Magníficat"],
+      ["nunc dimittis", "Nunc dimíttis"],
+      ["benedicite", "Benedícite"],
+    ];
+    for (const [name, incipitStart] of cases) {
+      const rows = getPsalm({ psalm: name, mode: 8 });
+      assert.ok(rows.length > 0, `${name} returns verses`);
+      assert.ok(
+        rows[0].incipit.startsWith(incipitStart),
+        `${name} → "${rows[0].incipit}" should start "${incipitStart}"`,
+      );
+    }
+  });
+
+  test("psalmus is deterministic — no wall-clock in the source", () => {
+    assert.equal(getPsalm({ psalm: 109, mode: 1 })[0].source.year, null);
+  });
+});
+
+describe("user GABC office-part header (contract regression)", () => {
+  test("a Latin genre name normalizes to its OfficeCode", () => {
+    const [c] = getChants({ gabc: "name: Test;\noffice-part: Introitus;\n%%\n(c4) A(g)" });
+    assert.equal(c.office, "in");
+    assert.equal(c.genus, "Introitus");
+  });
+  test("any casing normalizes; an unknown value falls to or", () => {
+    const [a] = getChants({ gabc: "office-part: antiphona;\n%%\n(c4) A(g)" });
+    assert.equal(a.office, "an");
+    const [u] = getChants({ gabc: "office-part: Varia;\n%%\n(c4) A(g)" });
+    assert.equal(u.office, "or");
   });
 });
