@@ -47,10 +47,22 @@ function chantFromGABC(query: CantusQuery): Chant[] {
 
   const incipit = query.incipit ?? name ?? "";
   const mode = query.mode != null ? String(query.mode) : headerMode;
+  // The office-part header carries either a code ("in") or a Latin genre name
+  // ("Introitus", any casing) — normalize to the OfficeCode vocabulary so user
+  // chants honour the same contract as corpus chants; unrecognized values fall
+  // to "or" like an absent header.
+  const officeFromHeader = ((): OfficeCode | null => {
+    if (!officePart) return null;
+    const v = officePart.trim().toLowerCase();
+    for (const [code, label] of Object.entries(OFFICE_LABELS)) {
+      if (v === code || v === label.toLowerCase()) return code as OfficeCode;
+    }
+    return null;
+  })();
   const office = (
     query.office
       ? (Array.isArray(query.office) ? query.office[0] : query.office)
-      : (officePart as OfficeCode | null) ?? "or"
+      : officeFromHeader ?? "or"
   ) as OfficeCode;
 
   return [{

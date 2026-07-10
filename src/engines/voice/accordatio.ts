@@ -16,7 +16,7 @@ export type Lattice = number[] | ((hz: number) => number);
 
 export interface AccordatioOpts {
   ad: Lattice;
-  vis: number; // 0 phonetic … 1 lattice-locked
+  vis?: number; // 0 phonetic … 1 lattice-locked (default 1)
 }
 
 function nearest(hz: number, ad: Lattice): number {
@@ -40,7 +40,17 @@ function nearest(hz: number, ad: Lattice): number {
  * Q and gain are untouched — accordatio moves the resonance, not its shape.
  */
 export function accord(formants: Formant[], opts: AccordatioOpts): Formant[] {
-  const vis = Math.max(0, Math.min(1, opts.vis));
+  const ad = opts?.ad;
+  if (typeof ad !== "function" && !Array.isArray(ad))
+    throw new Error(
+      "accordatio needs { ad } — an array of target Hz or an (hz) => hz function. " +
+        "Build one from a temperament: temper.gamut({ span }).map((p) => p.hz)",
+    );
+  if (Array.isArray(ad) && ad.some((hz) => !Number.isFinite(hz)))
+    throw new Error("accordatio lattice contains a non-finite Hz value");
+  if (opts.vis != null && !Number.isFinite(opts.vis))
+    throw new Error(`accordatio: vis must be a finite 0..1 weight, got ${String(opts.vis)}`);
+  const vis = Math.max(0, Math.min(1, opts.vis ?? 1));
   if (vis === 0) return formants;
   return formants.map((f) => {
     const target = nearest(f.freqHz, opts.ad);

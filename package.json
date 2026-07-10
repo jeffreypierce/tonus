@@ -39,6 +39,7 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
+    "docs",
     "!dist/**/*.js.map",
     "!dist/**/*.d.ts.map",
     "LICENSE",

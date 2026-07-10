@@ -91,6 +91,10 @@ function resolveAccentus(input?: AccentusInput): AccentusOpts {
  * @throws Error on invalid Chant input or unparseable GABC.
  */
 export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
+  if (!chant || typeof chant !== "object" || typeof (chant as Chant).gabc !== "string")
+    throw new Error(
+      "notatio needs a Chant with a gabc string — build one with tonus.cantus({ gabc })",
+    );
   const pondus = resolvePondus(opts?.pondus);
   const accentus = resolveAccentus(opts?.accentus);
   const parsed = parseGABC(chant.gabc, {

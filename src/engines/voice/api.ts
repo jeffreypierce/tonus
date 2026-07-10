@@ -13,7 +13,7 @@ import {
   type Persona,
   type PersonaName,
 } from "./data/personae.js";
-import { computeTable, formantsAt, locusOf, iterLocus } from "./formant.js";
+import { computeTable, formantsAt, locusOf } from "./formant.js";
 import { spectrumOf, claritasOf } from "./spectrum.js";
 import { shiftLocus } from "./data/latinitas.js";
 import { liquescentTarget, type Coda } from "./data/liquescentia.js";
@@ -63,7 +63,23 @@ function resolvePersona(input?: VoxInput): Persona {
 
 /** Layer the defaults, the preset, then the caller's overrides. */
 function resolveParams(input?: VoxInput, overrides?: Persona): VoxParams {
-  return { ...DEFAULTS, ...resolvePersona(input), ...(overrides ?? {}) };
+  const params = { ...DEFAULTS, ...resolvePersona(input), ...(overrides ?? {}) };
+  // Builder contract: junk sliders throw rather than resolving NaN formants
+  // (tract 0 would divide the table by zero; the 0..1 axes clamp is the
+  // documented range, but non-finite input is a caller bug).
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "number" && !Number.isFinite(value))
+      throw new Error(`vox: ${key} must be a finite number, got ${String(value)}`);
+  }
+  if (typeof params.tract !== "number" || !Number.isFinite(params.tract))
+    throw new Error(`vox: tract must be a finite number, got ${String(params.tract)}`);
+  if (params.tract <= 0.5 || params.tract > 2)
+    throw new Error(`vox: tract ${params.tract} is outside the physical range (0.5–2; ~0.8 child, 1.0 tenor, ~1.25 deep bass)`);
+  for (const axis of ["aetas", "fatigatio", "cantoris", "nisus"] as const) {
+    if (params[axis] != null && (params[axis]! < 0 || params[axis]! > 1))
+      throw new Error(`vox: ${axis} is a 0..1 slider, got ${params[axis]}`);
+  }
+  return params;
 }
 
 // ── Builder ──
@@ -101,7 +117,15 @@ export function buildVoice(input?: VoxInput, overrides?: Persona): Vox {
     },
 
     iter(a: Vowel, b: Vowel, t: number): Formant[] {
-      return formantsAt(table, iterLocus(a, b, t));
+      // Interpolate the RESOLVED loci (latinitas shift applied), so iter's
+      // endpoints agree with formantes under every regional pronunciation,
+      // not only the romana default.
+      const la = resolveLocus(a);
+      const lb = resolveLocus(b);
+      return formantsAt(table, {
+        u: la.u + (lb.u - la.u) * t,
+        v: la.v + (lb.v - la.v) * t,
+      });
     },
 
     spectrum(f0: number, vowel: Vowel | Locus, nHarmonics = 40): number[] {

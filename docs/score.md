@@ -1,12 +1,9 @@
 # Score
 
-`tonus.notatio` renders a chant into a score. The GABC is parsed into
-phrases, syllables, and neumes; every note is tuned through a
-`Temperamentum` and annotated with its Guidonian step; the Solesmes
-compound-beat classifier assigns the arsis/thesis rhythm; prosody is
-measured and an analytic imprint drawn. The score is data: its structure
-(`phrases`, `tabula`, `prosody`, `cadences`, `modulations`, `imprint`), drawn to
-SVG by the standalone `tonus.inscriptio(score)`.
+`tonus.notatio` renders a chant into a score: the analyzed, tuned, and
+rhythm-classified reading of one GABC melody. The score is data: `phrases`,
+`tabula`, `prosody`, `cadences`, `modulations`, `formulas`, and `imprint`. The
+standalone `tonus.inscriptio(score)` draws it to SVG.
 
 - [Score](#score)
   - [The score — `notatio`](#the-score--notatio)
@@ -29,7 +26,7 @@ SVG by the standalone `tonus.inscriptio(score)`.
 
 `notatio(chant, opts?)` builds a `Score` from a single `Chant`. Invalid
 input throws; recoverable GABC problems land in `score.errors`, and
-downstream fields degrade gracefully rather than throw.
+downstream fields degrade rather than throw.
 
 ```js
 const [feast] = tonus.festum({ date: new Date("2026-12-25") });
@@ -54,7 +51,7 @@ notation, signs of punctuation rather than measure:
 
 This hierarchy is read three ways in the engine, each weighting the bars for its
 own end: an analytic cadence weight (prosody), a phrasing strength (which zeroes
-the virgula), and a rest duration (MIDI). The differences are intentional and
+the virgula), and a rest duration (the divisio's pause length). The differences are intentional and
 documented at each table in the code.
 
 ```ts
@@ -66,6 +63,7 @@ interface Score {
   prosody: Prosody;
   cadences: Cadence[];
   modulations: Modulation[];
+  formulas: FormulaMatch[];
   imprint: Imprint;
 }
 
@@ -219,12 +217,17 @@ interface Context {
   syllableIndex: number;
   neumeGroup: number; // neume figure within the syllable (0-based)
   ictus: boolean;
+  ictusSign: boolean; // an editorial ictus mark is printed in the source
+  episema: boolean;
   accidentalSource: "none" | "state" | "explicit";
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
   mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
+  staffLetter: string; // the GABC staff letter as written
+  clef: string; // the clef in force at this note ("c3", "f4", …)
+  shape: string; // the notehead shape (punctum, inclinatum, quilisma, …)
   weight: number; // articulation weight
 }
 ```
@@ -263,6 +266,7 @@ interface ChantTabulaRow {
   noteIndex: number;
   neumeGroup: number; // which neume figure within the syllable (0-based)
   neumeIndex: number; // position of this note within that figure
+  wordStart: boolean; // first syllable of its word
 
   // note fields
   midi: number;
@@ -278,6 +282,10 @@ interface ChantTabulaRow {
   hz: number;
   offset: number;
   spn: string; // scientific pitch name, "D4"
+  staffLetter: string; // the GABC staff letter as written
+  staffPosition: number; // vertical staff position (line/space index)
+  clef: string; // the clef in force at this note ("c3", "f4", …)
+  shape: string; // the notehead shape (punctum, inclinatum, quilisma, …)
   bend: number; // 14-bit MIDI pitch bend (8192 = center)
   velocity: number | null;
   duration: number;
@@ -285,6 +293,8 @@ interface ChantTabulaRow {
   rhythmicShape: "arsic" | "thetic";
   rhythmicIndex: number;
   ictus: boolean;
+  ictusSign: boolean; // an editorial ictus mark is printed in the source
+  episema: boolean;
 
   // step fields
   degree: number | null;
@@ -299,6 +309,7 @@ interface ChantTabulaRow {
   lyric: string;
   vowel: string;
   divisio: string | null;
+  cadenceRef: number | null; // index into score.cadences[] when this note closes one
   neume: Neume;
 }
 ```
@@ -311,10 +322,10 @@ so the interpretation applied through `pondus` and `accentus` is already in the
 geometry.
 
 > **Retired in 0.2:** the MusicXML and MIDI emitters (`score.musicxml()`,
-> `score.midi()`) were removed. tonus emits one format — SVG. Microtuning still
+> `score.midi()`) were removed. tonus emits one format: SVG. Microtuning still
 > lives on each tabula row's `bend`/`hz`/`offset` for a Web-Audio player to read
-> directly (microtonally exact, which MIDI never was); it is simply no longer
-> serialized to a MIDI file here.
+> directly (microtonally exact, which MIDI never was); it is no longer serialized
+> to a MIDI file here.
 
 ### inscriptio — the standalone renderer
 
@@ -338,15 +349,14 @@ Two notation species, each with its own spacing pass:
 Options, by group (all optional):
 
 - **layout** — `width` wraps systems to fit (absent = a single line); `systemGap`,
-  `custos` (line-end guides), `breaks`, `until` (render the first N phrases).
+  `custos` (line-end guides).
 - **front matter** — `title`, `rubric` (or `annotation: "auto"` to derive
   _genus · modus · book_ from the chant), `dropcap` (a rubricated initial),
-  `rubrica` (the liturgical red).
+  `rubricaColor` (the liturgical red).
 - **intonation** — `accidentals: "standard" | "heji" | "cents"` and
   `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
 - **scale & ink** — `staffHeight`, `noteScale`, `padding`, `noteColor`,
-  `staffLineColor`, and lyric `lyricFont` / `lyricSize` / `lyricWeight`.
-- **emphasis** — `highlight(row) → color | null`, emit-time per-note coloring.
+  `staffLineColor`.
 
 **The geometry contract (public API).** `geometry` is one `NoteGeometry` per note,
 in tabula order — the interface downstream analysis _tracks_ (chironomy,
@@ -364,16 +374,21 @@ interface NoteGeometry {
 
 ### The intonation channel
 
-`accidentals` chooses how a note's tuning shows on the staff:
+`accidentals` chooses how a note's tuning shows on the staff. The `standard`
+accidentals are authentic to either species; the `heji` and `cents` modes are
+modern analytical overlays and render on **moderna** only — asking for them on
+`quadrata` (historical square notation) **throws**.
 
-- `"standard"` (default) — plain performance accidentals (♭ ♮ ♯), a mark stated
-  once and suppressed on an immediate repeat of the same pitch.
-- `"heji"` — Extended Helmholtz–Ellis comma accidentals. HEJI's baseline is the
-  **Pythagorean chain of pure fifths** — which is also tonus's default tuning — so
-  a Pythagorean chant renders clean; comma arrows bloom only where the tuning
-  departs from the pure-fifth chain (a just preset shows syntonic commas, ±21.5¢).
-  Meantone tempers by fractional commas — not just — so `heji` **throws** under it.
-- `"cents"` — signed cent deviations, for any tuning. `centsBaseline: "pythagorean"`
+- `"standard"` (default) — plain performance accidentals (♭ ♮ ♯) as GABC
+  expresses them, a mark stated once and suppressed on an immediate repeat of the
+  same pitch. Both species draw these.
+- `"heji"` — Extended Helmholtz–Ellis comma accidentals (moderna). HEJI's baseline
+  is the **Pythagorean chain of pure fifths** — which is also tonus's default
+  tuning — so a Pythagorean chant renders clean; comma arrows bloom only where the
+  tuning departs from the pure-fifth chain (a just preset shows syntonic commas,
+  ±21.5¢). Meantone tempers by fractional commas (not just), so `heji` **throws**
+  under it.
+- `"cents"` — signed cent deviations (moderna), for any tuning. `centsBaseline: "pythagorean"`
   (default) reads against the chant's home intonation — so changing the tuning
   shows what each temperament _does_ to the chant; `"et"` reads against equal
   temperament, the modern-reader instinct.
@@ -394,13 +409,13 @@ score.imprint.modalAffinity.slice(0, 2);
 //   { mode: 8, alias: "hypomixolydian", score: 2.09 } ]
 ```
 
-The ranking reads three signals beyond the pitch-class distribution: the
-**opening note** (each mode's initials, Rockstro's ordering), the **closing
-note** (a chant rests on its final — the treatises' first determinant of mode),
-and the **tessitura** (how high the melody sits above its final, the classical
-authentic/plagal separator). Together these rank the labelled mode first for
-~73% of the corpus, its plagal/authentic twin usually second — _Puer natus est_
-(mode 7) leads with 7, then its plagal twin 8.
+The ranking reads three signals beyond the pitch-class distribution: the opening
+note (each mode's initials, in Rockstro's ordering), the closing note (a chant
+rests on its final, the treatises' first determinant of mode), and the tessitura
+(how high the melody sits above its final, the classical authentic/plagal
+separator). Together these rank the labelled mode first for a typical chant, its
+plagal/authentic twin usually second. _Puer natus est_ (mode 7) leads with 7,
+then its plagal twin 8.
 
 It remains a measurement, not a confirmation: a transposed or mislabelled chant
 will not rank its nominal mode first, which is itself a useful signal.
@@ -433,7 +448,7 @@ interface VowelAttractor {
 
 interface ModalAffinity {
   mode: number; // 1–8
-  alias: string; // "Dorian" | "Hypodorian" | …
+  alias: string; // "dorian" | "hypodorian" | …
   score: number; // pc-distribution weight against mode's structural tones
 }
 ```
@@ -550,7 +565,9 @@ interface Modulation {
 `score.formulas` reads each phrase against Apel's centonization catalogue: the
 responsorial-melismatic chants (Graduals, Tracts, Great Responsories) are not
 freely composed but assembled from a stock of standard phrases shared across a
-mode. Each phrase is expressed as a step-skeleton relative to the final and
+mode. Each phrase is expressed as an octave-aware step-skeleton relative to
+the final's register (0 = the final, +4 = the fifth, +7 = the octave — Apel's
+own degree count, so a phrase reciting on the mode-5 tenor reads +4) and
 matched against the catalogue for its genre × mode, tolerating the melismatic
 filling that varies a formula to fit its text.
 
@@ -564,10 +581,13 @@ interface FormulaMatch {
 }
 ```
 
-Only the Tier-1 tabulatable genres carry a catalogue; other genres — and any
-chant with no mode — return `formula: null` (the step-skeleton is still computed).
-The catalogue is transcribed from Apel's plates and grows genre × mode; see
-`score/data/formulas.ts`.
+Only the Tier-1 tabulatable genres (Graduals, Tracts, Great Responsories) will
+carry a catalogue; other genres — and any chant with no mode — return
+`formula: null` (the step-skeleton is still computed). **In 0.2 the catalogue
+ships empty**: the machinery, the skeleton, and the graceful degradation are
+the release surface, and `formula` is `null` for every chant until the Apel
+transcription (mode-5 Graduals first) is dictated into
+`score/data/formulas.ts`, where the format is documented.
 
 ## Theory & Context
 

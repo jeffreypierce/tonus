@@ -219,6 +219,15 @@ export function getCosmos(query: CosmosQuery = {}): Cosmos | Cosmos[] {
     return frames;
   }
 
+  if (query.feast != null &&
+      (typeof query.feast !== "object" || !(query.feast.date instanceof Date)))
+    throw new Error(
+      "caelum: feast must be a Feast (from tonus.festum) — its date places the sky",
+    );
   const date = query.date ?? query.feast?.date ?? DEFAULT_EPOCH;
+  if (!(date instanceof Date) || Number.isNaN(date.getTime()))
+    throw new Error(
+      `caelum: date must be a Date — e.g. new Date("2026-12-25") (UTC-canonical)`,
+    );
   return snapshotAt(date, requested, query.orbLimit);
 }

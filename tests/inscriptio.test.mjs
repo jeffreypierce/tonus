@@ -241,8 +241,8 @@ describe("inscriptio — front matter", () => {
     assert.ok(/class="dropcap"[^>]*fill="#9E2B25"[^>]*>P</.test(svg));
   });
 
-  test("rubrica sets the liturgical red", () => {
-    const { svg } = inscriptio(score, { dropcap: true, rubrica: "#c00" });
+  test("rubricaColor sets the liturgical red", () => {
+    const { svg } = inscriptio(score, { dropcap: true, rubricaColor: "#c00" });
     assert.ok(/class="dropcap"[^>]*fill="#c00"/.test(svg));
   });
 
@@ -251,5 +251,24 @@ describe("inscriptio — front matter", () => {
     assert.ok(!svg.includes('class="title"'));
     assert.ok(!svg.includes('class="rubric"'));
     assert.ok(!svg.includes('class="dropcap"'));
+  });
+});
+
+describe("inscriptio — figures never merge across phrases (grouping regression)", () => {
+  // Regression: syllableIndex resets per phrase; without phraseIndex in the
+  // grouping key, "a(f) (;) men(gf)" merged both figures and dropped the
+  // second lyric and the divisio.
+  test("both lyrics and both divisios render", () => {
+    const { svg } = inscriptio(buildScore(makeChant("(c4) a(f) (;) men(gf) (::)")));
+    const lyrics = [...svg.matchAll(/class="lyric[^"]*"[^>]*>([^<]*)</g)].map((m) => m[1]);
+    assert.deepEqual(lyrics, ["a", "men"]);
+    const divisios = (svg.match(/class="divisio[^"]*"/g) ?? []).length;
+    assert.equal(divisios, 2);
+  });
+
+  test("an accidental on a non-initial figure note still renders (before the figure)", () => {
+    const { svg } = inscriptio(buildScore(makeChant("(c4) a(jix) (::)")));
+    const accidentals = (svg.match(/class="accidental[^"]*"/g) ?? []).length;
+    assert.ok(accidentals >= 1, "the flat on the upper note must not vanish");
   });
 });

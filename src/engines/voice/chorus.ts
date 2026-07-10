@@ -79,7 +79,9 @@ function resolveRoster(input?: ConsortiumName | ChorusOpts, opts?: ChorusOpts): 
   }
 
   voces = bag.voces ?? voces;
-  if (!voces) throw new Error("chorus: no consortium or voces roster given");
+  // No consortium and no roster: the schola is the default ensemble (docs
+  // promise it — a bare chorus() sings).
+  if (!voces) voces = CONSORTIA.schola;
 
   const { seed, voces: _v, ...overrides } = bag;
   return { roster: expandRoster(voces), overrides, seed: seed ?? 0 };

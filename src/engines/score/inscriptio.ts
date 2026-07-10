@@ -18,7 +18,6 @@
 import { toSvg, type NoteGeometry, type SvgResult } from "./emitters/svg.js";
 import { toModerna } from "./emitters/moderna.js";
 import type { Score } from "./api.js";
-import type { ChantTabulaRow } from "./tabula.js";
 
 export interface InscriptioOpts {
   // ── species ──
@@ -34,10 +33,6 @@ export interface InscriptioOpts {
   width?: number;
   /** Vertical gap between systems, px. */
   systemGap?: number;
-  /** Phrase indices that force a system break, or "auto" (width-driven). */
-  breaks?: "auto" | number[];
-  /** Render only the first N phrases — for incipits. */
-  until?: number;
   /** Draw the quadrata line-end custos guides. */
   custos?: boolean;
 
@@ -48,7 +43,7 @@ export interface InscriptioOpts {
   noteColor?: string;
   staffLineColor?: string;
   /** Accent red for dropcap / annotations. */
-  rubrica?: string;
+  rubricaColor?: string;
 
   // ── front matter (Phase 3c; all off by default) ──
   title?: string;
@@ -56,16 +51,10 @@ export interface InscriptioOpts {
   /** Derive the rubric block from chant meta (feast / genus / modus / source). */
   annotation?: "auto";
   dropcap?: boolean;
-
-  // ── lyrics ──
-  lyricFont?: string;
-  lyricSize?: number;
-  lyricWeight?: number;
-
-  // ── emphasis (emit-time, declarative, deterministic) ──
-  /** Per-note colour, or null. Emit-time coloring only — interactive selection is downstream. */
-  highlight?: (row: ChantTabulaRow) => string | null;
 }
+// Queued past 0.2 (declared here once wired, not before): `breaks` / `until`
+// (partial rendering for incipits), lyric font overrides, and an emit-time
+// `highlight(row)` hook. 0.2 declares only what the emitters honour.
 
 export interface Inscriptio {
   svg: string;
@@ -77,7 +66,7 @@ export interface Inscriptio {
 const EMITTER_KEYS = [
   "staffHeight", "noteScale", "padding", "noteColor", "staffLineColor",
   "width", "systemGap", "custos",
-  "title", "rubric", "annotation", "dropcap", "rubrica",
+  "title", "rubric", "annotation", "dropcap", "rubricaColor",
   "accidentals", "centsBaseline",
 ] as const;
 
@@ -92,6 +81,17 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
   }
   if (opts.notation && opts.notation !== "quadrata" && opts.notation !== "moderna") {
     throw new Error(`inscriptio: unknown notation "${opts.notation}"`);
+  }
+  // The HEJI and cents channels are modern analytical overlays; they belong on
+  // the modern staff, not on historical square notation. Quadrata carries only
+  // the accidentals GABC itself expresses (flat/natural/sharp).
+  if (opts.notation !== "moderna" &&
+      (opts.accidentals === "heji" || opts.accidentals === "cents")) {
+    throw new Error(
+      `inscriptio: accidentals "${opts.accidentals}" is a moderna-only intonation ` +
+      `overlay; square notation (quadrata) carries only GABC accidentals. ` +
+      `Use notation: "moderna".`,
+    );
   }
 
   // Pass through only the options the emitter currently consumes; the rest are

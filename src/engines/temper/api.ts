@@ -86,9 +86,22 @@ export interface Temperamentum {
 }
 
 function resolveOpts(input?: TemperamentumInput): TemperamentumOpts {
-  if (!input) return {};
+  if (input == null) return {};
   if (typeof input === "string") return { tuning: input };
-  return input;
+  if (typeof input !== "object")
+    throw new Error(
+      `temperamentum input must be a tuning name or an options object, got ${typeof input}`,
+    );
+  const opts = input;
+  if (opts.tuning != null && typeof opts.tuning !== "string")
+    throw new Error(`tuning must be a string, got ${typeof opts.tuning}`);
+  if (
+    opts.mode != null &&
+    opts.mode !== "auto" &&
+    (!Number.isInteger(opts.mode) || opts.mode < 1 || opts.mode > 8)
+  )
+    throw new RangeError(`Unknown mode: ${opts.mode}. Supported: 1–8 or "auto".`);
+  return opts;
 }
 
 function resolveScale(opts: TemperamentumOpts): { tuning: string; scaleSteps?: string[] } {
@@ -126,7 +139,12 @@ function tuningToScaleOpts(opts: TemperamentumOpts): { scalaOpts: ScaleOpts; tun
         break;
       default: {
         const ptolemaic = getPtolemaicRatios(tuning);
-        if (ptolemaic) scalaOpts.steps = ptolemaic;
+        if (!ptolemaic)
+          throw new Error(
+            `Unknown tuning: "${tuning}". Built-ins: pythagorean, meantone, equal, ` +
+              `ptolemy-intense, ptolemy-soft, ptolemy-equable — or pass a scale.`,
+          );
+        scalaOpts.steps = ptolemaic;
         break;
       }
     }

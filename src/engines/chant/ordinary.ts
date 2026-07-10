@@ -210,6 +210,17 @@ function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   return Array.isArray(v) ? v : [v];
 }
 
+/** The feast filter must carry Feast objects (from tonus.festum) — a raw
+ * TypeError deep in resolution would otherwise mask the caller bug. */
+function assertFeasts(feasts: Feast[] | undefined, method: string): void {
+  if (!feasts) return;
+  for (const f of feasts) {
+    if (!f || typeof f !== "object" || typeof (f as Feast).id !== "string")
+      throw new Error(`${method}: feast must be a Feast (from tonus.festum) — got ${typeof f}`);
+  }
+}
+
+
 /**
  * Mass ordinary retrieval (`tonus.ordinarium`) from the Kyriale. A feast
  * drives mass selection; `mass` pins a kyriale number directly.
@@ -218,6 +229,7 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
   if (!query || Object.keys(query).length === 0) return [];
 
   const feasts = toArray(query.feast);
+  assertFeasts(feasts, "ordinarium");
   const filterMode = query.mode != null ? Number(query.mode) : undefined;
 
   let results: OrdinaryChant[];

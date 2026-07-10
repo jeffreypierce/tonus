@@ -52,6 +52,17 @@ function toFeastArray(v: Feast | Feast[] | undefined): Feast[] | undefined {
   return Array.isArray(v) ? v : [v];
 }
 
+/** The feast filter must carry Feast objects (from tonus.festum) — a raw
+ * TypeError deep in resolution would otherwise mask the caller bug. */
+function assertFeasts(feasts: Feast[] | undefined, method: string): void {
+  if (!feasts) return;
+  for (const f of feasts) {
+    if (!f || typeof f !== "object" || typeof (f as Feast).id !== "string")
+      throw new Error(`${method}: feast must be a Feast (from tonus.festum) — got ${typeof f}`);
+  }
+}
+
+
 function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   if (v === undefined) return undefined;
   return Array.isArray(v) ? v : [v];
@@ -62,10 +73,25 @@ function toArray<T>(v: T | T[] | undefined): T[] | undefined {
  * Alleluia/Tractus, Offertorium, Communio. A feast narrows the result;
  * feasts without a dedicated proper fall back to the Commune Sanctorum.
  */
+const PROPRIUM_QUERY_KEYS = new Set([
+  "feast", "id", "gabc", "incipit", "mode", "office", "source",
+  "limit", "offset", "sort",
+]);
+
 export function getPropers(query?: PropriumQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
+  // The reconciled query contract (as festum/cantus): an unknown key is a
+  // caller bug, not a filter that silently matches everything.
+  const unknown = Object.keys(query).filter((k) => !PROPRIUM_QUERY_KEYS.has(k));
+  if (unknown.length > 0) {
+    throw new Error(
+      `proprium: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
+      `(expected ${[...PROPRIUM_QUERY_KEYS].join(", ")}).`,
+    );
+  }
 
   const feasts = toFeastArray(query.feast);
+  assertFeasts(feasts, "proprium");
   let results: Chant[];
 
   if (feasts) {

@@ -11,11 +11,14 @@ import { OFFICE_PSALMS_MONASTIC } from "../../data/office-psalms-monastic.js";
 import { intone } from "./intone.js";
 import { MODE_LABELS, type Chant, type PsalmusQuery, type Rite } from "./types.js";
 
+// Canticle numbers follow the generated psalms.json numbering (verified against
+// the incipits: 231 "Benedíctus Dóminus", 232 "Magníficat", 233 "Nunc dimíttis",
+// 210 "Benedícite, ómnia ópera"). The Te Deum is not psalmody — it carries its
+// own melody, has no rows in the psalter data, and is not addressable here.
 const CANTICLE_NAMES: Record<string, number> = {
   benedictus: 231,
-  magnificat: 234,
-  "nunc dimittis": 227,
-  "te deum": 240,
+  magnificat: 232,
+  "nunc dimittis": 233,
   benedicite: 210,
 };
 
@@ -53,7 +56,9 @@ function verseToChant(
     pages: [],
     source: {
       book: "Psalterium",
-      year: new Date().getUTCFullYear(),
+      // Deterministic: intoned psalmody is computed, not dated — the library's
+      // determinism doctrine forbids a wall-clock stamp here.
+      year: null,
       editor: "tonus",
     },
   };
