@@ -43,6 +43,36 @@ const fontFace = junicode
   ? `@font-face { font-family: "${JUNICODE}"; font-weight: 300 700; src: url(data:font/woff2;base64,${junicode.base64}) format("woff2"); }`
   : "";
 
+// ── The wardrobe — Junicode's alternates, rendered live by the browser ──
+// Pure CSS on the embedded variable font (axes via font-variation-settings,
+// features via font-feature-settings). Nothing here touches tonus — it's a
+// specimen sheet for choosing which settings the fonts option should carry.
+const SPEC = "Quem quaeritis in sepulchro? Resurrexit sicut dixit · 1462";
+const wardrobeRows = [
+  ["Crimson Pro", `font-family:'Crimson Pro',serif`, "the house face — also a garalde, hence the resemblance"],
+  ["Junicode plain", `font-family:'${JUNICODE}',serif`, "Fell-types base, no settings"],
+  ["wght 300", `font-family:'${JUNICODE}';font-variation-settings:'wght' 300`, "light"],
+  ["wght 700", `font-family:'${JUNICODE}';font-variation-settings:'wght' 700`, "bold"],
+  ["wdth 75", `font-family:'${JUNICODE}';font-variation-settings:'wdth' 75`, "condensed"],
+  ["wdth 125", `font-family:'${JUNICODE}';font-variation-settings:'wdth' 125`, "expanded"],
+  ["ENLA 100", `font-family:'${JUNICODE}';font-variation-settings:'ENLA' 100`, "enlarged minuscules — the versal look, lowercase grown toward cap height"],
+  ["smcp", `font-family:'${JUNICODE}';font-feature-settings:'smcp'`, "small caps"],
+  ["hist", `font-family:'${JUNICODE}';font-feature-settings:'hist'`, "historical forms — long ſ"],
+  ["ss01", `font-family:'${JUNICODE}';font-feature-settings:'ss01'`, "stylistic set 1"],
+  ["ss02", `font-family:'${JUNICODE}';font-feature-settings:'ss02'`, "stylistic set 2 (insular candidates)"],
+  ["ss03", `font-family:'${JUNICODE}';font-feature-settings:'ss03'`, "stylistic set 3"],
+  ["ss04", `font-family:'${JUNICODE}';font-feature-settings:'ss04'`, "stylistic set 4"],
+  ["dlig", `font-family:'${JUNICODE}';font-feature-settings:'dlig'`, "discretionary ligatures"],
+  ["onum", `font-family:'${JUNICODE}';font-feature-settings:'onum'`, "oldstyle figures — watch the 1462"],
+];
+const wardrobe = junicode
+  ? `<h2>0 · Junicode — the wardrobe</h2>
+<p class="note">browser-rendered specimen on the embedded variable font — axes and features the SVG <code>fonts</code> option could carry; only rows that differ from plain earn a place in a plate</p>
+<div class="plate"><table class="ward">
+${wardrobeRows.map(([label, css, note]) => `<tr><td class="ward-label">${label}</td><td class="ward-spec" style="${css}">${SPEC}</td><td class="ward-note">${note}</td></tr>`).join("\n")}
+</table></div>`
+  : "";
+
 const html = `<!doctype html>
 <html><head><meta charset="utf-8"><title>tonus svg lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,9 +85,15 @@ const html = `<!doctype html>
   .plate { background: #fffef9; border: 1px solid #e5e0d0; border-radius: 6px; padding: 14px; overflow-x: auto; }
   .err { color: #9E2B25; font-family: ui-monospace, monospace; }
   .stamp { color: #999; font-size: .8rem; margin-top: 3rem; }
+  .ward { border-collapse: collapse; width: 100%; }
+  .ward td { padding: .35rem .8rem .35rem 0; border-bottom: 1px solid #eee8d8; vertical-align: baseline; }
+  .ward-label { font-family: ui-monospace, monospace; font-size: .78rem; color: #9E2B25; white-space: nowrap; }
+  .ward-spec { font-size: 21px; }
+  .ward-note { color: #999; font-size: .78rem; }
 </style></head><body>
 <h1>tonus — svg render lab</h1>
 <p class="note">npm run lab · refresh this tab after each round · faces: Crimson Pro (house) + Junicode${junicode ? " (embedded)" : " (reference only — clone not found)"}</p>
+${wardrobe}
 ${results.map((c, i) => `<h2>${i + 1} · ${c.title}</h2><p class="note">${c.note}</p><div class="plate">${c.err ? `<span class="err">THROWS: ${c.err}</span>` : c.svg}</div>`).join("\n")}
 <p class="stamp">tonus ${JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version} · ${results.filter((c) => !c.err).length}/${results.length} plates rendered</p>
 </body></html>`;

@@ -47,7 +47,7 @@ tonus.temperamentum({ scale: "! meanquar.scl\n…" }); // Scala file
 | `root`      | `number`             | mode finalis    | Root pitch class override (0–11)                                                                                          |
 | `transpose` | `number`             | `0`             | Output semitone transposition                                                                                             |
 | `comma`     | `number \| string`   | —               | Meantone comma (`0.25`, `"1/4"`, `"1/3"`); ignored for other tunings                                                      |
-| `scale`     | `string \| string[]` | —               | Scala `.scl` file string or array of 7/12 ratio/cent values; implies custom tuning, name taken from the Scala description |
+| `scale`     | `string \| string[]` | —               | Scala `.scl` file string or array of 7/12 ratio/cent values, beginning at `1/1` (degree list) or ending at `2/1` (Scala convention); implies custom tuning, name from the Scala description |
 
 The tuning presets:
 

@@ -53,10 +53,21 @@ describe("accidentals — standard channel", () => {
     assert.ok(marks.length >= 1, "the explicit flat is marked");
   });
 
-  test("cents mode labels each pitch class once per system", () => {
-    const marks = computeAccidentals(justTabula(), "cents", "pythagorean").filter(Boolean);
-    // One label per departing pitch class, not per note.
-    assert.ok(marks.every((m) => m.kind === "cents"));
+  test("cents mode labels each pitch class once per phrase", () => {
+    const marks = computeAccidentals(justTabula(), "cents", "pythagorean");
+    // One label per departing pitch class per phrase, not per note: a pc
+    // labelled at its first appearance in a phrase stays silent on repeats.
+    const labelled = marks.filter(Boolean);
+    assert.ok(labelled.every((m) => m.kind === "cents"));
+    const tab = justTabula();
+    const seen = new Set();
+    tab.forEach((row, i) => {
+      const key = `${row.phraseIndex}:${row.pc}`;
+      if (marks[i]) {
+        assert.ok(!seen.has(key), `pc ${row.pc} labelled twice in phrase ${row.phraseIndex}`);
+        seen.add(key);
+      }
+    });
   });
 });
 

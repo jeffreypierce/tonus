@@ -18,7 +18,9 @@
 // It returns the same { svg, geometry } contract as quadrata, so downstream
 // tracks and inscriptio treat both species uniformly.
 import { GLYPHS, GLYPH_UPM } from "../../../data/smufl-glyphs.js";
-import { fontFaceCss } from "./svg.js";
+import { fontFaceCss, lyricMarkup } from "./svg.js";
+import { trimRuns } from "../lyric.js";
+import type { LyricRun } from "../types.js";
 import {
   computeAccidentals, type AccidentalMode, type AccidentalMark,
 } from "./accidentals.js";
@@ -40,8 +42,8 @@ const MSP = 7.4;                    // staff space
 const SCALE = (MSP * 4) / 1000;     // SMuFL: 1 em = 4 spaces
 const MTOP = 20;                    // top staff line, system-local
 const NH_W = 295 * SCALE;           // noteheadBlack advance ≈ 8.7px
-const ADV = 11.4;                   // per-note advance inside a melisma
-const SYL_GAP = 6;                  // gap after each syllable
+const ADV = 12.8;                   // per-note advance inside a melisma
+const SYL_GAP = 7;                  // gap after each syllable
 const LYRIC_Y = MTOP + 4 * MSP + 21;
 const SYSTEM_GAP_DEFAULT = 24;
 
@@ -148,8 +150,10 @@ function textW(s: string): number {
   return s.replace(/-/g, "").length * 6.7 + 2;
 }
 
+// Lyric text arrives pre-decoded (the parser strips GABC markup into `runs`);
+// the display trim here only clears syllable-joining hyphens and edge space.
 const stripLyric = (s: string): string =>
-  s.replace(/<\/?(?:eu|i)>/g, "").replace(/^-+/, "").replace(/-+$/, "").trim();
+  s.replace(/^-+/, "").replace(/-+$/, "").trim();
 
 type Row = ChantTabulaRow;
 
@@ -189,15 +193,28 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const slurs: string[] = [];
   const lyricSvgs: string[] = [];
   const lyricRuns: Array<{
-    x: number; systemY: number; text: string; wordStart: boolean;
+    x: number; systemY: number; text: string; spans?: LyricRun[]; wordStart: boolean;
   }> = [];
   const placements: Array<{ row: Row; x: number; y: number; system: number; systemY: number }> = [];
   const systemMaxX: number[] = [];
 
   let system = 0;
-  let systemY = 0;
-  let x = padding + 32;                // clef zone on the first system
-  const clefSvgs: string[] = [clef(10, 0)];
+  // Cents mode floats labels ABOVE the top staff line; pad the first system
+  // down so the staggered upper row doesn't clip the viewBox.
+  const topPad = accMode === "cents" ? 12 : 0;
+  let systemY = topPad;
+  // Every system reserves the same clef zone — the clef glyph at x=10 runs
+  // ~30px wide, and continuation systems once reset to padding+4, printing
+  // their first notes through it.
+  const CLEF_ZONE = 32;
+  let x = padding + CLEF_ZONE;
+  const clefSvgs: string[] = [clef(10, topPad)];
+
+  // The floating cents band dodges its own collisions: two rows above the
+  // staff, greedy — a label crowding the last one on the low row steps up.
+  const CENTS_SIZE = 10;
+  const CENTS_MIN_GAP = 32; // a "−21.5" at 10px runs ~28px
+  const centsRowX: [number, number] = [-Infinity, -Infinity];
 
   // Group rows into syllables (contiguous phrase+syllable index).
   const sylKeys: string[] = [];
@@ -222,11 +239,15 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       systemMaxX.push(x + padding);
       system++;
       systemY += systemHeight;
-      x = padding + 4;
+      x = padding + CLEF_ZONE;
+      centsRowX[0] = centsRowX[1] = -Infinity;
       clefSvgs.push(clef(10, systemY));
     }
 
-    const lyr = stripLyric(srows[0]!.lyric ?? "");
+    // Display form: trimmed styled runs when markup rides, else the trimmed
+    // plain string — one derivation for measuring and drawing.
+    const spans = srows[0]!.runs ? trimRuns(srows[0]!.runs!) : undefined;
+    const lyr = spans ? spans.map((s) => s.text).join("") : stripLyric(srows[0]!.lyric ?? "");
 
     // Note x-positions within the syllable.
     let nx = x + NH_W / 2 + 1;
@@ -249,11 +270,17 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       if (r.quilisma) body.push(quilismaMark(mx, my));
       const mk = markByRow.get(r);
       if (mk?.kind === "glyph") body.push(accidentalMark(mx, my, mk.glyph!));
-      else if (mk?.kind === "cents")
+      else if (mk?.kind === "cents") {
+        // Cents labels float in a band above the staff (not glued to the
+        // head) — an analytic overlay, not an engraving mark.
+        const bandRow = mx - centsRowX[0] >= CENTS_MIN_GAP ? 0 : 1;
+        centsRowX[bandRow] = mx;
         body.push(
-          `<text class="cents" x="${mx.toFixed(2)}" y="${(my - MSP).toFixed(2)}" ` +
-          `font-size="7.5" fill="#111" font-family="'Crimson Pro', Georgia, serif">${esc(mk.label ?? "")}</text>`,
+          `<text class="cents" x="${mx.toFixed(2)}" y="${(systemY + MTOP - 10 - bandRow * 10).toFixed(2)}" ` +
+          `text-anchor="middle" font-size="${CENTS_SIZE}" fill="#666" ` +
+          `font-family="'Crimson Pro', Georgia, serif">${esc(mk.label ?? "")}</text>`,
         );
+      }
       body.push(notehead(mx, my, r.liquescent, r.mora === 2));
       if (r.mora === 1) body.push(moraDots(mx, my, onLine));
       placements.push({ row: r, x: mx, y: my, system, systemY });
@@ -286,7 +313,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     // syllables, matching quadrata's Vendôme practice) after the walk.
     const tx = notePos[0]!.mx - NH_W / 2;
     if (lyr) {
-      lyricRuns.push({ x: tx, systemY, text: lyr, wordStart: srows[0]!.wordStart });
+      lyricRuns.push({ x: tx, systemY, text: lyr, spans, wordStart: srows[0]!.wordStart });
     }
 
     x += sylW + SYL_GAP;
@@ -311,7 +338,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   // Staff lines: five per system.
   const staff: string[] = [];
   for (let s = 0; s <= system; s++) {
-    const sysY = s * systemHeight;
+    const sysY = s * systemHeight + topPad;
     const right = (systemMaxX[s] ?? W) - padding;
     for (let i = 0; i < 5; i++) {
       const ly = sysY + MTOP + i * MSP;
@@ -324,13 +351,14 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   // Second pass: lyric texts, with a centred hyphen in the gap between
   // syllables of one word when both sit in the same system.
   const lyricSize = 15 * lyricScale;
+  const rubricaColor = options.rubricaColor ?? "#9E2B25";
   const estW = (t: string): number => t.length * lyricSize * 0.52;
   for (let k = 0; k < lyricRuns.length; k++) {
     const run = lyricRuns[k]!;
     lyricSvgs.push(
       `<text class="lyric" x="${run.x.toFixed(2)}" y="${(run.systemY + LYRIC_Y).toFixed(2)}" ` +
       `font-size="${lyricSize.toFixed(1)}" ` +
-      `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">${esc(run.text)}</text>`,
+      `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">${lyricMarkup(run.spans, run.text, rubricaColor)}</text>`,
     );
     const next = lyricRuns[k + 1];
     if (next && !next.wordStart && next.systemY === run.systemY) {
