@@ -57,9 +57,25 @@ export type WrittenShape =
   | "punctum" | "inclinatum" | "virga" | "virgaReversa"
   | "quilisma" | "oriscus" | "strophicus" | "cavum" | "linea";
 
+/**
+ * One styled span of a syllable's lyric — the decoded form of GABC's text
+ * markup (<i>, <b>, <sc>, <c>, elisions). The spans concatenate to the
+ * syllable's `lyric`; style flags are absent when a span is plain.
+ */
+export interface LyricRun {
+  text: string;
+  italic?: boolean;
+  bold?: boolean;
+  smallCaps?: boolean;
+  /** Rendered in the rubric color (GABC's <c>). */
+  rubric?: boolean;
+}
+
 // Context — position, lyric, and ornamentation within a score.
 export interface Context {
   lyric: string;
+  /** Styled lyric spans; present only when GABC markup styled this syllable. */
+  runs?: LyricRun[];
   vowel: string;
   syllableIndex: number;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
@@ -183,6 +199,8 @@ export interface ParsedNote {
   type: "note";
   step: number;
   lyric: string;
+  /** Styled lyric spans; present only when GABC markup styled this syllable. */
+  runs?: LyricRun[];
   syllableIndex: number;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
@@ -234,6 +252,8 @@ export interface Neume {
 
 export interface Syllable {
   lyric: string;
+  /** Styled lyric spans; present only when GABC markup styled this syllable. */
+  runs?: LyricRun[];
   notes: Note[];
   neume: Neume;
   /** Notes sung on this syllable — its melisma. 1 = syllabic, >1 = melismatic. */

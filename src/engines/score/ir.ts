@@ -48,6 +48,7 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
     },
     context: {
       lyric: raw.lyric,
+      runs: raw.runs,
       vowel: selectVowel(raw.lyric).vowel,
       syllableIndex: raw.syllableIndex,
       neumeGroup: raw.neumeGroup,
@@ -78,7 +79,10 @@ function makeSyllable(lyric: string, notes: Note[]): Syllable {
     const ictic = notes[notes.length - 2]!;
     ictic.performance.duration *= SALICUS_PROLONGATION;
   }
-  return { lyric, notes, neume, melisma: notes.length };
+  const runs = notes[0]?.context.runs;
+  return runs
+    ? { lyric, runs, notes, neume, melisma: notes.length }
+    : { lyric, notes, neume, melisma: notes.length };
 }
 
 // ── Arsis/thesis classification ── (the model is in the module header above)

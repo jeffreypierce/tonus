@@ -78,9 +78,32 @@ interface Phrase {
 
 interface Syllable {
   lyric: string;
+  runs?: LyricRun[];        // styled spans, present only when GABC markup styled this syllable
   notes: Note[];
   neume: Neume;
   melisma: number;          // notes on this syllable (1 = syllabic, >1 melismatic)
+}
+```
+
+GABC's lyric markup is decoded at parse, so `lyric` is always clean display
+text: the `<sp>` shortcuts arrive as real characters (`<sp>V/</sp>` → ℣,
+`<sp>R/</sp>` → ℟, `<sp>+</sp>` → the flex †, `<sp>'ae</sp>` → ǽ, the
+`\greheightstar` verbatim → the raised *), centering braces and layout tags
+(`<clear>`, `<nlba>`) vanish, above-lines text (`<alt>`) is not lyric text,
+and page cross-references (`\pageref`) to the paper books are dropped. Style
+tags — `<i>`, `<b>`, `<sc>`, `<c>` (rubric color), `<e>` (elision) — survive
+as `runs`, styled spans that concatenate to `lyric`; a style opened in one
+syllable and closed several later (the common `<i>ij.</i>` and euouae
+patterns) styles every syllable it crosses. Both notation species draw the
+runs (italic, bold, small caps, rubric color) as SVG `<tspan>`s.
+
+```typescript
+interface LyricRun {
+  text: string;
+  italic?: boolean;
+  bold?: boolean;
+  smallCaps?: boolean;
+  rubric?: boolean;         // rendered in rubricaColor
 }
 
 interface RestEvent {
@@ -307,6 +330,7 @@ interface ChantTabulaRow {
 
   // context
   lyric: string;
+  runs?: LyricRun[];         // styled lyric spans (see Syllable above)
   vowel: string;
   divisio: string | null;
   cadenceRef: number | null; // index into score.cadences[] when this note closes one
@@ -350,9 +374,11 @@ Options, by group (all optional):
 
 - **layout** — `width` wraps systems to fit (absent = a single line); `systemGap`,
   `custos` (line-end guides).
-- **front matter** — `title`, `rubric` (or `annotation: "auto"` to derive
-  _genus · modus · book_ from the chant), `dropcap` (a rubricated initial),
-  `rubricaColor` (the liturgical red).
+- **front matter** — set as the Solesmes books open a piece: `title` centers
+  over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
+  mark, e.g. _Introitus. 8._) sits upright at the left margin over the
+  dropcap; `dropcap` (a rubricated initial); `rubricaColor` (the liturgical
+  red — dropcap, annotation, and rubric lyric runs all draw in it).
 - **intonation** — `accidentals: "standard" | "heji" | "cents"` and
   `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
 - **scale & ink** — `staffHeight`, `noteScale`, `padding`, `noteColor`,
@@ -399,10 +425,12 @@ modern analytical overlays and render on **moderna** only — asking for them on
   tuning departs from the pure-fifth chain (a just preset shows syntonic commas,
   ±21.5¢). Meantone tempers by fractional commas (not just), so `heji` **throws**
   under it.
-- `"cents"` — signed cent deviations (moderna), for any tuning. `centsBaseline: "pythagorean"`
-  (default) reads against the chant's home intonation — so changing the tuning
-  shows what each temperament _does_ to the chant; `"et"` reads against equal
-  temperament, the modern-reader instinct.
+- `"cents"` — signed cent deviations (moderna), for any tuning. Labels float in
+  a band above the staff, and a deviating pitch class is labelled once per
+  phrase (its repeats ride silently until the next phrase restates it).
+  `centsBaseline: "pythagorean"` (default) reads against the chant's home
+  intonation — so changing the tuning shows what each temperament _does_ to the
+  chant; `"et"` reads against equal temperament, the modern-reader instinct.
 
 ## The imprint
 

@@ -29,7 +29,7 @@ export type CentsBaseline = "pythagorean" | "et";
 
 /** One note's intonation mark, for the emitter to place before/above the head. */
 export interface AccidentalMark {
-  /** "glyph" → a notehead-preceding accidental; "cents" → a superscript label. */
+  /** "glyph" → a notehead-preceding accidental; "cents" → a label floating above the staff. */
   kind: "glyph" | "cents";
   /** Glyph codepoint (kind "glyph") — a standard or HEJI accidental. */
   glyph?: string;
@@ -66,7 +66,7 @@ function fromPythagorean(row: ChantTabulaRow): number {
 
 /**
  * Compute the intonation mark for each tabula row, or null where none applies.
- * Repeat-suppression (standard mode) and per-system pitch-class suppression
+ * Repeat-suppression (standard mode) and per-phrase pitch-class suppression
  * (cents mode) keep the staff from being carpeted.
  * @throws Error when `heji` is asked of a non-just (meantone) tuning.
  */
@@ -115,13 +115,17 @@ export function computeAccidentals(
     });
   }
 
-  // cents — signed deviation label, repeat-suppressed per pitch class.
-  const seen = new Set<number>();
+  // cents — signed deviation label, stated once per pitch class PER PHRASE.
+  // A deviating pitch is labelled at its first appearance in each phrase and
+  // rides silently through the phrase's repeats; the next phrase restates it
+  // (the reader's memory is the phrase, and chant has no measures to carry it).
+  const seen = new Set<string>();
   return rows.map((row) => {
     const value = centsBaseline === "et" ? row.offset : fromPythagorean(row);
     if (Math.abs(value) < 0.5) return null;              // effectively in tune
-    if (seen.has(row.pc)) return null;                  // already labelled this pc
-    seen.add(row.pc);
+    const key = `${row.phraseIndex}:${row.pc}`;
+    if (seen.has(key)) return null;             // already labelled in this phrase
+    seen.add(key);
     const sign = value < 0 ? "−" : "+";            // real minus sign
     return { kind: "cents", label: `${sign}${Math.abs(value).toFixed(1)}` };
   });

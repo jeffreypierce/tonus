@@ -161,20 +161,27 @@ describe("tonus namespace", () => {
   });
 });
 
-describe("the generation surface (named exports)", () => {
-  test("everything a downstream generator needs imports from the package root", async () => {
+describe("the appendix (the export law)", () => {
+  // Verbs live on the namespace; return values are plain data; the appendix
+  // exports canonical constant tables — nothing with a ().
+  test("the six tables are exported", async () => {
     const m = await import("../dist/index.js");
-    const { MODES, TONES, getTone, getDifferentia, midiToGabc, gabcToMidi,
-      syllabifyWord, syllabifyPhrase, selectVowel } = m;
+    const { SEASON_LABEL, TEMPUS_NAME, GRADE_ORDER, GRADE_NAME, MODES, TONES } = m;
+    assert.equal(SEASON_LABEL.adv, "Advent");
+    assert.equal(TEMPUS_NAME.adv, "Tempus Adventus");
+    assert.equal(GRADE_ORDER.length, 14);
+    assert.ok(GRADE_NAME["duplex-i"]);
     assert.ok(MODES instanceof Map && MODES.get(1).nomen === "Protus Authenticus");
     assert.equal(TONES.length, 9); // eight tones + Tonus Peregrinus
-    assert.equal(getTone(1).nomen, "Tonus I");
-    assert.ok(getDifferentia(getTone(1)).termination.length > 0);
-    assert.equal(midiToGabc(57), "h");
-    assert.equal(gabcToMidi("h"), 57);
-    assert.deepEqual(syllabifyWord("Dóminus"), ["Dó", "mi", "nus"]);
-    assert.ok(syllabifyPhrase("Glória Patri").length >= 4);
-    assert.deepEqual(selectVowel("Dó"), { vowel: "o", accent: true });
+    assert.equal(TONES[0].nomen, "Tonus I");
+  });
+
+  test("no functions ride the appendix", async () => {
+    const m = await import("../dist/index.js");
+    const fns = Object.entries(m)
+      .filter(([k, v]) => k !== "default" && typeof v === "function")
+      .map(([k]) => k);
+    assert.deepEqual(fns, [], `functions leaked into the appendix: ${fns}`);
   });
 });
 
