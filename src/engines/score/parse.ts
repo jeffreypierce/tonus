@@ -32,12 +32,14 @@
 // Liber's; each is classified where it is read below.
 import type {
   ArticulationProfile,
+  LyricRun,
   ParseOptions,
   ParseResult,
   RestEvent,
   WrittenShape,
 } from "./types.js";
 import { buildArticulation } from "./articulation.js";
+import { createLyricDecoder } from "./lyric.js";
 import { detectVowelAccent } from "../chant/syllabify.js";
 
 // Constants
@@ -92,6 +94,7 @@ interface IntermNote {
   step: number;
   degree: number;
   lyric: string;
+  runs?: LyricRun[];
   syllableIndex: number;
   neumeGroup: number;
   staffLetter: string;      // raw GABC pitch letter a–m (drives staff position)
@@ -135,6 +138,7 @@ function parseNeume(
   notation: string[],
   context: {
     lyric: string;
+    runs?: LyricRun[];
     clef: string;
     oct: number;
     syllableIndex: number;
@@ -143,7 +147,7 @@ function parseNeume(
     profile: ArticulationProfile;
   },
 ): ParseResult["events"] {
-  const { lyric, clef, oct, syllableIndex, accent, accidentalState, profile } =
+  const { lyric, runs, clef, oct, syllableIndex, accent, accidentalState, profile } =
     context;
   const weights = profile.weights;
   const ruleGain = profile.ruleGain ?? 1.0;
@@ -360,6 +364,7 @@ function parseNeume(
       step,
       degree,
       lyric,
+      runs,
       syllableIndex,
       neumeGroup,
       staffLetter: letter,
@@ -424,6 +429,7 @@ function parseNeume(
       type: "note" as const,
       step: note.step,
       lyric: note.lyric,
+      runs: note.runs,
       syllableIndex: note.syllableIndex,
       neumeGroup: note.neumeGroup,
       staffLetter: note.staffLetter,
@@ -471,6 +477,9 @@ export function parseGABC(
 
   let currentClef = "c3";
   let accidentalState = initialAccidentalState(currentClef);
+  // One lyric decoder per source: GABC style tags open and close across
+  // syllable (and word) boundaries, so the decode state rides the whole walk.
+  const lyricDecoder = createLyricDecoder();
   const split = source.replace(/\)\s(?=[^\)]*(?:\(|$))/g, ")\n").split(/\n/g);
 
   split.forEach((word) => {
@@ -481,7 +490,12 @@ export function parseGABC(
     let syllableIndex = 0;
 
     while ((match = SYLLABLES_REGEX.exec(word)) !== null) {
-      const text = (match[1] ? match[1].trim().split("|")[0] : "") || "";
+      const rawText = (match[1] ? match[1].trim().split("|")[0] : "") || "";
+      // Decode GABC lyric markup EVERY syllable — a style opened here may
+      // close syllables later, so the decoder's state must advance even when
+      // this syllable carries no notes.
+      const decoded = lyricDecoder.decode(rawText);
+      const text = decoded.text;
       const notation = match[2] ? match[2].match(NOTATIONS_REGEX) : null;
 
       if (!notation || notation.length === 0) {
@@ -512,6 +526,7 @@ export function parseGABC(
         events.push(
           ...parseNeume(noteTokens, {
             lyric: text,
+            runs: decoded.runs,
             clef: currentClef,
             oct: opts.oct,
             syllableIndex,

@@ -99,14 +99,35 @@ describe("inscriptio — moderna species", () => {
     assert.ok(arrows(jst) > 0, "just intonation raises comma arrows");
   });
 
-  test("cents labels float above the head under a tempered tuning", () => {
+  test("cents labels float in the band above the staff, not glued to heads", () => {
     const svg = inscriptio(just(), { notation: "moderna", accidentals: "cents" }).svg;
-    assert.ok((svg.match(/class="cents"/g) || []).length > 0);
+    const labels = svg.match(/<text class="cents"[^>]*>/g) || [];
+    assert.ok(labels.length > 0);
+    // Single system: every label sits in the two-row band above the top line
+    // (topPad 12 + MTOP 20 − 10 = 22, or 12 when staggered up), regardless of
+    // the note's y — the pad keeps the upper row inside the viewBox.
+    for (const t of labels) {
+      assert.match(t, /y="(22|12)\.00"/, `floats above the staff: ${t}`);
+      assert.match(t, /text-anchor="middle"/);
+    }
   });
 
   test("heji under meantone surfaces the engine guard as a throw", () => {
     const meantone = buildScore(makeChant(SCALE), { temperamentum: buildTemper({ tuning: "meantone" }) });
     assert.throws(() => inscriptio(meantone, { notation: "moderna", accidentals: "heji" }), /just-expressible/);
+  });
+
+  test("continuation systems clear the clef — no first-note collision", () => {
+    // Narrow width forces several systems; every system's leftmost head must
+    // sit past the ~30px clef zone (a regression reset x to padding+4).
+    const long = makeChant("(c4) " + "Pu(g)er(h) na(gh)tus(f.) ".repeat(8) + "(::)");
+    const { geometry } = inscriptio(buildScore(long), { notation: "moderna", width: 320 });
+    const systems = [...new Set(geometry.map((g) => g.system))];
+    assert.ok(systems.length > 1, "the narrow width forces multiple systems");
+    for (const s of systems) {
+      const minX = Math.min(...geometry.filter((g) => g.system === s).map((g) => g.x));
+      assert.ok(minX >= 40, `system ${s} first head at x=${minX.toFixed(1)} clears the clef`);
+    }
   });
 
   test("an accidental reserves room — its head sits right of the unflatted note", () => {

@@ -80,6 +80,9 @@ describe("inscriptio — square-note SVG (single-system)", () => {
     assert.equal((torc.match(/class="stem"/g) || []).length, 2, "stems at both junctions");
     const porr = inscriptio(buildScore(makeChant("(c4) a(hgh) (::)"))).svg;
     assert.equal((porr.match(/swash/g) || []).length, 1, "porrectus keeps the diagonal swash");
+    // The Solesmes porrectus carries a LEFT stem on the descent edge (as the
+    // clivis does) — the swash alone once rendered bare.
+    assert.ok((porr.match(/class="stem"/g) || []).length >= 1, "porrectus left stem");
   });
 
   test("inscriptio(score).svg draws explicit accidentals and ledger lines", () => {
@@ -217,18 +220,30 @@ describe("inscriptio — front matter", () => {
     pages: [], source: { book: "Graduale Romanum", year: 1961, editor: "Solesmes" },
   });
 
-  test("title renders a headline and pushes the first system down", () => {
+  test("title renders a centered headline and pushes the first system down", () => {
     const withTitle = inscriptio(score, { title: "Puer natus est" });
     assert.ok(/class="title"[^>]*>Puer natus est</.test(withTitle.svg));
+    // Centered over the score, as the books open a piece.
+    assert.ok(/class="title"[^>]*text-anchor="middle"/.test(withTitle.svg));
     // The header band offsets the first note below where it sits bare.
     const bare = inscriptio(score);
     assert.ok(withTitle.geometry[0].y > bare.geometry[0].y);
   });
 
-  test("annotation:auto derives the rubric from genus · modus · book", () => {
+  test("annotation:auto stacks the Solesmes genus/mode mark", () => {
     const { svg } = inscriptio(score, { annotation: "auto" });
-    const rubric = svg.match(/class="rubric"[^>]*>([^<]*)</)?.[1];
-    assert.equal(rubric, "Introitus · Modus VII · Graduale Romanum");
+    const lines = [...svg.matchAll(/class="rubric"[^>]*>([^<]*)</g)].map((m) => m[1]);
+    assert.deepEqual(lines, ["Intr.", "7."], "abbreviated genus over mode, one line each");
+    // Upright (not italic), oldstyle figures for the numeral.
+    assert.ok(!/class="rubric"[^>]*font-style="italic"/.test(svg));
+    assert.ok(/class="rubric"[^>]*onum/.test(svg), "oldstyle figures");
+  });
+
+  test("with a dropcap the mark centers on the cap column beside the staff", () => {
+    const { svg } = inscriptio(score, { annotation: "auto", dropcap: true });
+    const marks = [...svg.matchAll(/class="rubric"[^>]*/g)].map((m) => m[0]);
+    assert.equal(marks.length, 2);
+    for (const m of marks) assert.match(m, /text-anchor="middle"/);
   });
 
   test("an explicit rubric overrides the auto one", () => {

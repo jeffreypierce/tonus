@@ -45,7 +45,7 @@ import type {
 } from "./engines/harmonia/api.js";
 import type { HarmonyTabulaRow } from "./engines/harmonia/tabula.js";
 import type { PlanetVowel } from "./engines/harmonia/data/vowels.js";
-import type { Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis, RhythmicType, CompoundBeat } from "./engines/score/types.js";
+import type { Note, Performance, Phrase, Syllable, LyricRun, RestEvent, ParseError, ArsisThesis, RhythmicType, CompoundBeat } from "./engines/score/types.js";
 import type { VoicedPitch } from "./engines/harmonia/voice.js";
 import type {
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
@@ -83,28 +83,18 @@ const tonus = {
 
 export default tonus;
 
-// Reference maps and grade helpers (display strings live here, not on objects).
+// ── The appendix ──
+// The export law: verbs live on the namespace; return values are plain data;
+// the appendix exports canonical constant tables — nothing with a (). A
+// function that earns public life earns a seventeenth Latin noun instead.
 export {
-  SEASON_LABELS,
-  TEMPUS_NAMES,
+  SEASON_LABEL,
+  TEMPUS_NAME,
   GRADE_ORDER,
-  GRADE_NAMES,
-  gradeOrder,
-  compareGrade,
-  ritusToGrade,
+  GRADE_NAME,
 } from "./engines/cal/types.js";
-
-// The generation surface: reference data and helpers for code that builds on
-// tonus rather than querying it. A downstream generator imports these from
-// "tonus", never from dist/ internals.
 export { MODES } from "./engines/temper/data/modes.js";
-export { TONES, getTone, getDifferentia } from "./engines/temper/data/tones.js";
-export { midiToGabc, gabcToMidi } from "./engines/temper/gabc.js";
-export {
-  syllabifyWord,
-  syllabifyPhrase,
-  selectVowel,
-} from "./engines/chant/syllabify.js";
+export { TONES } from "./engines/temper/data/tones.js";
 export type { PsalmTone, Differentia } from "./engines/temper/data/tones.js";
 
 export type {
@@ -120,7 +110,7 @@ export type {
   Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
   InscriptioOpts, Inscriptio, NoteGeometry, FontSpec, FontSlot, FontEmbed,
   ChantTabulaRow,
-  Note, Performance, Phrase, Syllable, RestEvent, ParseError, ArsisThesis,
+  Note, Performance, Phrase, Syllable, LyricRun, RestEvent, ParseError, ArsisThesis,
   RhythmicType, CompoundBeat,
   VoicedPitch,
   Cosmos, CosmosQuery, Body, BodyName, Aspect,

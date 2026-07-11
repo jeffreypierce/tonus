@@ -1,4 +1,4 @@
-import type { Score, Note, Neume } from "./types.js";
+import type { Score, Note, Neume, LyricRun } from "./types.js";
 import { MODES } from "../temper/modes.js";
 import {
   buildPhrasing,
@@ -29,6 +29,8 @@ export interface ChantTabulaRow {
   /** 0-based position of this note within its neume figure. */
   neumeIndex: number;
   lyric: string;
+  /** Styled lyric spans; present only when GABC markup styled this syllable. */
+  runs?: LyricRun[];
   vowel: string;
   /** True when this note's syllable is the first of its word. */
   wordStart: boolean;
@@ -215,6 +217,7 @@ export function computeTabula(
       neumeGroup: n.context.neumeGroup,
       neumeIndex: neumeIndices[i],
       lyric: n.context.lyric,
+      runs: n.context.runs,
       vowel: n.context.vowel,
       // wordStart reads the note's CONTEXT syllable index (the parser's, which
       // resets to 0 at each word boundary — so 0 = word start), NOT the row's

@@ -51,7 +51,8 @@
     "clean": "rm -rf dist",
     "test": "npm run build && node --test --test-reporter=spec tests/*.test.mjs",
     "prepublishOnly": "npm run clean && npm run build",
-    "lab": "npm run build && node scripts/render-lab.mjs"
+    "lab": "npm run build && node scripts/render-lab.mjs",
+    "stress": "npm run build && node scripts/render-stress.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

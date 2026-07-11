@@ -273,7 +273,31 @@ export function buildRatios(opts: ScaleOpts = {}): Scale {
   let ratios: number[];
 
   if (opts.steps != null) {
-    const parsed = opts.steps.map(parseStep);
+    let parsed = opts.steps.map(parseStep);
+    // Two USER step conventions circulate, and mistaking one for the other
+    // mistunes silently: a DEGREE LIST begins at 1/1 (the ptolemy presets), a
+    // SCALA list gives the degrees above an implicit tonic and ends at 2/1
+    // (every .scl file). Normalize both to 1/1-first; anything else is
+    // ambiguous and throws rather than resolving a plausible-looking wrong
+    // tuning. The check applies to USER intake only — string steps. An
+    // all-number list is the engine's own resolved table riding back in
+    // (notatio carries temperamentum.cents), root-relative by construction.
+    const userIntake = opts.steps.some((v) => typeof v === "string");
+    if (userIntake) {
+      const EPS = 1e-9;
+      const firstIsUnison = Math.abs((parsed[0] ?? 0) - 1) < EPS;
+      const lastIsOctave = Math.abs((parsed[parsed.length - 1] ?? 0) - 2) < EPS;
+      if (!firstIsUnison && lastIsOctave) {
+        parsed = [1, ...parsed.slice(0, -1)]; // Scala convention → shift under the tonic
+      } else if (firstIsUnison && lastIsOctave) {
+        parsed = parsed.slice(0, -1); // both stated → drop the closing octave
+      } else if (!firstIsUnison) {
+        throw new RangeError(
+          "Custom scale must begin at 1/1 (a degree list) or end at 2/1 (Scala convention)",
+        );
+      }
+      parsed = parsed.map(foldOct);
+    }
     if (parsed.length === 7) {
       ratios = expandDiatonicSteps(parsed);
     } else if (parsed.length === 12) {

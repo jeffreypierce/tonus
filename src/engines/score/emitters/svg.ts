@@ -20,6 +20,8 @@
 
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Chant } from "../../chant/types.js";
+import type { LyricRun } from "../types.js";
+import { trimRuns } from "../lyric.js";
 import { GLYPHS, GLYPH_UPM, type SmuflGlyph } from "../../../data/smufl-glyphs.js";
 import {
   computeAccidentals, type AccidentalMode, type CentsBaseline, type AccidentalMark,
@@ -224,6 +226,32 @@ const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+/**
+ * A syllable's lyric as SVG text content: styled runs become <tspan>s
+ * (italic, bold, small caps, rubric color); a plain lyric stays a bare
+ * escaped string. Shared by both species — callers pass runs whose
+ * concatenation equals the plain text they measure with.
+ */
+export function lyricMarkup(
+  runs: LyricRun[] | undefined,
+  plain: string,
+  rubricaColor: string,
+): string {
+  if (!runs || runs.length === 0) return esc(plain);
+  return runs
+    .map((run) => {
+      const attrs: string[] = [];
+      if (run.italic) attrs.push('font-style="italic"');
+      if (run.bold) attrs.push('font-weight="700"');
+      if (run.smallCaps) attrs.push('font-variant="small-caps"');
+      if (run.rubric) attrs.push(`fill="${esc(rubricaColor)}"`);
+      return attrs.length
+        ? `<tspan ${attrs.join(" ")}>${esc(run.text)}</tspan>`
+        : esc(run.text);
+    })
+    .join("");
+}
+
 // ── Geometry ──
 // Staff positions: 1 = bottom line, 3, 5, 7 = top line; even = spaces.
 
@@ -340,39 +368,64 @@ export function toSvg(
   const r = resolveOpts(options);
   const L = makeLayout(r);
 
-  // ── Front matter ── Title, rubric annotation, and dropcap sit in a header band
-  // above the first system. Everything below offsets down by the band's height.
-  const autoRubric = options.annotation === "auto"
-    ? [chant.genus, chant.modus, chant.source?.book].filter(Boolean).join(" · ")
-    : null;
-  const rubricText = r.rubric ?? autoRubric;
-  const header: string[] = [];
+  // ── Front matter ── Title, rubric annotation, and dropcap sit in a header
+  // band above the first system, set as the Solesmes books open a piece: the
+  // TITLE centered over the score ("Dominica Prima Adventus."), the
+  // genus/mode mark at the left margin over the dropcap ("Introitus. 8.",
+  // upright). Everything below offsets down by the band's height. The text
+  // is emitted at final assembly, when the score's width is known (the title
+  // centers on it); here we only reserve the band.
+  // The books abbreviate the genus in the margin mark (Intr., Grad., Offert.);
+  // a genus not in the table prints as-is with its period.
+  const GENUS_ABBREV: Record<string, string> = {
+    Introitus: "Intr.", Graduale: "Grad.", Offertorium: "Offert.",
+    Communio: "Comm.", Tractus: "Tract.", Alleluia: "All.",
+    Antiphona: "Ant.", Responsorium: "Resp.", "Responsorium Breve": "Resp. br.",
+    Hymnus: "Hymn.", Sequentia: "Seq.", Canticum: "Cant.", Psalmus: "Ps.",
+  };
+  const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+  const autoLines = options.annotation === "auto"
+    ? ([
+        chant.genus && capitalize(GENUS_ABBREV[chant.genus] ?? `${chant.genus}.`),
+        chant.mode && `${chant.mode}.`,
+      ].filter(Boolean) as string[])
+    : [];
+  // The mark STACKS as the books set it — "Offert." over "2." — one line per
+  // element; an explicit `rubric` string stays a single line.
+  const rubricLines: string[] = r.rubric ? [r.rubric] : autoLines;
+  const markSize = r.lyricSize * 1.05;
+  const markLineH = markSize * 0.98;   // tight, as the books stack Intr. over 8.
   let headerY = 0;
+  let titleBaseline = 0;
+  let rubricTop = 0;
   if (r.title) {
     const size = r.lyricSize * 1.5;
+    titleBaseline = size;
     headerY += size * 1.4;
-    header.push(
-      `<text class="title" x="${r.padding}" y="${(size).toFixed(2)}" ` +
-      `${fontAttrs(r.fonts.title)} font-size="${(size * r.fonts.title.scale).toFixed(1)}" ` +
-      `fill="${r.noteColor}">${esc(r.title)}</text>`,
-    );
   }
-  if (rubricText) {
-    const size = r.lyricSize * 0.85;
-    const ry = (r.title ? headerY : size * 1.3);
-    if (!r.title) headerY += size * 1.6;
-    header.push(
-      `<text class="rubric" x="${r.padding}" y="${ry.toFixed(2)}" ` +
-      `${fontAttrs(r.fonts.annotation)} font-size="${(size * r.fonts.annotation.scale).toFixed(1)}" ` +
-      `font-style="italic" fill="${r.rubricaColor}">${esc(rubricText)}</text>`,
-    );
+  if (rubricLines.length > 0 && !r.dropcap) {
+    // No cap → no margin column; the stack takes a header band of its own.
+    rubricTop = (r.title ? headerY : 0) + markSize * 1.1;
+    headerY = rubricTop + markLineH * (rubricLines.length - 1) + markSize * 0.5;
   }
   // Push all systems below the header band.
   L.systemY = headerY;
 
   const body: string[] = [];      // glyphs and stems
   const behind: string[] = [];    // ledger lines (render under glyphs)
-  const lyrics: Array<{ cx: number; text: string; wordStart: boolean; systemY: number }> = [];
+  const lyrics: Array<{
+    cx: number; text: string; runs?: LyricRun[]; wordStart: boolean; systemY: number;
+  }> = [];
+  // Display form of a row's lyric: trimmed styled runs when markup rides,
+  // else the hyphen-trimmed plain string. One derivation for measuring and
+  // drawing, so the two can never disagree.
+  const displayLyric = (row: ChantTabulaRow): { text: string; runs?: LyricRun[] } => {
+    if (row.runs) {
+      const runs = trimRuns(row.runs);
+      return { text: runs.map((s) => s.text).join(""), runs };
+    }
+    return { text: row.lyric.replace(/^-+/, "").replace(/-+$/, "").trim() };
+  };
   const placements: NotePlacement[] = [];
 
   // Dropcap column — the book's illuminated capital owns the left margin of
@@ -571,6 +624,9 @@ export function toSvg(
         if (swash) {
           ledger(figure[0]!.staffPosition, swash.inkLeft, swash.inkRight);
           ledger(figure[1]!.staffPosition, swash.inkLeft, swash.inkRight);
+          // The Solesmes porrectus carries a left stem — the descent edge,
+          // as on the clivis (the swash is a clivis whose fall stretched).
+          body.push(stem(swash.inkLeft + r.stemWeight, figure[0]!.staffPosition, figure[1]!.staffPosition));
           body.push(swash.svg);
           placements.push({ row: figure[0]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[0]!.staffPosition, L, r), system, systemY: L.systemY });
           placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[1]!.staffPosition, L, r), system, systemY: L.systemY });
@@ -657,7 +713,7 @@ export function toSvg(
       if (figure[0]!.wordStart && !afterDivisio) x += r.interWord;
       afterDivisio = false;
       // Column rule: don't let this syllable's lyric collide with the last.
-      const lyricText = figure[0]!.lyric.replace(/^-+/, "").replace(/-+$/, "").trim();
+      const lyricText = displayLyric(figure[0]!).text;
       if (lyricText) {
         const estFigW = figure.length *
           (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale;
@@ -674,10 +730,10 @@ export function toSvg(
     x = renderFigure(figure, x);
 
     if (newSyllable) {
-      const text = figure[0]!.lyric.replace(/^-+/, "").replace(/-+$/, "").trim();
+      const { text, runs } = displayLyric(figure[0]!);
       if (text) {
         const cx = (figureStartX + x) / 2;
-        lyrics.push({ cx, text, wordStart: figure[0]!.wordStart, systemY: L.systemY });
+        lyrics.push({ cx, text, runs, wordStart: figure[0]!.wordStart, systemY: L.systemY });
         prevLyricRight = cx + estLyricW(text) / 2;
       }
     }
@@ -803,18 +859,26 @@ export function toSvg(
   // dash appended to the text — only when both syllables share a system.
   // The dropcap owns the first letter — the lyric line carries the remainder
   // (strip BEFORE rendering; the cap itself is drawn later, over the margin).
-  if (capInitial && lyrics.length > 0) lyrics[0]!.text = lyrics[0]!.text.slice(1);
+  if (capInitial && lyrics.length > 0) {
+    const first = lyrics[0]!;
+    first.text = first.text.slice(1);
+    if (first.runs && first.runs.length > 0) {
+      first.runs = first.runs
+        .map((run, i) => (i === 0 ? { ...run, text: run.text.slice(1) } : run))
+        .filter((run) => run.text.length > 0);
+    }
+  }
 
   const lyricSvgs: string[] = [];
   const lyricFontSize = r.lyricSize * r.fonts.lyric.scale;
-  const lyricText = (cx: number, systemY: number, text: string): string =>
+  const lyricText = (cx: number, systemY: number, text: string, runs?: LyricRun[]): string =>
     `<text class="lyric" x="${cx.toFixed(2)}" y="${(systemY + L.lyricY).toFixed(2)}" ` +
     `text-anchor="middle" ${fontAttrs(r.fonts.lyric)} ` +
-    `font-size="${lyricFontSize.toFixed(1)}" fill="${r.noteColor}">${esc(text)}</text>`;
+    `font-size="${lyricFontSize.toFixed(1)}" fill="${r.noteColor}">${lyricMarkup(runs, text, r.rubricaColor)}</text>`;
   for (let k = 0; k < lyrics.length; k++) {
     const ly = lyrics[k]!;
     const next = lyrics[k + 1];
-    lyricSvgs.push(lyricText(ly.cx, ly.systemY, ly.text));
+    lyricSvgs.push(lyricText(ly.cx, ly.systemY, ly.text, ly.runs));
     // Continuing syllable in the same system → a centred hyphen in the gap.
     if (next && !next.wordStart && next.systemY === ly.systemY) {
       const thisRight = ly.cx + estLyricW(ly.text) / 2;
@@ -836,6 +900,42 @@ export function toSvg(
       `${fontAttrs(r.fonts.dropcap)} font-size="${(capSize * r.fonts.dropcap.scale).toFixed(1)}" ` +
       `fill="${r.rubricaColor}">${esc(capInitial.toUpperCase())}</text>`,
     );
+  }
+
+  // Front-matter text, deferred to here so the title can center on the
+  // final width (the books center the piece's title over the whole score).
+  const header: string[] = [];
+  if (r.title) {
+    const size = r.lyricSize * 1.5;
+    header.push(
+      `<text class="title" x="${(width / 2).toFixed(2)}" y="${titleBaseline.toFixed(2)}" ` +
+      `text-anchor="middle" ${fontAttrs(r.fonts.title)} ` +
+      `font-size="${(size * r.fonts.title.scale).toFixed(1)}" ` +
+      `fill="${r.noteColor}">${esc(r.title)}</text>`,
+    );
+  }
+  if (rubricLines.length > 0) {
+    // With a dropcap the stack owns the margin column: centered on the cap's
+    // width, its last line landing beside the first staff's upper reaches
+    // (the "Offert." / "2." of the books). Otherwise it sits left-aligned in
+    // its own header band. Oldstyle figures for the mode numeral.
+    const inMargin = r.dropcap && capIndent > 0;
+    const cx = inMargin ? r.padding + capIndent * 0.42 : r.padding;
+    const anchor = inMargin ? 'text-anchor="middle" ' : "";
+    // The stack STARTS at the top of the staff — first baseline roughly level
+    // with the top line, the mode numeral tucked beneath.
+    const y0 = inMargin
+      ? headerY + L.topY + markSize * 0.2
+      : rubricTop;
+    rubricLines.forEach((line, i) => {
+      header.push(
+        `<text class="rubric" x="${cx.toFixed(2)}" y="${(y0 + i * markLineH).toFixed(2)}" ` +
+        `${anchor}${fontAttrs(r.fonts.annotation)} ` +
+        `font-size="${(markSize * r.fonts.annotation.scale).toFixed(1)}" ` +
+        `style="font-feature-settings:'onum'" ` +
+        `fill="${r.rubricaColor}">${esc(line)}</text>`,
+      );
+    });
   }
 
   const svgTitle = chant.incipit ? `<title>${esc(chant.incipit)}</title>` : "";

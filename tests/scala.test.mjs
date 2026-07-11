@@ -125,3 +125,43 @@ describe("temper with scale array", () => {
     assert.equal(t.ratios.length, 12);
   });
 });
+
+describe("step conventions (silent-mistuning regression)", () => {
+  // A degree list begins at 1/1; a Scala list ends at 2/1. Both are accepted
+  // and normalized; ambiguous input throws. A standard .scl once landed
+  // off-by-one — every pc mistuned — because its steps filled the 1/1 slot.
+  const JUST = ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8"];
+  const JUST_SCALA = ["9/8", "5/4", "4/3", "3/2", "5/3", "15/8", "2/1"];
+
+  test("a .scl file agrees with the builtin it describes, every pitch", () => {
+    const viaScl = tonus.temperamentum({ scale: MEANTONE_SCL, root: 0 });
+    const builtin = tonus.temperamentum({ tuning: "meantone", root: 0 });
+    for (let midi = 48; midi <= 72; midi++) {
+      const dev = 1200 * Math.log2(viaScl.nota(midi).hz / builtin.nota(midi).hz);
+      assert.ok(Math.abs(dev) < 1e-4, `midi ${midi} deviates ${dev}¢`);
+    }
+  });
+
+  test("both 7-step conventions produce the identical temperament", () => {
+    const a = tonus.temperamentum({ scale: JUST, mode: 1 });
+    const b = tonus.temperamentum({ scale: JUST_SCALA, mode: 1 });
+    assert.deepEqual(a.ratios, b.ratios);
+  });
+
+  test("7-step rotation is exact: the fixed gamut yields each mode's species", () => {
+    const t = tonus.temperamentum({ scale: JUST, mode: 1 });
+    const cents = (x, y) => 1200 * Math.log2(t.nota(y).hz / t.nota(x).hz);
+    assert.ok(Math.abs(cents("D4", "F4") - 294.135) < 0.01);  // 32/27
+    assert.ok(Math.abs(cents("D4", "A4") - 680.449) < 0.01);  // 40/27 — the honest wolf
+    const t8 = tonus.temperamentum({ scale: JUST, mode: 8 });
+    const c8 = (x, y) => 1200 * Math.log2(t8.nota(y).hz / t8.nota(x).hz);
+    assert.ok(Math.abs(c8("G4", "B4") - 386.314) < 0.01);     // pure 5/4
+  });
+
+  test("a scale with neither anchor throws rather than guessing", () => {
+    assert.throws(
+      () => tonus.temperamentum({ scale: ["9/8", "5/4", "4/3", "3/2", "5/3", "15/8", "17/9"] }),
+      /begin at 1\/1 .* or end at 2\/1/,
+    );
+  });
+});

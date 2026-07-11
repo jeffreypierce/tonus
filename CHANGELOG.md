@@ -36,13 +36,22 @@ one format (SVG).
   data, and seeded ensembles. `formantes` tunes to a temperament directly:
   `tenor.formantes("a", temper, vis?)` — `vis` weights the pull, 0 (phonetic
   truth) to 1 (fully tuned, the default).
-- **The generation surface** — reference data and helpers ship as named exports
-  beside the namespace: `MODES`, `TONES` / `getTone` / `getDifferentia`,
-  `midiToGabc` / `gabcToMidi`, `syllabifyWord` / `syllabifyPhrase` /
-  `selectVowel`, with the types `PsalmTone` and `Differentia`. A downstream
-  generator imports everything from `"tonus"`, never from `dist/` internals.
+- **The appendix.** The export law is settled: verbs live on the namespace,
+  return values are plain data, and the named exports are canonical constant
+  tables only — `SEASON_LABEL`, `TEMPUS_NAME`, `GRADE_ORDER`, `GRADE_NAME`,
+  `MODES`, `TONES` (types `PsalmTone`/`Differentia` ride with their table).
+  The grade helper functions (`gradeOrder`, `compareGrade`, `ritusToGrade`)
+  retire from the surface: `gradeOrder(g)` is `GRADE_ORDER.indexOf(g)`.
 - **`docs/` ships in the package** — the documentation renders from the
   installed tarball, pinned to the version it describes.
+- **GABC lyric markup decodes.** The angle-bracket text tags — excluded since
+  the MIDI-only days — are parsed at intake: `<sp>` specials become real
+  characters (℣ ℟ † ǽ œ, the raised *), style tags (`<i>`, `<b>`, `<sc>`,
+  `<c>` rubric color, `<e>` elision) survive as styled `runs` on `Syllable`
+  and the tabula row, and both notation species draw them as `<tspan>`s.
+  Layout hints (`<clear>`, `<nlba>`, centering braces) and `\pageref`
+  cross-references vanish. Before this, quadrata printed `<sp>V/</sp>` as
+  literal lyric text and syllable widths were measured tags-and-all.
 - **Per-role text faces** — `inscriptio`'s `fonts` option assigns a face to
   the `dropcap`, `title`, `annotation`, and `lyric` roles (family, optional
   weight, optional size scale). By default the SVG carries references and
