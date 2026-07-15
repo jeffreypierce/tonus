@@ -31,9 +31,6 @@ calls and no runtime dependencies.
 - **Rhythm and notation.** GABC parsed into phrases, syllables, and tuned notes,
   shaped by the Solesmes arsis/thesis rhythm, with an analytic fingerprint of a
   chant's melodic character, and drawn to a square-note or modern staff.
-- **The voice.** The acoustics of the singing voice: the vowel formants,
-  spectrum, and brightness of a voice set by vocal size, age, and effort, with
-  regional Latin colour and seeded ensembles of many singers.
 - **The harmony of the spheres.** An ephemeris of the classical planets, voiced
   as tuned pitch after Boethius, Nicomachus, Pliny, and Ptolemy.
 
@@ -77,8 +74,7 @@ and Apel; the tuning follows Boethius's *De institutione musica* and Ptolemy's
 *Harmonics*; the notation is engraved in Daniel Spreadbury's
 [Bravura](https://github.com/steinbergmedia/bravura), the reference font for the
 SMuFL standard; the planetary doctrines follow Godwin's sourcebooks of the
-Pythagorean tradition; and the voice model follows Sundberg's acoustics of
-singing.
+Pythagorean tradition.
 
 Every figure is cited in the code beside what it explains. Where the sources
 disagree, tonus records the editorial call it made in the same place. The complete
@@ -120,7 +116,7 @@ The **[documentation index](docs/index.md)** is the technical center: the full
 API, the conventions, the error contract, and the code standards. From there,
 one page per engine, in dependency order:
 [tuning](docs/tuning.md), [calendar](docs/calendar.md), [chant](docs/chant.md),
-[score](docs/score.md), [voice](docs/voice.md), and [heavens](docs/heavens.md).
+[score](docs/score.md), and [heavens](docs/heavens.md).
 
 ## Install and run
 

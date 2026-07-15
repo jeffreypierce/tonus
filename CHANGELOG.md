@@ -2,6 +2,30 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.3.0
+
+The vox-ectomy. The voice engine (`vox`, `chorus`, the formant tables,
+personae, consortia, liquescentia coda tables, spectrum, accordatio) leaves
+the public library for orreliquum, the private instrument it was always
+being built toward. tonus returns to what it is: theory, calendar, chant,
+notation, and the heavens — the algorithms, publishable and citable.
+
+### Removed
+
+- **`tonus.vox()` and `tonus.chorus()`** and every voice type
+  (`Vox`, `VoxInput`, `VoxParams`, `Vowel`, `Formant`, `Locus`, `Latinitas`,
+  `Persona`, `PersonaName`, `Coda`, `TuningLike`, `Chorus`, `ChorusOpts`,
+  `Dispersio`, `ConsortiumName`, `Voces`). The namespace holds fourteen
+  verbs again. `docs/voice.md` emigrates with the code.
+- Voice test suites (`voice-vox`, `voice-chorus`, `voice-features`,
+  `voice-spectrum`) move with their subject.
+
+### Unchanged
+
+- `harmonia`'s planetary voices (`VoicedPitch`, `VoicedBody`, the Greek
+  vowel tables) are its own and remain.
+- Every other engine, table, and contract.
+
 ## 0.2.0
 
 Rendering becomes a standalone engine (`inscriptio`), the per-chant analysis

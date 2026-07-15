@@ -51,6 +51,7 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
       runs: raw.runs,
       vowel: selectVowel(raw.lyric).vowel,
       syllableIndex: raw.syllableIndex,
+      accent: raw.accent,
       neumeGroup: raw.neumeGroup,
       staffLetter: raw.staffLetter,
       clef: raw.clef,

@@ -31,8 +31,6 @@ import tonus from "tonus";
 | `tonus.inscriptio(score, opts?)`   | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
 | `tonus.caelum(query?)`             | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
 | `tonus.harmonia(cosmos, opts?)`    | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
-| `tonus.vox(persona?, over?)`       | [voice](voice.md)       | `Vox` — one singing voice, as data                      |
-| `tonus.chorus(consortium?, opts?)` | [voice](voice.md)       | `Chorus` — a seeded ensemble of voices                  |
 
 ### Query and builder functions
 
@@ -126,15 +124,6 @@ the list resolve their pitches through the ones before.
 - [Modulations](score.md#modulations)
 - [Melodic formulae](score.md#melodic-formulae)
 - [Theory & Context](score.md#theory--context) · [Sources](score.md#sources)
-
-**[Voice](voice.md)** — a singing voice modelled as formant and spectrum data.
-
-- [The singer — `vox`](voice.md#the-singer--vox)
-- [Vowels and formants — `formantes`, `iter`](voice.md#vowels-and-formants--formantes-iter)
-- [Spectrum and brightness — `spectrum`, `claritas`](voice.md#spectrum-and-brightness--spectrum-claritas)
-- [Liquescents — `liquescentia`](voice.md#liquescents--liquescentia)
-- [The ensemble — `chorus`](voice.md#the-ensemble--chorus)
-- [Theory & Context](voice.md#theory--context) · [Sources](voice.md#sources)
 
 **[Heavens](heavens.md)** — an ephemeris voiced through the planetary doctrines.
 
