@@ -32,6 +32,8 @@ export interface ChantTabulaRow {
   /** Styled lyric spans; present only when GABC markup styled this syllable. */
   runs?: LyricRun[];
   vowel: string;
+  /** True when this note's syllable bears the Latin tonic word-accent. */
+  accent: boolean;
   /** True when this note's syllable is the first of its word. */
   wordStart: boolean;
   /** MIDI pitch number (after transpose, clamped 0–127) */
@@ -219,6 +221,7 @@ export function computeTabula(
       lyric: n.context.lyric,
       runs: n.context.runs,
       vowel: n.context.vowel,
+      accent: n.context.accent,
       // wordStart reads the note's CONTEXT syllable index (the parser's, which
       // resets to 0 at each word boundary — so 0 = word start), NOT the row's
       // own `syllableIndex` above (a global per-phrase counter). Two indices,

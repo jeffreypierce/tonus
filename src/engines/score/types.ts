@@ -78,6 +78,8 @@ export interface Context {
   runs?: LyricRun[];
   vowel: string;
   syllableIndex: number;
+  /** True when this note's syllable bears the Latin tonic word-accent. */
+  accent: boolean;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
   /** Raw GABC pitch letter a–m — the staff slot for square-note rendering. */
@@ -202,6 +204,8 @@ export interface ParsedNote {
   /** Styled lyric spans; present only when GABC markup styled this syllable. */
   runs?: LyricRun[];
   syllableIndex: number;
+  /** True when this note's syllable bears the Latin tonic word-accent. */
+  accent: boolean;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
   /** Raw GABC pitch letter a–m — the staff slot for square-note rendering. */

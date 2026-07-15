@@ -59,7 +59,11 @@ is English. Option keys are addresses (may be Latin); their values are codes.
   `tests/render-lab.test.mjs` — a new rendering feature earns a plate, and the
   suite exercises it for free. Junicode resolves from `../Junicode-font` or
   `JUNICODE_DIR`.
-- Green tests **and** clean `tsc` at every commit. (Current floor: 507 tests.)
+- `npm run stress` — regenerates the breadth gallery at
+  `working/review/svg-stress.html` from `scripts/stress-pieces.mjs`: one real
+  corpus piece per genus, full dress. Runs headlessly in
+  `tests/render-stress.test.mjs`.
+- Green tests **and** clean `tsc` at every commit. (Current floor: 544 tests.)
 
 ## Fonts (license discipline)
 

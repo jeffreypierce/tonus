@@ -432,6 +432,10 @@ function parseNeume(
       runs: note.runs,
       syllableIndex: note.syllableIndex,
       neumeGroup: note.neumeGroup,
+      // Tonic word-accent of this note's syllable (Latin accentuation), the same
+      // boolean the articulation weighting reads above — surfaced as data so the
+      // tabula carries it (accent stats, prose-cursus). Syllable-wide constant.
+      accent,
       staffLetter: note.staffLetter,
       clef: note.clef,
       shape: note.shape,

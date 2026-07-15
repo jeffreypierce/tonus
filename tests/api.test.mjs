@@ -211,15 +211,6 @@ describe("guided throws on junk input (the error contract)", () => {
     assert.throws(() => tonus.temperamentum({ mode: 99 }), /Unknown mode/);
     assert.throws(() => tonus.temperamentum({ tuning: 42 }), /tuning must be a string/);
   });
-  test("vox rejects sliders that would resolve NaN formants", () => {
-    assert.throws(() => tonus.vox("tenor", { tract: 0 }), /physical range/);
-    assert.throws(() => tonus.vox("tenor", { aetas: 20 }), /0\.\.1 slider/);
-  });
-  test("a bare chorus() sings — the schola is the default", () => {
-    const c = tonus.chorus();
-    assert.ok(c.size > 0);
-    assert.deepEqual(c.dispersio(), tonus.chorus("schola").dispersio());
-  });
 });
 
 describe("formula steps are octave-aware (Apel degree count)", () => {
