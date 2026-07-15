@@ -10,6 +10,14 @@ the public library for orreliquum, the private instrument it was always
 being built toward. tonus returns to what it is: theory, calendar, chant,
 notation, and the heavens — the algorithms, publishable and citable.
 
+### Added
+
+- **`accent` on `ChantTabulaRow`** — a boolean marking whether a note's
+  syllable bears the Latin tonic word-accent. The value already existed inside
+  the parse (`detectVowelAccent` drives articulation stress); it is now surfaced
+  as data on the tabula, so downstream analysis can read accent placement
+  without re-deriving it. Threaded `ParsedNote → Context → ChantTabulaRow`.
+
 ### Removed
 
 - **`tonus.vox()` and `tonus.chorus()`** and every voice type
