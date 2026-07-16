@@ -9,3 +9,6 @@ archive/
 
 # Obsidian vault config (any depth)
 **/.obsidian/
+
+# local backup of extracted code (e.g. vox-ectomy); the real copy lives in its new home
+_to_delete/
