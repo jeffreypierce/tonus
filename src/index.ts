@@ -81,6 +81,8 @@ export {
 export { MODES } from "./engines/temper/data/modes.js";
 export { TONES } from "./engines/temper/data/tones.js";
 export type { PsalmTone, Differentia } from "./engines/temper/data/tones.js";
+export { CADENTIAE } from "./data/cadentiae.js";
+export type { CadentiaFamilia } from "./data/cadentiae.js";
 
 export type {
   Feast, FeastQuery, Pascha, Season, Grade,

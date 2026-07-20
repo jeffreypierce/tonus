@@ -9,8 +9,16 @@
 // from prosody's cadenceWeight/cadenceDistribution, which merely count the
 // divisio bars. Cadence figures are mode-specific, so this consumes the
 // per-mode ModeData.cadences catalog.
+//
+// Two catalogues serve two claims. ModeData.cadences (tradita — the treatises'
+// per-mode figures) names the `formula`; CADENTIAE (inventa — the corpus tally)
+// names the `familia`/`adventus` pair: the tail's interval shape (the gesture)
+// and where it lands relative to the chant final (the function). The corpus key
+// is computed exactly as the mining did — last <=4 notes, semitone intervals,
+// arrival octave-reduced to [-5..+6] — so every classification joins the table.
 import type { Phrase } from "./types.js";
 import type { ModeData, CadenceFigure } from "../temper/data/modes.js";
+import { CADENTIAE, type CadentiaFamilia } from "../../data/cadentiae.js";
 
 export type CadenceTarget = "finalis" | "tenor" | "other";
 export type CadenceApproach = "descending" | "ascending" | "unison";
@@ -41,6 +49,22 @@ export interface Cadence {
   confidence: number;
   /** Note positions forming this cadence: [phraseIndex, syllableIndex, noteIndex]. */
   notes: Array<[number, number, number]>;
+  /**
+   * The corpus-catalogue key, "shape @arrival" (e.g. "2,0,-2 @0" — see
+   * CADENTIAE), or null when the phrase ends on a single note (no intervals).
+   */
+  signature: string | null;
+  /** Draft Latin binomial of the matched CADENTIAE family, or null. */
+  familia: string | null;
+  /**
+   * The arrival case, Latin: "in finalem", "in tenorem" (when the arrival
+   * degree is the mode's tenor), "in tertiam", "in subfinalem", …
+   */
+  adventus: string;
+  /** Interval signature of the closing tail (<=4 notes), in semitones. */
+  shape: number[];
+  /** Closing note minus the chant final, semitones, octave-reduced [-5..+6]. */
+  arrival: number;
 }
 
 // Cadence formulae run four to ten notes [biblio: homan-cadence, p. xiii]. Take
@@ -179,6 +203,53 @@ function bestFigure(
   return best;
 }
 
+// ── The corpus catalogue (CADENTIAE) ────────────────────────────────────────
+
+// The mining keyed tails by their last <=4 notes; the classifier reads the same
+// span out of the (longer) formula window.
+const TAIL = 4;
+
+let familiaIndex: Map<string, CadentiaFamilia> | null = null;
+/** CADENTIAE keyed by "shape @arrival", built once on first use. */
+function familiaByKey(): Map<string, CadentiaFamilia> {
+  if (!familiaIndex) {
+    familiaIndex = new Map(CADENTIAE.map((f) => [f.key, f]));
+  }
+  return familiaIndex;
+}
+
+/** Octave-reduce a semitone offset to [-5..+6], exactly as the mining did. */
+function reduceArrival(semitones: number): number {
+  let a = semitones % 12;
+  if (a > 6) a -= 12;
+  if (a < -5) a += 12;
+  return a;
+}
+
+/**
+ * The arrival case, mode-independent: the interval class of the closing note
+ * above (or below) the chant final. The mode-aware "in tenorem" upgrade happens
+ * at detection time, where the mode is known.
+ */
+function adventusCase(arrival: number): string {
+  if (arrival === 0) return "in finalem";
+  if (arrival === 1 || arrival === 2) return "in secundam";
+  if (arrival === 3 || arrival === 4) return "in tertiam";
+  if (arrival === 5 || arrival === 6) return "in quartam";
+  if (arrival === -1 || arrival === -2) return "in subfinalem";
+  if (arrival === -3 || arrival === -4) return "in subtertiam";
+  return "in subquartam"; // -5
+}
+
+/** The chant's closing note — the reference every arrival is measured from. */
+function chantFinalMidi(phrases: Phrase[]): number | undefined {
+  for (let pi = phrases.length - 1; pi >= 0; pi--) {
+    const w = phraseFinalWindow(phrases[pi]!);
+    if (w.length > 0) return w[w.length - 1]!.midi;
+  }
+  return undefined;
+}
+
 /**
  * Detect the cadence closing each phrase. One Cadence per phrase that carries a
  * divisio. With no mode, targets/approach are still classified but no figure is
@@ -189,6 +260,12 @@ export function detectCadences(
   modeData: ModeData | undefined,
 ): Cadence[] {
   const cadences: Cadence[] = [];
+  const finalMidi = chantFinalMidi(phrases);
+  // The mode's tenor as an arrival degree — pc difference, same reduction as
+  // the arrival itself, so a tenor landing reads "in tenorem" even transposed.
+  const tenorArrival = modeData
+    ? reduceArrival(((modeData.tenor - modeData.final) % 12 + 12) % 12)
+    : undefined;
 
   for (let pi = 0; pi < phrases.length; pi++) {
     const phrase = phrases[pi]!;
@@ -223,6 +300,23 @@ export function detectCadences(
       }
     }
 
+    // The corpus classification: the tail's interval shape and its arrival,
+    // computed exactly as the mining did so the key joins CADENTIAE.
+    const tail = window.slice(-TAIL);
+    const shape = tail.slice(1).map((w, k) => w.midi - tail[k]!.midi);
+    const arrival =
+      finalMidi != null
+        ? reduceArrival(tail[tail.length - 1]!.midi - finalMidi)
+        : 0;
+    const signature =
+      shape.length > 0 ? `${shape.join(",")} @${arrival}` : null;
+    const familia =
+      signature != null ? (familiaByKey().get(signature)?.familia ?? null) : null;
+    const adventus =
+      arrival !== 0 && arrival === tenorArrival
+        ? "in tenorem"
+        : adventusCase(arrival);
+
     cadences.push({
       phraseIndex: pi,
       divisio,
@@ -233,6 +327,11 @@ export function detectCadences(
       steps,
       confidence: Math.round(confidence * 100) / 100,
       notes: window.map((w) => [pi, w.syllableIndex, w.noteIndex]),
+      signature,
+      familia,
+      adventus,
+      shape,
+      arrival,
     });
   }
 

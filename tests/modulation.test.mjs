@@ -51,6 +51,33 @@ describe("detectModulations", () => {
     }
   });
 
+  test("Christus resurgens reads as genuine modulation, not transposition", () => {
+    // It closes on its own final; its deuterus excursion is internal.
+    const chant = tonus
+      .cantus({ incipit: "Christus resurgens" })
+      .find((c) => c.mode === "8");
+    const score = tonus.notatio(chant, {
+      temperamentum: tonus.temperamentum({ mode: 8 }),
+    });
+    for (const m of score.modulations) assert.equal(m.kind, "modulation");
+  });
+
+  test("Exaltabo te (the transposed mode-2 introit) reads as transposition", () => {
+    // The textbook affinal case: notated a fifth up, it never closes on D —
+    // the foreign frame is global, so its spans are transposition, not
+    // modulation.
+    const chant = tonus
+      .cantus({ source: "gr" })
+      .find((c) => c.id === "gregobase:648");
+    assert.ok(chant, "Exaltabo te (gregobase:648) is in the corpus");
+    const score = tonus.notatio(chant);
+    assert.ok(score.modulations.length > 0);
+    assert.ok(
+      score.modulations.some((m) => m.kind === "transposition"),
+      "the dominant foreign frame is flagged as transposition",
+    );
+  });
+
   test("a firmly mode-1 phrase modulates nowhere", () => {
     // Centred on the mode-1 poles — the final D and the tenor A — so no foreign
     // mode outscores home.

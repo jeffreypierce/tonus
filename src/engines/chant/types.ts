@@ -15,7 +15,7 @@ export type OrdinaryCode =
   | "as"   // Asperges me (sprinkle rite, outside Paschaltide)
   | "va";  // Vidi aquam (sprinkle rite, Paschaltide)
 
-export type ChantSource = "gr" | "lu" | "la" | "lh" | "am" | "nr";
+export type ChantSource = "gr" | "lu" | "la" | "lh" | "am" | "nr" | "ky";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"
@@ -56,6 +56,19 @@ export const ORDINARY_LABELS: Readonly<Record<string, string>> = Object.freeze({
   as: "Asperges",
   va: "Vidi aquam",
 });
+
+// The Kyriale's bibliographic identity as a corpus book (`source: "ky"`).
+// Hand-authored (the other books' SOURCE constants ride their generated data
+// files; the kyriale's data file predates its book registration): the chants
+// are the Kyriale section of the 1961 Solesmes Graduale Romanum, extracted
+// from GregoBase GR source pages. Shared by the corpus surface (chant.ts) and
+// the ordinary engine so a kyriale chant carries ONE identity everywhere.
+export const KY_SOURCE = Object.freeze({
+  book: "Kyriale (Graduale Romanum)",
+  year: 1961,
+  editor: "Solesmes",
+  code: "ky",
+}) as Chant["source"];
 
 // ── Core interfaces ──
 export interface Chant {
