@@ -164,9 +164,9 @@ describe("tonus namespace", () => {
 describe("the appendix (the export law)", () => {
   // Verbs live on the namespace; return values are plain data; the appendix
   // exports canonical constant tables — nothing with a ().
-  test("the six tables are exported", async () => {
+  test("the seven tables are exported", async () => {
     const m = await import("../dist/index.js");
-    const { SEASON_LABEL, TEMPUS_NAME, GRADE_ORDER, GRADE_NAME, MODES, TONES } = m;
+    const { SEASON_LABEL, TEMPUS_NAME, GRADE_ORDER, GRADE_NAME, MODES, TONES, CADENTIAE } = m;
     assert.equal(SEASON_LABEL.adv, "Advent");
     assert.equal(TEMPUS_NAME.adv, "Tempus Adventus");
     assert.equal(GRADE_ORDER.length, 14);
@@ -174,6 +174,17 @@ describe("the appendix (the export law)", () => {
     assert.ok(MODES instanceof Map && MODES.get(1).nomen === "Protus Authenticus");
     assert.equal(TONES.length, 9); // eight tones + Tonus Peregrinus
     assert.equal(TONES[0].nomen, "Tonus I");
+    // CADENTIAE — the corpus cadence catalogue: most frequent family first,
+    // the universal close leading, statistics in sane ranges.
+    assert.ok(Array.isArray(CADENTIAE) && CADENTIAE.length > 100);
+    assert.equal(CADENTIAE[0].key, "2,0,-2 @0");
+    assert.equal(CADENTIAE[0].familia, "circuitus supra");
+    assert.equal(CADENTIAE[0].adventus, "in finalem");
+    for (const f of CADENTIAE) {
+      assert.ok(f.n >= 150 && f.finality >= 0 && f.finality <= 1);
+      assert.ok(f.shape.length >= 1 && f.shape.length <= 3);
+      assert.ok(f.arrival >= -5 && f.arrival <= 6);
+    }
   });
 
   test("no functions ride the appendix", async () => {

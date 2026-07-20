@@ -12,6 +12,9 @@ import { LA_DATA, LA_SOURCE } from "../../data/la.js";
 import { LH_DATA, LH_SOURCE } from "../../data/lh.js";
 import { AM_DATA, AM_SOURCE } from "../../data/am.js";
 import { NR_DATA, NR_SOURCE } from "../../data/nocturnale-romanum.js";
+import { KYRIALE } from "../../data/kyriale.js";
+import { KY_SOURCE } from "./types.js";
+import { entryToOrdinaryChant } from "./ordinary.js";
 
 function modusOf(mode: string | null): string | null {
   return mode != null ? (MODE_LABELS[mode] ?? null) : null;
@@ -94,6 +97,13 @@ const CORPUS: Chant[] = [
   ...LH_DATA.map((c) => withLabels(c, LH_SOURCE)),
   ...AM_DATA.map((c) => withLabels(c, AM_SOURCE)),
   ...NR_DATA.map((c) => withLabels(c, NR_SOURCE)),
+  // The Kyriale as a corpus book (source "ky"): the ordinary IS repertoire —
+  // office stays "or" and the per-ordinary identity rides `ordinary`/
+  // `ordinarium`/`mass`, the same records `ordinarium()` serves (one shaping,
+  // ordinary.ts). Registered 2026-07-16 so corpus-scale analysis can count
+  // the ordinary; a few aspersion chants legitimately also appear in other books
+  // (shared content, the CORPUS_OVERLAP situation).
+  ...KYRIALE.map(entryToOrdinaryChant),
 ];
 
 let _byId: Map<string, Chant> | null = null;
@@ -104,6 +114,7 @@ function byId(): Map<string, Chant> {
 
 const SOURCES: Record<ChantSource, Chant["source"]> = {
   gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
+  ky: KY_SOURCE,
 };
 
 // Tally a book's genre and mode distribution — computed once per code, cached.

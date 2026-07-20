@@ -38,6 +38,33 @@ describe("getChants", () => {
     assert.ok(antiphons.length > am.length / 2);
   });
 
+  test("serves the Kyriale as a corpus book (source ky) — the ordinary is countable", () => {
+    const ky = getChants({ source: "ky" });
+    assert.equal(ky.length, 120, `expected the full Kyriale, got ${ky.length}`);
+    for (const c of ky) {
+      assert.equal(c.source.code, "ky");
+      assert.equal(c.office, "or"); // office register: all ordinaries are "or"
+      assert.equal(c.genus, "Ordinarium");
+      assert.ok(c.ordinary, `${c.id}: the per-ordinary code rides \`ordinary\``);
+      assert.ok(c.ordinarium, `${c.id}: the Latin name rides \`ordinarium\``);
+      assert.ok(c.gabc.length > 0);
+    }
+    // The per-ordinary identity survives into the book: every part is present.
+    const parts = new Set(ky.map((c) => c.ordinary));
+    for (const code of ["ky", "gl", "cr", "sa", "ag", "it", "as", "va"]) {
+      assert.ok(parts.has(code), `kyriale carries ordinary "${code}"`);
+    }
+  });
+
+  test("a kyriale chant is one identity whether reached by book or by ordinarium", () => {
+    const viaBook = getChants({ source: "ky" }).find((c) => c.incipit === "Kyrie IV");
+    assert.ok(viaBook);
+    const feast = getFeast({ date: new Date(Date.UTC(2026, 3, 5)) }); // Easter
+    const viaOrdo = getOrdinary({ feast }).find((c) => c.id === viaBook.id);
+    assert.ok(viaOrdo, "Easter's ordinarium serves Kyrie IV");
+    assert.deepEqual(viaOrdo, viaBook);
+  });
+
   test("accepts array values for mode, office, and source", () => {
     const chants = getChants({ mode: [1, 2], office: ["an", "hy"], limit: 10 });
     assert.ok(chants.length > 0);

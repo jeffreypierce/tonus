@@ -6,8 +6,18 @@
 // phrase against every mode (reusing the imprint's modal-affinity math) and
 // flags runs of phrases that lean on a foreign mode — a modulation. Detection
 // only; distribution-based, no functional/harmonic analysis.
+//
+// A NOTE ON THE PHRASE-CLOSING NOTE (considered and rejected, 2026-07-17):
+// passing each phrase's last pc into the affinity (the final-note bonus that
+// serves whole-chant mode detection so well) was measured over the labeled
+// corpus (n=7,573): spans rose 22,489 → 24,552 with no reduction in
+// wall-to-wall readings. At phrase level the signal conflates a medial REST
+// (tenor-resting and other non-final medial degrees, which the cadence
+// tradition expects) with modal allegiance — so phrase scoring stays
+// distribution-only.
 import type { Phrase } from "./types.js";
 import { computeModalAffinity } from "../temper/modality.js";
+import { MODES } from "../temper/data/modes.js";
 
 export interface Modulation {
   /** Phrase index where the modulation begins (inclusive). */
@@ -18,6 +28,16 @@ export interface Modulation {
   toMode: number;
   /** 0–1: how strongly the foreign mode outscored the home mode, averaged. */
   confidence: number;
+  /**
+   * What the span is evidence of. "modulation" — an internal excursion that
+   * returns; "transposition" — the whole chant sits in a foreign mode's frame
+   * (it does not close on its labeled final, and one foreign mode dominates
+   * most of its phrases), i.e. the melody is notated at a transposed position
+   * (the affinal) or the label disagrees with the notation. A transposed chant
+   * is not modulating: the displacement is global, and callers displaying
+   * "modulations" should treat these spans as a re-reading of the whole chant.
+   */
+  kind: "modulation" | "transposition";
 }
 
 // How much a foreign mode must outscore the home mode (in normalised affinity)
@@ -25,6 +45,13 @@ export interface Modulation {
 // examples [biblio: sunol-textbook]: at 0.25 the modulations he names in Christus
 // resurgens (to mode 3) register, while incidental colouring below that does not.
 const MARGIN = 0.25;
+
+// A chant is read as TRANSPOSED (not modulating) when it does not close on its
+// labeled mode's final AND a single foreign mode's spans cover most of its
+// phrases. Corpus context: 81.6% of labeled chants close on their mode's final
+// (night report 2026-07-07); of the remainder, the wall-to-wall foreign
+// readings this rule reclassifies were 30% of ALL labeled chants before it.
+const TRANSPOSITION_SHARE = 0.6;
 
 /** The pitch-class distribution of one phrase's notes (fractions summing to 1). */
 function phrasePcDistribution(phrase: Phrase): Record<number, number> {
@@ -80,6 +107,7 @@ export function detectModulations(
       endPhrase: run.start + run.margins.length - 1,
       toMode: run.mode,
       confidence: Math.min(1, Math.round(avg * 100) / 100),
+      kind: "modulation",
     });
     run = null;
   };
@@ -94,6 +122,37 @@ export function detectModulations(
     }
   }
   flush();
+
+  // Transposition, not modulation: the chant does not close on its labeled
+  // final, and one foreign mode's spans dominate its phrases — the displacement
+  // is global (affinal notation, or a label at odds with the notation).
+  const homeFinal = MODES.get(homeMode)?.final;
+  let closingPc: number | undefined;
+  for (let pi = phrases.length - 1; pi >= 0 && closingPc == null; pi--) {
+    for (let si = phrases[pi]!.syllables.length - 1; si >= 0; si--) {
+      const notes = phrases[pi]!.syllables[si]!.notes;
+      if (notes.length > 0) {
+        closingPc = notes[notes.length - 1]!.pitch.pc;
+        break;
+      }
+    }
+  }
+  if (homeFinal != null && closingPc != null && closingPc !== homeFinal % 12) {
+    const coverage = new Map<number, number>();
+    for (const m of modulations) {
+      coverage.set(
+        m.toMode,
+        (coverage.get(m.toMode) ?? 0) + (m.endPhrase - m.startPhrase + 1),
+      );
+    }
+    for (const [toMode, phraseCount] of coverage) {
+      if (phraseCount / phrases.length >= TRANSPOSITION_SHARE) {
+        for (const m of modulations) {
+          if (m.toMode === toMode) m.kind = "transposition";
+        }
+      }
+    }
+  }
 
   return modulations;
 }

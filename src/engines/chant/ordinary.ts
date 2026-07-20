@@ -4,6 +4,7 @@
 import { MASSES, AD_LIB, type MassEntry } from "./data/masses.js";
 import { KYRIALE, type KyrialeEntry } from "../../data/kyriale.js";
 import {
+  KY_SOURCE,
   MODE_LABELS,
   ORDINARY_LABELS,
   type OrdinaryChant,
@@ -96,7 +97,10 @@ function selectCredoCode(feast: Feast, allowed: string[]): string | null {
   return allowed[0];
 }
 
-function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
+// Exported for the corpus surface (chant.ts): the kyriale rides `cantus`
+// under source "ky" as exactly these records — one shaping, one identity,
+// whether a chant arrives through the book or through `ordinarium`.
+export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
   const ordinary = ORDINARY_OFFICES.has(entry.office as OrdinaryCode)
     ? (entry.office as OrdinaryCode)
     : ("ky" as OrdinaryCode);
@@ -109,7 +113,7 @@ function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
     mode: entry.mode ? String(entry.mode) : null,
     modus: entry.mode ? (MODE_LABELS[String(entry.mode)] ?? null) : null,
     pages: [],
-    source: { book: "Graduale Romanum", year: 1961, editor: "Solesmes", code: "gr" },
+    source: KY_SOURCE,
     ordinary,
     ordinarium: ORDINARY_LABELS[ordinary] ?? entry.incipit,
     mass: entry.mass ?? 0,
