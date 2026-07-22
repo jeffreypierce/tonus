@@ -2,14 +2,14 @@
 
 The technical center of tonus: the full public API, the conventions every method
 obeys, the error contract, and the standards the code and docs are held to. The
-API is **sixteen methods on the `tonus` namespace**, no sub-namespaces.
+API is **fourteen methods on the `tonus` namespace**, no sub-namespaces.
 
 ```js
 import tonus from "tonus";
 ```
 
 - [The methods](#the-methods) — by engine
-- [The appendix](#the-appendix) — six constant tables
+- [The appendix](#the-appendix) — seven constant tables
 - [Full contents](#full-contents) — every method and section
 - [Conventions](#conventions) — Latin/English, dates, determinism, error contracts, bibiliography
 
@@ -40,8 +40,10 @@ return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
 chant results sort by rank then incipit.
 
 **Builder functions** (`temperamentum`,
-`notatio`, `harmonia`, `vox`, `chorus`,and `inscriptio`) construct and return context objects, and throw
-`Error` on invalid input.
+`notatio`, `harmonia`, and `inscriptio`) construct and return context objects, and throw
+`Error` on invalid input. Only `Temperamentum` carries methods; `Score` is a
+plain data record, and rendering is the standalone `inscriptio`. Voice
+synthesis (`vox`, `chorus`) now lives in the private orreliquum app.
 
 Context objects can be passed back into query functions as filters:
 
@@ -55,7 +57,7 @@ t.nota("D4");
 
 ## The appendix
 
-Six constant tables ship as named exports beside the namespace. Return values are plain data, and the appendix carries
+Seven constant tables ship as named exports beside the namespace. Return values are plain data, and the appendix carries
 canonical tables only, never functions.
 
 ```js
@@ -70,6 +72,7 @@ import tonus, { SEASON_LABEL, MODES } from "tonus";
 | `GRADE_NAME`   | grade code → the Latin rank name                                     |
 | `MODES`        | the eight modes' doctrine: final, tenor, ambitus, cadence figures    |
 | `TONES`        | the psalm tones (Graduale Romanum appendix), with their differentiae |
+| `CADENTIAE`    | the cadence families (`CadentiaFamilia`), generated corpus data      |
 
 ## Full contents
 
@@ -189,8 +192,6 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 - `caelum` in range mode (`{ from, to, step }`) throws `RangeError` on a missing
   bound, `to` before `from`, a non-positive step, or a range exceeding the frame cap.
 - `harmonia` throws `RangeError` on an unknown doctrina.
-- `vox` throws on an unknown persona; `chorus` throws on an unknown
-  consortium or persona, or an empty roster.
 
 ### The bibliography — [`BIBLIOGRAPHY.md`](../BIBLIOGRAPHY.md)
 

@@ -4,8 +4,9 @@
 
 - **The two API layers.** Engine functions (`getX` / `buildX`, in `src/engines/`)
   are internal and never exported; the public API is the Latin nouns assembled in
-  `src/index.ts`. Only `Score` and `Temperamentum` are classes with methods,
-  spec-mandated rather than a pattern to copy.
+  `src/index.ts`. Only `Temperamentum` carries methods, spec-mandated rather
+  than a pattern to copy; `Score` is a plain data record, rendered by the
+  standalone `inscriptio`.
 - **The two boundaries.** tonus computes what is derivable from one chant or one
   moment with received theory (the analysis boundary); corpus-scale census and
   editorial calibration live in the sibling `tonus-enodatio` and re-enter only as
@@ -82,7 +83,7 @@ Typical module layout:
 | Internal helper                  | camelCase       | `resolveMasses`, `computeSpeed`                |
 | Type / interface                 | PascalCase      | `Feast`, `Body`, `ChantMetrics`                |
 | Type union                       | PascalCase      | `Season`, `CanonicalHour`, `BodyName`          |
-| Constant map/array               | SCREAMING_SNAKE | `ORBITAL_ELEMENTS`, `SEASON_LABELS`            |
+| Constant map/array               | SCREAMING_SNAKE | `ORBITAL_ELEMENTS`, `SEASON_LABEL`             |
 | Module-level cache               | `_camelCase`    | `_byId`, `_calCache`                           |
 | Options interface                | noun + `Opts`   | `CaelumQuery`, `TemperamentumOpts`             |
 
@@ -94,7 +95,7 @@ Typical module layout:
 
 **Public API functions** are what users call. They are Latin nouns (`cantus()`, `festum()`, `temperamentum()`, `notatio()`), follow the query/builder contract, and are assembled in `src/index.ts`.
 
-**Builder engines** expose their public surface through `api.ts`. **Query engines** expose theirs through a file named after the engine's primary domain (e.g. `calendar.ts`, `chant.ts`, `planet/planet.ts`). The `api.ts` pattern is reserved for engines that compose multiple internal modules into a returned context object with methods.
+**Builder engines** expose their public surface through `api.ts`. **Query engines** expose theirs through a file named after the engine's primary domain (e.g. `calendar.ts`, `chant.ts`, `planet/planet.ts`). The `api.ts` pattern is reserved for engines that compose multiple internal modules into a returned context object — with methods (`Temperamentum`) or as a plain data record (`Score`).
 
 ---
 
@@ -152,7 +153,7 @@ tonus.temperamentum({ tuning: "pythagorean" }); // → Temperamentum
 tonus.notatio(chant); // → Score
 ```
 
-`Score` and `Temperamentum` are the only types with methods — this is spec-mandated, not a general pattern.
+`Temperamentum` is the only type with methods — this is spec-mandated, not a general pattern. `Score` is a plain data record; the standalone `inscriptio` renders it.
 
 ---
 
@@ -282,7 +283,7 @@ test("cantus: returns chants for mode 1", () => {
 
 ## What not to do
 
-- No classes (except `Score` and `Temperamentum` — spec-mandated context objects)
+- No classes (except `Temperamentum` — a spec-mandated context object; `Score` is a plain data record)
 - No default exports except `src/index.ts`
 - No `any` except in JS interop
 - No helper abstractions for one-off operations
