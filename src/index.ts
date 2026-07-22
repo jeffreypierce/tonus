@@ -71,7 +71,7 @@ export default tonus;
 // ── The appendix ──
 // The export law: verbs live on the namespace; return values are plain data;
 // the appendix exports canonical constant tables — nothing with a (). A
-// function that earns public life earns a seventeenth Latin noun instead.
+// function that earns public life earns a fifteenth Latin noun instead.
 export {
   SEASON_LABEL,
   TEMPUS_NAME,
