@@ -150,30 +150,6 @@
   With the vowel–planet attestations: Porphyry, Marcus Gnosticus, Demetrius of
   Phaleron, Eusebius of Caesarea, Barthélemy of Edessa (via `godwin-vowels`).
 
-## Voice acoustics (voice engine)
-
-- `sundberg-singing` — **Sundberg, Johan. _The Science of the Singing Voice_.
-  DeKalb, IL: Northern Illinois University Press, 1987.** The source–filter model,
-  formant frequencies of the sung vowels, the glottal-source spectral tilt, and
-  the singer's-formant cluster (~2.8–3.2 kHz).
-- `stevens-acoustic-phonetics` — **Stevens, Kenneth N. _Acoustic Phonetics_.
-  Cambridge, MA: MIT Press, 1998.** The measured formant acoustics of consonants:
-  nasal murmurs, the lateral's lowered third formant, and the glide transitions
-  the liquescent coda targets bend toward.
-- `peterson-barney` — **Peterson, Gordon E., and Harold L. Barney. "Control
-  Methods Used in a Study of the Vowels." _The Journal of the Acoustical Society
-  of America_ 24, no. 2 (1952): 175–184.** The corner-vowel formant measurements
-  the base tables are cross-checked against.
-- `ternstrom-choir` — **Ternström, Sten. "Choir Acoustics: An Overview of
-  Scientific Research Published to Date." _International Journal of Research in
-  Choral Singing_ 1, no. 1 (2003): 3–12; with "Perceptual Evaluations of Voice
-  Scatter in Unison Choir Sounds," _Journal of Voice_ 7, no. 2 (1993): 129–135.**
-  The measured order of tuning and timing scatter among unison choral voices, the
-  ensemble-scatter envelope.
-- `copeman-latin` — **Copeman, Harold. _Singing in Latin, or Pronunciation
-  Explor'd_. Oxford: Copeman, 1990.** The regional Latin vowel colour of the
-  Roman, Germanic, and Gallican pronunciations.
-
 ## Astronomy and computus
 
 - `standish-jpl` — **Standish, E. M. "Keplerian Elements for Approximate
