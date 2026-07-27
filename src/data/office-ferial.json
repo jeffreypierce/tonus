@@ -11,7 +11,7 @@
     "tertia",
     "vesperae"
   ],
-  "slots": 202,
+  "slots": 208,
   "table": {
     "laudes": {
       "0": {
@@ -127,6 +127,11 @@
           "gregobase:10138"
         ]
       },
+      "5": {
+        "ferial": [
+          "gregobase:7763"
+        ]
+      },
       "6": {
         "ferial": [
           "gregobase:8267",
@@ -141,8 +146,9 @@
         "ferial": [
           "nocturnale:F2N3A2",
           "gregobase:355",
+          "gregobase:18052",
           "nocturnale:EXF2A1",
-          "nocturnale:EXF2A2",
+          "gregobase:17988",
           "gregobase:12420",
           "gregobase:10056"
         ],
@@ -153,51 +159,51 @@
         ],
         "advent": [
           "gregobase:15564",
-          "nocturnale:A1F1N1A1",
+          "gregobase:7476",
           "gregobase:18241",
           "nocturnale:A1F1N1A2",
-          "gregobase:12021",
+          "gregobase:4390",
           "nocturnale:A1F1N1A3",
           "gregobase:9223",
           "nocturnale:A1F1N2A1",
           "gregobase:8316",
           "nocturnale:A1F1N2A2",
-          "gregobase:12818",
+          "gregobase:4414",
           "nocturnale:A1F1N2A3",
-          "gregobase:12857",
+          "gregobase:4352",
           "nocturnale:A1F1N3A1"
         ]
       },
       "1": {
         "ferial": [
-          "nocturnale:EXF2A4",
-          "nocturnale:EXF2A4",
-          "nocturnale:EXF2A5",
-          "nocturnale:EXF2A5",
+          "gregobase:7732",
+          "gregobase:7732",
+          "gregobase:18054",
+          "gregobase:18054",
           "nocturnale:F3N3A1",
           "nocturnale:F3N3A1",
           "nocturnale:EXF3A1",
-          "gregobase:2967",
+          "gregobase:18060",
           "nocturnale:EXF3A1",
-          "gregobase:2967",
+          "gregobase:18060",
           "nocturnale:EXF3A3",
           "nocturnale:EXF3A3"
         ],
         "cistercian": [
-          "nocturnale:EXF2A4",
-          "nocturnale:EXF2A5",
+          "gregobase:7732",
+          "gregobase:18054",
           "nocturnale:F3N3A1",
           "nocturnale:EXF3A1",
-          "gregobase:2967",
+          "gregobase:18060",
           "nocturnale:EXF3A3"
         ]
       },
       "2": {
         "ferial": [
-          "nocturnale:EXF3A4",
-          "nocturnale:EXF3A4",
-          "nocturnale:EXF3A5",
-          "nocturnale:EXF3A5",
+          "gregobase:18061",
+          "gregobase:18061",
+          "gregobase:18049",
+          "gregobase:18049",
           "nocturnale:F4N3A1",
           "nocturnale:F4N3A1",
           "nocturnale:EXF4A1",
@@ -206,7 +212,7 @@
           "nocturnale:EXF4A3"
         ],
         "cistercian": [
-          "nocturnale:EXF3A4",
+          "gregobase:18061",
           "nocturnale:F4N3A1",
           "nocturnale:EXF4A1",
           "nocturnale:EXF4A3"
@@ -224,13 +230,13 @@
           "gregobase:12728",
           "nocturnale:EXF5A1",
           "gregobase:12728",
-          "nocturnale:EXF5A2"
+          "gregobase:17590"
         ],
         "cistercian": [
           "nocturnale:EXF4A4",
           "gregobase:3236",
           "nocturnale:F5N3A3",
-          "nocturnale:EXF5A2"
+          "gregobase:17590"
         ]
       },
       "4": {
@@ -250,9 +256,9 @@
           "gregobase:12541",
           "gregobase:12541",
           "nocturnale:EXF7A1",
+          "gregobase:18057",
           "nocturnale:EXF7A1",
-          "nocturnale:EXF7A2a",
-          "nocturnale:EXF7A2a"
+          "gregobase:18057"
         ]
       },
       "6": {
@@ -261,18 +267,24 @@
           "nocturnale:EXF7A3",
           "nocturnale:EXF7A4",
           "nocturnale:EXF7A4",
+          "gregobase:16900",
+          "gregobase:16900",
           "nocturnale:EXF7A5",
           "nocturnale:EXF7A5"
         ],
         "cistercian": [
           "nocturnale:EXF7A3",
           "nocturnale:EXF7A4",
+          "gregobase:16900",
           "nocturnale:EXF7A5"
         ]
       },
       "any": {
         "nat": [
           "nocturnale:0101N3A1"
+        ],
+        "pasch": [
+          "gregobase:7834"
         ]
       }
     },
@@ -289,7 +301,7 @@
       },
       "2": {
         "ferial": [
-          "gregobase:12667"
+          "gregobase:8661"
         ]
       },
       "3": {
@@ -322,7 +334,7 @@
       },
       "1": {
         "ferial": [
-          "gregobase:12393",
+          "gregobase:18045",
           "gregobase:7867"
         ]
       },

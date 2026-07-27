@@ -1,6 +1,6 @@
 // am.ts — Antiphonale Monasticum 1934 corpus (monastic office)
 // Extracted from GregoBase (source ID 7) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-09T16:55:18.793Z
+// Generated: 2026-07-27T12:36:02.790Z
 // Chants: 1429
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";

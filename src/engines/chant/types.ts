@@ -15,7 +15,23 @@ export type OrdinaryCode =
   | "as"   // Asperges me (sprinkle rite, outside Paschaltide)
   | "va";  // Vidi aquam (sprinkle rite, Paschaltide)
 
-export type ChantSource = "gr" | "lu" | "la" | "lh" | "am" | "nr" | "ky";
+/**
+ * The books a chant can come from. `source` is PROVENANCE, not an acquisition
+ * unit: a book appears here because some chant the liturgy asks for is found in
+ * it, not because the whole book ships.
+ *
+ * The first seven are the original corpus. The eight office books after them
+ * ⟨widened 2026-07-27⟩ carry the antiphons and short responsories that fill
+ * weekday office slots — without them a matcher could only bind a slot to a
+ * chant the five extracted books happened to hold, which is why 41 Fridays had
+ * no Vespers ("Per singulos dies" lives in the Psalterium Monasticum).
+ */
+export type ChantSource =
+  | "gr" | "lu" | "la" | "lh" | "am" | "nr" | "ky"
+  // office books, monastic
+  | "am1" | "am2" | "am3" | "ams" | "psm" | "lr"
+  // office books, Roman
+  | "ar1" | "ar2";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"
