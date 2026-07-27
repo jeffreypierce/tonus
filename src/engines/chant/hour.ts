@@ -164,11 +164,30 @@ function antiphonsFor(
  * a feast belongs to; COMMUNE_OFFICE says what that category sings. Both rites
  * use it — a commune is a category of saint, not a cursus.
  */
-function communeAntiphons(feast: Feast, hour: CanonicalHour): Chant[] {
+function communeSlot(feast: Feast, hour: CanonicalHour, slot: string): Chant[] {
   const commune = communeByFeast().get(feast.id);
   if (!commune) return [];
-  const ids = COMMUNE_OFFICE[commune]?.[hour]?.antiphons;
+  const ids = COMMUNE_OFFICE[commune]?.[hour]?.[slot];
   return ids?.length ? resolveChants(ids) : [];
+}
+
+const communeAntiphons = (feast: Feast, hour: CanonicalHour): Chant[] =>
+  communeSlot(feast, hour, "antiphons");
+
+/**
+ * A little hour's portion of Ps 118 (Terce vv. 33–80, Sext 81–128, None 129–176,
+ * from the extracted DO scheme). The psalmody belongs to a specific day, so it
+ * is only included for a real feast query — not the all-days survey scan, which
+ * has no date and would repeat the psalms once per feast.
+ */
+function littleHourPsalmody(feast: Feast, hour: CanonicalHour, rite: Rite): Chant[] {
+  if (!feast.date) return [];
+  const hourName = hour === "tertia" ? "Tertia" : hour === "sexta" ? "Sexta" : "Nona";
+  const out: Chant[] = [];
+  for (const p of officePsalmPortions(hourName, feast.weekday, rite)) {
+    out.push(...intonePortion(p));
+  }
+  return out;
 }
 
 let _communeByFeast: Map<string, string> | null = null;
@@ -199,6 +218,13 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     // That is not silence: a monastery still sings the ferial cycle. Return it
     // rather than an empty ordo (this is the other half of the antiphonsFor
     // fallback, which only fires when a row EXISTS but its arrays are empty).
+    // The little hours have no antiphon of their own — their proper chant IS the
+    // short responsory — so they take the commune's respBreve. The psalmody is
+    // still theirs either way: returning ONLY the responsory would silence a day
+    // the commune cannot fill, which is worse than what it replaced.
+    if (hour === "tertia" || hour === "sexta" || hour === "nona") {
+      return [...littleHourPsalmody(feast, hour, rite), ...communeSlot(feast, hour, "respBreve")];
+    }
     return antiphonsFor(null, hour, feast, rite);
   }
 
@@ -223,18 +249,18 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     // The psalmody belongs to a specific day, so it is only included for a real
     // feast query — not the all-days survey scan (which has no date and would
     // repeat the psalms once per feast).
-    if (feast.date) {
-      const hourName = hour === "tertia" ? "Tertia" : hour === "sexta" ? "Sexta" : "Nona";
-      for (const p of officePsalmPortions(hourName, feast.weekday, rite)) {
-        results.push(...intonePortion(p));
-      }
-    }
+    results.push(...littleHourPsalmody(feast, hour, rite));
+    // The short responsory, with the same commune fallback the antiphons get.
+    // office-monastic fills respBreve on only 84–96 of its 409 rows, which is
+    // why Terce/Sext/None sang on 184–196 of 366 days: unlike the antiphons this
+    // was a bare lookup with nothing behind it.
     const rb = resolveChant(
       hour === "tertia" ? day.respBreveTertia
         : hour === "sexta" ? day.respBreveSexta
           : day.respBreveNona,
     );
     if (rb) results.push(rb);
+    else results.push(...communeSlot(feast, hour, "respBreve"));
   } else if (hour === "vesperae") {
     results.push(...antiphonsFor(day.antVespera, hour, feast, rite));
     const mc = resolveChant(day.antMagnificat);

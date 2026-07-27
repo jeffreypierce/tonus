@@ -52,6 +52,21 @@
         "hymnus": [
           "gregobase:12058"
         ]
+      },
+      "tertia": {
+        "respBreve": [
+          "gregobase:10400"
+        ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:8082"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:13112"
+        ]
       }
     },
     "C10": {
@@ -89,6 +104,21 @@
         ],
         "hymnus": [
           "gregobase:2885"
+        ]
+      },
+      "tertia": {
+        "respBreve": [
+          "gregobase:18079"
+        ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:14297"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:9141"
         ]
       }
     },
@@ -165,6 +195,21 @@
         ],
         "hymnus": [
           "gregobase:2885"
+        ]
+      },
+      "tertia": {
+        "respBreve": [
+          "gregobase:18079"
+        ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:14297"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:9141"
         ]
       }
     },
@@ -320,6 +365,21 @@
         "hymnus": [
           "gregobase:12434"
         ]
+      },
+      "tertia": {
+        "respBreve": [
+          "gregobase:4169"
+        ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:10477"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:12441"
+        ]
       }
     },
     "C2p": {
@@ -396,6 +456,21 @@
         "hymnus": [
           "gregobase:10560"
         ]
+      },
+      "tertia": {
+        "respBreve": [
+          "gregobase:8432"
+        ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:4174"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:8800"
+        ]
       }
     },
     "C3p": {
@@ -465,6 +540,21 @@
         "hymnus": [
           "gregobase:12971"
         ]
+      },
+      "tertia": {
+        "respBreve": [
+          "gregobase:18214"
+        ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:11709"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:3101"
+        ]
       }
     },
     "C4a": {
@@ -527,6 +617,16 @@
         "hymnus": [
           "gregobase:10073"
         ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:3084"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:8809"
+        ]
       }
     },
     "C5a": {
@@ -587,6 +687,21 @@
         ],
         "hymnus": [
           "gregobase:7253"
+        ]
+      },
+      "tertia": {
+        "respBreve": [
+          "gregobase:18079"
+        ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:14297"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:9141"
         ]
       }
     },
@@ -716,6 +831,21 @@
         ],
         "hymnus": [
           "gregobase:2948"
+        ]
+      },
+      "tertia": {
+        "respBreve": [
+          "gregobase:8957"
+        ]
+      },
+      "sexta": {
+        "respBreve": [
+          "gregobase:8954"
+        ]
+      },
+      "nona": {
+        "respBreve": [
+          "gregobase:8959"
         ]
       }
     },
