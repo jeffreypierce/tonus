@@ -28,7 +28,9 @@ describe("getChants", () => {
 
   test("serves the Antiphonale Monasticum (source am)", () => {
     const am = getChants({ source: "am" });
-    assert.ok(am.length > 1000, `expected the full AM corpus, got ${am.length}`);
+    // Post-cut the corpus is assignment-driven, so a book ships what the liturgy
+    // asks of it, not its full contents: AM contributes 467 of its 1,429 chants.
+    assert.ok(am.length > 300, `expected AM's shipped chants, got ${am.length}`);
     for (const c of am) {
       assert.equal(c.source.code, "am");
       assert.equal(c.source.book, "Antiphonale Monasticum");
@@ -119,7 +121,10 @@ describe("getCorpus", () => {
     assert.equal(am.year, 1934);
     assert.equal(am.editor, "Solesmes");
     assert.equal(am.edition, "Pro Diurnis Horis"); // GregoBase description, normalized
-    assert.ok(am.count > 1000);
+    // `count` is what tonus SHIPS from the book; `total` is what the book holds.
+    // The cut separated the two — before it they were the same number.
+    assert.ok(am.count > 300, `am.count = ${am.count}`);
+    assert.ok(am.total > am.count, "the book holds more than tonus ships");
   });
 
   test("exposes the full Latin title where GregoBase has one", () => {
@@ -214,7 +219,9 @@ describe("getOrdinary", () => {
 describe("getHour", () => {
   test("returns office chants for laudes", () => {
     const feasts = getFeast({ date: new Date("2026-12-25") });
-    const chants = getHour({ feast: feasts, hora: "laudes" });
+    // The corpus ships the Roman MASS and the Benedictine OFFICE, so an office
+    // hour is asked for in the rite that has chants behind it.
+    const chants = getHour({ feast: feasts, hora: "laudes", rite: "monasticum" });
     assert.ok(chants.length > 0);
   });
 
