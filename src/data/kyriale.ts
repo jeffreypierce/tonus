@@ -1,6 +1,6 @@
 // kyriale.ts — Mass ordinary (kyriale) chants
 // Extracted from GregoBase (GR source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-27T15:32:52.226Z
+// Generated: 2026-07-27T23:47:45.584Z
 // Entries: 120
 //
 // Mass numbers are derived from GR page references (e.g. page "18*" = Mass XVIII).
@@ -679,7 +679,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:168",
     office: "ky",
-    mass: 100,
+    mass: 17,
     mode: "6",
     incipit: "Kyrie XVII C",
     gabc: "(c4) KY(f)ri(gfg)e(h.) * e(ixjvIH'GhvF'E)lé(ghg')i(g)son.(f.) <i>iij.</i>(::)\r\nChri(ixj)ste(jv.hi!jv.) e(ixjvIH'GhvF'E)lé(ghg')i(g)son.(f.) <i>iij.</i>(::)\r\nKý(f)ri(hj)e(ixjjkij.) e(ixjvIH'GhvF'E)lé(ghg')i(g)son.(f.) <i>ij.</i>(::)\r\nKý(f)ri(hj)e(ixjjkij.) ~~~~~*(,) (ixf!hj/jkij.) e(ixjvIH'GhvF'E)lé(ghg')i(g)son.(f.) (::)",

@@ -185,11 +185,45 @@ interface CantusQuery {
   mode?: number | string | (number | string)[];
   office?: OfficeCode | OfficeCode[];
   source?: ChantSource | ChantSource[];
+  before?: number; // only chants ATTESTED by this year (the era view)
+  century?: number; // the same cutoff, spelled as a century (10 = the 900s)
+  cursus?: "monastic" | "secular"; // transmission; `both` satisfies either
   limit?: number;
   offset?: number;
   sort?: "incipit" | "mode" | "id";
 }
 ```
+
+## The repertoire as of a date — the era view
+
+`before: 1098` keeps only chants a manuscript of the 11th century or earlier
+already holds. This is **evidence, not existence**: the dates come from
+CANTUS's manuscript index, a terminus ante quem, so the filter answers "what
+is attested by then," never "what existed then" — and a chant with no dated
+witness is excluded rather than assumed old, because silence is not evidence
+of age. CANTUS dates only to the century, so a year admits the centuries
+that have CLOSED before it (`before: 1098` → through the 900s), and
+`century: N` is exactly `before: N * 100` — one cutoff, two spellings.
+
+The view is the analogue of
+[`festum({ before })`](calendar.md#the-day-as-of-a-year--before) over the
+calendar, and the two **compose**: a feast resolved under a view carries it,
+and every day verb serves the same view unasked.
+
+```js
+const [easter] = tonus.festum({ date: new Date("2026-04-05"), before: 1100 });
+tonus.proprium({ feast: easter }); // only propers attested by 1100
+tonus.ordinarium({ feast: easter }); // the ordinary the view attests
+```
+
+What happens to a slot the view excludes differs by verb, on the rubric's
+own logic: `ordinarium` **re-picks** — the Kyriale offers ranked
+alternatives by design, so the rotation runs over the admissible pool and
+the day still sings. `proprium`, `officium`, and `matutinum` have no pool
+of alternatives, so an excluded chant **falls silent** — an empty slot
+under a view is evidence speaking, not data missing. A `before`/`century`
+given to a day verb directly overrides the feast's view; an invalid one
+throws at every door.
 
 ## The Mass propers — `proprium`
 
@@ -216,31 +250,44 @@ interface PropriumQuery extends CantusQuery {
 ## The ordinary — `ordinarium`
 
 `ordinarium(query?)` retrieves the fixed chants of the Mass from the
-Kyriale. A feast drives mass selection through its `masses` list, whose derivation is described in
+Kyriale. A feast drives mass selection through its `masses` list — the
+masses the day's Kyriale RUBRIC appoints, derived as described in
 [calendar.md](calendar.md#the-days-feasts--festum); `mass` pins a kyriale
-number directly. For a feast, one chant per movement returns, chosen from
-the feast's masses by mode fit — so the movements may come from different
-masses:
+number directly. Where the rubric names several masses, the year rotates
+through them (same feast, same year → same answer, every time), and sibling
+printings under one number (Mass I prints two dismissals; Mass XVII prints
+Kyrie A/B/C) rotate with it. Slots resolve independently, which the book
+licenses outright — "chants from one Mass may be used together with those
+from others" — with one exception, the book's own: **"the Ferial Masses
+excepted."** Under a ferial rubric the sung ordinary is not gathered from
+several masses; only the dismissal travels.
 
 ```js
 const [easter] = tonus.festum({ date: new Date("2026-04-05") });
 tonus.ordinarium({ feast: easter });
-// ky  Kyrie IV      (mass 4)
-// gl  Gloria IV     (mass 4)
-// cr  Credo III     (mass 3)
-// sa  Sanctus II    (mass 2)
-// ag  Agnus Dei II  (mass 2)
-// it  Ite IIb       (mass 2)
+// ky  Kyrie I       (mass 1) — Lux et origo, Paschal time, every year
+// gl  Gloria I      (mass 1)
+// cr  Credo III     (mass 3) — the credo rotates on its own cycle
+// sa  Sanctus I     (mass 1)
+// ag  Agnus Dei I   (mass 1)
+// it  Ite Ia        (mass 1)
 // va  Vidi aquam    (mass 0) — the Paschaltide sprinkling antiphon rides along
 ```
 
-The Gloria is omitted in the penitential seasons (Advent, Septuagesima,
-and Lent), and with it the `it` row: at a Gloria-less Mass the dismissal is
-the Benedicamus Domino, and the Kyriale carries a `be` setting only in
-Masses 2 and 59 — so unless one of those is selected, the dismissal row is
-simply absent rather than substituted. The Triduum returns
-no ordinary at all: Good Friday has no Mass, and the Vigil's ordinary
-belongs to Easter. A pinned `mass` overrides the Triduum rule.
+The **Gloria follows the day's rank rubric, not its season**: the ferial
+masses print none (XVI, XVIII) and the penitential-Sunday mass none (XVII),
+while a I-class feast inside Advent or Lent — the Immaculate Conception —
+keeps its Gloria. At a Gloria-less Mass the dismissal is the Benedicamus
+Domino, and a mass with no dismissal of its own borrows one exactly as the
+book directs: "Benedicamus Domino **as in Mass II**" — so a green feria
+sings Mass XVI whole with the Mass II Benedicamus. The ad libitum appendix
+is a **solemnity boost**, reachable only under the festal rubrics (it takes
+its turn in the rotation once every _n + 1_ years); it never reaches a
+penitential day or a feria, and the Requiem settings stay out of every
+calendar-driven pick (reachable by `ordinarium({ mass: 102 })` only). The
+Triduum returns no ordinary at all: Good Friday has no Mass, and the
+Vigil's ordinary belongs to Easter. A pinned `mass` overrides the Triduum
+rule and the rotation both.
 
 **Maundy Thursday** (In Cena Domini) is the Triduum's exception: it keeps a
 full Mass with the Gloria, its ordinary fixed to Mass I (Lux et origo).
@@ -343,9 +390,14 @@ date query. For the Roman night office with its nocturn structure, see
 ## Matins nocturns — `matutinum`
 
 `officium({ hora: "matutinum" })` returns Matins as a flat chant list.
-`matutinum(query?)` instead returns the structured Roman night office: the
-nocturns, each with its great responsories (and antiphons where the source
-carries them). It is a separate accessor — the flat `officium` path is unchanged.
+`matutinum(query?)` instead returns the night office as a `Matins` object.
+Both rites are served, in different shapes — read `structured` before
+trusting `nocturns`. The Roman rite is assembled nocturn-by-nocturn from
+the Nocturnale (`structured: true`); the monastic rite comes from the flat
+office-monastic table, so it returns the right chants in ONE nocturn
+(`structured: false`) — the Benedictine three-nocturn / twelve-psalm
+division is not modelled. It is a separate accessor — the flat `officium`
+path is unchanged.
 
 ```js
 const advent1 = tonus.festum({ date: new Date("2026-11-29") }); // Dominica I Adventus
@@ -359,6 +411,7 @@ interface Matins {
   feastId: string;              // the tonus feast id resolved
   nomen: string;                // Latin name, e.g. "Dominica I Adventus"
   ritus: string;                // "I. classis - Semiduplex", "Feria", …
+  structured: boolean;          // true = real nocturn division (Roman only)
   invitatorium: Chant | null;   // opens the hour, before the first nocturn
   hymnus: Chant | null;         // the Matins hymn, after the invitatory
   nocturns: Nocturn[];          // one (simple) or three (festal)
@@ -387,7 +440,11 @@ tonus.matutinum({ feast: tonus.festum({ date: new Date("2026-07-15") }) });
 **Coverage.** The bridge from the Nocturnale's feast ids to the tonus calendar
 covers the sanctorale (all months) and Advent today; the other temporal
 seasons (Nativity, Lent, Passiontide, Paschaltide, after Pentecost) are not yet
-mapped. A feast with no match (or any rite other than Roman) returns `null`.
+mapped. A feast with no match in the queried rite's table returns `null`.
+Note the Roman office's chants were largely cut from the shipped corpus
+(the corpus is assignment-driven, Roman Mass + Benedictine Office), so
+Roman Matins resolves only the chants kept for other reasons — degrading
+to silence by the same evidence law as everywhere else.
 
 ## Psalms — `psalmus`
 

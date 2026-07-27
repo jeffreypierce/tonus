@@ -68,14 +68,24 @@ describe("getMatins — flat monastic Matins", () => {
     }
   });
 
-  test("monastic Matins draws on Solesmes books, not the Nocturnale", () => {
+  test("monastic Matins takes antiphons from the Solesmes books, responsories from NR", () => {
     const m = getMatins({ feast: { id: "01-01" }, rite: "monasticum" });
     const all = m.nocturns.flatMap((n) => [...n.responsories, ...n.antiphons]);
     assert.ok(all.length > 0);
-    for (const c of all) {
-      assert.ok(c.gabc.length > 0, `${c.incipit} should have GABC`);
-      assert.notEqual(c.source.code, "nr");
+    for (const c of all) assert.ok(c.gabc.length > 0, `${c.incipit} should have GABC`);
+
+    // This once asserted "never nr", which held only while the monastic
+    // responsory pool excluded the Nocturnale — and that exclusion was the
+    // reason monastic Matins had almost no responsories (52 days, 69 heard/yr).
+    // NR is now in that pool by construction, so the night office draws its
+    // GREAT RESPONSORIES from it. The antiphons still come from the Antiphonale
+    // and its gap-fillers, which is the division that matters.
+    const ants = m.nocturns.flatMap((n) => n.antiphons);
+    for (const c of ants) {
+      assert.notEqual(c.source.code, "nr",
+        `antiphon ${c.incipit} should come from a Solesmes book, not NR`);
     }
+    assert.ok(ants.length > 0, "monastic Matins should carry antiphons");
   });
 
   test("a feast the monastic table cannot fill returns null, not an empty shell", () => {

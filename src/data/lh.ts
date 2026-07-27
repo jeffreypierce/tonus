@@ -1,7 +1,7 @@
 // lh.ts — Liber Hymnarius 1983 corpus
 // Extracted from GregoBase (source ID 15) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-27T15:32:52.226Z
-// Chants: 19
+// Generated: 2026-07-27T23:47:45.584Z
+// Chants: 25
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
@@ -57,6 +57,16 @@ export const LH_DATA: ChantData[] = [
     ],
   },
   {
+    id: "gregobase:8129",
+    incipit: "Cor arca legem continens (another chant)",
+    gabc: "(c4)COR,(dh) ár(hg)ca(h) lé(g)gem(fe) cón(g)ti(g)nens,(h.) (,) Non(hj) ser(ji)vi(gh)tú(hg)tis(fe) vé(g)te(g)ris,(h.) (;) Sed(d) grá(f)ti(e)æ,(ghg) sed(fe) vé(dc)ni(de)æ,(e_) (,) Sed(g) et(f!gh) mi(hg)se(fe)ri(c)cór(ef)di(d)æ.(d.) (::) 2. Cor,(dh) san(hg)ctu(h)á(g)ri(fe)um(g) nó(g)vi(h.) (,) In(hj)te(ji)me(gh)rá(hg)tum(fe) foé(g)de(g)ris,(h.) (;) Tém(d)plum(f) ve(e)tú(ghg)sto(fe) sán(dc)cti(de)us,(e_) (,) Ve(g)lúm(f!gh)que(hg) scís(fe)s<i>o</i>() u(c)tí(ef)li(d)us.(d.) (::) 3. Te(dh) vul(hg)ne(h)rá(g)tum(fe) cá(g)ri(g)tas(h.) (,) I(hj)ctu(ji) pa(gh)tén(hg)ti(fe) vó(g)lu(g)it,(h.) (;) A(d)mó(f)ris(e) in(ghg)vi(fe)sí(dc)bi(de)lis(e_) (,) Ut(g) ve(f!gh)ne(hg)ré(fe)mur(c) vúl(ef)ne(d)ra.(d.) (::) 4. Hoc(dh) sub(hg) a(h)mó(g)ris(fe) sým(g)bo(g)lo(h.) (,) Pás(hj)sus(ji) cru(gh)én(hg)t<i>a</i>() et(fe) mý(g)sti(g)ca,(h.) (;) U(d)trúm(f)que(e) sa(ghg)cri(fe)fí(dc)ci(de)um(e_) (,) Chri(g)stus(f!gh) Sa(hg)cér(fe)dos(c) ób(ef)tu(d)lit.(d.) (::) 5. Quis(dh) non(hg) a(h)mán(g)tem(fe) ré(g)da(g)met?(h.) (,) Quis(hj) non(ji) re(gh)dém(hg)ptus(fe) dí(g)li(g)gat,(h.) (;) Et(d) ca(f)ri(e)tá(ghg)te(fe) iú(dc)gi(de)ter(e_) (,) Hæ(g)ré(f!gh)re(hg) Chri(fe)sto(c) ge(ef)sti(d)at?(d.) (::) 6. Ie(dh)su,(hg) ti(h)bi(g) sit(fe) gló(g)ri(g)a,(h.) (,) Qui(hj) Cor(ji)de(gh) fun(hg)dis(fe) grá(g)ti(g)am,(h.) (;) Cum(d) Pa(f)tr<i>e</i>() et(e) al(ghg)mo(fe) Spí(dc)ri(de)tu(e_) (,) In(g) sem(f!gh)pi(hg)tér(fe)na(c) sǽ(ef)cu(d)la.(d.) (::) A(ded)men.(c.d.) (::)",
+    office: "hy",
+    mode: "1",
+    pages: [
+    { page: "119", sequence: 0, extent: 1 }
+    ],
+  },
+  {
     id: "gregobase:8243",
     incipit: "Te dicimus praeconio mater",
     gabc: "(c4)TE(g) dí(g)ci(f)mus(e) præ(d)có(fhg)ni(fg)o,(g.) (,)\r\nma(h/iwji)ter(h) De(g)i(h) pu(ig)rís(h)si(g)ma;(f.) (;)\r\nno(f)stris(g) be(f)ní(g)gna(h) láu(j)di(g)bus(h!i!h'_) (,)\r\ntu(h)am(h) re(g)pén(e)de(f) grá(hg)ti(fg)am.(g.) (::)\r\n\r\n2. Son(g)tes(g) A(f)dá(e)mi(d) pó(fhg)ste(fg)ri,(g.) (,)\r\nin(h/iwji)fé(h)cta(g) pro(h)les(ig) gí(h)gni(g)mur;(f.) (;)\r\nla(f)bis(g) pa(f)tér(g)næ(h) né(j)sci(g)a(h!i!h'_) (,)\r\ntu(h) so(h)la,(g) Vir(e)go,(f) cré(hg)de(fg)ris.(g.) (::)\r\n\r\n3. Ca(g)put(g) dra(f)có(e)nis(d) ín(fhg)vi(fg)di(g.) (,)\r\ntu(h/iwji) cón(h)te(g)ris(h) ve(ig)stí(h)gi(g)o,(f.) (;)\r\nge(f)rís(g)que(f) so(g)la(h) gló(j)ri(g)am(h!i!h'_) (,)\r\nin(h)ta(h)mi(g)ná(e)t<i>æ</i>(f) o(f)rí(hg)gi(fg)nis.(g.) (::)\r\n\r\n4. No(g)stræ(g) de(f)cus(e) pro(d)pá(fhg)gi(fg)nis,(g.) (,)\r\nquæ(h/iwji) tol(h)lis(g) E(h)v<i>æ</i>(i) op(g)pró(h)bri(g)um,(f.) (;)\r\ntu(f) nos(g) tu(f)é(g)re(h) súp(j)pli(g)ces,(h!i!h'_) (,)\r\ntu(h) nos(h) la(g)bán(e)tes(f) é(hg)ri(fg)ge.(g.) (::)\r\n\r\n5. Ser(g)pén(g)tis(f) an(e)tí(d)qui(fhg) po(fg)tens(g.) (,)\r\na(h/iwji)stus(h) re(g)tún(h)d<i>e</i>(i) et(g) ím(h)pe(g)tus,(f.) (;)\r\nut(f) cæ(g)li(f)tum(g) pe(h)rén(j)ni(g)bus(h!i!h'_) (,)\r\nper(h) te(h) fru(g)á(e)mur(f) gáu(hg)di(fg)is.(g.) (::)\r\n\r\n6. Pa(g)tri(g) sit(f) et(e) Pa(d)rá(fhg)cli(fg)to(g.) (,)\r\ntu(h/iwji)ó(h)que(g) Na(h)to(ig) gló(h)ri(g)a,(f.) (;)\r\nqui(f) san(g)cti(f)tá(g)tis(h) ú(j)ni(g)cæ(h!i!h'_) (,)\r\nte(h) mu(h)ne(g)rá(e)runt(f) grá(hg)ti(fg)a.(g.) (::)\r\nA(ghg)men.(fg..) (::)",
@@ -87,6 +97,26 @@ export const LH_DATA: ChantData[] = [
     ],
   },
   {
+    id: "gregobase:8704",
+    incipit: "Aeterne Rex altissime",
+    gabc: "(c4) Æ(g)tér(g!hwih)ne(gf) Rex(hg) al(h!iwji)tís(hg)si(fg)me,(g.) (;)\r\nRed(g)émp(ih)tor(jk) et(k) fi(ji)dé(hg)li(hj)um,(j.) (:)\r\nQuo(j) mors(h) so(i)lú(g)ta(gh) dé(hg)per(fg)it,(g.) (;)\r\nDa(f)tur(hg) tri(hj)úm(ji)phus(hg) grá(hg)ti(fg)æ.(g.) (::)\r\n\r\n2. Scan(g)dis(g!hwih) tri(gf)bú(hg)nal(h!iwji) déx(hg)te(fg)ræ(g.) (;)\r\nPa(g)tris,(ih) ti(jk)bí(k)que(ji) cǽ(hg)li(hj)tus(j.) (:)\r\nFer(j)tur(h) pot(i)és(g)tas(gh) óm(hg)ni(fg)um,(g.) (;)\r\nQuæ(f) non(hg) e(hj)rat(ji) hu(hg)má(hg)ni(fg)tus.(g.) (::)\r\n\r\n3. Ut(g) tri(g!hwih)na(gf) re(hg)rum(h!iwji) má(hg)chi(fg)na,(g.) (;)\r\nCæ(g)lés(ih)ti(jk)um,(k) ter(ji)rés(hg)tri(hj)um,(j.) (:)\r\nEt(j) in(h)fe(i)ró(g)rum(gh) cón(hg)di(fg)ta,(g.) (;)\r\nFlec(f)tat(hg) ge(hj)nu(ji) iam(hg) súb(hg)di(fg)ta.(g.) (::)\r\n\r\n4. Tre(g)munt(g!hwih) vi(gf)dén(hg)tes(h!iwji) án(hg)ge(fg)li(g.) (;)\r\nVer(g)sam(ih) vi(jk)cem(k) mor(ji)tá(hg)li(hj)um:(j.) (:)\r\nCul(j)pat(h) ca(i)ro,(g) pur(gh)gat(hg) ca(fg)ro,(g.) (;)\r\nRe(f)gnat(hg) ca(hj)ro(ji) Ver(hg)bum(hg) De(fg)i.(g.) (::)\r\n\r\n5. Tu,(g) Chris(g!hwih)te,(gf) nos(hg)trum(h!iwji) gáu(hg)di(fg)um,(g.) (;)\r\nMa(g)nens(ih) per(jk)én(k)ne(ji) prǽ(hg)mi(hj)um,(j.) (:)\r\nMun(j)di(h) re(i)gis(g) qui(gh) fá(hg)bri(fg)cam,(g.) (;)\r\nMun(f)dá(hg)na(hj) vin(ji)cens(hg) gáu(hg)di(fg)a.(g.) (::)\r\n\r\n6. Hinc(g) te(g!hwih) pre(gf)cán(hg)tes,(h!iwji) quǽ(hg)su(fg)mus,(g.) (;)\r\nI(g)gnó(ih)sce(jk) cul(k)pis(ji) óm(hg)ni(hj)bus,(j.) (:)\r\nEt(j) cor(h)da(i) sur(g)sum(gh) súb(hg)le(fg)va(g.) (;)\r\nAd(f) te(hg) su(hj)pér(ji)na(hg) grá(hg)ti(fg)a.(g.) (::)\r\n\r\n7. Ut,(g) cum(g!hwih) ru(gf)bén(hg)te(h!iwji) cœ(hg)́per(fg)is(g.) (;)\r\nCla(g)ré(ih)re(jk) nu(k)be(ji) iú(hg)di(hj)cis,(j.) (:)\r\nPœ(j)nas(h) re(i)pél(g)las(gh) dé(hg)bi(fg)tas,(g.) (;)\r\nRed(f)das(hg) co(hj)ró(ji)nas(hg) pér(hg)di(fg)tas.(g.) (::)\r\n\r\n8. Ie(g)su,(g!hwih) ti(gf)bi(hg) sit(h!iwji) gló(hg)ri(fg)a,(g.) (;)\r\nQui(g) scan(ih)dis(jk) ad(k) cæ(ji)lés(hg)ti(hj)a,(j.) (:)\r\nCum(j) Pa(h)tr<i>e</i>,() et(i) al(g)mo(gh) Spí(hg)ri(fg)tu,(g.) (;)\r\nIn(f) sem(hg)pi(hj)tér(ji)na(hg) sǽ(hg)cu(fg)la.(g.) (::)\r\nA(ghg)men.(fg..) (::)",
+    office: "hy",
+    mode: "8",
+    pages: [
+    { page: "92", sequence: 2, extent: 3 }
+    ],
+  },
+  {
+    id: "gregobase:10383",
+    incipit: "Auctor beate saeculi",
+    gabc: "(c4)\r\nAU(dh)ctor(hg) be(h)á(g)te(fe) sǽ(g)cu(g)li,(h.) (,)\r\nChri(hj)ste,(ji) Re(gh)dém(hg)ptor(fe) óm(g)ni(g)um,(h.) (;)\r\nlu(d)men(f) Pa(e)tris(ghg) de(fe) lú(dc)mi(de)ne(e'_) (,)\r\nDe(g)ús(f!gh)que(hg) ve(fe)rus(c) de(ef) De(d.)o:(d.) (::)\r\n\r\n2. A(dh)mor(hg) co(h)é(g)git(fe) te(g) tu(g)us(h.) (,)\r\nmor(hj)tá(ji)le(gh) cor(hg)pus(fe) sú(g)me(g)re,(h.) (;)\r\nut(d) no(f)vus(e) A(ghg)dam(fe) réd(dc)de(de)res(e'_) (,)\r\nquod(g) ve(f!gh)tus(hg) il(fe)l<i>e</i> {a}b(c)stú(ef)le(d.)rat:(d.) (::)\r\n\r\n3. Il(dh)l<i>e</i> {a}(hg)mor,(h) al(g)mus(fe) ár(g)ti(g)fex(h.) (,)\r\nter(hj)ræ(ji) ma(gh)rís(hg)qu<i>e</i> {e}t(fe) sí(g)de(g)rum,(h.) (;)\r\ner(d)rá(f)ta(e) pa(ghg)trum(fe) mí(dc)se(de)rans(e'_) (,)\r\net(g) no(f!gh)stra(hg) rum(fe)pens(c) vín(ef)cu(d.)la.(d.) (::)\r\n\r\n4. Non(dh) cor(hg)de(h) di(g)scé(fe)dat(g) tu(g)o(h.) (,)\r\nvis(hj) il(ji)l<i>a</i> {a}(gh)mó(hg)ris(fe) ín(g)cli(g)ti:(h.) (;)\r\nhoc(d) fon(f)te(e) gen(ghg)tes(fe) háu(dc)ri(de)ant(e'_) (,)\r\nre(g)mis(f!gh)si(hg)ó(fe)nis(c) grá(ef)ti(d.)am.(d.) (::)\r\n\r\n5. Ad(dh) hoc(hg) a(h)cér(g)bam(fe) lán(g)ce(g)am(h.) (,)\r\npas(hj)súm(ji)qu<i>e</i> {a}d(gh) hoc(hg) est(fe) vúl(g)ne(g)ra,(h.) (;)\r\nut(d) nos(f) la(e)vá(ghg)ret(fe) sór(dc)di(de)bus(e'_) (,)\r\nun(g)da(f!gh) flu(hg)én(fe)t<i>e</i>, et(c) sán(ef)gui(d.)ne.(d.) (::)\r\n\r\n6. Ie(dh)su,(hg) ti(h)bi(g) sit(fe) gló(g)ri(g)a,(h.) (,)\r\nqui(hj) cor(ji)de(gh) fun(hg)dis(fe) grá(g)ti(g)am,(h.) (;)\r\ncum(d) Pa(f)tr<i>e</i>, {e}t(e) al(ghg)mo(fe) Spí(dc)ri(de)tu(e'_) (,)\r\nin(g) sem(f!gh)pi(hg)tér(fe)na(c) sǽ(ef)cu(d.)la.(d.) (::)\r\n\r\nA(ded)men.(cd..) (::)\r\n",
+    office: "hy",
+    mode: "1",
+    pages: [
+    { page: "117", sequence: 1, extent: 2 }
+    ],
+  },
+  {
     id: "gregobase:10398",
     incipit: "Regem Apostolorum",
     gabc: "(c3)RE(e_0!f>_0)gem(e) A(e)po(e)sto(e)ló(eg)rum(h) Dó(ggf)mi(hf__!gwhG__FE)num,(e/fge/ccod.) (;) ve(b/c@eof)ní(f)te,(hf__!gwhG__FE.) a(eec)do(d_e)ré(ec__doe)mus.(dc..) (::) Ve(g/goh)ní(fg)te. <i>p.135.</i>(gvFE) (::)",
@@ -114,6 +144,26 @@ export const LH_DATA: ChantData[] = [
     mode: "4",
     pages: [
     { page: "273", sequence: 1, extent: 1 }
+    ],
+  },
+  {
+    id: "gregobase:14250",
+    incipit: "O lux beata Caelitum",
+    gabc: "(f3)O(ef) lux(f) be(hg)á(f)ta(e) c<sp>'ae</sp>(h)li(ij)tum(j.) (,)\r\net(ij) sum(h)ma(hg) spes(fh) mor(hg)tá(fg)li(f)um,(e.) (;)\r\nIe(ef)su,(f) cu(fe)i(f) do(gh)mé(j)sti(ih)ca(h.) (,)\r\nar(ij)rí(g)sit(hg) or(f)to(e) cá(gh)ri(f)tas ;(f.) (::)",
+    office: "hy",
+    mode: "2",
+    pages: [
+    { page: "26", sequence: 0, extent: 2 }
+    ],
+  },
+  {
+    id: "gregobase:15456",
+    incipit: "Deum verum",
+    gabc: "initial-style: 1;\r\nname: Deum verum;\r\nbook: Liber Hymnarius p. 106;\r\noccasion: Sanctissimae Trinitatis;\r\noffice-part: Ad Invitatorium;\r\nuser-notes: ;\r\ncommentary: ;\r\nannotation: 4;\r\ncentering-scheme: english;\r\nfontsize: 12;\r\nfont: OFLSortsMillGoudy;\r\nheight: 11;\r\nwidth: 4.5;\r\n%%\r\n(c4)De(cdefv)um(e) ve(dffe)rum,(d_c_) (,) u(de)num(e') in(e>) Tri(c)ni(de)tá(efg)te(ffe.) (;) et(e) Tri(g)ni(gh)tá(h_g_/hv_GFg)tem(ffe.) (,) in(e) U(dc)ni(de)tá(efg_FE)te,(ddoe.) (;) ve(c_d)ní(e)te,(fg) ad(g_f_/g_1hGFf)o(de)ré(e.)mus.(e.) (::)\r\n",
+    office: "an",
+    mode: "4",
+    pages: [
+    { page: "106", sequence: 0, extent: 1 }
     ],
   },
   {
@@ -164,6 +214,16 @@ export const LH_DATA: ChantData[] = [
     mode: "4",
     pages: [
     { page: "266", sequence: 0, extent: 1 }
+    ],
+  },
+  {
+    id: "gregobase:17812",
+    incipit: "Jam Christus astra",
+    gabc: "(c4)IAM(d) Chri(d)stus,(df) astr<i>a</i>(d) a(dc)scén(f)de(gh)rat,(h) (,)\r\nre(hg)gré(j)ssus(jk) un(j)de(ji) vé(h)ne(gh)rat,(h) (;)\r\npro(d)mí(h)ssa(hih) Pa(g)tris(ge) mú(f)ne(ed)ra,(de) (,)\r\nSanc(c)tum(ed) da(g)tú(ghg)rus(fe) Spí(d)ri(cd)tum.(d) (::)",
+    office: "hy",
+    mode: null,
+    pages: [
+    { page: "101", sequence: 1, extent: 2 }
     ],
   },
   {

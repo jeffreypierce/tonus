@@ -90,6 +90,27 @@ tonus.festum({ season: "pasc" }); // liturgical-year scan, filtered
 tonus.festum({ grade: "duplex-i", marian: true });
 ```
 
+### The day as of a year — `before`
+
+`before` resolves the day AS OF a year: feasts instituted later step aside,
+and whatever ranked behind them — usually the temporale or the feria — wins
+instead. The calendar data is untouched; this is a view over it, from the
+institution dates in `cal/data/eras.ts`. A day whose every candidate is later
+than `before` returns `[]`, which is the honest answer: that day had no
+feast yet.
+
+```js
+tonus.festum({ date: new Date("2026-08-06"), before: 1100 });
+// the feria — the Transfiguration's universal feast is later
+```
+
+The feast returned **carries the view** (`feast.before`), and every chant
+verb reads it back: `proprium`, `ordinarium`, `officium`, and `matutinum`
+serve only chants attested by the same year, without being told the year
+twice. One `before` at the calendar door views the whole day. The chant side
+— what "attested" means, and what a slot the view excludes does — is in
+[chant.md](chant.md#the-repertoire-as-of-a-date--the-era-view).
+
 ```ts
 interface FeastQuery {
   date?: Date;
@@ -100,6 +121,7 @@ interface FeastQuery {
   grade?: Grade;
   marian?: boolean;
   apostolic?: boolean;
+  before?: number; // the era view: the day as of this year
 }
 
 interface Feast {
@@ -113,21 +135,25 @@ interface Feast {
   seasonEnd: Date;
   date: Date;
   weekday: number; // 0 = Sunday (UTC)
-  masses: number[]; // compatible kyriale mass numbers, most-fitting first
+  masses: number[]; // the masses the day's Kyriale rubric appoints
   marian: boolean;
   apostolic: boolean;
+  before?: number; // the era view this feast was resolved under, if any
 }
 ```
 
-The `masses` list is derived. Each
-of the eighteen kyriale masses carries the assignment printed over it in
-the Solesmes books (_Lux et origo_ in Paschaltide, _Orbis factor_ on
-ordinary Sundays, _Cum jubilo_ for feasts of the Virgin, XVII and XVIII
-for Advent and Lent), encoded in tonus as constraints of season, grade,
-and day. Those headings were always customary rather than binding, and
-where they are silent the constraint is an editorial reading; the ordering
-of the list, most fitting first, is likewise tonus's judgment. The
-encoding is `src/engines/chant/data/masses.ts`, one commented entry per mass.
+The `masses` list is derived from the Kyriale's own printed rubric — one
+category per mass, by RANK: "In Paschal Time", "For feasts of the I class",
+"For Sundays throughout the Year", "For ferias". A day resolves to exactly
+one rubric (a BVM feast is "of the Blessed Virgin" even in Paschaltide),
+and the masses carrying that rubric are the masses it may sing, in the
+book's own numbering — where a rubric names several (II class 1–5), that
+numbering is the book's invitation to choose, and `ordinarium` rotates
+among them by year. The book's per-mass nicknames (_Orbis factor_ for
+Sundays, and so on) record CUSTOMARY use, which disagrees with the rubric
+for 9 of the 18 — they are kept as documentation, never as a selector. The
+encoding is `src/engines/chant/data/masses.ts`, one commented entry per
+mass, `heading` carrying the printed rubric verbatim.
 
 ## Rank — `ritus` and `grade`
 

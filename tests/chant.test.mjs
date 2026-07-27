@@ -304,14 +304,27 @@ describe("getHour — the monastic rite", () => {
   });
 
   test("the commune fills a saint's office when the day has no proper antiphons", () => {
-    // The Mass has always resolved proper → seasonal → commune (propers.ts); the
-    // Office gained the same fallback. A category of saint sings its commune.
-    const survey = getHour({ hora: "vesperae", rite: "monasticum" });
-    const antiphons = survey.filter((c) => c.office === "an");
-    const fromAm = antiphons.filter((c) => c.source.code?.startsWith("am"));
+    // The Mass has always resolved proper → seasonal → commune (propers.ts);
+    // the Office has the same fallback — and it fills EVERY slot type the
+    // commune table ships, not just the antiphons. S. Henrici (2026-07-15)
+    // is served by his commune: Matins must carry responsories and Lauds a
+    // hymn, or the mined commune data is sitting silent on the shelf again.
+    // (An earlier form of this test surveyed antiphon provenance and passed
+    // verbatim with the fallback deleted.)
+    const [henry] = getFeast({ date: new Date(Date.UTC(2026, 6, 15)) });
+    const matins = getHour({ feast: henry, hora: "matutinum", rite: "monasticum" });
     assert.ok(
-      fromAm.length > antiphons.length / 2,
-      `most monastic antiphons should come from the Antiphonale (got ${fromAm.length}/${antiphons.length})`,
+      matins.some((c) => c.office === "re"),
+      "Matins sings the commune's great responsories",
+    );
+    assert.ok(
+      matins.some((c) => c.office === "an"),
+      "…alongside antiphons",
+    );
+    const lauds = getHour({ feast: henry, hora: "laudes", rite: "monasticum" });
+    assert.ok(
+      lauds.some((c) => c.office === "hy"),
+      "Lauds sings the commune's hymn when the day has none of its own",
     );
   });
 });
@@ -578,7 +591,11 @@ describe("getChants — attestation filters", () => {
       getChants({ century: 10 }).length,
       "before:1098 should admit through the 900s, not the 1000s",
     );
-    assert.equal(getChants({ before: 1100 }).length, getChants({ century: 10 }).length);
+    // At an exact century multiple the boundary century has just CLOSED: by
+    // 1100 the 11th century (1000–1099) is wholly attested, so it is admitted.
+    // (An earlier version pinned this to century 10, encoding an off-by-one
+    // that made every round-number `before` refuse the century it had closed.)
+    assert.equal(getChants({ before: 1100 }).length, getChants({ century: 11 }).length);
   });
 
   test("later cutoffs are supersets of earlier ones", () => {
@@ -600,10 +617,20 @@ describe("getChants — attestation filters", () => {
 
   test("an undated chant is excluded, not assumed old", () => {
     // Silence is not evidence of age: a chant CANTUS cannot date must not slip
-    // into an early-repertoire query.
+    // into an early-repertoire query. Asserted directly: even an UNBOUNDED
+    // cutoff admits only what the manuscript index can date, so the undated
+    // remainder of a book never appears. (The old form compared sizes against
+    // gr+nr — a proxy that broke the moment `before: 1000` correctly admitted
+    // the closed 900s.)
     const early = getChants({ before: 1000 });
     assert.ok(early.length > 0);
-    assert.ok(early.length < getChants({ source: "gr" }).length + getChants({ source: "nr" }).length);
+    const grAll = getChants({ source: "gr" }).length;
+    const grDated = getChants({ source: "gr", before: 30000 }).length;
+    assert.ok(grDated > 0, "some GR chants are dated");
+    assert.ok(
+      grDated < grAll,
+      `undated GR chants stay out at any cutoff (${grDated} dated of ${grAll})`,
+    );
   });
 
   test("id no longer short-circuits the other filters", () => {

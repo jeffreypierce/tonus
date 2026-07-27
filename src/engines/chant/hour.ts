@@ -2,6 +2,7 @@
 // engines/chant/hour — Divine Office hour retrieval
 // ---------------------------------------------------------------------------
 import { resolveChant, resolveChants } from "./chant.js";
+import { eraCutoff, chantAdmissible } from "./attest.js";
 import { intonePortion, officePsalmPortions } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
 import { getFeast } from "../cal/calendar.js";
@@ -256,24 +257,52 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
         ...(fromCommune.length ? fromCommune : seasonalRespBreve(feast, hour)),
       ];
     }
+    // The commune fills EVERY slot type it ships, not just the antiphons: a
+    // saint served by commune sings the commune's invitatory, hymn and
+    // responsories too — the table mined them (512 texts across 24 communes)
+    // and returning a truncated hour left them silent on the shelf. Slot
+    // order mirrors the with-row assembly below.
+    if (hour === "matutinum") {
+      return [
+        ...communeSlot(feast, hour, "invitatorium"),
+        ...antiphonsFor(null, hour, feast, rite),
+        ...communeSlot(feast, hour, "hymnus"),
+        ...communeSlot(feast, hour, "responsories"),
+      ];
+    }
+    if (hour === "laudes" || hour === "vesperae") {
+      return [
+        ...antiphonsFor(null, hour, feast, rite),
+        ...communeSlot(feast, hour, "hymnus"),
+      ];
+    }
     return antiphonsFor(null, hour, feast, rite);
   }
 
   const results: Chant[] = [];
 
   if (hour === "matutinum") {
+    // Each slot falls to the commune INDEPENDENTLY (own else commune, same
+    // all-or-nothing-per-slot rule the antiphons and respBreve always had) —
+    // a row with proper responsories but no invitatory borrows only the
+    // invitatory.
     const inv = resolveChant(day.invit);
     if (inv) results.push(inv);
+    else results.push(...communeSlot(feast, hour, "invitatorium"));
     results.push(...antiphonsFor(day.antMatutinum, hour, feast, rite));
     const hy = resolveChant(day.hymnMatutinum);
     if (hy) results.push(hy);
-    results.push(...resolveChants(day.respMatutinum));
+    else results.push(...communeSlot(feast, hour, "hymnus"));
+    const ownResp = resolveChants([...day.respMatutinum].filter((id): id is string => !!id));
+    if (ownResp.length) results.push(...ownResp);
+    else results.push(...communeSlot(feast, hour, "responsories"));
   } else if (hour === "laudes") {
     results.push(...antiphonsFor(day.antLaudes, hour, feast, rite));
     const bc = resolveChant(day.antBenedictus);
     if (bc) results.push(bc);
     const hy = resolveChant(day.hymnLaudes);
     if (hy) results.push(hy);
+    else results.push(...communeSlot(feast, hour, "hymnus"));
   } else if (hour === "tertia" || hour === "sexta" || hour === "nona") {
     // The little hours: their portion of Ps 118 (Terce vv. 33–80, Sext 81–128,
     // None 129–176, from the extracted DO scheme), then the responsory breve.
@@ -301,6 +330,7 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     if (mc) results.push(mc);
     const hy = resolveChant(day.hymnVespera);
     if (hy) results.push(hy);
+    else results.push(...communeSlot(feast, hour, "hymnus"));
   }
 
   return results;
@@ -366,6 +396,19 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     });
   } else {
     return [];
+  }
+
+  // The era view: an own `before`/`century` wins; otherwise the view
+  // festum({ before }) stamped on the feast rides along. Excluded chants
+  // degrade to SILENCE here ⟨RULED⟩ — the office's proper → commune → ferial
+  // chain triggers on ABSENCE from the tables, not on inadmissibility, so no
+  // re-pick is attempted. (Extending the chain to re-pick under a view is a
+  // recorded follow-up, not an accident.)
+  {
+    const cutoff = eraCutoff(query, feasts, "officium");
+    if (cutoff != null || query.cursus) {
+      results = results.filter((c) => chantAdmissible(c.id, cutoff, query.cursus));
+    }
   }
 
   // Apply CantusQuery filters

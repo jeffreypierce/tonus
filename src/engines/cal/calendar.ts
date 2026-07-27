@@ -219,8 +219,11 @@ function rubricForDay(
   const isSunday = date.getUTCDay() === 0;
   const penitential = PENITENTIAL_SEASONS.has(season);
 
-  if (season === "pasc") return "paschal";
+  // The book's own subject category outranks the season: a BVM feast in
+  // Paschaltide is "For feasts of the Blessed Virgin", not "In Paschal Time" —
+  // paschal-first left Cum jubilo unreachable for the whole of Eastertide.
   if (BVM_FEAST_IDS.has(id)) return "bvm";
+  if (season === "pasc") return "paschal";
 
   if (isSunday && SUNDAY_GRADES.includes(grade)) {
     return penitential ? "sunday-penitential" : "sunday";
@@ -379,7 +382,13 @@ export function getFeast(query?: FeastQuery): Feast[] {
     if (!Number.isFinite(query.before)) {
       throw new Error(`festum: before must be a year — e.g. festum({ date, before: 1350 })`);
     }
-    results = results.filter((f) => feastKeptBy(f.id, query.before!));
+    results = results
+      .filter((f) => feastKeptBy(f.id, query.before!))
+      // Stamp the view on the survivors. The chant verbs read it back, so one
+      // `before` at the calendar door carries through the whole day — the
+      // calendar as of 1100 serves the repertoire attested by 1100, without
+      // the caller saying the year twice. Their own before/century overrides.
+      .map((f) => ({ ...f, before: query.before! }));
   }
 
   if (query.nomen) {

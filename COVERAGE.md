@@ -35,19 +35,19 @@ Core six slots: **2022 / 4134** (48.9%).
 
 | Slot | Filled | Rate |
 | --- | ---: | ---: |
-| Invitatory | 124 / 811 | 15.3% |
-| Ant Matutinum | 254 / 811 | 31.3% |
-| Hymn Matutinum | 203 / 811 | 25.0% |
-| Resp Matutinum | 145 / 811 | 17.9% |
-| Ant Laudes | 304 / 811 | 37.5% |
-| Ant Benedictus | 306 / 811 | 37.7% |
-| Hymn Laudes | 276 / 811 | 34.0% |
-| RB Tertia | 241 / 811 | 29.7% |
-| RB Sexta | 265 / 811 | 32.7% |
-| RB Nona | 265 / 811 | 32.7% |
-| Ant Vespera | 294 / 811 | 36.3% |
-| Ant Magnificat | 294 / 811 | 36.3% |
-| Hymn Vespera | 238 / 811 | 29.3% |
+| Invitatory | 99 / 811 | 12.2% |
+| Ant Matutinum | 169 / 811 | 20.8% |
+| Hymn Matutinum | 52 / 811 | 6.4% |
+| Resp Matutinum | 133 / 811 | 16.4% |
+| Ant Laudes | 241 / 811 | 29.7% |
+| Ant Benedictus | 43 / 811 | 5.3% |
+| Hymn Laudes | 143 / 811 | 17.6% |
+| RB Tertia | 49 / 811 | 6.0% |
+| RB Sexta | 69 / 811 | 8.5% |
+| RB Nona | 247 / 811 | 30.5% |
+| Ant Vespera | 232 / 811 | 28.6% |
+| Ant Magnificat | 54 / 811 | 6.7% |
+| Hymn Vespera | 22 / 811 | 2.7% |
 
 ## Roman Matins — nocturns
 
@@ -80,14 +80,14 @@ unpublished. When such a source lands, the structure work is already scaffolded
 
 ## Chant source usage
 
-Total unique chant ids referenced by propers, office, and Matins: **2842**.
+Total unique chant ids referenced by propers, office, and Matins: **2223**.
 
 | Source prefix | Unique ids referenced |
 | --- | ---: |
-| `gregobase` | 1528 |
 | `nocturnale` | 1314 |
+| `gregobase` | 909 |
 
-Combined corpus: **7068** chants (gr 1344, lu 2377, la 1422, lh 361, nr 1564). Referenced: **2842** (40.2%).
+Combined corpus: **1788** chants (gr 780, lu 712, la 139, lh 19, nr 138). Referenced: **2223** (124.3%).
 
 *A large unreferenced remainder is expected — a book carries far more chants
 than any one calendar cycle invokes.*

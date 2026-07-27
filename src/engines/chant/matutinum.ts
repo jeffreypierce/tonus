@@ -1,18 +1,23 @@
 // ---------------------------------------------------------------------------
-// engines/chant/matutinum — structured Roman Matins (nocturns)
+// engines/chant/matutinum — the night office, both rites (nocturns)
 // ---------------------------------------------------------------------------
 // The flat `officium({ hora: "matutinum" })` returns Matins chants as an
 // undifferentiated Chant[] (the best-effort flat view, unchanged). This module
-// adds the STRUCTURED night office for the Roman rite: the 3-nocturn assembly
-// from the Nocturnale Romanum [biblio: nocturnale-romanum], joined to the tonus
-// calendar by feast id.
+// returns the night office as a Matins object, BOTH rites, different shapes —
+// read `structured` before trusting `nocturns`:
+//   · Roman: the 3-nocturn assembly from the Nocturnale Romanum
+//     [biblio: nocturnale-romanum], joined to the calendar by feast id
+//     (structured: true);
+//   · monastic: the flat office-monastic table's Matins fields, the right
+//     chants in ONE nocturn (structured: false) — the Benedictine 12-psalm
+//     grouping is not modelled.
 //
 // It is additive and separate — a distinct accessor (`tonus.matutinum`), not a
-// reshape of getHour — so the flat path and every other rite stay as they are.
-// Coverage is what the Nocturnale + the calendar bridge give: the sanctorale and
-// Advent today (see office-matins-roman.ts). A feast with no Nocturnale match
-// returns null, the office's graceful-degradation convention.
+// reshape of getHour — so the flat path stays as it is. Coverage is what each
+// rite's table gives (see office-matins-roman.ts / office-monastic). A feast
+// with no match returns null, the office's graceful-degradation convention.
 import { resolveChant } from "./chant.js";
+import { eraCutoff, chantAdmissible } from "./attest.js";
 import { getHour } from "./hour.js";
 import { getFeast } from "../cal/calendar.js";
 import { temporaSundayId } from "../cal/date.js";
@@ -166,8 +171,10 @@ function matinsForFeastId(feastId: string): Matins | null {
  * table, so it returns the right chants in ONE nocturn (`structured: false`);
  * the Benedictine 12-psalm division is not modelled.
  *
- * The query's `feast` and `rite` are read; `hora` is ignored (Matins *is* the
- * hour) as are the other `CantusQuery` filters.
+ * The query's `feast`, `rite`, and the era view (`before`/`century`/`cursus`,
+ * or the view stamped on the feast by `festum({ before })`) are read; `hora`
+ * is ignored (Matins *is* the hour), as are the remaining `CantusQuery`
+ * filters.
  * @returns the Matins, or null when the rite's table has no match for the feast.
  */
 export function getMatins(query?: OfficiumQuery): Matins | null {
@@ -183,5 +190,27 @@ export function getMatins(query?: OfficiumQuery): Matins | null {
       "matutinum: feast must be a Feast (from tonus.festum) — got " + typeof feast,
     );
 
-  return rite === "monasticum" ? monasticMatins(feast) : matinsForFeastId(feast.id);
+  const matins =
+    rite === "monasticum" ? monasticMatins(feast) : matinsForFeastId(feast.id);
+  if (!matins) return null;
+
+  // The era view: an own `before`/`century` wins; otherwise the view
+  // festum({ before }) stamped on the feast rides along. A Matins slot has no
+  // pool of alternatives, so an excluded chant degrades to SILENCE ⟨RULED⟩ —
+  // an emptied slot under a view is evidence speaking, not data missing.
+  const cutoff = eraCutoff(query ?? {}, feast ? [feast] : null, "matutinum");
+  const cursus = query?.cursus;
+  if (cutoff == null && !cursus) return matins;
+  const keep = (c: Chant | null) =>
+    c && chantAdmissible(c.id, cutoff, cursus) ? c : null;
+  return {
+    ...matins,
+    invitatorium: keep(matins.invitatorium),
+    hymnus: keep(matins.hymnus),
+    nocturns: matins.nocturns.map((n) => ({
+      ...n,
+      responsories: n.responsories.filter((c) => chantAdmissible(c.id, cutoff, cursus)),
+      antiphons: n.antiphons.filter((c) => chantAdmissible(c.id, cutoff, cursus)),
+    })),
+  };
 }

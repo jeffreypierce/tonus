@@ -2,9 +2,10 @@
 // engines/chant/propers — Mass proper lookup
 // ---------------------------------------------------------------------------
 import { resolveChant } from "./chant.js";
+import { eraCutoff, chantAdmissible } from "./attest.js";
 import { temporaSundayId } from "../cal/date.js";
 import type { Chant, PropriumQuery, OfficeCode } from "./types.js";
-import type { Feast } from "../cal/types.js";
+import { PENITENTIAL_SEASONS, type Feast, type Season } from "../cal/types.js";
 import { PROPERS, type ProperSet } from "../../data/propers.js";
 import { COMMUNE_PROPERS, FEAST_COMMUNE, type CommuneProperSet } from "../../data/commune.js";
 
@@ -29,7 +30,7 @@ function communePropers(): Map<string, CommuneProperSet> {
 const PROPER_SLOTS: (keyof Pick<ProperSet, "in" | "gr" | "al" | "tr" | "of" | "co">)[] =
   ["in", "gr", "al", "tr", "of", "co"];
 
-function resolveProperChants(feastId: string): Chant[] {
+function resolveProperChants(feastId: string, season?: Season | null): Chant[] {
   const map = byFeastId();
   const proper = map.get(feastId) ?? null;
   const sunday = temporaSundayId(feastId);
@@ -38,10 +39,25 @@ function resolveProperChants(feastId: string): Chant[] {
   const commune = communeByFeast().get(feastId);
   const communeProper = commune ? (communePropers().get(commune) ?? null) : null;
 
+  const ids: Record<string, string | null> = {};
+  for (const slot of PROPER_SLOTS) {
+    ids[slot] = proper?.[slot] ?? seasonProper?.[slot] ?? communeProper?.[slot] ?? null;
+  }
+  // Alleluia OR Tractus when the formulary carries BOTH: the commune sets
+  // serve year-round and print the pair, and serving them together handed
+  // 08-26 two gradual-tier chants in one Mass. Penitential seasons silence
+  // the Alleluia and sing the Tract; the rest of the year the reverse. A
+  // formulary carrying only ONE keeps it regardless — an Ember Saturday's
+  // tract is not silenced for falling outside Lent — and a survey call
+  // (no season in hand) still reports both.
+  if (season != null && ids.al && ids.tr) {
+    if (PENITENTIAL_SEASONS.has(season)) ids.al = null;
+    else ids.tr = null;
+  }
+
   const results: Chant[] = [];
   for (const slot of PROPER_SLOTS) {
-    const id = proper?.[slot] ?? seasonProper?.[slot] ?? communeProper?.[slot] ?? null;
-    const chant = resolveChant(id);
+    const chant = resolveChant(ids[slot]);
     if (chant) results.push(chant);
   }
   return results;
@@ -75,6 +91,7 @@ function toArray<T>(v: T | T[] | undefined): T[] | undefined {
  */
 const PROPRIUM_QUERY_KEYS = new Set([
   "feast", "id", "gabc", "incipit", "mode", "office", "source",
+  "before", "century", "cursus",
   "limit", "offset", "sort",
 ]);
 
@@ -95,10 +112,20 @@ export function getPropers(query?: PropriumQuery): Chant[] {
   let results: Chant[];
 
   if (feasts) {
-    results = feasts.flatMap((f) => resolveProperChants(f.id));
+    results = feasts.flatMap((f) => resolveProperChants(f.id, f.season));
   } else {
-    // No feast filter — resolve all propers
+    // No feast filter — resolve all propers (a survey: no season, both
+    // alleluia and tract report).
     results = PROPERS.flatMap((p) => resolveProperChants(p.feastId));
+  }
+
+  // The era view: an own `before`/`century` wins; otherwise the view
+  // festum({ before }) stamped on the feast rides along. A proper has no pool
+  // of alternatives, so an excluded chant degrades to SILENCE ⟨RULED⟩ — the
+  // same evidence law as the corpus cut.
+  const cutoff = eraCutoff(query, feasts, "proprium");
+  if (cutoff != null || query.cursus) {
+    results = results.filter((c) => chantAdmissible(c.id, cutoff, query.cursus));
   }
 
   const offices = toArray(query.office);

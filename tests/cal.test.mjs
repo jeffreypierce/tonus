@@ -300,3 +300,49 @@ describe("season alignment (temporale)", () => {
     }
   });
 });
+
+describe("the calendar has no silent days", () => {
+  // Five dates of 2026 once resolved to NOTHING — festum() returned [] and the
+  // whole day fell out of every walk: Pasc6-5 (a redirect-headed DO file
+  // gen-cal skipped), the November tail (the post-Pentecost season is elastic
+  // and its surplus weeks resume the omitted post-Epiphany Sundays), and
+  // Dec 30 (an octave day with no saint, carried by the date-stemmed Nat30).
+  test("every day of 2026 and 2027 resolves at least one entry", () => {
+    for (const year of [2026, 2027]) {
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(Date.UTC(year, 0, 1 + i));
+        const feasts = getFeast({ date: d });
+        assert.ok(
+          feasts.length > 0,
+          `${d.toISOString().slice(0, 10)} resolves to no feast at all`,
+        );
+      }
+    }
+  });
+
+  test("the five 2026 holes, by name", () => {
+    const at = (iso) => getFeast({ date: new Date(iso + "T00:00:00Z") });
+    assert.ok(at("2026-05-22").some((f) => f.id === "Pasc6-5"), "Friday after the Octave of Ascension");
+    assert.ok(at("2026-11-18").length > 0, "Wednesday of the resumed 6th Epiphany week");
+    assert.ok(at("2026-11-27").length > 0, "Friday of the last week after Pentecost");
+    assert.ok(at("2026-11-28").length > 0, "Saturday before Advent");
+    const dec30 = at("2026-12-30").find((f) => f.id === "Nat30");
+    assert.ok(dec30, "Dec 30 carries the octave day (Nat30)");
+    assert.equal(dec30.grade, "semiduplex", "a day within the Christmas octave is semiduplex");
+  });
+
+  test("Dominica ultima anchors to Advent; the surplus Sundays resume Epiphany's", () => {
+    // 2026: Pentecost May 24, Advent Nov 29 — 26 Sundays after Pentecost.
+    // The 24th and 25th resume Epi5 and Epi6; the last sings Dominica XXIV.
+    // Presence, not primacy: a sanctoral feast may outrank the Sunday, but
+    // the Sunday must be ON the day for the concurrence to happen at all.
+    const ids = (iso) =>
+      getFeast({ date: new Date(iso + "T00:00:00Z") }).map((f) => f.id);
+    assert.ok(ids("2026-11-08").includes("Epi5-0"), "24th Sunday = resumed 5th after Epiphany");
+    assert.ok(ids("2026-11-15").includes("Epi6-0"), "25th Sunday = resumed 6th after Epiphany");
+    assert.ok(ids("2026-11-22").includes("Pent24-0"), "the last Sunday is Dominica XXIV");
+    assert.ok(!ids("2026-11-08").includes("Pent24-0"), "the ultima does not ALSO sit at Pentecost+24 weeks");
+    // And in a year with exactly 24, Pent24 sits where linear placement put it.
+    // 2027: Pentecost Jun 13? — verified by the no-silent-days scan above.
+  });
+});

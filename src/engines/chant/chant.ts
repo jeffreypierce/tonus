@@ -7,6 +7,7 @@ import type {
 import { OFFICE_LABELS, MODE_LABELS } from "./types.js";
 import { CORPUS_OVERLAP } from "../../data/corpus-overlap.js";
 import { ATTESTATION } from "../../data/attestation.js";
+import { attestationCutoff, chantAdmissible } from "./attest.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
@@ -198,21 +199,9 @@ export function getCorpus(code: ChantSource): Corpus {
   return result;
 }
 
-/**
- * A year → the latest century wholly attested by it, on the same scale as
- * `Attestation.century` (10 = the 900s).
- *
- * CANTUS dates a manuscript only to its century, so `before: 1098` cannot mean
- * "witnessed before 1098" — a book dated "11th century" may have been written
- * in 1099. Admitting the whole 11th century would let a caller asking for 1098
- * receive chants first written down after it, which is the one thing this
- * filter exists to prevent. So a year admits only centuries that CLOSED before
- * it: 1098 → 10 (through the 900s), 1100 → 11. Callers who do want the
- * containing century can say so precisely with `century`.
- */
-function centuryOf(year: number): number {
-  return Math.ceil(year / 100) - 1;
-}
+// The era view's cutoff and admissibility rule live in ./attest.js — a leaf
+// module every chant verb shares, so cantus and the day verbs cannot drift
+// (and so ordinary.js need not import THIS module, which was a cycle).
 
 function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   if (v === undefined) return undefined;
@@ -297,27 +286,13 @@ export function getChants(query?: CantusQuery): Chant[] {
   // terminus ante quem, so this answers "what is ATTESTED by then", never "what
   // existed then". A chant CANTUS cannot date is excluded rather than assumed
   // old: the filter states what is evidenced, and silence is not evidence.
-  if (query.century != null || query.before != null) {
-    const cutoff = query.century ?? centuryOf(query.before!);
-    if (!Number.isFinite(cutoff)) {
-      throw new Error(
-        "cantus: century must be a century number (10 = the 900s), before a year — " +
-        "e.g. cantus({ before: 1098 })",
-      );
+  // One rule, one door-keeper: the same chantAdmissible() the day verbs use,
+  // so `cantus({ before })` and `proprium({ feast, before })` can never drift.
+  {
+    const cutoff = attestationCutoff(query, "cantus");
+    if (cutoff != null || query.cursus) {
+      out = out.filter((c) => chantAdmissible(c.id, cutoff, query.cursus));
     }
-    out = out.filter((c) => {
-      const a = ATTESTATION[c.id];
-      return a != null && a.century <= cutoff;
-    });
-  }
-
-  if (query.cursus) {
-    // `both` satisfies either ask: a chant in monastic AND secular books is
-    // genuinely part of both repertories.
-    out = out.filter((c) => {
-      const a = ATTESTATION[c.id];
-      return a?.cursus === query.cursus || a?.cursus === "both";
-    });
   }
 
   const sort = query.sort ?? "incipit";

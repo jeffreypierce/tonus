@@ -135,6 +135,57 @@ export function resolveEntryId(
   if (/^\d{2}-\d{2}$/.test(id)) {
     return [place(startOfDay(parseMonthDay(year, id)))];
   }
+
+  // The Christmas-octave days are DATE-stemmed, not week-stemmed:
+  // Nat26–Nat31 = Dec 26–31 ("Diei VI infra Octavam Nativitatis"). Dec 30
+  // has no saint, so without Nat30 the date resolved to nothing at all.
+  const nat = id.match(/^Nat(2[6-9]|3[01])$/);
+  if (nat) {
+    return [place(startOfDay(new Date(Date.UTC(year, 11, Number(nat[1])))))];
+  }
+
+  const m = id.match(/^([A-Za-z]+)(\d+)-(\d+)$/);
+  if (!m) throw new Error(`Unrecognized tempora stem: ${id}`);
+  const prefix = m[1];
+  const week = parseInt(m[2], 10);
+  const weekday = parseInt(m[3], 10);
+
+  // The season after Pentecost is ELASTIC (23–28 Sundays), and the book's
+  // rule is not linear: DO's Pent24 is "Dominica XXIV et ultima" — ALWAYS
+  // the last Sunday before Advent — and the surplus Sundays between the 23rd
+  // and the last resume the post-Epiphany Sundays omitted in January, in
+  // their order, ending at the sixth. Linear placement stranded the November
+  // tail with no tempora at all (the 11-18 / 11-27 / 11-28 holes of 2026).
+  const lastSunday = addDays(anchors.adventFirstSunday, -7);
+  const sundaysAfterPentecost = Math.round(
+    (lastSunday.getTime() - anchors.pentecost.getTime()) / (7 * 86400000),
+  );
+
+  if (prefix === "Pent") {
+    // Dominica ultima: anchored to Advent, not to Pentecost.
+    if (week === 24) return [place(addDays(lastSunday, weekday))];
+    // In a 23-Sunday year the ultima falls ON the 23rd slot and sings the
+    // 24th's mass — the 23rd steps aside rather than double-booking the day.
+    if (week >= sundaysAfterPentecost) return [];
+    return [place(addDays(anchors.pentecost, week * 7 + weekday))];
+  }
+
+  if (prefix === "Epi") {
+    // Always the January placement…
+    const placements = [place(resolveTemporaStem(id, anchors))];
+    // …and, in a long year, the autumn resumption: with S Sundays after
+    // Pentecost, the surplus g = S − 24 weeks between the 23rd and the
+    // ultima take Epi(7−g) … Epi6, in their order.
+    const surplus = sundaysAfterPentecost - 24;
+    if (surplus > 0 && week >= 7 - surplus && week <= 6) {
+      const sundayIndex = 24 + (week - (7 - surplus));
+      placements.push(
+        place(addDays(anchors.pentecost, sundayIndex * 7 + weekday)),
+      );
+    }
+    return placements;
+  }
+
   return [place(resolveTemporaStem(id, anchors))];
 }
 

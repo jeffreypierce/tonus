@@ -1542,6 +1542,12 @@ export const CAL_SANCTI: CalEntry[] = [
     "ritus": "Semiduplex"
   },
   {
+    "id": "11-18",
+    "name": "In Dedicatione Basilicarum Ss. Apostolorum Petri et Pauli",
+    "rank": 2,
+    "ritus": "Duplex majus"
+  },
+  {
     "id": "11-19",
     "name": "S. Elisabeth Viduæ",
     "rank": 3,
@@ -2151,6 +2157,42 @@ export const CAL_TEMPORA: CalEntry[] = [
     "ritus": "Duplex II classis"
   },
   {
+    "id": "Nat26",
+    "name": "Diei II infra Octavam Nativitatis",
+    "rank": 3,
+    "ritus": "Semiduplex"
+  },
+  {
+    "id": "Nat27",
+    "name": "Diei III infra Octavam Nativitatis",
+    "rank": 3,
+    "ritus": "Semiduplex"
+  },
+  {
+    "id": "Nat28",
+    "name": "Diei IV infra Octavam Nativitatis",
+    "rank": 3,
+    "ritus": "Semiduplex"
+  },
+  {
+    "id": "Nat29",
+    "name": "Diei V infra Octavam Nativitatis",
+    "rank": 3,
+    "ritus": "Semiduplex"
+  },
+  {
+    "id": "Nat30",
+    "name": "Diei VI infra Octavam Nativitatis",
+    "rank": 3,
+    "ritus": "Semiduplex"
+  },
+  {
+    "id": "Nat31",
+    "name": "Diei VII infra Octavam Nativitatis",
+    "rank": 3,
+    "ritus": "Semiduplex"
+  },
+  {
     "id": "Pasc0-0",
     "name": "Dominica Resurrectionis",
     "rank": 1,
@@ -2431,6 +2473,12 @@ export const CAL_TEMPORA: CalEntry[] = [
     "name": "In Octava Ascensionis",
     "rank": 2,
     "ritus": "Duplex majus"
+  },
+  {
+    "id": "Pasc6-5",
+    "name": "Feria VI post Octavam Ascensionis",
+    "rank": 3,
+    "ritus": "Semiduplex"
   },
   {
     "id": "Pasc6-6",

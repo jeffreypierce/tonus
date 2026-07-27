@@ -250,6 +250,12 @@ export interface Feast {
   masses: number[]; // ranked list of compatible kyriale mass numbers
   marian: boolean;
   apostolic: boolean;
+  /** The era view this feast was resolved under — the `before` year given to
+   *  festum. Carried on the feast so the chant verbs (proprium, ordinarium,
+   *  officium, matutinum) serve the SAME view without being told twice; a
+   *  `before`/`century` on their own query overrides. Absent on a present-day
+   *  resolution. */
+  before?: number;
 }
 
 export interface FeastQuery {

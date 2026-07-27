@@ -2,6 +2,75 @@
 
 All notable changes to tonus. Newest first.
 
+## Unreleased
+
+The rubric true-up and the era view. The 2026-07-27 review found the
+Kyriale selection chain leaking past its own gates; the fixes landed with
+regression tests, the corpus pipeline was corrected and regenerated behind
+them, and the calendar's and the corpus's `before` arguments were
+reconciled into one composable view.
+
+### Added
+
+- **The era view composes end to end.** `festum({ date, before })` stamps
+  the view year on the returned `Feast` (`feast.before`), and every day
+  verb — `proprium`, `ordinarium`, `officium`, `matutinum` — serves the
+  same view without being told the year twice; an own `before`/`century`
+  overrides. Previously the day verbs' types promised `before`/`century`/
+  `cursus` (they extend `CantusQuery`) while the implementations diverged
+  three ways: `proprium` threw "unknown query key," `officium` and
+  `ordinarium` silently ignored them.
+- One admissibility rule for every door: `engines/chant/attest.ts`, a leaf
+  module shared by `cantus` and the day verbs. `century: N` ≡
+  `before: N * 100` — one cutoff internally, two spellings for now.
+- Under a view, `ordinarium` **re-picks** over the admissible pool (the
+  Kyriale offers ranked alternatives by design); `proprium`/`officium`/
+  `matutinum` degrade to silence — the corpus cut's evidence law.
+- `matutinum({ rite: "monasticum" })` documented alongside Roman: both
+  rites served, `structured` telling the shapes apart.
+- Test suites: `tests/ordinarium.test.mjs` (the selection chain end to
+  end) and `tests/era-view.test.mjs` (the view's whole contract).
+
+### Fixed
+
+- **"Requiescant in pace" was the dismissal on every green feria** (~20
+  days/year): `isRequiem` missed the bare "Requiescant" incipit AND the
+  last-resort appendix return was ungated. The same hole handed ferias an
+  ad libitum Gloria. The appendix now never reaches a day whose rubric
+  does not admit it; the Requiem stays reachable via
+  `ordinarium({ mass: 102 })`.
+- **The Gloria follows the day's rank rubric, not its season**: ferias
+  print none; a I-class feast inside Advent (Immaculate Conception) keeps
+  hers. The "Benedicamus Domino as in Mass II" borrow the book directs is
+  now real — ferias and penitential Sundays sing Mass II's dismissal.
+- **The paschal rubric is a time, not a rank**: removed from the solemn
+  set (an Eastertide Tuesday no longer leads with an appendix Kyrie;
+  Easter keeps Lux et origo every year), and BVM outranks paschal in
+  `rubricForDay`, so Cum jubilo is reachable in Eastertide.
+- **Credo V was never sung**: the off-year rotation's parity was coupled
+  to the two-year bias (2 divides 6). The off-years now advance their own
+  cycle — all six credos are heard across twelve years.
+- The leftover masses-1–9 preference on high feasts (precedence measuring
+  what the rubric should) — deleted; it defeated the appendix solemnity
+  boost on the class feasts it was built for and pinned high BVM feasts to
+  mass IX.
+- `centuryOf` off-by-one at exact century multiples: `before: 1100` now
+  admits the closed 11th century, as its own doc always claimed.
+- "Kyrie XVII C" refiled from a synthetic mass 100 to mass 17 (corpus-side
+  incipit parsing read the variant letter C as roman 100) — it now rotates
+  as Mass XVII's sibling printing.
+
+### Data
+
+- Regenerated from the corrected pipeline: `office-roman` (canticle
+  antiphons split positionally — the last SURVIVOR of matching is no
+  longer promoted to the Benedictus/Magnificat slot), `office-monastic`
+  (464 days; rubric-year variant files excluded from the merge; stub
+  redirects followed to their actual targets), `office-ferial` (honestly
+  monastic rows only; the tier-then-book tiebreak; Matins 94 → 98 of 128),
+  `commune-office` (rubric-variant sections no longer blended; the Introit
+  genre-cap hole closed), `kyriale`.
+
 ## 0.3.0
 
 The vox-ectomy. The voice engine (`vox`, `chorus`, the formant tables,
