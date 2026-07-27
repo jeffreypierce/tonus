@@ -1,7 +1,13 @@
 // ---------------------------------------------------------------------------
 // engines/chant/ordinary — Mass ordinary (kyriale) selection
 // ---------------------------------------------------------------------------
-import { MASSES, AD_LIB, type MassEntry } from "./data/masses.js";
+import {
+  MASSES,
+  AD_LIB,
+  WHOLE_MASS_RUBRICS,
+  type MassEntry,
+  type MassRubric,
+} from "./data/masses.js";
 import { KYRIALE, type KyrialeEntry } from "../../data/kyriale.js";
 import {
   KY_SOURCE,
@@ -41,12 +47,151 @@ function resolveMasses(feast: Feast): MassEntry[] {
   return [feast.marian ? AD_LIB.bvm : AD_LIB.standard];
 }
 
-function entriesForOffice(office: string, massNumbers: number[]): KyrialeEntry[] {
-  const byMass = KYRIALE.filter(
-    (e) => e.office === office && e.mass != null && massNumbers.includes(e.mass),
+// The numbered kyriale runs 1–18. The book's appendix — ad libitum settings and
+// the like — carries synthetic numbers above that range, which no feast's
+// `masses` list ever names; those settings are therefore reachable only as a
+// last-resort fallback here, or by direct `ordinarium({ mass })` query.
+const NUMBERED_MASS_MAX = 18;
+
+function isAdLibitum(entry: KyrialeEntry): boolean {
+  // Most appendix settings sit above the numbered range, but two ad libitum
+  // Kyries are numbered 6 and 10 in the source data, colliding with the
+  // numbered masses — for those the incipit is the only discriminator.
+  return (entry.mass ?? 0) > NUMBERED_MASS_MAX || /\(ad lib\./i.test(entry.incipit);
+}
+
+/** Prefer a proper numbered setting over an appendix one at equal standing. */
+function adLibLast(a: KyrialeEntry, b: KyrialeEntry): number {
+  return Number(isAdLibitum(a)) - Number(isAdLibitum(b));
+}
+
+// The Missa pro defunctis settings belong to the Requiem, not to the temporal or
+// sanctoral day. They stay out of every calendar-driven pick and remain
+// reachable only by direct `ordinarium({ mass })` query.
+function isRequiem(entry: KyrialeEntry): boolean {
+  return /in\s+Miss\.\s*def|defunct/i.test(entry.incipit);
+}
+
+/**
+ * Deterministic rotation of a preference list by liturgical year.
+ *
+ * `feast.masses` lists every mass COMPATIBLE with the day, ranked — not one
+ * right answer and a set of wrong ones. A house that sings the same setting for
+ * nineteen years is a house, not the tradition, so the year steps through the
+ * compatible set. Keyed on the feast's own year, so the result is a pure
+ * function of the feast: same feast, same answer, every time it is asked.
+ */
+function rotate<T>(list: readonly T[], year: number): T[] {
+  if (list.length <= 1) return [...list];
+  const i = ((year % list.length) + list.length) % list.length;
+  return [...list.slice(i), ...list.slice(0, i)];
+}
+
+function feastYear(feast: Feast): number {
+  return feast.date instanceof Date ? feast.date.getUTCFullYear() : 0;
+}
+
+// "In order to add greater solemnity, one or more of the following 'Chants ad
+// libitum' may be employed." [liber-usualis-1961, Kyriale] — the appendix is a
+// SOLEMNITY boost, so it belongs only to the festal rubrics. Note this is NOT
+// `isHighFeast`: that measures PRECEDENCE, and by it a Lent Sunday
+// (Semiduplex I classis) and Ash Wednesday (Feria privilegiata) both rank high —
+// yet adding solemnity is precisely what those days do not do. Gate on the
+// rubric instead, so the appendix never reaches a penitential or ferial day.
+const SOLEMN_RUBRICS: ReadonlySet<MassRubric> = new Set<MassRubric>([
+  "class-i",
+  "class-ii",
+  "bvm",
+  "paschal",
+]);
+
+// Within a festal rubric the appendix joins the year's rotation as one more
+// member of the pool, taking its turn once every (appointed masses + 1) years.
+function appendixLeadsThisYear(
+  rubric: MassRubric | null,
+  poolSize: number,
+  year: number,
+): boolean {
+  if (rubric == null || !SOLEMN_RUBRICS.has(rubric) || poolSize < 1) return false;
+  const n = poolSize + 1;
+  return ((year % n) + n) % n === poolSize;
+}
+
+function appendixFor(office: string): KyrialeEntry[] {
+  return KYRIALE.filter(
+    (e) => e.office === office && isAdLibitum(e) && !isRequiem(e),
+  ).sort((a, b) => (a.mass ?? 0) - (b.mass ?? 0) || (a.id < b.id ? -1 : 1));
+}
+
+/**
+ * Candidate settings for one ordinary slot, most preferred first.
+ *
+ * `feast.masses` now holds exactly the masses the Kyriale appoints under the
+ * day's own rubric — "For feasts of the II class", "For ferias throughout the
+ * Year" — so every candidate here is one the book permits for this day. Where
+ * that rubric names several, the book numbers them (II class 1–5) and the year
+ * rotates through them; `massNumbers` arrives already rotated. Sibling settings
+ * under one number (mass I prints two dismissals, Ite Ia and Ib) rotate with it.
+ *
+ * Slots resolve independently, which the book licenses outright: "chants from one
+ * Mass may be used together with those from others" — so a day normally sings one
+ * mass throughout and borrows only where the book leaves a hole. Masses XVII and
+ * XVIII carry no dismissal at all, and the LU directs the borrow explicitly
+ * ("Benedicamus Domino as in Mass II, p. 22, or ad libitum as below").
+ *
+ * `wholeMass` carries the rubric's one exception — "the Ferial Masses excepted".
+ * Under a ferial rubric the sung movements may NOT be gathered from other masses;
+ * only the dismissal may travel, as the book itself directs.
+ *
+ * The chain degrades: appointed masses → unnumbered settings (Asperges, Vidi
+ * aquam) → the ad libitum appendix.
+ */
+function entriesForOffice(
+  office: string,
+  massNumbers: number[],
+  year: number,
+  appendixLeads: boolean,
+  wholeMass = false,
+): KyrialeEntry[] {
+  const rank = new Map(massNumbers.map((m, i) => [m, i]));
+  const numbered = KYRIALE.filter(
+    (e) =>
+      e.office === office && e.mass != null && rank.has(e.mass) &&
+      !isAdLibitum(e) && !isRequiem(e),
   );
-  if (byMass.length) return byMass;
-  return KYRIALE.filter((e) => e.office === office && e.mass == null);
+  // Group by mass so the day's rubric orders the groups, and rotate within a
+  // group so a mass with two printings is not permanently reduced to its first.
+  const groups = [...new Set(numbered.map((e) => e.mass!))]
+    .sort((a, b) => rank.get(a)! - rank.get(b)!);
+  // Under a ferial rubric the sung ordinary is not gathered from several masses.
+  // The dismissal is exempt — the book sends it elsewhere itself.
+  const borrowable = wholeMass && office !== "it" && office !== "be"
+    ? groups.slice(0, 1)
+    : groups;
+  const ranked = borrowable.flatMap((m) =>
+    rotate(numbered.filter((e) => e.mass === m), year),
+  );
+
+  const appendix = appendixFor(office);
+  const appendixPick = appendix.length
+    ? [appendix[((year % appendix.length) + appendix.length) % appendix.length]]
+    : [];
+
+  if (appendixLeads && appendixPick.length) return [...appendixPick, ...ranked];
+  if (ranked.length) return ranked;
+
+  // The sprinkling rites carry no mass number. The plain Asperges / Vidi aquam
+  // is the standing answer — its ad libitum variants must NOT rotate against it
+  // as equals, or the appendix would be sung more often than the rite itself.
+  // They arrive on the appendix turn like every other appendix setting.
+  const unnumbered = KYRIALE.filter(
+    (e) => e.office === office && e.mass == null && !isRequiem(e),
+  );
+  const plain = unnumbered.filter((e) => !isAdLibitum(e));
+  if (plain.length) return rotate(plain, year);
+  if (unnumbered.length) return unnumbered.sort(adLibLast);
+
+  return appendixPick.length ? appendixPick : appendix;
 }
 
 function selectBestChant(
@@ -84,8 +229,9 @@ function allowedCredos(masses: MassEntry[]): string[] {
   return CREDO_PRIORITY.filter((c) => set.has(c));
 }
 
-function selectCredoCode(feast: Feast, allowed: string[]): string | null {
-  if (!allowed.length) return null;
+// The preferred credo for the day, where the season or the feast's character
+// argues for one. A BIAS, not a gate — see selectCredoCode.
+function preferredCredoCode(feast: Feast, allowed: string[]): string | null {
   const { season, weekday, marian, apostolic } = feast;
   const isSunday = weekday === 0;
 
@@ -94,7 +240,29 @@ function selectCredoCode(feast: Feast, allowed: string[]): string | null {
   if (isSunday && ["epi", "pent"].includes(season) && allowed.includes("I")) return "I";
   if (apostolic && allowed.includes("III")) return "III";
   if (marian && allowed.includes("IV")) return "IV";
-  return allowed[0];
+  return allowed[0] ?? null;
+}
+
+// The fitting credo leads in one year of every two; the rest of the time the six
+// rotate. Every credo is heard, the fitting one is heard most.
+const CREDO_BIAS_EVERY = 2;
+
+/**
+ * Which credo the day sings, or null when this mass says none.
+ *
+ * An empty `allowed` still means NO credo today — that is the mass's own rubric
+ * and it is respected. But when a credo IS sung, the choice is drawn from all
+ * six, not from `allowed`: the Kyriale prints Credo I–VI as a set any mass may
+ * draw on, whereas the `credos` arrays in masses.ts only ever name I, III and
+ * IV — which left II, V and VI unsingable on every day of the year, despite
+ * CREDO_PRIORITY naming all six. 【The narrow `credos` data is a separate gap
+ * ⟨Jeffrey⟩; this reads it as a preference rather than the whole permission.】
+ */
+function selectCredoCode(feast: Feast, allowed: string[], year: number): string | null {
+  if (!allowed.length) return null;
+  const preferred = preferredCredoCode(feast, allowed);
+  if (preferred && year % CREDO_BIAS_EVERY === 0) return preferred;
+  return rotate(CREDO_PRIORITY, year)[0];
 }
 
 // Exported for the corpus surface (chant.ts): the kyriale rides `cantus`
@@ -143,12 +311,34 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
   const masses = resolvedMass != null
     ? (() => { const e = MASSES.get(resolvedMass); return e ? [e] : []; })()
     : resolveMasses(feast);
-  const massNumbers = masses.map((m) => m.mass);
   const mode = filterMode ?? null;
   const highFeast = isHighFeast(feast.grade);
 
+  // The year steps through the masses the day's rubric appoints. A pinned mass
+  // is an explicit request and overrides that — `ordinarium({ mass })` means
+  // that mass, this year and every year.
+  const year = feastYear(feast);
+  const pinned = resolvedMass != null;
+  const massNumbers = pinned
+    ? masses.map((m) => m.mass)
+    : rotate(masses.map((m) => m.mass), year);
+
+  // Every mass the day permits shares one rubric (they were selected by it), so
+  // the first one carries the day's category. "The Ferial Masses excepted" —
+  // under those two rubrics the sung ordinary is not assembled from several.
+  const rubric = masses[0]?.rubric ?? null;
+  const wholeMass = !pinned && rubric != null && WHOLE_MASS_RUBRICS.has(rubric);
+  const appendixLeads = !pinned &&
+    appendixLeadsThisYear(rubric, massNumbers.length, year);
+
   const pick = (office: string): OrdinaryChant | null => {
-    const entries = entriesForOffice(office, massNumbers);
+    const entries = entriesForOffice(
+      office,
+      massNumbers,
+      year,
+      appendixLeads,
+      wholeMass,
+    );
     const best = selectBestChant(entries, mode, highFeast, massNumbers);
     return best ? entryToOrdinaryChant(best) : null;
   };
@@ -170,7 +360,7 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
   // Credo — In Cena Domini's Mass has no Creed.
   if (!isMaundyThursday) {
     const allowed = allowedCredos(masses);
-    const credoCode = selectCredoCode(feast, allowed);
+    const credoCode = selectCredoCode(feast, allowed, year);
     if (credoCode) {
       const credoEntries = KYRIALE.filter((e) => e.office === "cr");
       const named = credoEntries.find((e) => e.incipit.includes(credoCode));
@@ -201,7 +391,12 @@ function ordinaryForFeast(feast: Feast, pinMass?: number, filterMode?: number | 
   // evening Mass of In Cena Domini.
   if (!isMaundyThursday) {
     const sprinkleType = feast.season === "pasc" ? "va" : "as";
-    const sprinkleEntries = entriesForOffice(sprinkleType, massNumbers);
+    const sprinkleEntries = entriesForOffice(
+      sprinkleType,
+      massNumbers,
+      year,
+      false,
+    );
     const sprinkleBest = selectBestChant(sprinkleEntries, mode, highFeast, massNumbers);
     if (sprinkleBest) results.push(entryToOrdinaryChant(sprinkleBest));
   }

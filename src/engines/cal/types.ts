@@ -261,6 +261,13 @@ export interface FeastQuery {
   grade?: Grade;
   marian?: boolean;
   apostolic?: boolean;
+  /**
+   * Resolve the day AS OF this year: feasts instituted later step aside and
+   * whatever ranked behind them wins — usually the temporale or the feria. A
+   * view over the shipped calendar, which keeps every day either way. Dates
+   * live in cal/data/eras.ts.
+   */
+  before?: number;
 }
 
 // The movable anchors of one liturgical year, as returned by tonus.pascha.

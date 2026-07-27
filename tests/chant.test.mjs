@@ -56,12 +56,17 @@ describe("getChants", () => {
     }
   });
 
+  // Which setting a day draws is year-dependent (ordinarium steps through the
+  // masses the day permits), so this asserts the IDENTITY property — one record
+  // whichever door it comes through — without pinning a particular Kyrie. The
+  // fixture used to name "Kyrie IV", which quietly encoded the selector reading
+  // the Kyriale's printing order instead of the day's own ranking.
   test("a kyriale chant is one identity whether reached by book or by ordinarium", () => {
-    const viaBook = getChants({ source: "ky" }).find((c) => c.incipit === "Kyrie IV");
-    assert.ok(viaBook);
     const feast = getFeast({ date: new Date(Date.UTC(2026, 3, 5)) }); // Easter
-    const viaOrdo = getOrdinary({ feast }).find((c) => c.id === viaBook.id);
-    assert.ok(viaOrdo, "Easter's ordinarium serves Kyrie IV");
+    const viaOrdo = getOrdinary({ feast }).find((c) => c.ordinary === "ky");
+    assert.ok(viaOrdo, "Easter's ordinarium serves a Kyrie");
+    const viaBook = getChants({ source: "ky" }).find((c) => c.id === viaOrdo.id);
+    assert.ok(viaBook, `${viaOrdo.id} is reachable as a book record too`);
     assert.deepEqual(viaOrdo, viaBook);
   });
 

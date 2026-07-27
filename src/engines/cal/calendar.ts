@@ -17,7 +17,14 @@
 // noted as future work.) The rank system this data carries is documented at
 // `ritus`/`Grade` in ./types.ts; Easter reckoning at pascha() in ./date.ts.
 import { CAL, type CalEntry } from "../../data/cal.js";
-import { MASSES } from "../chant/data/masses.js";
+import { feastKeptBy } from "./data/eras.js";
+import {
+  massesForRubric,
+  CLASS_I_GRADES,
+  CLASS_II_GRADES,
+  CLASS_III_GRADES,
+  type MassRubric,
+} from "../chant/data/masses.js";
 import {
   isoDate,
   startOfDay,
@@ -41,15 +48,11 @@ import {
   gradeOrder,
   BVM_FEAST_IDS,
   APOSTOLIC_FEAST_IDS,
+  PENITENTIAL_SEASONS,
 } from "./types.js";
 
 const _calCache = new Map<number, Map<string, CalEntry[]>>();
 const _anchorCache = new Map<number, RuleAnchors>();
-
-// Preferred mass order; ad libitum (mass 0) is handled separately in ordinary.ts.
-const DEFAULT_MASSES = [
-  8, 9, 11, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14, 15, 16, 17, 18,
-];
 
 export function getAnchors(year: number): RuleAnchors {
   if (_anchorCache.has(year)) return _anchorCache.get(year)!;
@@ -183,27 +186,70 @@ function findSeason(date: Date): { code: Season; start: Date; end: Date } {
   return s("epi", epiphanySunday(a), a.septuagesima);
 }
 
+// The Sunday-as-such grades. Per the ratified grade table, an ordinary Sunday is
+// `semiduplex`, an Advent Sunday `semiduplex-ii`, a Lent Sunday `semiduplex-i` —
+// so a day that is merely a Sunday is recognised by carrying one of these, while
+// a feast that outranks the Sunday carries a duplex grade and takes its class.
+const SUNDAY_GRADES: readonly Grade[] = [
+  "semiduplex-i",
+  "semiduplex-ii",
+  "semiduplex",
+];
+
+/**
+ * The Kyriale rubric this day falls under — the book classifies by RANK and
+ * appoints one category per day [biblio: liber-usualis-1961, Kyriale].
+ *
+ * Order matters. "In Paschal Time" is a season rubric and governs inside
+ * Paschaltide. The Sunday categories must be tested before the class tiers,
+ * because the Sunday grades are the semiduplex variants — which would otherwise
+ * be claimed by the I, II and III class tiers and hand a Lent Sunday a
+ * first-class mass.
+ *
+ * 【DECISIO ⟨Jeffrey⟩ — should a I class feast inside Paschaltide (Ascension,
+ * Pentecost) reach for the I-class pair II/III instead of Lux et Origo? The
+ * book's heading is unqualified, so Paschaltide wins here.】
+ */
+function rubricForDay(
+  id: string,
+  grade: Grade,
+  season: Season,
+  date: Date,
+): MassRubric {
+  const isSunday = date.getUTCDay() === 0;
+  const penitential = PENITENTIAL_SEASONS.has(season);
+
+  if (season === "pasc") return "paschal";
+  if (BVM_FEAST_IDS.has(id)) return "bvm";
+
+  if (isSunday && SUNDAY_GRADES.includes(grade)) {
+    return penitential ? "sunday-penitential" : "sunday";
+  }
+
+  if (CLASS_I_GRADES.includes(grade)) return "class-i";
+  if (CLASS_II_GRADES.includes(grade)) return "class-ii";
+  if (CLASS_III_GRADES.includes(grade)) return "class-iii";
+  if (grade === "simplex") return "commemoration";
+
+  return penitential ? "feria-penitential" : "feria";
+}
+
+// The masses the day may sing: those the Kyriale appoints under its rubric, in
+// the book's own numbering. Where a rubric names several — II class 1–5 — that
+// numbering IS the invitation to choose, and ordinary.ts rotates among them.
+//
+// This replaced a `seasons ∩ grades ∩ days` intersection that returned every
+// mass not positively excluded, which is how Easter came to be offered masses IV
+// and V (appointed for the II class). See the header of chant/data/masses.ts.
 function selectMasses(
   id: string,
   grade: Grade,
   season: Season,
   date: Date,
 ): number[] {
-  const dowCode = date.getUTCDay() === 0 ? "dominica" : "feria";
-  const requireBvm = BVM_FEAST_IDS.has(id);
-
-  const matches: number[] = [];
-  for (const num of DEFAULT_MASSES) {
-    const mass = MASSES.get(num);
-    if (!mass) continue;
-    if (requireBvm !== mass.bvm) continue;
-    if (!mass.seasons.includes(season)) continue;
-    if (!mass.grades.includes(grade)) continue;
-    if (!mass.days.includes(dowCode)) continue;
-    matches.push(num);
-  }
-
-  return matches;
+  return massesForRubric(rubricForDay(id, grade, season, date)).map(
+    (m) => m.mass,
+  );
 }
 
 function calEntryToFeast(
@@ -263,6 +309,7 @@ function feastsForDate(date: Date): Feast[] {
  */
 const FEAST_QUERY_KEYS = new Set([
   "date", "from", "to", "nomen", "season", "grade", "marian", "apostolic",
+  "before",
 ]);
 
 export function getFeast(query?: FeastQuery): Feast[] {
@@ -320,6 +367,19 @@ export function getFeast(query?: FeastQuery): Feast[] {
       results.push(...feastsForDate(d));
       d = addDays(d, 1);
     }
+  }
+
+  // `before` resolves the day AS OF a year: feasts instituted later step aside,
+  // and whatever ranked behind them — usually the temporale or the feria — wins
+  // instead. The calendar DATA is untouched; this is a view over it, so a caller
+  // asking for 1350 and a caller asking for 1962 read the same shipped table.
+  // A day whose every candidate is later than `before` returns empty, which is
+  // the honest answer: that day had no feast yet.
+  if (query.before != null) {
+    if (!Number.isFinite(query.before)) {
+      throw new Error(`festum: before must be a year — e.g. festum({ date, before: 1350 })`);
+    }
+    results = results.filter((f) => feastKeptBy(f.id, query.before!));
   }
 
   if (query.nomen) {
