@@ -20,18 +20,24 @@ export type OrdinaryCode =
  * unit: a book appears here because some chant the liturgy asks for is found in
  * it, not because the whole book ships.
  *
- * The first seven are the original corpus. The eight office books after them
- * ⟨widened 2026-07-27⟩ carry the antiphons and short responsories that fill
- * weekday office slots — without them a matcher could only bind a slot to a
- * chant the five extracted books happened to hold, which is why 41 Fridays had
- * no Vespers ("Per singulos dies" lives in the Psalterium Monasticum).
+ * The first seven are the original corpus. The office books after them
+ * ⟨widened 2026-07-27⟩ carry antiphons and short responsories that fill weekday
+ * office slots — without them a matcher could only bind a slot to a chant the
+ * five extracted books happened to hold, which is why 41 Fridays had no Vespers
+ * ("Per singulos dies" lives in the Psalterium Monasticum).
+ *
+ * That widening brought in eight; four are gone again ⟨2026-07-27⟩. am2, am3,
+ * lr and ar1 are bare transcriptions — no episema, no ictus, essentially no
+ * mora — so once the office matchers began preferring a rhythmically marked
+ * witness, every text they carried was better served elsewhere and the cut left
+ * them holding nothing. A source that ships zero chants is pure weight.
  */
 export type ChantSource =
   | "gr" | "lu" | "la" | "lh" | "am" | "nr" | "ky"
   // office books, monastic
-  | "am1" | "am2" | "am3" | "ams" | "psm" | "lr"
+  | "am1" | "ams" | "psm"
   // office books, Roman
-  | "ar1" | "ar2";
+  | "ar2";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"
