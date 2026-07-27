@@ -1,0 +1,35 @@
+{
+  "kind": "seasonal-respbreve",
+  "map": {
+    "dominica": {
+      "tertia": "gregobase:4128",
+      "sexta": "gregobase:12983",
+      "nona": "gregobase:11782"
+    },
+    "feria": {
+      "tertia": "gregobase:4139",
+      "sexta": "gregobase:4012",
+      "nona": "gregobase:11967"
+    },
+    "adv": {
+      "tertia": "gregobase:11345",
+      "sexta": "gregobase:11344",
+      "nona": "gregobase:4440"
+    },
+    "quad": {
+      "tertia": "gregobase:7493",
+      "sexta": "gregobase:7492",
+      "nona": "gregobase:12080"
+    },
+    "quad5": {
+      "tertia": "gregobase:15025",
+      "sexta": "gregobase:4204",
+      "nona": "gregobase:13106"
+    },
+    "pasc": {
+      "tertia": "gregobase:9214",
+      "sexta": "gregobase:9212",
+      "nona": "gregobase:13169"
+    }
+  }
+}

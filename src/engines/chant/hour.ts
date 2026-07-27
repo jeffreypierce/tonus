@@ -11,6 +11,7 @@ import { OFFICE_ROMAN, type OfficeDay } from "../../data/office-roman.js";
 import { OFFICE_MONASTIC } from "../../data/office-monastic.js";
 import { OFFICE_FERIAL } from "../../data/office-ferial.js";
 import { COMMUNE_OFFICE } from "../../data/commune-office.js";
+import { SEASONAL_RESPBREVE } from "../../data/seasonal-respbreve.js";
 import { FEAST_COMMUNE } from "../../data/commune.js";
 import {
   COMPLINE_ORDINARY,
@@ -175,6 +176,32 @@ const communeAntiphons = (feast: Feast, hour: CanonicalHour): Chant[] =>
   communeSlot(feast, hour, "antiphons");
 
 /**
+ * The little hours' short responsory as the SEASON appoints it — the last
+ * fallback, after the day's own proper and its commune.
+ *
+ * This chant is seasonal, not proper: DO carries none at all in its monastic
+ * dirs (0 of 278 SanctiM, 0 of 267 TemporaM) and keeps the real cycle in
+ * Psalterium/Special keyed by tempus. Only a few dozen feasts important enough
+ * to override have one of their own, which is why a feast-driven lookup filled
+ * so few days — it was reading the exception and missing the rule.
+ *
+ * Outside the four proper seasons the responsory is the per-diem default, and
+ * Sunday takes its own: `dominica` on a Sunday, `feria` on every other day.
+ */
+function seasonalRespBreve(feast: Feast, hour: CanonicalHour): Chant[] {
+  const byHour =
+    // DO's `Quad5` is PASSIONTIDE — the last fortnight of Lent — and tonus has
+    // no season code for it (`quadp` is Septuagesima, a different thing that
+    // falls BEFORE Lent). Rather than mis-map one to the other, Passiontide is
+    // left to resolve as ordinary Lent until the calendar models it.
+    SEASONAL_RESPBREVE[feast.season] ??
+    SEASONAL_RESPBREVE[feast.weekday === 0 ? "dominica" : "feria"];
+  const id = byHour?.[hour];
+  const chant = id ? resolveChant(id) : null;
+  return chant ? [chant] : [];
+}
+
+/**
  * A little hour's portion of Ps 118 (Terce vv. 33–80, Sext 81–128, None 129–176,
  * from the extracted DO scheme). The psalmody belongs to a specific day, so it
  * is only included for a real feast query — not the all-days survey scan, which
@@ -223,7 +250,11 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     // still theirs either way: returning ONLY the responsory would silence a day
     // the commune cannot fill, which is worse than what it replaced.
     if (hour === "tertia" || hour === "sexta" || hour === "nona") {
-      return [...littleHourPsalmody(feast, hour, rite), ...communeSlot(feast, hour, "respBreve")];
+      const fromCommune = communeSlot(feast, hour, "respBreve");
+      return [
+        ...littleHourPsalmody(feast, hour, rite),
+        ...(fromCommune.length ? fromCommune : seasonalRespBreve(feast, hour)),
+      ];
     }
     return antiphonsFor(null, hour, feast, rite);
   }
@@ -260,7 +291,10 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
           : day.respBreveNona,
     );
     if (rb) results.push(rb);
-    else results.push(...communeSlot(feast, hour, "respBreve"));
+    else {
+      const fromCommune = communeSlot(feast, hour, "respBreve");
+      results.push(...(fromCommune.length ? fromCommune : seasonalRespBreve(feast, hour)));
+    }
   } else if (hour === "vesperae") {
     results.push(...antiphonsFor(day.antVespera, hour, feast, rite));
     const mc = resolveChant(day.antMagnificat);
