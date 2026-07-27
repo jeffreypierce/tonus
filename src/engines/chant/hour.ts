@@ -9,6 +9,7 @@ import type { Chant, OfficiumQuery, CanonicalHour, Rite } from "./types.js";
 import type { Feast } from "../cal/types.js";
 import { OFFICE_ROMAN, type OfficeDay } from "../../data/office-roman.js";
 import { OFFICE_MONASTIC } from "../../data/office-monastic.js";
+import { OFFICE_FERIAL } from "../../data/office-ferial.js";
 import {
   COMPLINE_ORDINARY,
   COMPLINE_SEASONAL,
@@ -99,6 +100,52 @@ function primeForFeast(feast: Feast, rite: Rite): Chant[] {
   return results;
 }
 
+/**
+ * The antiphons for an hour, falling back to the FERIAL CYCLE when the day's
+ * own proper is empty.
+ *
+ * A monastic weekday in the temporale mostly has no proper antiphons — the
+ * office-monastic table has the day but leaves antLaudes/antVespera/antMatutinum
+ * empty (292 of its 409 entries), because those antiphons live in the psalter,
+ * not in the propers. Without a fallback the hour silently returns a partial
+ * ordo, which is why Lauds resolved on 106 of 360 days and essentially never in
+ * the temporale.
+ *
+ * Monastic only (the ferial cycle we mined is the monastic psalter), and only
+ * for a feast carrying a real weekday — the all-days survey path builds a
+ * mockFeast with no weekday, where a weekday-keyed lookup would be meaningless.
+ */
+function antiphonsFor(
+  proper: readonly (string | null)[] | null | undefined,
+  hour: CanonicalHour,
+  feast: Feast,
+  rite: Rite,
+): Chant[] {
+  // Copy: the OfficeDay arrays are readonly and may hold nulls; resolveChant
+  // drops the nulls, resolveChants wants a mutable string[].
+  const own = resolveChants([...(proper ?? [])].filter((id): id is string => !!id));
+  if (own.length) return own;
+  if (rite !== "monasticum") return own;
+  if (feast.weekday == null || !feast.date) return own;
+
+  const byWeekday = OFFICE_FERIAL[hour];
+  if (!byWeekday) return own;
+  const slot = byWeekday[String(feast.weekday)] ?? byWeekday["any"];
+  if (!slot) return own;
+  // Variant preference: the season's own set, else the plain ferial cycle.
+  const variant = ferialVariantFor(feast);
+  const ids = slot[variant] ?? slot["ferial"];
+  return ids ? resolveChants(ids) : own;
+}
+
+/** Which ferial variant a day draws: the season's, else the plain cycle. */
+function ferialVariantFor(feast: Feast): string {
+  if (feast.season === "adv") return "advent";
+  if (feast.season === "pasc") return "paschal";
+  if (feast.season === "nat") return "nat";
+  return "ferial";
+}
+
 function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chant[] {
   if (hour === "completorium") return complineForFeast(feast, rite);
   if (hour === "prima") return primeForFeast(feast, rite);
@@ -106,19 +153,25 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
   const map = officeMap(rite);
   const sunday = temporaSundayId(feast.id);
   const day = map.get(feast.id) ?? (sunday ? (map.get(sunday) ?? null) : null);
-  if (!day) return [];
+  if (!day) {
+    // No proper row at all — most sanctoral days and many ferias have none.
+    // That is not silence: a monastery still sings the ferial cycle. Return it
+    // rather than an empty ordo (this is the other half of the antiphonsFor
+    // fallback, which only fires when a row EXISTS but its arrays are empty).
+    return antiphonsFor(null, hour, feast, rite);
+  }
 
   const results: Chant[] = [];
 
   if (hour === "matutinum") {
     const inv = resolveChant(day.invit);
     if (inv) results.push(inv);
-    results.push(...resolveChants(day.antMatutinum));
+    results.push(...antiphonsFor(day.antMatutinum, hour, feast, rite));
     const hy = resolveChant(day.hymnMatutinum);
     if (hy) results.push(hy);
     results.push(...resolveChants(day.respMatutinum));
   } else if (hour === "laudes") {
-    results.push(...resolveChants(day.antLaudes));
+    results.push(...antiphonsFor(day.antLaudes, hour, feast, rite));
     const bc = resolveChant(day.antBenedictus);
     if (bc) results.push(bc);
     const hy = resolveChant(day.hymnLaudes);
@@ -142,7 +195,7 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     );
     if (rb) results.push(rb);
   } else if (hour === "vesperae") {
-    results.push(...resolveChants(day.antVespera));
+    results.push(...antiphonsFor(day.antVespera, hour, feast, rite));
     const mc = resolveChant(day.antMagnificat);
     if (mc) results.push(mc);
     const hy = resolveChant(day.hymnVespera);

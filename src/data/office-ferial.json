@@ -1,0 +1,493 @@
+{
+  "kind": "office-ferial",
+  "provenance": "DO psalter ferial antiphon cycle, matched to corpus chants (exact+high only). Lookup shape: hour → weekday (\"0\"..\"6\" | \"any\") → variant → chantId[] in ord order.",
+  "hours": [
+    "completorium",
+    "laudes",
+    "matutinum",
+    "nona",
+    "prima",
+    "sexta",
+    "tertia",
+    "vesperae"
+  ],
+  "slots": 202,
+  "table": {
+    "laudes": {
+      "0": {
+        "paschal": [
+          "gregobase:15205",
+          "gregobase:3307",
+          "gregobase:10056"
+        ],
+        "festal": [
+          "gregobase:10441",
+          "gregobase:3309",
+          "gregobase:10056"
+        ],
+        "ferial": [
+          "gregobase:10441",
+          "gregobase:3309",
+          "gregobase:10056"
+        ]
+      },
+      "1": {
+        "ferial": [
+          "gregobase:10436",
+          "gregobase:10438",
+          "gregobase:13129",
+          "gregobase:10439"
+        ]
+      },
+      "2": {
+        "ferial": [
+          "gregobase:10420",
+          "gregobase:10421",
+          "gregobase:10422",
+          "gregobase:10127",
+          "gregobase:9787"
+        ]
+      },
+      "3": {
+        "ferial": [
+          "gregobase:15612",
+          "gregobase:15613",
+          "gregobase:15614",
+          "gregobase:10130",
+          "gregobase:15615"
+        ]
+      },
+      "4": {
+        "ferial": [
+          "gregobase:10425",
+          "gregobase:9603",
+          "gregobase:10426",
+          "gregobase:10427"
+        ]
+      },
+      "5": {
+        "ferial": [
+          "gregobase:10428",
+          "gregobase:10429",
+          "gregobase:10430",
+          "gregobase:7948"
+        ]
+      },
+      "6": {
+        "ferial": [
+          "gregobase:9144",
+          "gregobase:10433",
+          "gregobase:10128",
+          "gregobase:10434"
+        ],
+        "festal": [
+          "gregobase:10436",
+          "gregobase:12941",
+          "gregobase:10439"
+        ]
+      }
+    },
+    "vesperae": {
+      "0": {
+        "ferial": [
+          "gregobase:4690",
+          "gregobase:10113",
+          "gregobase:10114",
+          "gregobase:3306"
+        ]
+      },
+      "1": {
+        "ferial": [
+          "gregobase:10440",
+          "gregobase:10117",
+          "gregobase:10118",
+          "gregobase:10119"
+        ]
+      },
+      "2": {
+        "ferial": [
+          "gregobase:7565",
+          "gregobase:10121",
+          "gregobase:7539",
+          "gregobase:4157"
+        ]
+      },
+      "3": {
+        "ferial": [
+          "gregobase:10124",
+          "gregobase:9118",
+          "gregobase:7946",
+          "gregobase:3302"
+        ]
+      },
+      "4": {
+        "ferial": [
+          "gregobase:10137",
+          "gregobase:7760",
+          "gregobase:10138"
+        ]
+      },
+      "6": {
+        "ferial": [
+          "gregobase:8267",
+          "gregobase:10142",
+          "gregobase:3250",
+          "gregobase:3303"
+        ]
+      }
+    },
+    "matutinum": {
+      "0": {
+        "ferial": [
+          "nocturnale:F2N3A2",
+          "gregobase:355",
+          "nocturnale:EXF2A1",
+          "nocturnale:EXF2A2",
+          "gregobase:12420",
+          "gregobase:10056"
+        ],
+        "paschal": [
+          "nocturnale:P1F1N1A",
+          "nocturnale:P1F1N2A",
+          "gregobase:10056"
+        ],
+        "advent": [
+          "gregobase:15564",
+          "nocturnale:A1F1N1A1",
+          "gregobase:18241",
+          "nocturnale:A1F1N1A2",
+          "gregobase:12021",
+          "nocturnale:A1F1N1A3",
+          "gregobase:9223",
+          "nocturnale:A1F1N2A1",
+          "gregobase:8316",
+          "nocturnale:A1F1N2A2",
+          "gregobase:12818",
+          "nocturnale:A1F1N2A3",
+          "gregobase:12857",
+          "nocturnale:A1F1N3A1"
+        ]
+      },
+      "1": {
+        "ferial": [
+          "nocturnale:EXF2A4",
+          "nocturnale:EXF2A4",
+          "nocturnale:EXF2A5",
+          "nocturnale:EXF2A5",
+          "nocturnale:F3N3A1",
+          "nocturnale:F3N3A1",
+          "nocturnale:EXF3A1",
+          "gregobase:2967",
+          "nocturnale:EXF3A1",
+          "gregobase:2967",
+          "nocturnale:EXF3A3",
+          "nocturnale:EXF3A3"
+        ],
+        "cistercian": [
+          "nocturnale:EXF2A4",
+          "nocturnale:EXF2A5",
+          "nocturnale:F3N3A1",
+          "nocturnale:EXF3A1",
+          "gregobase:2967",
+          "nocturnale:EXF3A3"
+        ]
+      },
+      "2": {
+        "ferial": [
+          "nocturnale:EXF3A4",
+          "nocturnale:EXF3A4",
+          "nocturnale:EXF3A5",
+          "nocturnale:EXF3A5",
+          "nocturnale:F4N3A1",
+          "nocturnale:F4N3A1",
+          "nocturnale:EXF4A1",
+          "nocturnale:EXF4A1",
+          "nocturnale:EXF4A3",
+          "nocturnale:EXF4A3"
+        ],
+        "cistercian": [
+          "nocturnale:EXF3A4",
+          "nocturnale:F4N3A1",
+          "nocturnale:EXF4A1",
+          "nocturnale:EXF4A3"
+        ]
+      },
+      "3": {
+        "ferial": [
+          "nocturnale:EXF4A4",
+          "nocturnale:EXF4A4",
+          "gregobase:3236",
+          "gregobase:3236",
+          "nocturnale:F5N3A3",
+          "nocturnale:EXF5A1",
+          "nocturnale:F5N3A3",
+          "gregobase:12728",
+          "nocturnale:EXF5A1",
+          "gregobase:12728",
+          "nocturnale:EXF5A2"
+        ],
+        "cistercian": [
+          "nocturnale:EXF4A4",
+          "gregobase:3236",
+          "nocturnale:F5N3A3",
+          "nocturnale:EXF5A2"
+        ]
+      },
+      "4": {
+        "ferial": [
+          "nocturnale:EXF5A3",
+          "nocturnale:EXF5A5",
+          "nocturnale:EXF5A6",
+          "nocturnale:EXF6A1",
+          "nocturnale:EXF6A2",
+          "nocturnale:EXF6A3"
+        ]
+      },
+      "5": {
+        "ferial": [
+          "nocturnale:EXF6A5",
+          "nocturnale:EXF6A5",
+          "gregobase:12541",
+          "gregobase:12541",
+          "nocturnale:EXF7A1",
+          "nocturnale:EXF7A1",
+          "nocturnale:EXF7A2a",
+          "nocturnale:EXF7A2a"
+        ]
+      },
+      "6": {
+        "ferial": [
+          "nocturnale:EXF7A3",
+          "nocturnale:EXF7A3",
+          "nocturnale:EXF7A4",
+          "nocturnale:EXF7A4",
+          "nocturnale:EXF7A5",
+          "nocturnale:EXF7A5"
+        ],
+        "cistercian": [
+          "nocturnale:EXF7A3",
+          "nocturnale:EXF7A4",
+          "nocturnale:EXF7A5"
+        ]
+      },
+      "any": {
+        "nat": [
+          "nocturnale:0101N3A1"
+        ]
+      }
+    },
+    "completorium": {
+      "0": {
+        "ferial": [
+          "gregobase:12592"
+        ]
+      },
+      "1": {
+        "ferial": [
+          "gregobase:13181"
+        ]
+      },
+      "2": {
+        "ferial": [
+          "gregobase:12667"
+        ]
+      },
+      "3": {
+        "ferial": [
+          "gregobase:12429"
+        ]
+      },
+      "4": {
+        "ferial": [
+          "gregobase:12067"
+        ]
+      },
+      "5": {
+        "ferial": [
+          "gregobase:12581"
+        ]
+      },
+      "6": {
+        "ferial": [
+          "gregobase:9603"
+        ]
+      }
+    },
+    "tertia": {
+      "0": {
+        "ferial": [
+          "gregobase:10056",
+          "gregobase:13170"
+        ]
+      },
+      "1": {
+        "ferial": [
+          "gregobase:12393",
+          "gregobase:7867"
+        ]
+      },
+      "2": {
+        "ferial": [
+          "gregobase:12128"
+        ]
+      },
+      "3": {
+        "ferial": [
+          "gregobase:2636"
+        ]
+      },
+      "4": {
+        "ferial": [
+          "gregobase:12728"
+        ]
+      },
+      "5": {
+        "ferial": [
+          "gregobase:13278"
+        ]
+      },
+      "6": {
+        "ferial": [
+          "gregobase:11817"
+        ]
+      },
+      "any": {
+        "ferial": [
+          "gregobase:8668"
+        ]
+      }
+    },
+    "prima": {
+      "0": {
+        "ferial": [
+          "gregobase:10056",
+          "gregobase:12222"
+        ]
+      },
+      "1": {
+        "ferial": [
+          "gregobase:4132"
+        ]
+      },
+      "2": {
+        "ferial": [
+          "gregobase:4131"
+        ]
+      },
+      "3": {
+        "ferial": [
+          "nocturnale:F1N2A3"
+        ]
+      },
+      "4": {
+        "ferial": [
+          "gregobase:8663"
+        ]
+      },
+      "5": {
+        "ferial": [
+          "gregobase:4136"
+        ]
+      },
+      "6": {
+        "ferial": [
+          "gregobase:12853",
+          "gregobase:4130"
+        ]
+      },
+      "any": {
+        "festal": [
+          "gregobase:10056"
+        ]
+      }
+    },
+    "sexta": {
+      "0": {
+        "ferial": [
+          "gregobase:10056",
+          "gregobase:12741"
+        ]
+      },
+      "1": {
+        "ferial": [
+          "gregobase:12420",
+          "gregobase:8656"
+        ]
+      },
+      "2": {
+        "ferial": [
+          "gregobase:13209"
+        ]
+      },
+      "3": {
+        "ferial": [
+          "gregobase:12863"
+        ]
+      },
+      "4": {
+        "ferial": [
+          "gregobase:13333"
+        ]
+      },
+      "5": {
+        "ferial": [
+          "gregobase:12185"
+        ]
+      },
+      "6": {
+        "ferial": [
+          "gregobase:13196"
+        ]
+      },
+      "any": {
+        "ferial": [
+          "gregobase:2292"
+        ]
+      }
+    },
+    "nona": {
+      "0": {
+        "ferial": [
+          "gregobase:10056",
+          "gregobase:12028"
+        ]
+      },
+      "1": {
+        "ferial": [
+          "gregobase:2783",
+          "gregobase:4197"
+        ]
+      },
+      "2": {
+        "ferial": [
+          "gregobase:11939"
+        ]
+      },
+      "3": {
+        "ferial": [
+          "gregobase:12116"
+        ]
+      },
+      "4": {
+        "ferial": [
+          "gregobase:12633"
+        ]
+      },
+      "5": {
+        "ferial": [
+          "gregobase:12692"
+        ]
+      },
+      "6": {
+        "ferial": [
+          "gregobase:12506"
+        ]
+      },
+      "any": {
+        "ferial": [
+          "gregobase:8669"
+        ]
+      }
+    }
+  }
+}
