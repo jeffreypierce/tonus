@@ -15,10 +15,8 @@ import { AM_DATA, AM_SOURCE } from "../../data/am.js";
 import { NR_DATA, NR_SOURCE } from "../../data/nocturnale-romanum.js";
 // Office books ⟨widened 2026-07-27⟩ — the antiphons and short responsories that
 // fill weekday office slots; see ChantSource in types.ts for why.
-import { AM1_DATA, AM1_SOURCE } from "../../data/am1.js";
 import { AMS_DATA, AMS_SOURCE } from "../../data/ams.js";
 import { PSM_DATA, PSM_SOURCE } from "../../data/psm.js";
-import { AR2_DATA, AR2_SOURCE } from "../../data/ar2.js";
 import { KYRIALE } from "../../data/kyriale.js";
 import { KY_SOURCE } from "./types.js";
 import { entryToOrdinaryChant } from "./ordinary.js";
@@ -104,10 +102,8 @@ const CORPUS: Chant[] = [
   ...LH_DATA.map((c) => withLabels(c, LH_SOURCE)),
   ...AM_DATA.map((c) => withLabels(c, AM_SOURCE)),
   ...NR_DATA.map((c) => withLabels(c, NR_SOURCE)),
-  ...AM1_DATA.map((c) => withLabels(c, AM1_SOURCE)),
   ...AMS_DATA.map((c) => withLabels(c, AMS_SOURCE)),
   ...PSM_DATA.map((c) => withLabels(c, PSM_SOURCE)),
-  ...AR2_DATA.map((c) => withLabels(c, AR2_SOURCE)),
   // The Kyriale as a corpus book (source "ky"): the ordinary IS repertoire —
   // office stays "or" and the per-ordinary identity rides `ordinary`/
   // `ordinarium`/`mass`, the same records `ordinarium()` serves (one shaping,
@@ -127,7 +123,7 @@ const SOURCES: Record<ChantSource, Chant["source"]> = {
   gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
   ky: KY_SOURCE,
   // office books ⟨widened 2026-07-27⟩ — provenance, not acquisition
-  am1: AM1_SOURCE, ams: AMS_SOURCE, psm: PSM_SOURCE, ar2: AR2_SOURCE,
+  ams: AMS_SOURCE, psm: PSM_SOURCE,
 };
 
 // Tally a book's genre and mode distribution — computed once per code, cached.

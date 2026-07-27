@@ -26,18 +26,21 @@ export type OrdinaryCode =
  * five extracted books happened to hold, which is why 41 Fridays had no Vespers
  * ("Per singulos dies" lives in the Psalterium Monasticum).
  *
- * That widening brought in eight; four are gone again ⟨2026-07-27⟩. am2, am3,
- * lr and ar1 are bare transcriptions — no episema, no ictus, essentially no
- * mora — so once the office matchers began preferring a rhythmically marked
- * witness, every text they carried was better served elsewhere and the cut left
- * them holding nothing. A source that ships zero chants is pure weight.
+ * That widening brought in eight; six are gone again ⟨2026-07-27⟩. am1, am2,
+ * am3, lr, ar1 and ar2 are bare transcriptions — no episema, no ictus,
+ * essentially no mora — so once the office matchers began preferring a
+ * rhythmically marked witness, every text they carried was better served by a
+ * book we already ship. tonus reads those marks for playback, so a bare chant is
+ * a worse copy, not a missing one.
+ *
+ * ams and psm stayed because they are fully marked, and psm holds "Per singulos
+ * dies" — the Friday Vespers antiphon the widening was for. Every chant tonus
+ * now ships carries rhythmic notation.
  */
 export type ChantSource =
   | "gr" | "lu" | "la" | "lh" | "am" | "nr" | "ky"
   // office books, monastic
-  | "am1" | "ams" | "psm"
-  // office books, Roman
-  | "ar2";
+  | "ams" | "psm";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"

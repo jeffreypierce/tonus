@@ -11,7 +11,7 @@
     "tertia",
     "vesperae"
   ],
-  "slots": 208,
+  "slots": 207,
   "table": {
     "laudes": {
       "0": {
@@ -282,9 +282,6 @@
       "any": {
         "nat": [
           "nocturnale:0101N3A1"
-        ],
-        "pasch": [
-          "gregobase:7834"
         ]
       }
     },

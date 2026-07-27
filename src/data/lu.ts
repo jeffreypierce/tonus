@@ -1,7 +1,7 @@
 // lu.ts — Liber Usualis 1961 corpus (primary antiphon/hymn source)
 // Extracted from GregoBase (source ID 3) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-27T15:19:13.051Z
-// Chants: 711
+// Generated: 2026-07-27T15:27:07.226Z
+// Chants: 712
 // LA fills gaps for chant IDs not present here.
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
@@ -6975,6 +6975,16 @@ export const LU_DATA: ChantData[] = [
     mode: "8",
     pages: [
     { page: "1798", sequence: 1, extent: 1 }
+    ],
+  },
+  {
+    id: "gregobase:3173",
+    incipit: "Super te Jerusalem orietur",
+    gabc: "(f3) SU(h)per(h) te(h) Je(hf)rú(g')sa(h)lem(i.) (;) * O(g')ri(h)é(fe)tur(f') Dó(h)mi(h)nus.(g.) (::) \r\n<sp>V/</sp>. Et(e) gló(fh)ri(h)a(h) e(gh)jus(h'_) (,) in(h) te(h) vi(hf)dé(g')bi(h)tur.(i.) (::) Gló(i)ri(i)a(i) Pa(ij)tri,(j'_) (,) et(j) Fí(i)li(j)o,(g'_[oh:h]) (,) et(h) Spi(h)rí(h)tu(h)i(hf) San(gh)cto.(i.) (::)",
+    office: "rb",
+    mode: null,
+    pages: [
+    { page: "248", sequence: 1, extent: 1 }
     ],
   },
   {

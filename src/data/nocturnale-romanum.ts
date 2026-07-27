@@ -113,6 +113,14 @@ export const NR_DATA: ChantData[] = [
     pages: [],
   },
   {
+    id: "nocturnale:APEXN1R2",
+    incipit: "Tollite jugum meum super vos",
+    gabc: "(c3) Tól(ef>)li(e)te(e) ju(ef)gum(e) <sp>*</sp> me(e)um(e_f!gwh) su(hihhg)per(h!iwjij>) vos,(i.) (;) di(ihhv_GF)<nlba>cit(g!hwiHG__F/gwh_GF) </nlba>Dó(e)mi(ef!gv_FEf)nus,(fe..) (;) et(ihi) dí(kol_)sci(l)te,(lk_k_vJIji__) (`) qui(i)a(j) mi(k)tis(i) sum(h_i_/hhog) (,) et(h) hú(i)mi(i)lis(k_i!jwkj) cor(i>)de:(ijiio/ghg.) (:) <sp>+</sp> Ju(g)gum(ij) e(j)nim(j) me(jij)um(hih) su(hf)á(h!ioj)ve(i) est,(giHG__hvG__FEfe..) (;) et(e) o(f)nus(fi) me(ih_hv_GF)um(g!hwiHG___F/gwh_GF<) le(ef!gv_FEf)ve.(fe..) (::) <sp>V/</sp> Et(i!jwkJI) in(h_i/hhog~)ve(h)ni(ig)é(hi)tis(hi) ré(i)qui(i!jwkj__)em(ji..) (;) a(i)ni(ijijIH)má(ih)bus(h!iwji/jkj) ves(i_h!iwjij)tris.(iv_HGhg..) <sp>+</sp>(::)",
+    office: "re",
+    mode: "7",
+    pages: [],
+  },
+  {
     id: "nocturnale:APEXN1R3",
     incipit: "Dum steteritis ante reges",
     gabc: "(c4) Dum(eeod~) ste(g)té(hi)ri(ijO1)tis(i) <sp>*</sp> an(i)te(i) re(ji)ges(h) et(i@jok) prǽ(kj/kjjs)si(jv_//hj!kv_JIj)des,(ji..) (;) no(i_j)lí(k)te(j) co(ijO1)gi(h)tá(ixg_f!gwhgh!iv)re(h) (,) quó(h)mo(gf)do(g) (`) aut(gf~) quid(g_h) lo(g)quá(e)mi(egffs)ni:(fe..) (:) <sp>+</sp> Dá(h)bi(g)tur(f) e(h)nim(j>) vo(ge/fgFE__fv_ED)bis(ed__) (,) in(fv_ED) il(e)la(f) ho(g_02/hjHG___Fgwhgh)ra(hg..) (;) quid(h_0//jsjshs/jsjshs_1!GF/gh_/hg__) lo(h)quá(hg/hffs)mi(fv_//df!gv_FEf)ni.(fe..) (::) <sp>V/</sp> Non(i) e(ikjjs)nim(h!iwji/hhog) vos(i) es(ijO1)tis(hg) qui(h) lo(j)quí(i)mi(ikjjs)ni:(ji..) (;) sed(ig~) Spí(hi)ri(i)tus(i) Pa(i)tris(i) ves(ijO1)tri,(i) (,) qui(i) ló(i)qui(ikjjvI__Hiwji)tur(hg) in(g_h!iwj) vo(jiioh/iv_HGh)bis.(hg..) (::) <sp>+</sp> Dá(h)bi(g)tur.(f) (::) <sp>V/</sp> Gló(ikjjs)ri(h!iwji__)a(hhog) Pa(ig)tri,(h) et(j) Fí(i)li(ikjjs)o,(ji..) (;) et(i) Spi(i)rí(ikjjvI_____H/iwji__)tu(hg)i(g_h!iwj) Sanc(jiioh/iv_HGh)to.(hg..) (::) <sp>+</sp> Dá(h)bi(g)tur.(f) (::)",

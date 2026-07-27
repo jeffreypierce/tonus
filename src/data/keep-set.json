@@ -12,9 +12,9 @@
     "converged": true
   },
   "counts": {
-    "corpus": 8618,
-    "keep": 1726,
-    "cut": 6892
+    "corpus": 7808,
+    "keep": 1725,
+    "cut": 6083
   },
   "byBook": {
     "gr": {
@@ -22,7 +22,7 @@
       "total": 1344
     },
     "lu": {
-      "keep": 711,
+      "keep": 712,
       "total": 2377
     },
     "la": {
@@ -38,24 +38,12 @@
       "total": 1429
     },
     "nr": {
-      "keep": 137,
+      "keep": 138,
       "total": 1564
     },
     "ky": {
       "keep": 120,
       "total": 120
-    },
-    "am1": {
-      "keep": 1,
-      "total": 301
-    },
-    "am2": {
-      "keep": 0,
-      "total": 6
-    },
-    "am3": {
-      "keep": 0,
-      "total": 161
     },
     "ams": {
       "keep": 11,
@@ -64,18 +52,6 @@
     "psm": {
       "keep": 11,
       "total": 60
-    },
-    "lr": {
-      "keep": 0,
-      "total": 29
-    },
-    "ar1": {
-      "keep": 0,
-      "total": 110
-    },
-    "ar2": {
-      "keep": 2,
-      "total": 310
     }
   },
   "byReason": {
@@ -83,7 +59,7 @@
     "table:propers": 17,
     "table:commune": 5,
     "table:commune-office": 92,
-    "table:office-ferial": 39,
+    "table:office-ferial": 38,
     "table:seasonal-respbreve": 3,
     "kyriale": 9
   },
@@ -845,6 +821,7 @@
     "gregobase:3169",
     "gregobase:317",
     "gregobase:3171",
+    "gregobase:3173",
     "gregobase:318",
     "gregobase:3181",
     "gregobase:3185",
@@ -987,7 +964,6 @@
     "gregobase:440",
     "gregobase:441",
     "gregobase:442",
-    "gregobase:4440",
     "gregobase:45",
     "gregobase:450",
     "gregobase:451",
@@ -1241,14 +1217,12 @@
     "gregobase:782",
     "gregobase:7825",
     "gregobase:7826",
-    "gregobase:7834",
     "gregobase:784",
     "gregobase:7849",
     "gregobase:785",
     "gregobase:7857",
     "gregobase:7867",
     "gregobase:787",
-    "gregobase:7876",
     "gregobase:788",
     "gregobase:789",
     "gregobase:79",
@@ -1689,6 +1663,7 @@
     "nocturnale:APEXN1A1",
     "nocturnale:APEXN1A3",
     "nocturnale:APEXN1R1",
+    "nocturnale:APEXN1R2",
     "nocturnale:APEXN1R3",
     "nocturnale:APEXN2A1",
     "nocturnale:APEXN2A3",
