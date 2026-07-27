@@ -1,7 +1,7 @@
 // lu.ts — Liber Usualis 1961 corpus (primary antiphon/hymn source)
 // Extracted from GregoBase (source ID 3) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-27T15:08:10.407Z
-// Chants: 709
+// Generated: 2026-07-27T15:16:02.684Z
+// Chants: 711
 // LA fills gaps for chant IDs not present here.
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
@@ -6768,6 +6768,16 @@ export const LU_DATA: ChantData[] = [
     ],
   },
   {
+    id: "gregobase:2967",
+    incipit: "Sana Domine",
+    gabc: "(f3) SA(h')na(g) Dó(h')mi(g)ne(f.) *(,) á(h)ni(h)mam(g') me(h)am,(g.) (,) qui(f)a(e') pec(f)cá(h')vi(g) ti(f.)bi.(f.) (::)",
+    office: "an",
+    mode: "2",
+    pages: [
+    { page: "1794", sequence: 1, extent: 1 }
+    ],
+  },
+  {
     id: "gregobase:3026",
     incipit: "Ecce sacerdos",
     gabc: "(c4) EC(f!gh)ce(g.) *() sa(g)cér(g)dos(g/hi) ma(h)gnus,(hg/h!iw/jg/hggf.0) (;) qui(f) in(g) di(h)é(hj)bus(hg) su(hvGFgh)is(g.) (;) plá(gh)cu(g)it(g.h!iw!jvIH'iw!jvIH) De(gh!ivHG'h)o :(hg..) *(:) Id(jjk)e(j)o(j.) ju(k)re(jji)ju(hg)rán(g./hjhivH~G~)do(hg..) (;) fe(f)cit(gh) il(hg)lum(fg) Dó(g)mi(g.e!fwg)nus(ghffvED.dgF'EfvED.) (;) cré(d)sce(dg)re(gh) in(gf) ple(g)bem(g.h!iw!jvIH'iw!jvIH) su(gh!ivHG'h)am.(hg..) (::) <i>T. P.</i> Al(g)le(ghfg)lú(gh/jhi){ia}(hg..) (::) <sp>V/</sp>. Be(gj)ne(j)di(j)cti(j)ó(ji)nem(jkJI'jvIH'Gh_g_) (`) ó(hi)mni(i)um(ih~) gén(jk~)ti(j)um(ih~) de(ij)dit(hi) il(g!hwi_[oh:h]h)li,(hg..) (:) et(g) te(fg)sta(g)mén(g)tum(g) su(g)um(g.) (,) con(g)fir(g)má(gh)vit(g) su(g)per(hjH'Ghih) ca(gf)put(gh) e(hji/jkJ'IH)jus.(hiH'Ghg..) (::) * Id(jjk)e(j)o.(j.) (::) Gló(gj)ri(ji)a(jkJI'jvIH'Ghg..) Pa(ih)tri,(ij) et(hi) Fí(g)li(g!hwi_[oh:h]h)o,(hg..) (:) et(g) Spi(g)rí(hjH'Ghih)tu(gf)i(gh) San(hji/jkJ'IH)cto.(hiH'Ghg..) (::) * Id(jjk)e(j)o.(j.) (::)",
@@ -7075,6 +7085,16 @@ export const LU_DATA: ChantData[] = [
     mode: "5",
     pages: [
     { page: "(10)", sequence: 1, extent: 1 }
+    ],
+  },
+  {
+    id: "gregobase:11787",
+    incipit: "Dum esset summus",
+    gabc: "(c4) DUM(d) es(d)set(dc) sum(f)mus(g') Pón(f)ti(gh)fex,(h.) *(,) ter(h_g)ré(ixi')na(h) non(g') mé(f!g'h)tu(fe)it :(d.) (;) sed(gg) ad(e) cae(g)lé(h')sti(g)a(f) re(fg)gna(f'_) (,) glo(f)ri(f)ó(e_[uh:l]f)sus(g) mi(fe)grá(d.)vit.(d.) (::) <i>T. P.</i> Al(e)le(fe)lú(d.){ia}.(d.) (::)",
+    office: "an",
+    mode: "1",
+    pages: [
+    { page: "1181", sequence: 2, extent: 1 }
     ],
   },
   {

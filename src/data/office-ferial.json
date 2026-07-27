@@ -148,7 +148,7 @@
           "gregobase:355",
           "gregobase:18052",
           "nocturnale:EXF2A1",
-          "gregobase:17988",
+          "nocturnale:EXF2A2",
           "gregobase:12420",
           "gregobase:10056"
         ],
@@ -162,15 +162,15 @@
           "gregobase:7476",
           "gregobase:18241",
           "nocturnale:A1F1N1A2",
-          "gregobase:4390",
+          "gregobase:12021",
           "nocturnale:A1F1N1A3",
           "gregobase:9223",
           "nocturnale:A1F1N2A1",
           "gregobase:8316",
           "nocturnale:A1F1N2A2",
-          "gregobase:4414",
+          "gregobase:12818",
           "nocturnale:A1F1N2A3",
-          "gregobase:4352",
+          "gregobase:12857",
           "nocturnale:A1F1N3A1"
         ]
       },
@@ -183,9 +183,9 @@
           "nocturnale:F3N3A1",
           "nocturnale:F3N3A1",
           "nocturnale:EXF3A1",
-          "gregobase:18060",
+          "gregobase:2967",
           "nocturnale:EXF3A1",
-          "gregobase:18060",
+          "gregobase:2967",
           "nocturnale:EXF3A3",
           "nocturnale:EXF3A3"
         ],
@@ -194,7 +194,7 @@
           "gregobase:18054",
           "nocturnale:F3N3A1",
           "nocturnale:EXF3A1",
-          "gregobase:18060",
+          "gregobase:2967",
           "nocturnale:EXF3A3"
         ]
       },
@@ -301,7 +301,7 @@
       },
       "2": {
         "ferial": [
-          "gregobase:8661"
+          "gregobase:12667"
         ]
       },
       "3": {
@@ -334,7 +334,7 @@
       },
       "1": {
         "ferial": [
-          "gregobase:18045",
+          "gregobase:12393",
           "gregobase:7867"
         ]
       },

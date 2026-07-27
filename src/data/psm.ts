@@ -1,6 +1,6 @@
 // psm.ts — Psalterium Monasticum
 // Extracted from GregoBase (source ID 24) by scripts/extract-gregobase.mjs
-// Chants: 14
+// Chants: 11
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
@@ -46,16 +46,6 @@ export const PSM_DATA: ChantData[] = [
     ],
   },
   {
-    id: "gregobase:8661",
-    incipit: "Tu Domine servabis nos",
-    gabc: "(c4) Tu(h) Dó(f)mi(fg)ne(g') *() ser(g)vá(h)bis(g) nos,(f.) (;) et(f) cu(g)stó(f)di(g)es(h) nos(h!iwjh__) in(i) æ(h)tér(g.)num.(g.) (::)",
-    office: "an",
-    mode: "8",
-    pages: [
-    { page: "13", sequence: 2, extent: 2 }
-    ],
-  },
-  {
     id: "gregobase:16899",
     incipit: "Clamaverunt iusti",
     gabc: "(c3)Cla(e)ma(e)vé(-ehg)runt(h) iu(ih/ij)sti(i'_) <v>\\greheightstar</v>(,) et(i) Dó(hgh)mi(gf)nus(e'_) e(f)xau(ed~)dí(ef)vit(f) e(e.)os.(e. ::) E(i) u(i) o(j) u(i) a(h) e(g.f. ::)",
@@ -83,16 +73,6 @@ export const PSM_DATA: ChantData[] = [
     mode: "1",
     pages: [
     { page: "158", sequence: 0, extent: 1 }
-    ],
-  },
-  {
-    id: "gregobase:18045",
-    incipit: "Illuminatio mea",
-    gabc: "(c3) IL(h)lu(h)mi(h)ná(h)ti(h)o(g) me(e!fwg)a,(g'_) *(,) et(f) sa(g)lus(h) me(f)a(e) Dó(f)mi(e)nus.(e.) (::) E(h) u(h) o(g) u(h) a(f) e.(e.) (::)",
-    office: "an",
-    mode: "8",
-    pages: [
-    { page: "42", sequence: 3, extent: 1 }
     ],
   },
   {
@@ -133,16 +113,6 @@ export const PSM_DATA: ChantData[] = [
     mode: "4",
     pages: [
     { page: "220", sequence: 1, extent: 1 }
-    ],
-  },
-  {
-    id: "gregobase:18060",
-    incipit: "Sana Domine",
-    gabc: "(f3) SA(h)na,(g') Dó(h)mi(g)ne,(f_') * á(h)ni(h)mam(g') me(h)am,(g.) (,) qui(f)a(e) pec(f)cá(h)vi(g) ti(f.)bi.(f.) (::) E(h) u(h) o(h) u(g) a(ef) e.(f.) (::)",
-    office: "an",
-    mode: "2",
-    pages: [
-    { page: "100", sequence: 0, extent: 1 }
     ],
   },
   {

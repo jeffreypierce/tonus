@@ -1,6 +1,6 @@
 // ar2.ts — Antiphonale Romanum II
 // Extracted from GregoBase (source ID 6) by scripts/extract-gregobase.mjs
-// Chants: 4
+// Chants: 2
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
@@ -15,26 +15,6 @@ export const AR2_SOURCE: Chant["source"] = {
 };
 
 export const AR2_DATA: ChantData[] = [
-  {
-    id: "gregobase:4352",
-    incipit: "Ecce iam venit",
-    gabc: "(c3) EC(h)ce(h) iam(hf~) ve(hi)nit(h) *() ple(h)ni(gxg)tú(f)do(e) tém(f)po(e)ris,(d) (;) in(d) quo(f) mi(fe)sit(d) De(ef)us(f) (,) Fí(h)li(h)um(h) su(e)um(e) in(f) ter(ed~)ras.(d) (::) E(h) u(h) o(i) u(gxg) a(h) e.(f) (::)",
-    office: "an",
-    mode: "5",
-    pages: [
-    { page: "36", sequence: 1, extent: 1 }
-    ],
-  },
-  {
-    id: "gregobase:4390",
-    incipit: "Annuntiate populis",
-    gabc: "(c3) AN(f)nun(e)ti(f)á(hi)te(i!/io) *(,) pó(h)pu(i)lis(j) et(ih~) dí(i)ci(i)te :(i) (;) Ec(fi)ce(hg) De(fe)us(f) (,) Sal(e>)vá(d)tor(e) nos(f)ter(h>) vé(f)ni(ef)et.(f) (::) <eu>E(i) u(h) o(i) u(j) a(h) e.(f) (::)</eu>",
-    office: "an",
-    mode: "4",
-    pages: [
-    { page: "3", sequence: 1, extent: 1 }
-    ],
-  },
   {
     id: "gregobase:7834",
     incipit: "Venite et videte",

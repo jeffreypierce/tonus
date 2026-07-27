@@ -13,8 +13,8 @@
   },
   "counts": {
     "corpus": 8618,
-    "keep": 1732,
-    "cut": 6886
+    "keep": 1726,
+    "cut": 6892
   },
   "byBook": {
     "gr": {
@@ -22,11 +22,11 @@
       "total": 1344
     },
     "lu": {
-      "keep": 709,
+      "keep": 711,
       "total": 2377
     },
     "la": {
-      "keep": 134,
+      "keep": 139,
       "total": 1422
     },
     "lh": {
@@ -38,7 +38,7 @@
       "total": 1429
     },
     "nr": {
-      "keep": 129,
+      "keep": 137,
       "total": 1564
     },
     "ky": {
@@ -46,7 +46,7 @@
       "total": 120
     },
     "am1": {
-      "keep": 5,
+      "keep": 1,
       "total": 301
     },
     "am2": {
@@ -54,7 +54,7 @@
       "total": 6
     },
     "am3": {
-      "keep": 9,
+      "keep": 0,
       "total": 161
     },
     "ams": {
@@ -62,11 +62,11 @@
       "total": 98
     },
     "psm": {
-      "keep": 14,
+      "keep": 11,
       "total": 60
     },
     "lr": {
-      "keep": 5,
+      "keep": 0,
       "total": 29
     },
     "ar1": {
@@ -74,15 +74,15 @@
       "total": 110
     },
     "ar2": {
-      "keep": 4,
+      "keep": 2,
       "total": 310
     }
   },
   "byReason": {
-    "walk": 1565,
+    "walk": 1561,
     "table:propers": 17,
     "table:commune": 5,
-    "table:commune-office": 94,
+    "table:commune-office": 92,
     "table:office-ferial": 39,
     "table:seasonal-respbreve": 3,
     "kyriale": 9
@@ -183,7 +183,6 @@
     "gregobase:1052",
     "gregobase:1053",
     "gregobase:1054",
-    "gregobase:10543",
     "gregobase:1055",
     "gregobase:10558",
     "gregobase:1056",
@@ -298,6 +297,7 @@
     "gregobase:1176",
     "gregobase:11765",
     "gregobase:11782",
+    "gregobase:11787",
     "gregobase:1179",
     "gregobase:11790",
     "gregobase:118",
@@ -341,6 +341,7 @@
     "gregobase:12004",
     "gregobase:1201",
     "gregobase:12016",
+    "gregobase:12021",
     "gregobase:12027",
     "gregobase:12028",
     "gregobase:1203",
@@ -391,6 +392,7 @@
     "gregobase:1237",
     "gregobase:12379",
     "gregobase:12391",
+    "gregobase:12393",
     "gregobase:12394",
     "gregobase:12395",
     "gregobase:124",
@@ -437,6 +439,7 @@
     "gregobase:12649",
     "gregobase:1265",
     "gregobase:12653",
+    "gregobase:12667",
     "gregobase:12668",
     "gregobase:12673",
     "gregobase:12674",
@@ -461,9 +464,11 @@
     "gregobase:12798",
     "gregobase:1280",
     "gregobase:1281",
+    "gregobase:12818",
     "gregobase:1282",
     "gregobase:1284",
     "gregobase:12853",
+    "gregobase:12857",
     "gregobase:12863",
     "gregobase:12885",
     "gregobase:1289",
@@ -578,7 +583,6 @@
     "gregobase:140",
     "gregobase:141",
     "gregobase:142",
-    "gregobase:14297",
     "gregobase:143",
     "gregobase:146",
     "gregobase:148",
@@ -607,8 +611,6 @@
     "gregobase:16096",
     "gregobase:16123",
     "gregobase:16130",
-    "gregobase:16138",
-    "gregobase:16189",
     "gregobase:162",
     "gregobase:16228",
     "gregobase:16229",
@@ -637,20 +639,14 @@
     "gregobase:17914",
     "gregobase:17919",
     "gregobase:17949",
-    "gregobase:17958",
-    "gregobase:17966",
-    "gregobase:17967",
     "gregobase:17987",
-    "gregobase:17988",
     "gregobase:17996",
     "gregobase:18",
     "gregobase:18024",
-    "gregobase:18045",
     "gregobase:18049",
     "gregobase:18052",
     "gregobase:18054",
     "gregobase:18057",
-    "gregobase:18060",
     "gregobase:18061",
     "gregobase:18069",
     "gregobase:18072",
@@ -667,7 +663,6 @@
     "gregobase:18215",
     "gregobase:18241",
     "gregobase:18248",
-    "gregobase:18273",
     "gregobase:184",
     "gregobase:1850",
     "gregobase:1851",
@@ -796,6 +791,7 @@
     "gregobase:294",
     "gregobase:2948",
     "gregobase:296",
+    "gregobase:2967",
     "gregobase:2975",
     "gregobase:2976",
     "gregobase:2977",
@@ -984,15 +980,12 @@
     "gregobase:431",
     "gregobase:432",
     "gregobase:433",
-    "gregobase:4352",
     "gregobase:437",
     "gregobase:438",
     "gregobase:439",
-    "gregobase:4390",
     "gregobase:44",
     "gregobase:440",
     "gregobase:441",
-    "gregobase:4414",
     "gregobase:442",
     "gregobase:4440",
     "gregobase:45",
@@ -1201,7 +1194,6 @@
     "gregobase:7471",
     "gregobase:7472",
     "gregobase:7473",
-    "gregobase:7474",
     "gregobase:7476",
     "gregobase:7487",
     "gregobase:7488",
@@ -1211,7 +1203,6 @@
     "gregobase:7497",
     "gregobase:75",
     "gregobase:7501",
-    "gregobase:7503",
     "gregobase:751",
     "gregobase:7539",
     "gregobase:754",
@@ -1402,7 +1393,6 @@
     "gregobase:864",
     "gregobase:865",
     "gregobase:8656",
-    "gregobase:8661",
     "gregobase:8663",
     "gregobase:8668",
     "gregobase:8669",
@@ -1432,7 +1422,6 @@
     "gregobase:878",
     "gregobase:8780",
     "gregobase:8786",
-    "gregobase:8789",
     "gregobase:879",
     "gregobase:8790",
     "gregobase:8792",
@@ -1440,8 +1429,6 @@
     "gregobase:8795",
     "gregobase:8798",
     "gregobase:88",
-    "gregobase:8800",
-    "gregobase:8809",
     "gregobase:881",
     "gregobase:8813",
     "gregobase:8824",
@@ -1579,7 +1566,6 @@
     "gregobase:9129",
     "gregobase:9139",
     "gregobase:914",
-    "gregobase:9141",
     "gregobase:9144",
     "gregobase:916",
     "gregobase:9166",
@@ -1692,6 +1678,7 @@
     "gregobase:997",
     "gregobase:998",
     "nocturnale:0101N3A1",
+    "nocturnale:0211N1A1",
     "nocturnale:0325N3R1",
     "nocturnale:A1F1N1A2",
     "nocturnale:A1F1N1A3",
@@ -1756,7 +1743,9 @@
     "nocturnale:COPON2R3",
     "nocturnale:COPON3A1",
     "nocturnale:COPON3A2",
+    "nocturnale:COPON3R2",
     "nocturnale:EXF2A1",
+    "nocturnale:EXF2A2",
     "nocturnale:EXF3A1",
     "nocturnale:EXF3A3",
     "nocturnale:EXF4A1",
@@ -1804,11 +1793,16 @@
     "nocturnale:PMEXN1A3",
     "nocturnale:PMEXN1R2",
     "nocturnale:PMEXN1R3",
+    "nocturnale:PMEXN2A2",
     "nocturnale:PMEXN2A3",
     "nocturnale:PMEXN2R1",
     "nocturnale:PMEXN2R3",
     "nocturnale:PMEXN3A1",
+    "nocturnale:PMEXN3A2",
+    "nocturnale:PMEXN3A3",
     "nocturnale:PMEXN3R1",
+    "nocturnale:UMEXN1A1",
+    "nocturnale:UMEXN1A2",
     "nocturnale:UMEXN1A3",
     "nocturnale:UMEXN2A1",
     "nocturnale:UMEXN2A2",

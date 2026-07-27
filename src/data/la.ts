@@ -1,7 +1,7 @@
 // la.ts — Liber antiphonarius 1960 corpus (Roman office)
 // Extracted from GregoBase (source ID 48) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-27T15:08:10.407Z
-// Chants: 134
+// Generated: 2026-07-27T15:16:02.684Z
+// Chants: 139
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
 
@@ -287,6 +287,16 @@ export const LA_DATA: ChantData[] = [
     ],
   },
   {
+    id: "gregobase:12021",
+    incipit: "Annuntiate populis",
+    gabc: "(c3) AN(f)nun(e')ti(f)á(h_i)te(i.) *(,) pó(h')pu(i)lis,(j) et(ih~) dí(i')ci(i)te:(i.) (;) Ec(f_i)ce(h_g) De(f_e)us(f') (,) Sal(e)vá(d')tor(e) no(f')ster(h) vé(f')ni(f)et.(f.) (::)",
+    office: "an",
+    mode: "4",
+    pages: [
+    { page: "241", sequence: 0, extent: 1 }
+    ],
+  },
+  {
     id: "gregobase:12027",
     incipit: "Justus germinabit",
     gabc: "(c4) JU(f)stus(f) ger(g')mi(f)ná(g_h)bit(hg..) *(;) Si(f!g'h)cut(gv_FD) lí(fg)li(g)um.(f.) <sp>V/</sp>.(::) Et(h) flo(h)ré(ixhi)bit(h) in(h) ae(h)tér(gh)num(g'_) (,) an(g)te(f') Dó(g)mi(gh)num.(hg..) (::) Gló(h)ri(h)a(h) Pa(ixhi)tri.(h'_) (::)",
@@ -534,6 +544,16 @@ export const LA_DATA: ChantData[] = [
     mode: "1",
     pages: [
     { page: "512", sequence: 3, extent: 2 }
+    ],
+  },
+  {
+    id: "gregobase:12393",
+    incipit: "Illuminatio mea",
+    gabc: "(c3) IL(h)lu(h)mi(h)ná(h')ti(h)o(g) me(e!fg)a,(g'_) (,) et(f) sa(g')lus(h) me(f')a(e) Dó(f')mi(e)nus.(e.) (::)",
+    office: "an",
+    mode: "8",
+    pages: [
+    { page: "86", sequence: 0, extent: 1 }
     ],
   },
   {
@@ -797,6 +817,16 @@ export const LA_DATA: ChantData[] = [
     ],
   },
   {
+    id: "gregobase:12667",
+    incipit: "Tu Domine servabis",
+    gabc: "(c4) Tu(h') Dó(f)mi(fg)ne(g) ser(g)vá(h')bis(g) nos,(f.) (;) et(f') cu(g)stó(f')di(g)es(h) nos(h!iwj_h) in(i') ae(h)tér(g.)num.(g.) (::)",
+    office: "an",
+    mode: "8",
+    pages: [
+    { page: "125", sequence: 0, extent: 1 }
+    ],
+  },
+  {
     id: "gregobase:12668",
     incipit: "A porta inferi",
     gabc: "(f3) A(f) por(e_f)ta(h_g) ín(f)fe(g)ri(f_e) *(,) é(h_i)ru(j)e(i) Dó(j')mi(i)ne(h.) (,) á(h_i)ni(g')mam(h) me(f.)am.(f.) (::)",
@@ -937,6 +967,16 @@ export const LA_DATA: ChantData[] = [
     ],
   },
   {
+    id: "gregobase:12818",
+    incipit: "Beatam me dicent omnes",
+    gabc: "(c4) BE(g)á(gj)tam(h) me(g') di(h)cent(gf~) *(,) o(g_h)mnes(g'_) ge(h)ne(gf)ra(g)ti(gh)ó(f)nes,(f.) (;) qui(f)a(g') an(f)cíl(g')lam(h) hú(j_k)mi(j)lem(ji/jkj) (,) re(h'_)spé(j)xit(i) De(g.)us.(g.) (::)",
+    office: "an",
+    mode: "8",
+    pages: [
+    { page: "[125]", sequence: 0, extent: 1 }
+    ],
+  },
+  {
     id: "gregobase:12853",
     incipit: "Exaltare Domine",
     gabc: "(c4) Ex(g)al(fd~)tá(e)re(f) Dó(gh)mi(h)ne,(g'_) (,) qui(g) jú(gf)di(g)cas(gh) ter(f)ram:(f.) (;) red(fg)de(g') re(h)tri(f)bu(g')ti(h)ó(gf)nem(h_j) su(i)pér(g.)bis.(g.) (::)",
@@ -944,6 +984,16 @@ export const LA_DATA: ChantData[] = [
     mode: "8",
     pages: [
     { page: "197", sequence: 0, extent: 1 }
+    ],
+  },
+  {
+    id: "gregobase:12857",
+    incipit: "Ecce jam venit",
+    gabc: "(c3) EC(d)ce(f) jam(hf~) ve(h_i)nit(h'_) *(,) ple(h)ni(gxg)tú(f')do(e) tém(f')po(e)ris,(d.) (;) in(d) quo(e) mi(f_e)sit(d) De(ef)us(f'_) (,) Fí(h)li(h)um(h') su(e)um(e') in(f) ter(ed~)ras.(d.) (::)",
+    office: "an",
+    mode: "5",
+    pages: [
+    { page: "238", sequence: 0, extent: 1 }
     ],
   },
   {
