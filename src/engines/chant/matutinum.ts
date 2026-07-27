@@ -13,6 +13,7 @@
 // Advent today (see office-matins-roman.ts). A feast with no Nocturnale match
 // returns null, the office's graceful-degradation convention.
 import { resolveChant } from "./chant.js";
+import { getHour } from "./hour.js";
 import { getFeast } from "../cal/calendar.js";
 import { temporaSundayId } from "../cal/date.js";
 import { MATINS_ROMAN, type MatinsDay } from "../../data/office-matins-roman.js";
@@ -29,7 +30,7 @@ export interface Nocturn {
   antiphons: Chant[];
 }
 
-/** A feast's structured Roman Matins. */
+/** A feast's Matins. */
 export interface Matins {
   /** The tonus feast id this Matins was resolved for. */
   feastId: string;
@@ -37,6 +38,14 @@ export interface Matins {
   nomen: string;
   /** The Latin rank/class from the Nocturnale, e.g. "I. classis", "Feria". */
   ritus: string;
+  /**
+   * Whether `nocturns` carries the real rubrical division. `true` for the Roman
+   * rite, whose Nocturnale assembly is nocturn-by-nocturn. `false` for the
+   * monastic rite, where the source table (office-monastic) is flat and every
+   * chant lands in a single nocturn `n: 1` — the Benedictine 12-psalm grouping
+   * is not modelled, so a caller must NOT read monastic nocturns as rubric.
+   */
+  structured: boolean;
   /** The invitatory, which opens Matins before the first nocturn (else null). */
   invitatorium: Chant | null;
   /** The Matins hymn, which follows the invitatory before the nocturns (else null). */
@@ -85,10 +94,52 @@ function resolveDay(day: MatinsDay): Matins {
     feastId: day.tonusFeastId!,
     nomen: day.name,
     ritus: day.rank,
+    structured: true,
     invitatorium,
     hymnus,
     nocturns,
     redirectedFrom: day.redirectedFrom,
+  };
+}
+
+/**
+ * Monastic Matins, FLAT. The monastic table (office-monastic) carries the night
+ * office as undifferentiated fields — `invit`, `antMatutinum`, `hymnMatutinum`,
+ * `respMatutinum` — with no nocturn boundaries, so there is nothing to assemble
+ * three nocturns from. Rather than invent a division the source does not record,
+ * everything lands in a single nocturn (`n: 1`) and `structured` is false.
+ *
+ * The Benedictine night office is genuinely a different shape from the Roman
+ * (12 psalms across the nocturns, not 9), so the Roman assembly is not merely
+ * unavailable here — it would be the wrong structure. Modelling it properly is
+ * deferred; this returns the right CHANTS in an honest container.
+ */
+function monasticMatins(feast: Feast): Matins | null {
+  const chants = getHour({ feast: [feast], hora: "matutinum", rite: "monasticum" });
+  if (!chants.length) return null;
+
+  // Lift the openers out, exactly as the Roman path does: the invitatory and
+  // hymn precede the first nocturn rubrically and are not responsories.
+  let invitatorium: Chant | null = null;
+  let hymnus: Chant | null = null;
+  const responsories: Chant[] = [];
+  const antiphons: Chant[] = [];
+  for (const c of chants) {
+    if (c.office === "in") invitatorium ??= c;
+    else if (c.office === "hy") hymnus ??= c;
+    else if (c.office === "re" || c.office === "rb") responsories.push(c);
+    else antiphons.push(c);
+  }
+
+  return {
+    feastId: feast.id,
+    nomen: feast.nomen,
+    ritus: feast.ritus,
+    structured: false,
+    invitatorium,
+    hymnus,
+    nocturns: [{ n: 1, responsories, antiphons }],
+    redirectedFrom: null,
   };
 }
 
@@ -107,16 +158,20 @@ function matinsForFeastId(feastId: string): Matins | null {
  * Structured Roman Matins (`tonus.matutinum`) for a feast: the invitatory and
  * hymn that open the hour, then the nocturns with their responsories (and
  * antiphons where present), assembled from the Nocturnale Romanum. Without a
- * feast, resolves the default epoch's feast (as
- * `officium` does). Only the Roman rite is served today; other rites return
- * null (the monastic night office is not yet modelled — see office-matins-roman).
+ * feast, resolves the default epoch's feast (as `officium` does).
+ *
+ * Both rites are served, in different shapes — read `structured` before trusting
+ * `nocturns`. Roman Matins is assembled nocturn-by-nocturn from the Nocturnale
+ * (`structured: true`). Monastic Matins comes from the flat office-monastic
+ * table, so it returns the right chants in ONE nocturn (`structured: false`);
+ * the Benedictine 12-psalm division is not modelled.
+ *
  * The query's `feast` and `rite` are read; `hora` is ignored (Matins *is* the
  * hour) as are the other `CantusQuery` filters.
- * @returns the Matins structure, or null when no Nocturnale match exists.
+ * @returns the Matins, or null when the rite's table has no match for the feast.
  */
 export function getMatins(query?: OfficiumQuery): Matins | null {
   const rite: Rite = query?.rite ?? "romanum";
-  if (rite !== "romanum") return null;
 
   const feasts = query?.feast
     ? Array.isArray(query.feast) ? query.feast : [query.feast]
@@ -128,5 +183,5 @@ export function getMatins(query?: OfficiumQuery): Matins | null {
       "matutinum: feast must be a Feast (from tonus.festum) — got " + typeof feast,
     );
 
-  return matinsForFeastId(feast.id);
+  return rite === "monasticum" ? monasticMatins(feast) : matinsForFeastId(feast.id);
 }

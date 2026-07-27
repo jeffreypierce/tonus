@@ -69,11 +69,54 @@ describe("getMatins — structured Roman Matins", () => {
     assert.equal(m.nocturns[2].antiphons.length, 3);
   });
 
-  test("the monastic rite is not served (returns null)", () => {
-    assert.equal(getMatins({ feast: { id: "Adv1-0" }, rite: "monasticum" }), null);
-  });
-
   test("a feast with no Nocturnale match returns null", () => {
     assert.equal(getMatins({ feast: { id: "99-99" } }), null);
+  });
+
+  test("the Roman rite reports itself structured", () => {
+    assert.equal(getMatins({ feast: { id: "Adv1-0" } }).structured, true);
+  });
+});
+
+describe("getMatins — flat monastic Matins", () => {
+  test("the monastic rite is served, and says it is NOT structured", () => {
+    const m = getMatins({ feast: { id: "01-01" }, rite: "monasticum" });
+    assert.ok(m, "monastic Matins should resolve");
+    assert.equal(m.structured, false);
+    assert.equal(m.feastId, "01-01");
+  });
+
+  test("flat Matins collapses to exactly one nocturn", () => {
+    const m = getMatins({ feast: { id: "01-01" }, rite: "monasticum" });
+    // The monastic source table records no nocturn boundaries, so inventing a
+    // 3-way division would be fabrication — everything lands in nocturn 1.
+    assert.equal(m.nocturns.length, 1);
+    assert.equal(m.nocturns[0].n, 1);
+  });
+
+  test("chants are sorted into the right buckets by office code", () => {
+    const m = getMatins({ feast: { id: "01-01" }, rite: "monasticum" });
+    const { responsories, antiphons } = m.nocturns[0];
+    assert.ok(antiphons.length > 0, "should carry antiphons");
+    for (const a of antiphons) assert.ok(a.office !== "re" && a.office !== "rb");
+    for (const r of responsories) assert.ok(r.office === "re" || r.office === "rb");
+    // Openers are lifted out of the nocturn, as on the Roman path.
+    for (const c of [...responsories, ...antiphons]) {
+      assert.ok(c.office !== "in" && c.office !== "hy");
+    }
+  });
+
+  test("monastic Matins draws on Solesmes books, not the Nocturnale", () => {
+    const m = getMatins({ feast: { id: "01-01" }, rite: "monasticum" });
+    const all = m.nocturns.flatMap((n) => [...n.responsories, ...n.antiphons]);
+    assert.ok(all.length > 0);
+    for (const c of all) {
+      assert.ok(c.gabc.length > 0, `${c.incipit} should have GABC`);
+      assert.notEqual(c.source.code, "nr");
+    }
+  });
+
+  test("a feast the monastic table cannot fill returns null, not an empty shell", () => {
+    assert.equal(getMatins({ feast: { id: "99-99" }, rite: "monasticum" }), null);
   });
 });
