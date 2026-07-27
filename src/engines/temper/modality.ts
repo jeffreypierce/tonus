@@ -5,6 +5,7 @@
 // whole chant, modulation detection to read each phrase. A pure function of a
 // pitch-class distribution (and, optionally, the chant's opening note).
 import { MODES } from "./modes.js";
+import type { RecitingNote } from "./modes.js";
 
 export interface ModalAffinity {
   mode: number;
@@ -19,6 +20,36 @@ const FINALIS_WEIGHT = 3;
 const TENOR_WEIGHT = 2;
 const REGULAR_MOD_WEIGHT = 1;
 const CONCEDED_MOD_WEIGHT = 0.5;
+
+// `ModeData.recitingNotes` (see data/modes.ts) carries more than the
+// principal tenor for several modes — auxiliary/secondary/pseudo/rare
+// reciting notes, sourced from the Gregorian Modes Degree Summary Tables.
+// A first attempt at wiring this in weighted every rank into degreeWeight
+// unconditionally (via the same max-of-roles `set` used below) and broke
+// tests/modality.test.mjs's authentic/plagal initials-bonus case for modes
+// 7/8: that test relies on an exact baseline tie between the pair, broken
+// only by the initials bonus. Mode 7's new auxiliary pc 0 partly overlapped
+// a pc it already carried as a conceded modulation degree (weight 0.5),
+// and "same rank, same weight" silently PROMOTED that existing pc to the
+// higher auxiliary weight — mode 8 had no equivalent already-weighted pc to
+// promote, so the promotion alone tipped the tie before the initials bonus
+// got a chance to run.
+//
+// The fix below is additive-only: a non-principal reciting note contributes
+// weight ONLY to a pc that isn't already weighted by the finalis, the tenor,
+// or a modulation degree (see the second loop after `set(data.final, ...)`).
+// It never promotes an existing weight. That keeps the 7/8 tie intact — both
+// modes pick up their (as it happens, shared) new auxiliary pc 11 identically
+// — while still letting genuinely new degrees (e.g. mode 4's pseudo-tenor at
+// pc 5, mode 5's rare recitation on its own final) contribute real signal.
+// `principal` entries are skipped outright: by construction they already
+// coincide with `data.tenor` or `data.final` and would always be a no-op.
+const RECITING_WEIGHT: Record<Exclude<RecitingNote["rank"], "principal">, number> = {
+  auxiliary: 1.2,
+  secondary: 0.8,
+  pseudo: 0.5,
+  rare: 0.3,
+};
 
 // A chant's opening note is a modal signal: each mode lists its valid initials
 // in rank order, most characteristic first (Rockstro's Grove ordering
@@ -77,6 +108,14 @@ export function computeModalAffinity(
     for (const pc of data.modulations.regular) set(pc % 12, REGULAR_MOD_WEIGHT);
     set(data.tenor, TENOR_WEIGHT);
     set(data.final, FINALIS_WEIGHT);
+    // Additive-only pass: see the comment on RECITING_WEIGHT above for why
+    // this fills in gaps rather than using `set` (which would promote an
+    // existing weight, not just add a new one).
+    for (const rn of data.recitingNotes) {
+      if (rn.rank === "principal") continue;
+      const pc = rn.pc % 12;
+      if (!degreeWeight.has(pc)) degreeWeight.set(pc, RECITING_WEIGHT[rn.rank]);
+    }
 
     let score = 0;
     for (const [pc, w] of degreeWeight) score += (pcDistribution[pc] ?? 0) * w;

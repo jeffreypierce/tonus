@@ -75,6 +75,13 @@
   Orality and notation.
 - `saulnier-guide` — **Saulnier, Daniel. _Gregorian Chant: A Guide_. CMAA
   edition.** Chant introduction.
+- `saulnier-modes` — **Saulnier, Daniel. _The Gregorian Modes_. Solesmes:
+  Éditions de Solesmes.** Two parts: tables from Dom Jean Claire's research
+  (Degree Summary Tables per mode — reciting notes, cadence types, ornament
+  relationships), then a mode-by-mode Octoechos study drawing on Fr. Jean
+  Jeanneteau's work on modal ethos. Source for `RecitingNote` in
+  `temper/data/modes.ts`. Only partially in hand (7 of 8 Degree Summary
+  Tables photographed; mode III has prose only, no table).
 - `pierik-spirit` — **Pierik, Marie. _The Spirit of Gregorian Chant_. Boston:
   Bruce Humphries, 1939; and _Gregorian Chant Analyzed and Studied_. St.
   Meinrad, IN: Grail, 1951.** Chant interpretation.

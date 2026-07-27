@@ -40,6 +40,32 @@ export interface CadenceFigure {
   steps: number[];   // diatonic steps relative to the final; resolution (0) last
 }
 
+// A mode's reciting notes, ranked. `tenor` (below) names the single principal
+// one for backward compatibility, but real chant practice recognizes more than
+// one: some modes recite on a second degree for certain pieces (mode IV's
+// e/g/a), on an auxiliary alongside the principal (modes VI–VIII), or even on
+// the final itself (mode V, mode VIII's g) [biblio: saulnier-modes, Degree
+// Summary Tables, per-mode]. `label` carries the source's own wording where it
+// doesn't collapse cleanly into a rank, so a mistaken rank call is visible and
+// checkable against the book rather than silently asserted.
+//
+// v1 is deliberately narrow: only reciting notes the tables/prose name
+// explicitly (principal/auxiliary, plus a few prose-confirmed "note of
+// composition" mentions) are included. The tables also grade several more
+// degrees as "important," "rare," or give per-degree cadence types
+// (final/intermediate/suspensive) — real information, left out here to avoid
+// asserting low-confidence transcription as data. That's a separate,
+// not-yet-built layer (see working/plan-modes-v2.md, Phases 2–3).
+//
+// Mode III has no photographed Degree Summary Table (prose only) — its single
+// entry is the historically-shifted practical tenor (see the mode's own
+// comment), not a transcription.
+export interface RecitingNote {
+  pc: number;
+  rank: "principal" | "auxiliary" | "secondary" | "pseudo" | "rare";
+  label?: string;
+}
+
 export interface ModeData {
   mode: number;
   nomen: string;      // Latin: "Protus Authenticus", etc.
@@ -47,7 +73,8 @@ export interface ModeData {
   maneria: string;    // "Protus" | "Deuterus" | "Tritus" | "Tetrardus"
   type: "authentic" | "plagal";
   final: number;      // finalis pitch class (C=0)
-  tenor: number;      // reciting tone pitch class
+  tenor: number;      // reciting tone pitch class — the principal entry of `recitingNotes`, kept as a plain duplicate (not derived) per tonus's plain-data-table convention; the two must stay in sync (guarded by tests/reciting-notes.test.mjs)
+  recitingNotes: RecitingNote[]; // ranked reciting notes — see the type's own comment
   scalePcs: number[]; // 7 diatonic pitch classes
   hexachords: ("durum" | "naturale" | "molle")[];
   profile: ModeProfile;
@@ -89,6 +116,7 @@ export const MODES = new Map<number, ModeData>([
       type: "authentic",
       final: 2,
       tenor: 9,
+      recitingNotes: [{ pc: 9, rank: "principal", label: "psalmodic tenor" }],
       scalePcs: [2, 4, 5, 7, 9, 11, 0],
       hexachords: ["naturale"],
       profile: { mood: "serious", ethos: "gravis", phrasing: "lyrical", melodic: "falling", tendency: "melismatic" },
@@ -113,6 +141,11 @@ export const MODES = new Map<number, ModeData>([
       type: "plagal",
       final: 2,
       tenor: 5,
+      recitingNotes: [
+        { pc: 5, rank: "principal", label: "official dominant, psalmodic tenor, strong degree" },
+        { pc: 2, rank: "principal", label: "final; also a principal note of composition per prose" },
+        { pc: 7, rank: "secondary", label: "important; prose also names it a note of composition" },
+      ],
       scalePcs: [2, 4, 5, 7, 9, 11, 0],
       hexachords: ["naturale"],
       profile: { mood: "sad", ethos: "tristis", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
@@ -140,6 +173,12 @@ export const MODES = new Map<number, ModeData>([
       type: "authentic",
       final: 4,
       tenor: 0,
+      // No Degree Summary Table exists for mode III (prose only, see
+      // BIBLIOGRAPHY.md [biblio: saulnier-modes]): "the primitive psalmodic
+      // tenor is b, but in numerous medieval manuscripts from northern Europe
+      // and in the modern editions, this tenor is raised to c." tonus already
+      // stored the raised/practical value; this just cites the confirmation.
+      recitingNotes: [{ pc: 0, rank: "principal", label: "historically raised from the primitive tenor b" }],
       scalePcs: [4, 5, 7, 9, 11, 0, 2],
       hexachords: ["naturale"],
       profile: { mood: "mystic", ethos: "mysticus", phrasing: "solemn", melodic: "falling", tendency: "melismatic" },
@@ -163,6 +202,12 @@ export const MODES = new Map<number, ModeData>([
       type: "plagal",
       final: 4,
       tenor: 9,
+      recitingNotes: [
+        { pc: 9, rank: "principal", label: "psalmodic tenor" },
+        { pc: 7, rank: "secondary", label: "note of composition for Responsory verses (deuterus-tritus)" },
+        { pc: 4, rank: "secondary", label: "final; also usable as a recitation note per prose" },
+        { pc: 5, rank: "pseudo", label: "pseudo-tenor; strong importance but not a true note of composition per prose" },
+      ],
       scalePcs: [4, 5, 7, 9, 11, 0, 2],
       hexachords: ["naturale"],
       profile: { mood: "harmonious", ethos: "harmonicus", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
@@ -186,6 +231,10 @@ export const MODES = new Map<number, ModeData>([
       type: "authentic",
       final: 5,
       tenor: 0,
+      recitingNotes: [
+        { pc: 0, rank: "principal", label: "official dominant, psalmodic tenor" },
+        { pc: 5, rank: "rare", label: "final; sometimes used as a recitation note" },
+      ],
       scalePcs: [5, 7, 9, 11, 0, 2, 4],
       hexachords: ["molle"],
       profile: { mood: "happy", ethos: "laetus", phrasing: "solemn", melodic: "rising", tendency: "melismatic" },
@@ -209,6 +258,11 @@ export const MODES = new Map<number, ModeData>([
       type: "plagal",
       final: 5,
       tenor: 9,
+      // Prose: "Mode VI possesses only one note of composition: f, the final
+      // of the pieces. For the psalmody, it resorts to a, even if it has been
+      // infrequently heard in the piece." So the reciting note is real but
+      // structurally secondary — hence "auxiliary," not "principal."
+      recitingNotes: [{ pc: 9, rank: "auxiliary", label: "psalmodic tenor; the mode's only note of composition is the final f, itself not used for recitation" }],
       scalePcs: [5, 7, 9, 11, 0, 2, 4],
       hexachords: ["molle"],
       profile: { mood: "devout", ethos: "devotus", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
@@ -232,6 +286,11 @@ export const MODES = new Map<number, ModeData>([
       type: "authentic",
       final: 7,
       tenor: 2,
+      recitingNotes: [
+        { pc: 2, rank: "principal", label: "psalmodic tenor" },
+        { pc: 0, rank: "auxiliary", label: "strong degree" },
+        { pc: 11, rank: "auxiliary" },
+      ],
       scalePcs: [7, 9, 11, 0, 2, 4, 5],
       hexachords: ["durum"],
       profile: { mood: "angelical", ethos: "angelicus", phrasing: "solemn", melodic: "rising", tendency: "melismatic" },
@@ -256,6 +315,16 @@ export const MODES = new Map<number, ModeData>([
       type: "plagal",
       final: 7,
       tenor: 0,
+      // Prose: "Mode VIII has two upper notes of recitation: c (psalmodic
+      // tenor) and b. The lower note of recitation, g, is also the final of
+      // the pieces. B and g are the notes of recitation for the verses of the
+      // Responsories." — the final doubling as a low reciting note is a real,
+      // distinct case (see also mode V's f).
+      recitingNotes: [
+        { pc: 0, rank: "principal", label: "psalmodic tenor" },
+        { pc: 11, rank: "auxiliary" },
+        { pc: 7, rank: "secondary", label: "final; the mode's lower recitation note, used for Responsory verses alongside b" },
+      ],
       scalePcs: [7, 9, 11, 0, 2, 4, 5],
       hexachords: ["durum"],
       profile: { mood: "perfect", ethos: "perfectus", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
