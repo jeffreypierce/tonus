@@ -1,6 +1,6 @@
 // kyriale.ts — Mass ordinary (kyriale) chants
 // Extracted from GregoBase (GR source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-27T15:27:07.226Z
+// Generated: 2026-07-27T15:32:52.226Z
 // Entries: 120
 //
 // Mass numbers are derived from GR page references (e.g. page "18*" = Mass XVIII).

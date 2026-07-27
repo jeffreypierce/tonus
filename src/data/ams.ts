@@ -7,7 +7,7 @@ import type { ChantData } from "./gr.js";
 export const AMS_SOURCE: Chant["source"] = {
   book: "Antiphonale Monasticum Solesmense",
   fullTitle: null,
-  edition: null,
+  edition: "Proprium Sanctorum — offices proper to the Solesmes congregation",
   year: 1935,
   editor: "Solesmes",
   scanSource: "Scan courtesy of Dominique Crochu",
