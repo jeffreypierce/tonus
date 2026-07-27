@@ -6,6 +6,7 @@ import type {
 } from "./types.js";
 import { OFFICE_LABELS, MODE_LABELS } from "./types.js";
 import { CORPUS_OVERLAP } from "../../data/corpus-overlap.js";
+import { ATTESTATION } from "../../data/attestation.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
@@ -210,6 +211,22 @@ export function getCorpus(code: ChantSource): Corpus {
   return result;
 }
 
+/**
+ * A year → the latest century wholly attested by it, on the same scale as
+ * `Attestation.century` (10 = the 900s).
+ *
+ * CANTUS dates a manuscript only to its century, so `before: 1098` cannot mean
+ * "witnessed before 1098" — a book dated "11th century" may have been written
+ * in 1099. Admitting the whole 11th century would let a caller asking for 1098
+ * receive chants first written down after it, which is the one thing this
+ * filter exists to prevent. So a year admits only centuries that CLOSED before
+ * it: 1098 → 10 (through the 900s), 1100 → 11. Callers who do want the
+ * containing century can say so precisely with `century`.
+ */
+function centuryOf(year: number): number {
+  return Math.ceil(year / 100) - 1;
+}
+
 function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   if (v === undefined) return undefined;
   return Array.isArray(v) ? v : [v];
@@ -231,6 +248,7 @@ export function resolveChants(ids: string[]): Chant[] {
  */
 const CANTUS_QUERY_KEYS = new Set([
   "id", "gabc", "incipit", "mode", "office", "source", "limit", "offset", "sort",
+  "before", "century", "cursus",
 ]);
 
 export function getChants(query?: CantusQuery): Chant[] {
@@ -252,14 +270,15 @@ export function getChants(query?: CantusQuery): Chant[] {
 
   if (query.gabc) return chantFromGABC(query);
 
+  // `id` is a fast path, but it must still honour the other filters — returning
+  // a chant that fails them makes `cantus({ source, id })` silently ignore the
+  // source and report an id from any book as belonging to that one.
   const ids = toArray(query.id);
+  let out: readonly Chant[] = CORPUS;
   if (ids) {
     const map = byId();
-    const found = ids.map((id) => map.get(id)).filter((c): c is Chant => !!c);
-    return found;
+    out = ids.map((id) => map.get(id)).filter((c): c is Chant => !!c);
   }
-
-  let out = CORPUS;
 
   const sources = toArray(query.source);
   if (sources) {
@@ -282,6 +301,36 @@ export function getChants(query?: CantusQuery): Chant[] {
   if (query.incipit) {
     const needle = query.incipit.toLowerCase();
     out = out.filter((c) => c.incipit.toLowerCase().includes(needle));
+  }
+
+  // ── Attestation: the repertoire AS OF a date ───────────────────────────────
+  // The analogue of `festum({ before })` over the calendar. The corpus ships
+  // 20th-century Solesmes editions, so the BOOK dates nothing; CANTUS's
+  // manuscript index does. `century` is the earliest surviving witness — a
+  // terminus ante quem, so this answers "what is ATTESTED by then", never "what
+  // existed then". A chant CANTUS cannot date is excluded rather than assumed
+  // old: the filter states what is evidenced, and silence is not evidence.
+  if (query.century != null || query.before != null) {
+    const cutoff = query.century ?? centuryOf(query.before!);
+    if (!Number.isFinite(cutoff)) {
+      throw new Error(
+        "cantus: century must be a century number (10 = the 900s), before a year — " +
+        "e.g. cantus({ before: 1098 })",
+      );
+    }
+    out = out.filter((c) => {
+      const a = ATTESTATION[c.id];
+      return a != null && a.century <= cutoff;
+    });
+  }
+
+  if (query.cursus) {
+    // `both` satisfies either ask: a chant in monastic AND secular books is
+    // genuinely part of both repertories.
+    out = out.filter((c) => {
+      const a = ATTESTATION[c.id];
+      return a?.cursus === query.cursus || a?.cursus === "both";
+    });
   }
 
   const sort = query.sort ?? "incipit";

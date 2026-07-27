@@ -165,6 +165,20 @@ export interface CantusQuery {
   mode?: number | string | (number | string)[];
   office?: OfficeCode | OfficeCode[];
   source?: ChantSource | ChantSource[];
+  /**
+   * Only chants ATTESTED by this year — the repertoire as of a date, the
+   * analogue of `festum({ before })`. `before: 1098` keeps what a manuscript of
+   * the 11th century or earlier already holds.
+   *
+   * This is evidence, not existence: the date comes from CANTUS's manuscript
+   * index, so it is a terminus ante quem. A chant with no dated witness is
+   * excluded rather than assumed old — silence is not evidence of age.
+   */
+  before?: number;
+  /** As `before`, but stated directly as a century (10 = the 900s). */
+  century?: number;
+  /** Only chants transmitted by this cursus; `both` always qualifies. */
+  cursus?: "monastic" | "secular";
   limit?: number;
   offset?: number;
   sort?: "incipit" | "mode" | "id";
