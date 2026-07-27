@@ -1,0 +1,771 @@
+{
+  "kind": "commune-office",
+  "map": {
+    "C1": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:8767",
+          "gregobase:8768",
+          "gregobase:8769",
+          "gregobase:8467",
+          "gregobase:8638"
+        ],
+        "hymnus": [
+          "gregobase:12058"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:8635",
+          "nocturnale:APEXN1A1",
+          "gregobase:16899",
+          "nocturnale:APEXN1A3",
+          "nocturnale:APEXN2A1",
+          "nocturnale:APEXN2A3",
+          "nocturnale:APEXN3A1",
+          "nocturnale:APEXN3A2",
+          "nocturnale:APEXN3A3",
+          "gregobase:8465",
+          "gregobase:10475"
+        ],
+        "invitatorium": [
+          "gregobase:16675"
+        ],
+        "responsories": [
+          "nocturnale:APEXN1R1",
+          "gregobase:7876",
+          "nocturnale:APEXN1R3",
+          "nocturnale:APEXN2R1",
+          "nocturnale:APEXN2R2",
+          "nocturnale:APEXN2R3",
+          "nocturnale:APEXN3R2"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:8767",
+          "gregobase:8768",
+          "gregobase:8769",
+          "gregobase:8467",
+          "gregobase:8638"
+        ],
+        "hymnus": [
+          "gregobase:12058"
+        ]
+      }
+    },
+    "C10": {
+      "matutinum": {
+        "antiphons": [
+          "gregobase:7970",
+          "gregobase:2290",
+          "gregobase:10432"
+        ],
+        "invitatorium": [
+          "gregobase:7474"
+        ],
+        "responsories": [
+          "gregobase:10543"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:11220",
+          "gregobase:8933",
+          "gregobase:11247",
+          "gregobase:8794",
+          "gregobase:8795",
+          "nocturnale:MUNXN1A2",
+          "gregobase:7967",
+          "nocturnale:MUXXN1A1",
+          "nocturnale:MUVXN1A2",
+          "nocturnale:MUXXN1A3",
+          "gregobase:3208",
+          "nocturnale:MUXXN2A2",
+          "nocturnale:MUXXN2A3",
+          "gregobase:18160",
+          "nocturnale:MUXXN3A2",
+          "nocturnale:MUXXN3A3"
+        ],
+        "hymnus": [
+          "gregobase:2885"
+        ]
+      }
+    },
+    "C11": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:11220",
+          "gregobase:8933",
+          "gregobase:11247",
+          "gregobase:8794",
+          "gregobase:8795",
+          "nocturnale:MUNXN1A2",
+          "gregobase:7967",
+          "nocturnale:MUXXN1A1",
+          "nocturnale:MUVXN1A2",
+          "nocturnale:MUXXN1A3",
+          "gregobase:3208",
+          "nocturnale:MUXXN2A2",
+          "nocturnale:MUXXN2A3",
+          "gregobase:18160",
+          "nocturnale:MUXXN3A2",
+          "nocturnale:MUXXN3A3"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:18090",
+          "gregobase:7963",
+          "nocturnale:CBMVN1A2",
+          "nocturnale:MUVXN1A2",
+          "nocturnale:CBMVN2A3",
+          "nocturnale:CBMVN3A1",
+          "nocturnale:CBMVN3A2",
+          "nocturnale:CBMVN3A3a",
+          "nocturnale:MUXXN1A1",
+          "nocturnale:MUXXN1A3",
+          "gregobase:3208",
+          "nocturnale:MUXXN2A2",
+          "nocturnale:MUXXN2A3",
+          "gregobase:18160",
+          "nocturnale:MUXXN3A2",
+          "nocturnale:MUXXN3A3",
+          "gregobase:13018",
+          "gregobase:4414"
+        ],
+        "invitatorium": [
+          "nocturnale:CBMVI"
+        ],
+        "responsories": [
+          "gregobase:10543",
+          "nocturnale:0325N3R1",
+          "nocturnale:CBMVN2R1",
+          "gregobase:8154"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:11220",
+          "gregobase:8933",
+          "gregobase:11247",
+          "gregobase:8794",
+          "gregobase:8795",
+          "nocturnale:MUNXN1A2",
+          "gregobase:7967",
+          "nocturnale:MUXXN1A1",
+          "nocturnale:MUVXN1A2",
+          "nocturnale:MUXXN1A3",
+          "gregobase:3208",
+          "nocturnale:MUXXN2A2",
+          "nocturnale:MUXXN2A3",
+          "gregobase:18160",
+          "nocturnale:MUXXN3A2",
+          "nocturnale:MUXXN3A3"
+        ],
+        "hymnus": [
+          "gregobase:2885"
+        ]
+      }
+    },
+    "C12": {
+      "matutinum": {
+        "antiphons": [
+          "gregobase:7970",
+          "gregobase:2290",
+          "gregobase:10432"
+        ],
+        "invitatorium": [
+          "gregobase:7474"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:8931",
+          "gregobase:8932",
+          "gregobase:8933",
+          "gregobase:8934",
+          "gregobase:8935"
+        ]
+      }
+    },
+    "C12A": {
+      "matutinum": {
+        "invitatorium": [
+          "gregobase:7474"
+        ],
+        "antiphons": [
+          "gregobase:7963",
+          "nocturnale:CBMVN1A2",
+          "nocturnale:MUVXN1A2",
+          "nocturnale:CBMVN2A3",
+          "nocturnale:CBMVN3A1",
+          "nocturnale:CBMVN3A2",
+          "nocturnale:CBMVN3A3a",
+          "nocturnale:MUXXN1A1",
+          "nocturnale:MUXXN1A3",
+          "gregobase:3208",
+          "nocturnale:MUXXN2A2",
+          "nocturnale:MUXXN2A3",
+          "gregobase:18160",
+          "nocturnale:MUXXN3A2",
+          "nocturnale:MUXXN3A3",
+          "gregobase:4039"
+        ]
+      }
+    },
+    "C1p": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:10104",
+          "gregobase:10105",
+          "gregobase:10106",
+          "gregobase:10107",
+          "gregobase:10108"
+        ],
+        "hymnus": [
+          "gregobase:12675"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:12701",
+          "nocturnale:APTPN2A",
+          "gregobase:11765",
+          "gregobase:10111"
+        ],
+        "invitatorium": [
+          "gregobase:16675"
+        ],
+        "hymnus": [
+          "gregobase:12675"
+        ],
+        "responsories": [
+          "nocturnale:APTPN1R1",
+          "nocturnale:APTPN1R2",
+          "nocturnale:APTPN1R3",
+          "gregobase:12701",
+          "nocturnale:APTPN2R2",
+          "nocturnale:APTPN2R3",
+          "nocturnale:APTPN3R1",
+          "nocturnale:APTPN3R2"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:10104",
+          "gregobase:10105",
+          "gregobase:10106",
+          "gregobase:10107",
+          "gregobase:10108"
+        ],
+        "hymnus": [
+          "gregobase:11809"
+        ]
+      }
+    },
+    "C2": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:8532",
+          "gregobase:4202",
+          "gregobase:8539",
+          "gregobase:11973",
+          "gregobase:8780"
+        ],
+        "hymnus": [
+          "gregobase:10101"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:11741",
+          "gregobase:17966",
+          "gregobase:17967",
+          "nocturnale:UMEXN1A3",
+          "nocturnale:UMEXN2A1",
+          "nocturnale:UMEXN2A2",
+          "nocturnale:UMEXN2A3",
+          "nocturnale:UMEXN3A1",
+          "gregobase:2374",
+          "nocturnale:UMEXN3A3",
+          "gregobase:8779",
+          "gregobase:8534"
+        ],
+        "invitatorium": [
+          "gregobase:10558"
+        ],
+        "hymnus": [
+          "gregobase:10101"
+        ],
+        "responsories": [
+          "gregobase:11741",
+          "gregobase:7503",
+          "nocturnale:CONPN1R3",
+          "nocturnale:UMEXN2R1",
+          "nocturnale:UMEXN2R2",
+          "nocturnale:UMEXN2R3",
+          "nocturnale:UMEXN3R1",
+          "nocturnale:UMEXN3R2a"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:8532",
+          "gregobase:4202",
+          "gregobase:8539",
+          "gregobase:11973",
+          "gregobase:8780"
+        ],
+        "hymnus": [
+          "gregobase:12434"
+        ]
+      }
+    },
+    "C2p": {
+      "vesperae": {
+        "hymnus": [
+          "gregobase:10101"
+        ]
+      },
+      "matutinum": {
+        "invitatorium": [
+          "nocturnale:MRTPI"
+        ],
+        "hymnus": [
+          "gregobase:10101"
+        ],
+        "antiphons": [
+          "nocturnale:APTPN2A",
+          "gregobase:12701"
+        ],
+        "responsories": [
+          "nocturnale:MRTPN2R2",
+          "gregobase:11765"
+        ]
+      },
+      "laudes": {
+        "hymnus": [
+          "gregobase:12434"
+        ]
+      }
+    },
+    "C3": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:4231",
+          "gregobase:8774",
+          "gregobase:8776",
+          "gregobase:13045"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:4230",
+          "nocturnale:PMEXN1A1",
+          "nocturnale:PMEXN1A2",
+          "nocturnale:PMEXN1A3",
+          "gregobase:8835",
+          "gregobase:16189",
+          "nocturnale:PMEXN2A3",
+          "nocturnale:PMEXN3A1",
+          "gregobase:16138",
+          "gregobase:18273",
+          "gregobase:8529",
+          "gregobase:8778"
+        ],
+        "invitatorium": [
+          "gregobase:10558"
+        ],
+        "responsories": [
+          "gregobase:16702",
+          "nocturnale:PMEXN1R2",
+          "nocturnale:PMEXN1R3",
+          "nocturnale:PMEXN2R1",
+          "nocturnale:PMEXN2R3",
+          "nocturnale:PMEXN3R1"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:4231",
+          "gregobase:8774",
+          "gregobase:8776",
+          "gregobase:13045"
+        ],
+        "hymnus": [
+          "gregobase:10560"
+        ]
+      }
+    },
+    "C3p": {
+      "vesperae": {
+        "hymnus": [
+          "gregobase:10560"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "nocturnale:APTPN2A",
+          "gregobase:12701"
+        ]
+      },
+      "laudes": {
+        "hymnus": [
+          "gregobase:10560"
+        ]
+      }
+    },
+    "C4": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:1914",
+          "gregobase:7826",
+          "gregobase:8786",
+          "gregobase:17857",
+          "gregobase:8636"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:18213",
+          "nocturnale:COPON1A1",
+          "nocturnale:COPON1A2",
+          "nocturnale:COPON1A3",
+          "nocturnale:COPON2A1",
+          "nocturnale:COPON2A2",
+          "nocturnale:COPON2A3",
+          "nocturnale:COPON3A1",
+          "nocturnale:COPON3A2",
+          "gregobase:2633",
+          "gregobase:11839",
+          "gregobase:18214"
+        ],
+        "invitatorium": [
+          "nocturnale:COPOIb"
+        ],
+        "responsories": [
+          "gregobase:18139",
+          "gregobase:3026",
+          "nocturnale:COPON2R1",
+          "nocturnale:COPON2R2",
+          "nocturnale:COPON2R3",
+          "gregobase:18214",
+          "gregobase:8789"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:1914",
+          "gregobase:7826",
+          "gregobase:8786",
+          "gregobase:17857",
+          "gregobase:8636"
+        ],
+        "hymnus": [
+          "gregobase:12971"
+        ]
+      }
+    },
+    "C4a": {
+      "matutinum": {
+        "antiphons": [
+          "gregobase:11690"
+        ],
+        "responsories": [
+          "gregobase:233"
+        ]
+      }
+    },
+    "C4b-1": {
+      "matutinum": {
+        "antiphons": [
+          "gregobase:17958"
+        ]
+      }
+    },
+    "C4b": {
+      "matutinum": {
+        "antiphons": [
+          "gregobase:17958"
+        ]
+      }
+    },
+    "C5": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:8634",
+          "gregobase:8798",
+          "gregobase:8577",
+          "gregobase:8575",
+          "gregobase:8636"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:8506",
+          "gregobase:18139",
+          "gregobase:8510"
+        ],
+        "responsories": [
+          "gregobase:7503",
+          "nocturnale:CONPN1R3",
+          "nocturnale:UMEXN2R1",
+          "gregobase:18214",
+          "nocturnale:CONPN2R3",
+          "nocturnale:CONPN3R1"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:8634",
+          "gregobase:8798",
+          "gregobase:8577",
+          "gregobase:8575",
+          "gregobase:8636"
+        ],
+        "hymnus": [
+          "gregobase:10073"
+        ]
+      }
+    },
+    "C5a": {
+      "matutinum": {
+        "antiphons": [
+          "gregobase:11690"
+        ],
+        "responsories": [
+          "gregobase:233"
+        ]
+      }
+    },
+    "C6": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:8792",
+          "gregobase:7825",
+          "gregobase:2836",
+          "gregobase:8794",
+          "gregobase:8795"
+        ],
+        "hymnus": [
+          "gregobase:7253"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "nocturnale:MUXXN3A3",
+          "nocturnale:MUXXN1A1",
+          "nocturnale:MUVXN1A2",
+          "nocturnale:MUXXN1A3",
+          "gregobase:3208",
+          "nocturnale:MUXXN2A2",
+          "nocturnale:MUXXN2A3",
+          "gregobase:18160",
+          "nocturnale:MUXXN3A2",
+          "gregobase:4244"
+        ],
+        "invitatorium": [
+          "nocturnale:MUVXIb"
+        ],
+        "responsories": [
+          "nocturnale:MUXXN3A3",
+          "gregobase:2103",
+          "gregobase:3208",
+          "nocturnale:MUXXN2R1",
+          "nocturnale:MUVXN2R3",
+          "nocturnale:MUVXN3R1"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:8792",
+          "gregobase:7825",
+          "gregobase:2836",
+          "gregobase:8794",
+          "gregobase:8795"
+        ],
+        "hymnus": [
+          "gregobase:7253"
+        ]
+      }
+    },
+    "C6a": {
+      "matutinum": {
+        "responsories": [
+          "nocturnale:MUXNN1R1"
+        ]
+      }
+    },
+    "C6b": {
+      "matutinum": {
+        "antiphons": [
+          "gregobase:8629"
+        ]
+      }
+    },
+    "C7": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:11220",
+          "gregobase:8933",
+          "gregobase:11247",
+          "gregobase:8794",
+          "gregobase:8795"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:4244",
+          "nocturnale:MUXXN1A1",
+          "nocturnale:MUVXN1A2",
+          "nocturnale:MUXXN1A3",
+          "gregobase:3208",
+          "nocturnale:MUXXN2A2",
+          "nocturnale:MUXXN2A3",
+          "gregobase:18160",
+          "nocturnale:MUXXN3A2",
+          "nocturnale:MUXXN3A3",
+          "nocturnale:MUNXN1A2",
+          "gregobase:11248",
+          "gregobase:8589"
+        ],
+        "invitatorium": [
+          "nocturnale:MUNXIa"
+        ],
+        "responsories": [
+          "nocturnale:MUNXN3R1"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:11220",
+          "gregobase:8933",
+          "gregobase:11247",
+          "gregobase:8794",
+          "gregobase:8795"
+        ]
+      }
+    },
+    "C7a": {
+      "matutinum": {
+        "responsories": [
+          "nocturnale:MUXNN1R1"
+        ]
+      }
+    },
+    "C7b": {
+      "matutinum": {
+        "antiphons": [
+          "gregobase:18211"
+        ],
+        "invitatorium": [
+          "nocturnale:MUNXIa"
+        ]
+      }
+    },
+    "C8": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:8957",
+          "gregobase:8958",
+          "gregobase:8959",
+          "gregobase:8504",
+          "gregobase:8960"
+        ],
+        "hymnus": [
+          "gregobase:2200"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:8956",
+          "nocturnale:CDEDN1A1",
+          "nocturnale:CDEDN1A2",
+          "nocturnale:CDEDN1A3",
+          "nocturnale:CDEDN2A1",
+          "nocturnale:CDEDN2A2",
+          "nocturnale:CDEDN2A3",
+          "nocturnale:CDEDN3A1",
+          "nocturnale:CDEDN3A2",
+          "nocturnale:CDEDN3A3",
+          "gregobase:2526",
+          "gregobase:8963"
+        ],
+        "hymnus": [
+          "gregobase:2200"
+        ],
+        "responsories": [
+          "nocturnale:CDEDN1R1",
+          "gregobase:4168",
+          "nocturnale:CDEDN1R3",
+          "nocturnale:CDEDN2R1",
+          "gregobase:8963",
+          "nocturnale:CDEDN2R3",
+          "nocturnale:CDEDN3R1",
+          "gregobase:8960"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:8957",
+          "gregobase:8958",
+          "gregobase:8959",
+          "gregobase:8504",
+          "gregobase:8960"
+        ],
+        "hymnus": [
+          "gregobase:2948"
+        ]
+      }
+    },
+    "C9": {
+      "vesperae": {
+        "antiphons": [
+          "gregobase:9098",
+          "gregobase:9100",
+          "gregobase:9101",
+          "gregobase:9102"
+        ]
+      },
+      "matutinum": {
+        "antiphons": [
+          "gregobase:9103",
+          "gregobase:2605",
+          "gregobase:2189",
+          "gregobase:2531",
+          "gregobase:2938",
+          "gregobase:2442",
+          "gregobase:1870",
+          "gregobase:2241",
+          "gregobase:18060",
+          "gregobase:2638",
+          "gregobase:9097"
+        ],
+        "invitatorium": [
+          "nocturnale:ODEFI"
+        ],
+        "responsories": [
+          "gregobase:3185",
+          "gregobase:3105",
+          "gregobase:3051",
+          "gregobase:3082",
+          "gregobase:3136",
+          "gregobase:3150",
+          "gregobase:3171",
+          "gregobase:376",
+          "gregobase:3215"
+        ]
+      },
+      "laudes": {
+        "antiphons": [
+          "gregobase:9093",
+          "gregobase:9094",
+          "gregobase:9095",
+          "gregobase:12668",
+          "gregobase:9096"
+        ]
+      }
+    }
+  }
+}

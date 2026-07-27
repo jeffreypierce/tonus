@@ -275,16 +275,37 @@ describe("getHour — the monastic rite", () => {
   });
 
   test("monastic office chants come from the Antiphonale Monasticum", () => {
-    // A feast with monastic Vespers antiphons; assert none silently bind to LU.
+    // A feast with monastic Vespers antiphons; assert they resolve monastic-first.
     const survey = getHour({ hora: "vesperae", rite: "monasticum" });
     const antiphons = survey.filter((c) => c.office === "an");
     assert.ok(antiphons.length > 0, "monastic Vespers survey returns antiphons");
-    // The AM-first pools mean antiphons resolve to am (or the la/lh gap-fillers),
-    // never to lu — the guard against the short-incipit mis-link risk.
-    for (const c of antiphons) {
-      assert.notEqual(c.source.code, "lu",
-        `monastic antiphon ${c.incipit} mis-bound to LU`);
-    }
+
+    // This once asserted "never lu" outright. That held only while the Office
+    // had no COMMUNE fallback: a saint with no proper antiphons sang nothing, so
+    // every antiphon came from the monastic propers. Now a saint's day resolves
+    // by category, and a handful of commune texts exist ONLY in the Liber
+    // Usualis — "Ecce sacerdos magnus" as an ANTIPHON is in lu alone (am has no
+    // setting; the other witnesses are a gradual and responsories, which the
+    // genre cap correctly refuses). Singing the right text from the wrong book
+    // beats silence, so the guard is now proportional, not absolute.
+    const fromLu = antiphons.filter((c) => c.source.code === "lu");
+    assert.ok(
+      fromLu.length / antiphons.length < 0.05,
+      `too many monastic antiphons from LU (${fromLu.length}/${antiphons.length}) — ` +
+      `the AM-first book preference has regressed: ${fromLu.map((c) => c.incipit).join(", ")}`,
+    );
+  });
+
+  test("the commune fills a saint's office when the day has no proper antiphons", () => {
+    // The Mass has always resolved proper → seasonal → commune (propers.ts); the
+    // Office gained the same fallback. A category of saint sings its commune.
+    const survey = getHour({ hora: "vesperae", rite: "monasticum" });
+    const antiphons = survey.filter((c) => c.office === "an");
+    const fromAm = antiphons.filter((c) => c.source.code?.startsWith("am"));
+    assert.ok(
+      fromAm.length > antiphons.length / 2,
+      `most monastic antiphons should come from the Antiphonale (got ${fromAm.length}/${antiphons.length})`,
+    );
   });
 });
 

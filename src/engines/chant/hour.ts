@@ -10,6 +10,8 @@ import type { Feast } from "../cal/types.js";
 import { OFFICE_ROMAN, type OfficeDay } from "../../data/office-roman.js";
 import { OFFICE_MONASTIC } from "../../data/office-monastic.js";
 import { OFFICE_FERIAL } from "../../data/office-ferial.js";
+import { COMMUNE_OFFICE } from "../../data/commune-office.js";
+import { FEAST_COMMUNE } from "../../data/commune.js";
 import {
   COMPLINE_ORDINARY,
   COMPLINE_SEASONAL,
@@ -101,8 +103,8 @@ function primeForFeast(feast: Feast, rite: Rite): Chant[] {
 }
 
 /**
- * The antiphons for an hour, falling back to the FERIAL CYCLE when the day's
- * own proper is empty.
+ * The antiphons for an hour: the day's own proper, else its COMMUNE, else the
+ * FERIAL CYCLE.
  *
  * A monastic weekday in the temporale mostly has no proper antiphons — the
  * office-monastic table has the day but leaves antLaudes/antVespera/antMatutinum
@@ -111,9 +113,19 @@ function primeForFeast(feast: Feast, rite: Rite): Chant[] {
  * ordo, which is why Lauds resolved on 106 of 360 days and essentially never in
  * the temporale.
  *
+ * ── WHY THE COMMUNE COMES BEFORE THE FERIAL CYCLE ───────────────────────────
+ * A saint's day is not a feria. When the rubrics give a saint no proper
+ * antiphons they do not send the choir back to the weekday psalter — they send
+ * it to the saint's CATEGORY: the Commune of one Martyr, of Virgins, of a
+ * Confessor Bishop. The Mass has always resolved this way (propers.ts:
+ * proper → seasonal → commune); the Office simply never had the table. So the
+ * commune is tried first, and the ferial cycle covers what remains — days with
+ * no saint at all, which is exactly what it was mined for.
+ *
  * Monastic only (the ferial cycle we mined is the monastic psalter), and only
  * for a feast carrying a real weekday — the all-days survey path builds a
  * mockFeast with no weekday, where a weekday-keyed lookup would be meaningless.
+ * The commune lookup has no such constraint: it is keyed by feast, not weekday.
  */
 function antiphonsFor(
   proper: readonly (string | null)[] | null | undefined,
@@ -124,7 +136,14 @@ function antiphonsFor(
   // Copy: the OfficeDay arrays are readonly and may hold nulls; resolveChant
   // drops the nulls, resolveChants wants a mutable string[].
   const own = resolveChants([...(proper ?? [])].filter((id): id is string => !!id));
+  // All-or-nothing per hour: a feast with ANY proper antiphon for this hour
+  // sings only those. Topping a short proper set up from the commune would mix
+  // two feasts' chants inside one hour, which no rubric asks for.
   if (own.length) return own;
+
+  const fromCommune = communeAntiphons(feast, hour);
+  if (fromCommune.length) return fromCommune;
+
   if (rite !== "monasticum") return own;
   if (feast.weekday == null || !feast.date) return own;
 
@@ -136,6 +155,28 @@ function antiphonsFor(
   const variant = ferialVariantFor(feast);
   const ids = slot[variant] ?? slot["ferial"];
   return ids ? resolveChants(ids) : own;
+}
+
+/**
+ * The antiphons this feast's COMMUNE appoints for an hour, or empty.
+ *
+ * FEAST_COMMUNE (mined from DO's `[Rule]`/`[Rank]` headers) says which category
+ * a feast belongs to; COMMUNE_OFFICE says what that category sings. Both rites
+ * use it — a commune is a category of saint, not a cursus.
+ */
+function communeAntiphons(feast: Feast, hour: CanonicalHour): Chant[] {
+  const commune = communeByFeast().get(feast.id);
+  if (!commune) return [];
+  const ids = COMMUNE_OFFICE[commune]?.[hour]?.antiphons;
+  return ids?.length ? resolveChants(ids) : [];
+}
+
+let _communeByFeast: Map<string, string> | null = null;
+function communeByFeast(): Map<string, string> {
+  if (!_communeByFeast) {
+    _communeByFeast = new Map(FEAST_COMMUNE.map((f) => [f.feastId, f.commune]));
+  }
+  return _communeByFeast;
 }
 
 /** Which ferial variant a day draws: the season's, else the plain cycle. */
