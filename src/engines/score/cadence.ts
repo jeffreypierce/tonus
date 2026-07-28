@@ -12,13 +12,12 @@
 //
 // Two catalogues serve two claims. ModeData.cadences (tradita — the treatises'
 // per-mode figures) names the `formula`; CADENTIAE (inventa — the corpus tally)
-// names the `familia`/`adventus` pair: the tail's interval shape (the gesture)
-// and where it lands relative to the chant final (the function). The corpus key
+// is joined by the `signature`: the tail's interval shape (the gesture) and
+// where it lands relative to the chant final (the function). The corpus key
 // is computed exactly as the mining did — last <=4 notes, semitone intervals,
 // arrival octave-reduced to [-5..+6] — so every classification joins the table.
 import type { Phrase } from "./types.js";
 import type { ModeData, CadenceFigure } from "../temper/data/modes.js";
-import { CADENTIAE, type CadentiaFamilia } from "../../data/cadentiae.js";
 
 export type CadenceTarget = "finalis" | "tenor" | "other";
 export type CadenceApproach = "descending" | "ascending" | "unison";
@@ -54,8 +53,6 @@ export interface Cadence {
    * CADENTIAE), or null when the phrase ends on a single note (no intervals).
    */
   signature: string | null;
-  /** Draft Latin binomial of the matched CADENTIAE family, or null. */
-  familia: string | null;
   /**
    * The arrival case, Latin: "in finalem", "in tenorem" (when the arrival
    * degree is the mode's tenor), "in tertiam", "in subfinalem", …
@@ -209,15 +206,6 @@ function bestFigure(
 // span out of the (longer) formula window.
 const TAIL = 4;
 
-let familiaIndex: Map<string, CadentiaFamilia> | null = null;
-/** CADENTIAE keyed by "shape @arrival", built once on first use. */
-function familiaByKey(): Map<string, CadentiaFamilia> {
-  if (!familiaIndex) {
-    familiaIndex = new Map(CADENTIAE.map((f) => [f.key, f]));
-  }
-  return familiaIndex;
-}
-
 /** Octave-reduce a semitone offset to [-5..+6], exactly as the mining did. */
 function reduceArrival(semitones: number): number {
   let a = semitones % 12;
@@ -310,8 +298,6 @@ export function detectCadences(
         : 0;
     const signature =
       shape.length > 0 ? `${shape.join(",")} @${arrival}` : null;
-    const familia =
-      signature != null ? (familiaByKey().get(signature)?.familia ?? null) : null;
     const adventus =
       arrival !== 0 && arrival === tenorArrival
         ? "in tenorem"
@@ -328,7 +314,6 @@ export function detectCadences(
       confidence: Math.round(confidence * 100) / 100,
       notes: window.map((w) => [pi, w.syllableIndex, w.noteIndex]),
       signature,
-      familia,
       adventus,
       shape,
       arrival,

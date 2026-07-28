@@ -536,27 +536,36 @@ export const CREDO_CENTURY: Record<string, MassCentury> = {
   VI: { from: 11, to: 11, printed: "XI. s." },
 };
 
-// ── The era bound ⟨★RULED — Jeffrey, 2026-07-28⟩ ────────────────────────────
-// tonus states ONE hard editorial bound and stands behind it, rather than
-// filtering on evidence it only has for some chants. (An attestation filter
-// built on CANTUS datings was tried and retired the same day: 31% of the corpus
-// is undated and the gap is genre-shaped — 93% of responsories — so a date
-// query answered "what was sung in 1098" by deleting the Night Office.)
+// ── The Kyriale era rule ⟨★RULED — Jeffrey, 2026-07-28⟩ ─────────────────────
+// A LATEST-CENTURY bound on ORDINARY settings, and nothing more. Scope matters
+// here, so it is stated plainly rather than implied:
 //
-// 754 — the Frankish adoption of the Roman rite under Pippin, the origin of the
-// Gregorian synthesis every book in this corpus descends from. NOT a claim that
-// chant began then: Greek-texted ordinary chants (the Carolingian Missa graeca)
-// were sung in the West from the 8th c and survive in a 9th-c Saint-Denis
-// sacramentary, yet Solesmes never printed them, so the corpus holds none. The
-// lower bound describes what THESE BOOKS transmit, not what was sung.
+// This is NOT a corpus-wide era filter. tonus has per-chant dates for the
+// Kyriale and for nothing else — 71 of 2,860 shipped chants, 2.5%. A bound
+// applied beyond that would be filtering 97.5% of the repertory on data that
+// does not exist. An attestation filter covering 69% was tried and retired the
+// same day for exactly this reason (it answered "what was sung in 1098" by
+// deleting the Night Office, because CANTUS does not index responsories), and
+// 2.5% is the stricter version of the same mistake.
 //
-// 1324 — Docta Sanctorum Patrum, John XXII's bull at Avignon condemning the ars
-// nova and insisting the plainchant melodies stay "intact and recognizable as
-// such." The liturgy's own line between the chant tradition and what followed —
-// and it lands on the seam already in the data. Kyriale parts by century:
-// 10th 21 · 11th 17 · 12th 13 · 13th 8 · 14th 2 · 15th 4 · 16th 1.
-export const ERA_FROM = 754;
-export const ERA_TO = 1324;
+// So the corpus's period is set by THE CUT — it ships what the liturgy places —
+// and this rule only keeps the ordinary from reaching for a setting the
+// Kyriale's own editors date to the Renaissance. Within its 2.5% the data is
+// near-complete (66 of 72 mass parts printed) and per-part, which is what makes
+// it safe to act on where CANTUS attestation was not.
+//
+// The cutoff: Docta Sanctorum Patrum, John XXII's bull at Avignon (1324),
+// condemning the ars nova and insisting the plainchant melodies stay "intact
+// and recognizable as such" — the liturgy's own line between the chant
+// tradition and what followed. It lands on the seam already in the data:
+// Kyriale parts by century run 10th 21 · 11th 17 · 12th 13 · 13th 8 · then
+// 14th 2. A cliff, not a slope.
+//
+// There is deliberately NO lower bound. An earlier draft carried ERA_FROM=754
+// (the Frankish adoption of the Roman rite), which read as doctrine but was
+// unenforceable: nothing in the corpus is checked against it and no data could
+// check it. A constant nothing enforces is a claim, not a rule.
+export const ORDINARY_LATEST_YEAR = 1324;
 
 /**
  * The latest century a year admits WHOLE.
@@ -571,13 +580,8 @@ function latestWholeCentury(year: number): number {
   return Math.ceil(year / 100) - 1;
 }
 
-/** The earliest century a year admits whole: 754 → 8 (the 700s). */
-function earliestCentury(year: number): number {
-  return Math.floor(year / 100) + 1;
-}
-
 /**
- * Whether a Kyriale setting falls inside the era bound.
+ * Whether a Kyriale setting is early enough to sing.
  *
  * PER PART, never per mass. The Kyriale is a 19th-c Solesmes GROUPING of chants
  * from different centuries — which is why its ascriptions are per-part in the
@@ -595,18 +599,19 @@ function earliestCentury(year: number): number {
  *
  * An undated part (the editors' own "?. s.") is ADMITTED, not excluded —
  * undated is not late, and excluding it would repeat the mistake that killed
- * the attestation filter.
+ * the attestation filter. Same for a part with no entry at all: this rule can
+ * only remove a setting the Kyriale itself dates late, never one it is silent
+ * about.
  */
 export function partWithinEra(
   mass: number | null | undefined,
   office: string | null | undefined,
-  fromYear: number = ERA_FROM,
-  toYear: number = ERA_TO,
+  toYear: number = ORDINARY_LATEST_YEAR,
 ): boolean {
   if (mass == null || !office) return true;
   const entry = MASS_CENTURY[mass]?.[office];
   if (!entry) return true;                       // no printed century → admit
   const century = entry.alt ?? entry.from;
   if (century == null) return true;              // "?. s." → admit
-  return century >= earliestCentury(fromYear) && century <= latestWholeCentury(toYear);
+  return century <= latestWholeCentury(toYear);
 }

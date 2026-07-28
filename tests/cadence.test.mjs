@@ -102,25 +102,23 @@ describe("detectCadences", () => {
     assert.equal(cadences.at(-1).formula, null);
   });
 
-  test("the corpus catalogue names the familia and the adventus", () => {
+  test("the corpus catalogue key and the adventus", () => {
     // f g g f in mode 6 (final F): tail intervals +2,0,-2 landing on the
-    // chant final — the universal close, circuitus supra in finalem.
+    // chant final — the universal close, in finalem.
     const score = buildScore(makeChant("(c4) fa(f) sol(g) sol(g) fa(f.) (::)", "6"));
     const last = score.cadences.at(-1);
     assert.equal(last.signature, "2,0,-2 @0");
-    assert.equal(last.familia, "circuitus supra");
     assert.equal(last.adventus, "in finalem");
     assert.deepEqual(last.shape, [2, 0, -2]);
     assert.equal(last.arrival, 0);
   });
 
-  test("mode-1 final descent reads descensus per semitonium", () => {
+  test("mode-1 final descent joins the catalogue in finalem", () => {
     // f g f e d: the mined tail is the last four notes g f e d —
     // -2,-1,-2 @0, the fall through the semitone onto the final.
     const score = buildScore(makeChant(MODE1_FINAL, "1"));
     const last = score.cadences.at(-1);
     assert.equal(last.signature, "-2,-1,-2 @0");
-    assert.equal(last.familia, "descensus per semitonium");
     assert.equal(last.adventus, "in finalem");
   });
 
@@ -131,8 +129,6 @@ describe("detectCadences", () => {
     const medial = score.cadences.find((c) => c.divisio === ";");
     assert.equal(medial.arrival, -5);
     assert.equal(medial.adventus, "in tenorem");
-    // An uncatalogued tail carries no familia — don't ink weak claims.
-    assert.equal(medial.familia, null);
   });
 
   test("a single-note phrase has no signature, but still an adventus", () => {
@@ -141,7 +137,6 @@ describe("detectCadences", () => {
     );
     const first = score.cadences[0];
     assert.equal(first.signature, null);
-    assert.equal(first.familia, null);
     assert.deepEqual(first.shape, []);
     assert.equal(first.adventus, "in finalem"); // it sits on the chant final
   });

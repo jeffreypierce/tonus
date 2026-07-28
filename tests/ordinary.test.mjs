@@ -4,7 +4,17 @@ import { getOrdinary } from "../dist/engines/chant/ordinary.js";
 import { getFeast } from "../dist/engines/cal/calendar.js";
 import { MASS_CENTURY, partWithinEra } from "../dist/engines/chant/data/masses.js";
 
-describe("the era bound (754–1324)", () => {
+describe("the Kyriale era rule (latest 1324)", () => {
+  test("its SCOPE is the Kyriale, not the corpus", () => {
+    // tonus has per-chant dates for 71 of 2,860 shipped chants — 2.5%. A
+    // corpus-wide era filter would be filtering 97.5% of the repertory on data
+    // that does not exist, which is the mistake that retired the attestation
+    // filter (at 69% coverage). The period of everything else is set by THE
+    // CUT: tonus ships what the liturgy places.
+    assert.equal(partWithinEra(undefined, undefined), true, "no mass/office → admit");
+    assert.equal(partWithinEra(4, "gr"), true, "a non-ordinary office is not the rule's business");
+  });
+
   test("drops a late PART without losing the mass", () => {
     // Mass XI "Orbis factor" is a 10th-c Kyrie/Gloria/Sanctus with a 14th-c
     // Agnus bolted on — the Kyriale is a 19th-c grouping of chants from
@@ -26,6 +36,14 @@ describe("the era bound (754–1324)", () => {
     assert.equal(partWithinEra(8, "sa"), true);
     assert.equal(partWithinEra(8, "ky"), false, "de Angelis' Kyrie is XV–XVI");
     assert.equal(partWithinEra(8, "gl"), false);
+  });
+
+  test("there is no lower bound — only a latest year", () => {
+    // An earlier draft carried ERA_FROM = 754, which read as doctrine but was
+    // unenforceable: nothing checked it and no data could. A 9th-c setting is
+    // admitted for the same reason a 13th-c one is — the rule can only remove
+    // what the Kyriale itself dates late.
+    assert.equal(partWithinEra(1, "ky"), true, "Lux et origo, X. s.");
   });
 
   test("1324 admits only centuries that CLOSED before it", () => {

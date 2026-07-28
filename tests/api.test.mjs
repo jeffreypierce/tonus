@@ -178,7 +178,6 @@ describe("the appendix (the export law)", () => {
     // the universal close leading, statistics in sane ranges.
     assert.ok(Array.isArray(CADENTIAE) && CADENTIAE.length > 100);
     assert.equal(CADENTIAE[0].key, "2,0,-2 @0");
-    assert.equal(CADENTIAE[0].familia, "circuitus supra");
     assert.equal(CADENTIAE[0].adventus, "in finalem");
     for (const f of CADENTIAE) {
       assert.ok(f.n >= 150 && f.finality >= 0 && f.finality <= 1);

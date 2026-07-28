@@ -383,15 +383,15 @@ function ordinaryForFeast(
   const dayRubric = resolveMasses(feast)[0]?.rubric ?? null;
   const appendixAllowed = dayRubric != null && SOLEMN_RUBRICS.has(dayRubric);
 
-  // The era bound RE-PICKS rather than silences ⟨RULED⟩: unlike a proper, the
+  // The Kyriale era rule RE-PICKS rather than silences ⟨RULED⟩: unlike a proper, the
   // ordinary offers ranked alternatives by design, so the whole selection —
   // rotation, siblings, borrow, appendix — runs over the admissible pool and
   // the day still sings a permitted setting. Filtering PER PART is what makes
   // that work: Mass XI keeps its 10th-c Kyrie/Gloria/Sanctus and only its
   // 14th-c Agnus borrows. Mass VIII (de Angelis) loses its Kyrie, Gloria and
   // Agnus — the famous late ones — while its Sanctus stays, because the editors
-  // print that one "(XI) XII. s." NO mass leaves the pool whole: the bound cuts
-  // 7 of 66 parts, and every day still sings.
+  // print that one "(XI) XII. s." NO mass leaves the pool whole: 7 of 66 parts
+  // go, and every day still sings.
   // See partWithinEra() in ./data/masses.ts for the 754–1324 reasoning.
   const pool = KYRIALE.filter(
     (e) => partWithinEra(e.mass, e.office) && (!admissible || admissible(e.id)),

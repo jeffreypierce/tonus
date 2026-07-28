@@ -51,15 +51,20 @@ describe("detectModulations", () => {
     }
   });
 
-  test("Christus resurgens reads as genuine modulation, not transposition", () => {
-    // It closes on its own final; its deuterus excursion is internal.
+  test("Christus resurgens reads as internal, not transposition", () => {
+    // It closes on its own final, so the deuterus excursion is internal. Suñol's
+    // example is a SINGLE phrase, so it grades as an inflection, not a span.
     const chant = tonus
       .cantus({ incipit: "Christus resurgens" })
       .find((c) => c.mode === "8");
     const score = tonus.notatio(chant, {
       temperamentum: tonus.temperamentum({ mode: 8 }),
     });
-    for (const m of score.modulations) assert.equal(m.kind, "modulation");
+    for (const m of score.modulations) assert.notEqual(m.kind, "transposition");
+    assert.ok(
+      score.modulations.some((m) => m.toMode === 3 && m.kind === "inflection"),
+      "Suñol's deuterus lean registers, graded as a one-phrase inflection",
+    );
   });
 
   test("Exaltabo te (the transposed mode-2 introit) reads as transposition", () => {

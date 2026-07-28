@@ -7,6 +7,14 @@
 // flags runs of phrases that lean on a foreign mode — a modulation. Detection
 // only; distribution-based, no functional/harmonic analysis.
 //
+// A span's `kind` GRADES the evidence: a one-phrase lean is an "inflection"
+// (passing colour), two phrases or more is a "modulation", and a chant whose
+// whole frame is foreign reads "transposition". Before that grading, 78% of
+// every span detected was a single phrase and 80% of moded chants "modulated"
+// — including Suñol's own Christus resurgens example, whose deuterus lean is
+// itself one phrase. Measured 2026-07-28 over 2,784 moded chants,
+// working/qa-sweep/measure-modulation.mjs.
+//
 // A NOTE ON THE PHRASE-CLOSING NOTE (considered and rejected, 2026-07-17):
 // passing each phrase's last pc into the affinity (the final-note bonus that
 // serves whole-chant mode detection so well) was measured over the labeled
@@ -29,15 +37,17 @@ export interface Modulation {
   /** 0–1: how strongly the foreign mode outscored the home mode, averaged. */
   confidence: number;
   /**
-   * What the span is evidence of. "modulation" — an internal excursion that
-   * returns; "transposition" — the whole chant sits in a foreign mode's frame
+   * What the span is evidence of. "inflection" — a single phrase leaning away
+   * and back: passing colour, not a shift. "modulation" — a SUSTAINED internal
+   * excursion, two phrases or more, that returns. "transposition" — the whole
+   * chant sits in a foreign mode's frame
    * (it does not close on its labeled final, and one foreign mode dominates
    * most of its phrases), i.e. the melody is notated at a transposed position
    * (the affinal) or the label disagrees with the notation. A transposed chant
    * is not modulating: the displacement is global, and callers displaying
    * "modulations" should treat these spans as a re-reading of the whole chant.
    */
-  kind: "modulation" | "transposition";
+  kind: "inflection" | "modulation" | "transposition";
 }
 
 // How much a foreign mode must outscore the home mode (in normalised affinity)
@@ -45,6 +55,15 @@ export interface Modulation {
 // examples [biblio: sunol-textbook]: at 0.25 the modulations he names in Christus
 // resurgens (to mode 3) register, while incidental colouring below that does not.
 const MARGIN = 0.25;
+
+// A phrase leaning toward its own mode's authentic/plagal partner is NOT
+// modulating: the partner shares the final, so the "lean" is AMBITUS — the
+// phrase sitting high or low within the same maneria — not a tonal-centre
+// shift. Measured 2026-07-28: partner leans were 18% of the lean-pairs behind
+// the 28% of moded chants that read as wall-to-wall foreign. A category
+// correction, not a threshold.
+const maneriaPartner = (mode: number): number =>
+  mode % 2 === 1 ? mode + 1 : mode - 1; // 1↔2, 3↔4, 5↔6, 7↔8
 
 // A chant is read as TRANSPOSED (not modulating) when it does not close on its
 // labeled mode's final AND a single foreign mode's spans cover most of its
@@ -89,6 +108,7 @@ export function detectModulations(
       const affinity = computeModalAffinity(phrasePcDistribution(phrase));
       const top = affinity[0];
       if (!top || top.mode === homeMode) return null;
+      if (top.mode === maneriaPartner(homeMode)) return null;
       const home = affinity.find((a) => a.mode === homeMode);
       const margin = top.score - (home?.score ?? 0);
       return margin >= MARGIN ? { mode: top.mode, margin } : null;
@@ -107,7 +127,7 @@ export function detectModulations(
       endPhrase: run.start + run.margins.length - 1,
       toMode: run.mode,
       confidence: Math.min(1, Math.round(avg * 100) / 100),
-      kind: "modulation",
+      kind: run.margins.length === 1 ? "inflection" : "modulation",
     });
     run = null;
   };
