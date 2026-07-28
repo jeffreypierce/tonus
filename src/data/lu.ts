@@ -1,6 +1,6 @@
 // lu.ts — Liber Usualis 1961 corpus (primary antiphon/hymn source)
 // Extracted from GregoBase (source ID 3) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-28T16:13:51.201Z
+// Generated: 2026-07-28T17:25:29.256Z
 // Chants: 707
 // LA fills gaps for chant IDs not present here.
 import type { Chant } from "./types.js";

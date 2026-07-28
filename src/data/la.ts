@@ -1,6 +1,6 @@
 // la.ts — Liber antiphonarius 1960 corpus (Roman office)
 // Extracted from GregoBase (source ID 48) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-28T16:13:51.201Z
+// Generated: 2026-07-28T17:25:29.256Z
 // Chants: 160
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
