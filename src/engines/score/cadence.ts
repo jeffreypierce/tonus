@@ -10,12 +10,20 @@
 // divisio bars. Cadence figures are mode-specific, so this consumes the
 // per-mode ModeData.cadences catalog.
 //
+// ⟨RULED 2026-07-28⟩ `adventus` — the Latin arrival-case ladder ("in
+// finalem", "in quintam", …) — is CUT, same law as `familia`: the signature
+// IS the name, and `arrival` already carries the number the ladder renamed.
+// (Its one mode-aware value, "in tenorem", overlapped `target`.) The mod-12
+// fold (+7 ≡ −5) that the ladder tried to name honestly is a FAMILY-KEY
+// question now — see the signed-arrival DECISIO for the census rebuild.
+//
 // Two catalogues serve two claims. ModeData.cadences (tradita — the treatises'
 // per-mode figures) names the `formula`; CADENTIAE (inventa — the corpus tally)
 // is joined by the `signature`: the tail's interval shape (the gesture) and
 // where it lands relative to the chant final (the function). The corpus key
 // is computed exactly as the mining did — last <=4 notes, semitone intervals,
-// arrival octave-reduced to [-5..+6] — so every classification joins the table.
+// arrival octave-reduced to [-5..+6], measured from the chant's own closing
+// note (its sounded final) — so every classification joins the table.
 import type { Phrase } from "./types.js";
 import type { ModeData, CadenceFigure } from "../temper/data/modes.js";
 
@@ -53,14 +61,11 @@ export interface Cadence {
    * CADENTIAE), or null when the phrase ends on a single note (no intervals).
    */
   signature: string | null;
-  /**
-   * The arrival case, Latin: "in finalem", "in tenorem" (when the arrival
-   * degree is the mode's tenor), "in tertiam", "in subfinalem", …
-   */
-  adventus: string;
   /** Interval signature of the closing tail (<=4 notes), in semitones. */
   shape: number[];
-  /** Closing note minus the chant final, semitones, octave-reduced [-5..+6]. */
+  /** Closing note minus the CHANT'S OWN closing note (its sounded final —
+   *  not the labeled mode's final, which may disagree on a transposed or
+   *  mislabeled chant), semitones, octave-reduced [-5..+6]. */
   arrival: number;
 }
 
@@ -214,21 +219,6 @@ function reduceArrival(semitones: number): number {
   return a;
 }
 
-/**
- * The arrival case, mode-independent: the interval class of the closing note
- * above (or below) the chant final. The mode-aware "in tenorem" upgrade happens
- * at detection time, where the mode is known.
- */
-function adventusCase(arrival: number): string {
-  if (arrival === 0) return "in finalem";
-  if (arrival === 1 || arrival === 2) return "in secundam";
-  if (arrival === 3 || arrival === 4) return "in tertiam";
-  if (arrival === 5 || arrival === 6) return "in quartam";
-  if (arrival === -1 || arrival === -2) return "in subfinalem";
-  if (arrival === -3 || arrival === -4) return "in subtertiam";
-  return "in subquartam"; // -5
-}
-
 /** The chant's closing note — the reference every arrival is measured from. */
 function chantFinalMidi(phrases: Phrase[]): number | undefined {
   for (let pi = phrases.length - 1; pi >= 0; pi--) {
@@ -249,11 +239,6 @@ export function detectCadences(
 ): Cadence[] {
   const cadences: Cadence[] = [];
   const finalMidi = chantFinalMidi(phrases);
-  // The mode's tenor as an arrival degree — pc difference, same reduction as
-  // the arrival itself, so a tenor landing reads "in tenorem" even transposed.
-  const tenorArrival = modeData
-    ? reduceArrival(((modeData.tenor - modeData.final) % 12 + 12) % 12)
-    : undefined;
 
   for (let pi = 0; pi < phrases.length; pi++) {
     const phrase = phrases[pi]!;
@@ -298,10 +283,6 @@ export function detectCadences(
         : 0;
     const signature =
       shape.length > 0 ? `${shape.join(",")} @${arrival}` : null;
-    const adventus =
-      arrival !== 0 && arrival === tenorArrival
-        ? "in tenorem"
-        : adventusCase(arrival);
 
     cadences.push({
       phraseIndex: pi,
@@ -314,7 +295,6 @@ export function detectCadences(
       confidence: Math.round(confidence * 100) / 100,
       notes: window.map((w) => [pi, w.syllableIndex, w.noteIndex]),
       signature,
-      adventus,
       shape,
       arrival,
     });

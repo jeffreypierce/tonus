@@ -102,13 +102,12 @@ describe("detectCadences", () => {
     assert.equal(cadences.at(-1).formula, null);
   });
 
-  test("the corpus catalogue key and the adventus", () => {
+  test("the corpus catalogue key", () => {
     // f g g f in mode 6 (final F): tail intervals +2,0,-2 landing on the
-    // chant final — the universal close, in finalem.
+    // chant final — the universal close.
     const score = buildScore(makeChant("(c4) fa(f) sol(g) sol(g) fa(f.) (::)", "6"));
     const last = score.cadences.at(-1);
     assert.equal(last.signature, "2,0,-2 @0");
-    assert.equal(last.adventus, "in finalem");
     assert.deepEqual(last.shape, [2, 0, -2]);
     assert.equal(last.arrival, 0);
   });
@@ -119,26 +118,28 @@ describe("detectCadences", () => {
     const score = buildScore(makeChant(MODE1_FINAL, "1"));
     const last = score.cadences.at(-1);
     assert.equal(last.signature, "-2,-1,-2 @0");
-    assert.equal(last.adventus, "in finalem");
+    assert.equal(last.arrival, 0);
   });
 
-  test("a medial rest on the tenor reads in tenorem", () => {
+  test("a medial rest on the tenor carries the tenor's arrival degree", () => {
     // The interior divisio rests on A, mode 1's tenor — a fifth above the
-    // chant final D, octave-reduced to -5, which IS the tenor degree.
+    // chant final D, octave-reduced to -5, which IS the tenor degree. The
+    // Latin naming of that fact (`adventus`) is CUT ⟨RULED 2026-07-28⟩ — the
+    // number and the `target` role carry it.
     const score = buildScore(makeChant(MODE1_MEDIAL, "1"));
     const medial = score.cadences.find((c) => c.divisio === ";");
     assert.equal(medial.arrival, -5);
-    assert.equal(medial.adventus, "in tenorem");
+    assert.equal(medial.target, "tenor");
   });
 
-  test("a single-note phrase has no signature, but still an adventus", () => {
+  test("a single-note phrase has no signature, but still an arrival", () => {
     const score = buildScore(
       makeChant("(c4) one(d.) (;) clos(e) ing(d.) (::)", "1"),
     );
     const first = score.cadences[0];
     assert.equal(first.signature, null);
     assert.deepEqual(first.shape, []);
-    assert.equal(first.adventus, "in finalem"); // it sits on the chant final
+    assert.equal(first.arrival, 0); // it sits on the chant final
   });
 
   test("tabula cadenceRef points back to the cadence for its constituent notes", () => {
