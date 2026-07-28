@@ -127,6 +127,65 @@ describe("getCorpus", () => {
     assert.ok(am.total > am.count, "the book holds more than tonus ships");
   });
 
+  test("the query form and the bare code are the same question", () => {
+    // corpus("am") came first; corpus({ book }) matches every other verb. Both
+    // must stay one answer, or the two spellings drift into two behaviours.
+    assert.deepEqual(getCorpus({ book: "am" }), getCorpus("am"));
+  });
+
+  test("corpus() with no argument returns the whole shelf", () => {
+    // This used to throw `Unknown corpus code: "undefined"` — the commonest
+    // question about a corpus was the one thing the verb could not answer.
+    const L = getCorpus();
+    assert.equal(L.books.length, 11, "every registered book is in the ledger");
+    assert.ok(L.count > 0 && L.distinct > 0 && L.total > 0);
+    // Rows vs addressable chants: a melody printed in two books is stored once
+    // but listed under both, so count exceeds distinct and both are true.
+    assert.ok(L.count > L.distinct, "rows exceed distinct chants");
+    assert.ok(L.total > L.count, "the books hold more than tonus ships");
+  });
+
+  test("the rollup reconciles with its parts", () => {
+    const L = getCorpus();
+    assert.equal(L.books.reduce((n, b) => n + b.count, 0), L.count, "books sum to count");
+    assert.equal(L.genera.reduce((n, g) => n + g.count, 0), L.count, "genera sum to count");
+    assert.equal(L.modes.reduce((n, m) => n + m.count, 0), L.count, "modes sum to count");
+    assert.equal(
+      L.books.reduce((n, b) => n + (b.full?.total ?? 0), 0),
+      L.total,
+      "measured book totals sum to the shelf total",
+    );
+  });
+
+  test("`full` is the ledger of the cut — what was there to keep", () => {
+    const am = getCorpus("am");
+    assert.ok(am.full, "am is a GregoBase book, so its full tally is measured");
+    assert.equal(am.full.total, am.total, "full.total agrees with the overlap total");
+    assert.ok(am.full.total > am.count, "the book held more than tonus kept");
+    // Same shape as the shipped tallies, so the two are comparable row for row.
+    assert.equal(am.full.genera.reduce((n, g) => n + g.count, 0), am.full.total);
+    assert.equal(am.full.modes.reduce((n, m) => n + m.count, 0), am.full.total);
+    assert.equal(am.full.genera[0].office, "an", "an antiphonary, before the cut too");
+  });
+
+  test("no book ships more than it holds", () => {
+    for (const b of getCorpus().books) {
+      if (!b.full) continue;
+      assert.ok(b.count <= b.full.total, `${b.code}: ships ${b.count} of ${b.full.total}`);
+    }
+  });
+
+  test("a book outside GregoBase reports full as UNMEASURED, not zero", () => {
+    // The same rule total/unique/shared already follow: null is "not compared",
+    // and a false zero would read as "this book holds nothing".
+    assert.equal(getCorpus("nr").full, null);
+    assert.equal(getCorpus("ky").full, null);
+  });
+
+  test("an unknown query key throws instead of being ignored", () => {
+    assert.throws(() => getCorpus({ source: "am" }), /unknown query key\(s\) "source"/);
+  });
+
   test("exposes the full Latin title where GregoBase has one", () => {
     // gr's description contains "Ecclesiae" → full title; am's does not → null.
     assert.match(getCorpus("gr").fullTitle, /Ecclesiae/);

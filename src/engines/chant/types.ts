@@ -170,6 +170,43 @@ export interface Corpus {
   shared: SharedCount[] | null;  // chants shared with each other book, descending
   genera: GenusCount[];          // genre breakdown, descending by count
   modes: ModeCount[];            // mode breakdown, 1–8 then the other/none bucket
+  /**
+   * What the book HOLDS, before the cut — the ledger of what was left behind.
+   * Same genera/modes shape as the shipped counts above, so an omission is
+   * visible rather than merely implied by a smaller number. `null` for a book
+   * outside GregoBase (nr, ky), the same "unmeasured, not zero" rule as
+   * `total`/`unique`/`shared`.
+   */
+  full: CorpusFullCount | null;
+}
+
+/** A book's pre-cut tally, in the shape `corpus()` reports the shipped one. */
+export interface CorpusFullCount {
+  total: number;
+  genera: GenusCount[];
+  modes: ModeCount[];
+}
+
+/**
+ * The whole shelf: every book's ledger, and the corpus-wide rollup.
+ * Returned by `corpus()` with no argument.
+ */
+export interface CorpusLedger {
+  /** Chants tonus ships, across all books (rows: a chant in two books counts twice). */
+  count: number;
+  /** Distinct chants tonus can address by id. */
+  distinct: number;
+  /** Chants the books hold in total, where measured. */
+  total: number;
+  genera: GenusCount[];
+  modes: ModeCount[];
+  /** Per book, in corpus order. */
+  books: Corpus[];
+}
+
+/** `corpus({ book })` — the query form; `corpus(code)` still works. */
+export interface CorpusQuery {
+  book?: ChantSource;
 }
 
 export interface CantusQuery {

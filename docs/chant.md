@@ -11,6 +11,7 @@ carries page-level provenance back to its book.
   - [The corpora](#the-corpora)
     - [The cut](#the-cut)
   - [The books — `corpus`](#the-books--corpus)
+    - [The ledger of the cut — `full`](#the-ledger-of-the-cut--full)
   - [Retrieval — `cantus`](#retrieval--cantus)
     - [On chant ids](#on-chant-ids)
   - [The Mass propers — `proprium`](#the-mass-propers--proprium)
@@ -80,7 +81,27 @@ identically (Spearman ρ = 0.89). What the cut removed was chants, not a dialect
 ## The books — `corpus`
 
 `corpus(code)` returns one book's bibliographic identity and a breakdown of what
-it holds — how many chants, in what genres, in what modes.
+it holds — how many chants, in what genres, in what modes. `corpus({ book })` is
+the same question in the query form every other verb uses; both spellings return
+one answer.
+
+`corpus()` with no argument returns **the whole shelf** — the rollup plus every
+book's ledger:
+
+```js
+tonus.corpus();
+// { count: 2887,      // rows tonus ships (a chant in two books counts twice)
+//   distinct: 2187,   // chants addressable by id
+//   total: 8592,      // what the books hold, where measured
+//   genera: [ { office: "an", genus: "Antiphona", count: 723 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 529 }, … ],
+//   books:  [ …11 Corpus entries, in registry order ] }
+```
+
+`count` and `distinct` differ because a melody printed in two books is stored
+once but listed under both. Both are reported because both are true and they
+answer different questions: how many rows a book listing has, and how many
+chants you can name.
 
 ```js
 tonus.corpus("am");
@@ -109,6 +130,28 @@ interface Corpus {
   modes:  { mode: string | null; modus: string | null; count: number }[];
 }
 ```
+
+### The ledger of the cut — `full`
+
+Every `Corpus` carries `full`: what the book HELD, before the keep set ran, in
+the same genera/modes shape as the shipped counts.
+
+```js
+const am = tonus.corpus("am");
+am.count;             // 576  — antiphons and the rest tonus kept
+am.full.total;        // 1456 — what the Antiphonale Monasticum holds
+am.genera[0];         // { office: "an", genus: "Antiphona", count: 458 }
+am.full.genera[0];    // { office: "an", genus: "Antiphona", count: 1049 }
+```
+
+This is what makes [the cut](#the-cut) auditable rather than merely asserted: a
+smaller number tells you something was left out, but not what. Reading the two
+tallies side by side names it — 1,049 antiphons in the book, 458 sung.
+
+Only the extractor can measure this. By the time tonus loads, the keep set has
+already run, so the pre-cut tally is read from an artifact rather than derived.
+Books outside GregoBase (`nr`, `ky`) report `full: null` — the same
+"unmeasured, not zero" rule `total`/`unique`/`shared` follow.
 
 The metadata is drawn from GregoBase's own catalogue. The `genera` list is the
 office distribution (descending by count); `modes` counts modes I–VIII, with a

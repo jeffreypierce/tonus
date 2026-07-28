@@ -3,9 +3,10 @@
 // ---------------------------------------------------------------------------
 import type {
   Chant, CantusQuery, OfficeCode, ChantSource, Corpus, GenusCount, ModeCount, SharedCount,
+  CorpusFullCount, CorpusLedger, CorpusQuery,
 } from "./types.js";
 import { OFFICE_LABELS, MODE_LABELS } from "./types.js";
-import { CORPUS_OVERLAP } from "../../data/corpus-overlap.js";
+import { CORPUS_OVERLAP, CORPUS_FULL } from "../../data/corpus-overlap.js";
 import { attestationCutoff, chantAdmissible } from "./attest.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
@@ -140,7 +141,109 @@ const _corpusCache = new Map<ChantSource, Corpus>();
  * source code; get the book's bibliographic identity plus its genre and mode
  * distributions. Computed on first access from the loaded corpus, then cached.
  */
-export function getCorpus(code: ChantSource): Corpus {
+/**
+ * One book's ledger, or the whole shelf's.
+ *
+ * `corpus("am")` and `corpus({ book: "am" })` are the same question — the bare
+ * code came first and keeps working, the object form matches every other verb.
+ * `corpus()` with no argument returns the rollup, which used to throw.
+ */
+export function getCorpus(): CorpusLedger;
+export function getCorpus(code: ChantSource): Corpus;
+export function getCorpus(query: CorpusQuery): Corpus;
+export function getCorpus(arg?: ChantSource | CorpusQuery): Corpus | CorpusLedger {
+  if (arg == null) return corpusLedger();
+  if (typeof arg === "object") {
+    const unknown = Object.keys(arg).filter((k) => k !== "book");
+    if (unknown.length) {
+      throw new Error(
+        `corpus: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} (expected book).`,
+      );
+    }
+    if (arg.book == null) return corpusLedger();
+    return oneCorpus(arg.book);
+  }
+  return oneCorpus(arg);
+}
+
+/** Sort a raw office tally into the GenusCount rows corpus() reports. */
+function generaRows(tally: Record<string, number>): GenusCount[] {
+  return Object.entries(tally)
+    .map(([office, count]) => ({
+      office: office as OfficeCode,
+      genus: OFFICE_LABELS[office as OfficeCode] ?? office,
+      count,
+    }))
+    .sort((a, b) => b.count - a.count || (a.office < b.office ? -1 : 1));
+}
+
+/** Sort a raw mode tally into ModeCount rows: 1–8 in order, then the rest. */
+function modesRows(tally: Record<string, number>): ModeCount[] {
+  const rows: ModeCount[] = [];
+  for (const m of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
+    const count = tally[m];
+    if (count) rows.push({ mode: m, modus: MODE_LABELS[m]!, count });
+  }
+  // The extractor buckets differentia forms, tonus peregrinus and unlabelled
+  // chants together under "other" — the same bucket the shipped counts report
+  // as `mode: null`, so the two tallies stay comparable row for row.
+  if (tally.other) rows.push({ mode: null, modus: null, count: tally.other });
+  return rows;
+}
+
+/**
+ * A book's pre-cut tally, or null where it cannot be measured. Only the
+ * extractor sees the un-cut book — by the time tonus loads, the keep set has
+ * already run — so this is read from the artifact, never derived here.
+ */
+function fullCount(code: ChantSource): CorpusFullCount | null {
+  const f = CORPUS_FULL[code];
+  if (!f) return null;
+  return { total: f.total, genera: generaRows(f.genera), modes: modesRows(f.modes) };
+}
+
+/**
+ * The whole shelf: every book, plus the corpus-wide rollup. `corpus()` with no
+ * argument used to throw ("Unknown corpus code: undefined"), which made the
+ * commonest question — what IS this corpus — the one thing the verb could not
+ * answer.
+ *
+ * `count` is rows and `distinct` is addressable chants; they differ because a
+ * melody printed in two books is stored once but listed under both. Both are
+ * reported because both are true and each answers a different question.
+ */
+let _ledger: CorpusLedger | null = null;
+function corpusLedger(): CorpusLedger {
+  if (_ledger) return _ledger;
+  // SOURCES is the registry — a book added there joins the ledger without an
+  // edit here, which is the failure mode every mirrored book list in this
+  // project has hit at least once.
+  const codes = Object.keys(SOURCES) as ChantSource[];
+  const books = codes.map((code) => oneCorpus(code));
+
+  const genera: Record<string, number> = {};
+  const modes: Record<string, number> = {};
+  for (const c of CORPUS) {
+    genera[c.office] = (genera[c.office] ?? 0) + 1;
+    const m = c.mode != null && MODE_LABELS[c.mode] ? c.mode : "other";
+    modes[m] = (modes[m] ?? 0) + 1;
+  }
+
+  _ledger = {
+    count: CORPUS.length,
+    distinct: byId().size,
+    // Sum only what was measured: a book outside GregoBase reports null rather
+    // than a false zero, and adding null in as 0 would understate the shelf
+    // while looking like a total.
+    total: codes.reduce((n: number, code) => n + (CORPUS_FULL[code]?.total ?? 0), 0),
+    genera: generaRows(genera),
+    modes: modesRows(modes),
+    books,
+  };
+  return _ledger;
+}
+
+function oneCorpus(code: ChantSource): Corpus {
   const cached = _corpusCache.get(code);
   if (cached) return cached;
 
@@ -199,6 +302,7 @@ export function getCorpus(code: ChantSource): Corpus {
     shared,
     genera,
     modes,
+    full: fullCount(code),
   };
   _corpusCache.set(code, result);
   return result;

@@ -20,7 +20,7 @@ import tonus from "tonus";
 | `tonus.festum(query?)`             | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
 | `tonus.pascha(year)`               | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
 | `tonus.cantus(query?)`             | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
-| `tonus.corpus(code)`               | [chant](chant.md)       | `Corpus` — one book's metadata + content breakdown      |
+| `tonus.corpus(code?)`              | [chant](chant.md)       | `Corpus` — a book's ledger; no arg → the whole shelf     |
 | `tonus.proprium(query?)`           | [chant](chant.md)       | `Chant[]` — Mass propers                                |
 | `tonus.ordinarium(query?)`         | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
 | `tonus.officium(query?)`           | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |

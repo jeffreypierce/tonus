@@ -96,7 +96,13 @@ These are **returns, not distinct chants** — a psalm sung daily counts daily.
 That is why the office books dominate and the Graduale, sung once a day at
 Mass, sits low despite being among the largest books.
 
-The shipped corpus is 2,887 chants across eleven books. Because it is
-assignment-driven — a chant ships only if some day calls for it — there is no
-large unreferenced remainder to report. That was the point of
-[the cut](docs/chant.md#the-cut).
+The shipped corpus is 2,887 rows over 2,187 distinct chants, across eleven
+books. Because it is assignment-driven — a chant ships only if some day calls
+for it — there is no large unreferenced remainder to report. That was the point
+of [the cut](docs/chant.md#the-cut).
+
+What the cut left behind is now readable rather than merely asserted:
+`corpus()` reports the whole shelf (2,887 shipped of **8,592 held**), and every
+book carries a `full` tally in the same genera/modes shape as its shipped one —
+so the Antiphonale's 1,049 antiphons and the 458 tonus sings sit side by side.
+See [the ledger of the cut](docs/chant.md#the-ledger-of-the-cut--full).
