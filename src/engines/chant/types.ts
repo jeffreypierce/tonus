@@ -40,7 +40,12 @@ export type OrdinaryCode =
 export type ChantSource =
   | "gr" | "lu" | "la" | "lh" | "am" | "nr" | "ky"
   // office books, monastic
-  | "ams" | "psm";
+  | "ams" | "psm"
+  // ⟨2026-07-28⟩ further MARKED Solesmes books. The rule for admission is
+  // stated in extract-gregobase.mjs OFFICE_BOOKS: Solesmes AND rhythmically
+  // marked (>50% episema or mora), because tonus reads those marks and a bare
+  // transcription is a worse copy of a chant already held.
+  | "cse" | "cot" | "cab" | "mpb";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"
