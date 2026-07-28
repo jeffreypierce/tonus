@@ -203,9 +203,6 @@ describe("guided throws on junk input (the error contract)", () => {
   test("caelum rejects a non-Date date", () => {
     assert.throws(() => tonus.caelum({ date: "solstice" }), /date must be a Date/);
   });
-  test("matutinum rejects a non-Feast feast", () => {
-    assert.throws(() => tonus.matutinum({ feast: 42 }), /must be a Feast/);
-  });
   test("harmonia rejects a non-Cosmos input", () => {
     assert.throws(() => tonus.harmonia(null), /Cosmos/);
     assert.throws(() => tonus.harmonia({ doctrina: "freud" }), /Cosmos/);

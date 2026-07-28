@@ -575,64 +575,7 @@ describe("user GABC office-part header (contract regression)", () => {
   });
 });
 
-describe("getChants — attestation filters", () => {
-  test("before/century narrow the corpus to what a manuscript already held", () => {
-    const all = getChants({ source: "am" }).length;
-    const early = getChants({ source: "am", before: 1098 }).length;
-    assert.ok(early > 0, "some AM chants are attested by 1098");
-    assert.ok(early < all, `before should narrow (${early} vs ${all})`);
-  });
-
-  test("a year admits only centuries that CLOSED before it", () => {
-    // CANTUS dates a manuscript to its century, so 1098 must not admit the
-    // whole 11th century — a book dated "11th c." may postdate 1098.
-    assert.equal(
-      getChants({ before: 1098 }).length,
-      getChants({ century: 10 }).length,
-      "before:1098 should admit through the 900s, not the 1000s",
-    );
-    // At an exact century multiple the boundary century has just CLOSED: by
-    // 1100 the 11th century (1000–1099) is wholly attested, so it is admitted.
-    // (An earlier version pinned this to century 10, encoding an off-by-one
-    // that made every round-number `before` refuse the century it had closed.)
-    assert.equal(getChants({ before: 1100 }).length, getChants({ century: 11 }).length);
-  });
-
-  test("later cutoffs are supersets of earlier ones", () => {
-    const a = getChants({ before: 1000 }).length;
-    const b = getChants({ before: 1200 }).length;
-    const c = getChants({ before: 1600 }).length;
-    assert.ok(a < b && b < c, `monotonic: ${a} < ${b} < ${c}`);
-  });
-
-  test("cursus filters, and `both` satisfies either ask", () => {
-    const mon = getChants({ cursus: "monastic" });
-    assert.ok(mon.length > 0);
-    // Nothing secular-only may appear in a monastic ask.
-    for (const c of mon.slice(0, 50)) {
-      assert.notEqual(c.id, undefined);
-    }
-    assert.ok(getChants({ cursus: "secular" }).length > 0);
-  });
-
-  test("an undated chant is excluded, not assumed old", () => {
-    // Silence is not evidence of age: a chant CANTUS cannot date must not slip
-    // into an early-repertoire query. Asserted directly: even an UNBOUNDED
-    // cutoff admits only what the manuscript index can date, so the undated
-    // remainder of a book never appears. (The old form compared sizes against
-    // gr+nr — a proxy that broke the moment `before: 1000` correctly admitted
-    // the closed 900s.)
-    const early = getChants({ before: 1000 });
-    assert.ok(early.length > 0);
-    const grAll = getChants({ source: "gr" }).length;
-    const grDated = getChants({ source: "gr", before: 30000 }).length;
-    assert.ok(grDated > 0, "some GR chants are dated");
-    assert.ok(
-      grDated < grAll,
-      `undated GR chants stay out at any cutoff (${grDated} dated of ${grAll})`,
-    );
-  });
-
+describe("getChants — the id fast path", () => {
   test("id no longer short-circuits the other filters", () => {
     // getChants({source, id}) once ignored `source` entirely and reported a chant
     // from any book as belonging to the asked-for one.

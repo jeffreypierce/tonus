@@ -2,7 +2,6 @@
 // engines/chant/propers — Mass proper lookup
 // ---------------------------------------------------------------------------
 import { resolveChant } from "./chant.js";
-import { eraCutoff, chantAdmissible } from "./attest.js";
 import { temporaSundayId } from "../cal/date.js";
 import type { Chant, PropriumQuery, OfficeCode } from "./types.js";
 import { PENITENTIAL_SEASONS, type Feast, type Season } from "../cal/types.js";
@@ -91,7 +90,6 @@ function toArray<T>(v: T | T[] | undefined): T[] | undefined {
  */
 const PROPRIUM_QUERY_KEYS = new Set([
   "feast", "id", "gabc", "incipit", "mode", "office", "source",
-  "before", "century", "cursus",
   "limit", "offset", "sort",
 ]);
 
@@ -119,14 +117,6 @@ export function getPropers(query?: PropriumQuery): Chant[] {
     results = PROPERS.flatMap((p) => resolveProperChants(p.feastId));
   }
 
-  // The era view: an own `before`/`century` wins; otherwise the view
-  // festum({ before }) stamped on the feast rides along. A proper has no pool
-  // of alternatives, so an excluded chant degrades to SILENCE ⟨RULED⟩ — the
-  // same evidence law as the corpus cut.
-  const cutoff = eraCutoff(query, feasts, "proprium");
-  if (cutoff != null || query.cursus) {
-    results = results.filter((c) => chantAdmissible(c.id, cutoff, query.cursus));
-  }
 
   const offices = toArray(query.office);
   if (offices) {

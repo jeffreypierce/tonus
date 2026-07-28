@@ -6,8 +6,6 @@ import type {
 } from "./types.js";
 import { OFFICE_LABELS, MODE_LABELS } from "./types.js";
 import { CORPUS_OVERLAP } from "../../data/corpus-overlap.js";
-import { ATTESTATION } from "../../data/attestation.js";
-import { attestationCutoff, chantAdmissible } from "./attest.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
@@ -199,10 +197,6 @@ export function getCorpus(code: ChantSource): Corpus {
   return result;
 }
 
-// The era view's cutoff and admissibility rule live in ./attest.js — a leaf
-// module every chant verb shares, so cantus and the day verbs cannot drift
-// (and so ordinary.js need not import THIS module, which was a cycle).
-
 function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   if (v === undefined) return undefined;
   return Array.isArray(v) ? v : [v];
@@ -224,7 +218,6 @@ export function resolveChants(ids: string[]): Chant[] {
  */
 const CANTUS_QUERY_KEYS = new Set([
   "id", "gabc", "incipit", "mode", "office", "source", "limit", "offset", "sort",
-  "before", "century", "cursus",
 ]);
 
 export function getChants(query?: CantusQuery): Chant[] {
@@ -277,22 +270,6 @@ export function getChants(query?: CantusQuery): Chant[] {
   if (query.incipit) {
     const needle = query.incipit.toLowerCase();
     out = out.filter((c) => c.incipit.toLowerCase().includes(needle));
-  }
-
-  // ── Attestation: the repertoire AS OF a date ───────────────────────────────
-  // The analogue of `festum({ before })` over the calendar. The corpus ships
-  // 20th-century Solesmes editions, so the BOOK dates nothing; CANTUS's
-  // manuscript index does. `century` is the earliest surviving witness — a
-  // terminus ante quem, so this answers "what is ATTESTED by then", never "what
-  // existed then". A chant CANTUS cannot date is excluded rather than assumed
-  // old: the filter states what is evidenced, and silence is not evidence.
-  // One rule, one door-keeper: the same chantAdmissible() the day verbs use,
-  // so `cantus({ before })` and `proprium({ feast, before })` can never drift.
-  {
-    const cutoff = attestationCutoff(query, "cantus");
-    if (cutoff != null || query.cursus) {
-      out = out.filter((c) => chantAdmissible(c.id, cutoff, query.cursus));
-    }
   }
 
   const sort = query.sort ?? "incipit";

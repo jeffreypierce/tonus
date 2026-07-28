@@ -2,7 +2,6 @@
 // engines/chant/hour — Divine Office hour retrieval
 // ---------------------------------------------------------------------------
 import { resolveChant, resolveChants } from "./chant.js";
-import { eraCutoff, chantAdmissible } from "./attest.js";
 import { intonePortion, officePsalmPortions } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
 import { getFeast } from "../cal/calendar.js";
@@ -396,19 +395,6 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     });
   } else {
     return [];
-  }
-
-  // The era view: an own `before`/`century` wins; otherwise the view
-  // festum({ before }) stamped on the feast rides along. Excluded chants
-  // degrade to SILENCE here ⟨RULED⟩ — the office's proper → commune → ferial
-  // chain triggers on ABSENCE from the tables, not on inadmissibility, so no
-  // re-pick is attempted. (Extending the chain to re-pick under a view is a
-  // recorded follow-up, not an accident.)
-  {
-    const cutoff = eraCutoff(query, feasts, "officium");
-    if (cutoff != null || query.cursus) {
-      results = results.filter((c) => chantAdmissible(c.id, cutoff, query.cursus));
-    }
   }
 
   // Apply CantusQuery filters

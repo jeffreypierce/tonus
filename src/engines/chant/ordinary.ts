@@ -9,7 +9,6 @@ import {
   type MassRubric,
 } from "./data/masses.js";
 import { KYRIALE, type KyrialeEntry } from "../../data/kyriale.js";
-import { attestationCutoff, eraCutoff, chantAdmissible } from "./attest.js";
 import {
   KY_SOURCE,
   MODE_LABELS,
@@ -512,23 +511,9 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
   let results: OrdinaryChant[];
 
   if (feasts) {
-    // The era view: an own `before`/`century` wins; otherwise the view
-    // festum({ before }) stamped on the feast rides along.
-    results = feasts.flatMap((f) => {
-      const cutoff = eraCutoff(query, [f], "ordinarium");
-      const adm = cutoff != null || query.cursus
-        ? (id: string) => chantAdmissible(id, cutoff, query.cursus)
-        : null;
-      return ordinaryForFeast(f, query.mass, filterMode, adm);
-    });
+    results = feasts.flatMap((f) => ordinaryForFeast(f, query.mass, filterMode));
   } else if (query.mass != null || query.ordinary) {
-    // Direct kyriale query without feast context — same admissibility rule as
-    // cantus, so the two doors cannot disagree.
     let entries = KYRIALE.slice();
-    const cutoff = attestationCutoff(query, "ordinarium");
-    if (cutoff != null || query.cursus) {
-      entries = entries.filter((e) => chantAdmissible(e.id, cutoff, query.cursus));
-    }
     if (query.mass != null) entries = entries.filter((e) => e.mass === query.mass);
     if (query.ordinary) entries = entries.filter((e) => e.office === query.ordinary);
     if (filterMode != null) entries = entries.filter((e) => e.mode === String(filterMode));
