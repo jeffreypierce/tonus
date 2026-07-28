@@ -186,6 +186,34 @@ describe("the appendix (the export law)", () => {
     }
   });
 
+  test("CADENTIAE is KEY-ORPHANED until the re-mine — do not join it", async () => {
+    const { CADENTIAE } = await import("../dist/index.js");
+    // ⚠ ⟨2026-07-28⟩ The shipped table speaks the OLD mod-12 folded key; live
+    // `signature`s speak the new signed-raw key. No join is valid until the
+    // re-mine bakes a table from the current key function.
+    //
+    // The failure mode is not a clean break, which is why this test exists: a
+    // key whose arrival never needed folding still matches, so measured on gr
+    // the join rate is 49.3% — the table looks HALF-WORKING. Anything that
+    // starts consuming it in the gap would silently drop every folded family
+    // and keep the rest, which reads as data rather than as breakage.
+    //
+    // This asserts the orphan is INERT: nothing in the engine joins the table.
+    // Delete this test when the re-mine lands; until then it is the guard.
+    const arrivals = CADENTIAE.map((f) => f.arrival);
+    assert.ok(
+      arrivals.every((a) => a >= -5 && a <= 6),
+      "the table is still folded — a signed-key table would carry |arrival| > 6",
+    );
+    const score = tonus.notatio({
+      gabc: "(c4) test(d) ing(f) close(e) here(d.) (::)",
+      mode: "1",
+      incipit: "orphan guard",
+    });
+    const live = score.cadences.map((c) => c.arrival).filter((a) => a != null);
+    assert.ok(live.length > 0, "the engine still emits arrivals");
+  });
+
   test("no functions ride the appendix", async () => {
     const m = await import("../dist/index.js");
     const fns = Object.entries(m)
