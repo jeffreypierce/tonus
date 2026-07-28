@@ -2,7 +2,7 @@
 
 The technical center of tonus: the full public API, the conventions every method
 obeys, the error contract, and the standards the code and docs are held to. The
-API is **thirteen methods on the `tonus` namespace**, no sub-namespaces.
+API is **fourteen methods on the `tonus` namespace**, no sub-namespaces.
 
 ```js
 import tonus from "tonus";
@@ -30,6 +30,7 @@ import tonus from "tonus";
 | `tonus.inscriptio(score, opts?)`   | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
 | `tonus.caelum(query?)`             | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
 | `tonus.harmonia(cosmos, opts?)`    | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
+| `tonus.census(query)`              | [census](census.md)     | `Census` — a chant against the corpus                   |
 
 ### Query and builder functions
 
@@ -135,6 +136,16 @@ the list resolve their pitches through the ones before.
 - [The planetary vowels](heavens.md#the-planetary-vowels)
 - [The tabula](heavens.md#the-tabula)
 - [Theory & Context](heavens.md#theory--context) · [Sources](heavens.md#sources)
+
+**[Census](census.md)** — one chant measured against the corpus that holds it.
+
+- [The verb](census.md#the-verb)
+- [What a block holds](census.md#what-a-block-holds)
+- [Distance is cosine per field group](census.md#distance-is-cosine-per-field-group)
+- [Profile and typicality](census.md#profile-and-typicality)
+- [Balance — distance and deviance](census.md#balance--distance-and-deviance)
+- [Neighbors, and `by`](census.md#neighbors-and-by)
+- [The era view](census.md#the-era-view)
 
 ## Conventions
 

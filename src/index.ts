@@ -9,6 +9,7 @@ import { buildScore } from "./engines/score/api.js";
 import { inscriptio } from "./engines/score/inscriptio.js";
 import { getCosmos } from "./engines/planet/planet.js";
 import { buildHarmonia } from "./engines/harmonia/api.js";
+import { getCensus } from "./engines/census/census.js";
 
 import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/types.js";
 import type {
@@ -46,6 +47,9 @@ import type { VoicedPitch } from "./engines/harmonia/voice.js";
 import type {
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
 } from "./engines/planet/types.js";
+import type {
+  Census, CensusQuery, CensusBy, CensusGroup, CensusGroupProfile, CensusNeighbour,
+} from "./engines/census/types.js";
 
 const tonus = {
   festum: getFeast,
@@ -61,6 +65,7 @@ const tonus = {
   inscriptio,
   caelum: getCosmos,
   harmonia: buildHarmonia,
+  census: getCensus,
 };
 
 export default tonus;
