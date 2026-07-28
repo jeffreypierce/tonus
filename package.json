@@ -47,7 +47,7 @@
     "BIBLIOGRAPHY.md"
   ],
   "scripts": {
-    "build": "tsc && cp src/data/psalms.json dist/data/psalms.json && cp src/data/smufl-glyphs.json dist/data/smufl-glyphs.json && cp src/data/office-ferial.json dist/data/office-ferial.json && cp src/data/commune-office.json dist/data/commune-office.json && cp src/data/seasonal-respbreve.json dist/data/seasonal-respbreve.json",
+    "build": "tsc && cp src/data/psalms.json dist/data/psalms.json && cp src/data/smufl-glyphs.json dist/data/smufl-glyphs.json && cp src/data/office-ferial.json dist/data/office-ferial.json && cp src/data/commune-office.json dist/data/commune-office.json && cp src/data/seasonal-respbreve.json dist/data/seasonal-respbreve.json && cp src/data/attestation.json dist/data/attestation.json",
     "clean": "rm -rf dist",
     "test": "npm run build && node --test --test-reporter=spec tests/*.test.mjs",
     "prepublishOnly": "npm run clean && npm run build",

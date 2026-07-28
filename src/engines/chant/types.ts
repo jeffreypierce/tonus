@@ -174,6 +174,24 @@ export interface CantusQuery {
   mode?: number | string | (number | string)[];
   office?: OfficeCode | OfficeCode[];
   source?: ChantSource | ChantSource[];
+  /**
+   * Only chants ATTESTED by this year — the repertoire as of a date, the
+   * analogue of `festum({ before })`, and the two COMPOSE: a Feast resolved by
+   * `festum({ date, before })` carries the view, and every day verb (proprium,
+   * ordinarium, officium) serves under it without being told the year twice;
+   * an own `before` overrides the feast's. `before: 1098` keeps what a
+   * manuscript of the 11th century or earlier already holds.
+   *
+   * This is evidence, not existence: the date comes from CANTUS's manuscript
+   * index, so it is a terminus ante quem. A chant with no dated witness is
+   * excluded rather than assumed old — silence is not evidence of age.
+   * ⟨RULED 2026-07-28, the comeback⟩: the one time argument. `century` did not
+   * return — it was `before: N * 100` in different clothes, and the noted
+   * convergence is executed.
+   */
+  before?: number;
+  /** Only chants transmitted by this cursus; `both` always qualifies. */
+  cursus?: "monastic" | "secular";
   limit?: number;
   offset?: number;
   sort?: "incipit" | "mode" | "id";
