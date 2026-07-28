@@ -165,8 +165,14 @@ export function detectModulations(
         (coverage.get(m.toMode) ?? 0) + (m.endPhrase - m.startPhrase + 1),
       );
     }
+    // The share is over phrases that SOUND — a note-less phrase (an isolated
+    // divisio, an empty incise) can neither lean nor stay home, so counting it
+    // in the denominator quietly diluted every chant that carried one.
+    const sounding = phrases.filter(
+      (p) => !p.syllables.every((s) => s.notes.length === 0),
+    ).length;
     for (const [toMode, phraseCount] of coverage) {
-      if (phraseCount / phrases.length >= TRANSPOSITION_SHARE) {
+      if (sounding > 0 && phraseCount / sounding >= TRANSPOSITION_SHARE) {
         for (const m of modulations) {
           if (m.toMode === toMode) m.kind = "transposition";
         }
