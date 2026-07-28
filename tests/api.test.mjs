@@ -180,38 +180,38 @@ describe("the appendix (the export law)", () => {
     assert.equal(CADENTIAE[0].key, "2,0,-2 @0");
     assert.equal(CADENTIAE[0].arrival, 0);
     for (const f of CADENTIAE) {
-      assert.ok(f.n >= 150 && f.finality >= 0 && f.finality <= 1);
-      assert.ok(f.shape.length >= 1 && f.shape.length <= 3);
-      assert.ok(f.arrival >= -5 && f.arrival <= 6);
+      // FLOOR rescaled 150 -> 50 with the sung re-mine ⟨2026-07-28⟩: the old
+      // number was set against 77,275 pre-cut phrase ends, and the sung corpus
+      // has 28,481. Carrying it over would have shrunk the table to ~29.
+      assert.ok(f.n >= 50 && f.finality >= 0 && f.finality <= 1);
+      assert.ok(f.shape.length >= 0 && f.shape.length <= 3);
+      // Arrival is SIGNED now, not folded to [-5..+6] — a fifth above the final
+      // no longer shares a family with a fourth below. Bounded generously; the
+      // corpus spans -7..9 and an octave-equivalent tail is filtered by FLOOR.
+      assert.ok(f.arrival >= -24 && f.arrival <= 24);
     }
   });
 
-  test("CADENTIAE is KEY-ORPHANED until the re-mine — do not join it", async () => {
+  test("CADENTIAE joins live signatures — the key-orphan gap is closed", async () => {
     const { CADENTIAE } = await import("../dist/index.js");
-    // ⚠ ⟨2026-07-28⟩ The shipped table speaks the OLD mod-12 folded key; live
-    // `signature`s speak the new signed-raw key. No join is valid until the
-    // re-mine bakes a table from the current key function.
-    //
-    // The failure mode is not a clean break, which is why this test exists: a
-    // key whose arrival never needed folding still matches, so measured on gr
-    // the join rate is 49.3% — the table looks HALF-WORKING. Anything that
-    // starts consuming it in the gap would silently drop every folded family
-    // and keep the rest, which reads as data rather than as breakage.
-    //
-    // This asserts the orphan is INERT: nothing in the engine joins the table.
-    // Delete this test when the re-mine lands; until then it is the guard.
-    const arrivals = CADENTIAE.map((f) => f.arrival);
+    // ⟨2026-07-28⟩ Between the signed-arrival re-key and the re-mine, the table
+    // spoke folded keys while live signatures spoke signed ones, and the join
+    // rate sat at 49.3% — HALF-WORKING, which reads as data rather than as
+    // breakage. The re-mine closed it. This asserts the two speak one key.
+    const table = new Set(CADENTIAE.map((f) => f.key));
+    // A signed table must carry arrivals the old fold could not express.
     assert.ok(
-      arrivals.every((a) => a >= -5 && a <= 6),
-      "the table is still folded — a signed-key table would carry |arrival| > 6",
+      CADENTIAE.some((f) => f.arrival > 6 || f.arrival < -5),
+      "the table is still folded — re-mine did not land",
     );
-    const score = tonus.notatio({
-      gabc: "(c4) test(d) ing(f) close(e) here(d.) (::)",
-      mode: "1",
-      incipit: "orphan guard",
-    });
-    const live = score.cadences.map((c) => c.arrival).filter((a) => a != null);
-    assert.ok(live.length > 0, "the engine still emits arrivals");
+    // And a live signature from the shipped corpus must find its family.
+    const score = tonus.notatio(tonus.cantus({ source: "gr", limit: 1 })[0]);
+    const sigs = score.cadences.map((c) => c.signature).filter(Boolean);
+    assert.ok(sigs.length > 0, "the engine emits signatures");
+    assert.ok(
+      sigs.some((sig) => table.has(sig)),
+      "no live signature joined the table — the keys have forked again",
+    );
   });
 
   test("no functions ride the appendix", async () => {
