@@ -5,6 +5,7 @@ import {
   MASSES,
   AD_LIB,
   WHOLE_MASS_RUBRICS,
+  partWithinEra,
   type MassEntry,
   type MassRubric,
 } from "./data/masses.js";
@@ -195,6 +196,23 @@ function entriesForOffice(
   if (appendixLeads && appendixPick.length) return [...appendixPick, ...ranked];
   if (ranked.length) return ranked;
 
+  // The SUNG borrow ⟨2026-07-28⟩. A day is often appointed exactly one mass, so
+  // when a slot has no candidate left the rubric's own licence is the only way
+  // out: "chants from one Mass may be used together with those from others, the
+  // Ferial Masses excepted." Before the era bound this branch was unreachable —
+  // every appointed mass printed every sung part — but dropping Mass XI's
+  // 14th-c Agnus left 115 Sundays a decade with an Agnus-shaped hole and only
+  // Mass XI appointed. Numbered masses in book order; never the appendix, which
+  // stays a solemnity boost reachable only on its own turn.
+  if (!wholeMass) {
+    const borrowed = pool.filter(
+      (e) =>
+        e.office === office && e.mass != null &&
+        !isAdLibitum(e) && !isRequiem(e),
+    ).sort((a, b) => a.mass! - b.mass! || (a.id < b.id ? -1 : 1));
+    if (borrowed.length) return borrowed;
+  }
+
   // The dismissal borrow. A mass with no dismissal of its own is sent elsewhere
   // by the book itself: Masses XVII and XVIII print none and direct
   // "Benedicamus Domino as in Mass II, p. 22, or ad libitum as below"; Mass XVI
@@ -365,12 +383,19 @@ function ordinaryForFeast(
   const dayRubric = resolveMasses(feast)[0]?.rubric ?? null;
   const appendixAllowed = dayRubric != null && SOLEMN_RUBRICS.has(dayRubric);
 
-  // The era view RE-PICKS rather than silences ⟨RULED⟩: unlike a proper, the
+  // The era bound RE-PICKS rather than silences ⟨RULED⟩: unlike a proper, the
   // ordinary offers ranked alternatives by design, so the whole selection —
-  // rotation, siblings, borrow, appendix — runs over the ADMISSIBLE pool and
-  // the day still sings whatever setting the view attests. An empty pool is
-  // the honest end of the line.
-  const pool = admissible ? KYRIALE.filter((e) => admissible(e.id)) : KYRIALE;
+  // rotation, siblings, borrow, appendix — runs over the admissible pool and
+  // the day still sings a permitted setting. Filtering PER PART is what makes
+  // that work: Mass XI keeps its 10th-c Kyrie/Gloria/Sanctus and only its
+  // 14th-c Agnus borrows. Mass VIII (de Angelis) loses its Kyrie, Gloria and
+  // Agnus — the famous late ones — while its Sanctus stays, because the editors
+  // print that one "(XI) XII. s." NO mass leaves the pool whole: the bound cuts
+  // 7 of 66 parts, and every day still sings.
+  // See partWithinEra() in ./data/masses.ts for the 754–1324 reasoning.
+  const pool = KYRIALE.filter(
+    (e) => partWithinEra(e.mass, e.office) && (!admissible || admissible(e.id)),
+  );
 
   // The year steps through the masses the day's rubric appoints. A pinned mass
   // is an explicit request and overrides that — `ordinarium({ mass })` means

@@ -362,3 +362,251 @@ export function massesForRubric(rubric: MassRubric): MassEntry[] {
     .filter((m) => m.rubric === rubric)
     .sort((a, b) => a.mass - b.mass);
 }
+
+// ── Kyriale century ascriptions ⟨editorial, 2026-07-28⟩ ─────────────────────
+// What the Vatican/Solesmes editors PRINT above each setting: "X. s." (saeculum
+// X), "XI-XIII. s." for a span, "(X) XIV-XVI. s." where they record an
+// alternative reading, and "?. s." where they decline to date it at all.
+//
+// ── THIS IS NOT MANUSCRIPT ATTESTATION ──────────────────────────────────────
+// CANTUS dates a chant by the manuscripts that carry it. This dates it by
+// editorial judgement, and the two must never be conflated — a census block
+// carrying one of these sets flags bit2 (centuryEditorial) so a consumer can
+// tell them apart. The Kyriale is outside CANTUS's index (CANTUS covers the
+// Office; the Mass Ordinary is a separate scholarly tradition catalogued by
+// Melnicki/Bosse/Thannabaur/Schildbach), which is why this table exists at all.
+//
+// Transcribed from the Kyriale Romanum (Bund fur Liturgie und Gregorianik,
+// 2001, after the Graduale Romanum 1961) — media.musicasacra.com/pdf/kyriale.pdf
+// — by machine extraction of its text layer, 74 ascriptions across 18 Masses
+// and 6 Credos.
+//
+// ⟨DECISIO — Jeffrey⟩ Every value below is an editorial claim to be checked
+// against the shelf copy. Four entries marked `inferred` had their PART
+// resolved by position (the ascription sits between two identified parts in
+// liturgical order) rather than by a legible incipit; the CENTURY is printed
+// either way. Cross-check candidates: Melnicki (Kyrie), Bosse (Gloria),
+// Thannabaur (Sanctus), Schildbach (Agnus).
+export interface MassCentury {
+  /** Earliest century the editors give (10 = the 900s); null where they print "?". */
+  from: number | null;
+  /** Latest, for a printed span like "XI-XIII. s."; equals `from` for a single. */
+  to: number | null;
+  /** A parenthesized alternative reading, e.g. "(X) XIV-XVI. s." → 10. */
+  alt?: number;
+  /** The part's century was read from position, not from a legible incipit. */
+  inferred?: true;
+  /** The token exactly as printed, so the claim stays auditable. */
+  printed: string;
+}
+
+/** mass number → ordinary code → what the Kyriale prints. */
+export const MASS_CENTURY: Record<number, Partial<Record<string, MassCentury>>> = {
+  // Mass I — Lux et Origo
+  1: {
+    ky: { from: 10, to: 10, printed: "X. s." },
+    gl: { from: 10, to: 10, printed: "X. s." },
+    sa: { from: 10, to: 10, printed: "X. s." },
+    ag: { from: 10, to: 10, printed: "X. s." },
+  },
+  // Mass II — Kyrie fons bonitatis
+  2: {
+    ky: { from: 10, to: 10, printed: "X. s." },
+    gl: { from: 13, to: 13, printed: "XIII. s." },
+    ag: { from: 10, to: 10, printed: "X. s." },
+  },
+  // Mass III — Kyrie Deus sempiterne
+  3: {
+    ky: { from: 11, to: 11, inferred: true, printed: "XI. s." },
+    gl: { from: 11, to: 11, printed: "XI. s." },
+    sa: { from: 12, to: 12, alt: 11, printed: "(XI) XII. s." },
+    ag: { from: 11, to: 12, printed: "XI-XII. s." },
+  },
+  // Mass IV — Cunctipotens Genitor Deus
+  4: {
+    ky: { from: 10, to: 10, printed: "X. s." },
+    gl: { from: 10, to: 10, printed: "X. s." },
+    sa: { from: 11, to: 11, printed: "XI. s." },
+    ag: { from: 13, to: 13, alt: 12, printed: "(XII) XIII. s." },
+  },
+  // Mass V — Kyrie magnæ Deus potentiæ
+  5: {
+    ky: { from: 13, to: 13, printed: "XIII. s." },
+    gl: { from: 12, to: 12, printed: "XII. s." },
+    sa: { from: 12, to: 12, printed: "XII. s." },
+    ag: { from: 12, to: 12, printed: "XII. s." },
+  },
+  // Mass VI — Kyrie Rex Genitor
+  6: {
+    ky: { from: 10, to: 10, printed: "X. s." },
+    gl: { from: 10, to: 10, printed: "X. s." },
+    sa: { from: 11, to: 11, printed: "XI. s." },
+    ag: { from: 11, to: 11, printed: "XI. s." },
+  },
+  // Mass VII — Kyrie Rex splendes
+  7: {
+    ky: { from: 10, to: 10, printed: "X. s." },
+    gl: { from: 12, to: 12, printed: "XII. s." },
+    sa: { from: 11, to: 11, printed: "XI. s." },
+    ag: { from: 15, to: 15, printed: "XV. s." },
+  },
+  // Mass VIII — de Angelis
+  8: {
+    ky: { from: 15, to: 16, printed: "XV-XVI. s." },
+    gl: { from: 16, to: 16, printed: "XVI. s." },
+    sa: { from: 12, to: 12, alt: 11, printed: "(XI) XII. s." },
+    ag: { from: 15, to: 15, printed: "XV. s." },
+  },
+  // Mass IX — Cum Jubilo
+  9: {
+    ky: { from: 12, to: 12, printed: "XII. s." },
+    gl: { from: 11, to: 11, printed: "XI. s." },
+    sa: { from: 14, to: 14, printed: "XIV. s." },
+    ag: { from: 13, to: 13, alt: 10, printed: "(X) XIII. s." },
+  },
+  // Mass X — Alme Pater
+  10: {
+    ky: { from: 11, to: 11, printed: "XI. s." },
+    gl: { from: 15, to: 15, printed: "XV. s." },
+    sa: { from: null, to: null, printed: "?. s." },
+    ag: { from: 12, to: 12, printed: "XII. s." },
+  },
+  // Mass XI — Orbis factor
+  11: {
+    ky: { from: 14, to: 16, alt: 10, printed: "(X) XIV-XVI. s." },
+    gl: { from: 10, to: 10, printed: "X. s." },
+    sa: { from: 10, to: 10, printed: "X. s." },
+    ag: { from: 14, to: 14, printed: "XIV. s." },
+  },
+  // Mass XII — Pater cuncta
+  12: {
+    ky: { from: 12, to: 12, printed: "XII. s." },
+    gl: { from: 12, to: 12, inferred: true, printed: "XII. s." },
+    sa: { from: 13, to: 13, printed: "XIII. s." },
+    ag: { from: 11, to: 11, printed: "XI. s." },
+  },
+  // Mass XIII — Stelliferi Conditor orbis
+  13: {
+    ky: { from: 11, to: 11, printed: "XI. s." },
+    gl: { from: 12, to: 12, printed: "XII. s." },
+    sa: { from: 13, to: 13, printed: "XIII. s." },
+    ag: { from: null, to: null, printed: "? s." },
+  },
+  // Mass XIV — Jesu Redemptor
+  14: {
+    ky: { from: 10, to: 10, inferred: true, printed: "X. s." },
+    gl: { from: 10, to: 10, printed: "X. s." },
+    sa: { from: 12, to: 12, inferred: true, printed: "XII. s." },
+    ag: { from: 13, to: 13, printed: "XIII. s." },
+  },
+  // Mass XV — Dominator Deus
+  15: {
+    ky: { from: 11, to: 13, printed: "XI-XIII. s." },
+    gl: { from: 10, to: 10, printed: "X. s." },
+    sa: { from: 10, to: 10, printed: "X. s." },
+    ag: { from: 14, to: 14, alt: 12, printed: "(XII) XIV. s." },
+  },
+  // Mass XVI
+  16: {
+    ky: { from: 11, to: 13, printed: "XI-XIII. s." },
+    sa: { from: 13, to: 13, printed: "XIII. s." },
+    ag: { from: 10, to: 11, printed: "X-XI. s." },
+  },
+  // Mass XVII
+  17: {
+    ky: { from: 15, to: 17, alt: 10, printed: "(X) XV-XVII. s." },
+    sa: { from: 11, to: 11, printed: "XI. s." },
+    ag: { from: 13, to: 13, printed: "XIII. s." },
+  },
+  // Mass XVIII — Deus Genitor alme
+  18: {
+    ky: { from: 11, to: 11, printed: "XI. s." },
+    sa: { from: 13, to: 13, printed: "XIII. s." },
+    ag: { from: 12, to: 12, printed: "XII. s." },
+  },
+};
+
+/** Credo number (roman, as the Kyriale names them) → its ascription. */
+export const CREDO_CENTURY: Record<string, MassCentury> = {
+  I: { from: 11, to: 11, printed: "XI. s." },
+  II: { from: null, to: null, printed: "?. s." },
+  III: { from: 17, to: 17, printed: "XVII. s." },
+  IV: { from: 15, to: 15, printed: "XV. s." },
+  V: { from: 12, to: 12, printed: "XII. s." },
+  VI: { from: 11, to: 11, printed: "XI. s." },
+};
+
+// ── The era bound ⟨★RULED — Jeffrey, 2026-07-28⟩ ────────────────────────────
+// tonus states ONE hard editorial bound and stands behind it, rather than
+// filtering on evidence it only has for some chants. (An attestation filter
+// built on CANTUS datings was tried and retired the same day: 31% of the corpus
+// is undated and the gap is genre-shaped — 93% of responsories — so a date
+// query answered "what was sung in 1098" by deleting the Night Office.)
+//
+// 754 — the Frankish adoption of the Roman rite under Pippin, the origin of the
+// Gregorian synthesis every book in this corpus descends from. NOT a claim that
+// chant began then: Greek-texted ordinary chants (the Carolingian Missa graeca)
+// were sung in the West from the 8th c and survive in a 9th-c Saint-Denis
+// sacramentary, yet Solesmes never printed them, so the corpus holds none. The
+// lower bound describes what THESE BOOKS transmit, not what was sung.
+//
+// 1324 — Docta Sanctorum Patrum, John XXII's bull at Avignon condemning the ars
+// nova and insisting the plainchant melodies stay "intact and recognizable as
+// such." The liturgy's own line between the chant tradition and what followed —
+// and it lands on the seam already in the data. Kyriale parts by century:
+// 10th 21 · 11th 17 · 12th 13 · 13th 8 · 14th 2 · 15th 4 · 16th 1.
+export const ERA_FROM = 754;
+export const ERA_TO = 1324;
+
+/**
+ * The latest century a year admits WHOLE.
+ *
+ * The Kyriale dates a setting only to its century, so 1324 cannot admit "the
+ * 14th century" — a chant marked XIV. s. may have been written in 1390, well
+ * after the bull. A century is admitted only when it CLOSED before the bound:
+ * 1324 → 13 (through the 1200s). This is what keeps Mass IX's XIV-c Sanctus and
+ * Mass XI's XIV-c Agnus out, which is the whole point of choosing 1324.
+ */
+function latestWholeCentury(year: number): number {
+  return Math.ceil(year / 100) - 1;
+}
+
+/** The earliest century a year admits whole: 754 → 8 (the 700s). */
+function earliestCentury(year: number): number {
+  return Math.floor(year / 100) + 1;
+}
+
+/**
+ * Whether a Kyriale setting falls inside the era bound.
+ *
+ * PER PART, never per mass. The Kyriale is a 19th-c Solesmes GROUPING of chants
+ * from different centuries — which is why its ascriptions are per-part in the
+ * first place. Mass XI "Orbis factor" is a 10th-c Kyrie + 10th Gloria + 10th
+ * Sanctus with a 14th-c Agnus bolted on; a whole-mass test would lose the
+ * ordinary Sunday mass over one late part. The book licenses the per-part
+ * result outright — "chants from one Mass may be used together with those from
+ * others, the Ferial Masses excepted" — so a dropped part simply borrows, which
+ * is the machinery entriesForOffice() already runs.
+ *
+ * `alt` wins where the editors print one. Mass XI's Kyrie reads "(X) XIV-XVI.
+ * s." — the parenthetical is the melody, the late reading is whichever
+ * manuscript they transcribed. Modern scholarship agrees: Corpus Monodicum
+ * (Brill, 2024) dates Orbis factor to the 10th-12th c.
+ *
+ * An undated part (the editors' own "?. s.") is ADMITTED, not excluded —
+ * undated is not late, and excluding it would repeat the mistake that killed
+ * the attestation filter.
+ */
+export function partWithinEra(
+  mass: number | null | undefined,
+  office: string | null | undefined,
+  fromYear: number = ERA_FROM,
+  toYear: number = ERA_TO,
+): boolean {
+  if (mass == null || !office) return true;
+  const entry = MASS_CENTURY[mass]?.[office];
+  if (!entry) return true;                       // no printed century → admit
+  const century = entry.alt ?? entry.from;
+  if (century == null) return true;              // "?. s." → admit
+  return century >= earliestCentury(fromYear) && century <= latestWholeCentury(toYear);
+}
