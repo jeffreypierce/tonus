@@ -132,12 +132,18 @@ describe("detectCadences", () => {
     assert.equal(medial.target, "tenor");
   });
 
-  test("a single-note phrase has no signature, but still an arrival", () => {
+  test("a single-note phrase is a cadence with an empty shape", () => {
+    // ⟨RULED 2026-07-28⟩ It has a LANDING but no GESTURE, so it keys as one:
+    // an empty shape and a real arrival, not a null. The census used to drop
+    // these entirely (68 corpus-wide, every one a real phrase carrying a real
+    // divisio, mostly "::" at the chant end); the engine used to keep them with
+    // a null signature. Consolidating the key forced the question, and "a
+    // cadence that lands without gesturing" is the honest reading.
     const score = buildScore(
       makeChant("(c4) one(d.) (;) clos(e) ing(d.) (::)", "1"),
     );
     const first = score.cadences[0];
-    assert.equal(first.signature, null);
+    assert.equal(first.signature, " @0");
     assert.deepEqual(first.shape, []);
     assert.equal(first.arrival, 0); // it sits on the chant final
   });

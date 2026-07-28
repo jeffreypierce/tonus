@@ -170,7 +170,11 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
 }
 
 export type { ParseError };
-export type { Cadence, CadenceTarget, CadenceApproach } from "./cadence.js";
+export type { Cadence, CadenceTarget, CadenceApproach, CadenceKeyEvent } from "./cadence.js";
+// THE cadence family key, exported as a FUNCTION and not only a type: the
+// census and the CADENTIAE miner need to key a flat tabula, and re-deriving
+// the algorithm is exactly the fork this consolidation ended.
+export { cadenceKeys } from "./cadence.js";
 export type { Modulation } from "./modulation.js";
 export type { FormulaMatch } from "./formula.js";
 export type { Formula, FormulaSlot } from "./data/formulas.js";

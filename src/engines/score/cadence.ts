@@ -211,12 +211,87 @@ function bestFigure(
 // span out of the (longer) formula window.
 const TAIL = 4;
 
-/** Octave-reduce a semitone offset to [-5..+6], exactly as the mining did. */
-function reduceArrival(semitones: number): number {
+/**
+ * Octave-reduce a semitone offset to [-5..+6].
+ *
+ * NO LONGER PART OF THE KEY ⟨RULED 2026-07-28⟩ — kept because the folded value
+ * is still worth reporting (it is the scale DEGREE, mode-theoretically real).
+ * The fold made a fifth ABOVE the final share a family with a fourth BELOW:
+ * measured over 27,985 phrase ends, 3,499 landed on @-5, of which 2,427 were
+ * really +7 and 1,072 really -5. Two opposite gestures, one key. Arrival in the
+ * key is now the SIGNED offset; see cadenceKey().
+ */
+export function reduceArrival(semitones: number): number {
   let a = semitones % 12;
   if (a > 6) a -= 12;
   if (a < -5) a += 12;
   return a;
+}
+
+/** One phrase-end event: the family key, and whether it closes the chant. */
+export interface CadenceKeyEvent {
+  /** `"<interval,interval,…> @<signed arrival>"` — empty shape for a 1-note phrase. */
+  key: string;
+  /** Shape only: the tail's successive semitone intervals. */
+  shape: number[];
+  /** Signed semitone offset of the landing note from the chant's closing note. */
+  arrival: number;
+  /** The arrival octave-reduced to [-5..+6] — the scale degree, not the key. */
+  degree: number;
+  /** A chant end, or a full-bar "::" — as opposed to an interior phrase end. */
+  isFinal: boolean;
+  /** Index of the phrase this closes. */
+  phraseIndex: number;
+}
+
+/**
+ * THE cadence family key — one implementation, shared by every consumer.
+ *
+ * ⟨consolidated 2026-07-28⟩ This existed three times: here (keyed off the
+ * Phrase tree), in tonus-corpus `census/_shared.mjs` (keyed off flat tabula
+ * rows), and in the CADENTIAE miner (a character-for-character copy of the
+ * census one, which escaped an earlier unforking only by living in gitignored
+ * working/). They agreed — measured corpus-wide, 28,051 engine cadences against
+ * 27,985 census phrase ends with ZERO key disagreements — but agreement by
+ * luck across three copies is what "no second parser, no drift" forbids.
+ *
+ * Takes the FLAT shape, because that is what the census and the miner have; the
+ * engine's own detection flattens into it. A phrase end is a `phraseIndex`
+ * transition or the last row.
+ *
+ * A ONE-NOTE PHRASE IS A CADENCE ⟨RULED⟩ — it has a landing but no gesture, so
+ * it is emitted with an empty shape rather than skipped. The census used to
+ * drop these (68 corpus-wide, all real phrases carrying a real divisio, mostly
+ * "::" at the chant end); the engine kept them with a null signature. The
+ * engine's reading is the right one.
+ */
+export function cadenceKeys(
+  rows: readonly { phraseIndex: number; midi: number; divisio: string | null }[],
+  finalMidi?: number,
+): CadenceKeyEvent[] {
+  if (!rows.length) return [];
+  const final = finalMidi ?? rows[rows.length - 1]!.midi;
+  const events: CadenceKeyEvent[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const next = rows[i + 1];
+    if (next && next.phraseIndex === rows[i]!.phraseIndex) continue; // not a phrase end
+    // The last <=TAIL rows of this phrase, ending at row i.
+    const seg: typeof rows[number][] = [];
+    for (let j = i; j >= 0 && seg.length < TAIL && rows[j]!.phraseIndex === rows[i]!.phraseIndex; j--) {
+      seg.unshift(rows[j]!);
+    }
+    const shape = seg.slice(1).map((r, k) => r.midi - seg[k]!.midi);
+    const arrival = seg[seg.length - 1]!.midi - final;
+    events.push({
+      key: `${shape.join(",")} @${arrival}`,
+      shape,
+      arrival,
+      degree: reduceArrival(arrival),
+      isFinal: rows[i]!.divisio === "::" || !next,
+      phraseIndex: rows[i]!.phraseIndex,
+    });
+  }
+  return events;
 }
 
 /** The chant's closing note — the reference every arrival is measured from. */
@@ -273,16 +348,18 @@ export function detectCadences(
       }
     }
 
-    // The corpus classification: the tail's interval shape and its arrival,
-    // computed exactly as the mining did so the key joins CADENTIAE.
-    const tail = window.slice(-TAIL);
-    const shape = tail.slice(1).map((w, k) => w.midi - tail[k]!.midi);
-    const arrival =
-      finalMidi != null
-        ? reduceArrival(tail[tail.length - 1]!.midi - finalMidi)
-        : 0;
-    const signature =
-      shape.length > 0 ? `${shape.join(",")} @${arrival}` : null;
+    // The corpus classification, from THE shared key function — the engine does
+    // not compute this itself. `cadenceKeys` takes flat rows, so the window is
+    // projected into that shape; one phrase in, one event out.
+    const ev = cadenceKeys(
+      window.map((w) => ({ phraseIndex: 0, midi: w.midi, divisio: null })),
+      finalMidi,
+    )[0];
+    const shape = ev?.shape ?? [];
+    const arrival = ev?.arrival ?? 0;
+    // A 1-note phrase has a landing but no gesture: a real cadence with an
+    // empty shape, which is why `signature` is the key rather than null.
+    const signature = ev?.key ?? null;
 
     cadences.push({
       phraseIndex: pi,
