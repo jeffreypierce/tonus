@@ -12,6 +12,7 @@ carries page-level provenance back to its book.
     - [The cut](#the-cut)
   - [The books — `corpus`](#the-books--corpus)
   - [Retrieval — `cantus`](#retrieval--cantus)
+    - [On chant ids](#on-chant-ids)
   - [The Mass propers — `proprium`](#the-mass-propers--proprium)
   - [The ordinary — `ordinarium`](#the-ordinary--ordinarium)
   - [The Office — `officium`](#the-office--officium)
@@ -200,7 +201,7 @@ name:
 
 ```ts
 interface Chant {
-  id: string;
+  id: string; // "gregobase:1210", "nocturnale:E1F2R3" — see below
   incipit: string;
   gabc: string;
   office: OfficeCode; // genre code
@@ -233,6 +234,26 @@ interface CantusQuery {
   sort?: "incipit" | "mode" | "id";
 }
 ```
+
+### On chant ids
+
+An id's prefix names **the catalogue the identifier came from** — not the book
+the chant is printed in, and not a claim about who the melody belongs to. A
+chant carrying `gregobase:1210` is a Solesmes book chant that GregoBase happens
+to have catalogued; the corpus is assembled from eleven books, and GregoBase is
+one source among several.
+
+The prefix is therefore **not a namespace you can query against**. GregoBase
+holds 18,148 chants; tonus ships 1,717 of them — 9.5% — because the corpus is
+assignment-driven, so an id copied from the GregoBase site will usually return
+`[]` here. That is not a lookup failure; it means no day of the calendar calls
+for that chant. The two prefixes in the shipped corpus are `gregobase:` (1,717)
+and `nocturnale:` (470), the latter carrying the Nocturnale's own alphanumeric
+keys rather than numbers.
+
+Within tonus an id is exactly one chant. A melody printed in several books —
+683 of them are — is stored once, under the record `cantus({ id })` returns, so
+`id` is a stable key to a chant rather than to a printing.
 
 ## The repertoire as of a date — the era view
 
