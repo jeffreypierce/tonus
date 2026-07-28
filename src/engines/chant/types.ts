@@ -45,7 +45,7 @@ export type ChantSource =
   // stated in extract-gregobase.mjs OFFICE_BOOKS: Solesmes AND rhythmically
   // marked (>50% episema or mora), because tonus reads those marks and a bare
   // transcription is a worse copy of a chant already held.
-  | "cse" | "cot" | "cab" | "mpb";
+  | "cse" | "cot";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"

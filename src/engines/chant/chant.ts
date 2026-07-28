@@ -20,8 +20,6 @@ import { PSM_DATA, PSM_SOURCE } from "../../data/psm.js";
 // ⟨2026-07-28⟩ further marked Solesmes books — see ChantSource in types.ts.
 import { CSE_DATA, CSE_SOURCE } from "../../data/cse.js";
 import { COT_DATA, COT_SOURCE } from "../../data/cot.js";
-import { CAB_DATA, CAB_SOURCE } from "../../data/cab.js";
-import { MPB_DATA, MPB_SOURCE } from "../../data/mpb.js";
 import { KYRIALE } from "../../data/kyriale.js";
 import { KY_SOURCE } from "./types.js";
 import { entryToOrdinaryChant } from "./ordinary.js";
@@ -111,8 +109,6 @@ const CORPUS: Chant[] = [
   ...PSM_DATA.map((c) => withLabels(c, PSM_SOURCE)),
   ...CSE_DATA.map((c) => withLabels(c, CSE_SOURCE)),
   ...COT_DATA.map((c) => withLabels(c, COT_SOURCE)),
-  ...CAB_DATA.map((c) => withLabels(c, CAB_SOURCE)),
-  ...MPB_DATA.map((c) => withLabels(c, MPB_SOURCE)),
   // The Kyriale as a corpus book (source "ky"): the ordinary IS repertoire —
   // office stays "or" and the per-ordinary identity rides `ordinary`/
   // `ordinarium`/`mass`, the same records `ordinarium()` serves (one shaping,
@@ -133,7 +129,7 @@ const SOURCES: Record<ChantSource, Chant["source"]> = {
   ky: KY_SOURCE,
   // office books ⟨widened 2026-07-27⟩ — provenance, not acquisition
   ams: AMS_SOURCE, psm: PSM_SOURCE,
-  cse: CSE_SOURCE, cot: COT_SOURCE, cab: CAB_SOURCE, mpb: MPB_SOURCE,
+  cse: CSE_SOURCE, cot: COT_SOURCE,
 };
 
 // Tally a book's genre and mode distribution — computed once per code, cached.
