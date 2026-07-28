@@ -6,7 +6,7 @@ carrying its rank in the rubrics' own vocabulary, its season, and the
 kyriale masses appropriate to it. The calendar is the Tridentine
 Roman rite (1570–1962), extracted from
 [Divinum Officium](https://github.com/DivinumOfficium/divinum-officium):
-642 entries across the sanctorale (fixed feasts) and the temporale
+650 entries across the sanctorale (fixed feasts) and the temporale
 (movable feasts), resolved against Easter computed by the Gregorian computus
 from 1583 and the Julian computus before it.
 
@@ -100,12 +100,12 @@ than `before` returns `[]`, which is the honest answer: that day had no
 feast yet.
 
 ```js
-tonus.festum({ date: new Date("2026-08-06"), before: 1100 });
-// the feria — the Transfiguration's universal feast is later
+tonus.festum({ date: new Date("2026-07-01"), before: 1100 });
+// the feria — the Precious Blood was not instituted until 1849
 ```
 
 The feast returned **carries the view** (`feast.before`), and every chant
-verb reads it back: `proprium`, `ordinarium`, `officium`, and `matutinum`
+verb reads it back: `proprium`, `ordinarium`, and `officium`
 serve only chants attested by the same year, without being told the year
 twice. One `before` at the calendar door views the whole day. The chant side
 — what "attested" means, and what a slot the view excludes does — is in

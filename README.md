@@ -23,8 +23,8 @@ calls and no runtime dependencies.
 - **The liturgical calendar.** The Tridentine calendar of any year, resolved
   against Easter (by the Julian or the Gregorian computus), with each feast's
   authentic rank, grade, and season.
-- **The chant repertoire.** Roughly eight and a half thousand chants across six
-  books (five Solesmes editions and the Roman Matins repertoire), in
+- **The chant repertoire.** 2,887 chants across eleven books (ten Solesmes
+  editions and the Nocturnale Romanum night office), in
   [GABC](https://gregorio-project.github.io/) notation: Mass propers, the Kyriale,
   the Office hours, the psalter, and the Matins nocturns, retrievable by feast,
   season, mode, or office.
@@ -121,8 +121,8 @@ one page per engine, in dependency order:
 ## Install and run
 
 ESM only. Node ≥ 20; works in the browser through a bundler. No runtime
-dependencies. About 8,500 chants and the full 642-entry calendar ship in the
-package (9.0 MB unpacked, 2.3 MB packed).
+dependencies. About 2,900 chants and the full 650-entry calendar ship in the
+package.
 
 ```sh
 npm test          # builds and runs the suite (node --test)

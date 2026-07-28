@@ -390,6 +390,7 @@ interface ModeData {
   type: "authentic" | "plagal";
   final: number; // finalis pitch class (C=0)
   tenor: number; // reciting tone pitch class
+  recitingNotes: { pc: number; rank: string; label: string }[]; // tenor + secondary reciting pitches
   scalePcs: number[]; // 7 diatonic pitch classes
   hexachords: ("durum" | "naturale" | "molle")[]; // rank-ordered
   profile: ModeProfile;
@@ -491,7 +492,7 @@ Ptolemy's three diatonic shades, and the modern equal division.
 
 ### The presets
 
-Five ways to fill the table, four historical and one modern. Each has a
+Six ways to fill the table, five historical and one modern. Each has a
 character; the interval arithmetic, the commas that drive it, and the
 editorial choices behind it are documented at the builder, in
 [`temper/scale.ts`](../src/engines/temper/scale.ts).

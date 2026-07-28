@@ -238,6 +238,7 @@ interface Context {
   lyric: string;
   vowel: string;
   syllableIndex: number;
+  accent: boolean; // this note's syllable bears the Latin tonic word-accent
   neumeGroup: number; // neume figure within the syllable (0-based)
   ictus: boolean;
   ictusSign: boolean; // an editorial ictus mark is printed in the source
@@ -287,6 +288,7 @@ interface ChantTabulaRow {
   phraseIndex: number;
   syllableIndex: number;
   noteIndex: number;
+  accent: boolean; // this note's syllable bears the Latin tonic word-accent
   neumeGroup: number; // which neume figure within the syllable (0-based)
   neumeIndex: number; // position of this note within that figure
   wordStart: boolean; // first syllable of its word
@@ -587,8 +589,18 @@ affinity. Each phrase is scored against all eight modes (the imprint's
 affinity math); a run of phrases that favours a foreign mode, by a margin,
 becomes one `Modulation` span. The margin is calibrated against Suñol's
 worked examples (_Christus resurgens_ modulates toward mode 3). It's
-distribution-based: it finds where a passage leans, not a functional
-analysis, and can read a transposed mode as its untransposed twin.
+distribution-based: it finds where a passage leans, not a functional analysis.
+
+`kind` says what the span is evidence OF, which matters because the three are
+not the same phenomenon. **`inflection`** is a single phrase leaning away and
+back — passing colour, not a shift. **`modulation`** is a sustained internal
+excursion, two phrases or more, that returns. **`transposition`** is the whole
+chant sitting in a foreign mode's frame: it does not close on its labelled
+final and one foreign mode dominates most of its phrases, meaning the melody is
+notated at a transposed position (the affinal) or the label disagrees with the
+notation. A transposed chant is not modulating — the displacement is global —
+so a caller displaying "modulations" should treat those spans as a re-reading of
+the whole chant rather than an event inside it.
 
 ```ts
 interface Modulation {
@@ -596,6 +608,7 @@ interface Modulation {
   endPhrase: number; // last phrase (inclusive)
   toMode: number; // the mode the passage leans toward (1–8)
   confidence: number; // 0–1, the averaged margin over the home mode
+  kind: "inflection" | "modulation" | "transposition";
 }
 ```
 

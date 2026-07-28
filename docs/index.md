@@ -2,7 +2,7 @@
 
 The technical center of tonus: the full public API, the conventions every method
 obeys, the error contract, and the standards the code and docs are held to. The
-API is **fourteen methods on the `tonus` namespace**, no sub-namespaces.
+API is **thirteen methods on the `tonus` namespace**, no sub-namespaces.
 
 ```js
 import tonus from "tonus";
@@ -24,7 +24,6 @@ import tonus from "tonus";
 | `tonus.proprium(query?)`           | [chant](chant.md)       | `Chant[]` — Mass propers                                |
 | `tonus.ordinarium(query?)`         | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
 | `tonus.officium(query?)`           | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |
-| `tonus.matutinum(query?)`          | [chant](chant.md)       | `Matins \| null` — structured Roman Matins nocturns     |
 | `tonus.psalmus(query?)`            | [chant](chant.md)       | `Chant[]` — intoned psalm verses                        |
 | `tonus.temperamentum(input?)`      | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
 | `tonus.notatio(chant, opts?)`      | [score](score.md)       | `Score` — GABC → musical score                          |
@@ -35,7 +34,7 @@ import tonus from "tonus";
 ### Query and builder functions
 
 **Query functions** (`festum`, `pascha`, `cantus`,
-`corpus`, `proprium`, `ordinarium`, `officium`, `matutinum`, `psalmus`, `caelum`) name what you want and return arrays. Empty matches
+`corpus`, `proprium`, `ordinarium`, `officium`, `psalmus`, `caelum`) name what you want and return arrays. Empty matches
 return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
 chant results sort by rank then incipit.
 
@@ -109,7 +108,7 @@ the list resolve their pitches through the ones before.
 - [The Mass propers — `proprium`](chant.md#the-mass-propers--proprium)
 - [The ordinary — `ordinarium`](chant.md#the-ordinary--ordinarium)
 - [The Office — `officium`](chant.md#the-office--officium)
-- [Matins nocturns — `matutinum`](chant.md#matins-nocturns--matutinum)
+- [Matins — the night office](chant.md#matins--the-night-office)
 - [Psalms — `psalmus`](chant.md#psalms--psalmus)
 - [Theory & Context](chant.md#theory--context) · [Sources](chant.md#sources)
 
