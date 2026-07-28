@@ -13,7 +13,7 @@ import { buildHarmonia } from "./engines/harmonia/api.js";
 import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/types.js";
 import type {
   CantusQuery, Chant, OrdinaryChant, PropriumQuery,
-  OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
+  OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Corpus, GenusCount, ModeCount, SharedCount,
 } from "./engines/chant/types.js";
 import type {
@@ -84,7 +84,7 @@ export type { CadentiaFamilia } from "./data/cadentiae.js";
 export type {
   Feast, FeastQuery, Pascha, Season, Grade,
   Chant, CantusQuery, OrdinaryChant,
-  PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery, Rite,
+  PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Corpus, GenusCount, ModeCount, SharedCount,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,

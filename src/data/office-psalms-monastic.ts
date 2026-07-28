@@ -1,14 +1,27 @@
 // office-psalms-monastic.ts — monastic little-hours psalmody
 // Extracted from Divinum Officium (Psalterium, [Monastic_]/[Monastic] sections)
 // by scripts/extract-office-psalms.mjs
-// Generated: 2026-07-08T04:45:29.223Z
+// Generated: 2026-07-28T18:55:33.685Z
 // Entries: 18
 //
-// The Benedictine little-hours psalm distribution. Same shape as OFFICE_PSALMS
-// (see office-psalms-roman.ts) but the monastic scheme differs: the little hours are
+// The Benedictine little-hours psalm distribution: the little hours are
 // weekday-varied across the whole psalter, and Compline is the fixed three
-// psalms 4, 90, 133 (vs. the Roman 4, 30, 90, 133).
-import type { OfficePsalmEntry } from "./office-psalms-roman.js";
+// psalms 4, 90, 133 (the Roman scheme, no longer shipped, had 4, 30, 90, 133).
+
+export interface OfficePsalmPortion {
+  psalm: number;
+  from?: number;
+  to?: number;
+}
+
+export interface OfficePsalmEntry {
+  hour: "Prima" | "Tertia" | "Sexta" | "Nona" | "Completorium";
+  /** 0–6 (0 = Sunday); null for the feast set or hours with no weekday split. */
+  weekday: number | null;
+  /** True for the feast (Festis) psalmody. */
+  festis: boolean;
+  psalms: OfficePsalmPortion[];
+}
 
 export const OFFICE_PSALMS_MONASTIC: OfficePsalmEntry[] = [
   { hour: "Prima", weekday: 0, festis: false, psalms: [{ psalm: 118, from: 1, to: 8 }, { psalm: 118, from: 9, to: 16 }, { psalm: 118, from: 17, to: 24 }, { psalm: 118, from: 25, to: 32 }] },

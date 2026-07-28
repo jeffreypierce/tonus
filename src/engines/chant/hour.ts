@@ -1,15 +1,14 @@
 // ---------------------------------------------------------------------------
 // engines/chant/hour — Divine Office hour retrieval
 // ---------------------------------------------------------------------------
-import { resolveChant, resolveChants } from "./chant.js";
+import { resolveChant, resolveChants, CANTUS_QUERY_KEYS } from "./chant.js";
 import { eraCutoff, chantAdmissible } from "./attest.js";
 import { intonePortion, officePsalmPortions } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
 import { getFeast } from "../cal/calendar.js";
-import type { Chant, OfficiumQuery, CanonicalHour, Rite } from "./types.js";
+import type { Chant, OfficiumQuery, CanonicalHour } from "./types.js";
 import type { Feast } from "../cal/types.js";
-import { OFFICE_ROMAN, type OfficeDay } from "../../data/office-roman.js";
-import { OFFICE_MONASTIC } from "../../data/office-monastic.js";
+import { OFFICE_MONASTIC, type OfficeDay } from "../../data/office-monastic.js";
 import { OFFICE_FERIAL } from "../../data/office-ferial.js";
 import { COMMUNE_OFFICE } from "../../data/commune-office.js";
 import { SEASONAL_RESPBREVE } from "../../data/seasonal-respbreve.js";
@@ -21,16 +20,20 @@ import {
 } from "./data/compline.js";
 import { PRIME_ORDINARY, PRIME_SEASONAL } from "./data/prime.js";
 
-let _roman: Map<string, OfficeDay> | null = null;
-let _monastic: Map<string, OfficeDay> | null = null;
-function officeMap(rite: Rite): Map<string, OfficeDay> {
-  if (rite === "monasticum") {
-    if (!_monastic) _monastic = new Map(OFFICE_MONASTIC.map((d) => [d.feastId, d]));
-    return _monastic;
-  }
-  if (!_roman) _roman = new Map(OFFICE_ROMAN.map((d) => [d.feastId, d]));
-  return _roman;
+// ⟨2026-07-28⟩ ONE office table. The Roman one was cut: DO's Roman horas gave
+// 811 rows of which 514 (63.4%) carried NO office chant — and `romanum` was the
+// DEFAULT rite, so the untold call returned nothing. Epiphany 1098 answered 0
+// for Matins, Laudes and Vespers under Roman and 16/6/5 under monastic. The
+// corpus went monastic-flat weeks ago; the office follows — and with it the
+// Roman little-hours psalmody, whose only consumer was this file. `rite` is
+// gone from the query: there is one cursus, so there is nothing to choose.
+let _office: Map<string, OfficeDay> | null = null;
+function officeMap(): Map<string, OfficeDay> {
+  if (!_office) _office = new Map(OFFICE_MONASTIC.map((d) => [d.feastId, d]));
+  return _office;
 }
+
+const OFFICIUM_QUERY_KEYS = new Set([...CANTUS_QUERY_KEYS, "feast", "hora"]);
 
 // Hours whose result is an ordered sequence (an ordo) rather than a set of
 // chants — they keep assembly order instead of being sorted by incipit.
@@ -50,17 +53,15 @@ const SEASONAL_ORDO_HOURS: ReadonlySet<CanonicalHour> = new Set([
 // tuas), the fixed psalms (from the extracted DO scheme), the invariable spine
 // (Deus in adjutorium, Nunc dimittis), and the date-driven Marian antiphon.
 // See ./data/compline.ts.
-function complineForFeast(feast: Feast, rite: Rite): Chant[] {
+function complineForFeast(feast: Feast): Chant[] {
   const seasonal = COMPLINE_SEASONAL[feast.season];
   const results: Chant[] = [];
 
   const opening = resolveChant(COMPLINE_ORDINARY.opening);
   if (opening) results.push(opening);
 
-  // Monastic Compline uses a fixed three-psalm set (4, 90, 133); the Roman rite
-  // adds Ps 30 vv. 2–6. The difference is entirely in the psalm scheme — the
-  // rest of the ordo (spine, hymn, In manus tuas, Marian antiphon) is shared.
-  for (const p of officePsalmPortions("Completorium", feast.weekday, rite)) {
+  // Monastic Compline is a fixed three-psalm set (4, 90, 133).
+  for (const p of officePsalmPortions("Completorium", feast.weekday)) {
     results.push(...intonePortion(p));
   }
 
@@ -82,7 +83,7 @@ function complineForFeast(feast: Feast, rite: Rite): Chant[] {
 // Prime, like Compline, is a fixed+seasonal ordo, not per-feast. Covers the
 // sung parts only (see ./data/prime.ts): opening, fixed psalms, the hymn Iam
 // lucis, and the seasonal short responsory Christe Fili Dei.
-function primeForFeast(feast: Feast, rite: Rite): Chant[] {
+function primeForFeast(feast: Feast): Chant[] {
   const seasonal = PRIME_SEASONAL[feast.season];
   const results: Chant[] = [];
 
@@ -92,9 +93,8 @@ function primeForFeast(feast: Feast, rite: Rite): Chant[] {
   const hymn = resolveChant(PRIME_ORDINARY.hymn);
   if (hymn) results.push(hymn);
 
-  // The monastic Prime psalmody is weekday-varied across the psalter (vs. the
-  // Roman Ps-118 pattern) — a psalm-scheme difference; the ordo spine is shared.
-  for (const p of officePsalmPortions("Prima", feast.weekday, rite)) {
+  // The monastic Prime psalmody is weekday-varied across the psalter.
+  for (const p of officePsalmPortions("Prima", feast.weekday)) {
     results.push(...intonePortion(p));
   }
 
@@ -133,7 +133,6 @@ function antiphonsFor(
   proper: readonly (string | null)[] | null | undefined,
   hour: CanonicalHour,
   feast: Feast,
-  rite: Rite,
 ): Chant[] {
   // Copy: the OfficeDay arrays are readonly and may hold nulls; resolveChant
   // drops the nulls, resolveChants wants a mutable string[].
@@ -146,7 +145,9 @@ function antiphonsFor(
   const fromCommune = communeAntiphons(feast, hour);
   if (fromCommune.length) return fromCommune;
 
-  if (rite !== "monasticum") return own;
+  // The ferial cycle used to be gated on rite === "monasticum". With the Roman
+  // office gone that gate only ever suppressed the fallback on the DEFAULT
+  // call, so it is dropped.
   if (feast.weekday == null || !feast.date) return own;
 
   const byWeekday = OFFICE_FERIAL[hour];
@@ -208,11 +209,11 @@ function seasonalRespBreve(feast: Feast, hour: CanonicalHour): Chant[] {
  * is only included for a real feast query — not the all-days survey scan, which
  * has no date and would repeat the psalms once per feast.
  */
-function littleHourPsalmody(feast: Feast, hour: CanonicalHour, rite: Rite): Chant[] {
+function littleHourPsalmody(feast: Feast, hour: CanonicalHour): Chant[] {
   if (!feast.date) return [];
   const hourName = hour === "tertia" ? "Tertia" : hour === "sexta" ? "Sexta" : "Nona";
   const out: Chant[] = [];
-  for (const p of officePsalmPortions(hourName, feast.weekday, rite)) {
+  for (const p of officePsalmPortions(hourName, feast.weekday)) {
     out.push(...intonePortion(p));
   }
   return out;
@@ -234,11 +235,11 @@ function ferialVariantFor(feast: Feast): string {
   return "ferial";
 }
 
-function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chant[] {
-  if (hour === "completorium") return complineForFeast(feast, rite);
-  if (hour === "prima") return primeForFeast(feast, rite);
+function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
+  if (hour === "completorium") return complineForFeast(feast);
+  if (hour === "prima") return primeForFeast(feast);
 
-  const map = officeMap(rite);
+  const map = officeMap();
   const sunday = temporaSundayId(feast.id);
   const day = map.get(feast.id) ?? (sunday ? (map.get(sunday) ?? null) : null);
   if (!day) {
@@ -253,7 +254,7 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     if (hour === "tertia" || hour === "sexta" || hour === "nona") {
       const fromCommune = communeSlot(feast, hour, "respBreve");
       return [
-        ...littleHourPsalmody(feast, hour, rite),
+        ...littleHourPsalmody(feast, hour),
         ...(fromCommune.length ? fromCommune : seasonalRespBreve(feast, hour)),
       ];
     }
@@ -265,18 +266,18 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     if (hour === "matutinum") {
       return [
         ...communeSlot(feast, hour, "invitatorium"),
-        ...antiphonsFor(null, hour, feast, rite),
+        ...antiphonsFor(null, hour, feast),
         ...communeSlot(feast, hour, "hymnus"),
         ...communeSlot(feast, hour, "responsories"),
       ];
     }
     if (hour === "laudes" || hour === "vesperae") {
       return [
-        ...antiphonsFor(null, hour, feast, rite),
+        ...antiphonsFor(null, hour, feast),
         ...communeSlot(feast, hour, "hymnus"),
       ];
     }
-    return antiphonsFor(null, hour, feast, rite);
+    return antiphonsFor(null, hour, feast);
   }
 
   const results: Chant[] = [];
@@ -289,7 +290,7 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     const inv = resolveChant(day.invit);
     if (inv) results.push(inv);
     else results.push(...communeSlot(feast, hour, "invitatorium"));
-    results.push(...antiphonsFor(day.antMatutinum, hour, feast, rite));
+    results.push(...antiphonsFor(day.antMatutinum, hour, feast));
     const hy = resolveChant(day.hymnMatutinum);
     if (hy) results.push(hy);
     else results.push(...communeSlot(feast, hour, "hymnus"));
@@ -297,7 +298,7 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     if (ownResp.length) results.push(...ownResp);
     else results.push(...communeSlot(feast, hour, "responsories"));
   } else if (hour === "laudes") {
-    results.push(...antiphonsFor(day.antLaudes, hour, feast, rite));
+    results.push(...antiphonsFor(day.antLaudes, hour, feast));
     const bc = resolveChant(day.antBenedictus);
     if (bc) results.push(bc);
     const hy = resolveChant(day.hymnLaudes);
@@ -309,7 +310,7 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
     // The psalmody belongs to a specific day, so it is only included for a real
     // feast query — not the all-days survey scan (which has no date and would
     // repeat the psalms once per feast).
-    results.push(...littleHourPsalmody(feast, hour, rite));
+    results.push(...littleHourPsalmody(feast, hour));
     // The short responsory, with the same commune fallback the antiphons get.
     // office-monastic fills respBreve on only 84–96 of its 409 rows, which is
     // why Terce/Sext/None sang on 184–196 of 366 days: unlike the antiphons this
@@ -325,7 +326,7 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour, rite: Rite): Chan
       results.push(...(fromCommune.length ? fromCommune : seasonalRespBreve(feast, hour)));
     }
   } else if (hour === "vesperae") {
-    results.push(...antiphonsFor(day.antVespera, hour, feast, rite));
+    results.push(...antiphonsFor(day.antVespera, hour, feast));
     const mc = resolveChant(day.antMagnificat);
     if (mc) results.push(mc);
     const hy = resolveChant(day.hymnVespera);
@@ -360,10 +361,24 @@ function assertFeasts(feasts: Feast[] | undefined, method: string): void {
 export function getHour(query?: OfficiumQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
 
+  // ⟨2026-07-28⟩ officium never validated its keys, which is how `rite` — now
+  // removed — kept being accepted after it stopped meaning anything: a JS
+  // caller asking for rite: "romanum" got monastic chants and no warning. A
+  // silently-ignored option is worse than a missing one, because the caller
+  // believes they chose. Same guard cantus and proprium already carry.
+  const unknown = Object.keys(query).filter(
+    (k) => !OFFICIUM_QUERY_KEYS.has(k),
+  );
+  if (unknown.length > 0) {
+    throw new Error(
+      `officium: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
+      `(expected ${[...OFFICIUM_QUERY_KEYS].join(", ")}).`,
+    );
+  }
+
   const feasts = toArray(query.feast);
   assertFeasts(feasts, "officium");
   const hour = query.hora;
-  const rite = query.rite ?? "romanum";
 
   let results: Chant[];
 
@@ -372,27 +387,25 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     // of the day — so concurrent feasts collapse to a single ordo rather than
     // repeating it. The other hours are genuinely per-feast.
     results = SEASONAL_ORDO_HOURS.has(hour)
-      ? feasts[0] ? chantsForFeastHour(feasts[0], hour, rite) : []
-      : feasts.flatMap((f) => chantsForFeastHour(f, hour, rite));
+      ? feasts[0] ? chantsForFeastHour(feasts[0], hour) : []
+      : feasts.flatMap((f) => chantsForFeastHour(f, hour));
   } else if (feasts) {
     const hours: CanonicalHour[] = [
       "matutinum", "laudes", "prima", "tertia", "sexta", "nona",
       "vesperae", "completorium",
     ];
-    results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h, rite)));
+    results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h)));
   } else if (hour && SEASONAL_ORDO_HOURS.has(hour)) {
     // Prime and Compline are seasonal ordos, not per-feast. With no feast,
     // resolve for the default epoch (Guido d'Arezzo's era) — festum()'s anchor.
     const [feast] = getFeast();
-    results = feast ? chantsForFeastHour(feast, hour, rite) : [];
+    results = feast ? chantsForFeastHour(feast, hour) : [];
   } else if (hour) {
-    // Hour without feast — survey per-feast content across the office entries of
-    // the chosen rite. mockFeast has no date, so the little hours return only
-    // their responsories.
-    const table = rite === "monasticum" ? OFFICE_MONASTIC : OFFICE_ROMAN;
-    results = table.flatMap((day) => {
+    // Hour without feast — survey per-feast content across the office entries.
+    // mockFeast has no date, so the little hours return only their responsories.
+    results = OFFICE_MONASTIC.flatMap((day) => {
       const mockFeast = { id: day.feastId } as Feast;
-      return chantsForFeastHour(mockFeast, hour, rite);
+      return chantsForFeastHour(mockFeast, hour);
     });
   } else {
     return [];

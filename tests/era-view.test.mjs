@@ -53,7 +53,7 @@ describe("era view — the feast carries it", () => {
     for (const c of getOrdinary({ feast: viewed })) {
       assert.ok(attested.has(c.id), `ordinarium: ${c.id} attested by ${VIEW}`);
     }
-    for (const c of getHour({ feast: viewed, hora: "laudes", rite: "monasticum" })) {
+    for (const c of getHour({ feast: viewed, hora: "laudes" })) {
       if (String(c.id).startsWith("psalm:")) continue; // generated psalmody, not corpus
       assert.ok(attested.has(c.id), `officium: ${c.id} attested by ${VIEW}`);
     }
@@ -108,7 +108,7 @@ describe("era view — one argument, every door", () => {
   test("cursus threads through the day verbs, `both` satisfying either ask", () => {
     const feast = getFeast({ date: easterDate })[0];
     const monastic = new Set(getChants({ cursus: "monastic" }).map((c) => c.id));
-    for (const c of getHour({ feast, hora: "laudes", rite: "monasticum", cursus: "monastic" })) {
+    for (const c of getHour({ feast, hora: "laudes", cursus: "monastic" })) {
       if (String(c.id).startsWith("psalm:")) continue;
       assert.ok(monastic.has(c.id), `${c.id} transmitted by the monastic cursus`);
     }
@@ -131,7 +131,7 @@ describe("era view — the Epiphany acceptance ⟨the failure that retired v1⟩
   // This test pins the repertory, not a count: the Night Office must survive.
   test("Epiphany Matins keeps its responsories under before: 1098", () => {
     const feast = getFeast({ date: epiphanyDate })[0];
-    const q = { feast, hora: "matutinum", rite: "monasticum" };
+    const q = { feast, hora: "matutinum" };
     const re = (cs) => cs.filter((c) => c.office === "re");
     const plainRe = re(getHour(q));
     const viewedRe = re(getHour({ ...q, before: 1098 }));

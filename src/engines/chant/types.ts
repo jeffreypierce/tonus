@@ -212,14 +212,15 @@ export interface OrdinariumQuery extends CantusQuery {
   mass?: number;
 }
 
-/** Which rite's Office to assemble. `romanum` (default) is the Tridentine Roman
- *  cursus; `monasticum` is the Benedictine cursus (Antiphonale Monasticum). */
-export type Rite = "romanum" | "monasticum";
-
+// ⟨2026-07-28⟩ `Rite` and the `rite` option are GONE. tonus assembles one
+// cursus, the Benedictine: the Roman office table was 63.4% hollow rows and its
+// psalmody had no consumer but that office, so `rite: "romanum"` returned a
+// chimera — Tridentine psalms under monastic hymns and versicles, agreeing on 3
+// chant ids out of 48. An option that cannot produce a cursus anyone sang is
+// worse than no option, because callers read it as a supported choice.
 export interface OfficiumQuery extends CantusQuery {
   feast?: Feast | Feast[];
   hora?: CanonicalHour;
-  rite?: Rite;
 }
 
 export interface PsalmusQuery {

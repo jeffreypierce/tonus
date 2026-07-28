@@ -3,13 +3,12 @@
 // ---------------------------------------------------------------------------
 import { PSALMS, type PsalmVerse } from "../../data/psalms.js";
 import {
-  OFFICE_PSALMS,
+  OFFICE_PSALMS_MONASTIC,
   type OfficePsalmEntry,
   type OfficePsalmPortion,
-} from "../../data/office-psalms-roman.js";
-import { OFFICE_PSALMS_MONASTIC } from "../../data/office-psalms-monastic.js";
+} from "../../data/office-psalms-monastic.js";
 import { intone } from "./intone.js";
-import { MODE_LABELS, type Chant, type PsalmusQuery, type Rite } from "./types.js";
+import { MODE_LABELS, type Chant, type PsalmusQuery } from "./types.js";
 
 // Canticle numbers follow the generated psalms.json numbering (verified against
 // the incipits: 231 "Benedíctus Dóminus", 232 "Magníficat", 233 "Nunc dimíttis",
@@ -107,14 +106,14 @@ export function intonePortion(p: OfficePsalmPortion, mode = 8): Chant[] {
 
 /**
  * The little-hours psalmody for one hour on a given weekday (0 = Sunday), from
- * the extracted DO Tridentine scheme (`office-psalms-roman.ts`). Prefers the
+ * the extracted DO monastic scheme (`office-psalms-monastic.ts`). Prefers the
  * weekday-specific entry, then the ferial default (weekday null), then the
  * feast set; returns the psalm portions (not yet intoned).
  */
 export function officePsalmPortions(
-  hour: OfficePsalmEntry["hour"], weekday: number, rite: Rite = "romanum",
+  hour: OfficePsalmEntry["hour"], weekday: number,
 ): OfficePsalmPortion[] {
-  const scheme = rite === "monasticum" ? OFFICE_PSALMS_MONASTIC : OFFICE_PSALMS;
+  const scheme = OFFICE_PSALMS_MONASTIC;
   const forHour = scheme.filter((e) => e.hour === hour);
   const exact = forHour.find((e) => e.weekday === weekday && !e.festis);
   const ferial = forHour.find((e) => e.weekday === null && !e.festis);

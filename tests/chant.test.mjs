@@ -221,7 +221,7 @@ describe("getHour", () => {
     const feasts = getFeast({ date: new Date("2026-12-25") });
     // The corpus ships the Roman MASS and the Benedictine OFFICE, so an office
     // hour is asked for in the rite that has chants behind it.
-    const chants = getHour({ feast: feasts, hora: "laudes", rite: "monasticum" });
+    const chants = getHour({ feast: feasts, hora: "laudes" });
     assert.ok(chants.length > 0);
   });
 
@@ -231,17 +231,21 @@ describe("getHour", () => {
     assert.ok(chants.length > 0);
   });
 
-  test("little hours march through Ps 118 (Terce 33–80, Sext 81–128, None 129–176)", () => {
+  // ⟨2026-07-28⟩ Was "little hours march through Ps 118 (Terce 33–80, …)" — the
+  // ROMAN pattern, asserted while `rite` defaulted to romanum. tonus now sings
+  // one cursus, and the Benedictine little hours take the gradual psalms
+  // (RB ch. 18: Terce 119–121, Sext 122–124, None 125–127) on an ordinary
+  // weekday, not sections of Ps 118. Same test, the surviving rite's numbers.
+  test("little hours take the gradual psalms (Terce 119–121, Sext 122–124, None 125–127)", () => {
     const [f] = getFeast({ date: new Date("2026-12-25") });
-    const p118Range = (hora) => {
-      const verses = getHour({ feast: f, hora })
-        .filter((c) => c.id.startsWith("psalm:118:"))
-        .map((c) => parseInt(c.id.split(":")[2], 10));
-      return [Math.min(...verses), Math.max(...verses)];
-    };
-    assert.deepEqual(p118Range("tertia"), [33, 80]);
-    assert.deepEqual(p118Range("sexta"), [81, 128]);
-    assert.deepEqual(p118Range("nona"), [129, 176]);
+    const psalmsAt = (hora) => [...new Set(
+      getHour({ feast: f, hora })
+        .filter((c) => c.id.startsWith("psalm:"))
+        .map((c) => parseInt(c.id.split(":")[1], 10)),
+    )].sort((a, b) => a - b);
+    assert.deepEqual(psalmsAt("tertia"), [119, 120, 121]);
+    assert.deepEqual(psalmsAt("sexta"), [122, 123, 124]);
+    assert.deepEqual(psalmsAt("nona"), [125, 126, 127]);
   });
 
   test("little hours keep the per-feast responsory after the psalms", () => {
@@ -262,28 +266,34 @@ describe("getHour", () => {
 });
 
 describe("getHour — the monastic rite", () => {
-  test("rite defaults to romanum (no change to existing callers)", () => {
-    const feasts = getFeast({ date: new Date("2026-12-25") });
-    const def = getHour({ feast: feasts, hora: "vesperae" });
-    const roman = getHour({ feast: feasts, hora: "vesperae", rite: "romanum" });
-    assert.deepEqual(def.map((c) => c.id), roman.map((c) => c.id));
+  // ⟨2026-07-28⟩ The `rite` option is gone — one cursus, nothing to choose — so
+  // the "defaults to romanum" test went with it. What it really guarded was that
+  // the untold call and the explicit call agree; that is now a tautology.
+  test("a removed option fails loudly — officium rejects rite", () => {
+    const [f] = getFeast({ date: new Date("2026-12-25") });
+    // The cut left `rite` accepted-but-meaningless: a caller asking for the
+    // Roman cursus silently received the monastic one. Guard the guard.
+    assert.throws(
+      () => getHour({ feast: f, hora: "vesperae", rite: "romanum" }),
+      /unknown query key\(s\) "rite"/,
+    );
+    assert.ok(getHour({ feast: f, hora: "vesperae" }).length > 0, "valid call still answers");
   });
 
-  test("monastic Compline uses the three-psalm scheme (4, 90, 133)", () => {
+  test("Compline uses the monastic three-psalm scheme (4, 90, 133)", () => {
     const [f] = getFeast({ date: new Date("2026-12-25") });
-    const psalms = (rite) =>
-      getHour({ feast: f, hora: "completorium", rite })
+    const psalms = [...new Set(
+      getHour({ feast: f, hora: "completorium" })
         .filter((c) => c.id.startsWith("psalm:"))
-        .map((c) => parseInt(c.id.split(":")[1], 10));
-    const monastic = [...new Set(psalms("monasticum"))];
-    // Monastic Compline is Ps 4, 90, 133 — no Ps 30 (which the Roman rite adds).
-    assert.deepEqual(monastic, [4, 90, 133]);
-    assert.ok(psalms("romanum").includes(30), "Roman Compline keeps Ps 30");
+        .map((c) => parseInt(c.id.split(":")[1], 10)),
+    )];
+    // Ps 4, 90, 133 — no Ps 30, which only the cut Roman scheme added.
+    assert.deepEqual(psalms, [4, 90, 133]);
   });
 
   test("monastic office chants come from the Antiphonale Monasticum", () => {
     // A feast with monastic Vespers antiphons; assert they resolve monastic-first.
-    const survey = getHour({ hora: "vesperae", rite: "monasticum" });
+    const survey = getHour({ hora: "vesperae" });
     const antiphons = survey.filter((c) => c.office === "an");
     assert.ok(antiphons.length > 0, "monastic Vespers survey returns antiphons");
 
@@ -312,7 +322,7 @@ describe("getHour — the monastic rite", () => {
     // (An earlier form of this test surveyed antiphon provenance and passed
     // verbatim with the fallback deleted.)
     const [henry] = getFeast({ date: new Date(Date.UTC(2026, 6, 15)) });
-    const matins = getHour({ feast: henry, hora: "matutinum", rite: "monasticum" });
+    const matins = getHour({ feast: henry, hora: "matutinum" });
     assert.ok(
       matins.some((c) => c.office === "re"),
       "Matins sings the commune's great responsories",
@@ -321,7 +331,7 @@ describe("getHour — the monastic rite", () => {
       matins.some((c) => c.office === "an"),
       "…alongside antiphons",
     );
-    const lauds = getHour({ feast: henry, hora: "laudes", rite: "monasticum" });
+    const lauds = getHour({ feast: henry, hora: "laudes" });
     assert.ok(
       lauds.some((c) => c.office === "hy"),
       "Lauds sings the commune's hymn when the day has none of its own",
@@ -389,15 +399,20 @@ describe("getHour — completorium (Compline)", () => {
     assert.equal(c[0].incipit, "Deus in adjutorium");
   });
 
-  test("Compline uses the exact psalm scheme: 4, 30(2-6), 90, 133", () => {
+  test("Compline uses the exact psalm scheme: 4, 90, 133 — whole psalms", () => {
     const c = complineFor("2026-08-15");
     const byPsalm = {};
     for (const v of c.filter((x) => x.id.startsWith("psalm:"))) {
       const p = v.id.split(":")[1];
       byPsalm[p] = (byPsalm[p] ?? 0) + 1;
     }
-    // Ps 30 is only vv. 2–6 (6 rows incl. the split v.3), NOT the whole psalm.
-    assert.equal(byPsalm["30"], 6, "Ps 30 is vv. 2–6 only");
+    // ⟨2026-07-28⟩ Ps 30 vv. 2–6 was the ROMAN scheme's partial psalm and is
+    // gone with it. The monastic three are sung whole, so the verse counts are
+    // the psalms' own lengths — which is the real assertion here: no truncation.
+    assert.equal(byPsalm["30"], undefined, "no Ps 30 — that was the Roman scheme");
+    assert.equal(byPsalm["4"], 10, "Ps 4 entire");
+    assert.equal(byPsalm["90"], 16, "Ps 90 entire");
+    assert.equal(byPsalm["133"], 4, "Ps 133 entire");
     assert.equal(byPsalm["4"], 10, "Ps 4 whole");
     assert.equal(byPsalm["90"], 16, "Ps 90 whole");
     assert.equal(byPsalm["133"], 4, "Ps 133 whole");
@@ -457,16 +472,19 @@ describe("getHour — prima (Prime)", () => {
     assert.equal(c[0].incipit, "Deus in adjutorium");
   });
 
-  test("Prime psalmody varies by weekday (DO Tridentine scheme)", () => {
+  test("Prime psalmody varies by weekday (DO monastic scheme)", () => {
     const psalmsOn = (date) => {
       const c = primeFor(date);
       return [...new Set(
-        c.filter((x) => x.id.startsWith("psalm:")).map((x) => x.id.split(":")[1]),
+        c.filter((x) => x.id.startsWith("psalm:")).map((x) => Number(x.id.split(":")[1])),
       )].sort((a, b) => a - b);
     };
-    // Sunday (2026-12-06) uses Ps 117; Friday (2026-12-11) uses Ps 21.
-    assert.deepEqual(psalmsOn("2026-12-06"), ["53", "117", "118"], "Sunday: 53,117,118");
-    assert.deepEqual(psalmsOn("2026-12-11"), ["21", "53", "118"], "Friday: 53,21,118");
+    // ⟨2026-07-28⟩ Re-anchored from the Tridentine scheme to the Benedictine.
+    // Sunday keeps Ps 118; the weekdays walk Pss 1–19 (RB ch. 18) instead of
+    // repeating 53 + 118 daily. The POINT of the test — that Prime is
+    // weekday-varied at all — is unchanged.
+    assert.deepEqual(psalmsOn("2026-12-06"), [118], "Sunday: Ps 118");
+    assert.deepEqual(psalmsOn("2026-12-11"), [15, 16, 17], "Friday: Ps 15,16,17");
   });
 
   test("Prime takes only the first two sections of Ps 118 (not all 176)", () => {

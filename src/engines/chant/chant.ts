@@ -223,7 +223,7 @@ export function resolveChants(ids: string[]): Chant[] {
  * A `gabc` field bypasses the corpus and returns a single user
  * chant parsed from raw GABC (body or full file with headers).
  */
-const CANTUS_QUERY_KEYS = new Set([
+export const CANTUS_QUERY_KEYS = new Set([
   "id", "gabc", "incipit", "mode", "office", "source", "limit", "offset", "sort",
   "before", "cursus",
 ]);
