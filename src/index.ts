@@ -16,6 +16,7 @@ import type {
   CantusQuery, Chant, OrdinaryChant, PropriumQuery,
   OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Corpus, GenusCount, ModeCount, SharedCount,
+  CorpusLedger, CorpusFullCount, CorpusQuery,
 } from "./engines/chant/types.js";
 import type {
   TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts,
@@ -91,6 +92,8 @@ export type {
   Chant, CantusQuery, OrdinaryChant,
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Corpus, GenusCount, ModeCount, SharedCount,
+  CorpusLedger, CorpusFullCount, CorpusQuery,
+  Census, CensusQuery, CensusBy, CensusGroup, CensusGroupProfile, CensusNeighbour,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
