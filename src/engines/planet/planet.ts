@@ -124,8 +124,13 @@ function buildPlanet(name: PlanetName, ts: number): Body {
     elongation: app.elongation,
     phase: app.phase,
     apparentDiameter: app.apparentDiameter,
-    zodiac: zodiac(pos.helio.lon),
-    sign: sign(pos.helio.lon),
+    // GEOCENTRIC, as the Sun's and Moon's are: a sign placement says where a
+    // body appears from here, which is the only frame in which "Mars in
+    // Sagittarius" means anything. Reading the heliocentric longitude put a
+    // body's own sign at odds with its own geo.lon — Mercury reported in Aries
+    // while appearing in Taurus.
+    zodiac: zodiac(pos.geo.lon),
+    sign: sign(pos.geo.lon),
   };
 }
 
