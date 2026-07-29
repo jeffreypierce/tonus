@@ -1,27 +1,41 @@
 // ---------------------------------------------------------------------------
 // site/diagrams/annulus — the liturgical year as a ring
 // ---------------------------------------------------------------------------
-// The year drawn once around: seasons as arcs on the inner ring, the movable
-// feasts as anchors on the outer, the standing day as a rubricated dot. The
-// wheel is the medieval figure for the year returning on itself, so the
-// diagram is the argument — Septuagesima and Advent are near neighbours on a
-// ring in a way no timeline shows.
+// Two calendars, concentric, and the argument is their relationship: the civil
+// year on the outside (months, weeks ticked), the liturgical year within it
+// (seasons as a banded ring), and the movable feasts riding an orbit between
+// them. Septuagesima and Advent are near neighbours on a ring in a way no
+// timeline shows, and Easter's wandering drags a third of the year with it.
 //
 // COMPUTED, NOT TRANSCRIBED. The lab round this descends from carried fifteen
-// hand-copied anchors frozen to 991. tonus.pascha(year) returns exactly those
-// fifteen, for any year, so the diagram takes a year and asks. That is the
-// site's whole thesis in one panel: it cannot drift from the library, because
-// it IS the library.
+// hand-copied anchors and seven hand-measured season boundaries, all frozen to
+// 991. tonus.pascha(year) returns exactly those fifteen — every day-of-year
+// matching the transcription — so the diagram takes a year and asks, and the
+// seasons fall out of the anchors that bound them. That is the site's thesis
+// in one panel: it cannot drift from the library, because it IS the library.
+//
+// The ring carries shape; the names live in the tabula beside it. Fifteen
+// radial labels cannot work here — Good Friday and Easter are two degrees
+// apart — so selection joins figure and table instead.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_SANS, HOUSE_MONO, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 
 const NS = "http://www.w3.org/2000/svg";
-const R_SEASON = 150, R_SEASON_NAME = 164, R_ANCHOR = 197;
-const R_WEDGE_IN = 178, R_WEDGE_OUT = 216;
 
-/** Anchors in the order they ring the year, with their display names. The keys
- * are pascha()'s own; the Latin is the site's register. */
+// The concentric systems, outward: season band, anchor orbit, compass, months.
+const R_SEASON = 150;        // the banded liturgical ring
+const R_SEASON_NAME = 176;   // season names, outside their band
+const R_ANCHOR = 197;        // the feasts' orbit
+const R_COMPASS = 228;       // week ticks start here
+const R_WEEK = 231.5;        // …and end here
+const R_MONTH_TICK = 234;    // month boundaries reach further
+const R_BAND_IN = 240;       // the month band
+const R_BAND_OUT = 271;
+const R_MONTH_NAME = 255.5;
+const SEASON_WEIGHT = 8;     // the season ring is a BAND, not a hairline
+
+/** Anchors in ring order. Keys are pascha()'s own; the Latin is the register. */
 const ANCHOR_NAMES = [
   ["epiphany", "Epiphania", "Epiphany", 3.6],
   ["baptism", "Baptismus Domini", "Baptism of the Lord", 2.4],
@@ -40,9 +54,9 @@ const ANCHOR_NAMES = [
   ["christmas", "Nativitas Domini", "Christmas", 3.6],
 ];
 
-/** The seasons, in ring order, each running from one anchor to the next.
- * `pen` marks the penitential seasons — drawn at the fainter stratum, which is
- * the ink system doing the work a second colour would otherwise do. */
+/** Each season runs anchor to anchor, so the boundaries are computed too.
+ * `pen` marks the penitential seasons: darker ink, the ink system doing the
+ * work a second colour would otherwise be asked to do. */
 const SEASONS = [
   { name: "NAT", from: "christmas", to: "epiphany", pen: false },
   { name: "EPI", from: "epiphany", to: "septuagesima", pen: false },
@@ -53,22 +67,42 @@ const SEASONS = [
   { name: "ADV", from: "adventFirstSunday", to: "christmas", pen: true },
 ];
 
+const MONTHS = ["IANUARIUS", "FEBRUARIUS", "MARTIUS", "APRILIS", "MAIUS", "IUNIUS",
+  "IULIUS", "AUGUSTUS", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+const MONTH_ABBR = ["Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
+  "Iul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 const deg2xy = (a, r) => [r * Math.sin((a * Math.PI) / 180), -r * Math.cos((a * Math.PI) / 180)];
 const doyAngle = (d) => (d / 365) * 360;
+
+const isLeap = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+
+/** Month-boundary days-of-year for a given year. */
+function monthBounds(year) {
+  const lens = [31, isLeap(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const out = [0];
+  for (const n of lens) out.push(out[out.length - 1] + n);
+  return out;
+}
 
 function dayOfYear(date, year) {
   return Math.floor((new Date(date) - Date.UTC(year, 0, 1)) / 86400000) + 1;
 }
 
-const MONTHS = ["Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
-  "Iul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** A date as the books would set it, read in UTC. tonus is UTC-canonical, and
- * local-time formatting silently moves a date across the midnight boundary —
- * west of Greenwich, Easter reads as the day before itself. */
+/** A date read in UTC. tonus is UTC-canonical, and local-time formatting moves
+ * a date across midnight — west of Greenwich Easter reads as the day before. */
 function romanDate(date) {
   const d = new Date(date);
-  return `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}`;
+  return `${MONTH_ABBR[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+/** The year in Roman numerals — the register the centre asks for. */
+function roman(n) {
+  const table = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"],
+    [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+  let out = "";
+  for (const [v, s] of table) while (n >= v) { out += s; n -= v; }
+  return out;
 }
 
 function el(tag, attrs, text) {
@@ -78,112 +112,183 @@ function el(tag, attrs, text) {
   return e;
 }
 
-/**
- * Build the annulus for a year.
- *
- * @param {object} tonus   the library (needs `pascha`)
- * @param {object} opts
- * @param {number} opts.year      the year to ring
- * @param {Date}   [opts.day]     the standing day, drawn in rubrica
- * @param {string} [opts.selected] anchor key to mark as selected
- * @param {(key: string) => void} [opts.onSelect]
- * @returns {SVGSVGElement}
- */
-export function annulus(tonus, { year, day = null, selected = "easter", onSelect } = {}) {
-  const p = tonus.pascha(year);
+/** An arc from a0 to a1 (degrees clockwise from 12 o'clock) at radius r.
+ * `sweep = 0` runs it backwards along the same path — which is how a name on
+ * the ring's lower half is set the right way up: same arc, opposite direction,
+ * so the text rides above the line instead of hanging under it. */
+const arc = (a0, a1, r, sweep = 1) => {
+  const [xs, ys] = deg2xy(sweep ? a0 : a1, r);
+  const [xe, ye] = deg2xy(sweep ? a1 : a0, r);
+  const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
+  return `M ${sc(xs)} ${sc(ys)} A ${r} ${r} 0 ${large} ${sweep} ${sc(xe)} ${sc(ye)}`;
+};
 
-  // Every anchor computed — nothing transcribed.
-  const anchors = ANCHOR_NAMES
+/** The anchors for a year, computed and sorted round the ring. */
+function anchorsFor(tonus, year) {
+  const p = tonus.pascha(year);
+  return ANCHOR_NAMES
     .filter(([key]) => p[key] != null)
     .map(([key, nomen, gloss, dot]) => ({
       key, nomen, gloss, dot,
       date: p[key],
+      dies: romanDate(p[key]),
       doy: dayOfYear(p[key], year),
     }))
     .sort((a, b) => a.doy - b.doy);
+}
 
+/**
+ * Build the annulus.
+ *
+ * @param {object} tonus  the library (needs `pascha`)
+ * @param {object} opts
+ * @param {number} opts.year        the year to ring
+ * @param {Date}   [opts.day]       the standing day, marked in rubrica
+ * @param {string} [opts.selected]  anchor key
+ * @param {(key: string) => void} [opts.onSelect]
+ */
+export function annulus(tonus, { year, day = null, selected = "easter", onSelect } = {}) {
+  const anchors = anchorsFor(tonus, year);
   const byKey = new Map(anchors.map((a) => [a.key, a]));
+  const bounds = monthBounds(year);
 
   const svg = el("svg", {
-    class: "annulus",
-    viewBox: "0 0 500 500",
-    xmlns: NS,
-    role: "img",
-    "aria-label": `The liturgical year ${year} as a ring`,
+    class: "annulus", viewBox: "0 0 600 600", xmlns: NS,
+    role: "img", "aria-label": `The liturgical year ${year} as a ring`,
   });
-  const root = el("g", { transform: "translate(250 250)" });
-  svg.appendChild(root);
-
   const defs = el("defs", {});
   svg.appendChild(defs);
+  const root = el("g", { transform: "translate(300 300)" });
+  svg.appendChild(root);
 
-  // ── the season arcs, with their names set along the curve ──
-  const seasons = el("g", { class: "seasons" });
-  root.appendChild(seasons);
+  // ── the season band: a ring of arcs, each season anchor to anchor ──
   for (const s of SEASONS) {
     const from = byKey.get(s.from), to = byKey.get(s.to);
     if (!from || !to) continue;
-    let a0 = doyAngle(from.doy);
-    let a1 = doyAngle(to.doy);
-    if (a1 < a0) a1 += 360;                    // the season wrapping the top
-    const large = a1 - a0 > 180 ? 1 : 0;
-    const [x0, y0] = deg2xy(a0, R_SEASON);
-    const [x1, y1] = deg2xy(a1 % 360, R_SEASON);
-
-    seasons.appendChild(el("path", {
-      d: `M ${sc(x0)} ${sc(y0)} A ${R_SEASON} ${R_SEASON} 0 ${large} 1 ${sc(x1)} ${sc(y1)}`,
+    let a0 = doyAngle(from.doy), a1 = doyAngle(to.doy);
+    if (a1 < a0) a1 += 360;
+    // A hair of air between neighbours, so the band reads as segments.
+    const gap = 0.6;
+    root.appendChild(el("path", {
+      d: arc(a0 + gap, a1 - gap, R_SEASON),
       fill: "none",
       stroke: INK,
-      "stroke-opacity": s.pen ? STRATUM.bracket : STRATUM.letters,
-      "stroke-width": s.light ? STROKE.hair : STROKE.fine,
+      "stroke-opacity": s.pen ? STRATUM.spark : (s.light ? STRATUM.rail : STRATUM.bracket),
+      "stroke-width": SEASON_WEIGHT,
     }));
 
-    // The name rides the arc itself; flipped when it would read upside down.
     const mid = ((a0 + a1) / 2) % 360;
     const flip = mid > 100 && mid < 260;
-    const [nx0, ny0] = deg2xy(a0, R_SEASON_NAME);
-    const [nx1, ny1] = deg2xy(a1 % 360, R_SEASON_NAME);
-    const id = `annulus-arc-${s.name}`;
+    const id = `annulus-${year}-arc-${s.name}`;
     defs.appendChild(el("path", {
       id,
-      d: flip
-        ? `M ${sc(nx1)} ${sc(ny1)} A ${R_SEASON_NAME} ${R_SEASON_NAME} 0 ${large} 0 ${sc(nx0)} ${sc(ny0)}`
-        : `M ${sc(nx0)} ${sc(ny0)} A ${R_SEASON_NAME} ${R_SEASON_NAME} 0 ${large} 1 ${sc(nx1)} ${sc(ny1)}`,
+      d: arc(a0, a1, R_SEASON_NAME, flip ? 0 : 1),
     }));
-    const text = el("text", {
-      "font-family": HOUSE_MONO,
-      "font-size": STEP.micro,
-      "letter-spacing": "0.12em",
-      fill: INK,
-      "fill-opacity": STRATUM.margin,
+    const t = el("text", {
+      "font-family": HOUSE_SANS, "font-size": STEP.micro,
+      "letter-spacing": "0.14em", fill: INK, "fill-opacity": STRATUM.margin,
     });
-    const tp = el("textPath", { href: `#${id}`, startOffset: "50%", "text-anchor": "middle" }, s.name);
-    text.appendChild(tp);
-    root.appendChild(text);
+    t.appendChild(el("textPath",
+      { href: `#${id}`, startOffset: "50%", "text-anchor": "middle" }, s.name));
+    root.appendChild(t);
   }
 
-  // ── the anchors: a wedge hit-area, a dot, and a name ──
-  const marks = el("g", { class: "anchors" });
-  root.appendChild(marks);
+  // ── the anchor orbit, and the compass and month-band circles ──
+  for (const r of [R_ANCHOR, R_COMPASS, R_MONTH_TICK, R_BAND_IN, R_BAND_OUT]) {
+    root.appendChild(el("circle", {
+      r, fill: "none", stroke: INK,
+      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.fine,
+    }));
+  }
 
+  // ── the compass: a tick per week, longer at each month boundary ──
+  const ticks = el("g", { class: "annulus-ticks" });
+  root.appendChild(ticks);
+  for (let d = 0; d < 365; d += 7) {
+    const a = doyAngle(d);
+    const [x1, y1] = deg2xy(a, R_COMPASS), [x2, y2] = deg2xy(a, R_WEEK);
+    ticks.appendChild(el("line", {
+      x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
+      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": 0.4,
+    }));
+  }
+  for (let i = 0; i < 12; i++) {
+    const a = doyAngle(bounds[i]);
+    const [x1, y1] = deg2xy(a, R_COMPASS), [x2, y2] = deg2xy(a, R_MONTH_TICK);
+    ticks.appendChild(el("line", {
+      x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
+      stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": 0.5,
+    }));
+    const [bx1, by1] = deg2xy(a, R_BAND_IN), [bx2, by2] = deg2xy(a, R_BAND_OUT);
+    ticks.appendChild(el("line", {
+      x1: sc(bx1), y1: sc(by1), x2: sc(bx2), y2: sc(by2),
+      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.fine,
+    }));
+  }
+
+  // ── the month names, set upright around the band ──
+  const names = el("g", { class: "annulus-months" });
+  root.appendChild(names);
+  for (let i = 0; i < 12; i++) {
+    const mid = doyAngle((bounds[i] + bounds[i + 1]) / 2);
+    const [x, y] = deg2xy(mid, R_MONTH_NAME);
+    const rot = mid > 90 && mid < 270 ? mid - 180 : mid;
+    names.appendChild(el("text", {
+      transform: `translate(${sc(x)} ${sc(y)}) rotate(${sc(rot)})`,
+      "text-anchor": "middle", "dominant-baseline": "central",
+      "font-family": HOUSE_SANS, "font-size": STEP.micro,
+      "letter-spacing": "0.16em",
+      fill: INK, "fill-opacity": STRATUM.margin,
+    }, MONTHS[i]));
+  }
+
+  // ── the centre ──
+  root.appendChild(el("text", {
+    y: -6, "text-anchor": "middle", "font-family": HOUSE_SERIF,
+    "font-size": STEP.body, "font-style": "italic",
+    fill: INK, "fill-opacity": STRATUM.label,
+  }, "Annus Domini"));
+  root.appendChild(el("text", {
+    y: 22, "text-anchor": "middle", "font-family": HOUSE_MONO,
+    "font-size": STEP.label, "letter-spacing": "0.08em",
+    fill: INK, "fill-opacity": STRATUM.margin,
+  }, roman(year)));
+
+  // ── the anchors on their orbit ──
+  const marks = el("g", { class: "annulus-anchors" });
+  root.appendChild(marks);
   anchors.forEach((a, i) => {
     const n = anchors.length;
-    const prev = anchors[(i - 1 + n) % n];
-    const next = anchors[(i + 1) % n];
+    const prev = anchors[(i - 1 + n) % n], next = anchors[(i + 1) % n];
     const d0 = i === 0 ? (prev.doy - 365 + a.doy) / 2 : (prev.doy + a.doy) / 2;
     const d1 = i === n - 1 ? (a.doy + next.doy + 365) / 2 : (a.doy + next.doy) / 2;
+    const isSel = a.key === selected;
+    const ang = doyAngle(a.doy);
+    const [x, y] = deg2xy(ang, R_ANCHOR);
+
+    // Selection is a rubricated roundel — the one place colour is spent here.
+    if (isSel) {
+      marks.appendChild(el("circle", {
+        cx: sc(x), cy: sc(y), r: sc(a.dot + 7),
+        fill: "none", stroke: RUBRICA, "stroke-width": 1.6,
+      }));
+    }
+    marks.appendChild(el("circle", {
+      cx: sc(x), cy: sc(y), r: sc(a.dot),
+      fill: isSel ? RUBRICA : INK,
+      "fill-opacity": isSel ? 1 : STRATUM.cadence,
+    }));
+
+    // A wedge of the ring is the hit area, so small dots stay clickable.
     const a0 = doyAngle(d0), a1 = doyAngle(d1);
     const large = a1 - a0 > 180 ? 1 : 0;
-    const [xo0, yo0] = deg2xy(a0, R_WEDGE_OUT), [xo1, yo1] = deg2xy(a1, R_WEDGE_OUT);
-    const [xi1, yi1] = deg2xy(a1, R_WEDGE_IN), [xi0, yi0] = deg2xy(a0, R_WEDGE_IN);
-
-    const isSel = a.key === selected;
+    const [xo0, yo0] = deg2xy(a0, R_COMPASS), [xo1, yo1] = deg2xy(a1, R_COMPASS);
+    const [xi1, yi1] = deg2xy(a1, R_SEASON), [xi0, yi0] = deg2xy(a0, R_SEASON);
     const hit = el("path", {
       class: "annulus-hit",
-      d: `M ${sc(xo0)} ${sc(yo0)} A ${R_WEDGE_OUT} ${R_WEDGE_OUT} 0 ${large} 1 ${sc(xo1)} ${sc(yo1)} ` +
-         `L ${sc(xi1)} ${sc(yi1)} A ${R_WEDGE_IN} ${R_WEDGE_IN} 0 ${large} 0 ${sc(xi0)} ${sc(yi0)} Z`,
-      fill: INK,
-      "fill-opacity": 0,
+      d: `M ${sc(xo0)} ${sc(yo0)} A ${R_COMPASS} ${R_COMPASS} 0 ${large} 1 ${sc(xo1)} ${sc(yo1)} ` +
+         `L ${sc(xi1)} ${sc(yi1)} A ${R_SEASON} ${R_SEASON} 0 ${large} 0 ${sc(xi0)} ${sc(yi0)} Z`,
+      fill: INK, "fill-opacity": 0,
       cursor: onSelect ? "pointer" : null,
       tabindex: onSelect ? "0" : null,
       role: onSelect ? "button" : null,
@@ -196,69 +301,22 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
       });
     }
     marks.appendChild(hit);
-
-    const ang = doyAngle(a.doy);
-    const [dx, dy] = deg2xy(ang, R_ANCHOR);
-    // Selection on a sparse ring cannot be opacity alone — at this scale a
-    // darker dot among fourteen others is invisible. The dot keeps the ink
-    // grammar; a halo around it carries the selection.
-    if (isSel) {
-      marks.appendChild(el("circle", {
-        cx: sc(dx), cy: sc(dy), r: sc(a.dot + 5),
-        fill: "none", stroke: INK,
-        "stroke-opacity": STRATUM.bracket, "stroke-width": STROKE.fine,
-      }));
-    }
-    marks.appendChild(el("circle", {
-      cx: sc(dx), cy: sc(dy), r: sc(a.dot),
-      fill: INK,
-      "fill-opacity": isSel ? STRATUM.cadence : STRATUM.wave,
-    }));
-
-    // No name rides the ring. Good Friday and Easter are two degrees apart and
-    // five pairs sit inside six, so radial labels collide at any rotation —
-    // the names belong to the tabula beside the diagram, where selection joins
-    // the two. The ring carries shape; the table carries text.
   });
 
-  // ── the standing day: the one rubricated mark ──
+  // ── the standing day, on the same orbit ──
   if (day) {
-    const doy = dayOfYear(day, year);
-    const ang = doyAngle(doy);
-    const [ix, iy] = deg2xy(ang, R_SEASON - 12);
-    const [ox, oy] = deg2xy(ang, R_WEDGE_OUT);
-    root.appendChild(el("line", {
-      x1: sc(ix), y1: sc(iy), x2: sc(ox), y2: sc(oy),
-      stroke: RUBRICA, "stroke-width": STROKE.firm, "stroke-linecap": "round",
-    }));
-    root.appendChild(el("circle", { cx: sc(ox), cy: sc(oy), r: 4, fill: RUBRICA }));
+    const [dx, dy] = deg2xy(doyAngle(dayOfYear(day, year)), R_ANCHOR);
+    marks.appendChild(el("circle", { cx: sc(dx), cy: sc(dy), r: 3.4, fill: RUBRICA }));
   }
-
-  // ── the year, at the centre ──
-  root.appendChild(el("text", {
-    x: 0, y: 8, "text-anchor": "middle",
-    "font-family": HOUSE_SERIF, "font-size": STEP.display,
-    fill: INK, "fill-opacity": STRATUM.label,
-  }, String(year)));
 
   return svg;
 }
 
-/** The names the ring cannot carry. Selection joins the two: a row highlights
- * with its wedge, and clicking either moves both. `a die` counts from the
- * standing day, so the table answers "how far from here" without arithmetic. */
+/** The names the ring cannot carry. Selection joins the two: clicking a row or
+ * its anchor moves both. `a die` counts from the standing day. */
 export function annulusTabula(tonus, { year, day = null, selected = "easter", onSelect } = {}) {
-  const p = tonus.pascha(year);
+  const rows = anchorsFor(tonus, year);
   const dayDoy = day ? dayOfYear(day, year) : null;
-
-  const rows = ANCHOR_NAMES
-    .filter(([key]) => p[key] != null)
-    .map(([key, nomen, gloss]) => ({
-      key, nomen, gloss,
-      dies: romanDate(p[key]),
-      doy: dayOfYear(p[key], year),
-    }))
-    .sort((a, b) => a.doy - b.doy);
 
   const columns = [
     { key: "nomen", head: "nomen", gloss: (r) => r.gloss },
@@ -272,7 +330,6 @@ export function annulusTabula(tonus, { year, day = null, selected = "easter", on
   }
 
   return tabula(rows, columns, {
-    selected, onSelect,
-    caption: `The movable feasts of ${year}`,
+    selected, onSelect, caption: `The movable feasts of ${year}`,
   });
 }
