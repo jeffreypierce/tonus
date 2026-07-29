@@ -3,13 +3,15 @@
 // ---------------------------------------------------------------------------
 // Standish's Keplerian element tables [biblio: standish-jpl] (1992 / DE430).
 //
-// Two element sets per body, a coverage-vs-accuracy trade: [0] is fitted across
-// 3000 BC–3000 AD (broad enough for tonus's medieval epoch, looser residuals);
-// [1] is fitted tightly for 1800–2050. planetPos (position.ts) picks [1] inside
-// that window and falls back to [0] outside it. Uranus and Neptune are present in
-// the tables but only the classical seven are voiced (ALL_BODIES stops at Saturn);
-// their elements are kept for completeness. The outer planets also carry a third
-// slot — the great-inequality perturbation coefficients, applied in position.ts.
+// Two element sets per body, a coverage-vs-accuracy trade: [0] is Standish's
+// Table 1, fitted tightly for 1800–2050; [1] is his Table 2a, fitted across
+// 3000 BC–3000 AD (broad enough for tonus's medieval epoch, looser residuals).
+// planetPos (position.ts) picks [0] inside the 1800–2050 window and falls back
+// to [1] outside it. Uranus and Neptune are present in the tables but only the
+// classical seven are voiced (ALL_BODIES stops at Saturn); their elements are
+// kept for completeness. The outer planets also carry a third slot — Table 2b's
+// great-inequality perturbation coefficients, which Standish defines for use
+// with the Table 2a elements only; position.ts applies them accordingly.
 export interface OrbitalElements {
   name: string;
   symbol: string;
@@ -17,9 +19,9 @@ export interface OrbitalElements {
   // a=semimajor axis (AU), e=eccentricity, I=inclination (deg),
   // L=mean longitude (deg), w̃=longitude of perihelion (deg), Ω=ascending node (deg)
   datasets: [
-    [number, number][], // dataset 0 (3000 BC–3000 AD)
-    [number, number][], // dataset 1 (1800–2050 AD)
-    [number, number, number, number]?, // outer-planet perturbation terms: [b, c, s, f]
+    [number, number][], // dataset 0 — Table 1 (1800–2050 AD)
+    [number, number][], // dataset 1 — Table 2a (3000 BC–3000 AD)
+    [number, number, number, number]?, // Table 2b perturbation terms: [b, c, s, f]
   ];
   radius: number; // equatorial radius, km
   rotation_period: number; // sidereal rotation period, days (negative = retrograde)
@@ -64,7 +66,7 @@ export const ORBITAL_ELEMENTS: Map<string, OrbitalElements> = new Map([
       datasets: [
         [
           [0.72333566, 0.0000039],
-          [0.00676399, -0.00005107],
+          [0.00677672, -0.00004107],
           [3.39467605, -0.0007889],
           [181.9790995, 58517.81538729],
           [131.60246718, 0.00268329],
@@ -72,7 +74,7 @@ export const ORBITAL_ELEMENTS: Map<string, OrbitalElements> = new Map([
         ],
         [
           [0.72332102, -0.00000026],
-          [-0.00005107, 0.01673163],
+          [0.00676399, -0.00005107],
           [3.39777545, 0.00043494],
           [181.9797085, 58517.8156026],
           [131.76755713, 0.05679648],
@@ -98,7 +100,7 @@ export const ORBITAL_ELEMENTS: Map<string, OrbitalElements> = new Map([
           [0, 0],
         ],
         [
-          [1.00000018, 1.52371243],
+          [1.00000018, -0.00000003],
           [0.01673163, -0.00003661],
           [-0.00054346, -0.01337178],
           [100.46691572, 35999.37306329],
@@ -159,7 +161,7 @@ export const ORBITAL_ELEMENTS: Map<string, OrbitalElements> = new Map([
           [14.27495244, 0.18199196],
           [100.29282654, 0.13024619],
         ],
-        [0.00012452, 0.0606406, -0.35635438, 38.35125],
+        [-0.00012452, 0.0606406, -0.35635438, 38.35125],
       ],
       radius: 69911,
       rotation_period: 0.41354,

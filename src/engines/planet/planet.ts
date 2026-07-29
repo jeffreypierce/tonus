@@ -2,7 +2,7 @@
 // engines/planet/planet — planetary snapshot builder
 // ---------------------------------------------------------------------------
 import { angleDelta, wrapAngle } from "./math.js";
-import { getState, sunPos, moonPos, planetPos, EARTH_RADIUS_AU } from "./position.js";
+import { getState, sunPos, moonPos, planetPos } from "./position.js";
 import { sunAppearance, moonAppearance, planetAppearance } from "./appearance.js";
 import { detectAspects } from "./aspects.js";
 import { ORBITAL_ELEMENTS } from "./orbital.js";

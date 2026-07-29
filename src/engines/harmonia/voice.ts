@@ -33,9 +33,8 @@ export interface VoicedBody extends Body {
 const ANCHOR_MIDI = 69;
 
 function voiceOne(body: Body, voice: Voice, vowel: PlanetVowel, scale: Scale): VoicedBody {
-  const pliny = voice.greekName === "proslambanomenos" && body.name === "Earth";
-  const presence = pliny ? 1 : computePresence(body);
-  const motion = pliny ? 0 : computeMotion(body);
+  const presence = computePresence(body);
+  const motion = computeMotion(body);
 
   // Direct Hz from anchor (A4) and doctrina ratio — bypass scale quantization
   // so the ratio's pure Hz relationship is preserved.
@@ -77,8 +76,12 @@ export function voiceBodies(
   for (const body of bodies) {
     const voice = voiceByBody.get(body.name);
     if (!voice) continue; // body not part of this doctrina (e.g. Earth in Boethius)
+    // Only the seven vowel-bearing planets voice. Earth stays silent even
+    // under Pliny, whose table assigns it proslambanomenos — the ratio is
+    // kept in the doctrina as documentation, but no classical vowel exists
+    // for Earth, and tonus does not invent one.
     const vowel = PLANET_VOWELS[body.name];
-    if (!vowel) continue; // body has no classical vowel mapping (e.g. Earth, FixedStars)
+    if (!vowel) continue;
     result.push(voiceOne(body, voice, vowel, scale));
   }
   return result;

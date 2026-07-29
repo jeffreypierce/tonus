@@ -32,7 +32,7 @@ export interface AstroState {
   JD: number;  // Julian Date (UT)
   TT: number;  // Julian Date (Terrestrial Time)
   TS: number;  // Unix timestamp (ms)
-  J: number;   // Julian centuries from J2000.0 (TT)
+  J: number;   // days from J2000.0 (TT)
   T: number;   // Julian centuries
   eps: number; // mean obliquity of the ecliptic, deg
 }
@@ -213,20 +213,23 @@ export function planetPos(name: string, state: AstroState, sun: SunPos): PlanetP
 
   const { J, T, eps } = state;
   const oe = body.datasets;
-  // Two Standish element sets per body (see orbital.ts): [1] is fitted tightly
-  // for 1800–2050, [0] trades accuracy for 3000 BC–3000 AD coverage. The bounds
-  // are J (days from J2000): −73048.5 ≈ 1800, 18626.5 ≈ 2050. Inside the window
-  // use the precise set, outside fall back to the long-range one.
-  const dataset = J > -73048.5 && J < 18626.5 ? oe[1] : oe[0];
+  // Two Standish element sets per body (see orbital.ts): [0] is Table 1, fitted
+  // tightly for 1800–2050; [1] is Table 2a, trading accuracy for 3000 BC–3000 AD
+  // coverage. The bounds are J (days from J2000): −73048.5 ≈ 1800, 18626.5 ≈
+  // 2050. Inside the window use the precise set, outside fall back to the
+  // long-range one — which is the set tonus's medieval epoch runs on.
+  const inWindow = J > -73048.5 && J < 18626.5;
+  const dataset = inWindow ? oe[0] : oe[1];
   const [a, e, I, L, wBar, Omega] = dataset.map(([x0, x1]) => x0 + x1 * T);
 
   const omega = wBar - Omega; // argument of periapsis
   let M = L - wBar;           // mean anomaly
 
   // Standish's great-inequality correction for the outer planets (Jupiter–Neptune):
-  // a secular b·T² plus a long-period cos/sin term at frequency f. Only bodies
-  // that carry a datasets[2] (see orbital.ts) get it. [biblio: standish-jpl]
-  if (oe[2]) {
+  // a secular b·T² plus a long-period cos/sin term at frequency f. Table 2b is
+  // defined for use with the Table 2a elements only, so it applies exactly when
+  // the long-range set is in play. [biblio: standish-jpl]
+  if (!inWindow && oe[2]) {
     const [b, c, s, f] = oe[2];
     M += b * T * T + c * cosDeg(f * T) + s * sinDeg(f * T);
   }

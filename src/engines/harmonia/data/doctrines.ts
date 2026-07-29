@@ -7,7 +7,9 @@
 // as [numerator, denominator] pairs.
 //
 // All v1 doctrinae are geocentric — Earth is the silent listener at the
-// center, not a voiced body (except Pliny, where Earth is a boundary tone).
+// center, not a voiced body. Pliny's table does assign Earth a boundary tone
+// (proslambanomenos, kept below as documentation), but Earth carries no
+// classical vowel, so the voicing engine leaves it silent there too.
 // The Sun holds the mese position in all four systems.
 //
 // The ratios are reconstructed from the primary texts [biblio:
