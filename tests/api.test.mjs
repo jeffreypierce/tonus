@@ -180,9 +180,10 @@ describe("the appendix (the export law)", () => {
     assert.equal(CADENTIAE[0].key, "2,0,-2 @0");
     assert.equal(CADENTIAE[0].arrival, 0);
     for (const f of CADENTIAE) {
-      // FLOOR rescaled 150 -> 50 with the sung re-mine ⟨2026-07-28⟩: the old
-      // number was set against 77,275 pre-cut phrase ends, and the sung corpus
-      // has 28,481. Carrying it over would have shrunk the table to ~29.
+      // FLOOR is 50, rescaled from 150 when the table was re-mined over the
+      // sung corpus: the old number was set against 77,275 pre-cut phrase
+      // ends, and the sung corpus has 28,481. Carrying it over would have
+      // shrunk the table to ~29.
       assert.ok(f.n >= 50 && f.finality >= 0 && f.finality <= 1);
       assert.ok(f.shape.length >= 0 && f.shape.length <= 3);
       // Arrival is SIGNED now, not folded to [-5..+6] — a fifth above the final
@@ -194,9 +195,9 @@ describe("the appendix (the export law)", () => {
 
   test("CADENTIAE joins live signatures — the key-orphan gap is closed", async () => {
     const { CADENTIAE } = await import("../dist/index.js");
-    // ⟨2026-07-28⟩ Between the signed-arrival re-key and the re-mine, the table
-    // spoke folded keys while live signatures spoke signed ones, and the join
-    // rate sat at 49.3% — HALF-WORKING, which reads as data rather than as
+    // Between the signed-arrival re-key and the re-mine, the table spoke
+    // folded keys while live signatures spoke signed ones, and the join rate
+    // sat at 49.3% — HALF-WORKING, which reads as data rather than as
     // breakage. The re-mine closed it. This asserts the two speak one key.
     const table = new Set(CADENTIAE.map((f) => f.key));
     // A signed table must carry arrivals the old fold could not express.
