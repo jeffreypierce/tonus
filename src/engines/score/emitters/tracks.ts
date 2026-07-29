@@ -71,6 +71,42 @@ const nib = (vn: number): number => 0.5 + 1.5 * vn;
 /** A scaled measure, at most two places and no trailing zeros: 1.8, not 1.80. */
 const sc = (v: number): string => Number(v.toFixed(2)).toString();
 
+/** One track's room within the band a system reserves below its lyric line. */
+export interface TrackBand {
+  /** This band's top, offset from the start of the track region. */
+  top: number;
+  /** The room this band takes. */
+  height: number;
+}
+
+/** THE STACK. Both tracks ride either species and may ride one score
+ * together, so the band room is the sum of what each asks for. The order is
+ * fixed here, not by the caller's array: the chironomia rides above, its wave
+ * an extension of the lyric line's rhythm; the tonarium rides below, a panel
+ * whose label row is its bottom edge and wants nothing under it. Requesting
+ * ["tonarium", "chironomia"] therefore draws exactly what ["chironomia",
+ * "tonarium"] draws. */
+export function trackBands(tracks: readonly TrackName[] | undefined, k: number): {
+  chironomia: TrackBand | null;
+  tonarium: TrackBand | null;
+  extra: number;
+} {
+  const wantsChiron = tracks?.includes("chironomia") ?? false;
+  const wantsTon = tracks?.includes("tonarium") ?? false;
+  let top = 0;
+  let chironomia: TrackBand | null = null;
+  let tonarium: TrackBand | null = null;
+  if (wantsChiron) {
+    chironomia = { top, height: chironomiaExtra(k) };
+    top += chironomia.height;
+  }
+  if (wantsTon) {
+    tonarium = { top, height: tonariumExtra(k) };
+    top += tonarium.height;
+  }
+  return { chironomia, tonarium, extra: top };
+}
+
 const HOUSE_SANS = "'IBM Plex Sans', system-ui, sans-serif";
 const HOUSE_MONO = "ui-monospace, Menlo, 'IBM Plex Mono', monospace";
 
