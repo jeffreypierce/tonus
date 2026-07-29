@@ -33,7 +33,7 @@ import {
   ligaturaDesc,
 } from "../../../data/gabc-glyphs.js";
 import {
-  buildChironomia, chironomiaExtra,
+  buildChironomia, buildTonarium, trackBands,
   type TrackData, type TrackName, type TrackNote,
 } from "./tracks.js";
 
@@ -151,7 +151,7 @@ export interface SvgOpts {
   accidentals?: AccidentalMode;
   /** Baseline for the cents channel; the chant's home intonation by default. */
   centsBaseline?: CentsBaseline;
-  /** Analysis tracks to draw beneath each system (quadrata: "chironomia"). */
+  /** Analysis tracks to draw beneath each system; they stack in a fixed order. */
   tracks?: readonly TrackName[];
   /** Score-level analysis the tracks consume — supplied by inscriptio. */
   trackData?: TrackData;
@@ -400,9 +400,8 @@ export function toSvg(
   // Track scale: chiron-14's constants are px at the default staffHeight 40
   // (staffInterval 40/6); other staff sizes scale the whole band with them.
   const trackScale = r.staffInterval / (40 / 6);
-  const chironomia = options.tracks?.includes("chironomia") ?? false;
-  const trackExtra = chironomia ? chironomiaExtra(trackScale) : 0;
-  const L = makeLayout(r, trackExtra);
+  const bands = trackBands(options.tracks, trackScale);
+  const L = makeLayout(r, bands.extra);
 
   // ── Front matter ── Title, rubric annotation, and dropcap sit in a header
   // band above the first system, set as the Solesmes books open a piece: the
@@ -855,25 +854,38 @@ export function toSvg(
     }
   }
 
-  // ── The chironomy track: wave + letters + typus lane below each system ──
-  // Downstream of the notation: it consumes the placements (the same anchors
-  // the geometry contract exports), never the score's own ink.
-  if (chironomia) {
-    const trackNotes: TrackNote[] = placements.map((pl) => ({
-      row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
-    }));
-    body.push(buildChironomia(trackNotes, {
-      k: trackScale,
-      // Clear of the lyric line's descenders: the crest's letters top out
-      // ~26px above the midline, and the lyric baseline sits at lyricY.
-      waveMidY: L.lyricY + 33 * trackScale,
-    }));
-  }
-
   // Close the final system; width is the widest system, height reaches the last.
   systemMaxX.push(x + r.padding);
   const width = Math.ceil(Math.max(...systemMaxX));
-  const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + trackExtra);
+  const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + bands.extra);
+
+  // ── The analysis tracks, below each system ──
+  // Downstream of the notation: they consume the placements (the same anchors
+  // the geometry contract exports), never the score's own ink. Drawn after the
+  // page width is known — the tonarium's lane measures itself against each
+  // system's right edge.
+  if (bands.chironomia || bands.tonarium) {
+    const trackNotes: TrackNote[] = placements.map((pl) => ({
+      row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
+    }));
+    if (bands.chironomia) {
+      body.push(buildChironomia(trackNotes, {
+        k: trackScale,
+        // Clear of the lyric line's descenders: the crest's letters top out
+        // ~26px above the midline, and the lyric baseline sits at lyricY.
+        waveMidY: L.lyricY + bands.chironomia.top + 33 * trackScale,
+      }));
+    }
+    if (bands.tonarium) {
+      body.push(buildTonarium(trackNotes, options.trackData ?? { cadences: [], modulations: [] }, {
+        k: trackScale,
+        laneTop: L.lyricY + bands.tonarium.top + 26 * trackScale,
+        rightFor: (s) => (systemMaxX[s] ?? width) - r.padding,
+        serifFamily: r.fonts.lyric.family,
+        rubricaColor: r.rubricaColor,
+      }));
+    }
+  }
 
   // Staff lines (positions 1, 3, 5, 7), once per system. A system's rightmost
   // ink bounds its staff so a short final line doesn't stretch to the page edge.

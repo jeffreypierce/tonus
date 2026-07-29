@@ -28,7 +28,7 @@ import type { NoteGeometry, SvgResult, SvgOpts } from "./svg.js";
 import { autoRubricLines } from "./svg.js";
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Chant } from "../../chant/types.js";
-import { buildTonarium, TONARIUM_EXTRA, type TrackNote } from "./tracks.js";
+import { buildChironomia, buildTonarium, trackBands, type TrackNote } from "./tracks.js";
 
 // ── Bravura moderna glyph codepoints (baked in smufl-glyphs.json) ──
 const G = {
@@ -182,10 +182,10 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const padding = options.padding ?? 14;
   const width = options.width ?? null;
   const systemGap = options.systemGap ?? SYSTEM_GAP_DEFAULT;
-  // A requested tonarium band widens every system by its reserved room.
-  const tonarium = options.tracks?.includes("tonarium") ?? false;
-  const trackExtra = tonarium ? TONARIUM_EXTRA : 0;
-  const systemHeight = LYRIC_Y + 24 + trackExtra + systemGap;
+  // A requested track band widens every system by its reserved room. Moderna's
+  // staff is fixed (MSP), so the track scale is always 1 here.
+  const bands = trackBands(options.tracks, 1);
+  const systemHeight = LYRIC_Y + 24 + bands.extra + systemGap;
 
   // Intonation channel: precompute each row's accidental/cents mark once (the
   // repeat-suppression and heji guard live in the engine), keyed by identity.
@@ -368,21 +368,32 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
   systemMaxX.push(x + padding);
   const W = Math.ceil(Math.max(...systemMaxX));
-  const height = Math.ceil(systemY + LYRIC_Y + 24 + trackExtra);
+  const height = Math.ceil(systemY + LYRIC_Y + 24 + bands.extra);
 
-  // ── The tonarium track: rails, sparkline, mode line, cadence row ──
-  // Downstream of the notation: it consumes the placements (the same anchors
+  // ── The analysis tracks, below each system ──
+  // Downstream of the notation: they consume the placements (the same anchors
   // the geometry contract exports), never the transcription's own ink.
-  if (tonarium) {
+  if (bands.chironomia || bands.tonarium) {
     const trackNotes: TrackNote[] = placements.map((pl) => ({
       row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
     }));
-    body.push(buildTonarium(trackNotes, options.trackData ?? { cadences: [], modulations: [] }, {
-      laneTop: LYRIC_Y + 26,
-      rightFor: (s) => (systemMaxX[s] ?? W) - padding,
-      serifFamily: lyricFace,
-      rubricaColor: options.rubricaColor ?? "#9E2B25",
-    }));
+    if (bands.chironomia) {
+      // The wave's constants are calibrated at quadrata's default staff
+      // interval, near enough to moderna's fixed staff space to read at k: 1.
+      body.push(buildChironomia(trackNotes, {
+        k: 1,
+        waveMidY: LYRIC_Y + bands.chironomia.top + 33,
+      }));
+    }
+    if (bands.tonarium) {
+      body.push(buildTonarium(trackNotes, options.trackData ?? { cadences: [], modulations: [] }, {
+        k: 1,
+        laneTop: LYRIC_Y + bands.tonarium.top + 26,
+        rightFor: (s) => (systemMaxX[s] ?? W) - padding,
+        serifFamily: lyricFace,
+        rubricaColor: options.rubricaColor ?? "#9E2B25",
+      }));
+    }
   }
 
   // Staff lines: five per system.

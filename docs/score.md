@@ -420,26 +420,36 @@ interface NoteGeometry {
 
 ### The analysis tracks
 
-`tracks` draws an analysis band beneath every system. The two tracks are
-species-paired — melodic analysis on the scientific staff, rhythmic below the
-square notation — and a mismatched pairing throws. One governing ink system
-runs through both: every mark draws in the score's black, strata graded by
-opacity alone (the liturgical red belongs to the mode line and nothing else),
-and every pressure-bearing line shares one nib law — velocity as stroke width.
+`tracks` draws an analysis band beneath every system. Either track rides either
+species, and both may ride one score — the selection is independent of the
+notation, as `notation` itself is. One governing ink system runs through both:
+every mark draws in the score's black, strata graded by opacity alone (the
+liturgical red belongs to the mode line and nothing else), and every
+pressure-bearing line shares one nib law — velocity as stroke width.
 
 ```js
-tonus.inscriptio(score, { width: 680, tracks: ["chironomia"] });                      // quadrata
-tonus.inscriptio(score, { notation: "moderna", width: 680, tracks: ["tonarium"] });   // moderna
+tonus.inscriptio(score, { width: 680, tracks: ["chironomia"] });
+tonus.inscriptio(score, { notation: "moderna", width: 680, tracks: ["tonarium"] });
+tonus.inscriptio(score, { width: 680, tracks: ["tonarium"] });                    // either way
+tonus.inscriptio(score, { width: 680, tracks: ["chironomia", "tonarium"] });      // stacked
 ```
 
-- **`"chironomia"`** (quadrata) — the conducting hand as one continuous line:
+The **two-register principle** is the house pairing: the rhythmic band under the
+square notation (the body), the melodic band under the transcription (the mind).
+It is a default worth keeping, not a constraint the renderer enforces.
+
+Requesting both stacks them in a fixed order — the chironomia above, the
+tonarium below — whichever order they are asked for, and the page grows by the
+sum of the two bands.
+
+- **`"chironomia"`** — the conducting hand as one continuous line:
   arsic beats crest, thetic beats trough, single-note theses pass through
   shallow, and the hand picks up between close arses in a small backward loop
   [biblio: carroll-chironomy]. Pressure is the stroke's _weight_: each note's
   `velocity` (the `accentus` shaping) becomes nib width over solid ink, so the
   line presses where the voice does. Pierik letters (A · T · PT) name the
   beats — the incise's rhythmic shape is read straight off them.
-- **`"tonarium"`** (moderna) — the melodic-analysis lane, named for the book
+- **`"tonarium"`** — the melodic-analysis lane, named for the book
   that catalogued chants by mode. Four rails — the maneriae finals ladder, D on
   the bottom (categories, not pitches) — carry the **mode line** in the
   liturgical red: the governing mode of each phrase, its numeral above

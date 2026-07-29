@@ -4,10 +4,11 @@
 // `inscriptio` (the inscribing) draws a Score. Per the rendering boundary
 // (CODE-STANDARDS → Boundaries), rendering is a standalone function that TAKES a
 // score — not a method on one. It inks the score itself; the analysis tracks
-// (chironomia under quadrata, tonarium under moderna) ship with it as opt-in
-// bands (`tracks`), drawn from the same placements the geometry contract
-// exports — never by scraping the notation. Custom tracks remain downstream
-// consumers of that contract. One emitter format: SVG.
+// (chironomia, the rhythmic band; tonarium, the melodic one) ship with it as
+// opt-in bands (`tracks`), either riding either species, drawn from the same
+// placements the geometry contract exports — never by scraping the notation.
+// Custom tracks remain downstream consumers of that contract. One emitter
+// format: SVG.
 //
 // The result is `{ svg, geometry }`. The geometry array — one entry per note in
 // tabula order — is the TRACK CONTRACT: downstream consumers place marks against
@@ -34,11 +35,15 @@ export interface InscriptioOpts {
   /** Baseline for the cents channel; the chant's home intonation by default. */
   centsBaseline?: "pythagorean" | "et";
   /**
-   * Analysis tracks drawn beneath each system. Species-paired by design (the
-   * two-register principle): "chironomia" — the rhythmic track (wave, Pierik
-   * letters, typus lane) — rides quadrata, the body; "tonarium" — the melodic
-   * track (maneriae rails, pressure sparkline, mode line, cadence sigils) —
-   * rides moderna, the mind. A mismatched pairing throws.
+   * Analysis tracks drawn beneath each system: "chironomia" — the rhythmic
+   * band (wave, Pierik letters) — and "tonarium" — the melodic band (maneriae
+   * rails, pressure sparkline, mode line, cadence nodes). Either rides either
+   * species, and both may ride one score; they stack in a fixed order, the
+   * chironomia above the tonarium, whichever order they are asked for.
+   *
+   * The two-register principle is the house pairing — the rhythmic band under
+   * the square notation (the body), the melodic band under the transcription
+   * (the mind). It is a default worth keeping, not a constraint enforced here.
    */
   tracks?: readonly TrackName[];
 
@@ -124,29 +129,14 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
     );
   }
 
-  // The tracks are species-paired (the two-register principle): the rhythmic
-  // track under the square notation, the melodic track under the transcription.
-  // An unknown name or a mismatched pairing is a caller bug and throws.
-  const moderna = opts.notation === "moderna";
+  // Either track rides either species, and both may ride one score — the
+  // selection is independent of the notation, as the notation itself is. An
+  // unknown name is a caller bug and throws.
   for (const track of opts.tracks ?? []) {
     if (track !== "chironomia" && track !== "tonarium") {
       throw new Error(
         `inscriptio: unknown track "${track}" — tracks are "chironomia" ` +
-        `(quadrata) and "tonarium" (moderna)`,
-      );
-    }
-    if (track === "chironomia" && moderna) {
-      throw new Error(
-        `inscriptio: "chironomia" is the rhythmic track under square notation; ` +
-        `it does not ride moderna. Use notation: "quadrata" (the default), or ` +
-        `the "tonarium" track here.`,
-      );
-    }
-    if (track === "tonarium" && !moderna) {
-      throw new Error(
-        `inscriptio: "tonarium" is the melodic track under the modern ` +
-        `transcription; it does not ride quadrata. Use notation: "moderna", ` +
-        `or the "chironomia" track here.`,
+        `(the rhythmic band) and "tonarium" (the melodic band)`,
       );
     }
   }

@@ -2,14 +2,14 @@
 // engines/score/emitters/tracks — the analysis tracks (chironomia, tonarium)
 // ---------------------------------------------------------------------------
 // The two analysis tracks the plate series locked, ported onto the emitters'
-// own placements. The two-register principle (design-analysis-track.md):
-// quadrata is the body — rhythm as gesture, the chironomy wave below the staff
-// (plate-chiron-14 is the spec; its typus lane was cut 2026-07-29 — the wave's
-// own A/T letters already carry the incise's shape); moderna is the mind —
-// pitch and mode, the tonarium lane below the transcription (plate-tonarium-08,
-// trued to the 2026-07-28 rulings: the SIGNATURE is a cadence's name — no
-// familia binomials, no adventus case ladder; `arrival` already carries the
-// number).
+// own placements. Either rides either species and both may ride one score; the
+// two-register principle is the house pairing, not a rule enforced here —
+// quadrata as the body (rhythm as gesture, the chironomy wave; plate-chiron-14
+// is the spec, its typus lane cut 2026-07-29 since the wave's own A/T letters
+// already carry the incise's shape), moderna as the mind (pitch and mode, the
+// tonarium lane; plate-tonarium-08, trued to the 2026-07-28 rulings: the
+// SIGNATURE is a cadence's name — no familia binomials, no adventus case
+// ladder; `arrival` already carries the number).
 //
 // THE GOVERNING INK SYSTEM (ruled 2026-07-29). One ink, one nib:
 // - Every track mark draws in the score's black; strata differ by OPACITY
@@ -67,6 +67,45 @@ const STRATUM = {
 
 /** THE nib — one pressure law for every track: normalized velocity → width. */
 const nib = (vn: number): number => 0.5 + 1.5 * vn;
+
+/** A scaled measure, at most two places and no trailing zeros: 1.8, not 1.80. */
+const sc = (v: number): string => Number(v.toFixed(2)).toString();
+
+/** One track's room within the band a system reserves below its lyric line. */
+export interface TrackBand {
+  /** This band's top, offset from the start of the track region. */
+  top: number;
+  /** The room this band takes. */
+  height: number;
+}
+
+/** THE STACK. Both tracks ride either species and may ride one score
+ * together, so the band room is the sum of what each asks for. The order is
+ * fixed here, not by the caller's array: the chironomia rides above, its wave
+ * an extension of the lyric line's rhythm; the tonarium rides below, a panel
+ * whose label row is its bottom edge and wants nothing under it. Requesting
+ * ["tonarium", "chironomia"] therefore draws exactly what ["chironomia",
+ * "tonarium"] draws. */
+export function trackBands(tracks: readonly TrackName[] | undefined, k: number): {
+  chironomia: TrackBand | null;
+  tonarium: TrackBand | null;
+  extra: number;
+} {
+  const wantsChiron = tracks?.includes("chironomia") ?? false;
+  const wantsTon = tracks?.includes("tonarium") ?? false;
+  let top = 0;
+  let chironomia: TrackBand | null = null;
+  let tonarium: TrackBand | null = null;
+  if (wantsChiron) {
+    chironomia = { top, height: chironomiaExtra(k) };
+    top += chironomia.height;
+  }
+  if (wantsTon) {
+    tonarium = { top, height: tonariumExtra(k) };
+    top += tonarium.height;
+  }
+  return { chironomia, tonarium, extra: top };
+}
 
 const HOUSE_SANS = "'IBM Plex Sans', system-ui, sans-serif";
 const HOUSE_MONO = "ui-monospace, Menlo, 'IBM Plex Mono', monospace";
@@ -156,7 +195,7 @@ function ribbonPath(samples: Pt[], vat: (x: number) => number, vmax: number,
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CHIRONOMIA — the hand's wave below the quadrata staff (plate-chiron-14)
+// CHIRONOMIA — the hand's wave below the staff (plate-chiron-14)
 // ═══════════════════════════════════════════════════════════════════════════
 // One continuous line per system: arsic beats crest, thetic beats trough,
 // single-note thetic beats pass through shallow (PT), pick-up loops where
@@ -173,7 +212,7 @@ export interface ChironomiaConfig {
   waveMidY: number;
 }
 
-/** Band room the quadrata emitter reserves below each system's lyric line. */
+/** Band room the chironomia reserves below each system's lyric line. */
 export function chironomiaExtra(k: number): number {
   return 50 * k;
 }
@@ -372,7 +411,7 @@ export function buildChironomia(notes: TrackNote[], cfg: ChironomiaConfig): stri
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TONARIUM — the melodic-analysis lane below the moderna staff (tonarium-08)
+// TONARIUM — the melodic-analysis lane below the staff (tonarium-08)
 // ═══════════════════════════════════════════════════════════════════════════
 // The mode staff: all four maneriae rails, D on the bottom (the finals ladder —
 // categories, not pitches, so the rails carry no letters). Through it, the
@@ -392,6 +431,8 @@ export function buildChironomia(notes: TrackNote[], cfg: ChironomiaConfig): stri
 // nothing.
 
 export interface TonariumConfig {
+  /** Scale factor: staffInterval / (40/6) — 1 at the default staffHeight. */
+  k: number;
   /** Lane top within a system (system-local). */
   laneTop: number;
   /** Right edge available to the lane, per system (page x). */
@@ -403,8 +444,10 @@ export interface TonariumConfig {
 }
 
 const LANE_H = 42;
-/** Band room the moderna emitter reserves below each system's lyric line. */
-export const TONARIUM_EXTRA = 78;
+/** Band room the tonarium reserves below each system's lyric line. */
+export function tonariumExtra(k: number): number {
+  return 78 * k;
+}
 
 const MODE_FINAL: Record<number, string> = { 1: "D", 2: "D", 3: "E", 4: "E", 5: "F", 6: "F", 7: "G", 8: "G" };
 const RAIL_ORDER = ["D", "E", "F", "G"]; // the finals ladder, D on the bottom
@@ -422,15 +465,17 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
   cfg: TonariumConfig): string {
   if (notes.length === 0) return "";
   const out: string[] = [];
+  const k = cfg.k;
+  const laneH = LANE_H * k;
 
   // The lane's own axis: the chant's ambitus, compressed. True pitch heights.
   const midis = notes.map((n) => n.row.midi);
   const lo = Math.min(...midis);
   const hi = Math.max(...midis, lo + 1);
   const laneY = (systemY: number, midi: number): number =>
-    systemY + cfg.laneTop + LANE_H - 4 - ((midi - lo) / (hi - lo)) * (LANE_H - 8);
+    systemY + cfg.laneTop + laneH - 4 * k - ((midi - lo) / (hi - lo)) * (laneH - 8 * k);
   const railY = (systemY: number, letter: string): number =>
-    systemY + cfg.laneTop + 33 - RAIL_ORDER.indexOf(letter) * 9;
+    systemY + cfg.laneTop + 33 * k - RAIL_ORDER.indexOf(letter) * 9 * k;
 
   const vmax = velocityMax(notes);
   const home = data.mode != null && MODE_FINAL[data.mode] ? data.mode : undefined;
@@ -452,15 +497,15 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
     const sysNotes = notes.filter((n) => n.system === s);
     const sysY = sysNotes[0]!.systemY;
     const xs = sysNotes.map((n) => n.x);
-    const xL = Math.min(...xs) - 4;
-    const xR = Math.min(Math.max(...xs) + 10, cfg.rightFor(s));
+    const xL = Math.min(...xs) - 4 * k;
+    const xR = Math.min(Math.max(...xs) + 10 * k, cfg.rightFor(s));
     const g: string[] = ['<g class="tonarium">'];
 
     // ── the mode staff: all four maneriae rails, always ──
     for (const letter of RAIL_ORDER) {
       const y = railY(sysY, letter);
       g.push(`<line x1="${xL.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${y.toFixed(1)}" ` +
-        `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="0.55"/>`);
+        `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.55 * k)}"/>`);
     }
 
     // ── the sparkline: the governing nib at the spark stratum ──
@@ -481,12 +526,12 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
     }
 
     // ── the mode line: rubrica, stepping between maneriae rails ──
-    const STRIP_Y = railY(sysY, "G") - 5.5;
+    const STRIP_Y = railY(sysY, "G") - 5.5 * k;
     const stripX = (x0: number): number => {
-      for (const cand of [x0 + 3.5, x0 + 21, x0 + 39]) {
-        if (spark.every(([px, py]) => Math.abs(px - cand) > 13 || py > STRIP_Y + 4.5)) return cand;
+      for (const cand of [x0 + 3.5 * k, x0 + 21 * k, x0 + 39 * k]) {
+        if (spark.every(([px, py]) => Math.abs(px - cand) > 13 * k || py > STRIP_Y + 4.5 * k)) return cand;
       }
-      return x0 + 3.5;
+      return x0 + 3.5 * k;
     };
     interface Seg { mode: number; conf: number; kind: string; x0: number; x1: number }
     const segs: Seg[] = [];
@@ -496,24 +541,25 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       const px = sysNotes.filter((n) => n.row.phraseIndex === p).map((n) => n.x);
       const prev = segs[segs.length - 1];
       if (prev && prev.mode === gov.mode && prev.kind === gov.kind) {
-        prev.x1 = Math.max(...px) + 8;
+        prev.x1 = Math.max(...px) + 8 * k;
       } else {
-        segs.push({ ...gov, x0: Math.min(...px) - 2, x1: Math.max(...px) + 8 });
+        segs.push({ ...gov, x0: Math.min(...px) - 2 * k, x1: Math.max(...px) + 8 * k });
       }
     }
     for (const sg of segs) {
       const y = railY(sysY, MODE_FINAL[sg.mode]!);
       const op = 0.55 + 0.45 * sg.conf;
-      const dash = sg.kind === "transposition" ? ' stroke-dasharray="4 2.6"' : "";
-      g.push(`<line x1="${sg.x0.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(sg.x1 - 3).toFixed(1)}" y2="${y.toFixed(1)}" ` +
-        `stroke="${cfg.rubricaColor}" stroke-width="1.05" opacity="${op.toFixed(2)}"${dash} stroke-linecap="round"/>`);
-      g.push(`<text x="${stripX(sg.x0).toFixed(1)}" y="${STRIP_Y.toFixed(1)}" font-size="10.5" ` +
+      const dash = sg.kind === "transposition"
+        ? ` stroke-dasharray="${sc(4 * k)} ${sc(2.6 * k)}"` : "";
+      g.push(`<line x1="${sg.x0.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(sg.x1 - 3 * k).toFixed(1)}" y2="${y.toFixed(1)}" ` +
+        `stroke="${cfg.rubricaColor}" stroke-width="${sc(1.05 * k)}" opacity="${op.toFixed(2)}"${dash} stroke-linecap="round"/>`);
+      g.push(`<text x="${stripX(sg.x0).toFixed(1)}" y="${STRIP_Y.toFixed(1)}" font-size="${sc(10.5 * k)}" ` +
         `opacity="${op.toFixed(2)}" fill="${cfg.rubricaColor}" font-family="${esc(cfg.serifFamily)}" ` +
         `font-style="italic">${ROMAN[sg.mode]}</text>`);
     }
 
     // ── cadences: the sparkline's own ending, re-inked at full strength ──
-    const yC = sysY + cfg.laneTop + LANE_H + 8;
+    const yC = sysY + cfg.laneTop + laneH + 8 * k;
     // Close-set labels dodge to a second row instead of colliding.
     const labelRight: [number, number] = [-Infinity, -Infinity];
     for (let ci = 0; ci < data.cadences.length; ci++) {
@@ -521,7 +567,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       if (cad.confidence < CONF_FLOOR) continue; // don't ink weak claims
       const fig = sysNotes.filter((n) => n.row.cadenceRef === ci);
       if (fig.length === 0) continue;
-      const x0 = Math.min(...fig.map((n) => n.x)) - 2;
+      const x0 = Math.min(...fig.map((n) => n.x)) - 2 * k;
       const x1 = Math.max(...fig.map((n) => n.x));
       const op = 0.45 + 0.5 * cad.confidence;
       const fam = cad.signature ? famIndex().get(cad.signature) : undefined;
@@ -530,15 +576,16 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       // The figure's slice of its phrase's own samples — the same curve at
       // the same width, the ink change alone marking the claim.
       const samples = (samplesByPhrase.get(fig[0]!.row.phraseIndex) ?? [])
-        .filter(([px]) => px >= x0 && px <= x1 + 2);
+        .filter(([px]) => px >= x0 && px <= x1 + 2 * k);
       if (samples.length >= 2) {
         const d = ribbonPath(samples, vat, vmax, 1);
         g.push(`<path d="${d}" fill="${INK}" fill-opacity="${(STRATUM.cadence * op).toFixed(2)}"/>`);
         const [nx, ny] = samples[samples.length - 1]!;
+        const r = sc(1.8 * k);
         g.push(closes
-          ? `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="1.8" fill="${INK}" opacity="${op.toFixed(2)}"/>`
-          : `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="1.8" fill="none" stroke="${INK}" ` +
-            `stroke-width="0.9" opacity="${op.toFixed(2)}"/>`);
+          ? `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="${INK}" opacity="${op.toFixed(2)}"/>`
+          : `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="none" stroke="${INK}" ` +
+            `stroke-width="${sc(0.9 * k)}" opacity="${op.toFixed(2)}"/>`);
       }
 
       // The label: the signature — the catalogue key, the name (07-28 ruling).
@@ -547,27 +594,30 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       // end-ticked bracket ties it to the span it names.
       const lab = cad.signature ?? "";
       if (lab) {
-        const estW = lab.length * 5.6; // 9px mono advance, measured
-        const right = cfg.rightFor(s) - 2;
-        const anchor = Math.min(x1 + 4.5, right - estW);
+        const estW = lab.length * 5.6 * k; // 9px mono advance, measured
+        const right = cfg.rightFor(s) - 2 * k;
+        const anchor = Math.min(x1 + 4.5 * k, right - estW);
         const span: [number, number] = [anchor, anchor + estW];
-        const row = span[0] < labelRight[0] + 8 ? 1 : 0;
+        const row = span[0] < labelRight[0] + 8 * k ? 1 : 0;
         labelRight[row] = Math.max(labelRight[row], span[1]);
-        const yRow = yC + row * 9.5;
-        const yB = yRow - 0.5;
-        const bw = `stroke="${INK}" stroke-opacity="${(STRATUM.bracket * op).toFixed(2)}" stroke-width="0.6"`;
+        const yRow = yC + row * 9.5 * k;
+        const yB = yRow - 0.5 * k;
+        const xB = x1 + 2 * k;
+        const yTick = yB - 3.5 * k;
+        const bw = `stroke="${INK}" stroke-opacity="${(STRATUM.bracket * op).toFixed(2)}" ` +
+          `stroke-width="${sc(0.6 * k)}"`;
         g.push(
-          `<line x1="${x0.toFixed(1)}" y1="${yB.toFixed(1)}" x2="${(x1 + 2).toFixed(1)}" y2="${yB.toFixed(1)}" ${bw}/>` +
-          `<line x1="${x0.toFixed(1)}" y1="${yB.toFixed(1)}" x2="${x0.toFixed(1)}" y2="${(yB - 3.5).toFixed(1)}" ${bw}/>` +
-          `<line x1="${(x1 + 2).toFixed(1)}" y1="${yB.toFixed(1)}" x2="${(x1 + 2).toFixed(1)}" y2="${(yB - 3.5).toFixed(1)}" ${bw}/>`,
+          `<line x1="${x0.toFixed(1)}" y1="${yB.toFixed(1)}" x2="${xB.toFixed(1)}" y2="${yB.toFixed(1)}" ${bw}/>` +
+          `<line x1="${x0.toFixed(1)}" y1="${yB.toFixed(1)}" x2="${x0.toFixed(1)}" y2="${yTick.toFixed(1)}" ${bw}/>` +
+          `<line x1="${xB.toFixed(1)}" y1="${yB.toFixed(1)}" x2="${xB.toFixed(1)}" y2="${yTick.toFixed(1)}" ${bw}/>`,
         );
-        g.push(`<text x="${anchor.toFixed(1)}" y="${(yRow + 2.8).toFixed(1)}" font-size="9" ` +
+        g.push(`<text x="${anchor.toFixed(1)}" y="${(yRow + 2.8 * k).toFixed(1)}" font-size="${sc(9 * k)}" ` +
           `opacity="${(STRATUM.label * op).toFixed(2)}" fill="${INK}" ` +
           `font-family="${esc(HOUSE_MONO)}">${esc(lab)}</text>`);
       }
     }
     if (s === 0) {
-      g.push(`<text x="${(xL - 2).toFixed(1)}" y="${(yC + 3).toFixed(1)}" font-size="9" ` +
+      g.push(`<text x="${(xL - 2 * k).toFixed(1)}" y="${(yC + 3 * k).toFixed(1)}" font-size="${sc(9 * k)}" ` +
         `text-anchor="end" fill="${INK}" opacity="${STRATUM.margin}" ` +
         `font-family="${esc(HOUSE_MONO)}">cad</text>`);
     }
