@@ -28,7 +28,7 @@ import type { NoteGeometry, SvgResult, SvgOpts } from "./svg.js";
 import { autoRubricLines } from "./svg.js";
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Chant } from "../../chant/types.js";
-import { buildTonarium, TONARIUM_EXTRA, type TrackNote } from "./tracks.js";
+import { buildTonarium, tonariumExtra, type TrackNote } from "./tracks.js";
 
 // ── Bravura moderna glyph codepoints (baked in smufl-glyphs.json) ──
 const G = {
@@ -184,7 +184,8 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const systemGap = options.systemGap ?? SYSTEM_GAP_DEFAULT;
   // A requested tonarium band widens every system by its reserved room.
   const tonarium = options.tracks?.includes("tonarium") ?? false;
-  const trackExtra = tonarium ? TONARIUM_EXTRA : 0;
+  // Moderna's staff is fixed (MSP), so the track scale is always 1 here.
+  const trackExtra = tonarium ? tonariumExtra(1) : 0;
   const systemHeight = LYRIC_Y + 24 + trackExtra + systemGap;
 
   // Intonation channel: precompute each row's accidental/cents mark once (the
@@ -378,6 +379,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
     }));
     body.push(buildTonarium(trackNotes, options.trackData ?? { cadences: [], modulations: [] }, {
+      k: 1,
       laneTop: LYRIC_Y + 26,
       rightFor: (s) => (systemMaxX[s] ?? W) - padding,
       serifFamily: lyricFace,
