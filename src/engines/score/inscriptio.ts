@@ -3,9 +3,11 @@
 // ---------------------------------------------------------------------------
 // `inscriptio` (the inscribing) draws a Score. Per the rendering boundary
 // (CODE-STANDARDS → Boundaries), rendering is a standalone function that TAKES a
-// score — not a method on one. It inks the score itself; analysis tracks
-// (chironomy, tonarium, …) are downstream overlays built on the geometry it
-// returns. One emitter format: SVG.
+// score — not a method on one. It inks the score itself; the analysis tracks
+// (chironomia under quadrata, tonarium under moderna) ship with it as opt-in
+// bands (`tracks`), drawn from the same placements the geometry contract
+// exports — never by scraping the notation. Custom tracks remain downstream
+// consumers of that contract. One emitter format: SVG.
 //
 // The result is `{ svg, geometry }`. The geometry array — one entry per note in
 // tabula order — is the TRACK CONTRACT: downstream consumers place marks against
@@ -20,6 +22,7 @@ import {
   type FontSpec, type FontSlot, type FontEmbed,
 } from "./emitters/svg.js";
 import { toModerna } from "./emitters/moderna.js";
+import type { TrackData, TrackName } from "./emitters/tracks.js";
 import type { Score } from "./api.js";
 
 export interface InscriptioOpts {
@@ -30,6 +33,14 @@ export interface InscriptioOpts {
   accidentals?: "standard" | "heji" | "cents";
   /** Baseline for the cents channel; the chant's home intonation by default. */
   centsBaseline?: "pythagorean" | "et";
+  /**
+   * Analysis tracks drawn beneath each system. Species-paired by design (the
+   * two-register principle): "chironomia" — the rhythmic track (wave, Pierik
+   * letters, typus lane) — rides quadrata, the body; "tonarium" — the melodic
+   * track (maneriae rails, pressure sparkline, mode line, cadence sigils) —
+   * rides moderna, the mind. A mismatched pairing throws.
+   */
+  tracks?: readonly TrackName[];
 
   // ── layout (the multi-system engine) ──
   /** Wrap systems to this px width. Absent = a single system (current behaviour). */
@@ -86,7 +97,7 @@ const EMITTER_KEYS = [
   "staffHeight", "noteScale", "padding", "noteColor", "staffLineColor",
   "width", "systemGap", "custos",
   "title", "rubric", "annotation", "dropcap", "rubricaColor", "fonts",
-  "accidentals", "centsBaseline",
+  "accidentals", "centsBaseline", "tracks",
 ] as const;
 
 /**
@@ -113,11 +124,51 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
     );
   }
 
+  // The tracks are species-paired (the two-register principle): the rhythmic
+  // track under the square notation, the melodic track under the transcription.
+  // An unknown name or a mismatched pairing is a caller bug and throws.
+  const moderna = opts.notation === "moderna";
+  for (const track of opts.tracks ?? []) {
+    if (track !== "chironomia" && track !== "tonarium") {
+      throw new Error(
+        `inscriptio: unknown track "${track}" — tracks are "chironomia" ` +
+        `(quadrata) and "tonarium" (moderna)`,
+      );
+    }
+    if (track === "chironomia" && moderna) {
+      throw new Error(
+        `inscriptio: "chironomia" is the rhythmic track under square notation; ` +
+        `it does not ride moderna. Use notation: "quadrata" (the default), or ` +
+        `the "tonarium" track here.`,
+      );
+    }
+    if (track === "tonarium" && !moderna) {
+      throw new Error(
+        `inscriptio: "tonarium" is the melodic track under the modern ` +
+        `transcription; it does not ride quadrata. Use notation: "moderna", ` +
+        `or the "chironomia" track here.`,
+      );
+    }
+  }
+
   // Pass through the options the emitters consume; the species selector stays
-  // here. A species ignores, not errors on, options that do not apply to it
-  // (moderna, e.g., carries no front matter).
+  // here. A species ignores, not errors on, options that do not apply to it.
+  // Both species honour the front matter (title, rubric/annotation) — the
+  // official opening is `title` + `annotation: "auto"`, no dropcap.
   const emitterOpts: Record<string, unknown> = {};
   for (const k of EMITTER_KEYS) if (opts[k] !== undefined) emitterOpts[k] = opts[k];
+
+  // The tracks consume score-level analysis the flat tabula does not carry;
+  // hand it through only when a track asked for it.
+  if (opts.tracks && opts.tracks.length > 0) {
+    const modeDigit = score.chant.mode ? parseInt(score.chant.mode) : NaN;
+    const trackData: TrackData = {
+      cadences: score.cadences,
+      modulations: score.modulations,
+      mode: Number.isFinite(modeDigit) ? modeDigit : undefined,
+    };
+    emitterOpts["trackData"] = trackData;
+  }
 
   // Dispatch to the species' own renderer — each owns its spacing pass.
   const render = opts.notation === "moderna" ? toModerna : toSvg;
@@ -127,3 +178,4 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
 
 export type { NoteGeometry } from "./emitters/svg.js";
 export type { FontSpec, FontSlot, FontEmbed } from "./emitters/svg.js";
+export type { TrackName, TrackData } from "./emitters/tracks.js";

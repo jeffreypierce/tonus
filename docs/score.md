@@ -382,7 +382,11 @@ Options, by group (all optional):
   over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
   mark, e.g. _Introitus. 8._) sits upright at the left margin over the
   dropcap; `dropcap` (a rubricated initial); `rubricaColor` (the liturgical
-  red — dropcap, annotation, and rubric lyric runs all draw in it).
+  red — dropcap, annotation, and rubric lyric runs all draw in it). Both
+  species honour the front matter. The **official opening** of a tonus score
+  is `title` (the incipit) + `annotation: "auto"` — no dropcap: the
+  illuminated capital remains an option, but it conflicts with the analysis
+  tracks' layouts and the house scores skip it.
 - **intonation** — `accidentals: "standard" | "heji" | "cents"` and
   `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
 - **scale & ink** — `staffHeight`, `noteScale`, `padding`, `noteColor`,
@@ -397,12 +401,13 @@ Options, by group (all optional):
   the cost of its size; one `@font-face` per family + weight, deduped).
   tonus never bundles font files; with `embed` it is a conduit for data the
   consumer supplies, so the consumer carries the face's license terms.
-  Unset roles keep the house serif. `moderna` honours the `lyric` slot.
+  Unset roles keep the house serif. `moderna` honours the `lyric`, `title`,
+  and `annotation` slots.
 
 **The geometry contract (public API).** `geometry` is one `NoteGeometry` per note,
-in tabula order — the interface downstream analysis _tracks_ (chironomy,
-tonarium) build on, so they place marks by index and coordinate instead of
-scraping the SVG:
+in tabula order — the interface analysis _tracks_ build on, so they place marks
+by index and coordinate instead of scraping the SVG. The library's own tracks
+(below) consume exactly these anchors; a custom track downstream does the same:
 
 ```ts
 interface NoteGeometry {
@@ -412,6 +417,49 @@ interface NoteGeometry {
   systemY: number;      // the system's top offset within the svg
 }
 ```
+
+### The analysis tracks
+
+`tracks` draws an analysis band beneath every system. The two tracks are
+species-paired — melodic analysis on the scientific staff, rhythmic below the
+square notation — and a mismatched pairing throws. One governing ink system
+runs through both: every mark draws in the score's black, strata graded by
+opacity alone (the liturgical red belongs to the mode line and nothing else),
+and every pressure-bearing line shares one nib law — velocity as stroke width.
+
+```js
+tonus.inscriptio(score, { width: 680, tracks: ["chironomia"] });                      // quadrata
+tonus.inscriptio(score, { notation: "moderna", width: 680, tracks: ["tonarium"] });   // moderna
+```
+
+- **`"chironomia"`** (quadrata) — the conducting hand as one continuous line:
+  arsic beats crest, thetic beats trough, single-note theses pass through
+  shallow, and the hand picks up between close arses in a small backward loop
+  [biblio: carroll-chironomy]. Pressure is the stroke's _weight_: each note's
+  `velocity` (the `accentus` shaping) becomes nib width over solid ink, so the
+  line presses where the voice does. Pierik letters (A · T · PT) name the
+  beats — the incise's rhythmic shape is read straight off them.
+- **`"tonarium"`** (moderna) — the melodic-analysis lane, named for the book
+  that catalogued chants by mode. Four rails — the maneriae finals ladder, D on
+  the bottom (categories, not pitches) — carry the **mode line** in the
+  liturgical red: the governing mode of each phrase, its numeral above
+  (authentic-vs-plagal lives in the numeral). A modulation of kind
+  `"inflection"` steps the line solid; a `"transposition"` (the affinal frame
+  read as displacement) draws dashed. Through the rails runs the melody itself,
+  compressed to the chant's ambitus and wearing the same pressure grammar, a
+  lighter stratum — context, not message.
+  A **cadence is the melody's own ending re-inked black**: the same curve at
+  the same width turns pure black across the cadential figure and lands on a
+  terminal node — filled when the family's measured `finality` in the
+  CADENTIAE catalogue closes, open when it suspends. The row beneath labels it
+  by its `signature` (the signature is the name; no editorial titles ride the
+  display), a light end-ticked bracket tying the label to the figure's span.
+  A label always follows its figure, clamping to the margin at the system's
+  edge; crowded labels dodge to a second row.
+
+Everywhere, confidence is opacity, and a claim below confidence 0.45 draws
+nothing — weak claims are not inked. Every mark sits under the notation that
+would falsify it.
 
 ### The intonation channel
 

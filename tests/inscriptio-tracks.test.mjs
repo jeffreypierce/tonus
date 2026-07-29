@@ -1,0 +1,125 @@
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import tonus from "../dist/index.js";
+import { buildScore } from "../dist/engines/score/api.js";
+import { inscriptio } from "../dist/engines/score/inscriptio.js";
+
+// The analysis tracks ride inscriptio (`tracks`): chironomia under quadrata,
+// tonarium under moderna — the two-register principle. Puer natus est is the
+// plate series' own subject (chiron-14 / tonarium-08), so it exercises every
+// stratum: classified incises (VIII), modulations, and confident cadences.
+const puer = () => tonus.cantus({ incipit: "Puer natus" })[0];
+
+describe("inscriptio — the chironomia track (quadrata)", () => {
+  const score = tonus.notatio(puer());
+  const plain = inscriptio(score, { width: 900 });
+  const tracked = inscriptio(score, { width: 900, tracks: ["chironomia"] });
+
+  test("draws the wave with the governing ink: one black, graded by stratum", () => {
+    assert.ok(tracked.svg.includes('class="chironomia"'), "the wave group");
+    // Pressure is line WEIGHT (the shared nib), not an opacity gradient.
+    assert.ok(!tracked.svg.includes("linearGradient"), "no gradient ink");
+    assert.ok(/class="chironomia"><path [^>]*fill="#111" fill-opacity="0\.75"/.test(tracked.svg),
+      "one ink at the wave stratum");
+    assert.ok(tracked.svg.includes('class="chironomia-letters"'), "the letter row");
+    assert.ok(/>A<\/text>/.test(tracked.svg), "arsis letters");
+    assert.ok(/>T<\/text>/.test(tracked.svg), "thesis letters");
+  });
+
+  test("reserves band room without disturbing the notation", () => {
+    const h = (svg) => Number(svg.match(/height="(\d+)"/)[1]);
+    assert.ok(h(tracked.svg) > h(plain.svg), "the band widens the page");
+    // The geometry contract is unmoved: same notes, same x anchors, and the
+    // first system's y unchanged (later systems shift by the band).
+    assert.equal(tracked.geometry.length, plain.geometry.length);
+    tracked.geometry.forEach((g, i) => {
+      assert.equal(g.x, plain.geometry[i].x);
+      if (g.system === 0) assert.equal(g.y, plain.geometry[i].y);
+    });
+  });
+});
+
+describe("inscriptio — the tonarium track (moderna)", () => {
+  const score = tonus.notatio(puer());
+  const tracked = inscriptio(score, { notation: "moderna", width: 900, tracks: ["tonarium"] });
+
+  test("draws the four maneriae rails and the mode line with its numeral", () => {
+    assert.ok(tracked.svg.includes('class="tonarium"'), "the lane group");
+    // Four rails per system, D on the bottom — categories, not pitches;
+    // rail ink = the governing black at the rail stratum.
+    const systems = new Set(tracked.geometry.map((g) => g.system)).size;
+    const rails = (tracked.svg.match(/stroke="#111" stroke-opacity="0\.16"/g) || []).length;
+    assert.equal(rails, systems * 4, "all four rails, every system");
+    // The home mode's numeral (VII) rides the strip in rubrica.
+    assert.ok(/font-style="italic">VII</.test(tracked.svg), "the governing numeral");
+  });
+
+  test("labels each confident cadence by its signature — the 07-28 ruling", () => {
+    const confident = score.cadences.filter((c) => c.confidence >= 0.45 && c.signature);
+    assert.ok(confident.length > 0, "the subject has confident cadences");
+    for (const cad of confident) {
+      assert.ok(tracked.svg.includes(`>${cad.signature}</text>`),
+        `signature "${cad.signature}" is the label`);
+    }
+    // No Latin arrival cases ride the row (adventus was cut).
+    assert.ok(!/in (finalem|tenorem|tertiam|subfinalem)/.test(tracked.svg));
+  });
+
+  test("draws a transposition segment dashed — displacement, not modulation", () => {
+    const exaltabo = tonus.cantus({ source: "gr" }).find((c) => c.id === "gregobase:648");
+    const s = tonus.notatio(exaltabo);
+    assert.ok(s.modulations.some((m) => m.kind === "transposition"),
+      "the affinal-frame subject still reads as transposition");
+    const svg = inscriptio(s, { notation: "moderna", width: 900, tracks: ["tonarium"] }).svg;
+    assert.ok(svg.includes('stroke-dasharray="4 2.6"'), "the dashed rubrica segment");
+  });
+});
+
+describe("inscriptio — duae species parity (ruled 2026-07-29)", () => {
+  const score = tonus.notatio(puer());
+
+  test("one staff→lyric gap and one lyric weight across both species", () => {
+    // The gap from the bottom staff line to the lyric baseline is the same
+    // 21px (default scale) in quadrata and moderna.
+    const gapOf = (svg, lines) => {
+      const lineYs = [...svg.matchAll(/<line x1[^>]*y1="([\d.]+)"/g)]
+        .slice(0, lines).map((m) => Number(m[1]));
+      const lyricY = Number(svg.match(/class="lyric"[^>]*y="([\d.]+)"/)[1]);
+      return lyricY - Math.max(...lineYs);
+    };
+    const quad = inscriptio(score).svg;
+    const mod = inscriptio(score, { notation: "moderna" }).svg;
+    const qGap = gapOf(quad, 4);   // 4-line staff
+    const mGap = gapOf(mod, 5);    // 5-line staff
+    assert.ok(Math.abs(qGap - mGap) < 0.1, `gaps match (${qGap} vs ${mGap})`);
+    // Both species set the same default lyric weight.
+    assert.ok(/class="lyric"[^>]*font-weight="518"/.test(quad), "quadrata weight 518");
+    assert.ok(/class="lyric"[^>]*font-weight="518"/.test(mod), "moderna weight 518");
+  });
+
+  test("both species honour the official front matter (title + auto mark, no dropcap)", () => {
+    const opts = { title: "Puer natus est", annotation: "auto" };
+    const quad = inscriptio(score, opts).svg;
+    const mod = inscriptio(score, { ...opts, notation: "moderna" }).svg;
+    for (const svg of [quad, mod]) {
+      assert.ok(svg.includes('class="title"'), "the centered title");
+      assert.ok(/class="rubric"[^>]*>Intr\.</.test(svg), "the genus mark");
+      assert.ok(/class="rubric"[^>]*>7\.</.test(svg), "the mode mark");
+      assert.ok(!svg.includes('class="dropcap"'), "no dropcap in tonus scores");
+    }
+  });
+});
+
+describe("inscriptio — track pairing guards", () => {
+  const score = buildScore({
+    id: "test:1", incipit: "Test", gabc: "(c4) Ky(g)ri(h)e(g.) (::)", office: "or",
+    genus: "Ordinarium", mode: "1", modus: "Modus I", pages: [],
+    source: { book: "Test", year: null, editor: null },
+  });
+
+  test("chironomia on moderna, tonarium on quadrata, and unknown names throw", () => {
+    assert.throws(() => inscriptio(score, { tracks: ["tonarium"] }), /moderna/);
+    assert.throws(() => inscriptio(score, { notation: "moderna", tracks: ["chironomia"] }), /quadrata/);
+    assert.throws(() => inscriptio(score, { tracks: ["bogus"] }), /unknown track/);
+  });
+});

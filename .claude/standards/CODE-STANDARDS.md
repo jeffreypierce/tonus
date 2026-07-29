@@ -11,8 +11,9 @@
   moment with received theory (the analysis boundary); corpus-scale census and
   editorial calibration live in the sibling `tonus-enodatio` and re-enter only as
   generated data with provenance. And `score` analyzes while `inscriptio` draws
-  (the rendering boundary): rendering is a standalone function taking a `Score`,
-  and analysis tracks live downstream.
+  (the rendering boundary): rendering is a standalone function taking a `Score`;
+  the two canonical analysis tracks ship with it (`tracks`), and custom tracks
+  live downstream on the geometry contract.
 - **The query/builder contract.** A no-match is `[]`; a malformed query throws.
   Builders throw on invalid input and carry an `errors` field for parse-level
   issues.
@@ -121,11 +122,15 @@ theory and may be hand-authored here, with its `[biblio:]` citation.
 **The rendering boundary — `score` analyzes, `inscriptio` draws.** Rendering is
 not a property of an analysis result; it is a standalone function that _takes_ a
 `Score`. tonus inks **the score itself** — both notation species, layout, lyrics,
-declarative highlighting — and nothing else. Analysis _tracks_ (chironomy waves,
-tonarium lanes, anything drawn above or below the staff systems) are downstream
-components in the publication, built on the geometry contract `inscriptio`
-returns. One emitter format: SVG. The crisp rule: `inscriptio` inks the score;
-anything outside the staff systems is a track, and tracks live downstream.
+declarative highlighting — plus the two **canonical analysis tracks**, opt-in
+through `inscriptio`'s `tracks` option (ruled 2026-07-28; previously downstream):
+_chironomia_ under quadrata, _tonarium_ under moderna, species-paired by the
+two-register principle. The tracks are still track-shaped inside the library:
+they consume the same note anchors the geometry contract exports (never the
+notation's ink), and they cite corpus vocabulary (CADENTIAE) only as generated
+data with provenance. One emitter format: SVG. The crisp rule: `inscriptio` inks
+the score and its two tracks; any _other_ track is a downstream component on the
+geometry contract.
 
 ---
 

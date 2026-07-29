@@ -25,8 +25,10 @@ import {
   computeAccidentals, type AccidentalMode, type AccidentalMark,
 } from "./accidentals.js";
 import type { NoteGeometry, SvgResult, SvgOpts } from "./svg.js";
+import { autoRubricLines } from "./svg.js";
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Chant } from "../../chant/types.js";
+import { buildTonarium, TONARIUM_EXTRA, type TrackNote } from "./tracks.js";
 
 // ── Bravura moderna glyph codepoints (baked in smufl-glyphs.json) ──
 const G = {
@@ -180,7 +182,10 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const padding = options.padding ?? 14;
   const width = options.width ?? null;
   const systemGap = options.systemGap ?? SYSTEM_GAP_DEFAULT;
-  const systemHeight = LYRIC_Y + 24 + systemGap;
+  // A requested tonarium band widens every system by its reserved room.
+  const tonarium = options.tracks?.includes("tonarium") ?? false;
+  const trackExtra = tonarium ? TONARIUM_EXTRA : 0;
+  const systemHeight = LYRIC_Y + 24 + trackExtra + systemGap;
 
   // Intonation channel: precompute each row's accidental/cents mark once (the
   // repeat-suppression and heji guard live in the engine), keyed by identity.
@@ -188,6 +193,35 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const marks = computeAccidentals(rows, accMode, options.centsBaseline ?? "pythagorean");
   const markByRow = new Map<Row, AccidentalMark>();
   rows.forEach((row, i) => { const m = marks[i]; if (m) markByRow.set(row, m); });
+
+  // ── Front matter ── The same official display quadrata sets (title centered
+  // over the score, the genus/mode mark stacked at the left margin — the
+  // `annotation: "auto"` params), honoured here so both species open a piece
+  // the same way. No dropcap: tonus scores skip the illuminated capital (it
+  // conflicts with the analysis-track layouts).
+  const titleFace = options.fonts?.title;
+  const annFace = options.fonts?.annotation;
+  const faceOf = (slot: typeof titleFace): string =>
+    !slot ? lyricFace : typeof slot === "string" ? slot : slot.family;
+  const weightOf = (slot: typeof titleFace): number | null =>
+    typeof slot === "object" && slot.weight != null ? slot.weight : null;
+  const rubricLines: string[] = typeof options.rubric === "string"
+    ? [options.rubric]
+    : options.annotation === "auto" ? autoRubricLines(chant) : [];
+  const markSize = 14.5;
+  const markLineH = markSize * 0.98;
+  const titleSize = 22;
+  let headerY = 0;
+  let titleBaseline = 0;
+  let rubricTop = 0;
+  if (options.title) {
+    titleBaseline = titleSize;
+    headerY += titleSize * 1.4;
+  }
+  if (rubricLines.length > 0) {
+    rubricTop = headerY + markSize * 1.1;
+    headerY = rubricTop + markLineH * (rubricLines.length - 1) + markSize * 0.5;
+  }
 
   const body: string[] = [];
   const slurs: string[] = [];
@@ -200,8 +234,9 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
   let system = 0;
   // Cents mode floats labels ABOVE the top staff line; pad the first system
-  // down so the staggered upper row doesn't clip the viewBox.
-  const topPad = accMode === "cents" ? 12 : 0;
+  // down so the staggered upper row doesn't clip the viewBox. The front-matter
+  // band pushes every system down by its height.
+  const topPad = (accMode === "cents" ? 12 : 0) + headerY;
   let systemY = topPad;
   // Every system reserves the same clef zone — the clef glyph at x=10 runs
   // ~30px wide, and continuation systems once reset to padding+4, printing
@@ -333,7 +368,22 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
   systemMaxX.push(x + padding);
   const W = Math.ceil(Math.max(...systemMaxX));
-  const height = Math.ceil(systemY + LYRIC_Y + 24);
+  const height = Math.ceil(systemY + LYRIC_Y + 24 + trackExtra);
+
+  // ── The tonarium track: rails, sparkline, mode line, cadence row ──
+  // Downstream of the notation: it consumes the placements (the same anchors
+  // the geometry contract exports), never the transcription's own ink.
+  if (tonarium) {
+    const trackNotes: TrackNote[] = placements.map((pl) => ({
+      row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
+    }));
+    body.push(buildTonarium(trackNotes, options.trackData ?? { cadences: [], modulations: [] }, {
+      laneTop: LYRIC_Y + 26,
+      rightFor: (s) => (systemMaxX[s] ?? W) - padding,
+      serifFamily: lyricFace,
+      rubricaColor: options.rubricaColor ?? "#9E2B25",
+    }));
+  }
 
   // Staff lines: five per system.
   const staff: string[] = [];
@@ -374,10 +424,31 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     }
   }
 
+  // Front-matter text, deferred so the title centers on the final width.
+  const header: string[] = [];
+  if (options.title) {
+    header.push(
+      `<text class="title" x="${(W / 2).toFixed(2)}" y="${titleBaseline.toFixed(2)}" ` +
+      `text-anchor="middle" font-family="${esc(faceOf(titleFace))}"` +
+      `${weightOf(titleFace) != null ? ` font-weight="${weightOf(titleFace)}"` : ""} ` +
+      `font-size="${titleSize}" fill="#111">${esc(options.title)}</text>`,
+    );
+  }
+  rubricLines.forEach((line, i) => {
+    header.push(
+      `<text class="rubric" x="${padding.toFixed(2)}" y="${(rubricTop + i * markLineH).toFixed(2)}" ` +
+      `font-family="${esc(faceOf(annFace))}"` +
+      `${weightOf(annFace) != null ? ` font-weight="${weightOf(annFace)}"` : ""} ` +
+      `font-size="${markSize}" style="font-feature-settings:'onum'" ` +
+      `fill="${rubricaColor}">${esc(line)}</text>`,
+    );
+  });
+
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${height}" ` +
     `width="${W}" height="${height}" class="tonus-chant moderna">${svgTitle}` +
     lyricEmbed +
+    header.join("") +
     staff.join("") + clefSvgs.join("") + body.join("") + slurs.join("") + lyricSvgs.join("") +
     `</svg>`;
 

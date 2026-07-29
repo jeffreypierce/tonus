@@ -32,6 +32,10 @@ import {
   DIVISIO_GLYPH,
   ligaturaDesc,
 } from "../../../data/gabc-glyphs.js";
+import {
+  buildChironomia, chironomiaExtra,
+  type TrackData, type TrackName, type TrackNote,
+} from "./tracks.js";
 
 /** A font face to embed into the SVG itself: the CALLER's bytes, base64.
  * tonus ships no font files — it is a conduit for data the consumer supplies,
@@ -147,6 +151,10 @@ export interface SvgOpts {
   accidentals?: AccidentalMode;
   /** Baseline for the cents channel; the chant's home intonation by default. */
   centsBaseline?: CentsBaseline;
+  /** Analysis tracks to draw beneath each system (quadrata: "chironomia"). */
+  tracks?: readonly TrackName[];
+  /** Score-level analysis the tracks consume — supplied by inscriptio. */
+  trackData?: TrackData;
 }
 
 interface Resolved {
@@ -222,6 +230,25 @@ function resolveOpts(o: SvgOpts): Resolved {
 const HOUSE_SERIF =
   "'Crimson Pro', 'Crimson Text', 'EB Garamond', Garamond, Georgia, serif";
 
+// The books abbreviate the genus in the margin mark (Intr., Grad., Offert.);
+// a genus not in the table prints as-is with its period.
+const GENUS_ABBREV: Record<string, string> = {
+  Introitus: "Intr.", Graduale: "Grad.", Offertorium: "Offert.",
+  Communio: "Comm.", Tractus: "Tract.", Alleluia: "All.",
+  Antiphona: "Ant.", Responsorium: "Resp.", "Responsorium Breve": "Resp. br.",
+  Hymnus: "Hymn.", Sequentia: "Seq.", Canticum: "Cant.", Psalmus: "Ps.",
+};
+
+/** The `annotation: "auto"` mark, derived from chant meta and stacked as the
+ * books set it ("Intr." over "8.") — shared by both species. */
+export function autoRubricLines(chant: Chant): string[] {
+  const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+  return [
+    chant.genus && capitalize(GENUS_ABBREV[chant.genus] ?? `${chant.genus}.`),
+    chant.mode && `${chant.mode}.`,
+  ].filter(Boolean) as string[];
+}
+
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
@@ -266,18 +293,22 @@ interface Layout {
   systemHeight: number;
 }
 
-function makeLayout(r: Resolved): Layout {
+function makeLayout(r: Resolved, trackExtra = 0): Layout {
   const topY = r.staffInterval * 5; // room for high notes + episema above
-  const lyricY = topY + r.staffInterval * 8.5 + r.lyricSize * 0.8;
+  // Lyric baseline sits 21px below the bottom line at the default staffHeight —
+  // MATCHED to moderna's staff→lyric gap (ruled 2026-07-29: one gap across the
+  // duae species), scaling with the staff. Close to the staff, as the books
+  // set it; notes hanging below the staff share this room, as they do in the
+  // books and in moderna.
+  const lyricY = topY + r.staffInterval * 9.15;
   return {
     topY,
     bottomY: topY + r.staffInterval * 6,
     baselineY: topY + r.staffInterval * 7,
-    // Lyric baseline sits ~1.25 staff spaces below the bottom line — close to
-    // the staff, but clear of notes hanging below it and their descenders.
     lyricY,
     systemY: 0,
-    systemHeight: Math.ceil(lyricY + r.lyricSize * 0.6) + r.systemGap,
+    // A requested track band widens every system by its reserved room.
+    systemHeight: Math.ceil(lyricY + r.lyricSize * 0.6) + trackExtra + r.systemGap,
   };
 }
 
@@ -366,7 +397,12 @@ export function toSvg(
   rows: ChantTabulaRow[], chant: Chant, options: SvgOpts = {},
 ): SvgResult {
   const r = resolveOpts(options);
-  const L = makeLayout(r);
+  // Track scale: chiron-14's constants are px at the default staffHeight 40
+  // (staffInterval 40/6); other staff sizes scale the whole band with them.
+  const trackScale = r.staffInterval / (40 / 6);
+  const chironomia = options.tracks?.includes("chironomia") ?? false;
+  const trackExtra = chironomia ? chironomiaExtra(trackScale) : 0;
+  const L = makeLayout(r, trackExtra);
 
   // ── Front matter ── Title, rubric annotation, and dropcap sit in a header
   // band above the first system, set as the Solesmes books open a piece: the
@@ -375,21 +411,7 @@ export function toSvg(
   // upright). Everything below offsets down by the band's height. The text
   // is emitted at final assembly, when the score's width is known (the title
   // centers on it); here we only reserve the band.
-  // The books abbreviate the genus in the margin mark (Intr., Grad., Offert.);
-  // a genus not in the table prints as-is with its period.
-  const GENUS_ABBREV: Record<string, string> = {
-    Introitus: "Intr.", Graduale: "Grad.", Offertorium: "Offert.",
-    Communio: "Comm.", Tractus: "Tract.", Alleluia: "All.",
-    Antiphona: "Ant.", Responsorium: "Resp.", "Responsorium Breve": "Resp. br.",
-    Hymnus: "Hymn.", Sequentia: "Seq.", Canticum: "Cant.", Psalmus: "Ps.",
-  };
-  const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
-  const autoLines = options.annotation === "auto"
-    ? ([
-        chant.genus && capitalize(GENUS_ABBREV[chant.genus] ?? `${chant.genus}.`),
-        chant.mode && `${chant.mode}.`,
-      ].filter(Boolean) as string[])
-    : [];
+  const autoLines = options.annotation === "auto" ? autoRubricLines(chant) : [];
   // The mark STACKS as the books set it — "Offert." over "2." — one line per
   // element; an explicit `rubric` string stays a single line.
   const rubricLines: string[] = r.rubric ? [r.rubric] : autoLines;
@@ -833,10 +855,25 @@ export function toSvg(
     }
   }
 
+  // ── The chironomy track: wave + letters + typus lane below each system ──
+  // Downstream of the notation: it consumes the placements (the same anchors
+  // the geometry contract exports), never the score's own ink.
+  if (chironomia) {
+    const trackNotes: TrackNote[] = placements.map((pl) => ({
+      row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
+    }));
+    body.push(buildChironomia(trackNotes, {
+      k: trackScale,
+      // Clear of the lyric line's descenders: the crest's letters top out
+      // ~26px above the midline, and the lyric baseline sits at lyricY.
+      waveMidY: L.lyricY + 33 * trackScale,
+    }));
+  }
+
   // Close the final system; width is the widest system, height reaches the last.
   systemMaxX.push(x + r.padding);
   const width = Math.ceil(Math.max(...systemMaxX));
-  const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6);
+  const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + trackExtra);
 
   // Staff lines (positions 1, 3, 5, 7), once per system. A system's rightmost
   // ink bounds its staff so a short final line doesn't stretch to the page edge.
@@ -871,9 +908,12 @@ export function toSvg(
 
   const lyricSvgs: string[] = [];
   const lyricFontSize = r.lyricSize * r.fonts.lyric.scale;
+  // Lyric weight defaults to moderna's 518 (one weight across the duae
+  // species, ruled 2026-07-29); an explicit fonts.lyric.weight overrides.
+  const lyricWeightAttr = r.fonts.lyric.weight != null ? "" : ' font-weight="518"';
   const lyricText = (cx: number, systemY: number, text: string, runs?: LyricRun[]): string =>
     `<text class="lyric" x="${cx.toFixed(2)}" y="${(systemY + L.lyricY).toFixed(2)}" ` +
-    `text-anchor="middle" ${fontAttrs(r.fonts.lyric)} ` +
+    `text-anchor="middle" ${fontAttrs(r.fonts.lyric)}${lyricWeightAttr} ` +
     `font-size="${lyricFontSize.toFixed(1)}" fill="${r.noteColor}">${lyricMarkup(runs, text, r.rubricaColor)}</text>`;
   for (let k = 0; k < lyrics.length; k++) {
     const ly = lyrics[k]!;
