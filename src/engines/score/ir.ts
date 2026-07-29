@@ -24,10 +24,10 @@
 // arsic (an incise never begins with thesis — Carroll p. 43); when the rules
 // tie, the shape alternates from the previous group.
 //
-// Modeled: the compound-beat classification and the per-note rhythmic index.
+// Modeled: the compound-beat classification, the per-note rhythmic index, and
+// the observable Le Guennant rhythmic types (IV–VIII; classifyRhythmicType).
 // Not yet: Carroll's textual rules (word-accent → arsic, word-final → thetic —
-// they need a Latin accent model), and Le Guennant's seven rhythmic types (a
-// corpus-level metric — spec in working/plan-rhythmic-types.md).
+// they need a Latin accent model).
 import type { ArsisThesis, CompoundBeat, RhythmicType, Score, ParsedNote, Note, ParseResult, Phrase, Syllable } from "./types.js";
 import type { Scale } from "../temper/scale.js";
 import { toPitch } from "../temper/pitch.js";

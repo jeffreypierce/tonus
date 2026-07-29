@@ -488,6 +488,10 @@ export function parseGABC(
 
   split.forEach((word) => {
     if (!word) return;
+    // A flat holds for the rest of the WORD or until a divisio — a new word
+    // clears any accidental the previous word set (the clef's own signature
+    // persists). This is the scope the header states, now enforced.
+    accidentalState = initialAccidentalState(currentClef);
 
     SYLLABLES_REGEX.lastIndex = 0;
     let match: RegExpExecArray | null;

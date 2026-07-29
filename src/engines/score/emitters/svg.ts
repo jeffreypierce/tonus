@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// engines/score/emitters/svg — square-note chant score as SVG (single line)
+// engines/score/emitters/svg — square-note chant score as SVG
 // ---------------------------------------------------------------------------
 // Renders the score's tabula as a 4-line Gregorian staff with SMuFL glyphs
 // (outlines baked from Bravura in smufl-glyphs.json). Fully self-contained: all
@@ -348,12 +348,12 @@ export interface NoteGeometry {
   syllableIndex: number;
   neumeGroup: number;
   noteIndex: number;
-  /** Which system (staff line) the note landed in — 0 for the single-system MVP. */
+  /** Which system (staff line) the note landed in — 0 when nothing wraps. */
   system: number;
   /** Notehead anchor in svg user units. */
   x: number;
   y: number;
-  /** The system's top offset within the svg — 0 until multi-system layout (Phase 3c). */
+  /** The system's top offset within the svg — 0 in the first system. */
   systemY: number;
 }
 

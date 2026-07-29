@@ -3,8 +3,8 @@
 // ---------------------------------------------------------------------------
 // The pondus ("weight") tables. Each GABC performance mark — episema, quilisma,
 // liquescent, strophicus, oriscus, ictus — carries a weight delta and a
-// duration delta that the parser folds into a note's rhythmicShape (see the
-// tanh compressor in parse.ts). The signs encode the semiological reading of
+// duration delta that the parser folds into a note's weight and duration (see
+// the tanh compressor in parse.ts). The signs encode the semiological reading of
 // the mark [biblio: cardine-semiology], and the durational values the Solesmes
 // rhythmic tradition [biblio: desrocquettes-values, liber-usualis]: POSITIVE
 // lengthens/stresses, NEGATIVE lightens/shortens. So an episema lengthens

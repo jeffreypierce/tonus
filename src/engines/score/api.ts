@@ -135,6 +135,10 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
 
   const tabula = computeTabula(ir, {
     mode: meta.mode ?? undefined,
+    // The office gate: a chant that names its liturgical type gets phrasing
+    // even when its mode must be inferred — the gate computeTabula always had,
+    // now actually fed.
+    office: chant.office,
     a4Hz: opts?.temperamentum?.a4,
     transpose: opts?.temperamentum?.transpose,
     cadences,
@@ -173,7 +177,7 @@ export type { ParseError };
 export type { Cadence, CadenceTarget, CadenceApproach, CadenceKeyEvent } from "./cadence.js";
 // THE cadence family key, exported as a FUNCTION and not only a type: the
 // census and the CADENTIAE miner need to key a flat tabula, and re-deriving
-// the algorithm is exactly the fork this consolidation ended.
+// the algorithm is exactly the fork this shared export forbids.
 export { cadenceKeys } from "./cadence.js";
 export type { Modulation } from "./modulation.js";
 export type { FormulaMatch } from "./formula.js";

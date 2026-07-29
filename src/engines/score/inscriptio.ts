@@ -11,10 +11,10 @@
 // tabula order — is the TRACK CONTRACT: downstream consumers place marks against
 // notes by index and coordinate, never by scraping the SVG.
 //
-// This is the standalone shell over the square-note emitter (emitters/svg.ts).
-// The multi-system layout engine, front matter, and the accidental channels are
-// wired in through InscriptioOpts as they land (Phases 3c–5); the options are
-// defined in full here so those phases fill them without a signature change.
+// This is the standalone shell over the species emitters: the square-note
+// renderer (emitters/svg.ts) and the modern transcription (emitters/moderna.ts).
+// The multi-system layout engine, front matter, and the accidental channels
+// are all wired in through InscriptioOpts.
 import {
   toSvg, type NoteGeometry, type SvgResult,
   type FontSpec, type FontSlot, type FontEmbed,
@@ -24,14 +24,14 @@ import type { Score } from "./api.js";
 
 export interface InscriptioOpts {
   // ── species ──
-  /** Notation species. Square-note by default; "moderna" is the modern transcription (Phase 4). */
+  /** Notation species. Square-note by default; "moderna" is the modern transcription. */
   notation?: "quadrata" | "moderna";
-  /** Accidental channel (Phase 5). "standard" performance accidentals by default. */
+  /** Accidental channel. "standard" performance accidentals by default. */
   accidentals?: "standard" | "heji" | "cents";
   /** Baseline for the cents channel; the chant's home intonation by default. */
   centsBaseline?: "pythagorean" | "et";
 
-  // ── layout (the multi-system engine; Phase 3c) ──
+  // ── layout (the multi-system engine) ──
   /** Wrap systems to this px width. Absent = a single system (current behaviour). */
   width?: number;
   /** Vertical gap between systems, px. */
@@ -48,7 +48,7 @@ export interface InscriptioOpts {
   /** Accent red for dropcap / annotations. */
   rubricaColor?: string;
 
-  // ── front matter (Phase 3c; all off by default) ──
+  // ── front matter (all off by default) ──
   title?: string;
   rubric?: string;
   /** Derive the rubric block from chant meta (feast / genus / modus / source). */
@@ -80,8 +80,8 @@ export interface Inscriptio {
   geometry: NoteGeometry[];
 }
 
-// Options the underlying square-note emitter understands today. The front-matter
-// and accidental options are accepted but inert until their phase.
+// Options handed through to the species emitters — everything but the species
+// selector itself.
 const EMITTER_KEYS = [
   "staffHeight", "noteScale", "padding", "noteColor", "staffLineColor",
   "width", "systemGap", "custos",
@@ -113,9 +113,9 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
     );
   }
 
-  // Pass through only the options the emitter currently consumes; the rest are
-  // reserved for later phases and ignored, not errored, so callers can adopt the
-  // full interface now.
+  // Pass through the options the emitters consume; the species selector stays
+  // here. A species ignores, not errors on, options that do not apply to it
+  // (moderna, e.g., carries no front matter).
   const emitterOpts: Record<string, unknown> = {};
   for (const k of EMITTER_KEYS) if (opts[k] !== undefined) emitterOpts[k] = opts[k];
 

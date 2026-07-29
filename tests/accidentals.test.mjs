@@ -18,7 +18,7 @@ const justTabula = () =>
 const meantoneTabula = () =>
   tonus.notatio(chant(), { temperamentum: tonus.temperamentum({ tuning: "meantone" }) }).tabula;
 
-// The four calibration cases ARE the acceptance (SPEC-0.2 Phase 5.2).
+// The four calibration cases ARE the acceptance.
 describe("accidentals — HEJI calibration", () => {
   test("(a) Pythagorean + heji ⇒ zero comma arrows (the baseline is HEJI's zero)", () => {
     const marks = computeAccidentals(pythTabula(), "heji").filter(Boolean);
