@@ -20,6 +20,9 @@
 
 import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_SANS, HOUSE_MONO, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
+import {
+  pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighbourMidpoints,
+} from "./polar.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -72,7 +75,6 @@ const MONTHS = ["IANUARIUS", "FEBRUARIUS", "MARTIUS", "APRILIS", "MAIUS", "IUNIU
 const MONTH_ABBR = ["Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
   "Iul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-const deg2xy = (a, r) => [r * Math.sin((a * Math.PI) / 180), -r * Math.cos((a * Math.PI) / 180)];
 const doyAngle = (d) => (d / 365) * 360;
 
 const isLeap = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
@@ -112,16 +114,6 @@ function el(tag, attrs, text) {
   return e;
 }
 
-/** An arc from a0 to a1 (degrees clockwise from 12 o'clock) at radius r.
- * `sweep = 0` runs it backwards along the same path — which is how a name on
- * the ring's lower half is set the right way up: same arc, opposite direction,
- * so the text rides above the line instead of hanging under it. */
-const arc = (a0, a1, r, sweep = 1) => {
-  const [xs, ys] = deg2xy(sweep ? a0 : a1, r);
-  const [xe, ye] = deg2xy(sweep ? a1 : a0, r);
-  const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
-  return `M ${sc(xs)} ${sc(ys)} A ${r} ${r} 0 ${large} ${sweep} ${sc(xe)} ${sc(ye)}`;
-};
 
 /** The anchors for a year, computed and sorted round the ring. */
 function anchorsFor(tonus, year) {
@@ -170,7 +162,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     // A hair of air between neighbours, so the band reads as segments.
     const gap = 0.6;
     root.appendChild(el("path", {
-      d: arc(a0 + gap, a1 - gap, R_SEASON),
+      d: arcPath(a0 + gap, a1 - gap, R_SEASON),
       fill: "none",
       stroke: INK,
       "stroke-opacity": s.pen ? STRATUM.spark : (s.light ? STRATUM.rail : STRATUM.bracket),
@@ -178,11 +170,11 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     }));
 
     const mid = ((a0 + a1) / 2) % 360;
-    const flip = mid > 100 && mid < 260;
+    const flip = isLowerHalf(mid);
     const id = `annulus-${year}-arc-${s.name}`;
     defs.appendChild(el("path", {
       id,
-      d: arc(a0, a1, R_SEASON_NAME, flip ? 0 : 1),
+      d: arcPath(a0, a1, R_SEASON_NAME, flip ? 0 : 1),
     }));
     const t = el("text", {
       "font-family": HOUSE_SANS, "font-size": STEP.micro,
@@ -206,7 +198,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
   root.appendChild(ticks);
   for (let d = 0; d < 365; d += 7) {
     const a = doyAngle(d);
-    const [x1, y1] = deg2xy(a, R_COMPASS), [x2, y2] = deg2xy(a, R_WEEK);
+    const [x1, y1] = pointAt(a, R_COMPASS), [x2, y2] = pointAt(a, R_WEEK);
     ticks.appendChild(el("line", {
       x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
       stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": 0.4,
@@ -214,12 +206,12 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
   }
   for (let i = 0; i < 12; i++) {
     const a = doyAngle(bounds[i]);
-    const [x1, y1] = deg2xy(a, R_COMPASS), [x2, y2] = deg2xy(a, R_MONTH_TICK);
+    const [x1, y1] = pointAt(a, R_COMPASS), [x2, y2] = pointAt(a, R_MONTH_TICK);
     ticks.appendChild(el("line", {
       x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
       stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": 0.5,
     }));
-    const [bx1, by1] = deg2xy(a, R_BAND_IN), [bx2, by2] = deg2xy(a, R_BAND_OUT);
+    const [bx1, by1] = pointAt(a, R_BAND_IN), [bx2, by2] = pointAt(a, R_BAND_OUT);
     ticks.appendChild(el("line", {
       x1: sc(bx1), y1: sc(by1), x2: sc(bx2), y2: sc(by2),
       stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.fine,
@@ -231,8 +223,8 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
   root.appendChild(names);
   for (let i = 0; i < 12; i++) {
     const mid = doyAngle((bounds[i] + bounds[i + 1]) / 2);
-    const [x, y] = deg2xy(mid, R_MONTH_NAME);
-    const rot = mid > 90 && mid < 270 ? mid - 180 : mid;
+    const [x, y] = pointAt(mid, R_MONTH_NAME);
+    const rot = uprightRotation(mid);
     names.appendChild(el("text", {
       transform: `translate(${sc(x)} ${sc(y)}) rotate(${sc(rot)})`,
       "text-anchor": "middle", "dominant-baseline": "central",
@@ -264,7 +256,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     const d1 = i === n - 1 ? (a.doy + next.doy + 365) / 2 : (a.doy + next.doy) / 2;
     const isSel = a.key === selected;
     const ang = doyAngle(a.doy);
-    const [x, y] = deg2xy(ang, R_ANCHOR);
+    const [x, y] = pointAt(ang, R_ANCHOR);
 
     // Selection is a rubricated roundel — the one place colour is spent here.
     if (isSel) {
@@ -281,13 +273,9 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
 
     // A wedge of the ring is the hit area, so small dots stay clickable.
     const a0 = doyAngle(d0), a1 = doyAngle(d1);
-    const large = a1 - a0 > 180 ? 1 : 0;
-    const [xo0, yo0] = deg2xy(a0, R_COMPASS), [xo1, yo1] = deg2xy(a1, R_COMPASS);
-    const [xi1, yi1] = deg2xy(a1, R_SEASON), [xi0, yi0] = deg2xy(a0, R_SEASON);
     const hit = el("path", {
       class: "annulus-hit",
-      d: `M ${sc(xo0)} ${sc(yo0)} A ${R_COMPASS} ${R_COMPASS} 0 ${large} 1 ${sc(xo1)} ${sc(yo1)} ` +
-         `L ${sc(xi1)} ${sc(yi1)} A ${R_SEASON} ${R_SEASON} 0 ${large} 0 ${sc(xi0)} ${sc(yi0)} Z`,
+      d: wedgePath(a0, a1, R_SEASON, R_COMPASS),
       fill: INK, "fill-opacity": 0,
       cursor: onSelect ? "pointer" : null,
       tabindex: onSelect ? "0" : null,
@@ -305,7 +293,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
 
   // ── the standing day, on the same orbit ──
   if (day) {
-    const [dx, dy] = deg2xy(doyAngle(dayOfYear(day, year)), R_ANCHOR);
+    const [dx, dy] = pointAt(doyAngle(dayOfYear(day, year)), R_ANCHOR);
     marks.appendChild(el("circle", { cx: sc(dx), cy: sc(dy), r: 3.4, fill: RUBRICA }));
   }
 
