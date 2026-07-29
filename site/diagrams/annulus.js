@@ -8,11 +8,17 @@
 // timeline shows, and Easter's wandering drags a third of the year with it.
 //
 // COMPUTED, NOT TRANSCRIBED. The lab round this descends from carried fifteen
-// hand-copied anchors and seven hand-measured season boundaries, all frozen to
-// 991. tonus.pascha(year) returns exactly those fifteen — every day-of-year
-// matching the transcription — so the diagram takes a year and asks, and the
-// seasons fall out of the anchors that bound them. That is the site's thesis
-// in one panel: it cannot drift from the library, because it IS the library.
+// hand-copied anchors with their Latin names and seven hand-measured season
+// boundaries, all frozen to 991. The library answers every one of them:
+// pascha(year) dates the movable feasts, festum({ date }) names each one and
+// reports the season it falls in, and each season states its own seasonStart
+// and seasonEnd. So the diagram asks and draws.
+//
+// What is left here is only what a DRAWING has to decide: five radii, a band
+// weight, which feasts get a larger dot, and which seasons read darker. Those
+// are rendering choices. Every fact about the calendar comes from tonus, which
+// is the point — the panel cannot drift from the library, because it has no
+// copy of the library to drift from.
 //
 // The ring carries shape; the names live in the tabula beside it. Fifteen
 // radial labels cannot work here — Good Friday and Easter are two degrees
@@ -38,42 +44,23 @@ const R_BAND_OUT = 271;
 const R_MONTH_NAME = 255.5;
 const SEASON_WEIGHT = 8;     // the season ring is a BAND, not a hairline
 
-/** Anchors in ring order. Keys are pascha()'s own; the Latin is the register. */
-const ANCHOR_NAMES = [
-  ["epiphany", "Epiphania", "Epiphany", 3.6],
-  ["baptism", "Baptismus Domini", "Baptism of the Lord", 2.4],
-  ["septuagesima", "Septuagesima", "Septuagesima", 2.4],
-  ["ashWednesday", "Feria IV Cinerum", "Ash Wednesday", 2.4],
-  ["firstLentSunday", "Dominica I Quadragesimæ", "First Sunday of Lent", 2.4],
-  ["palmSunday", "Dominica in Palmis", "Palm Sunday", 2.4],
-  ["goodFriday", "Feria VI in Parasceve", "Good Friday", 2.4],
-  ["easter", "Pascha", "Easter", 5.0],
-  ["ascension", "Ascensio Domini", "Ascension", 2.4],
-  ["pentecost", "Pentecoste", "Pentecost", 3.6],
-  ["trinitySunday", "Trinitas", "Trinity Sunday", 2.4],
-  ["corpusChristi", "Corpus Christi", "Corpus Christi", 2.4],
-  ["adventFirstSunday", "Dominica I Adventus", "First Sunday of Advent", 2.4],
-  ["gaudete", "Gaudete", "Gaudete", 2.4],
-  ["christmas", "Nativitas Domini", "Christmas", 3.6],
-];
+/** The anchors, in the order pascha() reports them. Only the dot size is the
+ * diagram's own business: how much a feast weighs in the drawing is a
+ * rendering decision, not a fact about the calendar. Everything else — the
+ * date, the Latin name, the season it falls in — is asked of the library. */
+const ANCHOR_WEIGHT = {
+  easter: 5.0,
+  christmas: 3.6, epiphany: 3.6, pentecost: 3.6,
+};
 
-/** Each season runs anchor to anchor, so the boundaries are computed too.
- * `pen` marks the penitential seasons: darker ink, the ink system doing the
- * work a second colour would otherwise be asked to do. */
-const SEASONS = [
-  { name: "NAT", from: "christmas", to: "epiphany", pen: false },
-  { name: "EPI", from: "epiphany", to: "septuagesima", pen: false },
-  { name: "LXX", from: "septuagesima", to: "ashWednesday", pen: true },
-  { name: "QUAD", from: "ashWednesday", to: "easter", pen: true },
-  { name: "PASC", from: "easter", to: "pentecost", pen: false, light: true },
-  { name: "PENT", from: "pentecost", to: "adventFirstSunday", pen: false },
-  { name: "ADV", from: "adventFirstSunday", to: "christmas", pen: true },
-];
+/** The seasons tonus does NOT ink lightly: penitential time reads darker, and
+ * paschal time lighter, which is the ink system doing what a second colour
+ * would otherwise be asked to do. Keyed by the library's own season codes. */
+const PENITENTIAL = new Set(["quadp", "quad", "adv"]);
+const PASCHAL = new Set(["pasc"]);
 
 const MONTHS = ["IANUARIUS", "FEBRUARIUS", "MARTIUS", "APRILIS", "MAIUS", "IUNIUS",
   "IULIUS", "AUGUSTUS", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
-const MONTH_ABBR = ["Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
-  "Iul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const doyAngle = (d) => (d / 365) * 360;
 
@@ -95,7 +82,8 @@ function dayOfYear(date, year) {
  * a date across midnight — west of Greenwich Easter reads as the day before. */
 function romanDate(date) {
   const d = new Date(date);
-  return `${MONTH_ABBR[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}`;
+  const m = MONTHS[d.getUTCMonth()];
+  return `${m[0]}${m.slice(1, 3).toLowerCase()} ${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
 /** The year in Roman numerals — the register the centre asks for. */
@@ -115,18 +103,50 @@ function el(tag, attrs, text) {
 }
 
 
-/** The anchors for a year, computed and sorted round the ring. */
+/** The anchors for a year: pascha() dates the movable feasts, and festum()
+ * names each one and says which season it falls in. Nothing is transcribed. */
 function anchorsFor(tonus, year) {
   const p = tonus.pascha(year);
-  return ANCHOR_NAMES
-    .filter(([key]) => p[key] != null)
-    .map(([key, nomen, gloss, dot]) => ({
-      key, nomen, gloss, dot,
-      date: p[key],
-      dies: romanDate(p[key]),
-      doy: dayOfYear(p[key], year),
-    }))
+  // Whatever anchors pascha() reports — not a list of them kept here. It dates
+  // fifteen today; a sixteenth would arrive on the ring without an edit.
+  return Object.keys(p)
+    .filter((key) => key !== "year" && p[key] instanceof Date)
+    .map((key) => {
+      const date = p[key];
+      const feast = tonus.festum({ date: new Date(date) })[0] ?? null;
+      return {
+        key,
+        nomen: feast?.nomen ?? key,
+        season: feast?.season ?? null,
+        tempus: feast?.tempus ?? null,
+        dot: ANCHOR_WEIGHT[key] ?? 2.4,
+        date,
+        dies: romanDate(date),
+        doy: dayOfYear(date, year),
+      };
+    })
     .sort((a, b) => a.doy - b.doy);
+}
+
+/** The year's seasons, each self-reported with its own bounds and Latin name.
+ * Walking the year and asking is what makes the ring answerable for any year —
+ * the boundaries are the library's, not a table of anchor pairs. */
+function seasonsFor(tonus, year) {
+  const seen = new Map();
+  const days = isLeap(year) ? 366 : 365;
+  for (let d = 0; d < days; d++) {
+    const feast = tonus.festum({ date: new Date(Date.UTC(year, 0, 1 + d)) })[0];
+    if (!feast?.season || seen.has(feast.season)) continue;
+    seen.set(feast.season, {
+      season: feast.season,
+      tempus: feast.tempus ?? null,
+      start: feast.seasonStart,
+      end: feast.seasonEnd,
+      penitential: PENITENTIAL.has(feast.season),
+      paschal: PASCHAL.has(feast.season),
+    });
+  }
+  return [...seen.values()];
 }
 
 /**
@@ -141,7 +161,7 @@ function anchorsFor(tonus, year) {
  */
 export function annulus(tonus, { year, day = null, selected = "easter", onSelect } = {}) {
   const anchors = anchorsFor(tonus, year);
-  const byKey = new Map(anchors.map((a) => [a.key, a]));
+  const seasons = seasonsFor(tonus, year);
   const bounds = monthBounds(year);
 
   const svg = el("svg", {
@@ -153,11 +173,12 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
   const root = el("g", { transform: "translate(300 300)" });
   svg.appendChild(root);
 
-  // ── the season band: a ring of arcs, each season anchor to anchor ──
-  for (const s of SEASONS) {
-    const from = byKey.get(s.from), to = byKey.get(s.to);
-    if (!from || !to) continue;
-    let a0 = doyAngle(from.doy), a1 = doyAngle(to.doy);
+  // ── the season band: each season on the bounds it reports for itself ──
+  for (const s of seasons) {
+    let a0 = doyAngle(dayOfYear(s.start, year));
+    let a1 = doyAngle(dayOfYear(s.end, year));
+    // A season may open before the civil year does (Nativitas starts in
+    // December and runs into January), so its arc crosses the wrap.
     if (a1 < a0) a1 += 360;
     // A hair of air between neighbours, so the band reads as segments.
     const gap = 0.6;
@@ -165,13 +186,14 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
       d: arcPath(a0 + gap, a1 - gap, R_SEASON),
       fill: "none",
       stroke: INK,
-      "stroke-opacity": s.pen ? STRATUM.spark : (s.light ? STRATUM.rail : STRATUM.bracket),
+      "stroke-opacity": s.penitential ? STRATUM.spark
+        : (s.paschal ? STRATUM.rail : STRATUM.bracket),
       "stroke-width": SEASON_WEIGHT,
     }));
 
     const mid = ((a0 + a1) / 2) % 360;
     const flip = isLowerHalf(mid);
-    const id = `annulus-${year}-arc-${s.name}`;
+    const id = `annulus-${year}-arc-${s.season}`;
     defs.appendChild(el("path", {
       id,
       d: arcPath(a0, a1, R_SEASON_NAME, flip ? 0 : 1),
@@ -180,8 +202,10 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
       "font-family": HOUSE_SANS, "font-size": STEP.micro,
       "letter-spacing": "0.14em", fill: INK, "fill-opacity": STRATUM.margin,
     });
+    // The library's own season code, set as the books abbreviate.
     t.appendChild(el("textPath",
-      { href: `#${id}`, startOffset: "50%", "text-anchor": "middle" }, s.name));
+      { href: `#${id}`, startOffset: "50%", "text-anchor": "middle" },
+      s.season.toUpperCase()));
     root.appendChild(t);
   }
 
@@ -307,7 +331,8 @@ export function annulusTabula(tonus, { year, day = null, selected = "easter", on
   const dayDoy = day ? dayOfYear(day, year) : null;
 
   const columns = [
-    { key: "nomen", head: "nomen", gloss: (r) => r.gloss },
+    // The name and the season are the library's own words.
+    { key: "nomen", head: "nomen", gloss: (r) => r.tempus ?? "" },
     { key: "dies", head: "dies", mono: true },
   ];
   if (dayDoy != null) {
