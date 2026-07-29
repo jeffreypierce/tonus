@@ -22,6 +22,25 @@ export function pointAt(deg, r) {
  * three o'clock, ours is twelve. */
 export const tangentRotation = (deg) => deg - 90;
 
+/** A point at ecliptic longitude `lon`, `r` from the centre.
+ *
+ * The zodiac does NOT share the calendar ring's convention. Longitude is
+ * measured from the vernal point ANTICLOCKWISE, and the vernal point sits at
+ * three o'clock — so 0° Aries is due right and Cancer is at the top, the
+ * opposite sense from a clock face. Reusing pointAt() here mirrors the sky:
+ * the signs run backwards and every planet lands on the wrong side of the
+ * wheel. */
+export function eclipticAt(lon, r) {
+  const rad = (lon * Math.PI) / 180;
+  return [r * Math.cos(rad), -r * Math.sin(rad)];
+}
+
+/** Upright text for a label at ecliptic longitude `lon`. */
+export function eclipticRotation(lon) {
+  const a = ((-lon % 360) + 360) % 360;
+  return a > 90 && a <= 270 ? a - 180 : a;
+}
+
 /** Upright text set radially would read upside down over the ring's left side;
  * this is the rotation that keeps it legible, flipping it through 180 where
  * needed. Nine o'clock (270°) flips — text there points left — while three

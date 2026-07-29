@@ -2,6 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import {
   pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighbourMidpoints,
+  eclipticAt, eclipticRotation,
 } from "../site/diagrams/polar.js";
 
 // The site's ring diagrams measure in degrees clockwise from twelve o'clock.
@@ -81,5 +82,29 @@ describe("site/polar — the ring geometry", () => {
     assert.match(d, /^M /, "starts with a move");
     assert.match(d, /Z$/, "and closes");
     assert.equal((d.match(/A /g) || []).length, 2, "an outer and an inner arc");
+  });
+
+  test("the ecliptic runs the OTHER way, from three o'clock", () => {
+    // The zodiac does not share the calendar ring's sense: longitude is
+    // measured from the vernal point anticlockwise, and the vernal point is due
+    // right. Reusing pointAt() mirrors the sky — every planet lands on the
+    // wrong side of the wheel.
+    const [x0, y0] = eclipticAt(0, 100);
+    assert.ok(near(x0, 100) && near(y0, 0), "0° Aries is due right");
+    const [x90, y90] = eclipticAt(90, 100);
+    assert.ok(near(x90, 0) && near(y90, -100), "90° Cancer is at the TOP");
+    const [x180, y180] = eclipticAt(180, 100);
+    assert.ok(near(x180, -100) && near(y180, 0), "180° Libra is due left");
+
+    // The Sun at 68.3° in the default epoch, on the solar sphere.
+    const [sx, sy] = eclipticAt(68.3, 135);
+    assert.ok(Math.abs(sx - 49.9) < 0.1, `Sol x ${sx.toFixed(1)} ≈ 49.9`);
+    assert.ok(Math.abs(sy + 125.4) < 0.1, `Sol y ${sy.toFixed(1)} ≈ -125.4`);
+  });
+
+  test("ecliptic labels stay upright across the wheel", () => {
+    assert.equal(eclipticRotation(0), 0, "due right reads flat");
+    assert.equal(eclipticRotation(180), 0, "due left flips to upright");
+    assert.equal(eclipticRotation(90), 270 - 180, "the top");
   });
 });

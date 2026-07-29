@@ -13,7 +13,11 @@ import { DEFAULT_EPOCH } from "../epoch.js";
 const MS_PER_DAY = 86400000;
 const ALL_BODIES: BodyName[] = ["Sun", "Moon", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn"];
 
-const SIGNS = [
+/** The twelve signs, in ecliptic order from the vernal point. Exported because
+ * a body's `sign` is one of these and a consumer drawing the zodiac needs the
+ * same twelve in the same order — copying them out is how a second, drifting
+ * list gets written. */
+export const SIGNS = [
   "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
   "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
 ] as const;

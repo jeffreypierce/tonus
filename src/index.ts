@@ -82,6 +82,7 @@ export {
   GRADE_NAME,
 } from "./engines/cal/types.js";
 export { MODES } from "./engines/temper/data/modes.js";
+export { SIGNS } from "./engines/planet/planet.js";
 export { TONES } from "./engines/temper/data/tones.js";
 export type { PsalmTone, Differentia } from "./engines/temper/data/tones.js";
 export { CADENTIAE } from "./data/cadentiae.js";

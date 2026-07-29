@@ -51,6 +51,7 @@ const tonus = (await import(join(root, "dist/index.js"))).default;
 const { annulus, annulusTabula } = await import(join(root, "site/diagrams/annulus.js"));
 const { chorda, regula, chordaTabula } = await import(join(root, "site/diagrams/chorda.js"));
 const { hand, handTabula } = await import(join(root, "site/diagrams/hand.js"));
+const { rota, rotaTabula, rotaAspectTabula } = await import(join(root, "site/diagrams/rota.js"));
 
 // ── Junicode, embedded when a clone is around ──
 const juniPath = [
@@ -142,6 +143,26 @@ const plates = [
     },
   },
 ];
+
+plates.push(
+  {
+    title: "rota — the wheel of the spheres",
+    note: "seven planets at their true longitudes for the default epoch, each on its own sphere " +
+      "in the Chaldean order — and that order IS the scale order: Luna sounds D5 at the centre, " +
+      "Saturn E4 at the rim. The lines are aspects, drawn at the weight of their strength; " +
+      "tonus names the interval each one sounds.",
+    build: () => {
+      const o = { selected: "Sun", onSelect: () => {} };
+      return [rota(tonus, o), rotaTabula(tonus, o)];
+    },
+  },
+  {
+    title: "rota — the chords the sky is playing",
+    note: "the same moment's aspects as a table. A trine is a third, a square a tritone: the " +
+      "angle, its strength, and the interval it sounds all come from harmonia.",
+    build: () => [rotaAspectTabula(tonus, {})],
+  },
+);
 
 const results = plates.map((p) => {
   try {
