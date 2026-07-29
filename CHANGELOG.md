@@ -15,6 +15,31 @@ chant against the corpus that holds it.
 
 ### Added
 
+- **The analysis tracks ship with `inscriptio`.** `tracks: ["chironomia"]`
+  (quadrata) draws the conducting hand's wave — arsic crests, thetic
+  troughs, pick-up loops, Pierik letters. `tracks: ["tonarium"]`
+  (moderna) draws the melodic lane: the four maneriae rails, the melody
+  compressed to its ambitus, the mode line in rubrica (solid inflection,
+  dashed transposition). A cadence is the melody's own ending re-inked
+  at full strength — the same curve at the same width — landing on a
+  terminal node (filled when the family's measured finality in CADENTIAE
+  closes, open when it suspends), labelled beneath by its signature on a
+  light end-ticked bracket spanning the figure. One governing ink system
+  runs through both tracks: one black graded by stratum opacity (rubrica
+  is the mode line's alone), and one nib law — velocity as stroke
+  width — for every pressure-bearing line. Species-paired by the
+  two-register principle; a mismatched pairing throws. Confidence is
+  opacity; claims under 0.45 draw nothing. The tracks consume the same
+  note anchors the geometry contract exports — the score's own ink is
+  untouched, and the geometry is unchanged with tracks on.
+- **The duae species share one lyric setting and one opening.**
+  Quadrata's staff→lyric gap now equals moderna's (21px at the default
+  staff height, scaling with it), and both species default the lyric
+  weight to 518; an explicit `fonts.lyric.weight` still overrides.
+  Moderna now honours the front matter (`title`, `rubric`,
+  `annotation: "auto"`) as quadrata does; the official opening of a
+  tonus score is the incipit as `title` plus the auto genus/mode mark,
+  with no dropcap.
 - **The era view composes end to end.** `festum({ date, before })` stamps
   the view year on the returned `Feast` (`feast.before`), and every day
   verb — `proprium`, `ordinarium`, `officium` — serves the
