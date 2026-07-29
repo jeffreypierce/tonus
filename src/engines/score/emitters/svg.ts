@@ -151,7 +151,7 @@ export interface SvgOpts {
   accidentals?: AccidentalMode;
   /** Baseline for the cents channel; the chant's home intonation by default. */
   centsBaseline?: CentsBaseline;
-  /** Analysis tracks to draw beneath each system (quadrata: "chironomia"). */
+  /** Analysis tracks to draw beneath each system; they stack in a fixed order. */
   tracks?: readonly TrackName[];
   /** Score-level analysis the tracks consume — supplied by inscriptio. */
   trackData?: TrackData;

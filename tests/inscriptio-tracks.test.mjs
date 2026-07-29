@@ -110,16 +110,60 @@ describe("inscriptio — duae species parity (ruled 2026-07-29)", () => {
   });
 });
 
-describe("inscriptio — track pairing guards", () => {
-  const score = buildScore({
+describe("inscriptio — the tracks are selectable, not species-paired", () => {
+  const score = tonus.notatio(puer());
+  const plain = buildScore({
     id: "test:1", incipit: "Test", gabc: "(c4) Ky(g)ri(h)e(g.) (::)", office: "or",
     genus: "Ordinarium", mode: "1", modus: "Modus I", pages: [],
     source: { book: "Test", year: null, editor: null },
   });
+  const height = (svg) => Number(/height="([0-9.]+)"/.exec(svg)[1]);
 
-  test("chironomia on moderna, tonarium on quadrata, and unknown names throw", () => {
-    assert.throws(() => inscriptio(score, { tracks: ["tonarium"] }), /moderna/);
-    assert.throws(() => inscriptio(score, { notation: "moderna", tracks: ["chironomia"] }), /quadrata/);
-    assert.throws(() => inscriptio(score, { tracks: ["bogus"] }), /unknown track/);
+  test("either track rides either species", () => {
+    for (const notation of ["quadrata", "moderna"]) {
+      for (const track of ["chironomia", "tonarium"]) {
+        const { svg } = inscriptio(score, { notation, width: 900, tracks: [track] });
+        assert.ok(svg.includes(`class="${track}"`), `${track} on ${notation}`);
+      }
+    }
+  });
+
+  test("both tracks stack on one score, and the band pays for both", () => {
+    for (const notation of ["quadrata", "moderna"]) {
+      const one = inscriptio(score, { notation, width: 900, tracks: ["chironomia"] });
+      const other = inscriptio(score, { notation, width: 900, tracks: ["tonarium"] });
+      const both = inscriptio(score, { notation, width: 900, tracks: ["chironomia", "tonarium"] });
+      assert.ok(both.svg.includes('class="chironomia"'), `${notation}: wave present`);
+      assert.ok(both.svg.includes('class="tonarium"'), `${notation}: lane present`);
+      assert.ok(height(both.svg) > height(one.svg), `${notation}: taller than the wave alone`);
+      assert.ok(height(both.svg) > height(other.svg), `${notation}: taller than the lane alone`);
+    }
+  });
+
+  test("the stack order is the renderer's, not the caller's", () => {
+    for (const notation of ["quadrata", "moderna"]) {
+      const a = inscriptio(score, { notation, width: 900, tracks: ["chironomia", "tonarium"] });
+      const b = inscriptio(score, { notation, width: 900, tracks: ["tonarium", "chironomia"] });
+      assert.equal(a.svg, b.svg, `${notation}: either order draws the same page`);
+    }
+  });
+
+  test("a track disturbs neither the notation nor the geometry contract", () => {
+    for (const notation of ["quadrata", "moderna"]) {
+      const bare = inscriptio(score, { notation, width: 900 });
+      const tracked = inscriptio(score, { notation, width: 900, tracks: ["chironomia", "tonarium"] });
+      assert.equal(tracked.geometry.length, bare.geometry.length, `${notation}: same notes`);
+      for (let i = 0; i < bare.geometry.length; i++) {
+        assert.equal(tracked.geometry[i].x, bare.geometry[i].x, `${notation}: note ${i} x`);
+        if (bare.geometry[i].system === 0) {
+          assert.equal(tracked.geometry[i].y, bare.geometry[i].y, `${notation}: note ${i} y`);
+        }
+      }
+    }
+  });
+
+  test("unknown track names still throw", () => {
+    assert.throws(() => inscriptio(plain, { tracks: ["bogus"] }), /unknown track/);
+    assert.throws(() => inscriptio(plain, { notation: "moderna", tracks: ["bogus"] }), /unknown track/);
   });
 });
