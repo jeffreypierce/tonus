@@ -3,13 +3,20 @@
 // ---------------------------------------------------------------------------
 //
 // Rules applied (in order):
-//   1. Digraphs ae, oe, au, ei, eu → single vowel unit (never split)
-//   2. qu → treated as single consonant (u is silent after q)
-//   3. V-ia/ie/io/iu/ua/ue/uo-V → always split before the i/u (ecclesiastical)
-//      Exception: ui after l/r is a diphthong (alleluia, huius)
-//   4. Single consonant between vowels → goes with following vowel (V·CV)
-//   5. Consonant clusters: muta cum liquida (tr, pr, br, gr, dr, cr, fr, pl, bl,
-//      cl, gl, fl) stay together; all other clusters split after first consonant
+//   1. Diphthongs ae, oe, au → single vowel unit (never split). ei and ui are
+//      NOT diphthongs in ecclesiastical Latin (De-i, e-le-i-son, fu-it, su-i)
+//      — except the pronoun stems cui/hui (cui, huic), where ui is true.
+//      eu is NOT a diphthong either (de-us, me-us split normally).
+//   2. qu → single consonant (u is silent after q); likewise the ngu glide
+//      (lin-gua, sán-guis) — but not gu elsewhere (e-xi-gu-us, ar-gu-it).
+//   3. i between vowels, or word-initial before a vowel, is consonantal (the
+//      j sound): e-ius, ma-ior, al-le-lu-ia, Ie-su — it opens the next
+//      syllable rather than closing this one.
+//   4. All other adjacent vowels split (ecclesiastical): fi-li-a, glo-ri-a
+//   5. Single consonant between vowels → goes with following vowel (V·CV)
+//   6. Consonant clusters: muta cum liquida (tr, pr, br, gr, dr, cr, fr, pl, bl,
+//      cl, gl, fl) and the Greek digraphs th, ph, ch stay with the following
+//      vowel; all other clusters split after the first consonant
 //
 // Diacritics (áéíóúàèìòùâêîôû etc.) are treated as their base vowel throughout.
 
@@ -18,9 +25,11 @@
 const VOWELS = new Set("aeiouyáéíóúàèìòùâêîôûäëïöüæœý");
 const SOFT_HYPHEN = "\u00ad";
 
-// Latin diphthongs: ae, oe, au, ei are single syllable.
-// eu is not a classical Latin diphthong (de-us, me-us split normally).
-const DIPHTHONGS = new Set(["ae", "oe", "au", "ei", "ui"]);
+// Latin diphthongs treated as single syllables. ei and ui are deliberately
+// absent: in ecclesiastical Latin they are hiatus (De-i, fu-it, su-i) — ui is
+// a true diphthong only in the pronoun stems cui/hui, handled below. eu is not
+// a classical Latin diphthong (de-us, me-us split normally).
+const DIPHTHONGS = new Set(["ae", "oe", "au"]);
 
 // Muta cum liquida pairs that stay with the following vowel
 const MUTA_CUM_LIQUIDA = new Set([
@@ -67,17 +76,38 @@ function isConsonantBase(ch: string): boolean {
  *      "ánima"   → ["á", "ni", "ma"]
  */
 export function syllabifyWord(word: string): string[] {
-  if (word.length <= 2) return [word];
+  if (word.length <= 1) return [word];
 
   const chars = Array.from(word);
   const n = chars.length;
+  const lower = chars.map(baseChar).join("");
 
-  // Find all vowel positions (base-char aware).
+  // A glide u carries no syllable: after q always (qui), and in the ngu
+  // cluster before a vowel (lin-gua, sán-guis) — but a u after plain g is a
+  // real vowel (e-xi-gu-us, ar-gu-it).
+  const isGlideU = (i: number): boolean => {
+    if (baseChar(chars[i]) !== "u") return false;
+    const prev = i > 0 ? baseChar(chars[i - 1]) : "";
+    if (prev === "q") return true;
+    const prev2 = i > 1 ? baseChar(chars[i - 2]) : "";
+    return prev === "g" && prev2 === "n" && i + 1 < n && isVowelBase(chars[i + 1]);
+  };
+
+  // A consonantal i (the j sound) carries no syllable of its own — it opens
+  // the following vowel's: between real vowels (e-ius, ma-ior, al-le-lu-ia)
+  // or word-initial before a vowel (Ie-su, iu-bi-lá-te).
+  const isConsonantalI = (i: number): boolean => {
+    if (baseChar(chars[i]) !== "i") return false;
+    if (i + 1 >= n || !isVowelBase(chars[i + 1])) return false;
+    if (i === 0) return true;
+    return isVowelBase(chars[i - 1]) && !isGlideU(i - 1);
+  };
+
+  // Find all vowel positions (base-char aware; glides and consonantal i out).
   const vpos: number[] = [];
   for (let i = 0; i < n; i++) {
     if (isVowelBase(chars[i])) {
-      const prev = i > 0 ? baseChar(chars[i - 1]) : "";
-      if (baseChar(chars[i]) === "u" && prev === "q") continue;
+      if (isGlideU(i) || isConsonantalI(i)) continue;
       vpos.push(i);
     }
   }
@@ -95,6 +125,9 @@ export function syllabifyWord(word: string): string[] {
     if (v2 === v1 + 1) {
       const pair = baseChar(chars[v1]) + baseChar(chars[v2]);
       if (DIPHTHONGS.has(pair)) continue;
+      // ui is a true diphthong only in the pronoun stems (cui, huic, and the
+      // cui- compounds); everywhere else it is hiatus (fu-it, su-i).
+      if (pair === "ui" && /^(cui|hui)/.test(lower)) continue;
 
       // All other adjacent vowels split in ecclesiastical Latin
       splits.add(v2);
