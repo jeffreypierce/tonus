@@ -10,15 +10,15 @@
 // closing note (its sounded final — not the labeled mode's final), as a SIGNED
 // semitone count (the arrival — the function).
 //
-// ⟨2026-07-28⟩ The arrival is no longer octave-reduced. The old mod-12 fold
-// pooled a fifth ABOVE the final with a fourth BELOW — measured, 3,499 of
+// The arrival is deliberately not octave-reduced: the mod-12 fold pooled a
+// fifth ABOVE the final with a fourth BELOW — measured, 3,499 of
 // 27,985 phrase ends landed on @-5, of which 2,427 were really +7. Two
 // opposite gestures under one key. Folding survives as a degree field on a live
 // cadence event, where it is the scale degree and mode-theoretically real.
 //
 // The population is the SUNG corpus, not the printed books: this table and the
 // census now count the same chants, which they never did before. No Latin
-// arrival names ride the table ⟨RULED 2026-07-28, same law as familia⟩:
+// arrival names ride the table, for the same reason no family names do:
 // the key carries the arrival; the reader can count. Families with n >= 50 are tabled here (122 families,
 // 58.8% of all phrase-ends); the full tally lives in the mining
 // artifact. finality = share of a family's occurrences at a final close
@@ -36,7 +36,7 @@ export interface CadentiaFamilia {
   /** Interval signature in semitones between the tail's consecutive notes. */
   shape: number[];
   /** Closing note minus the chant's own closing note (sounded final),
-   *  semitones, octave-reduced to [-5..+6] — see the mod-12 fold note above. */
+   *  in SIGNED semitones — not octave-reduced; see the arrival note above. */
   arrival: number;
   /** Corpus occurrences. */
   n: number;
@@ -149,7 +149,7 @@ export const CADENTIAE: CadentiaFamilia[] = [
   {"key":"2,-2,-1 @0","shape":[2,-2,-1],"arrival":0,"n":63,"finality":0.381,"modes":{"1":1,"3":7,"4":49,"5":3,"7":3}},
   {"key":"0,-1,-2 @0","shape":[0,-1,-2],"arrival":0,"n":61,"finality":0.377,"modes":{"1":15,"2":22,"3":4,"4":13,"5":6,"8":1}},
   {"key":"-2,-2,0 @3","shape":[-2,-2,0],"arrival":3,"n":60,"finality":0,"modes":{"1":18,"2":15,"3":15,"4":9,"5":1,"7":1,"8":1}},
-  {"key":" @0","shape":[0],"arrival":0,"n":60,"finality":1,"modes":{"1":12,"2":4,"3":6,"4":4,"5":5,"6":4,"7":15,"8":10}},
+  {"key":" @0","shape":[],"arrival":0,"n":60,"finality":1,"modes":{"1":12,"2":4,"3":6,"4":4,"5":5,"6":4,"7":15,"8":10}},
   {"key":"0,0,-1 @-5","shape":[0,0,-1],"arrival":-5,"n":59,"finality":0.712,"modes":{"3":45,"4":14}},
   {"key":"-2,2,-2 @7","shape":[-2,2,-2],"arrival":7,"n":58,"finality":0.069,"modes":{"1":8,"5":14,"7":35,"8":1}},
   {"key":"-2,-1,0 @-5","shape":[-2,-1,0],"arrival":-5,"n":58,"finality":1,"modes":{"3":57,"4":1}},

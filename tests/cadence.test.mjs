@@ -124,7 +124,7 @@ describe("detectCadences", () => {
   test("a medial rest on the tenor carries the tenor's arrival degree", () => {
     // The interior divisio rests on A, mode 1's tenor — a fifth above the
     // chant final D, octave-reduced to -5, which IS the tenor degree. The
-    // Latin naming of that fact (`adventus`) is CUT ⟨RULED 2026-07-28⟩ — the
+    // Latin naming of that fact (`adventus`) is deliberately absent — the
     // number and the `target` role carry it.
     const score = buildScore(makeChant(MODE1_MEDIAL, "1"));
     const medial = score.cadences.find((c) => c.divisio === ";");
@@ -133,12 +133,12 @@ describe("detectCadences", () => {
   });
 
   test("a single-note phrase is a cadence with an empty shape", () => {
-    // ⟨RULED 2026-07-28⟩ It has a LANDING but no GESTURE, so it keys as one:
-    // an empty shape and a real arrival, not a null. The census used to drop
-    // these entirely (68 corpus-wide, every one a real phrase carrying a real
-    // divisio, mostly "::" at the chant end); the engine used to keep them with
-    // a null signature. Consolidating the key forced the question, and "a
-    // cadence that lands without gesturing" is the honest reading.
+    // It has a LANDING but no GESTURE, so it keys as one: an empty shape and
+    // a real arrival, not a null. The census used to drop these entirely
+    // (68 corpus-wide, every one a real phrase carrying a real divisio, mostly
+    // "::" at the chant end); the engine used to keep them with a null
+    // signature. Consolidating the key forced the question, and "a cadence
+    // that lands without gesturing" is the honest reading.
     const score = buildScore(
       makeChant("(c4) one(d.) (;) clos(e) ing(d.) (::)", "1"),
     );

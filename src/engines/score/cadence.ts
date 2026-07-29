@@ -10,19 +10,19 @@
 // divisio bars. Cadence figures are mode-specific, so this consumes the
 // per-mode ModeData.cadences catalog.
 //
-// ⟨RULED 2026-07-28⟩ `adventus` — the Latin arrival-case ladder ("in
-// finalem", "in quintam", …) — is CUT, same law as `familia`: the signature
-// IS the name, and `arrival` already carries the number the ladder renamed.
+// `adventus` — a Latin arrival-case ladder ("in finalem", "in quintam", …) —
+// is deliberately absent, for the same reason `familia` is: the signature IS
+// the name, and `arrival` already carries the number the ladder would rename.
 // (Its one mode-aware value, "in tenorem", overlapped `target`.) The mod-12
-// fold (+7 ≡ −5) that the ladder tried to name honestly is a FAMILY-KEY
-// question now — see the signed-arrival DECISIO for the census rebuild.
+// fold (+7 ≡ −5) the ladder would have had to name honestly is answered in
+// the family key itself, whose arrival is signed.
 //
 // Two catalogues serve two claims. ModeData.cadences (tradita — the treatises'
 // per-mode figures) names the `formula`; CADENTIAE (inventa — the corpus tally)
 // is joined by the `signature`: the tail's interval shape (the gesture) and
 // where it lands relative to the chant final (the function). The corpus key
-// is computed exactly as the mining did — last <=4 notes, semitone intervals,
-// arrival octave-reduced to [-5..+6], measured from the chant's own closing
+// is computed exactly as the mining does — last <=4 notes, semitone intervals,
+// arrival as the SIGNED semitone offset from the chant's own closing
 // note (its sounded final) — so every classification joins the table.
 import type { Phrase } from "./types.js";
 import type { ModeData, CadenceFigure } from "../temper/data/modes.js";
@@ -58,14 +58,15 @@ export interface Cadence {
   notes: Array<[number, number, number]>;
   /**
    * The corpus-catalogue key, "shape @arrival" (e.g. "2,0,-2 @0" — see
-   * CADENTIAE), or null when the phrase ends on a single note (no intervals).
+   * CADENTIAE). A single-note phrase keys with an empty shape (" @0"):
+   * a landing with no gesture is still a cadence.
    */
   signature: string | null;
   /** Interval signature of the closing tail (<=4 notes), in semitones. */
   shape: number[];
   /** Closing note minus the CHANT'S OWN closing note (its sounded final —
    *  not the labeled mode's final, which may disagree on a transposed or
-   *  mislabeled chant), semitones, octave-reduced [-5..+6]. */
+   *  mislabeled chant), in SIGNED semitones — not octave-reduced. */
   arrival: number;
 }
 
@@ -214,12 +215,12 @@ const TAIL = 4;
 /**
  * Octave-reduce a semitone offset to [-5..+6].
  *
- * NO LONGER PART OF THE KEY ⟨RULED 2026-07-28⟩ — kept because the folded value
- * is still worth reporting (it is the scale DEGREE, mode-theoretically real).
- * The fold made a fifth ABOVE the final share a family with a fourth BELOW:
+ * NOT part of the family key — kept because the folded value is still worth
+ * reporting (it is the scale DEGREE, mode-theoretically real). As a key the
+ * fold made a fifth ABOVE the final share a family with a fourth BELOW:
  * measured over 27,985 phrase ends, 3,499 landed on @-5, of which 2,427 were
- * really +7 and 1,072 really -5. Two opposite gestures, one key. Arrival in the
- * key is now the SIGNED offset; see cadenceKey().
+ * really +7 and 1,072 really -5. Two opposite gestures, one key. Arrival in
+ * the key is therefore the SIGNED offset; see cadenceKeys().
  */
 export function reduceArrival(semitones: number): number {
   let a = semitones % 12;
@@ -247,23 +248,22 @@ export interface CadenceKeyEvent {
 /**
  * THE cadence family key — one implementation, shared by every consumer.
  *
- * ⟨consolidated 2026-07-28⟩ This existed three times: here (keyed off the
- * Phrase tree), in tonus-corpus `census/_shared.mjs` (keyed off flat tabula
- * rows), and in the CADENTIAE miner (a character-for-character copy of the
- * census one, which escaped an earlier unforking only by living in gitignored
- * working/). They agreed — measured corpus-wide, 28,051 engine cadences against
- * 27,985 census phrase ends with ZERO key disagreements — but agreement by
- * luck across three copies is what "no second parser, no drift" forbids.
+ * This once existed three times: here (keyed off the Phrase tree), in
+ * tonus-corpus `census/_shared.mjs` (keyed off flat tabula rows), and in the
+ * CADENTIAE miner (a character-for-character copy of the census one). They
+ * agreed — measured corpus-wide, 28,051 engine cadences against 27,985 census
+ * phrase ends with ZERO key disagreements — but agreement by luck across three
+ * copies is what "no second parser, no drift" forbids; hence this one shared
+ * function.
  *
  * Takes the FLAT shape, because that is what the census and the miner have; the
  * engine's own detection flattens into it. A phrase end is a `phraseIndex`
  * transition or the last row.
  *
- * A ONE-NOTE PHRASE IS A CADENCE ⟨RULED⟩ — it has a landing but no gesture, so
- * it is emitted with an empty shape rather than skipped. The census used to
- * drop these (68 corpus-wide, all real phrases carrying a real divisio, mostly
- * "::" at the chant end); the engine kept them with a null signature. The
- * engine's reading is the right one.
+ * A ONE-NOTE PHRASE IS A CADENCE — it has a landing but no gesture, so it is
+ * emitted with an empty shape rather than skipped. (The census once dropped
+ * these — 68 corpus-wide, all real phrases carrying a real divisio, mostly
+ * "::" at the chant end — a hole this shared key closes.)
  */
 export function cadenceKeys(
   rows: readonly { phraseIndex: number; midi: number; divisio: string | null }[],

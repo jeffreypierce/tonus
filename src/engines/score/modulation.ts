@@ -12,10 +12,10 @@
 // whole frame is foreign reads "transposition". Before that grading, 78% of
 // every span detected was a single phrase and 80% of moded chants "modulated"
 // — including Suñol's own Christus resurgens example, whose deuterus lean is
-// itself one phrase. Measured 2026-07-28 over 2,784 moded chants,
-// working/qa-sweep/measure-modulation.mjs.
+// itself one phrase. Measured over 2,784 moded chants
+// (working/qa-sweep/measure-modulation.mjs).
 //
-// A NOTE ON THE PHRASE-CLOSING NOTE (considered and rejected, 2026-07-17):
+// A NOTE ON THE PHRASE-CLOSING NOTE (considered and rejected):
 // passing each phrase's last pc into the affinity (the final-note bonus that
 // serves whole-chant mode detection so well) was measured over the labeled
 // corpus (n=7,573): spans rose 22,489 → 24,552 with no reduction in
@@ -59,7 +59,7 @@ const MARGIN = 0.25;
 // A phrase leaning toward its own mode's authentic/plagal partner is NOT
 // modulating: the partner shares the final, so the "lean" is AMBITUS — the
 // phrase sitting high or low within the same maneria — not a tonal-centre
-// shift. Measured 2026-07-28: partner leans were 18% of the lean-pairs behind
+// shift. Measured over the corpus: partner leans were 18% of the lean-pairs behind
 // the 28% of moded chants that read as wall-to-wall foreign. A category
 // correction, not a threshold.
 const maneriaPartner = (mode: number): number =>
@@ -67,8 +67,8 @@ const maneriaPartner = (mode: number): number =>
 
 // A chant is read as TRANSPOSED (not modulating) when it does not close on its
 // labeled mode's final AND a single foreign mode's spans cover most of its
-// phrases. Corpus context: 81.6% of labeled chants close on their mode's final
-// (night report 2026-07-07); of the remainder, the wall-to-wall foreign
+// phrases. Corpus context: 81.6% of labeled chants close on their mode's
+// final; of the remainder, the wall-to-wall foreign
 // readings this rule reclassifies were 30% of ALL labeled chants before it.
 const TRANSPOSITION_SHARE = 0.6;
 
