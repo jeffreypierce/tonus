@@ -21,7 +21,7 @@ export interface GuidonianEntry {
 // middle fingertip (region "super"). The two b/♮ pairs (58/59, 70/71) share a
 // locus by design — one joint, two readings (fa in molle, mi in durum), the
 // tradition, not a duplication to fix. After Suñol [biblio: sunol-textbook] and
-// Apel [biblio: apel-chant]; realized in working/diagram-hand-08.html.
+// Apel [biblio: apel-chant].
 // prettier-ignore
 export const GUIDONIAN_DATA = new Map<number, GuidonianEntry>([
   [43, { hand: { finger: "thumb",  region: "tip"   }, name: ["Γ",  "Gammaut"   ], variants: [{ hexachord: "durum",    solmization: "UT"  }] }],

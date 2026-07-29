@@ -602,7 +602,7 @@ describe("the Pythagorean chain spelling (E♭–G♯)", () => {
   test("b molle sits on the flat side of the chain", () => {
     const t = buildTemper({ tuning: "pythagorean" });
     // B♭ a pure fourth over F (chain …E♭–B♭–F–C…): offset ≈ −9.78¢ from ET.
-    const bb = t.nota(70); // B♭4 as MIDI (integer stays 12-TET? no — nota resolves through the tuning)
+    const bb = t.nota(70); // B♭4 by MIDI number; nota resolves it through the tuning
     assert.ok(Math.abs(bb.offset - -9.78) < 0.05, `B♭ offset ${bb.offset}, expected ≈ −9.78 (flat side)`);
   });
 });

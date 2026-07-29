@@ -168,7 +168,14 @@ export const TONES: PsalmTone[] = [
 
 /** Look up a PsalmTone by mode number (1–8, or 0 for Peregrinus) */
 export function getTone(mode: number): PsalmTone {
-  return TONES.find(t => t.mode === mode) ?? TONES.find(t => t.mode === 8)!;
+  const tone = TONES.find(t => t.mode === mode);
+  // A bad mode throws rather than silently singing Tonus VIII: a
+  // plausible-looking wrong psalm tone is worse than no answer, and getMode
+  // (temper/modes.ts) already holds this line for the modes themselves.
+  if (!tone) {
+    throw new Error(`getTone: no psalm tone for mode ${mode} (expected 1–8, or 0 for the tonus peregrinus).`);
+  }
+  return tone;
 }
 
 /** Look up a differentia by code, falling back to the tone's defaultDiff */

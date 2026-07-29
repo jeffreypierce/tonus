@@ -54,8 +54,8 @@ export interface CadenceFigure {
 // composition" mentions) are included. The tables also grade several more
 // degrees as "important," "rare," or give per-degree cadence types
 // (final/intermediate/suspensive) — real information, left out here to avoid
-// asserting low-confidence transcription as data. That's a separate,
-// not-yet-built layer (see working/plan-modes-v2.md, Phases 2–3).
+// asserting low-confidence transcription as data. That's a separate layer,
+// not yet built.
 //
 // Mode III has no photographed Degree Summary Table (prose only) — its single
 // entry is the historically-shifted practical tenor (see the mode's own
