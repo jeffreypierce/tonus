@@ -252,9 +252,8 @@ export interface Feast {
   apostolic: boolean;
   /** The era view this feast was resolved under — the `before` year given to
    *  festum. Carried on the feast so the chant verbs (proprium, ordinarium,
-   *  officium) serve the SAME view without being told twice; a
-   *  `before`/`century` on their own query overrides. Absent on a present-day
-   *  resolution. */
+   *  officium) serve the SAME view without being told twice; a `before` on
+   *  their own query overrides. Absent on a present-day resolution. */
   before?: number;
 }
 

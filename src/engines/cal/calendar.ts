@@ -186,7 +186,7 @@ function findSeason(date: Date): { code: Season; start: Date; end: Date } {
   return s("epi", epiphanySunday(a), a.septuagesima);
 }
 
-// The Sunday-as-such grades. Per the ratified grade table, an ordinary Sunday is
+// The Sunday-as-such grades. Per the canonical grade table, an ordinary Sunday is
 // `semiduplex`, an Advent Sunday `semiduplex-ii`, a Lent Sunday `semiduplex-i` —
 // so a day that is merely a Sunday is recognised by carrying one of these, while
 // a feast that outranks the Sunday carries a duplex grade and takes its class.
@@ -206,9 +206,9 @@ const SUNDAY_GRADES: readonly Grade[] = [
  * be claimed by the I, II and III class tiers and hand a Lent Sunday a
  * first-class mass.
  *
- * 【DECISIO ⟨Jeffrey⟩ — should a I class feast inside Paschaltide (Ascension,
- * Pentecost) reach for the I-class pair II/III instead of Lux et Origo? The
- * book's heading is unqualified, so Paschaltide wins here.】
+ * An open editorial question: should a I class feast inside Paschaltide
+ * (Ascension, Pentecost) reach for the I-class pair II/III instead of Lux et
+ * Origo? The book's heading is unqualified, so Paschaltide wins here.
  */
 function rubricForDay(
   id: string,
@@ -307,8 +307,9 @@ function feastsForDate(date: Date): Feast[] {
  * Calendar lookup (`tonus.festum`). Returns matching feasts sorted
  * `day asc, rank desc` — for a date, the primary feast plus concurrent
  * feasts; for a `from`/`to` range, every day flattened; with no query,
- * the current liturgical year. Dates are UTC-canonical: build them from
- * ISO strings or `Date.UTC`.
+ * the default-epoch day (Guido d'Arezzo's era); for a filter-only query,
+ * the liturgical year containing that epoch. Dates are UTC-canonical:
+ * build them from ISO strings or `Date.UTC`.
  */
 const FEAST_QUERY_KEYS = new Set([
   "date", "from", "to", "nomen", "season", "grade", "marian", "apostolic",
@@ -387,7 +388,7 @@ export function getFeast(query?: FeastQuery): Feast[] {
       // Stamp the view on the survivors. The chant verbs read it back, so one
       // `before` at the calendar door carries through the whole day — the
       // calendar as of 1100 serves the repertoire attested by 1100, without
-      // the caller saying the year twice. Their own before/century overrides.
+      // the caller saying the year twice. A `before` of their own overrides.
       .map((f) => ({ ...f, before: query.before! }));
   }
 

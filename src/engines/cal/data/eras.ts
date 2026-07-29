@@ -11,7 +11,7 @@
 // This is a VIEW over it. A feast absent from this table is treated as old
 // enough to keep, so the table only ever needs the late arrivals.
 //
-// ── 【DECISIO ⟨Jeffrey⟩ — EVERY DATE HERE NEEDS YOUR RED PEN】 ────────────────
+// ── EVERY DATE HERE WANTS A HISTORIAN'S RED PEN ─────────────────────────────
 // These are liturgical-historical claims, not measurements. `year` is the date
 // of UNIVERSAL observance in the Roman calendar (the point at which the feast
 // would displace a feria everywhere), because that is what a day-resolution
@@ -29,14 +29,14 @@
 //     Poland (who is listed, at 08-17). Keep.
 // Those three are the traps in dating this list by name.
 //
-// ── KEPT BY RULING ⟨Jeffrey, 2026-07-27⟩ ────────────────────────────────────
+// ── KEPT DELIBERATELY, AGAINST THE STRICT READING ───────────────────────────
 //   · 08-06 In Transfiguratione Domini — Callixtus III made it universal in 1457,
 //     but it is an ancient Eastern feast with local Western observance long
 //     before. Old school; keep.
 //   · 07-02 In Visitatione BMV — 1389 is Urban VI's UNIVERSAL extension (prayed
 //     for the end of the Great Schism). St Bonaventure had already instituted it
 //     for the Franciscans in 1263 — genuinely inside a pre-1350 line, so the
-//     ruling is supported by the record, not only by instinct.
+//     keep is supported by the record, not only by instinct.
 //   · 02-08 S. Joannis de Matha and 11-20 S. Felicis de Valois — the Trinitarian
 //     founders, both dead c. 1212–13. Their cult was confirmed late, but the
 //     saints and their veneration are medieval. Keep.
@@ -77,7 +77,7 @@ export const FEAST_ERAS: Readonly<Record<string, FeastEra>> = Object.freeze({
 
   // ── Saints venerated after ~1350 ───────────────────────────────────────────
   // Dated by canonization or by entry into the universal calendar, whichever is
-  // the later — again, ⟨Jeffrey⟩, these want checking.
+  // the later — again, these want checking against the sources.
   "03-04": { year: 1521, note: "Casimir of Poland, d. 1484" },
   "08-17": { year: 1594, note: "Hyacinth of Poland, d. 1257 — cult approved late" },
   "05-05": { year: 1712, note: "Pius V, d. 1572" },

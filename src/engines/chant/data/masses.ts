@@ -61,8 +61,8 @@ export interface MassEntry {
 // The grades belonging to each rank category. The Grade ladder is
 // classis-primary and already carries the class in its names — `-i` is
 // "Duplex/Semiduplex I classis", `-ii` is II classis, unsuffixed is the
-// III-class tier (see cal/types.ts and archive/plan-2-rank-redesign.md, the
-// 14-grade table ratified 2026-07-02).
+// III-class tier (see cal/types.ts and archive/plan-2-rank-redesign.md for
+// the canonical 14-grade table).
 export const CLASS_I_GRADES: readonly Grade[] = [
   "triduum",
   "duplex-i",
@@ -91,9 +91,9 @@ export const FERIA_GRADES: readonly Grade[] = [
 // back with a Credo and the sprinkling and no Kyrie, Gloria, Sanctus or Agnus at
 // all, on roughly 50 days a year. The numbers below are the settings these
 // entries are already named after: de Angelis IS mass VIII, Cum jubilo IS the
-// BVM mass.
-// 【DECISIO ⟨Jeffrey⟩ — bvm: "Missa Salve" could instead point at the ad libitum
-// Kyrie Salve (appendix); mass IX is the plain reading of "de Beata Maria".】
+// BVM mass. An open editorial question on bvm: "Missa Salve" could instead
+// point at the ad libitum Kyrie Salve (appendix); mass IX is the plain reading
+// of "de Beata Maria".
 export const AD_LIB: { standard: MassEntry; bvm: MassEntry } = {
   standard: {
     id: "adlib_standard",
@@ -363,7 +363,7 @@ export function massesForRubric(rubric: MassRubric): MassEntry[] {
     .sort((a, b) => a.mass - b.mass);
 }
 
-// ── Kyriale century ascriptions ⟨editorial, 2026-07-28⟩ ─────────────────────
+// ── Kyriale century ascriptions ─────────────────────────────────────────────
 // What the Vatican/Solesmes editors PRINT above each setting: "X. s." (saeculum
 // X), "XI-XIII. s." for a span, "(X) XIV-XVI. s." where they record an
 // alternative reading, and "?. s." where they decline to date it at all.
@@ -381,12 +381,12 @@ export function massesForRubric(rubric: MassRubric): MassEntry[] {
 // — by machine extraction of its text layer, 74 ascriptions across 18 Masses
 // and 6 Credos.
 //
-// ⟨DECISIO — Jeffrey⟩ Every value below is an editorial claim to be checked
-// against the shelf copy. Four entries marked `inferred` had their PART
-// resolved by position (the ascription sits between two identified parts in
-// liturgical order) rather than by a legible incipit; the CENTURY is printed
-// either way. Cross-check candidates: Melnicki (Kyrie), Bosse (Gloria),
-// Thannabaur (Sanctus), Schildbach (Agnus).
+// Every value below is an editorial claim, still to be checked against the
+// shelf copy. Four entries marked `inferred` had their PART resolved by
+// position (the ascription sits between two identified parts in liturgical
+// order) rather than by a legible incipit; the CENTURY is printed either way.
+// Cross-check candidates: Melnicki (Kyrie), Bosse (Gloria), Thannabaur
+// (Sanctus), Schildbach (Agnus).
 export interface MassCentury {
   /** Earliest century the editors give (10 = the 900s); null where they print "?". */
   from: number | null;
@@ -536,17 +536,18 @@ export const CREDO_CENTURY: Record<string, MassCentury> = {
   VI: { from: 11, to: 11, printed: "XI. s." },
 };
 
-// ── The Kyriale era rule ⟨★RULED — Jeffrey, 2026-07-28⟩ ─────────────────────
+// ── The Kyriale era rule ────────────────────────────────────────────────────
 // A LATEST-CENTURY bound on ORDINARY settings, and nothing more. Scope matters
 // here, so it is stated plainly rather than implied:
 //
-// This is NOT a corpus-wide era filter. tonus has per-chant dates for the
-// Kyriale and for nothing else — 71 of 2,860 shipped chants, 2.5%. A bound
-// applied beyond that would be filtering 97.5% of the repertory on data that
-// does not exist. An attestation filter covering 69% was tried and retired the
-// same day for exactly this reason (it answered "what was sung in 1098" by
-// deleting the Night Office, because CANTUS does not index responsories), and
-// 2.5% is the stricter version of the same mistake.
+// This is NOT a corpus-wide era filter. tonus has per-chant EDITORIAL dates
+// for the Kyriale and for nothing else — 71 of 2,860 shipped chants, 2.5%. A
+// bound applied beyond that would be filtering 97.5% of the repertory on data
+// that does not exist. The attestation filter learned this the hard way: at
+// 69% coverage it answered "what was sung in 1098" by deleting the Night
+// Office, because CANTUS had not yet dated the responsories, and it stayed
+// retired until the coverage was closed (see chant/attest.ts). 2.5% is the
+// stricter version of the same mistake.
 //
 // So the corpus's period is set by THE CUT — it ships what the liturgy places —
 // and this rule only keeps the ordinary from reaching for a setting the
@@ -572,12 +573,15 @@ export const ORDINARY_LATEST_YEAR = 1324;
  *
  * The Kyriale dates a setting only to its century, so 1324 cannot admit "the
  * 14th century" — a chant marked XIV. s. may have been written in 1390, well
- * after the bull. A century is admitted only when it CLOSED before the bound:
- * 1324 → 13 (through the 1200s). This is what keeps Mass IX's XIV-c Sanctus and
- * Mass XI's XIV-c Agnus out, which is the whole point of choosing 1324.
+ * after the bull. A century is admitted only when it has CLOSED by the bound:
+ * 1324 → 13 (through the 1200s), 1300 → 13 (the century closes at its
+ * hundredth year). This is the same closed-century rule attest.ts applies to
+ * `before` — floor, not ceil, so an exact century year admits the century it
+ * ends. It is what keeps Mass IX's XIV-c Sanctus and Mass XI's XIV-c Agnus
+ * out, which is the whole point of choosing 1324.
  */
 function latestWholeCentury(year: number): number {
-  return Math.ceil(year / 100) - 1;
+  return Math.floor(year / 100);
 }
 
 /**

@@ -11,6 +11,7 @@ import {
 } from "./data/masses.js";
 import { KYRIALE, type KyrialeEntry } from "../../data/kyriale.js";
 import { attestationCutoff, eraCutoff, chantAdmissible } from "./attest.js";
+import { CANTUS_QUERY_KEYS } from "./types.js";
 import {
   KY_SOURCE,
   MODE_LABELS,
@@ -99,9 +100,9 @@ function feastYear(feast: Feast): number {
 // "paschal" is deliberately NOT here: it is a TIME, not a rank — every
 // Eastertide day carries it, ordinary Tuesdays included (their grade is
 // semiduplex, so no grade test separates them from a feast either). And Easter
-// itself sings Lux et Origo every year ⟨RULED⟩, which an appendix turn on the
-// paschal rubric would break every second year. Mass I is complete in every
-// slot, so paschal days never need the appendix at all.
+// itself sings Lux et Origo every year — a fixed point — which an appendix turn
+// on the paschal rubric would break every second year. Mass I is complete in
+// every slot, so paschal days never need the appendix at all.
 const SOLEMN_RUBRICS: ReadonlySet<MassRubric> = new Set<MassRubric>([
   "class-i",
   "class-ii",
@@ -197,7 +198,7 @@ function entriesForOffice(
   if (appendixLeads && appendixPick.length) return [...appendixPick, ...ranked];
   if (ranked.length) return ranked;
 
-  // The SUNG borrow ⟨2026-07-28⟩. A day is often appointed exactly one mass, so
+  // The SUNG borrow. A day is often appointed exactly one mass, so
   // when a slot has no candidate left the rubric's own licence is the only way
   // out: "chants from one Mass may be used together with those from others, the
   // Ferial Masses excepted." Before the era bound this branch was unreachable —
@@ -261,17 +262,19 @@ function entriesForOffice(
 // days it was built for and pinning high BVM feasts to mass IX forever.
 function selectBestChant(
   entries: KyrialeEntry[],
-  filterMode: number | null,
+  filterModes: string[] | null,
 ): KyrialeEntry | null {
   if (!entries.length) return null;
 
-  const modeStr = filterMode != null ? String(filterMode) : null;
-  let candidates = modeStr
-    ? entries.filter((e) => e.mode === modeStr)
+  let candidates = filterModes
+    ? entries.filter((e) => e.mode != null && filterModes.includes(e.mode))
     : entries;
 
-  if (!candidates.length && modeStr) {
-    const paired = pairedMode(filterMode!);
+  // The paired-mode fallback serves a single asked mode; a list already
+  // states its own alternatives.
+  if (!candidates.length && filterModes?.length === 1) {
+    const asked = Number(filterModes[0]);
+    const paired = Number.isInteger(asked) ? pairedMode(asked) : null;
     if (paired) candidates = entries.filter((e) => e.mode === String(paired));
   }
   if (!candidates.length) candidates = entries;
@@ -312,8 +315,8 @@ const CREDO_BIAS_EVERY = 2;
  * six, not from `allowed`: the Kyriale prints Credo I–VI as a set any mass may
  * draw on, whereas the `credos` arrays in masses.ts only ever name I, III and
  * IV — which left II, V and VI unsingable on every day of the year, despite
- * CREDO_PRIORITY naming all six. 【The narrow `credos` data is a separate gap
- * ⟨Jeffrey⟩; this reads it as a preference rather than the whole permission.】
+ * CREDO_PRIORITY naming all six. The narrow `credos` data is a separate gap
+ * still open; this reads it as a preference rather than the whole permission.
  */
 function selectCredoCode(feast: Feast, allowed: string[], year: number): string | null {
   if (!allowed.length) return null;
@@ -363,7 +366,7 @@ const MAUNDY_THURSDAY_MASS = 1;
 function ordinaryForFeast(
   feast: Feast,
   pinMass?: number,
-  filterMode?: number | null,
+  filterModes?: string[] | null,
   admissible?: ((id: string) => boolean) | null,
 ): OrdinaryChant[] {
   const isMaundyThursday = feast.id === MAUNDY_THURSDAY_ID;
@@ -377,14 +380,14 @@ function ordinaryForFeast(
   const masses = resolvedMass != null
     ? (() => { const e = MASSES.get(resolvedMass); return e ? [e] : []; })()
     : resolveMasses(feast);
-  const mode = filterMode ?? null;
+  const mode = filterModes ?? null;
 
   // The day's OWN rank rubric, from the unpinned resolution — the Gloria and
   // the appendix licence are the day's law, not the pinned mass's.
   const dayRubric = resolveMasses(feast)[0]?.rubric ?? null;
   const appendixAllowed = dayRubric != null && SOLEMN_RUBRICS.has(dayRubric);
 
-  // The Kyriale era rule RE-PICKS rather than silences ⟨RULED⟩: unlike a proper, the
+  // The Kyriale era rule RE-PICKS rather than silences: unlike a proper, the
   // ordinary offers ranked alternatives by design, so the whole selection —
   // rotation, siblings, borrow, appendix — runs over the admissible pool and
   // the day still sings a permitted setting. Filtering PER PART is what makes
@@ -393,7 +396,7 @@ function ordinaryForFeast(
   // Agnus — the famous late ones — while its Sanctus stays, because the editors
   // print that one "(XI) XII. s." NO mass leaves the pool whole: 7 of 66 parts
   // go, and every day still sings.
-  // See partWithinEra() in ./data/masses.ts for the 754–1324 reasoning.
+  // See partWithinEra() in ./data/masses.ts for the 1324 reasoning.
   const pool = KYRIALE.filter(
     (e) => partWithinEra(e.mass, e.office) && (!admissible || admissible(e.id)),
   );
@@ -523,6 +526,8 @@ function assertFeasts(feasts: Feast[] | undefined, method: string): void {
 }
 
 
+const ORDINARIUM_QUERY_KEYS = new Set([...CANTUS_QUERY_KEYS, "feast", "ordinary", "mass"]);
+
 /**
  * Mass ordinary retrieval (`tonus.ordinarium`) from the Kyriale. A feast
  * drives mass selection; `mass` pins a kyriale number directly.
@@ -530,24 +535,37 @@ function assertFeasts(feasts: Feast[] | undefined, method: string): void {
 export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
   if (!query || Object.keys(query).length === 0) return [];
 
+  // The same door policy as cantus and officium: an unknown key throws, so a
+  // stale or misspelled option is learned immediately, not silently ignored.
+  const unknown = Object.keys(query).filter((k) => !ORDINARIUM_QUERY_KEYS.has(k));
+  if (unknown.length) {
+    throw new Error(
+      `ordinarium: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
+      `(expected ${[...ORDINARIUM_QUERY_KEYS].join(", ")}).`,
+    );
+  }
+
   const feasts = toArray(query.feast);
   assertFeasts(feasts, "ordinarium");
-  const filterMode = query.mode != null ? Number(query.mode) : undefined;
+  // `mode` accepts a scalar or an array, with cantus's semantics: match any.
+  const filterModes = query.mode == null
+    ? null
+    : (Array.isArray(query.mode) ? query.mode : [query.mode]).map(String);
 
   let results: OrdinaryChant[];
 
   if (feasts) {
     // The era view: an own `before` wins; otherwise the view festum({ before })
     // stamped on the feast rides along. The admissibility rule composes with
-    // the standing Kyriale era doctrine (partWithinEra, 754–1324): doctrine
-    // bounds what the BOOK may reach for, attestation narrows to what a viewed
-    // year can EVIDENCE — and the re-pick machinery serves both.
+    // the standing Kyriale era doctrine (partWithinEra, bound at 1324):
+    // doctrine bounds what the BOOK may reach for, attestation narrows to what
+    // a viewed year can EVIDENCE — and the re-pick machinery serves both.
     results = feasts.flatMap((f) => {
       const cutoff = eraCutoff(query, [f], "ordinarium");
       const adm = cutoff != null || query.cursus
         ? (id: string) => chantAdmissible(id, cutoff, query.cursus)
         : null;
-      return ordinaryForFeast(f, query.mass, filterMode, adm);
+      return ordinaryForFeast(f, query.mass, filterModes, adm);
     });
   } else if (query.mass != null || query.ordinary) {
     // Direct kyriale query without feast context — same admissibility rule as
@@ -559,7 +577,7 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
     }
     if (query.mass != null) entries = entries.filter((e) => e.mass === query.mass);
     if (query.ordinary) entries = entries.filter((e) => e.office === query.ordinary);
-    if (filterMode != null) entries = entries.filter((e) => e.mode === String(filterMode));
+    if (filterModes) entries = entries.filter((e) => e.mode != null && filterModes.includes(e.mode));
 
     const offset = Math.max(0, query.offset ?? 0);
     const limit = query.limit == null ? entries.length : Math.max(0, query.limit);

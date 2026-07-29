@@ -7,23 +7,22 @@
 // ordinary import cycle this replaces died of exactly that (a TDZ
 // ReferenceError whenever ordinary.js loaded first).
 //
-// ── THE COMEBACK ⟨RULED 2026-07-28⟩ ────────────────────────────────────────
-// This filter was retired on 2026-07-27 because its data had a genre-shaped
-// hole: 31% of the corpus undated, 93% of RESPONSORIES among them, so
-// `before: 1098` deleted the Hartker repertory from Epiphany Matins — wrong
-// about the liturgy on the exact question the library exists to answer. The
-// rule was never the problem; the coverage was. The corpus side closed it
-// (crosswalk gap-fill + matcher v2: composite respond+verse, the incipit-
-// entry rule, containment, genre disambiguation — all gold-gated): 85% of
-// shipped records now carry a dated witness and responsories are 92% DATED.
-// What remains undated is deliberate (psalter, formulas) or editorial
-// territory (hymns, modern propers) — not a genre bias. So the evidence law
-// stands as ruled: an undated chant is EXCLUDED under any cutoff. Silence is
-// not evidence.
+// ── A FILTER THAT LEFT AND CAME BACK ───────────────────────────────────────
+// This filter was once retired because its data had a genre-shaped hole: 31%
+// of the corpus undated, 93% of RESPONSORIES among them, so `before: 1098`
+// deleted the Hartker repertory from Epiphany Matins — wrong about the
+// liturgy on the exact question the library exists to answer. The rule was
+// never the problem; the coverage was. The corpus side closed it (crosswalk
+// gap-fill + matcher v2: composite respond+verse, the incipit-entry rule,
+// containment, genre disambiguation — all gold-gated): 85% of shipped records
+// now carry a dated witness and responsories are 92% DATED. What remains
+// undated is deliberate (psalter, formulas) or editorial territory (hymns,
+// modern propers) — not a genre bias. So the evidence law stands: an undated
+// chant is EXCLUDED under any cutoff. Silence is not evidence.
 //
-// `century` did not come back. It was always `before: N * 100` in different
-// clothes — one cutoff internally, two spellings at the door — and the noted
-// convergence ⟨Jeffrey⟩ is now executed as the deletion it was designed to be.
+// A `century` option is deliberately absent. It was always `before: N * 100`
+// in different clothes — one cutoff internally, two spellings at the door —
+// so the two spellings converged on the one that is a year.
 // ---------------------------------------------------------------------------
 import { ATTESTATION } from "../../data/attestation.js";
 

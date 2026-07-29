@@ -122,7 +122,7 @@ export function getPropers(query?: PropriumQuery): Chant[] {
 
   // The era view: an own `before` wins; otherwise the view festum({ before })
   // stamped on the feast rides along. A proper has no pool of alternatives, so
-  // an excluded chant degrades to SILENCE ⟨RULED⟩ — the same evidence law as
+  // an excluded chant degrades to SILENCE by design — the same evidence law as
   // the corpus cut.
   const cutoff = eraCutoff(query, feasts, "proprium");
   if (cutoff != null || query.cursus) {

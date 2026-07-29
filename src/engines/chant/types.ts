@@ -20,13 +20,13 @@ export type OrdinaryCode =
  * unit: a book appears here because some chant the liturgy asks for is found in
  * it, not because the whole book ships.
  *
- * The first seven are the original corpus. The office books after them
- * ⟨widened 2026-07-27⟩ carry antiphons and short responsories that fill weekday
- * office slots — without them a matcher could only bind a slot to a chant the
- * five extracted books happened to hold, which is why 41 Fridays had no Vespers
+ * The first seven are the original corpus. The office books after them widened
+ * it: they carry antiphons and short responsories that fill weekday office
+ * slots — without them a matcher could only bind a slot to a chant the five
+ * extracted books happened to hold, which is why 41 Fridays had no Vespers
  * ("Per singulos dies" lives in the Psalterium Monasticum).
  *
- * That widening brought in eight; six are gone again ⟨2026-07-27⟩. am1, am2,
+ * That widening brought in eight; six are gone again. am1, am2,
  * am3, lr, ar1 and ar2 are bare transcriptions — no episema, no ictus,
  * essentially no mora — so once the office matchers began preferring a
  * rhythmically marked witness, every text they carried was better served by a
@@ -41,9 +41,9 @@ export type ChantSource =
   | "gr" | "lu" | "la" | "lh" | "am" | "nr" | "ky"
   // office books, monastic
   | "ams" | "psm"
-  // ⟨2026-07-28⟩ further MARKED Solesmes books. The rule for admission is
-  // stated in extract-gregobase.mjs OFFICE_BOOKS: Solesmes AND rhythmically
-  // marked (>50% episema or mora), because tonus reads those marks and a bare
+  // further MARKED Solesmes books. The rule for admission is stated in
+  // extract-gregobase.mjs OFFICE_BOOKS: Solesmes AND rhythmically marked
+  // (>50% episema or mora), because tonus reads those marks and a bare
   // transcription is a worse copy of a chant already held.
   | "cse" | "cot";
 
@@ -52,6 +52,14 @@ export type CanonicalHour =
   | "vesperae" | "completorium";
 
 // ── Display labels ──
+/** The keys cantus() accepts — the base set the day verbs extend. Lives here,
+ *  cycle-free, so ordinary.ts can build its own key set without importing
+ *  chant.ts (the two are an import cycle). */
+export const CANTUS_QUERY_KEYS = new Set([
+  "id", "gabc", "incipit", "mode", "office", "source", "limit", "offset", "sort",
+  "before", "cursus",
+]);
+
 export const MODE_LABELS: Readonly<Record<string, string>> = Object.freeze({
   "1": "Modus I", "2": "Modus II", "3": "Modus III", "4": "Modus IV",
   "5": "Modus V", "6": "Modus VI", "7": "Modus VII", "8": "Modus VIII",
@@ -221,15 +229,16 @@ export interface CantusQuery {
    * analogue of `festum({ before })`, and the two COMPOSE: a Feast resolved by
    * `festum({ date, before })` carries the view, and every day verb (proprium,
    * ordinarium, officium) serves under it without being told the year twice;
-   * an own `before` overrides the feast's. `before: 1098` keeps what a
-   * manuscript of the 11th century or earlier already holds.
+   * an own `before` overrides the feast's. Only centuries wholly CLOSED by
+   * the year count as witnessed: `before: 1098` keeps what a manuscript of
+   * the 10th century or earlier already holds (see attest.ts for why).
    *
    * This is evidence, not existence: the date comes from CANTUS's manuscript
    * index, so it is a terminus ante quem. A chant with no dated witness is
    * excluded rather than assumed old — silence is not evidence of age.
-   * ⟨RULED 2026-07-28, the comeback⟩: the one time argument. `century` did not
-   * return — it was `before: N * 100` in different clothes, and the noted
-   * convergence is executed.
+   * This is the ONE time argument: a `century` spelling is deliberately
+   * absent, because it was `before: N * 100` in different clothes — one
+   * cutoff internally, two spellings at the door (see attest.ts).
    */
   before?: number;
   /** Only chants transmitted by this cursus; `both` always qualifies. */
@@ -249,9 +258,9 @@ export interface OrdinariumQuery extends CantusQuery {
   mass?: number;
 }
 
-// ⟨2026-07-28⟩ `Rite` and the `rite` option are GONE. tonus assembles one
-// cursus, the Benedictine: the Roman office table was 63.4% hollow rows and its
-// psalmody had no consumer but that office, so `rite: "romanum"` returned a
+// A `Rite` type and a `rite` option are deliberately absent. tonus assembles
+// one cursus, the Benedictine: the Roman office table was 63.4% hollow rows and
+// its psalmody had no consumer but that office, so `rite: "romanum"` returned a
 // chimera — Tridentine psalms under monastic hymns and versicles, agreeing on 3
 // chant ids out of 48. An option that cannot produce a cursus anyone sang is
 // worse than no option, because callers read it as a supported choice.

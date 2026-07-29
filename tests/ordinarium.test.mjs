@@ -1,4 +1,4 @@
-// Kyriale rubric selection — regression tests from the 2026-07-27 review.
+// Kyriale rubric selection — a regression battery for the selection chain.
 //
 // Every test here encodes a defect that shipped under a green suite, because
 // nothing exercised the selection chain end to end: the last-resort appendix
@@ -112,7 +112,7 @@ describe("ordinarium — Paschaltide is a time, not a rank", () => {
     }
   });
 
-  test("Easter leads with Lux et Origo every year ⟨RULED⟩", () => {
+  test("Easter leads with Lux et Origo every year", () => {
     const easters = [
       [2025, 4, 20], [2026, 4, 5], [2027, 3, 28],
       [2028, 4, 16], [2029, 4, 1], [2030, 4, 21],

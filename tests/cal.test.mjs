@@ -342,7 +342,7 @@ describe("the calendar has no silent days", () => {
     assert.ok(ids("2026-11-15").includes("Epi6-0"), "25th Sunday = resumed 6th after Epiphany");
     assert.ok(ids("2026-11-22").includes("Pent24-0"), "the last Sunday is Dominica XXIV");
     assert.ok(!ids("2026-11-08").includes("Pent24-0"), "the ultima does not ALSO sit at Pentecost+24 weeks");
-    // And in a year with exactly 24, Pent24 sits where linear placement put it.
-    // 2027: Pentecost Jun 13? — verified by the no-silent-days scan above.
+    // In a year with exactly 24 Sundays, Pent24 sits where linear placement
+    // put it — covered by the no-silent-days scan above.
   });
 });

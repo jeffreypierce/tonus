@@ -20,13 +20,13 @@ import {
 } from "./data/compline.js";
 import { PRIME_ORDINARY, PRIME_SEASONAL } from "./data/prime.js";
 
-// ⟨2026-07-28⟩ ONE office table. The Roman one was cut: DO's Roman horas gave
-// 811 rows of which 514 (63.4%) carried NO office chant — and `romanum` was the
-// DEFAULT rite, so the untold call returned nothing. Epiphany 1098 answered 0
-// for Matins, Laudes and Vespers under Roman and 16/6/5 under monastic. The
-// corpus went monastic-flat weeks ago; the office follows — and with it the
-// Roman little-hours psalmody, whose only consumer was this file. `rite` is
-// gone from the query: there is one cursus, so there is nothing to choose.
+// ONE office table. The Roman one was cut: DO's Roman horas gave 811 rows of
+// which 514 (63.4%) carried NO office chant — and `romanum` was the DEFAULT
+// rite, so the untold call returned nothing. Epiphany 1098 answered 0 for
+// Matins, Lauds and Vespers under Roman and 16/6/5 under monastic. The corpus
+// is monastic-flat; the office follows — and with it the Roman little-hours
+// psalmody, whose only consumer was this file. A `rite` option is deliberately
+// absent from the query: there is one cursus, so there is nothing to choose.
 let _office: Map<string, OfficeDay> | null = null;
 function officeMap(): Map<string, OfficeDay> {
   if (!_office) _office = new Map(OFFICE_MONASTIC.map((d) => [d.feastId, d]));
@@ -164,8 +164,8 @@ function antiphonsFor(
  * The antiphons this feast's COMMUNE appoints for an hour, or empty.
  *
  * FEAST_COMMUNE (mined from DO's `[Rule]`/`[Rank]` headers) says which category
- * a feast belongs to; COMMUNE_OFFICE says what that category sings. Both rites
- * use it — a commune is a category of saint, not a cursus.
+ * a feast belongs to; COMMUNE_OFFICE says what that category sings. A commune
+ * is a category of saint, not a cursus, so the table binds to no rite.
  */
 function communeSlot(feast: Feast, hour: CanonicalHour, slot: string): Chant[] {
   const commune = communeByFeast().get(feast.id);
@@ -204,9 +204,12 @@ function seasonalRespBreve(feast: Feast, hour: CanonicalHour): Chant[] {
 }
 
 /**
- * A little hour's portion of Ps 118 (Terce vv. 33–80, Sext 81–128, None 129–176,
- * from the extracted DO scheme). The psalmody belongs to a specific day, so it
- * is only included for a real feast query — not the all-days survey scan, which
+ * A little hour's psalmody, from the extracted DO scheme. The Benedictine
+ * distribution varies by weekday: Sunday and Monday walk portions of Ps 118
+ * (Terce Sunday vv. 33–56, Monday 105–128, and so on through the hours);
+ * Tuesday through Saturday sing the gradual psalms (Terce 119–121, Sext
+ * 122–124, None 125–127). The psalmody belongs to a specific day, so it is
+ * only included for a real feast query — not the all-days survey scan, which
  * has no date and would repeat the psalms once per feast.
  */
 function littleHourPsalmody(feast: Feast, hour: CanonicalHour): Chant[] {
@@ -305,11 +308,11 @@ function chantsForFeastHour(feast: Feast, hour: CanonicalHour): Chant[] {
     if (hy) results.push(hy);
     else results.push(...communeSlot(feast, hour, "hymnus"));
   } else if (hour === "tertia" || hour === "sexta" || hour === "nona") {
-    // The little hours: their portion of Ps 118 (Terce vv. 33–80, Sext 81–128,
-    // None 129–176, from the extracted DO scheme), then the responsory breve.
-    // The psalmody belongs to a specific day, so it is only included for a real
-    // feast query — not the all-days survey scan (which has no date and would
-    // repeat the psalms once per feast).
+    // The little hours: the day's psalmody (Ps 118 portions on Sunday and
+    // Monday, the gradual psalms the rest of the week — see littleHourPsalmody),
+    // then the responsory breve. The psalmody belongs to a specific day, so it
+    // is only included for a real feast query — not the all-days survey scan
+    // (which has no date and would repeat the psalms once per feast).
     results.push(...littleHourPsalmody(feast, hour));
     // The short responsory, with the same commune fallback the antiphons get.
     // office-monastic fills respBreve on only 84–96 of its 409 rows, which is
@@ -361,11 +364,11 @@ function assertFeasts(feasts: Feast[] | undefined, method: string): void {
 export function getHour(query?: OfficiumQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
 
-  // ⟨2026-07-28⟩ officium never validated its keys, which is how `rite` — now
-  // removed — kept being accepted after it stopped meaning anything: a JS
+  // officium once accepted any key unexamined, which is how the removed
+  // `rite` kept being accepted after it stopped meaning anything: a JS
   // caller asking for rite: "romanum" got monastic chants and no warning. A
   // silently-ignored option is worse than a missing one, because the caller
-  // believes they chose. Same guard cantus and proprium already carry.
+  // believes they chose. Same guard cantus and proprium carry.
   const unknown = Object.keys(query).filter(
     (k) => !OFFICIUM_QUERY_KEYS.has(k),
   );
@@ -413,10 +416,10 @@ export function getHour(query?: OfficiumQuery): Chant[] {
 
   // The era view: an own `before` wins; otherwise the view festum({ before })
   // stamped on the feast rides along. Excluded chants degrade to SILENCE here
-  // ⟨RULED⟩ — the office's proper → commune → ferial chain triggers on ABSENCE
-  // from the tables, not on inadmissibility, so no re-pick is attempted.
-  // (Extending the chain to re-pick under a view is a recorded follow-up, not
-  // an accident.)
+  // by design — the office's proper → commune → ferial chain triggers on
+  // ABSENCE from the tables, not on inadmissibility, so no re-pick is
+  // attempted. (Extending the chain to re-pick under a view is deliberate
+  // future work, not an accident.)
   {
     const cutoff = eraCutoff(query, feasts, "officium");
     if (cutoff != null || query.cursus) {

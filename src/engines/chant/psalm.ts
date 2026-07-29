@@ -67,8 +67,22 @@ function verseToChant(
  * Psalm and canticle retrieval (`tonus.psalmus`) from the Psalterium,
  * intoned to the psalm tones (modes 1-8 plus tonus peregrinus) as GABC.
  */
+const PSALMUS_QUERY_KEYS = new Set([
+  "psalm", "verse", "mode", "differentia", "intonatio", "inDirectum", "solemn",
+]);
+
 export function getPsalm(query?: PsalmusQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
+
+  // The same door policy as cantus and officium: an unknown key throws, so a
+  // stale or misspelled option is learned immediately, not silently ignored.
+  const unknown = Object.keys(query).filter((k) => !PSALMUS_QUERY_KEYS.has(k));
+  if (unknown.length) {
+    throw new Error(
+      `psalmus: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
+      `(expected ${[...PSALMUS_QUERY_KEYS].join(", ")}).`,
+    );
+  }
 
   const verses = lookupVerses(query.psalm ?? 0, query.verse);
   if (!verses.length) return [];

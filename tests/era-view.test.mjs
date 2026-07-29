@@ -4,15 +4,15 @@
 // filters the REPERTOIRE attested by a year. These are two halves of one
 // intent, and they compose: the feast carries the view it was resolved under,
 // and every day verb (proprium, ordinarium, officium) serves the same view
-// without being told the year twice ⟨RULED 2026-07-27⟩.
+// without being told the year twice.
 //
-// THE COMEBACK ⟨RULED 2026-07-28⟩: this suite was retired with the filter when
-// its data had a genre-shaped hole (93% of responsories undated — before: 1098
-// deleted the Night Office). The corpus closed the hole (85% dated,
-// responsories 92%); the filter returned with ONE time argument. `century` did
-// not come back — the noted convergence executed as a deletion — and the
-// Epiphany acceptance test at the bottom pins the exact failure that retired
-// v1, so it can never quietly return.
+// THE COMEBACK: this suite was retired with the filter when its data had a
+// genre-shaped hole (93% of responsories undated — before: 1098 deleted the
+// Night Office). The corpus closed the hole (85% dated, responsories 92%);
+// the filter returned with ONE time argument. `century` did not come back —
+// the planned convergence executed as a deletion — and the Epiphany
+// acceptance test at the bottom pins the exact failure that retired v1, so it
+// can never quietly return.
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { getChants } from "../dist/engines/chant/chant.js";
@@ -69,7 +69,7 @@ describe("era view — the feast carries it", () => {
 });
 
 describe("era view — re-pick vs silence", () => {
-  test("ordinarium RE-PICKS: the rotation runs over the admissible pool ⟨RULED⟩", () => {
+  test("ordinarium RE-PICKS: the rotation runs over the admissible pool", () => {
     const plain = getFeast({ date: easterDate })[0];
     const parts = (ord) => new Set(ord.map((c) => c.ordinary));
     const viewedOrd = getOrdinary({ feast: plain, before: VIEW });
@@ -87,7 +87,7 @@ describe("era view — re-pick vs silence", () => {
     }
   });
 
-  test("proprium degrades to SILENCE — a proper has no pool of alternatives ⟨RULED⟩", () => {
+  test("proprium degrades to SILENCE — a proper has no pool of alternatives", () => {
     const plain = getFeast({ date: easterDate })[0];
     const all = getPropers({ feast: plain });
     const viewed = getPropers({ feast: plain, before: VIEW });
@@ -123,11 +123,11 @@ describe("era view — one argument, every door", () => {
   });
 });
 
-describe("era view — the Epiphany acceptance ⟨the failure that retired v1⟩", () => {
-  // 2026-07-27: under before: 1098, Epiphany Matins lost every one of its 9
-  // responsories — Hartker-derived, c. 1000, they BELONG in an 1098 answer —
-  // because CANTUS's direct text index never dated them. The comeback exists
-  // because the corpus closed that hole (crosswalk gap-fill + matcher v2).
+describe("era view — the Epiphany acceptance (the failure that retired v1)", () => {
+  // Under before: 1098, v1 lost every one of Epiphany Matins' 9 responsories
+  // — Hartker-derived, c. 1000, they BELONG in an 1098 answer — because
+  // CANTUS's direct text index never dated them. The comeback exists because
+  // the corpus closed that hole (crosswalk gap-fill + matcher v2).
   // This test pins the repertory, not a count: the Night Office must survive.
   test("Epiphany Matins keeps its responsories under before: 1098", () => {
     const feast = getFeast({ date: epiphanyDate })[0];

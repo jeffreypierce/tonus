@@ -5,7 +5,7 @@ import type {
   Chant, CantusQuery, OfficeCode, ChantSource, Corpus, GenusCount, ModeCount, SharedCount,
   CorpusFullCount, CorpusLedger, CorpusQuery,
 } from "./types.js";
-import { OFFICE_LABELS, MODE_LABELS } from "./types.js";
+import { OFFICE_LABELS, MODE_LABELS, CANTUS_QUERY_KEYS } from "./types.js";
 import { CORPUS_OVERLAP, CORPUS_FULL } from "../../data/corpus-overlap.js";
 import { attestationCutoff, chantAdmissible } from "./attest.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
@@ -14,11 +14,11 @@ import { LA_DATA, LA_SOURCE } from "../../data/la.js";
 import { LH_DATA, LH_SOURCE } from "../../data/lh.js";
 import { AM_DATA, AM_SOURCE } from "../../data/am.js";
 import { NR_DATA, NR_SOURCE } from "../../data/nocturnale-romanum.js";
-// Office books ⟨widened 2026-07-27⟩ — the antiphons and short responsories that
-// fill weekday office slots; see ChantSource in types.ts for why.
+// Office books — the antiphons and short responsories that fill weekday
+// office slots; see ChantSource in types.ts for why.
 import { AMS_DATA, AMS_SOURCE } from "../../data/ams.js";
 import { PSM_DATA, PSM_SOURCE } from "../../data/psm.js";
-// ⟨2026-07-28⟩ further marked Solesmes books — see ChantSource in types.ts.
+// Further marked Solesmes books — see ChantSource in types.ts.
 import { CSE_DATA, CSE_SOURCE } from "../../data/cse.js";
 import { COT_DATA, COT_SOURCE } from "../../data/cot.js";
 import { KYRIALE } from "../../data/kyriale.js";
@@ -113,7 +113,7 @@ const CORPUS: Chant[] = [
   // The Kyriale as a corpus book (source "ky"): the ordinary IS repertoire —
   // office stays "or" and the per-ordinary identity rides `ordinary`/
   // `ordinarium`/`mass`, the same records `ordinarium()` serves (one shaping,
-  // ordinary.ts). Registered 2026-07-16 so corpus-scale analysis can count
+  // ordinary.ts). Registered as a book so corpus-scale analysis can count
   // the ordinary; a few aspersion chants legitimately also appear in other books
   // (shared content, the CORPUS_OVERLAP situation).
   ...KYRIALE.map(entryToOrdinaryChant),
@@ -128,7 +128,7 @@ function byId(): Map<string, Chant> {
 const SOURCES: Record<ChantSource, Chant["source"]> = {
   gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
   ky: KY_SOURCE,
-  // office books ⟨widened 2026-07-27⟩ — provenance, not acquisition
+  // office books — provenance, not acquisition
   ams: AMS_SOURCE, psm: PSM_SOURCE,
   cse: CSE_SOURCE, cot: COT_SOURCE,
 };
@@ -322,16 +322,15 @@ export function resolveChants(ids: string[]): Chant[] {
   return ids.map(resolveChant).filter((c): c is Chant => c !== null);
 }
 
-/**
- * Cross-corpus chant retrieval (`tonus.cantus`) over GR, LA, LH, and LU.
- * A `gabc` field bypasses the corpus and returns a single user
- * chant parsed from raw GABC (body or full file with headers).
- */
-export const CANTUS_QUERY_KEYS = new Set([
-  "id", "gabc", "incipit", "mode", "office", "source", "limit", "offset", "sort",
-  "before", "cursus",
-]);
+// The key set lives in types.ts (cycle-free); re-exported here for the verbs
+// that extend it (hour.ts).
+export { CANTUS_QUERY_KEYS };
 
+/**
+ * Cross-corpus chant retrieval (`tonus.cantus`) over every corpus book
+ * (the codes in SOURCES). A `gabc` field bypasses the corpus and returns a
+ * single user chant parsed from raw GABC (body or full file with headers).
+ */
 export function getChants(query?: CantusQuery): Chant[] {
   // A no-match returns []; a malformed query is a caller bug and throws with
   // guidance (the reconciled query contract — see CODE-STANDARDS → Boundaries).

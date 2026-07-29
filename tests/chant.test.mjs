@@ -290,9 +290,9 @@ describe("getHour", () => {
     assert.ok(chants.length > 0);
   });
 
-  // ⟨2026-07-28⟩ Was "little hours march through Ps 118 (Terce 33–80, …)" — the
-  // ROMAN pattern, asserted while `rite` defaulted to romanum. tonus now sings
-  // one cursus, and the Benedictine little hours take the gradual psalms
+  // This once asserted the ROMAN pattern ("little hours march through Ps 118:
+  // Terce 33–80, …"), from when a `rite` option defaulted to romanum. tonus
+  // sings one cursus, and the Benedictine little hours take the gradual psalms
   // (RB ch. 18: Terce 119–121, Sext 122–124, None 125–127) on an ordinary
   // weekday, not sections of Ps 118. Same test, the surviving rite's numbers.
   test("little hours take the gradual psalms (Terce 119–121, Sext 122–124, None 125–127)", () => {
@@ -325,8 +325,8 @@ describe("getHour", () => {
 });
 
 describe("getHour — the monastic rite", () => {
-  // ⟨2026-07-28⟩ The `rite` option is gone — one cursus, nothing to choose — so
-  // the "defaults to romanum" test went with it. What it really guarded was that
+  // The `rite` option is gone — one cursus, nothing to choose — so the
+  // "defaults to romanum" test went with it. What it really guarded was that
   // the untold call and the explicit call agree; that is now a tautology.
   test("a removed option fails loudly — officium rejects rite", () => {
     const [f] = getFeast({ date: new Date("2026-12-25") });
@@ -465,16 +465,13 @@ describe("getHour — completorium (Compline)", () => {
       const p = v.id.split(":")[1];
       byPsalm[p] = (byPsalm[p] ?? 0) + 1;
     }
-    // ⟨2026-07-28⟩ Ps 30 vv. 2–6 was the ROMAN scheme's partial psalm and is
-    // gone with it. The monastic three are sung whole, so the verse counts are
-    // the psalms' own lengths — which is the real assertion here: no truncation.
+    // Ps 30 vv. 2–6 was the ROMAN scheme's partial psalm and went with that
+    // scheme. The monastic three are sung whole, so the verse counts are the
+    // psalms' own lengths — which is the real assertion here: no truncation.
     assert.equal(byPsalm["30"], undefined, "no Ps 30 — that was the Roman scheme");
     assert.equal(byPsalm["4"], 10, "Ps 4 entire");
     assert.equal(byPsalm["90"], 16, "Ps 90 entire");
     assert.equal(byPsalm["133"], 4, "Ps 133 entire");
-    assert.equal(byPsalm["4"], 10, "Ps 4 whole");
-    assert.equal(byPsalm["90"], 16, "Ps 90 whole");
-    assert.equal(byPsalm["133"], 4, "Ps 133 whole");
     assert.ok(!byPsalm["31"], "no stray psalms");
   });
 
@@ -538,10 +535,10 @@ describe("getHour — prima (Prime)", () => {
         c.filter((x) => x.id.startsWith("psalm:")).map((x) => Number(x.id.split(":")[1])),
       )].sort((a, b) => a - b);
     };
-    // ⟨2026-07-28⟩ Re-anchored from the Tridentine scheme to the Benedictine.
-    // Sunday keeps Ps 118; the weekdays walk Pss 1–19 (RB ch. 18) instead of
-    // repeating 53 + 118 daily. The POINT of the test — that Prime is
-    // weekday-varied at all — is unchanged.
+    // Anchored to the Benedictine scheme, not the Tridentine: Sunday keeps
+    // Ps 118; the weekdays walk Pss 1–19 (RB ch. 18) instead of repeating
+    // 53 + 118 daily. The POINT of the test — that Prime is weekday-varied
+    // at all — is unchanged.
     assert.deepEqual(psalmsOn("2026-12-06"), [118], "Sunday: Ps 118");
     assert.deepEqual(psalmsOn("2026-12-11"), [15, 16, 17], "Friday: Ps 15,16,17");
   });
