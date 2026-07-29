@@ -14,6 +14,7 @@
 // it IS the library.
 
 import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, sc } from "./ink.js";
+import { tabula } from "./tabula.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const R_SEASON = 150, R_SEASON_NAME = 164, R_ANCHOR = 197;
@@ -59,6 +60,17 @@ function dayOfYear(date, year) {
   return Math.floor((new Date(date) - Date.UTC(year, 0, 1)) / 86400000) + 1;
 }
 
+const MONTHS = ["Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
+  "Iul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** A date as the books would set it, read in UTC. tonus is UTC-canonical, and
+ * local-time formatting silently moves a date across the midnight boundary —
+ * west of Greenwich, Easter reads as the day before itself. */
+function romanDate(date) {
+  const d = new Date(date);
+  return `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
 function el(tag, attrs, text) {
   const e = document.createElementNS(NS, tag);
   for (const k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
@@ -94,12 +106,12 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
 
   const svg = el("svg", {
     class: "annulus",
-    viewBox: "0 0 600 620",
+    viewBox: "0 0 500 500",
     xmlns: NS,
     role: "img",
     "aria-label": `The liturgical year ${year} as a ring`,
   });
-  const root = el("g", { transform: "translate(300 300)" });
+  const root = el("g", { transform: "translate(250 250)" });
   svg.appendChild(root);
 
   const defs = el("defs", {});
@@ -122,7 +134,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
       d: `M ${sc(x0)} ${sc(y0)} A ${R_SEASON} ${R_SEASON} 0 ${large} 1 ${sc(x1)} ${sc(y1)}`,
       fill: "none",
       stroke: INK,
-      "stroke-opacity": s.pen ? STRATUM.rail : STRATUM.bracket,
+      "stroke-opacity": s.pen ? STRATUM.bracket : STRATUM.letters,
       "stroke-width": s.light ? STROKE.hair : STROKE.fine,
     }));
 
@@ -171,7 +183,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
       d: `M ${sc(xo0)} ${sc(yo0)} A ${R_WEDGE_OUT} ${R_WEDGE_OUT} 0 ${large} 1 ${sc(xo1)} ${sc(yo1)} ` +
          `L ${sc(xi1)} ${sc(yi1)} A ${R_WEDGE_IN} ${R_WEDGE_IN} 0 ${large} 0 ${sc(xi0)} ${sc(yi0)} Z`,
       fill: INK,
-      "fill-opacity": isSel ? 0.05 : 0,
+      "fill-opacity": 0,
       cursor: onSelect ? "pointer" : null,
       tabindex: onSelect ? "0" : null,
       role: onSelect ? "button" : null,
@@ -187,25 +199,26 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
 
     const ang = doyAngle(a.doy);
     const [dx, dy] = deg2xy(ang, R_ANCHOR);
+    // Selection on a sparse ring cannot be opacity alone — at this scale a
+    // darker dot among fourteen others is invisible. The dot keeps the ink
+    // grammar; a halo around it carries the selection.
+    if (isSel) {
+      marks.appendChild(el("circle", {
+        cx: sc(dx), cy: sc(dy), r: sc(a.dot + 5),
+        fill: "none", stroke: INK,
+        "stroke-opacity": STRATUM.bracket, "stroke-width": STROKE.fine,
+      }));
+    }
     marks.appendChild(el("circle", {
       cx: sc(dx), cy: sc(dy), r: sc(a.dot),
       fill: INK,
       "fill-opacity": isSel ? STRATUM.cadence : STRATUM.wave,
     }));
 
-    // The name sits outside its dot, turned to stay upright.
-    const flip = ang > 180;
-    const [tx, ty] = deg2xy(ang, R_ANCHOR + 12);
-    marks.appendChild(el("text", {
-      x: sc(tx), y: sc(ty),
-      transform: `rotate(${sc(flip ? ang + 90 : ang - 90)} ${sc(tx)} ${sc(ty)})`,
-      "text-anchor": flip ? "end" : "start",
-      "dominant-baseline": "middle",
-      "font-family": HOUSE_SERIF,
-      "font-size": isSel ? STEP.label : STEP.caption,
-      fill: INK,
-      "fill-opacity": isSel ? STRATUM.label : STRATUM.letters,
-    }, a.nomen));
+    // No name rides the ring. Good Friday and Easter are two degrees apart and
+    // five pairs sit inside six, so radial labels collide at any rotation —
+    // the names belong to the tabula beside the diagram, where selection joins
+    // the two. The ring carries shape; the table carries text.
   });
 
   // ── the standing day: the one rubricated mark ──
@@ -229,4 +242,37 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
   }, String(year)));
 
   return svg;
+}
+
+/** The names the ring cannot carry. Selection joins the two: a row highlights
+ * with its wedge, and clicking either moves both. `a die` counts from the
+ * standing day, so the table answers "how far from here" without arithmetic. */
+export function annulusTabula(tonus, { year, day = null, selected = "easter", onSelect } = {}) {
+  const p = tonus.pascha(year);
+  const dayDoy = day ? dayOfYear(day, year) : null;
+
+  const rows = ANCHOR_NAMES
+    .filter(([key]) => p[key] != null)
+    .map(([key, nomen, gloss]) => ({
+      key, nomen, gloss,
+      dies: romanDate(p[key]),
+      doy: dayOfYear(p[key], year),
+    }))
+    .sort((a, b) => a.doy - b.doy);
+
+  const columns = [
+    { key: "nomen", head: "nomen", gloss: (r) => r.gloss },
+    { key: "dies", head: "dies", mono: true },
+  ];
+  if (dayDoy != null) {
+    columns.push({
+      key: "doy", head: "a die", mono: true, num: true,
+      format: (doy) => { const d = doy - dayDoy; return d > 0 ? `+${d}` : String(d); },
+    });
+  }
+
+  return tabula(rows, columns, {
+    selected, onSelect,
+    caption: `The movable feasts of ${year}`,
+  });
 }
