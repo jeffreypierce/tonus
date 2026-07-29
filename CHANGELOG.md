@@ -8,28 +8,59 @@ The rubric true-up and the era view. The 2026-07-27 review found the
 Kyriale selection chain leaking past its own gates; the fixes landed with
 regression tests, the corpus pipeline was corrected and regenerated behind
 them, and the calendar's and the corpus's `before` arguments were
-reconciled into one composable view.
+reconciled into one composable view. Since then the shelf widened to
+eleven books, the office settled on one cursus, the cadence catalogue was
+re-mined over the sung corpus, and a new verb — `census` — measures every
+chant against the corpus that holds it.
 
 ### Added
 
 - **The era view composes end to end.** `festum({ date, before })` stamps
   the view year on the returned `Feast` (`feast.before`), and every day
-  verb — `proprium`, `ordinarium`, `officium`, `matutinum` — serves the
-  same view without being told the year twice; an own `before`/`century`
+  verb — `proprium`, `ordinarium`, `officium` — serves the
+  same view without being told the year twice; an own `before`
   overrides. Previously the day verbs' types promised `before`/`century`/
   `cursus` (they extend `CantusQuery`) while the implementations diverged
   three ways: `proprium` threw "unknown query key," `officium` and
   `ordinarium` silently ignored them.
 - One admissibility rule for every door: `engines/chant/attest.ts`, a leaf
-  module shared by `cantus` and the day verbs. `century: N` ≡
-  `before: N * 100` — one cutoff internally, two spellings for now.
+  module shared by `cantus`, the day verbs, and the census. One spelling
+  at the door — `before`, a year.
 - Under a view, `ordinarium` **re-picks** over the admissible pool (the
-  Kyriale offers ranked alternatives by design); `proprium`/`officium`/
-  `matutinum` degrade to silence — the corpus cut's evidence law.
-- `matutinum({ rite: "monasticum" })` documented alongside Roman: both
-  rites served, `structured` telling the shapes apart.
+  Kyriale offers ranked alternatives by design); `proprium` and `officium`
+  degrade to silence — the corpus cut's evidence law.
+- **The shelf widens to eleven books.** Four more marked Solesmes office
+  books join — Antiphonale Monasticum Solesmense (`ams`), Psalterium
+  Monasticum (`psm`), Cantus selecti (`cse`), Chants of the Church
+  (`cot`) — admitted by the stated rule: Solesmes and rhythmically marked.
+  The shipped corpus is 2,887 rows over 2,187 distinct chants.
+- **`tonus.census({ id })`** — one chant measured against the corpus that
+  holds it: a per-group profile with typicality, `balance` (distance and
+  deviant groups), and nearest neighbours by per-group cosine (`k`, `by`,
+  `before`). One block of 225 float32s per shipped chant; see
+  `docs/census.md`.
+- **`corpus()` with no argument returns the whole shelf** — the rollup
+  plus every book's ledger — and every book carries `full`, the pre-cut
+  tally: the ledger of the cut, auditable rather than asserted.
+- **`CADENTIAE` joins the appendix** (with `CadentiaFamilia`): the
+  corpus-grounded cadence catalogue, mined from every phrase-end in the
+  sung corpus — the same population the census counts — keyed by shape
+  and arrival.
 - Test suites: `tests/ordinarium.test.mjs` (the selection chain end to
   end) and `tests/era-view.test.mjs` (the view's whole contract).
+
+### Removed
+
+- **The `rite` option.** tonus assembles one cursus, the Benedictine: the
+  Roman office table carried no chant at all on 63.4% of its days, and its
+  little-hours psalmody had no other consumer, so `rite: "romanum"`
+  returned a cursus nobody sang. A stale `rite` key now throws
+  (`officium` rejects unknown keys) rather than being silently ignored.
+- **`matutinum` as a separate verb.** Matins is an hour of `officium`
+  (`hora: "matutinum"`), returned flat like every other hour; the
+  three-nocturn ordo shape remains unmodelled.
+- **`century`.** It was `before: N * 100` in different clothes; the two
+  spellings converged on the one that is a year.
 
 ### Fixed
 

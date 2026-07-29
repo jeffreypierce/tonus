@@ -12,6 +12,7 @@ from 1583 and the Julian computus before it.
 
 - [Calendar](#calendar)
   - [The day's feasts — `festum`](#the-days-feasts--festum)
+    - [The day as of a year — `before`](#the-day-as-of-a-year--before)
   - [Rank — `ritus` and `grade`](#rank--ritus-and-grade)
   - [Seasons — the temporale](#seasons--the-temporale)
   - [The year's anchors — `pascha`](#the-years-anchors--pascha)
@@ -46,7 +47,7 @@ tonus.festum({ date: new Date("2026-12-25") });
     seasonEnd: "2027-01-10",
     date: "2026-12-25",
     weekday: 5,
-    masses: [3, 4],
+    masses: [2, 3],
     marian: false,
     apostolic: false,
   },
@@ -61,15 +62,15 @@ tonus.festum({ date: new Date("2026-12-25") });
     seasonEnd: "2027-01-10",
     date: "2026-12-25",
     weekday: 5,
-    masses: [],
+    masses: [16],
     marian: false,
     apostolic: false,
   },
 ];
 ```
 
-The privileged feast leads; the concurrent Advent feria follows with no proper
-mass of its own (`masses: []`).
+The privileged feast leads; the concurrent Advent feria follows, carrying only
+the ferial rubric's mass (`masses: [16]`).
 
 Precedence decides what comes first when feasts collide. On November 30,
 2025, St. Andrew falls on the first Sunday of Advent; the privileged

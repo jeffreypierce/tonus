@@ -1,11 +1,12 @@
 # Census
 
-`census` measures one chant against the corpus that holds it: how ordinary it
+`census` measures one chant against the corpus that holds it: how typical it
 is, where it is unusual, and what it is near.
 
 - [Census](#census)
-  - [The verb](#the-verb)
+  - [The method](#the-method)
   - [What a block holds](#what-a-block-holds)
+  - [How the measurement works](#how-the-measurement-works)
   - [Distance is cosine per field group](#distance-is-cosine-per-field-group)
   - [Profile and typicality](#profile-and-typicality)
   - [Balance — distance and deviance](#balance--distance-and-deviance)
@@ -13,7 +14,7 @@ is, where it is unusual, and what it is near.
   - [The era view](#the-era-view)
   - [What the census is not](#what-the-census-is-not)
 
-## The verb
+## The method
 
 ```js
 tonus.census({ id: "gregobase:1210" });
@@ -49,9 +50,9 @@ Everything comes back in one call — profile, balance, neighbours:
 
 ```ts
 interface CensusQuery {
-  id: string;      // the chant to census
-  k?: number;      // how many neighbours, default 8; 0 returns none
-  by?: CensusBy;   // which field group similarity is measured on, default "all"
+  id: string; // the chant to census
+  k?: number; // how many neighbours, default 8; 0 returns none
+  by?: CensusBy; // which field group similarity is measured on, default "all"
   before?: number; // restrict neighbours to chants attested by this year
 }
 ```
@@ -66,21 +67,45 @@ chant is unlike everything," which is a different claim.
 The corpus pipeline censuses every shipped chant into 225 float32s, grouped by
 what they describe:
 
-| group | floats | what it measures |
-| --- | ---: | --- |
-| `modal` | 12 | affinity to each of the eight modes, the final's and tenor's pitch-class, ambitus |
-| `degreeHist` | 15 | how long the melody dwells on each scale degree, final-relative |
-| `melodic` | 121 | the interval bigram table — which step follows which |
-| `trigram` | 16 | three-note motifs, against the corpus's commonest |
-| `cadenceFinal` | 16 | how the chant closes, keyed by cadence signature |
-| `cadenceMedial` | 16 | how its interior phrases land |
-| `chironomy` | 6 | the melodic arc in quarters, phrase length, melisma density |
-| `textual` | 7 | vowel distribution by sung duration, accent rate, melisma mean |
-| `formulas` | 4 | centonization hits against the formulary |
+| group           | floats | what it measures                                                                  |
+| --------------- | -----: | --------------------------------------------------------------------------------- |
+| `modal`         |     12 | affinity to each of the eight modes, the final's and tenor's pitch-class, ambitus |
+| `degreeHist`    |     15 | how long the melody dwells on each scale degree, final-relative                   |
+| `melodic`       |    121 | the interval bigram table — which step follows which                              |
+| `trigram`       |     16 | three-note motifs, against the corpus's commonest                                 |
+| `cadenceFinal`  |     16 | how the chant closes, keyed by cadence signature                                  |
+| `cadenceMedial` |     16 | how its interior phrases land                                                     |
+| `chironomy`     |      6 | the melodic arc in quarters, phrase length, melisma density                       |
+| `textual`       |      7 | vowel distribution by sung duration, accent rate, melisma mean                    |
+| `formulas`      |      4 | centonization hits against the formulary                                          |
 
 Four more fields ride in the block and are **not** similarity dimensions:
 `flags` (a bitfield), `attest` (dating — that is what `before` reads),
 `extras`, and `reserve`. `by` will not accept them.
+
+## How the measurement works
+
+Every number in a block reads off a single `notatio()` parse — the same parse
+`score` gives you — so the census can never disagree with the library about
+what a chant is.
+
+Each float is a named measurement, not a learned one: time spent on the
+subfinal, how often a rising second follows a falling third. When the census
+calls two chants near, the profile says in what respect.
+
+Most groups are normalized to sum to one, so a group holds a distribution —
+where the melody's time goes, not how much of it there is; length is not a
+similarity. The trigram and cadence groups count against dictionaries mined
+from the corpus itself — its commonest motifs, its commonest closing gestures,
+one bucket for the rest — so the corpus supplies the vocabulary and the chant
+supplies the usage.
+
+The reference is the mean block over all 2,187 chants, group by group — no
+curated exemplar, no tunable weights. And because blocks are sums of durations
+and counts, they add: a season's blocks, summed and divided by their count,
+are the season's mean profile in the same 225 slots. The corpus repository's
+year-shaped aggregates are built on that closure; only the per-chant half
+ships (see [What the census is not](#what-the-census-is-not)).
 
 ## Distance is cosine per field group
 
@@ -98,15 +123,15 @@ Each group's `typicality` is its cosine against the corpus mean for that group:
 1.0 is "uses this dimension exactly as the corpus does on average," lower means
 "unlike the rest."
 
-The two numbers above are a fair illustration. *Ab occultis meis* is a mode-2
-Gradual whose `modal` typicality is 0.986 — modally it is an ordinary mode-2
+The two numbers above are a fair illustration. _Ab occultis meis_ is a mode-2
+Gradual whose `modal` typicality is 0.986 — modally it is a typical mode-2
 chant — while its `melodic` typicality is 0.694, because its interval
 vocabulary is its own. One chant can be conventional in one dimension and
 distinctive in another, which is the reason the groups are kept apart.
 
 Typicality is always measured against the **whole shipped corpus**, never the
-filtered pool: `before` restricts who may be a neighbour, it does not rewrite
-what "ordinary" means.
+filtered pool: `before` restricts who may be a neighbour, it does not move
+the mean.
 
 ## Balance — distance and deviance
 
@@ -114,12 +139,12 @@ what "ordinary" means.
 balance: { distance: 0.1029, deviantGroups: ["degreeHist", "melodic", "formulas"] }
 ```
 
-`distance` is 1 minus the mean typicality across all groups: 0 is the most
-ordinary chant imaginable, 1 has nothing in common with the corpus mean.
+`distance` is 1 minus the mean typicality across all groups: 0 is a chant at
+the corpus mean, 1 has nothing in common with it.
 
 `deviantGroups` names where a chant is unusual **relative to its own mean**,
 most deviant first — not against an absolute threshold. The question it answers
-is "given how ordinary this chant is overall, where does it depart from
+is "given how typical this chant is overall, where does it depart from
 itself?", which is what makes the answer legible for a chant that is unusual
 everywhere or nowhere.
 
@@ -137,7 +162,7 @@ Nothing tells the census what genre or mode a chant is. It recovers them from
 melodic shape alone — which is the readiest evidence that the blocks describe
 something real.
 
-`by` changes what *near* means:
+`by` changes what _near_ means:
 
 ```js
 tonus.census({ id: "gregobase:1210", k: 3, by: "cadenceFinal" });
@@ -145,7 +170,7 @@ tonus.census({ id: "gregobase:1210", k: 3, by: "cadenceFinal" });
 ```
 
 Asked on `all`, a mode-2 Gradual finds mode-2 Graduals. Asked on
-`cadenceFinal`, it finds an Alleluia, an Introit and a Communion in modes 1, 3
+`cadenceFinal`, it finds an Alleluia, an Introit and a Communion in modes 1
 and 4 that happen to end with the same gesture. Both answers are correct; they
 are answers to different questions.
 
@@ -171,7 +196,7 @@ The seed chant itself is never filtered — you asked about it by name.
 It is not a similarity search over Gregorian chant at large. The blocks
 describe the chants tonus ships, which is the assignment-driven corpus: what
 some day of the calendar calls for. A melody's neighbours are its neighbours
-*within that repertoire*.
+_within that repertoire_.
 
 It is also not the whole census. The corpus pipeline builds year-shaped
 aggregates too — what a season sings, how usage weights a chant across the

@@ -11,7 +11,7 @@
   carries the episema/mora layer the score engine reads, because a bare
   transcription is a worse copy of a chant already held. Every book below passes
   it; the 1974 Graduale, the 1990 Gregorian Missal and the 1983 Liber cantualis
-  are excluded by ruling as post-conciliar re-editions of books already here.
+  are deliberately excluded as post-conciliar re-editions of books already here.
 
   - _Graduale sacrosanctæ Romanæ ecclesiæ de tempore et de sanctis_ (Graduale
     Romanum). Ed. Solesmes. Tournai: Desclée, 1961 — 780 chants (`gr`).

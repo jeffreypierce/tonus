@@ -33,6 +33,9 @@ calls and no runtime dependencies.
   chant's melodic character, and drawn to a square-note or modern staff.
 - **The harmony of the spheres.** An ephemeris of the classical planets, voiced
   as tuned pitch after Boethius, Nicomachus, Pliny, and Ptolemy.
+- **The census.** Every shipped chant measured against the corpus that holds
+  it: how typical it is, where it is unusual, and its nearest neighbours by
+  melodic shape.
 
 ## The ideas behind it
 
@@ -116,7 +119,8 @@ The **[documentation index](docs/index.md)** is the technical center: the full
 API, the conventions, the error contract, and the code standards. From there,
 one page per engine, in dependency order:
 [tuning](docs/tuning.md), [calendar](docs/calendar.md), [chant](docs/chant.md),
-[score](docs/score.md), and [heavens](docs/heavens.md).
+[score](docs/score.md), [heavens](docs/heavens.md), and
+[census](docs/census.md).
 
 ## Install and run
 

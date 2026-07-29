@@ -11,7 +11,7 @@ import tonus from "tonus";
 - [The methods](#the-methods) — by engine
 - [The appendix](#the-appendix) — seven constant tables
 - [Full contents](#full-contents) — every method and section
-- [Conventions](#conventions) — Latin/English, dates, determinism, error contracts, bibiliography
+- [Conventions](#conventions) — Latin/English, dates, determinism, error contracts, bibliography
 
 ## The methods
 
@@ -44,6 +44,10 @@ chant results sort by rank then incipit.
 `Error` on invalid input. Only `Temperamentum` carries methods; `Score` is a
 plain data record, and rendering is the standalone `inscriptio`. Voice
 synthesis (`vox`, `chorus`) now lives in the private orreliquum app.
+
+`census` takes the query form but answers for exactly one chant, so an id with
+no block throws rather than returning an empty answer — a silent nothing would
+read as "this chant is unlike everything," which is a different claim.
 
 Context objects can be passed back into query functions as filters:
 
@@ -106,10 +110,10 @@ the list resolve their pitches through the ones before.
 - [The corpora](chant.md#the-corpora)
 - [The books — `corpus`](chant.md#the-books--corpus)
 - [Retrieval — `cantus`](chant.md#retrieval--cantus)
+- [The repertoire as of a date — the era view](chant.md#the-repertoire-as-of-a-date--the-era-view)
 - [The Mass propers — `proprium`](chant.md#the-mass-propers--proprium)
 - [The ordinary — `ordinarium`](chant.md#the-ordinary--ordinarium)
 - [The Office — `officium`](chant.md#the-office--officium)
-- [Matins — the night office](chant.md#matins--the-night-office)
 - [Psalms — `psalmus`](chant.md#psalms--psalmus)
 - [Theory & Context](chant.md#theory--context) · [Sources](chant.md#sources)
 
@@ -146,6 +150,7 @@ the list resolve their pitches through the ones before.
 - [Balance — distance and deviance](census.md#balance--distance-and-deviance)
 - [Neighbors, and `by`](census.md#neighbors-and-by)
 - [The era view](census.md#the-era-view)
+- [What the census is not](census.md#what-the-census-is-not)
 
 ## Conventions
 
@@ -202,6 +207,8 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 - `caelum` in range mode (`{ from, to, step }`) throws `RangeError` on a missing
   bound, `to` before `from`, a non-positive step, or a range exceeding the frame cap.
 - `harmonia` throws `RangeError` on an unknown doctrina.
+- `census` throws on an id with no block (the census covers only the chants
+  tonus ships) and on an unknown query key or field group.
 
 ### The bibliography — [`BIBLIOGRAPHY.md`](../BIBLIOGRAPHY.md)
 

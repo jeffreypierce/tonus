@@ -11,6 +11,8 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
   - [The note](#the-note)
   - [The tabula](#the-tabula)
   - [Rendering](#rendering)
+    - [inscriptio — the standalone renderer](#inscriptio--the-standalone-renderer)
+    - [The intonation channel](#the-intonation-channel)
   - [The imprint](#the-imprint)
   - [Prosody](#prosody)
   - [Cadences](#cadences)
@@ -446,8 +448,8 @@ score.imprint.attractors[0];
 // { pc: 0, weight: 0.39, pitch: { spn: "C4", … } }
 
 score.imprint.modalAffinity.slice(0, 2);
-// [ { mode: 7, alias: "mixolydian",     score: 2.54 },
-//   { mode: 8, alias: "hypomixolydian", score: 2.09 } ]
+// [ { mode: 7, alias: "mixolydian",     score: 2.64 },
+//   { mode: 8, alias: "hypomixolydian", score: 2.18 } ]
 ```
 
 The ranking reads three signals beyond the pitch-class distribution: the opening
@@ -635,10 +637,10 @@ interface FormulaMatch {
 
 Only the Tier-1 tabulatable genres (Graduals, Tracts, Great Responsories) will
 carry a catalogue; other genres — and any chant with no mode — return
-`formula: null` (the step-skeleton is still computed). **In 0.2 the catalogue
-ships empty**: the machinery, the skeleton, and the graceful degradation are
-the release surface, and `formula` is `null` for every chant until the Apel
-transcription (mode-5 Graduals first) is dictated into
+`formula: null` (the step-skeleton is still computed). **The catalogue
+currently ships empty**: the machinery, the skeleton, and the graceful
+degradation are the release surface, and `formula` is `null` for every chant
+until the Apel transcription (mode-5 Graduals first) is dictated into
 `score/data/formulas.ts`, where the format is documented.
 
 ## Theory & Context
