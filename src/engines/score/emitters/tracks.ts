@@ -28,6 +28,10 @@ import type { ChantTabulaRow } from "../tabula.js";
 import type { Cadence } from "../cadence.js";
 import type { Modulation } from "../modulation.js";
 import { CADENTIAE, type CadentiaFamilia } from "../../../data/cadentiae.js";
+import {
+  INK, STRATUM, CONF_FLOOR, nib, sc, esc, HOUSE_SANS, HOUSE_MONO,
+  sampleCubic, crSamples, velocityAt, velocityCeiling, ribbonPath, type Pt,
+} from "./atramentum.js";
 
 export type TrackName = "chironomia" | "tonarium";
 
@@ -49,27 +53,6 @@ export interface TrackNote {
   system: number;
   systemY: number;
 }
-
-// ── The governing ink system ──
-const INK = "#111";
-/** Stratum opacities: one ink, graded. The melody strata (wave, spark) sit
- * under their annotations; a cadence claim re-inks at full strength. */
-const STRATUM = {
-  wave: 0.75,     // the chironomy line — the gesture itself
-  spark: 0.45,    // the tonarium melody — context, not message
-  cadence: 1.0,   // the claim: the melody's ending, full ink
-  letters: 0.62,  // Pierik letters
-  label: 0.9,     // signature labels
-  bracket: 0.3,   // the label's end-ticked tie
-  rail: 0.16,     // the maneriae rails
-  margin: 0.38,   // the "cad" margin word
-} as const;
-
-/** THE nib — one pressure law for every track: normalized velocity → width. */
-const nib = (vn: number): number => 0.5 + 1.5 * vn;
-
-/** A scaled measure, at most two places and no trailing zeros: 1.8, not 1.80. */
-const sc = (v: number): string => Number(v.toFixed(2)).toString();
 
 /** One track's room within the band a system reserves below its lyric line. */
 export interface TrackBand {
@@ -105,93 +88,6 @@ export function trackBands(tracks: readonly TrackName[] | undefined, k: number):
     top += tonarium.height;
   }
   return { chironomia, tonarium, extra: top };
-}
-
-const HOUSE_SANS = "'IBM Plex Sans', system-ui, sans-serif";
-const HOUSE_MONO = "ui-monospace, Menlo, 'IBM Plex Mono', monospace";
-
-const esc = (s: string): string =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-type Pt = [number, number];
-
-/** Sample one cubic Bézier segment (matches the generators' tessellation). */
-function sampleCubic(p1: Pt, c1: Pt, c2: Pt, p2: Pt, steps: number): Pt[] {
-  const out: Pt[] = [];
-  for (let k = 0; k < steps; k++) {
-    const t = k / steps;
-    const mt = 1 - t;
-    out.push([
-      mt ** 3 * p1[0] + 3 * mt * mt * t * c1[0] + 3 * mt * t * t * c2[0] + t ** 3 * p2[0],
-      mt ** 3 * p1[1] + 3 * mt * mt * t * c1[1] + 3 * mt * t * t * c2[1] + t ** 3 * p2[1],
-    ]);
-  }
-  return out;
-}
-
-/** Catmull–Rom through the points, sampled — the tracks' one curve idiom. */
-function crSamples(pts: Pt[], steps: number): Pt[] {
-  if (pts.length < 2) return [...pts];
-  const P: Pt[] = [pts[0]!, ...pts, pts[pts.length - 1]!];
-  const out: Pt[] = [];
-  for (let i = 1; i < P.length - 2; i++) {
-    const [p0, p1, p2, p3] = [P[i - 1]!, P[i]!, P[i + 1]!, P[i + 2]!];
-    const c1: Pt = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-    const c2: Pt = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-    out.push(...sampleCubic(p1, c1, c2, p2, steps));
-  }
-  out.push(pts[pts.length - 1]!);
-  return out;
-}
-
-/** Piecewise-linear velocity read along x between note anchors; the pressure
- * signal both tracks share. Null velocities (phrasing inactive) read 0.3. */
-function velocityAt(velpts: Pt[]): (x: number) => number {
-  return (x: number): number => {
-    if (velpts.length === 0) return 0.3;
-    if (x <= velpts[0]![0]) return velpts[0]![1];
-    if (x >= velpts[velpts.length - 1]![0]) return velpts[velpts.length - 1]![1];
-    for (let i = 0; i + 1 < velpts.length; i++) {
-      const [x0, v0] = velpts[i]!;
-      const [x1, v1] = velpts[i + 1]!;
-      if (x0 <= x && x <= x1) return v0 + (v1 - v0) * ((x - x0) / Math.max(x1 - x0, 1e-6));
-    }
-    return 0.3;
-  };
-}
-
-/** The chant's own velocity ceiling — pressure normalizes per chant, not to a
- * corpus constant (the plates' frozen 0.62 was a session artifact). */
-function velocityMax(notes: TrackNote[]): number {
-  let vmax = 0;
-  for (const n of notes) if (n.row.velocity != null && n.row.velocity > vmax) vmax = n.row.velocity;
-  return vmax > 0 ? vmax : 0.62;
-}
-
-/** A ribbon polygon around sampled points: THE nib at `scale`, velocity as
- * width — the one pressure stroke every track draws with. */
-function ribbonPath(samples: Pt[], vat: (x: number) => number, vmax: number,
-  scale: number): string {
-  const top: Pt[] = [];
-  const bot: Pt[] = [];
-  const N = samples.length;
-  for (let i = 0; i < N; i++) {
-    const [x, y] = samples[i]!;
-    const [x0, y0] = samples[Math.max(i - 1, 0)]!;
-    const [x1, y1] = samples[Math.min(i + 1, N - 1)]!;
-    const dx = x1 - x0;
-    const dy = y1 - y0;
-    const L = Math.hypot(dx, dy) || 1;
-    const nx = -dy / L;
-    const ny = dx / L;
-    const vn = Math.min(vat(x) / vmax, 1);
-    const w = nib(vn) * scale;
-    top.push([x + (nx * w) / 2, y + (ny * w) / 2]);
-    bot.push([x - (nx * w) / 2, y - (ny * w) / 2]);
-  }
-  return "M " + top.map((p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" L ") +
-    " L " + bot.reverse().map((p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" L ") + " Z";
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -385,7 +281,7 @@ function waveEngine(ptsIn: WavePt[], last: number, yM: number, k: number,
 export function buildChironomia(notes: TrackNote[], cfg: ChironomiaConfig): string {
   if (notes.length === 0) return "";
   const { k } = cfg;
-  const vmax = velocityMax(notes);
+  const vmax = velocityCeiling(notes.map((n) => n.row.velocity));
   const systems = [...new Set(notes.map((n) => n.system))].sort((a, b) => a - b);
   const out: string[] = [];
 
@@ -452,7 +348,6 @@ export function tonariumExtra(k: number): number {
 const MODE_FINAL: Record<number, string> = { 1: "D", 2: "D", 3: "E", 4: "E", 5: "F", 6: "F", 7: "G", 8: "G" };
 const RAIL_ORDER = ["D", "E", "F", "G"]; // the finals ladder, D on the bottom
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
-const CONF_FLOOR = 0.45; // the weak-claim rule: below this, no ink
 
 let _famIndex: Map<string, CadentiaFamilia> | null = null;
 function famIndex(): Map<string, CadentiaFamilia> {
@@ -477,7 +372,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
   const railY = (systemY: number, letter: string): number =>
     systemY + cfg.laneTop + 33 * k - RAIL_ORDER.indexOf(letter) * 9 * k;
 
-  const vmax = velocityMax(notes);
+  const vmax = velocityCeiling(notes.map((n) => n.row.velocity));
   const home = data.mode != null && MODE_FINAL[data.mode] ? data.mode : undefined;
 
   // The governing mode of a phrase: the strongest modulation covering it at or
