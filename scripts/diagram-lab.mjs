@@ -49,6 +49,7 @@ globalThis.document = {
 // ── the library and the diagrams ──
 const tonus = (await import(join(root, "dist/index.js"))).default;
 const { annulus, annulusTabula } = await import(join(root, "site/diagrams/annulus.js"));
+const { chorda, regula, chordaTabula } = await import(join(root, "site/diagrams/chorda.js"));
 
 // ── Junicode, embedded when a clone is around ──
 const juniPath = [
@@ -82,20 +83,40 @@ const plates = [
     },
   },
   {
-    title: "annulus — 2026, no standing day",
-    note: "the same diagram for a different year — computed from pascha(), not transcribed. " +
-      "Easter falls later, and every anchor moves with it.",
+    title: "annulus — 2026, computed for a different year",
+    note: "the same diagram, no transcription: pascha(2026) moves every anchor.",
     build: () => {
       const o = { year: 2026, selected: "easter" };
       return [annulus(tonus, o), annulusTabula(tonus, o)];
     },
   },
   {
-    title: "annulus — 1582",
-    note: "a distant year: the ring is the argument that the calendar returns on itself, whatever the year.",
+    title: "chorda — the monochord, mode 7",
+    note: "one string, stopped where a ratio divides it — the whole string sounds the finalis, " +
+      "half of it the octave, so the drawn span is that sounding half. The divisions bunch " +
+      "toward the octave because pitch and length are reciprocal, not proportional: the " +
+      "spacing IS the arithmetic. The tenor (diapente, 2/3) is selected.",
     build: () => {
-      const o = { year: 1582, day: new Date(Date.UTC(1582, 0, 6)), selected: "epiphany" };
-      return [annulus(tonus, o), annulusTabula(tonus, o)];
+      const o = { mode: 7 };
+      return [chorda(tonus, o), chordaTabula(tonus, o)];
+    },
+  },
+  {
+    title: "regula — the same scale in cents",
+    note: "the scale laid out evenly against the equal-tempered grid. Where a mark sits off " +
+      "its grid line is where Pythagorean tuning and the piano part company.",
+    build: () => {
+      const o = { mode: 7 };
+      return [regula(tonus, o), chordaTabula(tonus, o)];
+    },
+  },
+  {
+    title: "chorda — mode 1, for comparison",
+    note: "the same instrument for a different mode: the finalis moves to D and every " +
+      "division with it. Nothing here is transcribed per-mode.",
+    build: () => {
+      const o = { mode: 1 };
+      return [chorda(tonus, o), chordaTabula(tonus, o)];
     },
   },
 ];
@@ -125,9 +146,10 @@ h1{font-size:26px;font-weight:500;margin:0 0 4px;letter-spacing:.01em}
 .body{display:grid;grid-template-columns:minmax(320px,1fr) minmax(300px,420px);gap:36px;align-items:start}
 @media(max-width:900px){.body{grid-template-columns:1fr}}
 table.tabula{border-collapse:collapse;width:100%;font-size:13.5px}
-table.tabula th{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+table.tabula th{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
   color:var(--label);text-align:left;font-weight:400;padding:0 10px 6px 0;border-bottom:1px solid var(--rule)}
 table.tabula td{padding:5px 10px 5px 0;border-bottom:1px solid var(--rule);vertical-align:baseline}
+table.tabula td:nth-child(3){white-space:nowrap}
 table.tabula tr.sel td{background:rgba(17,17,17,.05)}
 table.tabula .mono{font-family:var(--mono);font-size:11px}
 table.tabula .num{text-align:right;font-variant-numeric:tabular-nums}
