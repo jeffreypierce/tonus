@@ -60,7 +60,7 @@ describe("census — the blocks address the right chants", () => {
   });
 
   test("a block's own numbers survive a live re-parse — the anti-shift anchor", () => {
-    // ⟨the test that earns its keep⟩ Everything else here is self-consistent
+    // The test that earns its keep: everything else here is self-consistent
     // under a block-index shift: if census read block i+1 for every chant, the
     // seed's self-similarity would still be 1 and the neighbour ordering would
     // still be internally coherent. Verified by mutation — shifting the index

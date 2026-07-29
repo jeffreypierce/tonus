@@ -1,9 +1,9 @@
 // ---------------------------------------------------------------------------
 // engines/census/types — the census verb's shapes
 // ---------------------------------------------------------------------------
-// English fields ⟨RULED⟩. The census is measurement, not repertoire: it says
-// how a chant sits against the corpus it belongs to, and the vocabulary for
-// that is arithmetic, not liturgy.
+// The field names are English by design. The census is measurement, not
+// repertoire: it says how a chant sits against the corpus it belongs to, and
+// the vocabulary for that is arithmetic, not liturgy.
 
 /** A field group census() can measure similarity on. */
 export type CensusGroup =
@@ -59,8 +59,7 @@ export interface Census {
   balance: {
     /**
      * Mean cosine distance from the corpus centre across all groups, 0–1.
-     * 0 is the most ordinary chant imaginable; 1 has nothing in common with
-     * the corpus mean.
+     * 0 is a chant at the corpus mean; 1 has nothing in common with it.
      */
     distance: number;
     /**

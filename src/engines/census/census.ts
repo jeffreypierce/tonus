@@ -4,10 +4,10 @@
 // The corpus repo censuses every shipped chant into a block of 225 float32s:
 // modal behaviour, degree histogram, interval bigrams, trigram and cadence
 // vocabulary, chironomy, text setting, formula hits. This engine reads those
-// blocks and answers one question — how ordinary is this chant, and what is it
+// blocks and answers one question — how typical is this chant, and what is it
 // near?
 //
-// DISTANCE IS COSINE PER FIELD GROUP ⟨RULED⟩, never over the flat 225. Cosine
+// DISTANCE IS COSINE PER FIELD GROUP, never over the flat 225. Cosine
 // on the whole vector is dominated by the 121-float melodic block and by sheer
 // magnitude, so a long Tract would neighbour other long chants for being long.
 // Per-group cosine asks about SHAPE within each dimension, and `all` is the
@@ -93,7 +93,7 @@ function cosine(a: ArrayLike<number>, b: ArrayLike<number>): number {
 // ── The corpus mean, per group, computed once ───────────────────────────────
 // Typicality is measured against the whole SHIPPED corpus, not against the
 // filtered pool: `before` restricts who may be a neighbour, it does not
-// rewrite what "ordinary" means.
+// move the mean.
 let _means: Record<CensusGroup, Float32Array> | null = null;
 function means(): Record<CensusGroup, Float32Array> {
   if (_means) return _means;
@@ -171,7 +171,7 @@ export function getCensus(query: CensusQuery): Census {
     };
   }
 
-  // ── balance: how far from ordinary, and where ────────────────────────────
+  // ── balance: how far from the corpus mean, and where ─────────────────────
   const typicalities = GROUP_NAMES.map((g) => profile[g]!.typicality);
   const meanTypicality = typicalities.reduce((a, b) => a + b, 0) / typicalities.length;
   const distance = 1 - meanTypicality;
@@ -200,7 +200,7 @@ export function getCensus(query: CensusQuery): Census {
       }
       scored.push({ id: otherId, similarity: sum / groupsToUse.length });
     }
-    // Ties → lower id ⟨RULED⟩, so the same question always has the same answer.
+    // Ties → lower id, so the same question always has the same answer.
     scored.sort((a, b) => b.similarity - a.similarity || (a.id < b.id ? -1 : 1));
     neighbors.push(...scored.slice(0, k));
   }
