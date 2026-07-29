@@ -2,7 +2,7 @@
 
 What the tonus calendar actually resolves to: for each day, whether tonus
 carries its Mass propers and its Divine Office. Measured against the shipped
-build, 2026-07-28.
+build, 2026-07-29.
 
 ## The day, end to end
 
