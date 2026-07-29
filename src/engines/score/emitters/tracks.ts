@@ -2,14 +2,14 @@
 // engines/score/emitters/tracks — the analysis tracks (chironomia, tonarium)
 // ---------------------------------------------------------------------------
 // The two analysis tracks the plate series locked, ported onto the emitters'
-// own placements. The two-register principle (design-analysis-track.md):
-// quadrata is the body — rhythm as gesture, the chironomy wave below the staff
-// (plate-chiron-14 is the spec; its typus lane was cut 2026-07-29 — the wave's
-// own A/T letters already carry the incise's shape); moderna is the mind —
-// pitch and mode, the tonarium lane below the transcription (plate-tonarium-08,
-// trued to the 2026-07-28 rulings: the SIGNATURE is a cadence's name — no
-// familia binomials, no adventus case ladder; `arrival` already carries the
-// number).
+// own placements. Either rides either species and both may ride one score; the
+// two-register principle is the house pairing, not a rule enforced here —
+// quadrata as the body (rhythm as gesture, the chironomy wave; plate-chiron-14
+// is the spec, its typus lane cut 2026-07-29 since the wave's own A/T letters
+// already carry the incise's shape), moderna as the mind (pitch and mode, the
+// tonarium lane; plate-tonarium-08, trued to the 2026-07-28 rulings: the
+// SIGNATURE is a cadence's name — no familia binomials, no adventus case
+// ladder; `arrival` already carries the number).
 //
 // THE GOVERNING INK SYSTEM (ruled 2026-07-29). One ink, one nib:
 // - Every track mark draws in the score's black; strata differ by OPACITY
@@ -195,7 +195,7 @@ function ribbonPath(samples: Pt[], vat: (x: number) => number, vmax: number,
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CHIRONOMIA — the hand's wave below the quadrata staff (plate-chiron-14)
+// CHIRONOMIA — the hand's wave below the staff (plate-chiron-14)
 // ═══════════════════════════════════════════════════════════════════════════
 // One continuous line per system: arsic beats crest, thetic beats trough,
 // single-note thetic beats pass through shallow (PT), pick-up loops where
@@ -212,7 +212,7 @@ export interface ChironomiaConfig {
   waveMidY: number;
 }
 
-/** Band room the quadrata emitter reserves below each system's lyric line. */
+/** Band room the chironomia reserves below each system's lyric line. */
 export function chironomiaExtra(k: number): number {
   return 50 * k;
 }
@@ -411,7 +411,7 @@ export function buildChironomia(notes: TrackNote[], cfg: ChironomiaConfig): stri
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TONARIUM — the melodic-analysis lane below the moderna staff (tonarium-08)
+// TONARIUM — the melodic-analysis lane below the staff (tonarium-08)
 // ═══════════════════════════════════════════════════════════════════════════
 // The mode staff: all four maneriae rails, D on the bottom (the finals ladder —
 // categories, not pitches, so the rails carry no letters). Through it, the

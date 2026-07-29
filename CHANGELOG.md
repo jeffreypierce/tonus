@@ -16,9 +16,9 @@ chant against the corpus that holds it.
 ### Added
 
 - **The analysis tracks ship with `inscriptio`.** `tracks: ["chironomia"]`
-  (quadrata) draws the conducting hand's wave — arsic crests, thetic
+  draws the conducting hand's wave — arsic crests, thetic
   troughs, pick-up loops, Pierik letters. `tracks: ["tonarium"]`
-  (moderna) draws the melodic lane: the four maneriae rails, the melody
+  draws the melodic lane: the four maneriae rails, the melody
   compressed to its ambitus, the mode line in rubrica (solid inflection,
   dashed transposition). A cadence is the melody's own ending re-inked
   at full strength — the same curve at the same width — landing on a
@@ -27,8 +27,12 @@ chant against the corpus that holds it.
   light end-ticked bracket spanning the figure. One governing ink system
   runs through both tracks: one black graded by stratum opacity (rubrica
   is the mode line's alone), and one nib law — velocity as stroke
-  width — for every pressure-bearing line. Species-paired by the
-  two-register principle; a mismatched pairing throws. Confidence is
+  width — for every pressure-bearing line. Either track rides either
+  species, and both may ride one score: they stack in a fixed order, the
+  chironomia above the tonarium, whichever order they are asked for. The
+  two-register principle — the rhythmic band under the square notation,
+  the melodic band under the transcription — is the house default, not a
+  rule the renderer enforces. Confidence is
   opacity; claims under 0.45 draw nothing. The tracks consume the same
   note anchors the geometry contract exports — the score's own ink is
   untouched, and the geometry is unchanged with tracks on.
