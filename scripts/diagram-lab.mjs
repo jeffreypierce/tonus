@@ -50,6 +50,7 @@ globalThis.document = {
 const tonus = (await import(join(root, "dist/index.js"))).default;
 const { annulus, annulusTabula } = await import(join(root, "site/diagrams/annulus.js"));
 const { chorda, regula, chordaTabula } = await import(join(root, "site/diagrams/chorda.js"));
+const { hand, handTabula } = await import(join(root, "site/diagrams/hand.js"));
 
 // ── Junicode, embedded when a clone is around ──
 const juniPath = [
@@ -108,6 +109,27 @@ const plates = [
     build: () => {
       const o = { mode: 7 };
       return [regula(tonus, o), chordaTabula(tonus, o)];
+    },
+  },
+  {
+    title: "manus — the Guidonian hand, mode 1",
+    note: "twenty joints, each holding one step of the gamut, read in a spiral: thumb tip, down " +
+      "the thumb, across the finger bases, up the little finger, back across the tips. The " +
+      "finalis and tenor of the mode read darker; the syllable under each joint is how THIS " +
+      "hexachord names it. Only the hand's shape is drawn here — every pitch, name, hexachord " +
+      "and mutation comes from gradus().",
+    build: () => {
+      const o = { mode: 1, onSelect: () => {} };
+      return [hand(tonus, o), handTabula(tonus, o)];
+    },
+  },
+  {
+    title: "manus — the same hand read in mode 7",
+    note: "the drawing does not change; the reading does. The finalis moves to G, the tenor to D, " +
+      "and the whole hand shifts into the hard hexachord — which is what the hand was for.",
+    build: () => {
+      const o = { mode: 7, onSelect: () => {} };
+      return [hand(tonus, o), handTabula(tonus, o)];
     },
   },
   {
