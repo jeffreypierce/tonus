@@ -317,6 +317,16 @@ const FEAST_QUERY_KEYS = new Set([
 ]);
 
 export function getFeast(query?: FeastQuery): Feast[] {
+  // A bare Date is the natural guess, and it has no own enumerable keys — so
+  // without this it would read as "no query" and quietly return the default
+  // epoch, the same plausible-looking wrong answer the unknown-key guard below
+  // exists to prevent. Say what was meant instead.
+  if (query instanceof Date) {
+    throw new Error(
+      `festum: pass the date as a query — festum({ date }), not festum(date)`,
+    );
+  }
+
   if (!query || Object.keys(query).length === 0) {
     return feastsForDate(DEFAULT_EPOCH);
   }

@@ -75,6 +75,17 @@ describe("getFeast", () => {
     assert.throws(() => getFeast({ date: new Date("2026-12-25"), foo: 1 }), /unknown query key/);
   });
 
+  test("throws on a bare Date rather than reading it as no query at all", () => {
+    // A Date has no own enumerable keys, so an unguarded `festum(date)` reads
+    // as "no query" and returns the DEFAULT EPOCH — a plausible wrong answer
+    // for whatever date was meant, which is the failure the guard above exists
+    // to prevent.
+    const christmas = new Date(Date.UTC(991, 11, 25));
+    assert.throws(() => getFeast(christmas), /festum\(\{ date \}\)/);
+    // The query form is the one that answers.
+    assert.equal(getFeast({ date: christmas })[0].nomen, "In Nativitate Domini");
+  });
+
   test("filters feasts by grade", () => {
     const feasts = getFeast({ grade: "duplex-i" });
     assert.ok(feasts.length > 0);
