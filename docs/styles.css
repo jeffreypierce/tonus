@@ -163,7 +163,13 @@ main { padding: 24px 28px 80px; }
 .chant-row button:hover { background: rgba(17, 17, 17, 0.035); }
 .chant-row button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: -2px; }
 .chant-row[aria-selected="true"] button { background: rgba(17, 17, 17, 0.06); }
-.chant-row .incipit svg { max-width: 100%; height: auto; display: block; }
+/* The incipit is one long system, shown from its start and clipped: a few
+   notes of the real melody, which is how a chant is recognised. */
+.chant-row .incipit {
+  display: block; overflow: hidden;
+  height: 34px; mask-image: linear-gradient(to right, #000 78%, transparent);
+}
+.chant-row .incipit svg { height: 34px; width: auto; max-width: none; display: block; }
 .chant-row-name { display: block; font-size: var(--step-label); }
 .chant-row-meta {
   display: block; font-family: var(--mono); font-size: var(--micro);

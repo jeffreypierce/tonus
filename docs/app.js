@@ -392,7 +392,8 @@ function tabulaPanel() {
       el("td", { class: "mono" }, r.spn ?? ""),
       el("td", { class: "mono num" }, r.hz != null ? r.hz.toFixed(1) : ""),
       el("td", {}, r.nomen ?? ""),
-      el("td", {}, r.neume ?? ""),
+      // A neume is a shape, not a string — the row wants what it is called.
+      el("td", {}, r.neume?.type ?? ""),
       el("td", {}, r.lyric ?? ""),
     );
     b.append(tr);

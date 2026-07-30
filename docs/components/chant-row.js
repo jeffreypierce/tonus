@@ -16,20 +16,30 @@ import { el } from "./tabs.js";
 const cache = new Map();
 
 /** The first notes, drawn small. Failures degrade to a dash rather than
- * throwing — a chant whose gabc will not parse should not empty the list. */
-function incipit(tonus, chant, { width = 260, staffHeight = 20 } = {}) {
-  if (cache.has(chant.id)) return cache.get(chant.id).cloneNode(true);
-  let node;
-  try {
-    const score = tonus.notatio(chant);
-    const { svg } = tonus.inscriptio(score, { width, staffHeight, noteScale: 0.7 });
-    node = el("span", { class: "incipit" });
-    node.innerHTML = svg;
-  } catch {
-    node = el("span", { class: "ghost" }, "—");
+ * throwing — a chant whose gabc will not parse should not empty the list.
+ *
+ * The cache holds MARKUP, not a node: a node can only be in one place, so
+ * handing the cached one out twice moves it out of the first list into the
+ * second. Markup is inert and each row builds its own element from it. */
+function incipit(tonus, chant, { staffHeight = 20 } = {}) {
+  let svg = cache.get(chant.id);
+  if (svg === undefined) {
+    try {
+      // Rendered as ONE long system and clipped by the box it sits in. Passing
+      // a narrow width instead wraps the whole chant into five stacked staves,
+      // which is a score, not an incipit — the row wants the first few notes,
+      // and the cheapest true way to get them is to draw the line and show its
+      // beginning.
+      svg = tonus.inscriptio(tonus.notatio(chant), { staffHeight, noteScale: 0.7 }).svg;
+    } catch {
+      svg = null;
+    }
+    cache.set(chant.id, svg);
   }
-  cache.set(chant.id, node);
-  return node.cloneNode(true);
+  if (svg == null) return el("span", { class: "ghost" }, "—");
+  const node = el("span", { class: "incipit" });
+  node.innerHTML = svg;
+  return node;
 }
 
 /**
