@@ -113,11 +113,30 @@ function means(): Record<CensusGroup, Float32Array> {
   return out;
 }
 
-const VALID_KEYS = new Set(["id", "k", "by", "before"]);
+/** The centroid of several blocks, per group — a set's stand-in for a chant's
+ * own slice. One member returns that member's slice unchanged, so a set of one
+ * censuses exactly as the chant does. */
+function centroid(blockIndices: readonly number[], group: CensusGroup): Float32Array {
+  if (blockIndices.length === 1) return slice(blockIndices[0]!, group);
+  const { count } = CENSUS_GROUPS[group]!;
+  const acc = new Float32Array(count);
+  for (const bi of blockIndices) {
+    const s = slice(bi, group);
+    for (let k = 0; k < count; k++) acc[k]! += s[k]!;
+  }
+  for (let k = 0; k < count; k++) acc[k]! /= blockIndices.length;
+  return acc;
+}
+
+const VALID_KEYS = new Set(["id", "ids", "k", "by", "before"]);
 
 /**
- * The census of one chant: its profile against the corpus, where it is
- * unusual, and what it is near.
+ * The census of one chant, or of a SET of them: its profile against the
+ * corpus, where it is unusual, and what it is near.
+ *
+ * A set is censused as its centroid, so "how typical are the Graduals" is the
+ * same question as "how typical is this Gradual", asked of more than one. Its
+ * neighbours are what resemble it from outside — no member of the set is one.
  */
 export function getCensus(query: CensusQuery): Census {
   if (!query || typeof query !== "object") {
@@ -131,17 +150,43 @@ export function getCensus(query: CensusQuery): Census {
     );
   }
 
-  const { id } = query;
-  if (typeof id !== "string" || !id) {
+  // One chant or a set, never both and never neither. A malformed query
+  // throws; this is the door, not a no-match.
+  const hasId = query.id !== undefined;
+  const hasIds = query.ids !== undefined;
+  if (hasId && hasIds) {
+    throw new Error('census: give id or ids, not both — census({ id }) censuses one chant, ' +
+      "census({ ids }) censuses a set together.");
+  }
+  if (!hasId && !hasIds) {
+    throw new Error('census requires an id (a string) or ids (an array), ' +
+      'e.g. census({ id: "gregobase:1210" }).');
+  }
+  if (hasId && (typeof query.id !== "string" || !query.id)) {
     throw new Error("census requires an id (a string), e.g. census({ id: \"gregobase:1210\" }).");
   }
-  const self = index().get(id);
-  if (self == null) {
-    throw new Error(
-      `census: no block for "${id}". The census covers the ${CENSUS_ORDER.length} chants ` +
-        "tonus ships; an id from a catalogue at large will not be among them.",
-    );
+  if (hasIds && (!Array.isArray(query.ids) || query.ids.length === 0)) {
+    throw new Error("census: ids must be a non-empty array of chant ids.");
   }
+
+  // Deduped, and read in the order given: the same set always answers the same.
+  const ids = hasId ? [query.id as string] : [...new Set(query.ids as readonly string[])];
+  const blockIndices: number[] = [];
+  for (const one of ids) {
+    if (typeof one !== "string" || !one) {
+      throw new Error("census: every id must be a non-empty string.");
+    }
+    const at = index().get(one);
+    if (at == null) {
+      throw new Error(
+        `census: no block for "${one}". The census covers the ${CENSUS_ORDER.length} chants ` +
+          "tonus ships; an id from a catalogue at large will not be among them.",
+      );
+    }
+    blockIndices.push(at);
+  }
+  const id = ids[0]!;
+  const members = new Set(blockIndices);
 
   const by: CensusBy = query.by ?? "all";
   if (by !== "all" && !GROUP_NAMES.includes(by as CensusGroup)) {
@@ -164,7 +209,7 @@ export function getCensus(query: CensusQuery): Census {
   const mean = means();
   const profile = {} as Record<CensusGroup, CensusGroupProfile>;
   for (const g of GROUP_NAMES) {
-    const s = slice(self, g);
+    const s = centroid(blockIndices, g);
     profile[g] = {
       values: Array.from(s),
       typicality: cosine(s, mean[g]!),
@@ -188,10 +233,12 @@ export function getCensus(query: CensusQuery): Census {
   const neighbors: CensusNeighbour[] = [];
   if (k > 0) {
     const groupsToUse = by === "all" ? GROUP_NAMES : [by as CensusGroup];
-    const selfSlices = groupsToUse.map((g) => slice(self, g));
+    const selfSlices = groupsToUse.map((g) => centroid(blockIndices, g));
     const scored: CensusNeighbour[] = [];
     for (let i = 0; i < CENSUS_ORDER.length; i++) {
-      if (i === self) continue;
+      // A subject is never its own neighbour, and no member of a set is one
+      // of the set's: what a group is near means what is near it from outside.
+      if (members.has(i)) continue;
       const otherId = CENSUS_ORDER[i]!;
       if (cutoff != null && !chantAdmissible(otherId, cutoff)) continue;
       let sum = 0;
@@ -205,5 +252,5 @@ export function getCensus(query: CensusQuery): Census {
     neighbors.push(...scored.slice(0, k));
   }
 
-  return { id, profile, balance: { distance, deviantGroups }, neighbors, by };
+  return { id, ids, profile, balance: { distance, deviantGroups }, neighbors, by };
 }

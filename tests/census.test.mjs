@@ -239,3 +239,76 @@ describe("census — the geometry is what the artifact says", () => {
     }
   });
 });
+
+describe("census — a set of chants, censused together", () => {
+  // "That way we can do 'all Kyries' and stuff like that." A set is censused as
+  // the centroid of its members' blocks, read against the corpus exactly as one
+  // chant's block is — so the question does not change, only how many chants
+  // are asking it.
+  const A = SEED;
+  const B = tonus.census({ id: SEED }).neighbors[0].id;
+
+  test("a set of one IS the chant", () => {
+    const one = tonus.census({ id: A });
+    const set = tonus.census({ ids: [A] });
+    for (const g of Object.keys(one.profile)) {
+      assert.equal(set.profile[g].typicality, one.profile[g].typicality, `${g} typicality`);
+      assert.deepEqual(set.profile[g].values, one.profile[g].values, `${g} values`);
+    }
+    assert.equal(set.balance.distance, one.balance.distance);
+    assert.deepEqual(set.balance.deviantGroups, one.balance.deviantGroups);
+    assert.deepEqual(set.neighbors, one.neighbors);
+    assert.deepEqual(set.ids, [A]);
+  });
+
+  test("the profile is the centroid of the members' blocks", () => {
+    const a = tonus.census({ id: A });
+    const b = tonus.census({ id: B });
+    const set = tonus.census({ ids: [A, B] });
+    for (const g of Object.keys(set.profile)) {
+      set.profile[g].values.forEach((v, i) => {
+        const mean = (a.profile[g].values[i] + b.profile[g].values[i]) / 2;
+        assert.ok(Math.abs(v - mean) < 1e-6, `${g}[${i}]: ${v} is the mean ${mean}`);
+      });
+    }
+  });
+
+  test("no member of a set is its own neighbour", () => {
+    const ids = [A, B];
+    const set = tonus.census({ ids });
+    assert.ok(set.neighbors.length > 0, "a set has neighbours");
+    for (const n of set.neighbors) {
+      assert.ok(!ids.includes(n.id), `${n.id} is a member and must not be a neighbour`);
+    }
+  });
+
+  test("a set is nearer the corpus centre than its members — noise cancels", () => {
+    // Averaging keeps what a group shares and cancels what is peculiar to each
+    // of them, so a set reads as MORE typical than any chant in it. Worth
+    // pinning: it looks like a bug the first time it is seen.
+    const ids = tonus.cantus({ mode: "3" }).slice(0, 20).map((c) => c.id)
+      .filter((id) => { try { tonus.census({ id }); return true; } catch { return false; } });
+    assert.ok(ids.length >= 5, "enough mode-3 chants carry blocks");
+    const each = ids.map((id) => tonus.census({ id }).balance.distance);
+    const set = tonus.census({ ids }).balance.distance;
+    assert.ok(set < Math.min(...each),
+      `the set (${set.toFixed(4)}) sits inside its nearest member (${Math.min(...each).toFixed(4)})`);
+  });
+
+  test("duplicates do not weight a member twice", () => {
+    const plain = tonus.census({ ids: [A, B] });
+    const doubled = tonus.census({ ids: [A, B, A, B] });
+    assert.deepEqual(doubled.ids, [A, B], "ids dedupe");
+    assert.equal(doubled.balance.distance, plain.balance.distance);
+  });
+
+  test("a malformed set is a caller bug", () => {
+    assert.throws(() => tonus.census({ id: A, ids: [A] }), /not both/);
+    assert.throws(() => tonus.census({ k: 3 }), /requires an id/);
+    assert.throws(() => tonus.census({ ids: [] }), /non-empty array/);
+    assert.throws(() => tonus.census({ ids: A }), /non-empty array/);
+    assert.throws(() => tonus.census({ ids: [A, "nope:1"] }), /no block for "nope:1"/);
+    assert.throws(() => tonus.census({ ids: [123] }), /non-empty string/);
+  });
+});
+
