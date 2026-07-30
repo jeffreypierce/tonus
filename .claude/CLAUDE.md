@@ -74,7 +74,10 @@ is English. Option keys are addresses (may be Latin); their values are codes.
   `working/review/svg-stress.html` from `scripts/stress-pieces.mjs`: one real
   corpus piece per genus, full dress. Runs headlessly in
   `tests/render-stress.test.mjs`.
-- Green tests **and** clean `tsc` at every commit. (Current floor: 544 tests.)
+- `npm run serve` — the site at <http://localhost:8000>, served from `docs/`
+  exactly as GitHub Pages will. `npm run diagrams` regenerates the diagram
+  gallery at `working/review/diagram-lab.html`.
+- Green tests **and** clean `tsc` at every commit. (Current floor: 596 tests.)
 
 ## Fonts (license discipline)
 
