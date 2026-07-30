@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import {
   pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighbourMidpoints,
   eclipticAt, eclipticRotation,
-} from "../site/diagrams/polar.js";
+} from "../docs/diagrams/polar.js";
 
 // The site's ring diagrams measure in degrees clockwise from twelve o'clock.
 // These pin the two things that actually broke while porting the annulus: which
 // way a sweep runs, and what happens across the wrap.
 
-describe("site/polar — the ring geometry", () => {
+describe("docs/polar — the ring geometry", () => {
   const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
 
   test("twelve o'clock is up, and the quarters run clockwise", () => {

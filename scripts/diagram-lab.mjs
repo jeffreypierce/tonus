@@ -48,10 +48,10 @@ globalThis.document = {
 
 // ── the library and the diagrams ──
 const tonus = (await import(join(root, "dist/index.js"))).default;
-const { annulus, annulusTabula } = await import(join(root, "site/diagrams/annulus.js"));
-const { chorda, regula, chordaTabula } = await import(join(root, "site/diagrams/chorda.js"));
-const { hand, handTabula } = await import(join(root, "site/diagrams/hand.js"));
-const { rota, rotaTabula, rotaAspectTabula } = await import(join(root, "site/diagrams/rota.js"));
+const { annulus, annulusTabula } = await import(join(root, "docs/diagrams/annulus.js"));
+const { chorda, regula, chordaTabula } = await import(join(root, "docs/diagrams/chorda.js"));
+const { hand, handTabula } = await import(join(root, "docs/diagrams/hand.js"));
+const { rota, rotaTabula, rotaAspectTabula } = await import(join(root, "docs/diagrams/rota.js"));
 
 // ── Junicode, embedded when a clone is around ──
 const juniPath = [
