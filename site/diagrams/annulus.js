@@ -265,9 +265,20 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     marks.appendChild(hit);
   });
 
-  // ── the standing day, on the same orbit ──
+  // ── the standing day ──
+  // The selected anchor already wears a rubricated roundel, so the day cannot
+  // also be a rubrica dot on the same orbit — the two read as one another. It
+  // is a radius instead: a hand on the year, pointing from the centre out
+  // through the ring, which is what a standing day is.
   if (day) {
-    const [dx, dy] = pointAt(doyAngle(dayOfYear(day, year)), R_ANCHOR);
+    const a = doyAngle(dayOfYear(day, year));
+    const [ix, iy] = pointAt(a, R_SEASON + SEASON_WEIGHT / 2 + 3);
+    const [ox, oy] = pointAt(a, FRAME.tick);
+    marks.appendChild(el("line", {
+      x1: sc(ix), y1: sc(iy), x2: sc(ox), y2: sc(oy),
+      stroke: RUBRICA, "stroke-width": 1, "stroke-opacity": 0.5,
+    }));
+    const [dx, dy] = pointAt(a, R_ANCHOR);
     marks.appendChild(el("circle", { cx: sc(dx), cy: sc(dy), r: 3.4, fill: RUBRICA }));
   }
 
