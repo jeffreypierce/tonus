@@ -115,12 +115,12 @@ filters.
 
 ## Documentation
 
-The **[documentation index](docs/index.md)** is the technical center: the full
+The **[documentation index](docs/api/index.md)** is the technical center: the full
 API, the conventions, the error contract, and the code standards. From there,
 one page per engine, in dependency order:
-[tuning](docs/tuning.md), [calendar](docs/calendar.md), [chant](docs/chant.md),
-[score](docs/score.md), [heavens](docs/heavens.md), and
-[census](docs/census.md).
+[tuning](docs/api/tuning.md), [calendar](docs/api/calendar.md), [chant](docs/api/chant.md),
+[score](docs/api/score.md), [heavens](docs/api/heavens.md), and
+[census](docs/api/census.md).
 
 ## Install and run
 

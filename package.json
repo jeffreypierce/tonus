@@ -51,7 +51,7 @@
     "clean": "rm -rf dist",
     "test": "npm run build && node --test --test-reporter=spec tests/*.test.mjs",
     "prepublishOnly": "npm run clean && npm run build",
-    "site": "npm run build && node scripts/vendor-ink.mjs",
+    "site": "npm run build && node scripts/vendor-ink.mjs && rm -rf docs/dist && cp -R dist docs/dist",
     "diagrams": "npm run site && node scripts/diagram-lab.mjs",
     "lab": "npm run build && node scripts/render-lab.mjs",
     "stress": "npm run build && node scripts/render-stress.mjs"
