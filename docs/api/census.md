@@ -1,8 +1,7 @@
 # Census
 
-`census` measures a chant against the corpus that holds it: how typical it is,
-where it is unusual, and what it is near. Pass a set of chants and it answers
-the same for the group.
+`census` measures one chant against the corpus that holds it: how typical it
+is, where it is unusual, and what it is near.
 
 - [Census](#census)
   - [The method](#the-method)
@@ -12,7 +11,6 @@ the same for the group.
   - [Profile and typicality](#profile-and-typicality)
   - [Balance — distance and deviance](#balance--distance-and-deviance)
   - [Neighbors, and `by`](#neighbors-and-by)
-  - [A set of chants — `ids`](#a-set-of-chants--ids)
   - [The era view](#the-era-view)
   - [What the census is not](#what-the-census-is-not)
 
@@ -52,15 +50,12 @@ Everything comes back in one call — profile, balance, neighbours:
 
 ```ts
 interface CensusQuery {
-  id?: string; // the chant to census…
-  ids?: readonly string[]; // …or a set of them, censused together
+  id: string; // the chant to census
   k?: number; // how many neighbours, default 8; 0 returns none
   by?: CensusBy; // which field group similarity is measured on, default "all"
   before?: number; // restrict neighbours to chants attested by this year
 }
 ```
-
-Give `id` or `ids`, never both — see [A set of chants](#a-set-of-chants--ids).
 
 The census covers the **2,187 chants tonus ships** — the same population
 `cantus({ id })` addresses, one block per chant. An id with no block throws
@@ -181,35 +176,6 @@ are answers to different questions.
 
 `k` bounds the result (default 8, `0` returns none, larger than the corpus
 returns all 2,186 others).
-
-## A set of chants — `ids`
-
-Pass `ids` instead of `id` and the census answers for a whole group: every
-Gradual, one mode, a feast's propers, whatever a query returned.
-
-```js
-const graduals = tonus.cantus({ office: "gr" }).map((c) => c.id);
-tonus.census({ ids: graduals });
-// 240 chants → distance 0.035, deviant on degreeHist and cadenceFinal
-```
-
-The profile is the **centroid** of the members' blocks, read against the corpus
-exactly as one chant's block is. So the question does not change — only how
-many chants are asking it. `ids` on the result names the members; a single
-`census({ id })` returns a one-entry `ids`, so the shape never forks.
-
-**A set's neighbours are what resemble it from outside.** No member of the set
-is one, mirroring how a chant is never its own neighbour: asking what a group is
-near is not asking what is in it.
-
-Give `id` or `ids`, never both and never neither. Duplicates dedupe, so a member
-cannot weight itself twice.
-
-> **A set reads as more typical than any chant in it.** That is the arithmetic,
-> not an error: averaging keeps what the members share and cancels what is
-> peculiar to each, so the centroid sits nearer the corpus mean than its
-> nearest member. Twenty mode-3 chants average to 0.026 from the centre while
-> the closest of them individually sits at 0.043. Compare sets with sets.
 
 ## The era view
 

@@ -139,28 +139,58 @@ function calendarium() {
   return el("div", { class: "columns" }, left, right);
 }
 
-/** The whole day censused as one — the set feature, used for what it was for. */
+/** The day's music against the corpus — chant by chant.
+ *
+ * Not as one averaged profile: a group's mean lands on the corpus mean, so
+ * fifteen chants averaged read 0.96–0.99 on every dimension and say nothing.
+ * What is worth seeing is the SPREAD — which of today's chants is ordinary and
+ * which is singular. */
 function dayCensus(feast) {
-  const ids = [];
+  const seen = new Map();
   for (const o of OFFICES) {
-    try { for (const c of o.of(feast)) if (c.id) ids.push(c.id); } catch { /* none */ }
+    try {
+      for (const c of o.of(feast)) if (c.id && !seen.has(c.id)) seen.set(c.id, c);
+    } catch { /* this office has nothing today */ }
   }
-  const censusable = [...new Set(ids)].filter((id) => {
-    try { tonus.census({ id }); return true; } catch { return false; }
-  });
-  if (!censusable.length) return el("p", { class: "ghost" }, "No census for today's music.");
 
-  const c = tonus.census({ ids: censusable });
+  const rows = [];
+  for (const [id, chant] of seen) {
+    try { rows.push({ chant, census: tonus.census({ id, k: 0 }) }); } catch { /* no block */ }
+  }
+  if (!rows.length) return el("p", { class: "ghost" }, "No census for today's music.");
+  rows.sort((a, b) => a.census.balance.distance - b.census.balance.distance);
+
+  const table = el("table", { class: "tabula" });
+  table.append(el("thead", {}, el("tr", {},
+    el("th", {}, "cantus"),
+    el("th", { class: "num" }, "distantia"),
+    el("th", {}, "deviant"),
+  )));
+  const body = el("tbody");
+  for (const { chant, census } of rows) {
+    body.append(el("tr", {
+      class: state.chant?.id === chant.id ? "sel" : null,
+      tabindex: "0",
+      onclick: () => openChant(chant),
+      onkeydown: (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openChant(chant); }
+      },
+    },
+      el("td", {}, chant.incipit,
+        el("span", { class: "gloss" }, chant.modus ?? "")),
+      el("td", { class: "mono num" }, census.balance.distance.toFixed(3)),
+      el("td", { class: "gloss" }, census.balance.deviantGroups[0] ?? ""),
+    ));
+  }
+  table.append(body);
+
+  const near = rows[0], far = rows[rows.length - 1];
   return el("div", {},
-    pairs([
-      ["chants", c.ids.length],
-      ["distantia", c.balance.distance.toFixed(4)],
-      ["deviant", c.balance.deviantGroups.slice(0, 3).join(", ")],
-    ]),
+    table,
     el("p", { class: "note" },
-      "The day's music as one profile. A set reads as more typical than any " +
-      "chant in it — averaging keeps what they share and cancels what is each " +
-      "chant's own."),
+      `${rows.length} of today's chants carry a census block. ` +
+      `${near.chant.incipit} is the most ordinary of them; ` +
+      `${far.chant.incipit} the most singular.`),
   );
 }
 

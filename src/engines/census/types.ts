@@ -22,17 +22,7 @@ export type CensusBy = CensusGroup | "all";
 
 export interface CensusQuery {
   /** The chant to census. Exactly one block per id (blocks are deduped by id). */
-  id?: string;
-  /**
-   * A SET of chants to census together — every Kyrie, a mode, a feast's
-   * propers, whatever query produced them. The profile is then the centroid of
-   * their blocks, read against the corpus exactly as one chant's would be, so
-   * "how typical is this group" is the same question as "how typical is this
-   * chant" asked of more than one.
-   *
-   * Give `id` or `ids`, never both and never neither.
-   */
-  ids?: readonly string[];
+  id: string;
   /** How many neighbours to return. Default 8; 0 returns none. */
   k?: number;
   /** Which field group similarity is measured on. Default "all". */
@@ -62,14 +52,9 @@ export interface CensusNeighbour {
 }
 
 export interface Census {
-  /** The chant censused — the single id, or the first of a set. */
+  /** The chant censused. */
   id: string;
-  /**
-   * Every chant censused, in the order they were read. One entry for a single
-   * chant, so the shape does not fork between the two questions.
-   */
-  ids: readonly string[];
-  /** Per-group readings, keyed by group name. For a set, of the centroid. */
+  /** Per-group readings, keyed by group name. */
   profile: Readonly<Record<CensusGroup, CensusGroupProfile>>;
   balance: {
     /**
@@ -78,16 +63,12 @@ export interface Census {
      */
     distance: number;
     /**
-     * Groups whose typicality falls furthest below the subject's own mean —
-     * where it is unusual, named. Most deviant first.
+     * Groups whose typicality falls furthest below the chant's own mean —
+     * where this chant is unusual, named. Most deviant first.
      */
     deviantGroups: readonly CensusGroup[];
   };
-  /**
-   * Nearest chants on the chosen group, nearest first. Ties → lower id.
-   * The subject is never its own neighbour, and for a set no MEMBER is: a
-   * group's neighbours are what resemble it from outside.
-   */
+  /** Nearest chants on the chosen group, nearest first. Ties → lower id. */
   neighbors: readonly CensusNeighbour[];
   /** Which group the neighbour sweep measured on. */
   by: CensusBy;
