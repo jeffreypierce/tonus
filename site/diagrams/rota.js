@@ -24,13 +24,35 @@
 
 import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_SANS, HOUSE_MONO, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
-import { eclipticAt, eclipticRotation } from "./polar.js";
+import { pointAt } from "./polar.js";
+import { FRAME, wheel, outerRing } from "./frame.js";
 // The twelve signs come from the library, not a copy of them: a body's `sign`
 // is one of these, so the wheel's sectors and the table's words are the same
 // list. (A named export, like MODES and CADENTIAE — not on the default object.)
 import { SIGNA } from "./signs.js";
 
 const NS = "http://www.w3.org/2000/svg";
+
+/** Where 0° Aries sits on the shared frame.
+ *
+ * The frame turns the calendar's way — clockwise from twelve — and the zodiac
+ * turns the SAME way, because a calendar date IS the Sun's longitude: day 1 of
+ * 991 finds the Sun at 279°, day 80 at 359°, day 152 at 68°, all increasing
+ * together. So the signs do not mirror; they are simply offset.
+ *
+ * The offset is the vernal point's own place in the civil year — the day the
+ * Sun crosses 0° Aries, as an angle. Measured rather than assumed: it comes out
+ * near 82° for 991 and drifts with precession over centuries, so it is computed
+ * per year rather than frozen. Checked across the year, a single offset holds
+ * to about two degrees; the residue is the orbit's eccentricity. */
+function eclipticTurn(tonus, year) {
+  // The Sun's longitude on a known day, turned back into a frame angle.
+  const day = new Date(Date.UTC(year, 5, 1));
+  const doy = Math.floor((day - Date.UTC(year, 0, 1)) / 86400000) + 1;
+  const cal = (doy / 365) * 360;
+  const sun = tonus.caelum({ date: day }).bodies.find((b) => b.name === "Sun");
+  return (((cal - sun.geo.lon) % 360) + 360) % 360;
+}
 
 // The spheres, inward to outward. The innermost radius and the step between
 // them are drawing choices.
@@ -45,7 +67,6 @@ const R_FIRST = 42, R_STEP = 31;
  * reports the bodies in its own order (the Sun first, as the mese), so the
  * spheres are named here. */
 const CHALDEAN = ["Moon", "Mercury", "Venus", "Sun", "Mars", "Jupiter", "Saturn"];
-const R_ZODIAC_IN = 259, R_ZODIAC_MID = 265, R_ZODIAC_OUT = 271, R_ZODIAC_NAME = 285;
 
 function el(tag, attrs, text) {
   const e = document.createElementNS(NS, tag);
@@ -109,17 +130,18 @@ export function rotaAspects(tonus, { date } = {}) {
  * @param {(key: string) => void} [opts.onSelect]
  */
 export function rota(tonus, { date, selected, aspects = true, onSelect } = {}) {
+  const when = date ?? tonus.caelum().date;
+  const turn = eclipticTurn(tonus, new Date(when).getUTCFullYear());
+  const eclipticAngle = (lon) => (((lon + turn) % 360) + 360) % 360;
   const rows = rotaRows(tonus, { date });
   const chords = aspects ? rotaAspects(tonus, { date }) : [];
   const byName = new Map(rows.map((r) => [r.key, r]));
   const sel = selected ?? rows[0]?.key;
 
-  const svg = el("svg", {
-    class: "rota", viewBox: "0 0 640 640", xmlns: NS,
-    role: "img", "aria-label": "The wheel of the spheres, sounding",
+  const { svg, root } = wheel({
+    className: "rota",
+    label: "The wheel of the spheres, sounding",
   });
-  const root = el("g", { transform: "translate(320 320)" });
-  svg.appendChild(root);
 
   // ── the spheres: one ring per planet ──
   for (const r of rows) {
@@ -129,34 +151,14 @@ export function rota(tonus, { date, selected, aspects = true, onSelect } = {}) {
     }));
   }
 
-  // ── the zodiac band ──
-  for (const r of [R_ZODIAC_IN, R_ZODIAC_MID, R_ZODIAC_OUT]) {
-    root.appendChild(el("circle", {
-      r, fill: "none", stroke: INK,
-      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
-    }));
-  }
-  SIGNA.forEach((name, i) => {
-    const a0 = i * 30;
-    const [x1, y1] = eclipticAt(a0, R_ZODIAC_IN);
-    const [x2, y2] = eclipticAt(a0, R_ZODIAC_OUT);
-    root.appendChild(el("line", {
-      x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
-      stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": STROKE.hair,
-    }));
-    const mid = a0 + 15;
-    const [tx, ty] = eclipticAt(mid, R_ZODIAC_NAME);
-    root.appendChild(el("text", {
-      transform: `translate(${sc(tx)} ${sc(ty)}) rotate(${sc(eclipticRotation(mid))})`,
-      "text-anchor": "middle", "dominant-baseline": "central",
-      "font-family": HOUSE_SANS, "font-size": STEP.micro,
-      "letter-spacing": "0.14em",
-      fill: INK, "fill-opacity": STRATUM.margin,
-    }, name.toUpperCase()));
-  });
+  // ── the ring both wheels wear, labelled with the twelve signs ──
+  // The frame turns the calendar's way — clockwise from twelve — so the signs
+  // are placed at their longitudes within it rather than in the ecliptic's own
+  // sense. ECLIPTIC_TURN is what carries 0° Aries to where the frame puts it.
+  outerRing(root, { names: [...SIGNA], period: 360, ticks: 10, offset: turn });
 
   // ── the chords: an aspect line at the weight of its strength ──
-  const at = (r) => eclipticAt(r.longitude, r.radius);
+  const at = (r) => pointAt(eclipticAngle(r.longitude), r.radius);
   for (const asp of chords) {
     const [aName, bName] = asp.bodies;
     const a = byName.get(aName), b = byName.get(bName);
@@ -192,7 +194,7 @@ export function rota(tonus, { date, selected, aspects = true, onSelect } = {}) {
     }));
 
     // The glyph outside its dot, turned to stay upright.
-    const [gx, gy] = eclipticAt(r.longitude, r.radius + dot + 11);
+    const [gx, gy] = pointAt(eclipticAngle(r.longitude), r.radius + dot + 11);
     root.appendChild(el("text", {
       x: sc(gx), y: sc(gy), "text-anchor": "middle", "dominant-baseline": "central",
       "font-family": HOUSE_SERIF, "font-size": STEP.caption,

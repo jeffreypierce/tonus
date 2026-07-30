@@ -29,6 +29,7 @@ import { tabula } from "./tabula.js";
 import {
   pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighbourMidpoints,
 } from "./polar.js";
+import { FRAME, wheel, outerRing } from "./frame.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -36,12 +37,7 @@ const NS = "http://www.w3.org/2000/svg";
 const R_SEASON = 150;        // the banded liturgical ring
 const R_SEASON_NAME = 176;   // season names, outside their band
 const R_ANCHOR = 197;        // the feasts' orbit
-const R_COMPASS = 228;       // week ticks start here
-const R_WEEK = 231.5;        // …and end here
-const R_MONTH_TICK = 234;    // month boundaries reach further
-const R_BAND_IN = 240;       // the month band
-const R_BAND_OUT = 271;
-const R_MONTH_NAME = 255.5;
+const R_COMPASS = FRAME.compass;   // the ring both wheels share begins here
 const SEASON_WEIGHT = 8;     // the season ring is a BAND, not a hairline
 
 /** The anchors, in the order pascha() reports them. Only the dot size is the
@@ -164,14 +160,10 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
   const seasons = seasonsFor(tonus, year);
   const bounds = monthBounds(year);
 
-  const svg = el("svg", {
-    class: "annulus", viewBox: "0 0 600 600", xmlns: NS,
-    role: "img", "aria-label": `The liturgical year ${year} as a ring`,
+  const { svg, defs, root } = wheel({
+    className: "annulus",
+    label: `The liturgical year ${year} as a ring`,
   });
-  const defs = el("defs", {});
-  svg.appendChild(defs);
-  const root = el("g", { transform: "translate(300 300)" });
-  svg.appendChild(root);
 
   // ── the season band: each season on the bounds it reports for itself ──
   for (const s of seasons) {
@@ -209,54 +201,12 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     root.appendChild(t);
   }
 
-  // ── the anchor orbit, and the compass and month-band circles ──
-  for (const r of [R_ANCHOR, R_COMPASS, R_MONTH_TICK, R_BAND_IN, R_BAND_OUT]) {
-    root.appendChild(el("circle", {
-      r, fill: "none", stroke: INK,
-      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.fine,
-    }));
-  }
-
-  // ── the compass: a tick per week, longer at each month boundary ──
-  const ticks = el("g", { class: "annulus-ticks" });
-  root.appendChild(ticks);
-  for (let d = 0; d < 365; d += 7) {
-    const a = doyAngle(d);
-    const [x1, y1] = pointAt(a, R_COMPASS), [x2, y2] = pointAt(a, R_WEEK);
-    ticks.appendChild(el("line", {
-      x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
-      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": 0.4,
-    }));
-  }
-  for (let i = 0; i < 12; i++) {
-    const a = doyAngle(bounds[i]);
-    const [x1, y1] = pointAt(a, R_COMPASS), [x2, y2] = pointAt(a, R_MONTH_TICK);
-    ticks.appendChild(el("line", {
-      x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
-      stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": 0.5,
-    }));
-    const [bx1, by1] = pointAt(a, R_BAND_IN), [bx2, by2] = pointAt(a, R_BAND_OUT);
-    ticks.appendChild(el("line", {
-      x1: sc(bx1), y1: sc(by1), x2: sc(bx2), y2: sc(by2),
-      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.fine,
-    }));
-  }
-
-  // ── the month names, set upright around the band ──
-  const names = el("g", { class: "annulus-months" });
-  root.appendChild(names);
-  for (let i = 0; i < 12; i++) {
-    const mid = doyAngle((bounds[i] + bounds[i + 1]) / 2);
-    const [x, y] = pointAt(mid, R_MONTH_NAME);
-    const rot = uprightRotation(mid);
-    names.appendChild(el("text", {
-      transform: `translate(${sc(x)} ${sc(y)}) rotate(${sc(rot)})`,
-      "text-anchor": "middle", "dominant-baseline": "central",
-      "font-family": HOUSE_SANS, "font-size": STEP.micro,
-      "letter-spacing": "0.16em",
-      fill: INK, "fill-opacity": STRATUM.margin,
-    }, MONTHS[i]));
-  }
+  // ── the anchor orbit, then the ring both wheels wear ──
+  root.appendChild(el("circle", {
+    r: R_ANCHOR, fill: "none", stroke: INK,
+    "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.fine,
+  }));
+  outerRing(root, { names: MONTHS, bounds, period: 365, ticks: 7 });
 
   // ── the centre ──
   root.appendChild(el("text", {
