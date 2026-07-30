@@ -48,9 +48,9 @@ console.log(`vendored the ink → site/diagrams/ink.js (${(src.length / 1024).to
 // SIGNS is one line of the planet engine; the rest of that module pulls in the
 // ephemeris, so the constant is re-emitted rather than the file copied.
 const planet = await readFile(SIGNS_SRC, "utf8");
-const m = planet.match(/export const SIGNS = \[[\s\S]*?\];/);
+const m = planet.match(/export const SIGNS = \[[\s\S]*?\];[\s\S]*?export const SIGNA = \[[\s\S]*?\];/);
 if (!m) {
-  console.error("vendor-ink: SIGNS not found in the planet engine — did it move?");
+  console.error("vendor-ink: SIGNS/SIGNA not found in the planet engine — did they move?");
   process.exit(1);
 }
 await writeFile(SIGNS_OUT,

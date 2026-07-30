@@ -28,7 +28,7 @@ import { eclipticAt, eclipticRotation } from "./polar.js";
 // The twelve signs come from the library, not a copy of them: a body's `sign`
 // is one of these, so the wheel's sectors and the table's words are the same
 // list. (A named export, like MODES and CADENTIAE — not on the default object.)
-import { SIGNS } from "./signs.js";
+import { SIGNA } from "./signs.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -81,7 +81,7 @@ export function rotaRows(tonus, { date } = {}) {
         presence: v.presence,
         motion: v.motion,
         retrograde: v.retrograde,
-        sign: body.sign,
+        sign: body.signum,
         // One ring per sphere, at its place in the Chaldean order.
         radius: R_FIRST + (sphere < 0 ? i : sphere) * R_STEP,
         sphere,
@@ -136,7 +136,7 @@ export function rota(tonus, { date, selected, aspects = true, onSelect } = {}) {
       "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
     }));
   }
-  SIGNS.forEach((name, i) => {
+  SIGNA.forEach((name, i) => {
     const a0 = i * 30;
     const [x1, y1] = eclipticAt(a0, R_ZODIAC_IN);
     const [x2, y2] = eclipticAt(a0, R_ZODIAC_OUT);
