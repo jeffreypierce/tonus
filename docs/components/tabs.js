@@ -37,11 +37,15 @@ export const el = (tag, attrs = {}, ...kids) => {
  * @param {string} [opts.className]           extra class on the wrapper
  * @returns {HTMLElement}
  */
-export function tabs({ tabs: items, active, onChange, label = "views", className }) {
+export function tabs({ tabs: items, active, onChange, label = "views", className,
+  stripOnly = false, variant }) {
   const current = items.some((t) => t.key === active) ? active : items[0]?.key;
   const wrap = el("div", { class: ["tabbed", className].filter(Boolean).join(" ") });
 
-  const strip = el("div", { class: "tabstrip", role: "tablist", "aria-label": label });
+  const strip = el("div", {
+    class: ["tabstrip", variant && `tabstrip-${variant}`].filter(Boolean).join(" "),
+    role: "tablist", "aria-label": label,
+  });
   const buttons = [];
 
   items.forEach((t, i) => {
@@ -73,6 +77,11 @@ export function tabs({ tabs: items, active, onChange, label = "views", className
     strip.append(b);
   });
 
+  // The strip alone, when the panel belongs in another row of the page's grid
+  // — the two columns' headers must align across the page, so a strip cannot
+  // always carry its own panel directly beneath it.
+  if (stripOnly) return strip;
+
   wrap.append(strip);
 
   // Only the current panel is built. A tab nobody opened costs nothing, which
@@ -88,4 +97,16 @@ export function tabs({ tabs: items, active, onChange, label = "views", className
     }, shown.panel()));
   }
   return wrap;
+}
+
+/** Just the panel a strip would have shown — its other half. */
+export function tabPanel({ tabs: items, active, label = "views" }) {
+  const shown = items.find((t) => t.key === active) ?? items[0];
+  if (!shown) return el("div");
+  return el("div", {
+    class: "tabpanel", role: "tabpanel",
+    id: `panel-${label}-${shown.key}`,
+    "aria-labelledby": `tab-${label}-${shown.key}`,
+    tabindex: "0",
+  }, shown.panel());
 }
