@@ -132,7 +132,12 @@ function calendarium() {
         ? [feast.ritus, feast.grade].filter(Boolean).join(" · ")
         : state.day.toISOString().slice(0, 10)),
     // row 3 — what may be changed
-    inputs: dateDial(state.day, (d) => { state.day = d; state.chant = null; render(); }),
+    inputs: dateDial(state.day, (d) => { state.day = d; state.chant = null; render(); }, {
+      onDrag: setDragging,
+      // On release, redraw in full: the header rows were left standing during
+      // the drag and may now be out of date.
+      settle: () => render(),
+    }),
     rightInputs: state.right.calendarium === "harmonia"
       ? el("div", { class: "settings" }, el("button", {
           type: "button", "aria-pressed": state.aspects ? "true" : "false",
@@ -452,7 +457,18 @@ const VIEWS = [
   { key: "calendarium", name: "Calendarium", build: calendarium },
 ];
 
+/** True while a slider is under the pointer.
+ *
+ * A drag fires input continuously and every one would redraw the page — which
+ * replaces the row the slider lives in, detaching it mid-gesture and killing
+ * the drag after one step. So while a dial is held the page updates in place
+ * and the full redraw waits for release. */
+let dragging = false;
+
+export function setDragging(on) { dragging = on; }
+
 function render() {
+  if (dragging) { renderLight(); return; }
   const nav = document.getElementById("views");
   nav.replaceChildren(...VIEWS.map((v) => el("button", {
     type: "button",
@@ -463,6 +479,29 @@ function render() {
   const host = document.getElementById("view");
   const view = VIEWS.find((v) => v.key === state.view) ?? VIEWS[1];
   host.replaceChildren(view.build());
+  writeUrl();
+}
+
+/** A redraw that leaves the header rows — and the dial being dragged — alone.
+ * Only the two panels beneath them are rebuilt, which is everything a moving
+ * date actually changes. */
+function renderLight() {
+  const view = VIEWS.find((v) => v.key === state.view) ?? VIEWS[1];
+  const fresh = view.build();
+  const host = document.getElementById("view");
+  const oldRows = host.querySelectorAll(".row");
+  const newRows = fresh.querySelectorAll(".row");
+  if (oldRows.length !== newRows.length) { host.replaceChildren(fresh); return; }
+  oldRows.forEach((row, i) => {
+    // The inputs row holds the dial the pointer is on; leave it standing.
+    if (row.classList.contains("row-inputs")) {
+      // …but its right half may still need to change.
+      const cells = row.children, next = newRows[i].children;
+      if (cells[1] && next[1]) cells[1].replaceChildren(...next[1].childNodes);
+      return;
+    }
+    row.replaceChildren(...newRows[i].childNodes);
+  });
   writeUrl();
 }
 

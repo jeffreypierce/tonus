@@ -167,10 +167,20 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
 
   // ── the season band: each season on the bounds it reports for itself ──
   for (const s of seasons) {
-    let a0 = doyAngle(dayOfYear(s.start, year));
-    let a1 = doyAngle(dayOfYear(s.end, year));
-    // A season may open before the civil year does (Nativitas starts in
-    // December and runs into January), so its arc crosses the wrap.
+    // A season's bounds are the LITURGICAL ones, which need not fall inside the
+    // civil year being drawn: Pentecost runs to the NEXT Advent, so asked about
+    // a June day in 1175 it ends in November 1176. True, and unusable as an
+    // angle — a day past the year's end exceeds 360° and the arc wraps past
+    // itself, which is what made the band go out of round.
+    //
+    // So the ring shows each season's share OF THIS YEAR, clamped to it.
+    const days = isLeap(year) ? 366 : 365;
+    const from = Math.max(1, Math.min(days, dayOfYear(s.start, year)));
+    const to = Math.max(1, Math.min(days, dayOfYear(s.end, year)));
+    let a0 = doyAngle(from);
+    let a1 = doyAngle(to);
+    // A season may still open before the civil year does — Nativitas starts in
+    // December and runs into January — so its arc legitimately crosses the wrap.
     if (a1 < a0) a1 += 360;
     // A hair of air between neighbours, so the band reads as segments.
     const gap = 0.6;
