@@ -36,11 +36,9 @@ const daysIn = (y, m) => [31, isLeap(y) ? 29 : 28, 31, 30, 31, 30,
  */
 let dials = null;
 
-export function dateDial(date, onChange, { minYear = 500, maxYear = 2100, onDrag, settle } = {}) {
+export function dateDial(date, onChange, { minYear = 500, maxYear = 2100 } = {}) {
   if (!dials) dials = build(minYear, maxYear);
   dials.onChange = onChange;
-  dials.onDrag = onDrag;
-  dials.settle = settle;
   dials.sync(date);
   return dials.node;
 }
@@ -54,11 +52,6 @@ function build(minYear, maxYear) {
     });
     const read = el("span", { class: "dial-read" });
     input.addEventListener("input", () => made.emit());
-    // The page must not rebuild this element while it is being dragged.
-    input.addEventListener("pointerdown", () => made.onDrag?.(true));
-    for (const done of ["pointerup", "pointercancel", "blur"]) {
-      input.addEventListener(done, () => { made.onDrag?.(false); made.settle?.(); });
-    }
     return {
       input, read,
       node: el("label", { class: "dial" },

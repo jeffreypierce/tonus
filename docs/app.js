@@ -81,6 +81,28 @@ function page({ title, rightTitle, detail, rightDetail, inputs, rightInputs, lef
   );
 }
 
+/** Rebuild the two panels beneath the header, and nothing else.
+ *
+ * A dial fires input continuously while it is dragged. A full redraw would
+ * replace the row it lives in — and since appending a node MOVES it, even
+ * building the new page would carry the live slider out of the document. So a
+ * moving date rebuilds only the body, and the header rows are never rebuilt at
+ * all: the element under the pointer is never touched, which is the only
+ * arrangement that cannot break the gesture. */
+function renderPanels() {
+  const host = document.getElementById("view");
+  const body = host.querySelector(".row-body");
+  if (!body) { render(); return; }
+  const view = VIEWS.find((v) => v.key === state.view) ?? VIEWS[1];
+  const panels = view.panels?.();
+  if (!panels) { render(); return; }
+  body.replaceChildren(
+    el("div", { class: "cell" }, panels.left),
+    el("div", { class: "cell" }, panels.right),
+  );
+  writeUrl();
+}
+
 /** A key/value table — the shape half these panels want. */
 function pairs(rows) {
   const t = el("table", { class: "tabula" });
@@ -97,6 +119,36 @@ function pairs(rows) {
 // CALENDARIUM — a day
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** The two panels of Calendarium, which a moving date rebuilds on their own. */
+function calendariumPanels() {
+  const [feast] = tonus.festum({ date: state.day });
+  const officeTabs = OFFICES.map((o) => ({
+    key: o.key,
+    name: o.name,
+    panel: () => {
+      let chants = [];
+      try { chants = o.of(feast).filter((c) => c.gabc); } catch { chants = []; }
+      if (!chants.length) return el("p", { class: "ghost" }, "Nothing is sung here today.");
+      return chantList(tonus, chants, { selectedId: state.chant?.id, onSelect: openChant });
+    },
+  }));
+  const readings = calendariumReadings(feast);
+  return {
+    left: feast ? tabs({
+      label: "officium", active: state.office, variant: "quiet",
+      onChange: (k) => { state.office = k; render(); },
+      tabs: officeTabs,
+    }) : el("p", { class: "ghost" }, "No feast at this date."),
+    right: tabPanel({ tabs: readings, active: state.right.calendarium, label: "lectio" }),
+  };
+}
+
+const calendariumReadings = (feast) => [
+  { key: "harmonia", name: "Harmonia Mundi", panel: harmoniaPanel },
+  { key: "festum", name: "Festum", panel: () => festumPanel(feast) },
+  { key: "corpus", name: "Corpus", panel: corpusPanel },
+];
+
 function calendarium() {
   const [feast] = tonus.festum({ date: state.day });
 
@@ -111,11 +163,8 @@ function calendarium() {
     },
   }));
 
-  const readings = [
-    { key: "harmonia", name: "Harmonia Mundi", panel: harmoniaPanel },
-    { key: "festum", name: "Festum", panel: () => festumPanel(feast) },
-    { key: "corpus", name: "Corpus", panel: corpusPanel },
-  ];
+  const readings = calendariumReadings(feast);
+  const panels = calendariumPanels();
 
   return page({
     // row 1 — what this is, and what may be read of it
@@ -132,11 +181,11 @@ function calendarium() {
         ? [feast.ritus, feast.grade].filter(Boolean).join(" · ")
         : state.day.toISOString().slice(0, 10)),
     // row 3 — what may be changed
-    inputs: dateDial(state.day, (d) => { state.day = d; state.chant = null; render(); }, {
-      onDrag: setDragging,
-      // On release, redraw in full: the header rows were left standing during
-      // the drag and may now be out of date.
-      settle: () => render(),
+    inputs: dateDial(state.day, (d) => {
+      state.day = d;
+      state.chant = null;
+      // The panels only: the row this slider sits in must survive the drag.
+      renderPanels();
     }),
     rightInputs: state.right.calendarium === "harmonia"
       ? el("div", { class: "settings" }, el("button", {
@@ -144,12 +193,8 @@ function calendarium() {
           onclick: () => { state.aspects = !state.aspects; render(); },
         }, "aspectus"))
       : null,
-    left: feast ? tabs({
-      label: "officium", active: state.office, variant: "quiet",
-      onChange: (k) => { state.office = k; render(); },
-      tabs: officeTabs,
-    }) : el("p", { class: "ghost" }, "No feast at this date."),
-    right: tabPanel({ tabs: readings, active: state.right.calendarium, label: "lectio" }),
+    left: panels.left,
+    right: panels.right,
   });
 }
 
@@ -210,6 +255,22 @@ function corpusPanel() {
 // CANTICUM — a chant
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** The two panels of Canticum. */
+function canticumPanels() {
+  if (!state.chant || !state.score) return { left: null, right: null };
+  const readings = canticumReadings();
+  return {
+    left: scoreFigure(),
+    right: tabPanel({ tabs: readings, active: state.right.canticum, label: "lectio" }),
+  };
+}
+
+const canticumReadings = () => [
+  { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel },
+  { key: "manus", name: "Manus Guidonius", panel: manusPanel },
+  { key: "tabula", name: "Tabula", panel: tabulaPanel },
+];
+
 function canticum() {
   if (!state.chant || !state.score) {
     return page({
@@ -223,11 +284,8 @@ function canticum() {
   const mode = modeOf(chant);
   const row = state.note != null ? state.score.tabula[state.note] : null;
 
-  const readings = [
-    { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel },
-    { key: "manus", name: "Manus Guidonius", panel: manusPanel },
-    { key: "tabula", name: "Tabula", panel: tabulaPanel },
-  ];
+  const readings = canticumReadings();
+  const panels = canticumPanels();
 
   const M = tonus.temperamentum({ mode, tuning: state.tuning }).modus(mode);
 
@@ -265,8 +323,8 @@ function canticum() {
           el("select", { onchange: (e) => { state.tuning = e.target.value; render(); } },
             ...TUNINGS.map((v) => el("option", { value: v, selected: state.tuning === v }, v))))
       : null,
-    left: scoreFigure(),
-    right: tabPanel({ tabs: readings, active: state.right.canticum, label: "lectio" }),
+    left: panels.left,
+    right: panels.right,
   });
 }
 
@@ -453,22 +511,11 @@ function readUrl() {
 
 // ── render ──
 const VIEWS = [
-  { key: "canticum", name: "Canticum", build: canticum },
-  { key: "calendarium", name: "Calendarium", build: calendarium },
+  { key: "canticum", name: "Canticum", build: canticum, panels: canticumPanels },
+  { key: "calendarium", name: "Calendarium", build: calendarium, panels: calendariumPanels },
 ];
 
-/** True while a slider is under the pointer.
- *
- * A drag fires input continuously and every one would redraw the page — which
- * replaces the row the slider lives in, detaching it mid-gesture and killing
- * the drag after one step. So while a dial is held the page updates in place
- * and the full redraw waits for release. */
-let dragging = false;
-
-export function setDragging(on) { dragging = on; }
-
 function render() {
-  if (dragging) { renderLight(); return; }
   const nav = document.getElementById("views");
   nav.replaceChildren(...VIEWS.map((v) => el("button", {
     type: "button",
@@ -482,28 +529,6 @@ function render() {
   writeUrl();
 }
 
-/** A redraw that leaves the header rows — and the dial being dragged — alone.
- * Only the two panels beneath them are rebuilt, which is everything a moving
- * date actually changes. */
-function renderLight() {
-  const view = VIEWS.find((v) => v.key === state.view) ?? VIEWS[1];
-  const fresh = view.build();
-  const host = document.getElementById("view");
-  const oldRows = host.querySelectorAll(".row");
-  const newRows = fresh.querySelectorAll(".row");
-  if (oldRows.length !== newRows.length) { host.replaceChildren(fresh); return; }
-  oldRows.forEach((row, i) => {
-    // The inputs row holds the dial the pointer is on; leave it standing.
-    if (row.classList.contains("row-inputs")) {
-      // …but its right half may still need to change.
-      const cells = row.children, next = newRows[i].children;
-      if (cells[1] && next[1]) cells[1].replaceChildren(...next[1].childNodes);
-      return;
-    }
-    row.replaceChildren(...newRows[i].childNodes);
-  });
-  writeUrl();
-}
 
 readUrl();
 render();
