@@ -27,7 +27,9 @@
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Cadence } from "../cadence.js";
 import type { Modulation } from "../modulation.js";
-import { cadentiaFamilia, type CadentiaFamilia } from "../../../data/cadentiae.js";
+import {
+  cadentiaFamilia, CADENTIAE_POPULATION, type CadentiaFamilia,
+} from "../../../data/cadentiae.js";
 import {
   INK, STRATUM, CONF_FLOOR, nib, sc, esc, HOUSE_SANS, HOUSE_MONO,
   sampleCubic, crSamples, velocityAt, velocityCeiling, ribbonPath, type Pt,
@@ -357,6 +359,31 @@ const MODE_FINAL: Record<number, string> = { 1: "D", 2: "D", 3: "E", 4: "E", 5: 
 const RAIL_ORDER = ["D", "E", "F", "G"]; // the finals ladder, D on the bottom
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
+// A family's occurrences in one mode must reach this before its lift is
+// printed. Under it the ratio is a rumour: one or two chants deciding a number
+// that reads like a measurement.
+const LIFT_FLOOR = 10;
+
+/**
+ * What the bracket says about a cadence: its lift against the chant's own
+ * mode, or — when the mode is unknown or the in-mode count too thin to divide
+ * — the family's plain corpus share.
+ *
+ * The lift is read against the CHANT'S mode even where the mode line above
+ * shows a governing modulation at that phrase. Deliberate: the question is
+ * "is this close characteristic of this chant's mode?", and re-basing
+ * per-phrase would make two adjacent labels incomparable.
+ */
+function cadenceLabel(fam: CadentiaFamilia | undefined, mode?: number): string {
+  if (!fam) return ""; // no catalogue join, no claim
+  const share = (n: number) => `${(n * 100).toFixed(1)}%`;
+  if (mode == null) return share(fam.share);
+  const inMode = fam.modes[String(mode)] ?? 0;
+  const modeEnds = CADENTIAE_POPULATION.byMode[String(mode)] ?? 0;
+  if (inMode < LIFT_FLOOR || !modeEnds || !fam.share) return share(fam.share);
+  return `×${((inMode / modeEnds) / fam.share).toFixed(1)}`;
+}
+
 /** The tonarium track, every system. */
 export function buildTonarium(notes: TrackNote[], data: TrackData,
   cfg: TonariumConfig): string {
@@ -473,6 +500,13 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       // null here, and falls back to the modal target — see TrackData.cadences.
       const closes = (cad.finality ?? (cad.target === "finalis" ? 1 : 0)) >= 0.5;
 
+      // The family key rides the group, not the page: the label now carries
+      // the measure, so the NAME lives here — machine-readable, the join back
+      // to CADENTIAE, and the provenance a margin gloss can print.
+      g.push(cad.signature
+        ? `<g data-cadentia="${esc(cad.signature)}">`
+        : "<g>");
+
       // The figure's slice of its phrase's own samples — the same curve at
       // the same width, the ink change alone marking the claim.
       const samples = (samplesByPhrase.get(fig[0]!.row.phraseIndex) ?? [])
@@ -488,11 +522,14 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
             `stroke-width="${sc(0.9 * k)}" opacity="${op.toFixed(2)}"/>`);
       }
 
-      // The label: the signature — the catalogue key, the name (07-28 ruling).
-      // It always FOLLOWS its figure; at the system's edge it clamps to the
-      // margin rather than jumping to the figure's other side. A light
-      // end-ticked bracket ties it to the span it names.
-      const lab = cad.signature ?? "";
+      // The label: how characteristic this close is OF THIS CHANT'S MODE —
+      // the family's in-mode share over its corpus share ("×2.1"). The raw
+      // key is the family's name, but a name is not the question the diagram
+      // asks; it moves to the margin (data-cadentia on the group) and the
+      // reader gets the measure instead. It always FOLLOWS its figure; at the
+      // system's edge it clamps to the margin rather than jumping to the
+      // figure's other side. A light end-ticked bracket ties it to the span.
+      const lab = cadenceLabel(fam, data.mode);
       if (lab) {
         const estW = lab.length * 5.6 * k; // 9px mono advance, measured
         const right = cfg.rightFor(s) - 2 * k;
@@ -515,6 +552,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
           `opacity="${(STRATUM.label * op).toFixed(2)}" fill="${INK}" ` +
           `font-family="${esc(HOUSE_MONO)}">${esc(lab)}</text>`);
       }
+      g.push("</g>");
     }
     if (s === 0) {
       g.push(`<text x="${(xL - 2 * k).toFixed(1)}" y="${(yC + 3 * k).toFixed(1)}" font-size="${sc(9 * k)}" ` +

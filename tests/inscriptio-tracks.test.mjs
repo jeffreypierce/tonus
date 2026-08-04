@@ -54,13 +54,25 @@ describe("inscriptio — the tonarium track (moderna)", () => {
     assert.ok(/font-style="italic">VII</.test(tracked.svg), "the governing numeral");
   });
 
-  test("labels each confident cadence by its signature — the 07-28 ruling", () => {
+  test("labels each confident cadence by its lift, and keys it in the margin", () => {
     const confident = score.cadences.filter((c) => c.confidence >= 0.45 && c.signature);
     assert.ok(confident.length > 0, "the subject has confident cadences");
+
+    // The KEY moves to the group: still the family's name and still the join
+    // back to CADENTIAE, but no longer the thing the reader is handed.
     for (const cad of confident) {
-      assert.ok(tracked.svg.includes(`>${cad.signature}</text>`),
-        `signature "${cad.signature}" is the label`);
+      assert.ok(tracked.svg.includes(`data-cadentia="${cad.signature}"`),
+        `signature "${cad.signature}" keys its group`);
+      assert.ok(!tracked.svg.includes(`>${cad.signature}</text>`),
+        `signature "${cad.signature}" is no longer printed as the label`);
     }
+
+    // What the READER gets is the measure: lift against the chant's own mode
+    // ("×2.1"), or the plain corpus share where the mode is unknown or the
+    // in-mode count too thin to divide.
+    const labels = [...tracked.svg.matchAll(/>(×[\d.]+|[\d.]+%)<\/text>/g)];
+    assert.ok(labels.length > 0, "no lift or share label rendered");
+
     // No Latin arrival cases ride the row (adventus was cut).
     assert.ok(!/in (finalem|tenorem|tertiam|subfinalem)/.test(tracked.svg));
   });
