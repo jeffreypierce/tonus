@@ -67,7 +67,7 @@ describe("detectModulations", () => {
     );
   });
 
-  test("Exaltabo te (the transposed mode-2 introit) reads as transposition", () => {
+  test("Exaltabo te (the transposed mode-2 offertory) reads as transposition", () => {
     // The textbook affinal case: notated a fifth up, it never closes on D —
     // the foreign frame is global, so its spans are transposition, not
     // modulation.
