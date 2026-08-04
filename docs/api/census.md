@@ -35,11 +35,10 @@ Everything comes back in one call — profile, balance, neighbors:
     cadenceMedial: { values: [...16], typicality: … },
     chironomy:     { values: [...6],  typicality: … },
     textual:       { values: [...7],  typicality: … },
-    formulas:      { values: [...4],  typicality: … },
   },
   balance: {
-    distance: 0.1029,
-    deviantGroups: ["degreeHist", "melodic", "formulas"],
+    distance: 0.0920,
+    deviantGroups: ["degreeHist", "melodic"],
   },
   neighbors: [
     { id: "gregobase:34", similarity: 0.999 },
@@ -64,7 +63,7 @@ chant is unlike everything," which is a different claim.
 
 ## What a block holds
 
-The corpus pipeline censuses every shipped chant into 225 float32s, grouped by
+The corpus pipeline censuses every shipped chant into 221 float32s, grouped by
 what they describe:
 
 | group           | floats | what it measures                                                                  |
@@ -77,7 +76,6 @@ what they describe:
 | `cadenceMedial` |     16 | how its interior phrases land                                                     |
 | `chironomy`     |      6 | the melodic arc in quarters, phrase length, melisma density                       |
 | `textual`       |      7 | vowel distribution by sung duration, accent rate, melisma mean                    |
-| `formulas`      |      4 | centonization hits against the formulary                                          |
 
 Four more fields ride in the block and are **not** similarity dimensions:
 `flags` (a bitfield), `attest` (dating — that is what `before` reads),
@@ -103,7 +101,7 @@ supplies the usage.
 The reference is the mean block over all 2,187 chants, group by group — no
 curated exemplar, no tunable weights. And because blocks are sums of durations
 and counts, they add: a season's blocks, summed and divided by their count,
-are the season's mean profile in the same 225 slots. The corpus repository's
+are the season's mean profile in the same 221 slots. The corpus repository's
 year-shaped aggregates are built on that closure; only the per-chant half
 ships (see [What the census is not](#what-the-census-is-not)).
 
@@ -118,7 +116,7 @@ just quietly be answers to a different question.
 
 The rule, in three lines:
 
-1. Cosine **per field group**, never over the flat 225.
+1. Cosine **per field group**, never over the flat 221.
 2. `by: "all"` is the **equal-weight mean** of the per-group cosines — every
    dimension one vote, no tunable weights.
 3. Ties break to the lower id, so the same question always has the same answer.
@@ -139,7 +137,7 @@ different widths and different natural spreads. Rank within one `by`; never
 threshold across two.
 
 **A centroid must be pooled per group, then compared per group.** Averaging the
-flat 225 and taking one cosine is the exact mistake rule 1 exists to prevent —
+flat 221 and taking one cosine is the exact mistake rule 1 exists to prevent —
 and it does not announce itself. Pooling the 178 Communions both ways gives
 different winners, and the flat version collapses the top of the field into a
 0.987 tie where the per-group version spreads 0.847 to 0.653. Compression like
@@ -170,7 +168,7 @@ const cosine = (a, b) => {
   return na && nb ? dot / Math.sqrt(na * nb) : 0;
 };
 
-// Pool a set of chants into a centroid — per group, never the flat 225.
+// Pool a set of chants into a centroid — per group, never the flat 221.
 function centroid(ids) {
   const sums = Object.fromEntries(
     GROUPS.map((g) => [g, new Array(CENSUS_GROUPS[g].count).fill(0)]),
@@ -198,21 +196,20 @@ const ranked = ids
   .map((id) => ({ id, s: similarity(id, c) }))
   .sort((a, b) => b.s.all - a.s.all);
 
-// 0.847  Quinque prudentes
-// 0.845  Domus mea
-// 0.839  Joseph fili David
+// 0.953  Quinque prudentes
+// 0.951  Domus mea
+// 0.944  Joseph fili David
 //   …
-// 0.663  Exiit sermo
-// 0.653  Tollite hostias
+// 0.746  Exiit sermo
+// 0.735  Tollite hostias
 ```
 
 The per-group breakdown is where the answer becomes legible. _Quinque
 prudentes_ leads on `textual` 0.998, `cadenceMedial` 0.996 and `trigram` 0.994
 — it sets its text and turns its phrases the way Communions do — while its
-`cadenceFinal` is only 0.824 and `formulas` is 0.000, that last because it
-matches no catalogued formula and neither does the pooled average. A chant is
-typical of its genus in some dimensions and not others, which is the whole
-reason the groups are never flattened together.
+`cadenceFinal` is only 0.824, so the one thing it does unlike a typical
+Communion is end. A chant is typical of its genus in some dimensions and not
+others, which is the whole reason the groups are never flattened together.
 
 ## Profile and typicality
 
@@ -233,7 +230,7 @@ the mean.
 ## Balance — distance and deviance
 
 ```js
-balance: { distance: 0.1029, deviantGroups: ["degreeHist", "melodic", "formulas"] }
+balance: { distance: 0.0920, deviantGroups: ["degreeHist", "melodic"] }
 ```
 
 `distance` is 1 minus the mean typicality across all groups: 0 is a chant at

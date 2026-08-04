@@ -68,9 +68,8 @@ function slice(blockIndex: number, group: CensusGroup): Float32Array {
 
 /**
  * Cosine similarity, 0–1. Two all-zero vectors are IDENTICAL (1), not
- * undefined: a chant with no formula hits and another with none agree
- * perfectly about formulas. One zero vector against a non-zero one shares
- * nothing, so 0.
+ * undefined: two chants that both sit silent in a dimension agree perfectly
+ * about it. One zero vector against a non-zero one shares nothing, so 0.
  */
 function cosine(a: ArrayLike<number>, b: ArrayLike<number>): number {
   let dot = 0;

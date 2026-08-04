@@ -14,8 +14,7 @@ export type CensusGroup =
   | "cadenceFinal"
   | "cadenceMedial"
   | "chironomy"
-  | "textual"
-  | "formulas";
+  | "textual";
 
 /** `all` = the equal-weight mean of every group's cosine. */
 export type CensusBy = CensusGroup | "all";
