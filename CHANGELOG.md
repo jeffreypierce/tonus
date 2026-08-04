@@ -15,6 +15,16 @@ chant against the corpus that holds it.
 
 ### Changed
 
+- **The tonarium's cadence label says how typical a close is, not which
+  family it belongs to.** The bracket read `"2,0,-2 @0"` — the family's name,
+  which a reader could not weigh. It now reads `"×2.1"`: the family's share
+  within this chant's mode over its share of the corpus at large. Measured
+  across four books the figure spans ×0.46 to ×10.56, median ×2.22; a lift
+  below 1.0 prints too, since an atypical close is information. A mode-less
+  chant, or a family with fewer than ten occurrences in the chant's mode,
+  falls back to the plain corpus share. The key is not lost — each cadence
+  now draws inside a group carrying `data-cadentia`, the join back to
+  `CADENTIAE` and the provenance a margin gloss can print.
 - **BREAKING — five appendix tables renamed to match the register rule.**
   `TEMPUS_NAME` → `TEMPORA`, `GRADE_NAME` → `GRADUS`, and the internal
   `OFFICE_LABELS` / `ORDINARY_LABELS` / `MODE_LABELS` → `OFFICIA` /
@@ -31,6 +41,26 @@ chant against the corpus that holds it.
 
 ### Added
 
+- **The cadence catalogue carries its own denominator, and joins itself.**
+  Every `CadentiaFamilia` gains `share` — its occurrences over ALL 28,481
+  phrase-ends, not over the 58.7% that cleared the table's floor, which would
+  have flattered every family in it. `CADENTIAE_POPULATION` ships beside it
+  with the same total per mode digit, so a family's **lift** in a mode is one
+  division: `(modes[m] / byMode[m]) / share`. The ratio itself is not baked —
+  export the vocabulary, not the arithmetic.
+  A `Cadence` now carries `finality`, the share of ITS family's corpus
+  occurrences that land at a final close, joined once in `notatio` instead of
+  by every caller rebuilding the index. It rides the cadence while `familia`
+  still does not, because the two differ in kind: the signature already IS the
+  family's name, but how often that family closes cannot be read off it — of
+  the 55 families landing on the final, 31 do not close, and their finality
+  spans 0.054 to 1.000. Detection stays pure; the corpus table meets detected
+  data in the score builder, where `MODES` already does.
+  Both cadence catalogues are now documented as what they are — *tradita*
+  (the treatises' figures, final cadences only) and *inventa* (the corpus
+  tally, any target, and so the only account of medial closes) — with the
+  measured coverage of each and a worked lift example that was run before it
+  was printed.
 - **The appendix widened, so callers stop transcribing the library's own
   vocabulary.** `HORAE` (the eight canonical hours, Matins first — the order
   is the content, and `officium`'s validation reads the same list, so the two

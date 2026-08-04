@@ -95,11 +95,20 @@ table of codes or English keeps English. So the name tells you which you hold.
 
 **Tuning**
 
-| Export      | What it holds                                                        |
-| ----------- | -------------------------------------------------------------------- |
-| `MODES`     | the eight modes' doctrine: final, tenor, ambitus, cadence figures    |
-| `TONES`     | the psalm tones (Graduale Romanum appendix), with their differentiae |
-| `CADENTIAE` | the cadence families (`CadentiaFamilia`), generated corpus data      |
+| Export                 | What it holds                                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| `MODES`                | the eight modes' doctrine: final, tenor, ambitus, and the **received** cadence figures                |
+| `TONES`                | the psalm tones (Graduale Romanum appendix), with their differentiae                                  |
+| `CADENTIAE`            | the **mined** cadence families (`CadentiaFamilia`) — shape, arrival, share, finality, per-mode counts |
+| `CADENTIAE_POPULATION` | the denominator behind every `share`: all phrase-ends, and the same total per mode                    |
+
+The two cadence tables are not duplicates. `MODES.cadences` is what the
+treatises say a mode closes on (final cadences only); `CADENTIAE` is what the
+corpus was measured doing (any target, which makes it the only account of
+medial closes). See [one spine, two
+annotations](score.md#one-spine-two-annotations), and
+[lift](tuning.md#lift--how-mode-bound-a-close-is) for what `CADENTIAE_POPULATION`
+is for.
 
 **Heavens**
 
@@ -133,7 +142,7 @@ the list resolve their pitches through the ones before.
 - [Neumes — `neuma`](tuning.md#neumes--neuma)
 - [Ratios — `ratio`](tuning.md#ratios--ratio)
 - [The gamut — `gamut`](tuning.md#the-gamut--gamut)
-- [Modes — `modus`](tuning.md#modes--modus) · [Cadence figures](tuning.md#cadence-figures)
+- [Modes — `modus`](tuning.md#modes--modus) · [Cadence figures](tuning.md#cadence-figures) · [The corpus catalogue](tuning.md#the-corpus-catalogue--cadentiae)
 - [Psalm tones — `tonus`](tuning.md#psalm-tones--tonus)
 - [Theory & Context](tuning.md#theory--context) · [Sources](tuning.md#sources)
 
@@ -167,7 +176,7 @@ the list resolve their pitches through the ones before.
 - [The intonation channel](score.md#the-intonation-channel)
 - [The imprint](score.md#the-imprint)
 - [Prosody](score.md#prosody)
-- [Cadences](score.md#cadences)
+- [Cadences](score.md#cadences) · [One spine, two annotations](score.md#one-spine-two-annotations)
 - [Modulations](score.md#modulations)
 - [Melodic formulae](score.md#melodic-formulae)
 - [Theory & Context](score.md#theory--context) · [Sources](score.md#sources)
@@ -183,7 +192,7 @@ the list resolve their pitches through the ones before.
 
 **[Census](census.md)** — one chant measured against the corpus that holds it.
 
-- [The verb](census.md#the-verb)
+- [The method](census.md#the-method)
 - [What a block holds](census.md#what-a-block-holds)
 - [Distance is cosine per field group](census.md#distance-is-cosine-per-field-group)
 - [Profile and typicality](census.md#profile-and-typicality)
