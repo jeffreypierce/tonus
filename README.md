@@ -22,7 +22,7 @@ calls and no runtime dependencies.
 - **The liturgical calendar.** The Tridentine calendar of any year, resolved
   against Easter (by the Julian or the Gregorian computus), with each feast's
   rank, grade, and season.
-- **The chant repertoire.** 2,887 chants across eleven books (ten Solesmes
+- **The chant repertoire.** 2,187 chants across ten books (nine Solesmes
   editions and the Nocturnale Romanum night office), in
   [GABC](https://gregorio-project.github.io/) notation: Mass propers, the Kyriale,
   the Office hours, the psalter, and the Matins nocturns, retrievable by feast,

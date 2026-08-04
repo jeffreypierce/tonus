@@ -29,7 +29,7 @@ carries page-level provenance back to its book.
 
 ## The corpora
 
-Ten Solesmes books, extracted from
+Nine Solesmes books, extracted from
 [GregoBase](https://gregobase.selapa.net/), joined by the Divinum Officium
 propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 
@@ -40,16 +40,21 @@ propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 | `la`   | Liber antiphonarius               | Solesmes, 1960     | 160    |
 | `lh`   | Liber Hymnarius                   | Solesmes, 1983     | 25     |
 | `am`   | Antiphonale Monasticum            | Solesmes, 1934     | 576    |
-| `ky`   | Kyriale (Graduale Romanum)        | Solesmes, 1961     | 120    |
 | `ams`  | Antiphonale Monasticum Solesmense | Solesmes, 1935     | 11     |
 | `psm`  | Psalterium Monasticum             | Solesmes, 1981     | 11     |
 | `cse`  | Cantus selecti                    | Solesmes, 1957     | 11     |
 | `cot`  | Chants of the Church              | Solesmes, 1956     | 16     |
 | `nr`   | Nocturnale Romanum                | Sandhofe, 2002     | 470    |
 
-**2,887 chants in all.** The books hold 9,015 between them; tonus ships only
-what the calendar calls for on some day of the year, so a chant with no day
-to be sung on is not here. See [The cut](#the-cut) below.
+**2,187 chants in all**, plus the Mass ordinary (120 settings, reached by
+[`ordinary`](#the-ordinary--ordinarium) rather than by book — the Kyriale is a
+partition of the Graduale, not a shelf of its own). The books hold 10,156
+between them; tonus ships only what the calendar calls for on some day of the
+year, so a chant with no day to be sung on is not here. See
+[The cut](#the-cut) below.
+
+The ten books list 2,767 rows for those 2,187 chants: a melody printed in two
+books is stored once and listed under both.
 
 `am`, `ams`, and `psm` are the monastic (Benedictine) books; the rest are
 Roman. Every Solesmes book here bears the rhythmic markings the
@@ -64,7 +69,7 @@ those marks too.
 The corpus is **assignment-driven**: a chant ships when some day of the
 liturgical year calls for it. The calendar is walked year by year until it stops
 finding new assignments (39 years, in the event), and what it never reaches is
-not shipped — 9,015 book chants become 2,887.
+not shipped — 10,156 book chants become 2,187.
 
 This is a working model of a medieval calendar's melodic content, not a complete
 GABC library. The trade is deliberate: everything here answers "what was sung on
@@ -90,18 +95,18 @@ book's ledger:
 
 ```js
 tonus.corpus();
-// { count: 2887,      // rows tonus ships (a chant in two books counts twice)
-//   distinct: 2187,   // chants addressable by id
-//   total: 8592,      // what the books hold, where measured
-//   genera: [ { office: "an", genus: "Antiphona", count: 723 }, … ],
-//   modes:  [ { mode: "1", modus: "Modus I", count: 529 }, … ],
-//   books:  [ …11 Corpus entries, in registry order ] }
+// { count: 2187,      // chants tonus holds, each counted once
+//   listings: 2767,   // rows on the shelf — a chant in two books appears twice
+//   total: 10156,     // what the books hold, before the cut
+//   genera: [ { office: "an", genus: "Antiphona", count: 693 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 392 }, … ],
+//   books:  [ …10 Corpus entries, in registry order ] }
 ```
 
-`count` and `distinct` differ because a melody printed in two books is stored
-once but listed under both. Both are reported because both are true and they
-answer different questions: how many rows a book listing has, and how many
-chants you can name.
+**`count` is the number of chants** — the one to quote. `listings` is how long
+the shelf is, and `listings - count` is how much the books overlap (580 chants
+printed in more than one). The breakdowns describe the same population `count`
+does, so `genera` and `modes` sum to it.
 
 ```js
 tonus.corpus("am");
@@ -151,8 +156,10 @@ tallies side by side names it — 1,049 antiphons in the book, 458 sung.
 
 Only the extractor can measure this. By the time tonus loads, the keep set has
 already run, so the pre-cut tally is read from an artifact rather than derived.
-Books outside GregoBase (`nr`, `ky`) report `full: null` — the same
-"unmeasured, not zero" rule `total`/`unique`/`shared` follow.
+Every shelved book reports one, including the Nocturnale, whose tally comes
+from its own extract rather than from GregoBase — it was the last book
+reporting `full: null`, which read as "not yet measured" when the number had
+existed all along.
 
 The metadata is drawn from GregoBase's own catalogue. The `genera` list is the
 office distribution (descending by count); `modes` counts modes I–VIII, with a
@@ -167,11 +174,15 @@ book (by GregoBase chant id). These reveal, for instance, that the Liber Usualis
 is largely the Graduale and the Antiphonarius bound together (it shares hundreds
 of chants with each), while the Antiphonale Monasticum is almost entirely its own.
 
-Overlap is measured only where a book has a GregoBase catalogue to be compared
-against. The Nocturnale (`nr`) comes from a separate source and the Kyriale
-(`ky`) is a rubric-driven selection rather than a printed book, so for both the
-overlap is **unmeasured**: `total`, `unique`, and `shared` are `null`, distinct
-from a measured zero, so a consumer never mistakes "not compared" for "shares
+The Nocturnale (`nr`) is compared differently, because it has no GregoBase
+catalogue: its counts come from its own extract, and it shares **nothing** —
+`unique` is all 1,564 chants it holds. That is a measurement, not a gap. The
+crosswalk that pairs a nocturnale chant with a GregoBase twin is *enrichment*,
+a route to metadata, not a claim that the two books print the same chant, so
+counting those as shared would invent a relationship the books do not have.
+
+The `null` those fields can still carry means **unmeasured**, distinct from a
+measured zero, so a consumer never mistakes "not compared" for "shares
 nothing".
 
 ## Retrieval — `cantus`
@@ -271,6 +282,7 @@ interface CantusQuery {
   mode?: number | string | (number | string)[];
   office?: OfficeCode | OfficeCode[];
   source?: ChantSource | ChantSource[];
+  ordinary?: OrdinaryCode | OrdinaryCode[]; // a part of the Mass ordinary
   before?: number; // only chants ATTESTED by this year (the era view)
   cursus?: "monastic" | "secular"; // transmission; `both` satisfies either
   limit?: number;
@@ -279,12 +291,35 @@ interface CantusQuery {
 }
 ```
 
+### The ordinary, and why it is not a `source`
+
+The Mass ordinary is addressable but not shelved. `ordinary` is the door:
+
+```js
+tonus.cantus({ ordinary: "ky" });            // all 31 Kyries
+tonus.cantus({ ordinary: "gl", mode: 4 });   // mode-4 Glorias
+tonus.cantus({ ordinary: ["as", "va"] });    // the sprinkle antiphons
+```
+
+The Kyriale is a **partition of the Graduale**, not a book: there is no Kyriale
+in GregoBase, and the extractor pulls the ordinary out of the Graduale's own
+rows so it can be routed to per-ordinary codes. Listing it beside its parent
+counted the Graduale twice, so it is not a `source` and not a row in the shelf.
+
+It is still repertoire, so it stays nameable — by `id`, and by the part of the
+Mass it belongs to. A plain search does not sweep it in: ask for `{ mode: 5 }`
+and you get the shelf, because you should not stumble onto a Kyrie while
+looking for Graduals. Ask for a Kyrie and you get Kyries.
+
+For the setting a given DAY calls for, [`ordinarium`](#the-ordinary--ordinarium)
+is the verb — it applies the Kyriale's own rubrics. This is flat retrieval.
+
 ### On chant ids
 
 An id's prefix names **the catalogue the identifier came from** — not the book
 the chant is printed in, and not a claim about who the melody belongs to. A
 chant carrying `gregobase:1210` is a Solesmes book chant that GregoBase happens
-to have catalogued; the corpus is assembled from eleven books, and GregoBase is
+to have catalogued; the corpus is assembled from ten books, and GregoBase is
 one source among several.
 
 The prefix is therefore **not a namespace you can query against**. GregoBase

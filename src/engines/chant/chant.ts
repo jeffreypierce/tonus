@@ -22,7 +22,6 @@ import { PSM_DATA, PSM_SOURCE } from "../../data/psm.js";
 import { CSE_DATA, CSE_SOURCE } from "../../data/cse.js";
 import { COT_DATA, COT_SOURCE } from "../../data/cot.js";
 import { KYRIALE } from "../../data/kyriale.js";
-import { KY_SOURCE } from "./types.js";
 import { entryToOrdinaryChant } from "./ordinary.js";
 
 function modusOf(mode: string | null): string | null {
@@ -110,24 +109,40 @@ const CORPUS: Chant[] = [
   ...PSM_DATA.map((c) => withLabels(c, PSM_SOURCE)),
   ...CSE_DATA.map((c) => withLabels(c, CSE_SOURCE)),
   ...COT_DATA.map((c) => withLabels(c, COT_SOURCE)),
-  // The Kyriale as a corpus book (source "ky"): the ordinary IS repertoire —
-  // office stays "or" and the per-ordinary identity rides `ordinary`/
-  // `ordinarium`/`mass`, the same records `ordinarium()` serves (one shaping,
-  // ordinary.ts). Registered as a book so corpus-scale analysis can count
-  // the ordinary; a few aspersion chants legitimately also appear in other books
-  // (shared content, the CORPUS_OVERLAP situation).
-  ...KYRIALE.map(entryToOrdinaryChant),
 ];
+
+// The Kyriale, addressable but not shelved — ruled 2026-08-04.
+//
+// It was a row in the ledger, and it should not have been: there is no Kyriale
+// in GregoBase. `ky` and `gr` are the same source id, PARTITIONED by the
+// extractor, which pulls `office-part = 'ky'` out of the Graduale query so the
+// ordinary can be routed to per-ordinary codes. Listing that slice beside its
+// parent counted the Graduale twice, and its `total: null` read as "not yet
+// measured" when there was no separate book to measure.
+//
+// But "not a book" and "not nameable" are different claims, and only the first
+// is true. These chants are sung repertoire, they are censused, and an id must
+// still resolve to exactly one chant — the census contract says so in as many
+// words. So they stay addressable by `id`, by `office: "or"`, and by
+// `ordinary`, and stay out of the shelf's book list and row count.
+const KYRIALE_CHANTS: Chant[] = KYRIALE.map(entryToOrdinaryChant);
+
+/** Everything nameable: the shelf, plus the ordinary that no shelf holds. */
+const ADDRESSABLE: Chant[] = [...CORPUS, ...KYRIALE_CHANTS];
 
 let _byId: Map<string, Chant> | null = null;
 function byId(): Map<string, Chant> {
-  if (!_byId) _byId = new Map(CORPUS.map((c) => [c.id, c]));
+  if (!_byId) _byId = new Map(ADDRESSABLE.map((c) => [c.id, c]));
   return _byId;
 }
 
+// The book registry, and so the shelf `corpus()` reports. `ky` is deliberately
+// absent: it is a partition of `gr`, not a book (see CORPUS above). Its
+// bibliographic record still rides every kyriale chant's `source` — a caller
+// reading one is told which book it is printed in — but the Kyriale is not a
+// row in the ledger, because the Graduale already is.
 export const SOURCES: Record<ChantSource, Chant["source"]> = {
   gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
-  ky: KY_SOURCE,
   // office books — provenance, not acquisition
   ams: AMS_SOURCE, psm: PSM_SOURCE,
   cse: CSE_SOURCE, cot: COT_SOURCE,
@@ -208,9 +223,10 @@ function fullCount(code: ChantSource): CorpusFullCount | null {
  * commonest question — what IS this corpus — the one thing the verb could not
  * answer.
  *
- * `count` is rows and `distinct` is addressable chants; they differ because a
- * melody printed in two books is stored once but listed under both. Both are
- * reported because both are true and each answers a different question.
+ * `count` is how many chants tonus holds, each counted once — including the
+ * ordinary, which is addressable but not shelved. `listings` is how many rows
+ * the shelf has, where a melody printed in two books appears under both; the
+ * difference between them is the overlap.
  */
 let _ledger: CorpusLedger | null = null;
 function corpusLedger(): CorpusLedger {
@@ -221,17 +237,20 @@ function corpusLedger(): CorpusLedger {
   const codes = Object.keys(SOURCES) as ChantSource[];
   const books = codes.map((code) => oneCorpus(code));
 
+  // Tally over what tonus HOLDS, one row per chant — the same population
+  // `count` reports, so the breakdowns sum to the headline instead of to the
+  // listing total. Deduped by id, because a chant in two books is one chant.
   const genera: Record<string, number> = {};
   const modes: Record<string, number> = {};
-  for (const c of CORPUS) {
+  for (const c of byId().values()) {
     genera[c.office] = (genera[c.office] ?? 0) + 1;
     const m = c.mode != null && MODI[c.mode] ? c.mode : "other";
     modes[m] = (modes[m] ?? 0) + 1;
   }
 
   _ledger = {
-    count: CORPUS.length,
-    distinct: byId().size,
+    count: byId().size,
+    listings: CORPUS.length,
     // Sum only what was measured: a book outside GregoBase reports null rather
     // than a false zero, and adding null in as 0 would understate the shelf
     // while looking like a total.
@@ -360,10 +379,21 @@ export function getChants(query?: CantusQuery): Chant[] {
   // a chant that fails them makes `cantus({ source, id })` silently ignore the
   // source and report an id from any book as belonging to that one.
   const ids = toArray(query.id);
-  let out: readonly Chant[] = CORPUS;
+  const ordinaries = toArray(query.ordinary);
+  // The default pool is the SHELF. The Kyriale is not on it (see KYRIALE_CHANTS
+  // above), so it is reached deliberately: by `id`, which must resolve any
+  // chant tonus holds, or by `ordinary`, which asks for a part of the Mass and
+  // could not mean anything else. A plain `cantus({ mode: 5 })` does not sweep
+  // the ordinary in, because the ordinary is not repertoire of that kind — you
+  // ask for a Kyrie, you do not stumble onto one.
+  let out: readonly Chant[] = ordinaries ? KYRIALE_CHANTS : CORPUS;
   if (ids) {
     const map = byId();
     out = ids.map((id) => map.get(id)).filter((c): c is Chant => !!c);
+  }
+  if (ordinaries) {
+    const set = new Set<string>(ordinaries);
+    out = out.filter((c) => c.ordinary != null && set.has(c.ordinary));
   }
 
   const sources = toArray(query.source);

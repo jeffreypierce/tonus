@@ -15,6 +15,26 @@ chant against the corpus that holds it.
 
 ### Changed
 
+- **BREAKING — the shelf reports ONE number, and the Kyriale leaves it.**
+  `corpus()` reported `count` (book listings, a chant in two books counted
+  twice) beside `distinct` (chants), which made the headline figure depend on
+  how many books happened to print the same melody — a reader had to know that
+  to read either. Now `count` is **how many chants tonus holds**, each counted
+  once, and `listings` is the shelf's length; `listings - count` is the
+  overlap. `genera` and `modes` sum to `count`, describing the same population
+  the headline does.
+  The Kyriale is no longer an eleventh book. There is no Kyriale in GregoBase:
+  `ky` and `gr` are the same source, partitioned by the extractor so the
+  ordinary can be routed to per-ordinary codes, so listing it beside its parent
+  counted the Graduale twice and its `total: null` read as "unmeasured" when
+  there was no separate book to measure. `ky` is not a `ChantSource` and not a
+  row in the shelf — which is 10 books, 2,187 chants, 2,767 listings.
+  Nothing became unreachable. `ordinarium({ feast })` is untouched, and the
+  ordinary is now queryable directly: **`cantus({ ordinary: "ky" })`** returns
+  all 31 Kyries, composes with the other filters, and the Kyriale's
+  bibliographic record still rides every one of its chants. A plain search does
+  not sweep the ordinary in — you ask for a Kyrie rather than stumbling onto
+  one.
 - **BEHAVIOUR — the salicus takes Cardine's correction, and stops being
   confused with the Solesmes ictus.** Two changes, each ruled and each
   measured separately over the sung corpus (2,887 chants, 28,498 phrases).
@@ -73,6 +93,20 @@ chant against the corpus that holds it.
 
 ### Added
 
+- **Every shelved book reports what it HOLDS.** The Nocturnale was the last
+  one answering `full: null`, which read as "not yet measured" — but the tally
+  had existed all along in its own extract. It holds **1,564** chants against
+  the 470 tonus ships, and it shares nothing: `unique` is all of them. That is
+  a measurement, not a gap. The crosswalk pairing a nocturnale chant with a
+  GregoBase twin is enrichment, a route to metadata, not a claim that two books
+  print the same chant, so counting those as shared would invent a
+  relationship. The shelf now holds 10,156 chants before the cut.
+- **Three genera that are reported but not shipped now have names.**
+  `Improperia` (the Good Friday Reproaches), `Antiphona Mariana` (Marian
+  antiphons outside the office cycle) and `Supplicatio` (litanies) appear in a
+  book's pre-cut `full` tally, where they had been printing as bare codes —
+  `genus: "su"` — while every other row carried a Latin genus. Being outside
+  the cut is not a reason to be nameless in a table tonus publishes.
 - **The cadence catalogue carries its own denominator, and joins itself.**
   Every `CadentiaFamilia` gains `share` — its occurrences over ALL 28,481
   phrase-ends, not over the 58.7% that cleared the table's floor, which would

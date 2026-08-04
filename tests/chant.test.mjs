@@ -6,6 +6,11 @@ import { getOrdinary } from "../dist/engines/chant/ordinary.js";
 import { getHour } from "../dist/engines/chant/hour.js";
 import { getPsalm } from "../dist/engines/chant/psalm.js";
 import { getFeast } from "../dist/engines/cal/calendar.js";
+import { OFFICIA } from "../dist/engines/chant/types.js";
+
+// Every part of the Mass ordinary — the doors to the Kyriale, which is
+// addressable but not shelved.
+const ORDINARY_CODES = ["ky", "gl", "cr", "sa", "ag", "be", "it", "as", "va"];
 
 describe("getChants", () => {
   test("returns chants filtered by mode", () => {
@@ -40,10 +45,19 @@ describe("getChants", () => {
     assert.ok(antiphons.length > am.length / 2);
   });
 
-  test("serves the Kyriale as a corpus book (source ky) — the ordinary is countable", () => {
-    const ky = getChants({ source: "ky" });
+  test("serves the Kyriale by `ordinary`, not as a book — the ordinary is countable", () => {
+    // The Kyriale is a PARTITION of the Graduale, not a book of its own (there
+    // is no Kyriale in GregoBase — the extractor splits one source), so it is
+    // not a `source` and not a row in the shelf. It is still sung repertoire,
+    // so it stays addressable: by id, and by the part of the Mass it belongs to.
+    // Not a source any more — and an unrecognised source VALUE returns [],
+    // the same as any other, since only a malformed KEY is a caller bug.
+    assert.deepEqual(getChants({ source: "ky" }), []);
+    const ky = ORDINARY_CODES.flatMap((code) => getChants({ ordinary: code }));
     assert.equal(ky.length, 120, `expected the full Kyriale, got ${ky.length}`);
     for (const c of ky) {
+      // The bibliographic record survives — a chant still says which book it is
+      // printed in, and a singer would be holding the Kyriale.
       assert.equal(c.source.code, "ky");
       assert.equal(c.office, "or"); // office register: all ordinaries are "or"
       assert.equal(c.genus, "Ordinarium");
@@ -67,8 +81,8 @@ describe("getChants", () => {
     const feast = getFeast({ date: new Date(Date.UTC(2026, 3, 5)) }); // Easter
     const viaOrdo = getOrdinary({ feast }).find((c) => c.ordinary === "ky");
     assert.ok(viaOrdo, "Easter's ordinarium serves a Kyrie");
-    const viaBook = getChants({ source: "ky" }).find((c) => c.id === viaOrdo.id);
-    assert.ok(viaBook, `${viaOrdo.id} is reachable as a book record too`);
+    const viaBook = getChants({ id: viaOrdo.id })[0];
+    assert.ok(viaBook, `${viaOrdo.id} is reachable by id too`);
     assert.deepEqual(viaOrdo, viaBook);
   });
 
@@ -137,17 +151,47 @@ describe("getCorpus", () => {
     // This used to throw `Unknown corpus code: "undefined"` — the commonest
     // question about a corpus was the one thing the verb could not answer.
     const L = getCorpus();
-    assert.equal(L.books.length, 11, "every registered book is in the ledger");
-    assert.ok(L.count > 0 && L.distinct > 0 && L.total > 0);
-    // Rows vs addressable chants: a melody printed in two books is stored once
-    // but listed under both, so count exceeds distinct and both are true.
-    assert.ok(L.count > L.distinct, "rows exceed distinct chants");
+    assert.equal(L.books.length, 10, "every registered book is in the ledger");
+    assert.ok(L.count > 0 && L.listings > 0 && L.total > 0);
+    // `count` leads and means chants — each one once, the ordinary included.
+    // `listings` is the shelf's length, where a melody printed in two books
+    // appears under both, so it exceeds count by exactly the overlap.
+    assert.ok(L.listings > L.count, "the shelf lists more rows than there are chants");
+    const nameable = new Set([
+      ...L.books.flatMap((b) => getChants({ source: b.code })),
+      ...ORDINARY_CODES.flatMap((code) => getChants({ ordinary: code })),
+    ].map((c) => c.id));
+    assert.equal(L.count, nameable.size, "count is every chant tonus can name, deduped");
     assert.ok(L.total > L.count, "the books hold more than tonus ships");
+    assert.ok(L.total > L.count, "the books hold more than tonus ships");
+  });
+
+  test("every genus the ledger prints has a name, shipped or not", () => {
+    // A row printing its own code where every other row prints a Latin genus
+    // is the ledger showing its plumbing. This caught `su`, `im` and `pa`:
+    // genera tonus does not ship but DOES report, because they appear in a
+    // book's pre-cut `full` tally. Being outside the cut is not a reason to
+    // be nameless in a table tonus publishes.
+    const L = getCorpus();
+    const check = (rows, where) => {
+      for (const g of rows) {
+        assert.ok(OFFICIA[g.office], `${where}: office "${g.office}" has no label`);
+        assert.notEqual(g.genus, g.office, `${where}: "${g.office}" prints as its own code`);
+      }
+    };
+    check(L.genera, "shelf");
+    for (const b of L.books) {
+      check(b.genera, `${b.code} shipped`);
+      if (b.full) check(b.full.genera, `${b.code} full`);
+    }
   });
 
   test("the rollup reconciles with its parts", () => {
     const L = getCorpus();
-    assert.equal(L.books.reduce((n, b) => n + b.count, 0), L.count, "books sum to count");
+    // Books sum to LISTINGS, not to count — a chant in two books is one chant
+    // but two rows, and that is the whole difference between the two numbers.
+    assert.equal(L.books.reduce((n, b) => n + b.count, 0), L.listings, "books sum to listings");
+    // The breakdowns describe the same population the headline does.
     assert.equal(L.genera.reduce((n, g) => n + g.count, 0), L.count, "genera sum to count");
     assert.equal(L.modes.reduce((n, m) => n + m.count, 0), L.count, "modes sum to count");
     assert.equal(
@@ -175,11 +219,18 @@ describe("getCorpus", () => {
     }
   });
 
-  test("a book outside GregoBase reports full as UNMEASURED, not zero", () => {
-    // The same rule total/unique/shared already follow: null is "not compared",
-    // and a false zero would read as "this book holds nothing".
-    assert.equal(getCorpus("nr").full, null);
-    assert.equal(getCorpus("ky").full, null);
+  test("every shelved book reports what it HOLDS, including the one outside GregoBase", () => {
+    // nr was the last book reporting `full: null`, which read as "not yet
+    // measured" — but the tally existed all along in the Nocturnale extract.
+    // A shelf where one row cannot answer the question makes the cut
+    // unauditable for that book, which is the whole point of `full`.
+    for (const book of getCorpus().books) {
+      assert.ok(book.full, `${book.code} reports no full tally`);
+      assert.ok(book.full.total >= book.count,
+        `${book.code}: holds ${book.full.total} but ships ${book.count}`);
+    }
+    const nr = getCorpus("nr");
+    assert.equal(nr.full.total, 1564, "the full Nocturnale, before the cut");
   });
 
   test("an unknown query key throws instead of being ignored", () => {
@@ -231,14 +282,18 @@ describe("getCorpus", () => {
     assert.ok(am.unique > am.total * 0.9, "AM is >90% its own repertoire");
   });
 
-  test("overlap is null (unmeasured) for a non-GregoBase book, not a false zero", () => {
-    // nr (Nocturnale) is outside GregoBase, so its overlap was never measured.
-    // It must report null — distinct from a measured "shares nothing" ([]/0).
+  test("nr shares nothing, and that is MEASURED rather than unknown", () => {
+    // The distinction null vs [] carries real weight here. nr is outside
+    // GregoBase, so its overlap could not be computed from chant-id sets and
+    // was null; it is now measured from the Nocturnale's own extract, and the
+    // answer is that it shares nothing. The crosswalk to GregoBase source 23
+    // is ENRICHMENT — a twin for metadata — not a claim that two books print
+    // the same chant, so counting those as shared would invent a relationship.
     const nr = getCorpus("nr");
-    assert.equal(nr.total, null);
-    assert.equal(nr.unique, null);
-    assert.equal(nr.shared, null);
-    assert.ok(nr.count > 0, "count is still real (chants tonus stores)");
+    assert.equal(nr.total, 1564);
+    assert.equal(nr.unique, 1564, "every chant it holds is its own");
+    assert.deepEqual(nr.shared, [], "measured as sharing nothing, not unmeasured");
+    assert.ok(nr.count > 0 && nr.count < nr.total, "it ships a cut of what it holds");
   });
 
   test("unknown code throws (message lists the known codes)", () => {

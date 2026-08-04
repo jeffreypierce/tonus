@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import tonus from "../dist/index.js";
 import { CENSUS_ORDER, CENSUS_GROUPS, CENSUS_BLOCK_FLOATS } from "../dist/data/census.js";
 
-const { census, cantus } = tonus;
+const { census, cantus, corpus } = tonus;
 const SEED = "gregobase:1210"; // Ab occultis meis — a mode-2 Graduale
 
 describe("census — the shape of the answer", () => {
@@ -49,9 +49,17 @@ describe("census — the blocks address the right chants", () => {
   test("every shipped chant has a block, and every block a chant", () => {
     // The bijection is the whole reason blocks are deduped by id. If it breaks,
     // census({ id }) starts answering about a chant the caller did not name.
+    // The population is DERIVED, never listed here: a hardcoded book list is
+    // the exact thing that rots, and this one already had — it still named
+    // "ky" after the Kyriale stopped being a shelf entry. The shelf comes from
+    // corpus(), and the ordinary is addressable-but-not-shelved, so it is
+    // asked for by the door that reaches it.
     const ids = new Set();
-    for (const code of ["gr", "lu", "la", "lh", "am", "nr", "ky", "ams", "psm", "cse", "cot"]) {
-      for (const c of cantus({ source: code })) ids.add(c.id);
+    for (const book of corpus().books) {
+      for (const c of cantus({ source: book.code })) ids.add(c.id);
+    }
+    for (const code of ["ky", "gl", "cr", "sa", "ag", "be", "it", "as", "va"]) {
+      for (const c of cantus({ ordinary: code })) ids.add(c.id);
     }
     const blocks = new Set(CENSUS_ORDER);
     assert.equal(blocks.size, CENSUS_ORDER.length, "no duplicate ids in the order");

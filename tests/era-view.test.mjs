@@ -22,7 +22,15 @@ import { getHour } from "../dist/engines/chant/hour.js";
 import { getFeast } from "../dist/engines/cal/calendar.js";
 
 const VIEW = 1100; // the high end of the ~700–1100 target
-const attested = new Set(getChants({ before: VIEW }).map((c) => c.id));
+// The attested set must span everything a day verb can serve. `cantus({ before })`
+// alone covers the SHELF, and the Kyriale is addressable but not shelved — so
+// asking only that way would call every ordinary chant unattested and make this
+// test fail on chants the corpus has dated to the 10th century.
+const ORDINARY_CODES = ["ky", "gl", "cr", "sa", "ag", "be", "it", "as", "va"];
+const attested = new Set([
+  ...getChants({ before: VIEW }),
+  ...ORDINARY_CODES.flatMap((code) => getChants({ ordinary: code, before: VIEW })),
+].map((c) => c.id));
 const easterDate = new Date(Date.UTC(2026, 3, 5));
 const epiphanyDate = new Date(Date.UTC(2026, 0, 6));
 

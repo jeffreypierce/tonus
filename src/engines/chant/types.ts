@@ -8,7 +8,13 @@ export type { Season, Grade, Feast };
 // ── Primitive codes ──
 export type OfficeCode =
   | "an" | "al" | "ca" | "co" | "gr" | "hy" | "in"
-  | "of" | "ps" | "re" | "rb" | "se" | "tr" | "tp" | "or";
+  | "of" | "ps" | "re" | "rb" | "se" | "tr" | "tp" | "or"
+  // Genera tonus does not SHIP but does REPORT: they appear in a book's
+  // pre-cut `full` tally, so they need names there. The cut keeps them out of
+  // the shipped corpus (extract-gregobase.mjs OFFICE_MAP is the admission
+  // list), but a ledger that prints a bare code where every other row has a
+  // Latin genus is showing its own plumbing.
+  | "im" | "pa" | "su";
 
 export type OrdinaryCode =
   | "ky" | "gl" | "cr" | "sa" | "ag" | "be" | "it"
@@ -38,7 +44,7 @@ export type OrdinaryCode =
  * now ships carries rhythmic notation.
  */
 export type ChantSource =
-  | "gr" | "lu" | "la" | "lh" | "am" | "nr" | "ky"
+  | "gr" | "lu" | "la" | "lh" | "am" | "nr"
   // office books, monastic
   | "ams" | "psm"
   // further MARKED Solesmes books. The rule for admission is stated in
@@ -66,7 +72,7 @@ export const HORAE: readonly CanonicalHour[] = Object.freeze([
  *  chant.ts (the two are an import cycle). */
 export const CANTUS_QUERY_KEYS = new Set([
   "id", "gabc", "incipit", "mode", "office", "source", "limit", "offset", "sort",
-  "before", "cursus",
+  "before", "cursus", "ordinary",
 ]);
 
 export const MODI: Readonly<Record<string, string>> = Object.freeze({
@@ -87,6 +93,10 @@ export const OFFICIA: Readonly<Record<OfficeCode, string>> = Object.freeze({
   re: "Responsorium",
   rb: "Responsorium Breve",
   se: "Sequentia",
+  // Reported in the pre-cut tallies, not shipped — see OfficeCode above.
+  im: "Improperia",       // the Good Friday Reproaches (Popule meus)
+  pa: "Antiphona Mariana", // Marian antiphons outside the office cycle
+  su: "Supplicatio",      // litanies and supplications (the Easter Vigil litany)
   tr: "Tractus",
   tp: "Tonus Peregrinus",
   or: "Ordinarium",
@@ -104,7 +114,11 @@ export const ORDINARIA: Readonly<Record<string, string>> = Object.freeze({
   va: "Vidi aquam",
 });
 
-// The Kyriale's bibliographic identity as a corpus book (`source: "ky"`).
+// The Kyriale's bibliographic identity. NOT a ChantSource: `ky` is a partition
+// of the Graduale, not a book of its own (chant.ts, CORPUS), so it is not a
+// value `cantus({ source })` takes and not a row in the shelf. This record
+// still rides every kyriale chant, because a chant should say which book it is
+// printed in — and the Kyriale is what a singer would be holding.
 // Hand-authored (the other books' SOURCE constants ride their generated data
 // files; the kyriale's data file predates its book registration): the chants
 // are the Kyriale section of the 1961 Solesmes Graduale Romanum, extracted
@@ -135,7 +149,10 @@ export interface Chant {
     year: number | null;
     editor: string | null;
     scanSource?: string | null;  // scan attribution (from GregoBase)
-    code?: ChantSource | "user";
+    // A queryable book code, plus the two that are not books: "user" for a
+    // chant parsed from raw GABC, and "ky" for the Kyriale — a partition of the
+    // Graduale, so it names a printing rather than a shelf entry.
+    code?: ChantSource | "user" | "ky";
   };
   ordinary?: OrdinaryCode;   // machine code; present for kyriale chants
   ordinarium?: string;       // Latin ordinary name, e.g. "Kyrie eleison"
@@ -209,11 +226,24 @@ export interface CorpusFullCount {
  * Returned by `corpus()` with no argument.
  */
 export interface CorpusLedger {
-  /** Chants tonus ships, across all books (rows: a chant in two books counts twice). */
+  /**
+   * How many chants tonus holds — every chant it can name, counted once.
+   *
+   * This is THE number, and it used to take three to say: `count` was book
+   * LISTINGS (a chant printed in two books counted twice) and `distinct` was
+   * chants, which made the headline figure depend on how many books happened
+   * to print the same melody. A reader had to know that to read either.
+   * Listings are still available, as `listings` below, where they belong —
+   * a fact about the shelf, not about the repertoire.
+   */
   count: number;
-  /** Distinct chants tonus can address by id. */
-  distinct: number;
-  /** Chants the books hold in total, where measured. */
+  /**
+   * Book listings across the shelf: a chant printed in two books counts twice.
+   * `listings - count` is how much the books overlap. Secondary on purpose —
+   * it answers "how long is the shelf", not "how much chant is there".
+   */
+  listings: number;
+  /** Chants the books hold in total, before the cut. */
   total: number;
   genera: GenusCount[];
   modes: ModeCount[];
@@ -233,6 +263,18 @@ export interface CantusQuery {
   mode?: number | string | (number | string)[];
   office?: OfficeCode | OfficeCode[];
   source?: ChantSource | ChantSource[];
+  /**
+   * A part of the Mass ordinary — `"ky"` for the Kyries, `"gl"` the Glorias,
+   * and so on. This is the door to the Kyriale, which is addressable but not
+   * shelved (it is a partition of the Graduale, not a book), so it is absent
+   * from `source` and from an unfiltered search. Asking for an ordinary can
+   * only mean one thing, which is why it may reach where `mode` alone does not.
+   *
+   * For the setting a given DAY calls for, `ordinarium({ feast })` is the verb:
+   * it applies the Kyriale's own rubrics. This is the flat retrieval — every
+   * Kyrie in the book, whatever day would sing it.
+   */
+  ordinary?: OrdinaryCode | OrdinaryCode[];
   /**
    * Only chants ATTESTED by this year — the repertoire as of a date, the
    * analogue of `festum({ before })`, and the two COMPOSE: a Feast resolved by
