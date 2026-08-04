@@ -334,6 +334,23 @@ function canticum() {
  * with CSS — a narrower window has to be answered with a narrower render. The
  * element measures itself, and an observer re-renders it when the column
  * changes size, which is why nothing here ever scrolls sideways. */
+// The house dress for every score on this page: Junicode, by REFERENCE.
+//
+// The page already loads the variable face (styles.css `@font-face`), so the
+// SVGs name it and stay small — embedding would carry ~300KB of font into
+// every score on a page that already has it. That is what the `embed` slot is
+// FOR, and this is the case it is not for.
+//
+// Weights are the lab's house dress. Without this the renders fall back to the
+// library's built-in serif stack at weight 518, which is why the lyrics read
+// heavy and in the wrong face against the rest of the page.
+const SCORE_FONTS = {
+  dropcap:    { family: "Junicode", weight: 700 },
+  title:      { family: "Junicode", weight: 620 },
+  annotation: { family: "Junicode", weight: 640 },
+  lyric:      { family: "Junicode", weight: 400, scale: 1.06 },
+};
+
 function scoreFigure() {
   const wrap = el("div", { class: "score" });
   // Measured, not assumed: the element is not in the document yet, so ask the
@@ -343,6 +360,7 @@ function scoreFigure() {
   try {
     const { svg, geometry } = tonus.inscriptio(state.score, {
       width,
+      fonts: SCORE_FONTS,
       notation: state.notation,
       tracks: state.tracks.length ? state.tracks : undefined,
     });

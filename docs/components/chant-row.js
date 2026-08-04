@@ -30,7 +30,12 @@ function incipit(tonus, chant, { staffHeight = 20 } = {}) {
       // which is a score, not an incipit — the row wants the first few notes,
       // and the cheapest true way to get them is to draw the line and show its
       // beginning.
-      svg = tonus.inscriptio(tonus.notatio(chant), { staffHeight, noteScale: 0.7 }).svg;
+      svg = tonus.inscriptio(tonus.notatio(chant), {
+        staffHeight, noteScale: 0.7,
+        // Junicode by reference — the page loads the face; see SCORE_FONTS in
+        // app.js for why these rows never embed it.
+        fonts: { lyric: { family: "Junicode", weight: 400, scale: 1.06 } },
+      }).svg;
     } catch {
       svg = null;
     }

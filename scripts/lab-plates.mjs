@@ -37,7 +37,78 @@ export function buildPlates(tonus, fonts = {}) {
   // annotation, rubric runs) so shape reads before color. Drop when settled.
   const INK = { rubricaColor: "#111" };
 
+  // ── The font matrix ──
+  // What a caller can actually ask for, laid out so the answers sit side by
+  // side. Two axes: WHICH face each role uses, and whether the bytes ride
+  // inside the SVG or are referenced from the host page.
+  //
+  // The music glyphs are on neither axis. Bravura's outlines are BAKED into
+  // smufl-glyphs.json as paths, so notation is self-contained and
+  // license-clean in every plate — the font options govern TEXT only
+  // (dropcap, title, annotation, lyric).
+  const fontMatrix = [
+    {
+      title: "Fonts — no `fonts` option at all (the library default)",
+      note: "what a caller gets for free: the built-in serif stack, no Junicode, no embed. The baseline every other plate is measured against.",
+      render: () => tonus.inscriptio(tonus.notatio(kyrie()), { ...INK }),
+    },
+    {
+      title: "Fonts — Junicode by REFERENCE, every role",
+      note: "the host page supplies the face; the SVG names it and stays small. This is what the docs site does — one face, loaded once, every score.",
+      render: () => tonus.inscriptio(tonus.notatio(kyrie()), {
+        title: "Kyrie", annotation: "auto", dropcap: true, fonts: JF, ...INK,
+      }),
+    },
+    {
+      title: "Fonts — Junicode EMBEDDED, every role",
+      note: "the caller's bytes ride inside this SVG's own <style>, so the file renders correctly pasted anywhere — at the cost of carrying the face. Same page as the plate above, so the two should look identical.",
+      render: () => tonus.inscriptio(tonus.notatio(kyrie()), {
+        title: "Kyrie", annotation: "auto", dropcap: true,
+        fonts: { dropcap: jw(700), title: jw(620), annotation: jw(640), lyric: jw(560, 1.06) },
+        ...INK,
+      }),
+    },
+    {
+      title: "Fonts — one role embedded, the rest referenced",
+      note: "the slots are independent: only the lyric carries bytes here. A caller can pay for the face that matters and reference the others.",
+      render: () => tonus.inscriptio(tonus.notatio(kyrie()), {
+        title: "Kyrie", annotation: "auto", dropcap: true,
+        fonts: { dropcap: jr(700), title: jr(620), annotation: jr(640), lyric: jw(560, 1.06) },
+        ...INK,
+      }),
+    },
+    {
+      title: "Fonts — the lyric at weight 400",
+      note: "against the no-fonts plate at the top, which carries the library's own default of 518. 518 is heavier than most text faces sit; this is the comparison that decides whether that default is right.",
+      render: () => tonus.inscriptio(tonus.notatio(kyrie()), {
+        fonts: { lyric: jr(400) }, ...INK,
+      }),
+    },
+    {
+      title: "Fonts — moderna, same dress",
+      note: "the duae species share one lyric setting (ruled 2026-07-29), so this should read as the same text at the same weight as the quadrata plates — only the notation differs.",
+      render: () => tonus.inscriptio(tonus.notatio(kyrie()), {
+        notation: "moderna", title: "Kyrie", annotation: "auto", fonts: JF, ...INK,
+      }),
+    },
+    {
+      title: "Fonts — a real chant, quadrata, house dress",
+      note: "the parity check on something longer than a Kyrie. Compare its lyrics against the moderna plate below: a difference there is a defect, a difference in the notation is the point.",
+      render: () => tonus.inscriptio(tonus.notatio(adTeLevavi()), {
+        width: 900, fonts: JF, ...INK,
+      }),
+    },
+    {
+      title: "Fonts — the same chant, moderna, house dress",
+      note: "same options, same face, same weights. Only the notation species changes.",
+      render: () => tonus.inscriptio(tonus.notatio(adTeLevavi()), {
+        width: 900, notation: "moderna", fonts: JF, ...INK,
+      }),
+    },
+  ];
+
   return [
+    ...fontMatrix,
     {
       title: "Quadrata — baseline (Junicode)",
       note: "the square-note render, Junicode lyrics at weight 560",
