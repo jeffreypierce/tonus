@@ -395,19 +395,6 @@ describe("guided throws on junk input (the error contract)", () => {
   });
 });
 
-describe("formula steps are octave-aware (Apel degree count)", () => {
-  test("the mode-5 tenor reads +4, not −3", () => {
-    // A rising sixth F→D in mode 5: degrees 0 1 2 3 4 5 — the old ±half-octave
-    // fold read the fifth (C, the tenor) as −3 and mangled every climbing
-    // verse formula.
-    const [chant] = tonus.cantus({ gabc: "(c3) A(e)B(f)C(g)D(h)E(i)F(j) (::)", mode: 5, office: "gr" });
-    const score = tonus.notatio(chant);
-    const steps = score.formulas[0].steps;
-    assert.ok(steps.includes(4), `steps ${JSON.stringify(steps)} must count the fifth as +4`);
-    assert.ok(!steps.includes(-3), `steps ${JSON.stringify(steps)} must not fold to −3`);
-  });
-});
-
 describe("feast filters reject non-Feast input everywhere", () => {
   test("proprium, ordinarium, officium, caelum all throw with guidance", () => {
     assert.throws(() => tonus.proprium({ feast: 42 }), /must be a Feast/);

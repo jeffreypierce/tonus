@@ -2,7 +2,7 @@
 
 `tonus.notatio` renders a chant into a score: the analyzed, tuned, and
 rhythm-classified reading of one GABC melody. The score is data: `phrases`,
-`tabula`, `prosody`, `cadences`, `modulations`, `formulas`, and `imprint`. The
+`tabula`, `prosody`, `cadences`, `modulations`, and `imprint`. The
 standalone `tonus.inscriptio(score)` draws it to SVG.
 
 - [Score](#score)
@@ -19,7 +19,6 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
     - [One spine, two annotations](#one-spine-two-annotations)
     - [`finality` — how often this family closes](#finality--how-often-this-family-closes)
   - [Modulations](#modulations)
-  - [Melodic formulae](#melodic-formulae)
   - [Theory \& Context](#theory--context)
     - [The model](#the-model)
     - [The classification rules](#the-classification-rules)
@@ -67,7 +66,6 @@ interface Score {
   prosody: Prosody;
   cadences: Cadence[];
   modulations: Modulation[];
-  formulas: FormulaMatch[];
   imprint: Imprint;
 }
 
@@ -730,35 +728,6 @@ interface Modulation {
   kind: "inflection" | "modulation" | "transposition";
 }
 ```
-
-## Melodic formulae
-
-`score.formulas` reads each phrase against Apel's centonization catalogue: the
-responsorial-melismatic chants (Graduals, Tracts, Great Responsories) are not
-freely composed but assembled from a stock of standard phrases shared across a
-mode. Each phrase is expressed as an octave-aware step-skeleton relative to
-the final's register (0 = the final, +4 = the fifth, +7 = the octave — Apel's
-own degree count, so a phrase reciting on the mode-5 tenor reads +4) and
-matched against the catalogue for its genre × mode, tolerating the melismatic
-filling that varies a formula to fit its text.
-
-```ts
-interface FormulaMatch {
-  phraseIndex: number;
-  formula: string | null;   // Apel's symbol (e.g. "F10"), or null if none fits
-  slot: FormulaSlot | null; // opening | intonation | flex | mediant | termination | close
-  confidence: number;       // 0–1: how completely the phrase realises the formula
-  steps: (number | null)[]; // the phrase's step-skeleton — the evidence
-}
-```
-
-Only the Tier-1 tabulatable genres (Graduals, Tracts, Great Responsories) will
-carry a catalogue; other genres — and any chant with no mode — return
-`formula: null` (the step-skeleton is still computed). **The catalogue
-currently ships empty**: the machinery, the skeleton, and the graceful
-degradation are the release surface, and `formula` is `null` for every chant
-until the Apel transcription (mode-5 Graduals first) is dictated into
-`score/data/formulas.ts`, where the format is documented.
 
 ## Theory & Context
 

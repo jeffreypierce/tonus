@@ -13,6 +13,23 @@ eleven books, the office settled on one cursus, the cadence catalogue was
 re-mined over the sung corpus, and a new verb — `census` — measures every
 chant against the corpus that holds it.
 
+### Removed
+
+- **BREAKING — `Score.formulas` and the Apel centonization matcher are out.**
+  The catalogue of standard phrases, the per-phrase matcher, `FormulaMatch`,
+  `Formula`, `FormulaSlot`, and `formulaeFor` are gone from the library. What
+  shipped was one mode's alphabet (mode-5 Graduals) behind a matcher whose
+  per-phrase window structurally could not fire on 40 of its 53 formulae —
+  Apel tabulates a chant as a sequence across a whole respond, and matching at
+  that scale is a different algorithm that was never built. The honest state
+  was a public field that answered `null` for nearly every chant, and an
+  appendix of research the library could not yet use.
+  The census keeps its `formulas` field group: those four floats are baked
+  upstream in tonus-corpus and describe the corpus as measured, whatever tonus
+  does with them. The transcriptions, photographs, tooling and verification
+  reports are kept in the workshop, not deleted — the reading of Apel stands on
+  its own, and the pipeline is there if the matcher is ever built properly.
+
 ### Changed
 
 - **BREAKING — the shelf reports ONE number, and the Kyriale leaves it.**

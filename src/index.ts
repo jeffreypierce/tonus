@@ -25,7 +25,7 @@ import type {
 } from "./engines/temper/api.js";
 import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
-  Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
+  Cadence, CadenceTarget, CadenceApproach, Modulation,
 } from "./engines/score/api.js";
 import type {
   InscriptioOpts, Inscriptio, NoteGeometry, FontSpec, FontSlot, FontEmbed,
@@ -125,7 +125,7 @@ export type {
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
-  Cadence, CadenceTarget, CadenceApproach, Modulation, FormulaMatch, Formula, FormulaSlot,
+  Cadence, CadenceTarget, CadenceApproach, Modulation,
   InscriptioOpts, Inscriptio, NoteGeometry, FontSpec, FontSlot, FontEmbed,
   ChantTabulaRow,
   Note, Performance, Phrase, Syllable, LyricRun, RestEvent, ParseError, ArsisThesis,

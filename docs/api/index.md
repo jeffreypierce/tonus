@@ -178,7 +178,6 @@ the list resolve their pitches through the ones before.
 - [Prosody](score.md#prosody)
 - [Cadences](score.md#cadences) · [One spine, two annotations](score.md#one-spine-two-annotations)
 - [Modulations](score.md#modulations)
-- [Melodic formulae](score.md#melodic-formulae)
 - [Theory & Context](score.md#theory--context) · [Sources](score.md#sources)
 
 **[Heavens](heavens.md)** — an ephemeris voiced through the planetary doctrines.
