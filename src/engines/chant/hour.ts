@@ -6,6 +6,7 @@ import { eraCutoff, chantAdmissible } from "./attest.js";
 import { intonePortion, officePsalmPortions } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
 import { getFeast } from "../cal/calendar.js";
+import { HORAE } from "./types.js";
 import type { Chant, OfficiumQuery, CanonicalHour } from "./types.js";
 import type { Feast } from "../cal/types.js";
 import { OFFICE_MONASTIC, type OfficeDay } from "../../data/office-monastic.js";
@@ -381,7 +382,16 @@ export function getHour(query?: OfficiumQuery): Chant[] {
 
   const feasts = toArray(query.feast);
   assertFeasts(feasts, "officium");
+
+  // A misspelled hour is a malformed query, not an empty one: without this it
+  // matched nothing and returned [], and the caller read that as "no chants at
+  // this hour" rather than "there is no such hour."
   const hour = query.hora;
+  if (hour != null && !HORAE.includes(hour)) {
+    throw new Error(
+      `officium: unknown hora "${hour}" (expected ${HORAE.join(", ")}).`,
+    );
+  }
 
   let results: Chant[];
 
@@ -393,11 +403,7 @@ export function getHour(query?: OfficiumQuery): Chant[] {
       ? feasts[0] ? chantsForFeastHour(feasts[0], hour) : []
       : feasts.flatMap((f) => chantsForFeastHour(f, hour));
   } else if (feasts) {
-    const hours: CanonicalHour[] = [
-      "matutinum", "laudes", "prima", "tertia", "sexta", "nona",
-      "vesperae", "completorium",
-    ];
-    results = feasts.flatMap((f) => hours.flatMap((h) => chantsForFeastHour(f, h)));
+    results = feasts.flatMap((f) => HORAE.flatMap((h) => chantsForFeastHour(f, h)));
   } else if (hour && SEASONAL_ORDO_HOURS.has(hour)) {
     // Prime and Compline are seasonal ordos, not per-feast. With no feast,
     // resolve for the default epoch (Guido d'Arezzo's era) — festum()'s anchor.

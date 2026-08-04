@@ -1,13 +1,12 @@
 # tonus
 
-**tonus** is a library for the music of the medieval Church and the cosmology
-that surrounded it. It reconstructs the chant repertoire and the intellectual
-world it lived in, from the tuning of a single pitch to the harmony the ancients
-ascribed to the planets.
-
-It treats this repertoire as musical and historical material to be measured,
-queried, and understood, and it takes no theological position and asks none of
-its users. What it models is the sound and its structure.
+**tonus** is a JavaScript library for medieval music theory and chant
+analysis. It holds the Gregorian repertoire and the theory it was built on:
+the chant books, the calendar that assigns them, the eight modes and their
+psalm tones, the tunings of the treatises, and the harmony of the spheres.
+It resolves what any day calls for, tunes chant in the ratios it was sung
+in, parses and draws the notation, voices the planets as pitch, and
+measures each chant against the whole repertoire.
 
 Everything is computed locally and deterministically: the same question always
 returns the same answer, from data that ships inside the package, with no network
@@ -22,7 +21,7 @@ calls and no runtime dependencies.
   ethos, and the psalm tones that go with them.
 - **The liturgical calendar.** The Tridentine calendar of any year, resolved
   against Easter (by the Julian or the Gregorian computus), with each feast's
-  authentic rank, grade, and season.
+  rank, grade, and season.
 - **The chant repertoire.** 2,887 chants across eleven books (ten Solesmes
   editions and the Nocturnale Romanum night office), in
   [GABC](https://gregorio-project.github.io/) notation: Mass propers, the Kyriale,
@@ -39,42 +38,31 @@ calls and no runtime dependencies.
 
 ## The ideas behind it
 
-For Boethius, whose *De institutione musica* carried Greek theory into the Latin
-Middle Ages, music was a branch of number. It stood in the quadrivium beside
-arithmetic, geometry, and astronomy, and it reached from the audible up to the
-inaudible: the sounding music of voices and instruments (*musica instrumentalis*),
-the concord of body and soul (*musica humana*), and the harmony of the turning
-cosmos (*musica mundana*). The true *musicus* judged all three by reason; the
-singer who merely performed ranked below him. This is the frame the chant
-repertoire was composed and copied inside of, where pitch was ratio, the modes a
-received order, and the heavens audible proportion.
+Boethius's _De institutione musica_ carried Greek theory into the Latin
+Middle Ages, and it treats music as a branch of number, beside arithmetic,
+geometry, and astronomy. Its music runs from the audible to the inaudible:
+voices and instruments (_musica instrumentalis_), body and soul (_musica
+humana_), the turning cosmos (_musica mundana_). Chant was composed and
+copied inside that frame: pitch was ratio, the modes a received order, the
+heavens harmonic proportion.
 
-The thousand years since have been spent codifying and recovering that world. The
-monks of Solesmes reconstructed a rhythm the notation had stopped recording;
-Rockstro, Apel, and Hiley catalogued the modes and the repertoire; acousticians
-measured the voice Boethius could only reason about. tonus stands on that
-scholarship and takes the old claims literally enough to compute them.
-
-That is the library's single idea, applied throughout. It rebuilds pitch as the
-ratios chant was tuned in, not the equal temperament that came later. It reads the
-calendar as the retrieval index it was for a millennium. It commits to one reading
-of the rhythm, the Solesmes arsis and thesis (an interpretation among several),
-rather than pretending the sources agree. And it computes *musica mundana* as real
-pitch, voicing the planets after the theorists who first heard it there. Where the
-sources run out or contradict one another, tonus makes an editorial call and
-records it in the code. It reunites what Boethius set apart: the music one hears,
-and the music one can only reckon.
+tonus takes those claims literally enough to compute them. It tunes pitch in
+the Pythagorean ratios of the treatises. It reads the calendar as the
+retrieval index it was for a millennium. It follows the Solesmes rhythm of
+arsis and thesis. And it computes _musica mundana_ as sounding pitch. Where
+the sources run out or contradict one another, tonus makes an editorial call
+and records it in the code.
 
 ## Sources
 
 tonus is built on primary and scholarly sources, and it names them wherever it
 makes a choice. The chant and calendar data are the Solesmes editions, by way of
 [GregoBase](https://gregobase.selapa.net/),
-[Divinum Officium](https://divinumofficium.com/), and the community *Nocturnale
-Romanum*. The rhythm follows Mocquereau, Gajard, Suñol, and Daniel Saulnier; the
-modes and cadences follow Rockstro's *Grove* article, Niedermeyer & d'Ortigue,
-and Apel; the tuning follows Boethius's *De institutione musica* and Ptolemy's
-*Harmonics*; the notation is engraved in Daniel Spreadbury's
+[Divinum Officium](https://divinumofficium.com/), and the community _Nocturnale
+Romanum_. The rhythm follows Mocquereau, Gajard, Suñol, and Daniel Saulnier; the
+modes and cadences follow Rockstro's _Grove_ article, Niedermeyer & d'Ortigue,
+and Apel; the tuning follows Boethius's _De institutione musica_ and Ptolemy's
+_Harmonics_; the notation is engraved in Daniel Spreadbury's
 [Bravura](https://github.com/steinbergmedia/bravura), the reference font for the
 SMuFL standard; the planetary doctrines follow Godwin's sourcebooks of the
 Pythagorean tradition.
@@ -82,6 +70,10 @@ Pythagorean tradition.
 Every figure is cited in the code beside what it explains. Where the sources
 disagree, tonus records the editorial call it made in the same place. The complete
 list is [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md).
+
+tonus treats this repertoire as musical and historical material to be measured,
+queried, and understood, and it takes no theological position and asks none of
+its users. What it models is the sound and its structure.
 
 ## Example
 
@@ -94,11 +86,11 @@ import tonus from "tonus";
 
 // Build a tuning: Pythagorean, set to mode 1.
 const t = tonus.temperamentum({ mode: 1 });
-t.nota("D4");          // 293.33 Hz, the final of mode 1, through pure fifths
-t.gradus("D4");        // "Delasolre": RE of the natural hexachord, the finalis
+t.nota("D4"); // 293.33 Hz, the final of mode 1, through pure fifths
+t.gradus("D4"); // "Delasolre": RE of the natural hexachord, the finalis
 
 // Ask the calendar for a day, then pull the chant that belongs to it.
-const [feast]   = tonus.festum({ date: new Date("2026-12-25") });
+const [feast] = tonus.festum({ date: new Date("2026-12-25") });
 // → "In Nativitate Domini", a Duplex I classis feast of Christmastide
 const [introit] = tonus.proprium({ feast, office: "in" });
 // → "Puer natus est", mode 7, from the Liber Usualis
@@ -115,12 +107,12 @@ filters.
 
 ## Documentation
 
-The **[documentation index](docs/index.md)** is the technical center: the full
+The **[documentation index](docs/api/index.md)** is the technical center: the full
 API, the conventions, the error contract, and the code standards. From there,
 one page per engine, in dependency order:
-[tuning](docs/tuning.md), [calendar](docs/calendar.md), [chant](docs/chant.md),
-[score](docs/score.md), [heavens](docs/heavens.md), and
-[census](docs/census.md).
+[tuning](docs/api/tuning.md), [calendar](docs/api/calendar.md), [chant](docs/api/chant.md),
+[score](docs/api/score.md), [heavens](docs/api/heavens.md), and
+[census](docs/api/census.md).
 
 ## Install and run
 

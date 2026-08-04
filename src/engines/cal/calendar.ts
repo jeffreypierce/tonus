@@ -43,7 +43,7 @@ import {
   type Pascha,
   type Season,
   type Grade,
-  TEMPUS_NAME,
+  TEMPORA,
   entryGrade,
   gradeOrder,
   BVM_FEAST_IDS,
@@ -198,7 +198,7 @@ const SUNDAY_GRADES: readonly Grade[] = [
 
 /**
  * The Kyriale rubric this day falls under — the book classifies by RANK and
- * appoints one category per day [biblio: liber-usualis-1961, Kyriale].
+ * appoints one category per day [biblio: liber-usualis, Kyriale].
  *
  * Order matters. "In Paschal Time" is a season rubric and governs inside
  * Paschaltide. The Sunday categories must be tested before the class tiers,
@@ -270,7 +270,7 @@ function calEntryToFeast(
     ritus,
     grade,
     season: season.code,
-    tempus: TEMPUS_NAME[season.code],
+    tempus: TEMPORA[season.code],
     seasonStart: season.start,
     seasonEnd: season.end,
     date: d,
@@ -317,6 +317,16 @@ const FEAST_QUERY_KEYS = new Set([
 ]);
 
 export function getFeast(query?: FeastQuery): Feast[] {
+  // A bare Date is the natural guess, and it has no own enumerable keys — so
+  // without this it would read as "no query" and quietly return the default
+  // epoch, the same plausible-looking wrong answer the unknown-key guard below
+  // exists to prevent. Say what was meant instead.
+  if (query instanceof Date) {
+    throw new Error(
+      `festum: pass the date as a query — festum({ date }), not festum(date)`,
+    );
+  }
+
   if (!query || Object.keys(query).length === 0) {
     return feastsForDate(DEFAULT_EPOCH);
   }

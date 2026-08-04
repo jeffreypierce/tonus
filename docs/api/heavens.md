@@ -81,7 +81,8 @@ interface Body {
   phase: number; // 0–1 illuminated fraction
   apparentDiameter: number | { equ: number; pol: number }; // arcsec
   zodiac: number; // sign 0–11 (Aries=0 … Pisces=11)
-  sign: string; // "Aries", "Taurus", …
+  sign: string; // the code: "Aries", "Taurus", …
+  signum: string; // the Latin: "Scorpius", "Capricornus", …
   distEarthRadii?: number; // Moon only
 }
 

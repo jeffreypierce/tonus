@@ -12,7 +12,7 @@ code is the bottom of the well.
 
 | Level               | Surface     | Depth  | Holds                                                                                                    |
 | ------------------- | ----------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| **1. Official API** | `docs/*.md` | medium | API focus (options, examples, interfaces) + high-level theory that links to the bibliography and to code |
+| **1. Official API** | `docs/api/*.md` | medium | API focus (options, examples, interfaces) + high-level theory that links to the bibliography and to code |
 | **2. Code**         | `src/`      | full   | how it is computed, why, and from what source: full theory, editorial decisions, provenance              |
 
 Only the **deepest** material lives in code:

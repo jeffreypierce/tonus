@@ -13,8 +13,103 @@ eleven books, the office settled on one cursus, the cadence catalogue was
 re-mined over the sung corpus, and a new verb — `census` — measures every
 chant against the corpus that holds it.
 
+### Changed
+
+- **BEHAVIOUR — the salicus takes Cardine's correction, and stops being
+  confused with the Solesmes ictus.** Two changes, each ruled and each
+  measured separately over the sung corpus (2,887 chants, 28,498 phrases).
+  The second — redefining what counts as a salicus at all — was ratified on
+  its own terms, since it decides what the word denotes everywhere in tonus,
+  not just how one note is weighted.
+  **Detection.** A salicus is "at least three ascending notes in which the
+  next-to-last is an oriscus" [biblio: cardine-semiology, ch. 16]. tonus had
+  been calling any ascending run with the editorial ictus a salicus — 2,795
+  groups, of which **36 (1.3%) actually carried an oriscus** — while missing
+  188 of the corpus's 226 real salici, which classified as `scandicus`. Two
+  nearly disjoint sets under one name. Now: `salicus` 2,795 → **226**, exactly
+  the chants that meet Cardine's definition; `scandicus` 498 → 2,501, and the
+  4-and-5-note ictus ascents (566) join `compound`. An ictus-marked ascent
+  with no oriscus is a scandicus that Solesmes marked for rhythm, and the mark
+  is still readable on `context.ictus`.
+  **Weighting.** The printed editions lengthen the oriscus; the manuscripts
+  show the principal note is the one immediately following it. The 1.3×
+  prolongation moves from the next-to-last note to the **summit** — which is
+  the last note at any length, since the oriscus is next-to-last by
+  definition, so the 4- and 5-note forms need no separate rule. The salicus
+  stays arsic: tension toward the summit is the arsic gesture, so Cardine
+  strengthens that rule rather than contradicting it.
+  **Downstream:** 208 of 28,498 phrases (0.73%) change `rhythmicType`,
+  overwhelmingly toward VIII. This is the one point where tonus's rhythmic
+  layer departs from Mocquereau and Suñol, and `ir.ts` now says so at its
+  header.
+  **The limit, stated plainly:** tonus sees only what the transcription marks.
+  Bevenot's own example — the mode-6 _Requiem_ introit's fa-sol-la — carries
+  the ictus and no oriscus in GregoBase, so it still reads as a scandicus. He
+  is reading the manuscripts; the corpus is a printed edition that resolved
+  the oriscus away. Recovering those wants the sources, not a looser rule.
+- **The tonarium's cadence label says how typical a close is, not which
+  family it belongs to.** The bracket read `"2,0,-2 @0"` — the family's name,
+  which a reader could not weigh. It now reads `"×2.1"`: the family's share
+  within this chant's mode over its share of the corpus at large. Measured
+  across four books the figure spans ×0.46 to ×10.56, median ×2.22; a lift
+  below 1.0 prints too, since an atypical close is information. A mode-less
+  chant, or a family with fewer than ten occurrences in the chant's mode,
+  falls back to the plain corpus share. The key is not lost — each cadence
+  now draws inside a group carrying `data-cadentia`, the join back to
+  `CADENTIAE` and the provenance a margin gloss can print.
+- **BREAKING — five appendix tables renamed to match the register rule.**
+  `TEMPUS_NAME` → `TEMPORA`, `GRADE_NAME` → `GRADUS`, and the internal
+  `OFFICE_LABELS` / `ORDINARY_LABELS` / `MODE_LABELS` → `OFFICIA` /
+  `ORDINARIA` / `MODI`, the last three now public. The house rule is that
+  Latin names carry Latin content and English names carry codes or English;
+  the appendix had three spellings of "code → display string" and five tables
+  whose Latin values sat under English names. Names now follow the register of
+  their values, so `SEASON_LABEL` ("Advent") and `TEMPORA` ("Tempus
+  Adventus") are distinguishable by name rather than by memory. Only the two
+  `cal` tables were public before; the rest is new surface.
+- **`officium` throws on an unrecognised `hora`.** It returned `[]`, which
+  read as "no chants at this hour" rather than "there is no such hour" — the
+  same silent-nothing the unknown-query-key guard beside it already refused.
+
 ### Added
 
+- **The cadence catalogue carries its own denominator, and joins itself.**
+  Every `CadentiaFamilia` gains `share` — its occurrences over ALL 28,481
+  phrase-ends, not over the 58.7% that cleared the table's floor, which would
+  have flattered every family in it. `CADENTIAE_POPULATION` ships beside it
+  with the same total per mode digit, so a family's **lift** in a mode is one
+  division: `(modes[m] / byMode[m]) / share`. The ratio itself is not baked —
+  export the vocabulary, not the arithmetic.
+  A `Cadence` now carries `finality`, the share of ITS family's corpus
+  occurrences that land at a final close, joined once in `notatio` instead of
+  by every caller rebuilding the index. It rides the cadence while `familia`
+  still does not, because the two differ in kind: the signature already IS the
+  family's name, but how often that family closes cannot be read off it — of
+  the 55 families landing on the final, 31 do not close, and their finality
+  spans 0.054 to 1.000. Detection stays pure; the corpus table meets detected
+  data in the score builder, where `MODES` already does.
+  Both cadence catalogues are now documented as what they are — _tradita_
+  (the treatises' figures, final cadences only) and _inventa_ (the corpus
+  tally, any target, and so the only account of medial closes) — with the
+  measured coverage of each and a worked lift example that was run before it
+  was printed.
+- **The appendix widened, so callers stop transcribing the library's own
+  vocabulary.** `HORAE` (the eight canonical hours, Matins first — the order
+  is the content, and `officium`'s validation reads the same list, so the two
+  cannot drift), `OFFICIA`, `ORDINARIA`, `MODI`, `SOURCES` (the book codes
+  `cantus({ source })` takes, with their bibliographic records), and
+  `CENSUS_GROUPS` / `CENSUS_ORDER` — the census field groups and the block
+  index, so asking whether a chant is censused stops needing a `try/catch`.
+  A table is admitted when a caller would otherwise type it out, because a
+  transcribed copy drifts and fails as wrong answers rather than as an error.
+  The appendix is now grouped by engine.
+- **The census distance rule is documented as a contract.** Similarity is
+  cosine per field group, never over the flat 225; `by: "all"` is the
+  equal-weight mean. Grouping is userland, so a caller pooling blocks is
+  computing a distance and must reproduce the rule or silently disagree with
+  `census()`. `census.md` now states it for callers with the three ways to get
+  a plausible wrong answer, and a worked example — pooling the 178 Communions
+  — that was run before it was printed, and reproduces `census()` exactly.
 - **The analysis tracks ship with `inscriptio`.** `tracks: ["chironomia"]`
   draws the conducting hand's wave — arsic crests, thetic
   troughs, pick-up loops, Pierik letters. `tracks: ["tonarium"]`

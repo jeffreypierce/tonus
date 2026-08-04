@@ -68,6 +68,19 @@ export interface Cadence {
    *  not the labeled mode's final, which may disagree on a transposed or
    *  mislabeled chant), in SIGNED semitones — not octave-reduced. */
   arrival: number;
+  /**
+   * The catalogued family's measured finality: the share of THIS FAMILY's
+   * corpus occurrences that fall at a final close. null when the signature is
+   * below the catalogue's floor (about a third of cadences), and null on a
+   * cadence taken straight from `detectCadences` — the join happens in the
+   * score builder, not the detector.
+   *
+   * A measurement, not a name, which is why it rides here while `familia`
+   * does not: the signature is already the family's name, but how often that
+   * family CLOSES cannot be read off the signature. Families landing on the
+   * final range from 0.054 to 1.000, so `arrival === 0` does not imply a close.
+   */
+  finality: number | null;
 }
 
 // Cadence formulae run four to ten notes [biblio: homan-cadence, p. xiii]. Take
@@ -374,6 +387,11 @@ export function detectCadences(
       signature,
       shape,
       arrival,
+      // Left null here on purpose. Detection is a pure pass over the phrase
+      // tree; the corpus catalogue is generated data, and reaching for it from
+      // inside the detector would put a baked artifact in the detection path.
+      // buildScore joins it, where MODES is already joined.
+      finality: null,
     });
   }
 

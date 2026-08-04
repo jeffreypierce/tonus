@@ -13,13 +13,27 @@ import { DEFAULT_EPOCH } from "../epoch.js";
 const MS_PER_DAY = 86400000;
 const ALL_BODIES: BodyName[] = ["Sun", "Moon", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn"];
 
-const SIGNS = [
+/** The twelve signs, in ecliptic order from the vernal point — the machine
+ * codes. Exported because a body's `sign` is one of these and a consumer
+ * drawing the zodiac needs the same twelve in the same order; copying them out
+ * is how a second, drifting list gets written. */
+export const SIGNS = [
   "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
   "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
 ] as const;
 
+/** The same twelve as the books name them. Eight are already their own Latin
+ * nominative; the four that differ are the ones English clipped — Scorpius for
+ * Scorpio, and the -us/-i endings the others dropped. Parallel to a body's
+ * `name`/`nomen` pair: the code stays English, the Latin rides beside it. */
+export const SIGNA = [
+  "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+  "Libra", "Scorpius", "Sagittarius", "Capricornus", "Aquarius", "Pisces",
+] as const;
+
 const zodiac = (lon: number): number => Math.floor(wrapAngle(lon) / 30) % 12;
 const sign = (lon: number): string => SIGNS[zodiac(lon)];
+const signum = (lon: number): string => SIGNA[zodiac(lon)];
 
 function computeSpeed(geoLon: number, name: string, ts: number): number {
   const nextState = getState(ts + MS_PER_DAY);
@@ -55,6 +69,7 @@ function buildSun(ts: number): Body {
     apparentDiameter: app.apparentDiameter,
     zodiac: zodiac(pos.geo.lon),
     sign: sign(pos.geo.lon),
+    signum: signum(pos.geo.lon),
   };
 }
 
@@ -89,6 +104,7 @@ function buildMoon(ts: number): Body {
     apparentDiameter: app.apparentDiameter,
     zodiac: zodiac(pos.geo.lon),
     sign: sign(pos.geo.lon),
+    signum: signum(pos.geo.lon),
     distEarthRadii: pos.distEarthRadii,
   };
 }
@@ -124,8 +140,14 @@ function buildPlanet(name: PlanetName, ts: number): Body {
     elongation: app.elongation,
     phase: app.phase,
     apparentDiameter: app.apparentDiameter,
-    zodiac: zodiac(pos.helio.lon),
-    sign: sign(pos.helio.lon),
+    // GEOCENTRIC, as the Sun's and Moon's are: a sign placement says where a
+    // body appears from here, which is the only frame in which "Mars in
+    // Sagittarius" means anything. Reading the heliocentric longitude put a
+    // body's own sign at odds with its own geo.lon — Mercury reported in Aries
+    // while appearing in Taurus.
+    zodiac: zodiac(pos.geo.lon),
+    sign: sign(pos.geo.lon),
+    signum: signum(pos.geo.lon),
   };
 }
 
@@ -153,6 +175,7 @@ function buildEarth(ts: number): Body {
     apparentDiameter: 0,
     zodiac: zodiac(pos.helio.lon),
     sign: sign(pos.helio.lon),
+    signum: signum(pos.helio.lon),
   };
 }
 

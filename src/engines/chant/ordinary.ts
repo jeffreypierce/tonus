@@ -14,15 +14,15 @@ import { attestationCutoff, eraCutoff, chantAdmissible } from "./attest.js";
 import { CANTUS_QUERY_KEYS } from "./types.js";
 import {
   KY_SOURCE,
-  MODE_LABELS,
-  ORDINARY_LABELS,
+  MODI,
+  ORDINARIA,
   type OrdinaryChant,
   type OrdinariumQuery,
   type OrdinaryCode,
 } from "./types.js";
 import { type Feast } from "../cal/types.js";
 
-const ORDINARY_OFFICES = new Set(Object.keys(ORDINARY_LABELS));
+const ORDINARY_OFFICES = new Set(Object.keys(ORDINARIA));
 const MODE_PAIRS: [number, number][] = [[1, 2], [3, 4], [5, 6], [7, 8]];
 const CREDO_PRIORITY = ["IV", "III", "I", "II", "V", "VI"] as const;
 
@@ -90,7 +90,7 @@ function feastYear(feast: Feast): number {
 }
 
 // "In order to add greater solemnity, one or more of the following 'Chants ad
-// libitum' may be employed." [liber-usualis-1961, Kyriale] — the appendix is a
+// libitum' may be employed." [liber-usualis, Kyriale] — the appendix is a
 // SOLEMNITY boost, so it belongs only to the festal rubrics. Note this is NOT
 // `isHighFeast`: that measures PRECEDENCE, and by it a Lent Sunday
 // (Semiduplex I classis) and Ash Wednesday (Feria privilegiata) both rank high —
@@ -343,11 +343,11 @@ export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
     office: "or",
     genus: "Ordinarium",
     mode: entry.mode ? String(entry.mode) : null,
-    modus: entry.mode ? (MODE_LABELS[String(entry.mode)] ?? null) : null,
+    modus: entry.mode ? (MODI[String(entry.mode)] ?? null) : null,
     pages: [],
     source: KY_SOURCE,
     ordinary,
-    ordinarium: ORDINARY_LABELS[ordinary] ?? entry.incipit,
+    ordinarium: ORDINARIA[ordinary] ?? entry.incipit,
     mass: entry.mass ?? 0,
   };
 }

@@ -9,7 +9,7 @@ import tonus from "tonus";
 ```
 
 - [The methods](#the-methods) — by engine
-- [The appendix](#the-appendix) — seven constant tables
+- [The appendix](#the-appendix) — the canonical constant tables
 - [Full contents](#full-contents) — every method and section
 - [Conventions](#conventions) — Latin/English, dates, determinism, error contracts, bibliography
 
@@ -61,22 +61,71 @@ t.nota("D4");
 
 ## The appendix
 
-Seven constant tables ship as named exports beside the namespace. Return values are plain data, and the appendix carries
-canonical tables only, never functions.
+The canonical constant tables ship as named exports beside the namespace.
+Return values are plain data, and the appendix carries tables only, never
+functions. A table is here because a caller would otherwise **type it out** —
+a mode list, an hour list, the valid `by:` values — and a transcribed copy
+drifts, failing as wrong answers rather than as an error.
 
 ```js
-import tonus, { SEASON_LABEL, MODES } from "tonus";
+import tonus, { SEASON_LABEL, HORAE, MODES } from "tonus";
 ```
 
-| Export         | What it holds                                                        |
-| -------------- | -------------------------------------------------------------------- |
-| `SEASON_LABEL` | season code → English display label                                  |
-| `TEMPUS_NAME`  | season code → the Latin tempus name                                  |
-| `GRADE_ORDER`  | the fourteen grades in precedence order (sort by `indexOf`)          |
-| `GRADE_NAME`   | grade code → the Latin rank name                                     |
-| `MODES`        | the eight modes' doctrine: final, tenor, ambitus, cadence figures    |
-| `TONES`        | the psalm tones (Graduale Romanum appendix), with their differentiae |
-| `CADENTIAE`    | the cadence families (`CadentiaFamilia`), generated corpus data      |
+Names follow the register rule: a table of Latin values takes a Latin name, a
+table of codes or English keeps English. So the name tells you which you hold.
+
+**Calendar**
+
+| Export         | What it holds                                                   |
+| -------------- | --------------------------------------------------------------- |
+| `SEASON_LABEL` | season code → English display label (`adv` → "Advent")          |
+| `TEMPORA`      | season code → the Latin tempus name (`adv` → "Tempus Adventus") |
+| `GRADE_ORDER`  | the fourteen grades in precedence order (sort by `indexOf`)     |
+| `GRADUS`       | grade code → the Latin rank name                                |
+
+**Chant**
+
+| Export      | What it holds                                                              |
+| ----------- | -------------------------------------------------------------------------- |
+| `HORAE`     | the eight canonical hours, Matins first — the order is the content         |
+| `OFFICIA`   | office code → the Latin genus (`an` → "Antiphona")                         |
+| `ORDINARIA` | ordinary code → the Latin name (`ky` → "Kyrie eleison")                    |
+| `MODI`      | mode number → the Latin name (`"1"` → "Modus I")                           |
+| `SOURCES`   | book code → its bibliographic record; the codes `cantus({ source })` takes |
+
+**Tuning**
+
+| Export                 | What it holds                                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| `MODES`                | the eight modes' doctrine: final, tenor, ambitus, and the **received** cadence figures                |
+| `TONES`                | the psalm tones (Graduale Romanum appendix), with their differentiae                                  |
+| `CADENTIAE`            | the **mined** cadence families (`CadentiaFamilia`) — shape, arrival, share, finality, per-mode counts |
+| `CADENTIAE_POPULATION` | the denominator behind every `share`: all phrase-ends, and the same total per mode                    |
+
+The two cadence tables are not duplicates. `MODES.cadences` is what the
+treatises say a mode closes on (final cadences only); `CADENTIAE` is what the
+corpus was measured doing (any target, which makes it the only account of
+medial closes). See [one spine, two
+annotations](score.md#one-spine-two-annotations), and
+[lift](tuning.md#lift--how-mode-bound-a-close-is) for what `CADENTIAE_POPULATION`
+is for.
+
+**Heavens**
+
+| Export  | What it holds                                        |
+| ------- | ---------------------------------------------------- |
+| `SIGNS` | the twelve zodiac signs, English, ecliptic order     |
+| `SIGNA` | the same twelve in Latin (`Scorpius`, `Capricornus`) |
+
+**Census**
+
+| Export          | What it holds                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| `CENSUS_GROUPS` | the field groups → `{ offset, count }`; the keys are the valid `by:` values **and** the `profile` keys |
+| `CENSUS_ORDER`  | every censused chant id, in block order — so membership is a lookup, not a `try/catch`                 |
+
+Both census tables exist because pooling blocks yourself means reproducing the
+distance rule; see [the census contract](census.md#distance-is-cosine-per-field-group).
 
 ## Full contents
 
@@ -93,7 +142,7 @@ the list resolve their pitches through the ones before.
 - [Neumes — `neuma`](tuning.md#neumes--neuma)
 - [Ratios — `ratio`](tuning.md#ratios--ratio)
 - [The gamut — `gamut`](tuning.md#the-gamut--gamut)
-- [Modes — `modus`](tuning.md#modes--modus) · [Cadence figures](tuning.md#cadence-figures)
+- [Modes — `modus`](tuning.md#modes--modus) · [Cadence figures](tuning.md#cadence-figures) · [The corpus catalogue](tuning.md#the-corpus-catalogue--cadentiae)
 - [Psalm tones — `tonus`](tuning.md#psalm-tones--tonus)
 - [Theory & Context](tuning.md#theory--context) · [Sources](tuning.md#sources)
 
@@ -127,7 +176,7 @@ the list resolve their pitches through the ones before.
 - [The intonation channel](score.md#the-intonation-channel)
 - [The imprint](score.md#the-imprint)
 - [Prosody](score.md#prosody)
-- [Cadences](score.md#cadences)
+- [Cadences](score.md#cadences) · [One spine, two annotations](score.md#one-spine-two-annotations)
 - [Modulations](score.md#modulations)
 - [Melodic formulae](score.md#melodic-formulae)
 - [Theory & Context](score.md#theory--context) · [Sources](score.md#sources)
@@ -143,7 +192,7 @@ the list resolve their pitches through the ones before.
 
 **[Census](census.md)** — one chant measured against the corpus that holds it.
 
-- [The verb](census.md#the-verb)
+- [The method](census.md#the-method)
 - [What a block holds](census.md#what-a-block-holds)
 - [Distance is cosine per field group](census.md#distance-is-cosine-per-field-group)
 - [Profile and typicality](census.md#profile-and-typicality)
@@ -179,9 +228,9 @@ Dates are UTC-canonical. Local-time constructions like
 `new Date(2026, 0, 6)` resolve to different days depending on the
 machine's timezone. Prefer `new Date("2026-01-06")` instead.
 
-`tonus.festum()` and `tonus.caelum()` default to an emblematic
-medieval epoch, **1 June 991**, the symbolic birthday of Guido d'Arezzo. Pass
-an explicit `date` for any other day.
+`tonus.festum()` and `tonus.caelum()` default to **1 June 991**, the
+symbolic birthday of Guido d'Arezzo. Pass an explicit `date` for any other
+day.
 
 ### Determinism
 
@@ -212,7 +261,7 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 
 ### The bibliography — [`BIBLIOGRAPHY.md`](../BIBLIOGRAPHY.md)
 
-The single source of truth for citations, each with a stables key. Code
+The single source of truth for citations, each with a stable key. Code
 cites by bracketed key (`[biblio: key]`); each page keeps a short `## Sources`
 line pointing to the keys it draws on. Nothing outside `BIBLIOGRAPHY.md` restates
 a full reference.

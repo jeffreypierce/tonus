@@ -81,34 +81,48 @@ describe("buildScore", () => {
     assert.equal(last.performance.rhythmicShape, "thetic");
   });
 
-  test("salicus (ascending 3 with ictus on middle note) classifies as salicus neume and is always arsic", () => {
-    // Three ascending notes where the middle has an ictus mark (')
-    const gabc = "(c4) Sa(gi'k) (::)";
-    const score = buildScore(makeChant(gabc));
-    const syl = score.phrases[0].syllables[0];
-    assert.equal(syl.neume.type, "salicus");
-    for (const n of syl.notes) {
+  test("the ORISCUS makes a salicus, not the editorial ictus", () => {
+    // Cardine ch. 16: "at least three ascending notes in which the next-to-last
+    // is an oriscus." The oriscus is the definition.
+    const withOriscus = buildScore(makeChant("(c4) Sa(fgoh) (::)")).phrases[0].syllables[0];
+    assert.equal(withOriscus.neume.type, "salicus");
+    for (const n of withOriscus.notes) {
       assert.equal(n.performance.rhythmicShape, "arsic");
     }
+    // An ictus-marked ascent with no oriscus is a SCANDICUS that Solesmes
+    // marked for rhythm — the conflation Bevenot calls a trap. The mark is not
+    // lost; it stays readable on the note.
+    const ictusOnly = buildScore(makeChant("(c4) Sa(fg'h) (::)")).phrases[0].syllables[0];
+    assert.equal(ictusOnly.neume.type, "scandicus");
+    assert.ok(ictusOnly.notes[1].context.ictus, "the editorial ictus survives on the note");
   });
 
-  test("a 4+ note salicus has its ictus on the second-to-last ascending note", () => {
-    // Four ascending notes with the ictus on the penultimate (Suñol).
-    const syl = buildScore(makeChant("(c4) Sa(fgh'i) (::)")).phrases[0].syllables[0];
+  test("a 4-note salicus needs no separate rule — the summit is still last", () => {
+    // The oriscus is next-to-last by definition, so the note after it is the
+    // final note at any length.
+    const syl = buildScore(makeChant("(c4) Sa(fghoi) (::)")).phrases[0].syllables[0];
     assert.equal(syl.neume.type, "salicus");
-    // The plain 4-note ascent without that ictus is not a salicus.
+    // An oriscus elsewhere in the ascent does not make one.
+    const midOriscus = buildScore(makeChant("(c4) Sa(fgohi) (::)")).phrases[0].syllables[0];
+    assert.notEqual(midOriscus.neume.type, "salicus");
+    // Neither does a plain ascent.
     const plain = buildScore(makeChant("(c4) Sa(fghi) (::)")).phrases[0].syllables[0];
     assert.notEqual(plain.neume.type, "salicus");
   });
 
-  test("the salicus ictus note is prolonged", () => {
-    const [f, g, a] = buildScore(makeChant("(c4) Sa(fg'h) (::)")).phrases[0].syllables[0].notes;
-    // The middle (ictus) note is longer than either neighbour.
-    assert.ok(g.performance.duration > f.performance.duration);
-    assert.ok(g.performance.duration > a.performance.duration);
-    // A plain scandicus does not prolong its middle note.
-    const plainG = buildScore(makeChant("(c4) Sa(fgh) (::)")).phrases[0].syllables[0].notes[1];
-    assert.ok(g.performance.duration > plainG.performance.duration);
+  test("the salicus prolongs its SUMMIT — Cardine's correction", () => {
+    // The printed editions lengthen the oriscus; the manuscripts show the
+    // principal note is the one immediately following it. So the oriscus is
+    // taken lightly and the note after it is held.
+    const [f, g, h] = buildScore(makeChant("(c4) Sa(fgoh) (::)")).phrases[0].syllables[0].notes;
+    assert.ok(h.performance.duration > g.performance.duration,
+      "the summit outlasts the oriscus");
+    assert.ok(h.performance.duration > f.performance.duration,
+      "the summit outlasts the approach");
+    // And it is longer than the same note in a plain ascent — the prolongation
+    // is real, not just the oriscus being short.
+    const plainH = buildScore(makeChant("(c4) Sa(fgh) (::)")).phrases[0].syllables[0].notes[2];
+    assert.ok(h.performance.duration > plainH.performance.duration);
   });
 
   test("oriscus is flagged and taken slightly faster", () => {

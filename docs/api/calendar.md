@@ -25,9 +25,9 @@ from 1583 and the Julian computus before it.
 falls on the day: the primary feast first, concurrent feasts after it, in
 order of dignity. A range query (`from`/`to`) walks each day and flattens
 the results. A query with filters but no date scans the default liturgical
-year, Advent to Advent. With no argument at all, the day resolved is not
-the modern date but tonus's medieval epoch — **1 June 991**, the symbolic
-birthday of Guido d'Arezzo (see [the conventions note](index.md#conventions)).
+year, Advent to Advent. With no argument at all, the day resolves to
+tonus's default epoch, **1 June 991**, the symbolic birthday of Guido
+d'Arezzo (see [the conventions note](index.md#conventions)).
 Empty matches return `[]`; an invalid range throws.
 
 ```js
@@ -93,12 +93,11 @@ tonus.festum({ grade: "duplex-i", marian: true });
 
 ### The day as of a year — `before`
 
-`before` resolves the day AS OF a year: feasts instituted later step aside,
-and whatever ranked behind them — usually the temporale or the feria — wins
-instead. The calendar data is untouched; this is a view over it, from the
-institution dates in `cal/data/eras.ts`. A day whose every candidate is later
-than `before` returns `[]`, which is the honest answer: that day had no
-feast yet.
+`before` resolves the day as it stood in a given year: the calendar holds
+only the feasts instituted by then, and precedence runs over those. On most
+days that returns the temporale or the feria in place of a modern feast.
+Institution dates are in `cal/data/eras.ts`. A day with no feast yet
+instituted returns `[]`.
 
 ```js
 tonus.festum({ date: new Date("2026-07-01"), before: 1100 });
@@ -128,7 +127,7 @@ interface FeastQuery {
 interface Feast {
   id: string; // "MM-DD" (sancti) or DO stem, e.g. "Adv1-0" (tempora)
   nomen: string; // Latin feast name, "In Nativitate Domini"
-  ritus: string; // authentic Tridentine rank, incl. octave detail
+  ritus: string; // the Tridentine rank verbatim, incl. octave detail
   grade: Grade; // canonical grade code; precedence via GRADE_ORDER
   season: Season; // machine code (DO Tempora stem)
   tempus: string; // Latin season name, "Tempus Adventus"
@@ -180,11 +179,11 @@ Duplex feast never displaces a Lent Sunday:
 | 7   | `semiduplex-ii`      | Semiduplex II classis                | later Advent Sundays, octave days                           |
 | 8   | `duplex-majus`       | Duplex majus                         |                                                             |
 | 9   | `duplex`             | Duplex                               |                                                             |
-| 10  | `semiduplex`         | Semiduplex                           | ordinary Sundays, semiduplex feasts                         |
+| 10  | `semiduplex`         | Semiduplex                           | Sundays throughout the year, semiduplex feasts              |
 | 11  | `simplex`            | Simplex                              |                                                             |
 | 12  | `feria-major`        | Feria major                          | Advent/Lent ferias, Ember days                              |
 | 13  | `vigilia`            | Vigilia                              |                                                             |
-| 14  | `feria`              | Feria                                | ordinary weekdays                                           |
+| 14  | `feria`              | Feria                                | weekdays with no feast                                      |
 
 Four privileged Sundays receive a per-id override. Divinum Officium marks
 Advent I and the three Septuagesima-block Sundays plain `"Semiduplex"`;
@@ -284,4 +283,4 @@ recorded in the code — see the era note at
 ## Sources
 
 Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
-`divinum-officium`, `computus`, `liber-usualis`, `wikipedia-calendar`.
+`divinum-officium`, `computus`, `liber-usualis`.

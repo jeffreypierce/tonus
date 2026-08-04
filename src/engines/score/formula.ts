@@ -121,6 +121,22 @@ function skeleton(steps: Array<number | null>): Array<number | null> {
  * match: walk the formula, advancing through the observed skeleton to find each
  * formula step in order (extra observed steps between are the melismatic filling
  * a formula tolerates). Returns the fraction of the formula matched in order.
+ *
+ * KNOWN CEILING, measured when the Apel mode-5 catalogue landed. The observed
+ * skeleton is ONE PHRASE, so a formula longer than the phrase can never reach
+ * MIN_CONFIDENCE — and Apel's phrases are long: the catalogue's median skeleton
+ * is 18 steps against a median mode-5 Gradual phrase of 14. In practice every
+ * formula of 10 skeletal steps or fewer matches and every one of 13 or more
+ * matches nothing, which is a fact about this window rather than about the
+ * repertoire: comparing whole chants instead of single phrases, the long
+ * formulae match 1,137 times where the per-phrase window finds 106.
+ *
+ * That is expected, not broken — Apel tabulates a chant as a SEQUENCE of
+ * formulae across its whole respond, and a formula may span several divisiones
+ * or share one with its neighbour. Matching at chant scale is a different
+ * algorithm (a segmentation over the whole melody, not a per-phrase fit) and
+ * wants its own design pass; the per-phrase fit is honest about what it is,
+ * and reports `formula: null` rather than a forced answer.
  */
 function formulaMatch(observed: Array<number | null>, formula: Array<number | null>): number {
   if (formula.length === 0) return 0;

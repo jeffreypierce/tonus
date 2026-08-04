@@ -2,7 +2,7 @@
 // engines/score/infer — mode and chant type inference from parsed GABC
 // ---------------------------------------------------------------------------
 import type { ChantType, Score, OrdinaryCode, OfficeCode } from "./types.js";
-import { OFFICE_LABELS } from "../chant/types.js";
+import { OFFICIA } from "../chant/types.js";
 import { MODES } from "../temper/modes.js";
 
 // Identify an ordinary chant by its opening words. Two movements have a second,
@@ -21,7 +21,7 @@ const ORDINARY_INCIPITS: Array<[RegExp, OrdinaryCode]> = [
   [/^ite/i, "it"],
 ];
 
-const OFFICE_CODES = new Set(Object.keys(OFFICE_LABELS));
+const OFFICE_CODES = new Set(Object.keys(OFFICIA));
 
 export function inferChantType(ir: Score): ChantType | undefined {
   const officePart = ir.chant.office?.toLowerCase().trim();

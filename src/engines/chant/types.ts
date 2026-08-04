@@ -51,6 +51,15 @@ export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"
   | "vesperae" | "completorium";
 
+/** The eight canonical hours in the order they are sung, Matins first. The
+ *  order is the content: a day's office read out of sequence is not the day's
+ *  office. `officium` validates `hora` against this, so the list a caller reads
+ *  and the check it must satisfy cannot drift apart. */
+export const HORAE: readonly CanonicalHour[] = Object.freeze([
+  "matutinum", "laudes", "prima", "tertia", "sexta", "nona",
+  "vesperae", "completorium",
+]);
+
 // ── Display labels ──
 /** The keys cantus() accepts — the base set the day verbs extend. Lives here,
  *  cycle-free, so ordinary.ts can build its own key set without importing
@@ -60,12 +69,12 @@ export const CANTUS_QUERY_KEYS = new Set([
   "before", "cursus",
 ]);
 
-export const MODE_LABELS: Readonly<Record<string, string>> = Object.freeze({
+export const MODI: Readonly<Record<string, string>> = Object.freeze({
   "1": "Modus I", "2": "Modus II", "3": "Modus III", "4": "Modus IV",
   "5": "Modus V", "6": "Modus VI", "7": "Modus VII", "8": "Modus VIII",
 });
 
-export const OFFICE_LABELS: Readonly<Record<OfficeCode, string>> = Object.freeze({
+export const OFFICIA: Readonly<Record<OfficeCode, string>> = Object.freeze({
   an: "Antiphona",
   al: "Alleluia",
   ca: "Canticum",
@@ -83,7 +92,7 @@ export const OFFICE_LABELS: Readonly<Record<OfficeCode, string>> = Object.freeze
   or: "Ordinarium",
 });
 
-export const ORDINARY_LABELS: Readonly<Record<string, string>> = Object.freeze({
+export const ORDINARIA: Readonly<Record<string, string>> = Object.freeze({
   ky: "Kyrie eleison",
   gl: "Gloria",
   cr: "Credo",

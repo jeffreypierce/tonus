@@ -17,6 +17,8 @@ Pythagorean, as in the treatises.
   - [The gamut — `gamut`](#the-gamut--gamut)
   - [Modes — `modus`](#modes--modus)
     - [Cadence figures](#cadence-figures)
+    - [The corpus catalogue — `CADENTIAE`](#the-corpus-catalogue--cadentiae)
+      - [Lift — how mode-bound a close is](#lift--how-mode-bound-a-close-is)
   - [Psalm tones — `tonus`](#psalm-tones--tonus)
   - [Theory \& Context](#theory--context)
     - [The presets](#the-presets)
@@ -442,6 +444,85 @@ encoding, sources, and known gaps (medial cadences are not yet included) are
 documented at the data — see `CadenceFigure` in
 [`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
 
+This is the **tradita** half — what the treatises say. Its counterpart is the
+corpus tally below, and they are not interchangeable: see [one spine, two
+annotations](score.md#one-spine-two-annotations).
+
+### The corpus catalogue — `CADENTIAE`
+
+Where the figures above are received, [`CADENTIAE`](index.md#the-appendix) is
+**mined**: every phrase-end in the sung corpus, grouped into families by what
+the melody actually did. A family is a **shape** — the closing tail's
+successive semitone intervals — and an **arrival**, where it landed relative
+to the chant's own closing note. Together they are the key, `"2,0,-2 @0"`, and
+the key is the family's whole name. No editorial titles ride the table.
+
+122 families clear the floor of 50 occurrences, covering 58.7% of all
+phrase-ends. The rest of the tail is real but too thin to characterise.
+
+```ts
+interface CadentiaFamilia {
+  key: string;       // "shape @arrival" — the name, and the join
+  shape: number[];   // successive semitone intervals of the closing tail
+  arrival: number;   // SIGNED semitones from the chant's own closing note
+  n: number;         // corpus occurrences
+  share: number;     // n over ALL phrase-ends (CADENTIAE_POPULATION.ends)
+  finality: number;  // share of those occurrences at a final close
+  modes: Record<string, number>; // occurrences by mode digit ("?" = mode-less)
+}
+```
+
+`share` is taken against **every** phrase-end, not against the 58.7% that
+cleared the floor — a share against the tabled subset would flatter every
+family in it. The denominator ships beside the table:
+
+```ts
+CADENTIAE_POPULATION.ends;   // 28481 — all phrase-ends, sung corpus
+CADENTIAE_POPULATION.byMode; // the same total per mode digit
+```
+
+#### Lift — how mode-bound a close is
+
+`modes` and `byMode` share a denominator, so a family's **lift** in a given
+mode is one division: how much more (or less) that mode reaches for this close
+than the corpus at large.
+
+```js
+import { CADENTIAE, CADENTIAE_POPULATION as POP } from "tonus";
+
+const fam = CADENTIAE.find((f) => f.key === "2,0,-2 @0");
+const lift = (f, mode) =>
+  (f.modes[String(mode)] / POP.byMode[String(mode)]) / f.share;
+
+lift(fam, 6); // 2.19
+lift(fam, 4); // 0.06
+```
+
+The commonest family in the corpus (n = 1131, share 0.0397, finality 0.434),
+read mode by mode:
+
+| Mode | Occurrences | Lift  |
+| ---- | ----------- | ----- |
+| 1    | 157         | ×0.72 |
+| 2    | 206         | ×1.34 |
+| 3    | 34          | ×0.32 |
+| 4    | 8           | ×0.06 |
+| 5    | 146         | ×1.26 |
+| 6    | 146         | ×2.19 |
+| 7    | 109         | ×0.80 |
+| 8    | 323         | ×1.64 |
+
+Mode 6 reaches for this close more than twice as often as the corpus does;
+mode 4 almost never. That is the figure the tonarium prints under a cadence
+([score.md](score.md#the-analysis-tracks)).
+
+**The ratio is not baked.** The table exports the vocabulary — counts and
+their denominators — and leaves the arithmetic to the caller, for the same
+reason `census()` exports profiles rather than answers. Two cautions when you
+take it: below roughly ten in-mode occurrences the ratio is one or two chants
+deciding a number that reads like a measurement, and a mode-less chant (`"?"`)
+has no denominator at all. In both cases fall back to `share`.
+
 ## Psalm tones — `tonus`
 
 `tonus` returns the recitation formula of the context's mode as tuned
@@ -547,7 +628,6 @@ tonus.temperamentum({ scale: sclFileString }); // name taken from the file
 ## Sources
 
 Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
-`boethius-institutione`, `ptolemy-harmonics`, `guidonian-gamut`,
-`atkinson-nexus`, `reisenweaver-guido`, `schulter-harmony`, `rockstro-grove`,
-`powers-wiering-mode`, `niedermeyer-ortigue`, `bragers-treatise`,
-`sunol-textbook`, `liber-usualis`, `scala-format`, `wikipedia-tuning`.
+`boethius-institutione`, `ptolemy-harmonics`, `schulter-harmony`,
+`rockstro-grove`, `niedermeyer-ortigue`, `bragers-treatise`,
+`sunol-textbook`, `saulnier-modes`, `liber-usualis`, `scala-format`.

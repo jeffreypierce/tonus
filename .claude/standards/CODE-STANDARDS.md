@@ -231,7 +231,7 @@ interface Note {
 
 ## Documentation
 
-Code is level 2 of a two-level documentation ladder (`docs/*.md` → code), the top
+Code is level 2 of a two-level documentation ladder (`docs/api/*.md` → code), the top
 level linking down into it; code is the bottom of the well, holding the deepest
 material. The `## Comments` rules above are how that plays out in `src/`. The
 whole model — the two levels, the centralized bibliography, and the

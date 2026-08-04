@@ -9,6 +9,12 @@
 // carroll-chironomy, carroll-applied], founded on Mocquereau
 // [biblio: mocquereau-nombre].
 //
+// ONE DEPARTURE from that lineage, deliberate: the salicus. Cardine's
+// semiological reading of the manuscripts moves its principal note from the
+// oriscus to the note following it [biblio: cardine-semiology, ch. 16], and
+// tonus follows Cardine there — see SALICUS_PROLONGATION below. Everything
+// else in this layer is Mocquereau's synthesis as Gajard and Carroll teach it.
+//
 // Arsis (rising, active) and thesis (resting, retractive) are qualities of the
 // COMPOUND BEAT — the group of notes between one ictus and the next — not of
 // single notes. Every note in a group shares its quality. The ictus marks the
@@ -70,15 +76,29 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
   };
 }
 
-// The salicus ictus note (its second-to-last ascending note) is prolonged
-// [biblio: sunol-textbook, Ch. V]. Modest, in the spirit of an episema.
+// The salicus's principal note is prolonged. Modest, in the spirit of an
+// episema.
+//
+// WHICH note is Cardine's correction [biblio: cardine-semiology, ch. 16 §II].
+// The printed editions mark the note bearing the oriscus and the current
+// practice lengthens it, treating it as principal "because of its special
+// sign"; the manuscripts show the principal note is the one IMMEDIATELY
+// FOLLOWING the oriscus — the summit — with §II.A proving it from the St Gall
+// signs and the melodic tension toward that summit. The oriscus is a note of
+// passage, not of rest. This is the one point where the rhythmic layer
+// departs from Mocquereau/Suñol, and it departs deliberately.
+//
+// The summit is the LAST note of the ascent, because a salicus is ascending
+// by definition and the oriscus is its next-to-last note — so the note after
+// the oriscus is the final one, at any length. The 4- and 5-note forms need no
+// separate rule.
 const SALICUS_PROLONGATION = 1.3;
 
 function makeSyllable(lyric: string, notes: Note[]): Syllable {
   const neume = classifyNeume(notes);
   if (neume.type === "salicus" && notes.length >= 2) {
-    const ictic = notes[notes.length - 2]!;
-    ictic.performance.duration *= SALICUS_PROLONGATION;
+    const summit = notes[notes.length - 1]!;
+    summit.performance.duration *= SALICUS_PROLONGATION;
   }
   const runs = notes[0]?.context.runs;
   return runs

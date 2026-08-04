@@ -164,13 +164,13 @@ describe("tonus namespace", () => {
 describe("the appendix (the export law)", () => {
   // Verbs live on the namespace; return values are plain data; the appendix
   // exports canonical constant tables — nothing with a ().
-  test("the seven tables are exported", async () => {
+  test("the canonical tables are exported", async () => {
     const m = await import("../dist/index.js");
-    const { SEASON_LABEL, TEMPUS_NAME, GRADE_ORDER, GRADE_NAME, MODES, TONES, CADENTIAE } = m;
+    const { SEASON_LABEL, TEMPORA, GRADE_ORDER, GRADUS, MODES, TONES, CADENTIAE } = m;
     assert.equal(SEASON_LABEL.adv, "Advent");
-    assert.equal(TEMPUS_NAME.adv, "Tempus Adventus");
+    assert.equal(TEMPORA.adv, "Tempus Adventus");
     assert.equal(GRADE_ORDER.length, 14);
-    assert.ok(GRADE_NAME["duplex-i"]);
+    assert.ok(GRADUS["duplex-i"]);
     assert.ok(MODES instanceof Map && MODES.get(1).nomen === "Protus Authenticus");
     assert.equal(TONES.length, 9); // eight tones + Tonus Peregrinus
     assert.equal(TONES[0].nomen, "Tonus I");
@@ -190,6 +190,96 @@ describe("the appendix (the export law)", () => {
       // no longer shares a family with a fourth below. Bounded generously; the
       // corpus spans -7..9 and an octave-equivalent tail is filtered by FLOOR.
       assert.ok(f.arrival >= -24 && f.arrival <= 24);
+    }
+  });
+
+  test("CADENTIAE_POPULATION is the honest denominator", async () => {
+    const { CADENTIAE, CADENTIAE_POPULATION: POP } = await import("../dist/index.js");
+    // byMode must be the FULL tally, not the tabled subset — if it were summed
+    // from the 122 families that cleared the floor, every share and every lift
+    // taken against it would be inflated, and nothing would error.
+    const sum = Object.values(POP.byMode).reduce((s, n) => s + n, 0);
+    assert.equal(sum, POP.ends, "byMode does not sum to ends");
+    assert.ok(POP.ends > CADENTIAE.reduce((s, f) => s + f.n, 0),
+      "ends is not larger than the tabled families — it is not the full population");
+    // Every mode digit, plus "?" for the mode-less.
+    for (const m of ["1", "2", "3", "4", "5", "6", "7", "8", "?"]) {
+      assert.ok(POP.byMode[m] > 0, `byMode is missing ${m}`);
+    }
+    // share is n over that denominator, to the baked 4 places.
+    for (const f of CADENTIAE) {
+      assert.ok(Math.abs(f.share - f.n / POP.ends) < 0.00005,
+        `${f.key}: share ${f.share} != n/ends`);
+    }
+    // Frozen, like every other appendix table.
+    assert.ok(Object.isFrozen(POP) && Object.isFrozen(POP.byMode));
+  });
+
+  test("cadentiaFamilia is THE index, not a second one", async () => {
+    const { CADENTIAE } = await import("../dist/index.js");
+    // Not on the appendix: it is a function, and the export law admits tables
+    // only. Consumers reach it through the data module.
+    const { cadentiaFamilia } = await import("../dist/data/cadentiae.js");
+    const fresh = new Map(CADENTIAE.map((f) => [f.key, f]));
+    for (const [key, fam] of fresh) {
+      assert.equal(cadentiaFamilia(key), fam, `${key} resolves to a different object`);
+    }
+    assert.equal(cadentiaFamilia("no such key @99"), undefined);
+  });
+
+  test("a cadence carries its family's finality, joined not re-derived", async () => {
+    const { cadentiaFamilia } = await import("../dist/data/cadentiae.js");
+    let joined = 0, floored = 0;
+    for (const chant of tonus.cantus({ source: "gr", limit: 60 })) {
+      let score;
+      try { score = tonus.notatio(chant); } catch { continue; }
+      for (const cad of score.cadences) {
+        const fam = cad.signature ? cadentiaFamilia(cad.signature) : undefined;
+        if (fam) {
+          // The joined value must BE the family's, not something recomputed
+          // from arrival or target that happens to look similar.
+          assert.equal(cad.finality, fam.finality,
+            `${cad.signature}: cadence says ${cad.finality}, table says ${fam.finality}`);
+          joined++;
+        } else {
+          // Below the floor there is no family — an uncatalogued close, not a
+          // close that never closes.
+          assert.equal(cad.finality, null, `${cad.signature} has no family but finality is set`);
+          floored++;
+        }
+      }
+    }
+    assert.ok(joined > 0 && floored > 0, `saw ${joined} joined / ${floored} floored`);
+  });
+
+  test("detector-fresh cadences carry null finality — the join is the builder's", async () => {
+    const { detectCadences } = await import("../dist/engines/score/cadence.js");
+    const { MODES } = await import("../dist/index.js");
+    const score = tonus.notatio(tonus.cantus({ source: "gr", limit: 1 })[0]);
+    // The detector is a pure pass: it computes the signature and stops, so the
+    // corpus artifact never enters the detection path.
+    const raw = detectCadences(score.phrases, MODES.get(2));
+    assert.ok(raw.length > 0);
+    assert.ok(raw.every((c) => c.finality === null),
+      "detectCadences filled finality — the corpus join leaked into detection");
+    // And the built score DID join it.
+    assert.ok(score.cadences.some((c) => c.finality !== null));
+  });
+
+  test("no formula rides a cadence off the finalis", async () => {
+    // True by construction (cadence.ts assigns `formula` only inside the
+    // target === "finalis" branch), kept as a tripwire: the tradita catalogue
+    // holds only final figures, so widening that branch without widening the
+    // catalogue would silently mislabel medial closes.
+    for (const chant of tonus.cantus({ source: "gr", limit: 80 })) {
+      let score;
+      try { score = tonus.notatio(chant); } catch { continue; }
+      for (const cad of score.cadences) {
+        if (cad.formula != null) {
+          assert.equal(cad.target, "finalis",
+            `${cad.formula} on a ${cad.target} cadence`);
+        }
+      }
     }
   });
 
@@ -213,6 +303,62 @@ describe("the appendix (the export law)", () => {
       sigs.some((sig) => table.has(sig)),
       "no live signature joined the table — the keys have forked again",
     );
+  });
+
+  test("HORAE is the office order, and officium agrees with it", async () => {
+    const { HORAE } = await import("../dist/index.js");
+    // The order IS the content — a day's office read out of sequence is not
+    // the day's office.
+    assert.deepEqual([...HORAE], [
+      "matutinum", "laudes", "prima", "tertia", "sexta", "nona",
+      "vesperae", "completorium",
+    ]);
+    // The list and the check cannot drift: every entry is accepted, and a
+    // plausible near-miss is refused rather than silently matching nothing.
+    for (const hora of HORAE) {
+      assert.ok(Array.isArray(tonus.officium({ hora })), `officium rejected ${hora}`);
+    }
+    assert.throws(() => tonus.officium({ hora: "vespers" }), /unknown hora/);
+  });
+
+  test("the Latin label tables carry Latin", async () => {
+    const { OFFICIA, ORDINARIA, MODI } = await import("../dist/index.js");
+    // The register rule read back off the values: a Latin name means Latin
+    // content. If one of these ever holds "Antiphon", the name is now a lie.
+    assert.equal(OFFICIA.an, "Antiphona");
+    assert.equal(ORDINARIA.ky, "Kyrie eleison");
+    assert.equal(MODI["1"], "Modus I");
+    assert.equal(Object.keys(MODI).length, 8);
+  });
+
+  test("SOURCES is the book ledger cantus filters by", async () => {
+    const { SOURCES } = await import("../dist/index.js");
+    assert.equal(SOURCES.gr.book, "Graduale Romanum");
+    // Every registered code is a code cantus({ source }) actually accepts —
+    // this is the table a caller reads to build a book picker.
+    for (const code of Object.keys(SOURCES)) {
+      assert.equal(SOURCES[code].code, code, `${code} disagrees with its own record`);
+      assert.ok(Array.isArray(tonus.cantus({ source: code, limit: 1 })));
+    }
+  });
+
+  test("CENSUS_GROUPS and CENSUS_ORDER describe the real census", async () => {
+    const { CENSUS_GROUPS, CENSUS_ORDER } = await import("../dist/index.js");
+    // CENSUS_ORDER is the block index, so membership is answerable without a
+    // try/catch — that is the whole reason it is public.
+    assert.ok(CENSUS_ORDER.length > 0);
+    const id = CENSUS_ORDER[0];
+    const c = tonus.census({ id, k: 0 });
+    // The group keys are the `by:` values AND the profile keys. One vocabulary.
+    assert.deepEqual(
+      Object.keys(c.profile).sort(),
+      Object.keys(CENSUS_GROUPS).sort(),
+    );
+    for (const [g, { count }] of Object.entries(CENSUS_GROUPS)) {
+      assert.equal(c.profile[g].values.length, count, `${g} field count disagrees`);
+    }
+    // A censused id resolves; an id outside the index does not.
+    assert.ok(!CENSUS_ORDER.includes("gregobase:none-such"));
   });
 
   test("no functions ride the appendix", async () => {

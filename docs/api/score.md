@@ -16,6 +16,8 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
   - [The imprint](#the-imprint)
   - [Prosody](#prosody)
   - [Cadences](#cadences)
+    - [One spine, two annotations](#one-spine-two-annotations)
+    - [`finality` — how often this family closes](#finality--how-often-this-family-closes)
   - [Modulations](#modulations)
   - [Melodic formulae](#melodic-formulae)
   - [Theory \& Context](#theory--context)
@@ -460,12 +462,24 @@ sum of the two bands.
   lighter stratum — context, not message.
   A **cadence is the melody's own ending re-inked black**: the same curve at
   the same width turns pure black across the cadential figure and lands on a
-  terminal node — filled when the family's measured `finality` in the
-  CADENTIAE catalogue closes, open when it suspends. The row beneath labels it
-  by its `signature` (the signature is the name; no editorial titles ride the
-  display), a light end-ticked bracket tying the label to the figure's span.
-  A label always follows its figure, clamping to the margin at the system's
-  edge; crowded labels dodge to a second row.
+  terminal node — filled when the family's measured `finality` closes, open
+  when it suspends. The row beneath labels it with its **lift** against the
+  chant's own mode — `"×2.1"`, how much more (or less) that mode reaches for
+  this close than the corpus at large. A lift below 1.0 prints too: an
+  atypical close is information. Where the chant has no mode, or the family
+  has too few occurrences in it to divide honestly, the label falls back to
+  the plain corpus share (`"3.8%"`). The family **key** has not vanished — it
+  rides the cadence group as `data-cadentia`, which is the join back to
+  [`CADENTIAE`](index.md#the-appendix) and the provenance a margin gloss can
+  print. A light end-ticked bracket ties the label to the figure's span; a
+  label always follows its figure, clamping to the margin at the system's
+  edge, and crowded labels dodge to a second row.
+
+  > **Layout in progress.** The tonarium's label row and band geometry are
+  > being reworked now that the data behind them settled. The grammar above
+  > is stable — what the marks MEAN will not change — but exact placement,
+  > spacing, and the dodge behaviour are not yet final. This note comes out
+  > when they are.
 
 Everywhere, confidence is opacity, and a claim below confidence 0.45 draws
 nothing — weak claims are not inked. Every mark sits under the notation that
@@ -622,10 +636,44 @@ interface CadenceDistribution {
 `score.cadences` names the melodic close of each phrase — where prosody
 only counts the divisio bars, this identifies the figure. One `Cadence` per
 phrase-ending divisio: its resolution `target`, the melodic `approach`, and the
-named `formula` when the ending matches one of the mode's cadence figures
-([tuning.md](tuning.md#cadence-figures)). The `divisio`
-tells medial from final (the double bar `::` is the final cadence). Each note
-that forms a cadence carries a `cadenceRef` back-index on the tabula.
+`divisio` that tells medial from final (the double bar `::` is the final
+cadence). Each note that forms a cadence carries a `cadenceRef` back-index on
+the tabula.
+
+### One spine, two annotations
+
+Two catalogues describe a cadence, and they answer different questions. Read
+this before deciding which field to use:
+
+> Every cadence carries a **`signature`** — always. Some are **catalogued** by
+> the corpus (`finality`, and everything in
+> [`CADENTIAE`](index.md#the-appendix)). Some, on the final, are **named** by
+> received theory (`formula`).
+
+- **`formula`** is _tradita_: the mode's cadence figures as the treatises give
+  them ([tuning.md](tuning.md#cadence-figures)), matched in solmization
+  relative to the final — `"la-sol"`, `"mi-re"`. It fires **only on the
+  finalis**, because the received catalogue holds only final figures.
+- **`signature`** is _inventa_: the tail's interval shape and where it lands,
+  keyed as `"2,0,-2 @0"` and mined from the corpus. It fires on **any** target,
+  which makes it the only thing that speaks about **medial** cadences at all.
+
+Measured over 27,969 cadences in the shipped corpus: 42.5% carry a formula,
+58.7% join the catalogue, 32.4% carry both, and 31.2% are keyed but fall below
+the catalogue's floor. Neither is derivable from the other — of the 101
+signatures that ever co-occur with a formula, 63 map to more than one, because
+the signature is mode-blind and the formula is mode-relative.
+
+### `finality` — how often this family closes
+
+`finality` is the share of **this family's** corpus occurrences that fall at a
+final close. It is a measurement, not a property of this particular cadence,
+and it cannot be read off the signature: of the 55 families that land **on**
+the final, 31 do not close, and their finality spans 0.054 to 1.000. So
+`arrival === 0` implies nothing about whether a close is final.
+
+It is `null` when the signature falls below the catalogue's floor — an
+uncatalogued close, not a close that never closes.
 
 ```ts
 interface Cadence {
@@ -633,13 +681,24 @@ interface Cadence {
   divisio: string; // the bar that ends the phrase ("::" = final cadence)
   target: "finalis" | "tenor" | "other";
   approach: "descending" | "ascending" | "unison";
-  formula: string | null; // matched figure id, e.g. "la-sol"; null if unmatched
+  formula: string | null; // tradita: matched figure id, e.g. "la-sol"; finalis only
   pcs: number[]; // observed pitch classes, resolution last
   steps: (number | null)[]; // diatonic steps from the target; [] with no mode
   confidence: number; // 0–1
   notes: [number, number, number][]; // [phrase, syllable, note] positions
+  signature: string | null; // inventa: the family key, "shape @arrival"
+  shape: number[]; // the tail's successive semitone intervals
+  arrival: number; // SIGNED semitones from the chant's own closing note
+  finality: number | null; // the family's measured finality; null below the floor
 }
 ```
+
+A one-note phrase is a cadence — a landing with no gesture — and keys with an
+empty shape (`" @0"`), which is why `signature` is that key rather than null.
+
+`arrival` is deliberately **not** octave-reduced. Folding it pooled a fifth
+above the final with a fourth below: of 3,499 phrase-ends that landed on `@-5`
+under the fold, 2,427 were really `+7`. Two opposite gestures under one key.
 
 ## Modulations
 
@@ -648,7 +707,7 @@ mode — the local, temporal counterpart to the imprint's global modal
 affinity. Each phrase is scored against all eight modes (the imprint's
 affinity math); a run of phrases that favours a foreign mode, by a margin,
 becomes one `Modulation` span. The margin is calibrated against Suñol's
-worked examples (_Christus resurgens_ modulates toward mode 3). It's
+worked examples (_Christus resurgens_ modulates toward mode 3). It is
 distribution-based: it finds where a passage leans, not a functional analysis.
 
 `kind` says what the span is evidence OF, which matters because the three are
@@ -734,9 +793,23 @@ The classifier applies Carroll's three melodic rules in priority order
 
 The first compound beat of an incise is always arsic. When every rule is inconclusive, the
 shape alternates from the previous group. Two conventional overrides
-precede the rules: the **salicus** (ascending three-note group with a
-middle ictus) is always arsic, and the **doubly-dotted clivis** is always
+precede the rules: the **salicus** is always arsic — the tension toward its
+summit is the arsic gesture — and the **doubly-dotted clivis** is always
 thetic, as a cadential figure.
+
+A salicus here is Cardine's: an ascent of at least three notes whose
+**next-to-last note is an oriscus** [biblio: cardine-semiology, ch. 16]. The
+oriscus is what makes one. An ascending group carrying only the editorial
+Solesmes ictus is a **scandicus** that was marked for rhythm — a distinction
+worth stating because conflating the two is, in Bevenot's word, a trap: over
+the sung corpus the ictus rule matches 2,795 groups of which 36 carry an
+oriscus, while the corpus holds 226 real salici.
+
+Cardine's correction also decides WHICH note is principal. The printed
+editions lengthen the oriscus itself; the manuscripts show the principal note
+is the one **immediately following** it — the summit — so tonus prolongs that
+note and takes the oriscus lightly. This is the one point where the rhythmic
+layer departs from Mocquereau and Suñol, and it does so deliberately.
 
 ### Rhythmic types
 
@@ -762,4 +835,5 @@ word-final → thetic) or accentual (spondaic vs. dactylic) cadences.
 
 Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
 `carroll-chironomy`, `carroll-applied`, `gajard-rhythm`, `mocquereau-nombre`,
-`cardine-semiology`, `desrocquettes-values`, `homan-cadence`, `murray-accentual`.
+`cardine-semiology`, `desrocquettes-values`, `sunol-textbook`, `homan-cadence`,
+`pierik-spirit`, `apel-chant`, `liber-usualis`, `bravura-smufl`.

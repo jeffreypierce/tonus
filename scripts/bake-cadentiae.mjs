@@ -34,6 +34,20 @@ const tally = JSON.parse(readFileSync(SRC, "utf8"));
 const books = [...new Set(tally.families.flatMap((f) => Object.keys(f.books ?? {})))]
   .sort()
   .join(", ");
+// The population is baked, so a tally that predates it must fail loudly rather
+// than emit `undefined` into a shipped constant.
+if (!tally.byMode || !tally.phraseEnds) {
+  throw new Error(
+    "cadfams-omni.json has no byMode/phraseEnds — re-run aggregate-cadentiae-2.py",
+  );
+}
+const byModeSum = Object.values(tally.byMode).reduce((s, n) => s + n, 0);
+if (byModeSum !== tally.phraseEnds) {
+  throw new Error(
+    `byMode sums to ${byModeSum} but phraseEnds is ${tally.phraseEnds} — the denominator is not the full tally`,
+  );
+}
+
 const rows = tally.families.filter((f) => f.n >= FLOOR);
 const kept = rows.reduce((s, r) => s + r.n, 0);
 
@@ -49,6 +63,9 @@ const entries = rows.map((f) => {
     shape,
     arrival,
     n: f.n,
+    // Against ALL phrase-ends, not the tabled 58.8% — a share taken against
+    // the subset that cleared the floor would flatter every family in it.
+    share: Number((f.n / tally.phraseEnds).toFixed(4)),
     finality: f.finality,
     modes: f.modes,
   };
@@ -59,7 +76,7 @@ const body = entries
     (e) =>
       `  ${JSON.stringify({
         key: e.key, shape: e.shape, arrival: e.arrival,
-        n: e.n, finality: e.finality, modes: e.modes,
+        n: e.n, share: e.share, finality: e.finality, modes: e.modes,
       })},`,
   )
   .join("\n");
@@ -106,16 +123,54 @@ export interface CadentiaFamilia {
   arrival: number;
   /** Corpus occurrences. */
   n: number;
+  /** \`n\` over ALL phrase-ends (CADENTIAE_POPULATION.ends) — not over the
+   *  tabled subset, which would flatter every family that cleared the floor. */
+  share: number;
   /** Share of occurrences at a final close — the measured finality index. */
   finality: number;
   /** Occurrences by mode digit ("1".."8"; "?" = mode-less chants). */
   modes: Record<string, number>;
 }
 
+/**
+ * The denominator behind every \`share\`: all phrase-ends in the sung corpus,
+ * and the same total per mode digit. Both are the FULL tally, never summed
+ * from the tabled families — a family's mode counts divided by the tabled
+ * subset would overstate every one of them.
+ *
+ * With \`byMode\`, a family's lift in a given mode is one division:
+ * \`(modes[m] / byMode[m]) / share\` — how much more (or less) that mode
+ * reaches for this close than the corpus at large. Baked as vocabulary, not
+ * as arithmetic: the ratio is the caller's to take.
+ */
+export const CADENTIAE_POPULATION: {
+  readonly ends: number;
+  readonly byMode: Readonly<Record<string, number>>;
+} = Object.freeze({
+  ends: ${tally.phraseEnds},
+  byMode: Object.freeze(${JSON.stringify(tally.byMode)}),
+});
+
 /** The cadence catalogue, most frequent family first. */
 export const CADENTIAE: CadentiaFamilia[] = [
 ${body}
 ];
+
+// THE index, built once and shared. Every consumer joins on the family key, so
+// each one that builds its own Map is a third copy of the same lookup — the
+// renderer had one, the score builder needed one, and any caller wanting a
+// family's statistics had to write a fourth.
+let _index: Map<string, CadentiaFamilia> | null = null;
+
+/**
+ * The catalogued family for a cadence signature, or undefined when the
+ * signature falls below the table's floor. Deferred: a caller who never asks
+ * does not pay for the Map.
+ */
+export function cadentiaFamilia(key: string): CadentiaFamilia | undefined {
+  if (!_index) _index = new Map(CADENTIAE.map((f) => [f.key, f]));
+  return _index.get(key);
+}
 `;
 
 writeFileSync(OUT, file);

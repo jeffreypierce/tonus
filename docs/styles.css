@@ -1,0 +1,378 @@
+/* ---------------------------------------------------------------------------
+   site/styles — Dieter Rams designs a liturgical book
+   ---------------------------------------------------------------------------
+   Blacks, greys, one liturgical red. The ink system the diagrams draw with,
+   stated once for the page around them: the same #111, the same rubrica, the
+   same six type steps. Nothing decorative that is not also informative.
+
+   Junicode carries content and Latin; IBM Plex Mono carries machine data —
+   ids, hz, cents, ratios; Jacquard is rationed to the wordmark alone.
+--------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Junicode";
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("fonts/JunicodeVFsubset.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/IBMPlexMono.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Jacquard";
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/Jacquard24.woff2") format("woff2");
+}
+
+:root {
+  --ink: #111;
+  --paper: #FDFDFC;
+  --rubrica: #9E2B25;
+  --label: #6E6A61;
+  --ghost: #BBB6AC;
+  --rule: #DDDAD3;
+
+  --serif: Junicode, "Crimson Pro", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --display: Jacquard, var(--serif);
+
+  /* The type scale the diagrams draw with. */
+  --micro: 9px;
+  --caption: 11px;
+  --step-label: 13.5px;
+  --body: 17px;
+  --title: 21px;
+  --display-size: 26px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: var(--body);
+  line-height: 1.5;
+}
+
+/* ── the head: wordmark, and the one place Jacquard appears ── */
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding: 22px 28px 14px;
+  border-bottom: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+.wordmark {
+  font-family: var(--display);
+  font-size: 30px;
+  letter-spacing: 0.04em;
+  color: var(--rubrica);
+  line-height: 1;
+}
+.version {
+  font-family: var(--mono);
+  font-size: var(--caption);
+  color: var(--label);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--rule);
+}
+.version:hover { color: var(--ink); }
+
+/* ── the view switch ── */
+/* The view switch is a control, not a tab — but a black slab for it is louder
+   than anything else on a page of hairlines and grey. It reads as a segmented
+   control instead: one hairline box, the current half lifted onto the paper
+   and named in the serif, the other recessed. The rubrica marks it, since
+   choosing a view is the one navigational act here. */
+.views {
+  display: flex; margin-left: auto;
+  border: 1px solid var(--rule);
+  background: rgba(17, 17, 17, 0.035);
+}
+.views button {
+  font-family: var(--serif); font-size: var(--step-label);
+  letter-spacing: 0.02em;
+  color: var(--label); background: none;
+  border: 0; border-bottom: 2px solid transparent;
+  padding: 7px 20px 5px; cursor: pointer;
+}
+.views button + button { border-left: 1px solid var(--rule); }
+.views button:hover { color: var(--ink); }
+.views button[aria-selected="true"] {
+  color: var(--ink); font-weight: 600;
+  background: var(--paper);
+  border-bottom-color: var(--rubrica);
+}
+.views button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: -2px; }
+.views button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: 1px; }
+
+/* ── the two-column body ── */
+
+main { padding: 24px 28px 80px; }
+
+/* Five columns, three and two: the subject gets the wider half because a
+   score and a chant list are wide things, and a wheel is not. */
+.page { display: flex; flex-direction: column; }
+.row {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 48px;
+  align-items: end;
+}
+.row-body { align-items: start; margin-top: 20px; }
+.cell { min-width: 0; }
+@media (max-width: 900px) {
+  .row { grid-template-columns: 1fr; gap: 8px; }
+  .row-body { gap: 32px; }
+}
+
+/* The three header rows align ACROSS the columns, so a reader's eye can run
+   level from one side to the other. */
+.row-title { min-height: 34px; }
+.row-detail { min-height: 24px; padding-top: 16px; }
+.row-inputs { min-height: 32px; padding-top: 14px; padding-bottom: 6px; }
+
+/* ── the subject: what this column is about ── */
+.row-title h1 { font-size: var(--title); font-weight: 500; margin: 0; }
+.row-detail .sub, .sub {
+  font-family: var(--mono); font-size: var(--caption);
+  color: var(--label); letter-spacing: 0.06em; margin: 0;
+}
+
+/* ── tabs: one strip, three uses ── */
+/* A tab is named and underlined, not boxed, and the strip carries the rule as
+   its own background — so the current tab reads as a DARKENING of a line that
+   runs the whole width, not as a stroke floating under one word.
+   
+   Set in Junicode. The details beneath are mono, and a tab in the same face
+   reads as more machine data rather than as a name you may choose; the serif
+   is also the house's main face and had been left carrying almost nothing. */
+.tabstrip {
+  display: flex; gap: 26px; flex-wrap: wrap;
+  background-image: linear-gradient(var(--rule), var(--rule));
+  background-size: 100% 2px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+}
+.tabstrip button {
+  font-family: var(--serif); font-size: var(--body);
+  font-weight: 400; letter-spacing: 0.005em;
+  color: var(--label); background: none;
+  border: 0; border-bottom: 2px solid transparent;
+  padding: 2px 0 8px; cursor: pointer;
+}
+.tabstrip button:hover { color: var(--ink); }
+.tabstrip button[aria-selected="true"] {
+  color: var(--ink); font-weight: 600;
+  border-bottom-color: var(--ink);
+}
+/* The office cascade sits inside a column, quieter than the panel tabs. */
+.tabstrip-quiet { gap: 22px; }
+.tabstrip-quiet button { font-size: var(--step-label); padding-bottom: 6px; }
+.tabstrip button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: -2px; }
+.tabpanel:focus-visible { outline: none; }
+
+/* ── the chant row: a list entry with its own notation ── */
+.chant-list { list-style: none; margin: 0; padding: 0; }
+.chant-row { border-bottom: 1px solid var(--rule); }
+.chant-row button {
+  display: grid;
+  grid-template-columns: minmax(0, 132px) 1fr auto;
+  align-items: center; gap: 14px;
+  width: 100%; text-align: left;
+  background: none; border: 0; padding: 10px 4px;
+  font: inherit; color: var(--ink); cursor: pointer;
+}
+.chant-row button:hover { background: rgba(17, 17, 17, 0.035); }
+.chant-row button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: -2px; }
+.chant-row[aria-selected="true"] button { background: rgba(17, 17, 17, 0.06); }
+/* The incipit is one long system, shown from its start and clipped: a few
+   notes of the real melody, which is how a chant is recognised. */
+.chant-row .incipit {
+  display: block; overflow: hidden;
+  height: 34px; mask-image: linear-gradient(to right, #000 78%, transparent);
+}
+.chant-row .incipit svg { height: 34px; width: auto; max-width: none; display: block; }
+.chant-row-name { display: block; font-size: var(--step-label); }
+.chant-row-meta {
+  display: block; font-family: var(--mono); font-size: var(--micro);
+  color: var(--label); letter-spacing: 0.06em; margin-top: 2px;
+}
+.chant-row-aside {
+  font-family: var(--mono); font-size: var(--caption);
+  color: var(--label); font-variant-numeric: tabular-nums;
+}
+
+.note {
+  font-size: var(--caption); color: var(--label);
+  max-width: 58ch; line-height: 1.5; margin: 10px 0 0;
+}
+/* The date as three sliders. Dragging the day walks the mark round the year
+   ring and the Sun through the zodiac — the page is a function of this date,
+   and a slider lets you watch that rather than infer it. */
+.dials { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.dial { display: inline-flex; align-items: center; gap: 7px; }
+.dial-name {
+  font-family: var(--mono); font-size: var(--micro);
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--label);
+}
+.dial-read {
+  font-family: var(--mono); font-size: var(--caption);
+  color: var(--ink); font-variant-numeric: tabular-nums;
+  min-width: 3.4ch;
+}
+.dial input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 84px; height: 14px; background: none; cursor: ew-resize;
+}
+.dial input[type="range"]::-webkit-slider-runnable-track {
+  height: 1px; background: var(--rule);
+}
+.dial input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ink); margin-top: -4px;
+}
+.dial input[type="range"]::-moz-range-track { height: 1px; background: var(--rule); }
+.dial input[type="range"]::-moz-range-thumb {
+  width: 9px; height: 9px; border: 0; border-radius: 50%; background: var(--ink);
+}
+.dial input[type="range"]:focus-visible { outline: 2px solid var(--rubrica); outline-offset: 3px; }
+
+/* ── panels ── */
+.panel { margin-bottom: 34px; }
+.panel > h2 {
+  font-family: var(--mono);
+  font-size: var(--micro);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--label);
+  font-weight: 400;
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+.panel svg { max-width: 100%; height: auto; display: block; }
+/* A wheel is a wheel: both wear the same frame, so both take the same room
+   whatever sits in the panel beneath them. Left to the grid, the one with two
+   tables under it stretches and the pair stop being comparable. */
+.panel svg.annulus, .panel svg.rota { width: 100%; max-width: 520px; aspect-ratio: 1; }
+
+
+/* ── the chant list ── */
+.feast {
+  font-family: var(--mono);
+  font-size: var(--micro);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--label);
+  margin: 18px 0 6px;
+}
+.chants { list-style: none; margin: 0; padding: 0; }
+.chants li {
+  border-bottom: 1px solid var(--rule);
+}
+.chants button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 9px 4px;
+  font: inherit;
+  font-size: var(--step-label);
+  color: var(--ink);
+  cursor: pointer;
+}
+.chants button:hover { background: rgba(17, 17, 17, 0.035); }
+.chants button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: -2px; }
+.chants li[aria-selected="true"] button { background: rgba(17, 17, 17, 0.06); }
+.chants .meta {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--micro);
+  color: var(--label);
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+.chants .preview { display: block; margin-top: 5px; }
+.chants .preview svg { max-height: 46px; width: auto; }
+
+/* ── the score ── */
+.score-head { margin-bottom: 4px; }
+.score-head h1 {
+  font-size: var(--title);
+  font-weight: 500;
+  margin: 0;
+}
+.score-head .sub {
+  font-family: var(--mono);
+  font-size: var(--caption);
+  color: var(--label);
+  letter-spacing: 0.06em;
+}
+/* No sideways scroll: the score is re-rendered at the column's width rather
+   than overflowing it (see scoreFigure's ResizeObserver). */
+.score { margin: 4px 0 8px; }
+.score svg { max-width: 100%; height: auto; display: block; }
+
+/* ── settings: the few the toy carries ── */
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: var(--caption);
+  color: var(--label);
+  padding: 0;
+}
+.settings label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.settings .set-name {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: var(--micro);
+}
+.settings select, .settings button {
+  font-family: var(--mono);
+  font-size: var(--caption);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.settings button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); }
+
+/* ── the tabula, shared by every panel ── */
+/* A wide table scrolls inside its own box; the page never does. */
+.tabpanel, .cell { overflow-x: auto; }
+table.tabula { border-collapse: collapse; width: 100%; font-size: var(--step-label); }
+table.tabula caption {
+  font-family: var(--mono); font-size: var(--micro); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--label); text-align: left; padding-bottom: 10px;
+}
+table.tabula th {
+  font-family: var(--mono); font-size: var(--micro); letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--label); text-align: left;
+  font-weight: 400; white-space: nowrap;
+  padding: 0 10px 6px 0; border-bottom: 1px solid var(--rule);
+}
+table.tabula td {
+  padding: 5px 10px 5px 0; border-bottom: 1px solid var(--rule); vertical-align: baseline;
+}
+table.tabula tr[tabindex] { cursor: pointer; }
+table.tabula tr[tabindex]:hover td { background: rgba(17, 17, 17, 0.035); }
+table.tabula tr.sel td { background: rgba(17, 17, 17, 0.06); }
+table.tabula .mono { font-family: var(--mono); font-size: var(--caption); }
+table.tabula .num { text-align: right; font-variant-numeric: tabular-nums; }
+table.tabula .gloss { color: var(--label); font-size: var(--caption); margin-left: 0.5em; }
+
+.ghost { color: var(--ghost); font-style: italic; }

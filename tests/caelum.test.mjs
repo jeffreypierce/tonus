@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import tonus from "../dist/index.js";
+import tonus, { SIGNS, SIGNA } from "../dist/index.js";
 
 const CHRISTMAS_2026 = new Date(2026, 11, 25, 12, 0, 0);
 
@@ -120,3 +120,38 @@ describe("caelum range", () => {
     assert.throws(() => tonus.caelum({ from: FROM }), /requires both from and to/);
   });
 });
+
+describe("caelum — the sign is geocentric", () => {
+  test("every body's sign agrees with its own geo.lon", () => {
+    // A sign placement says where a body APPEARS from here: "Mars in
+    // Sagittarius" has no meaning in any other frame. The planet builder read
+    // the heliocentric longitude while the Sun's and Moon's read the
+    // geocentric one, so a planet's reported sign contradicted its own
+    // position — Mercury in Aries while appearing in Taurus.
+    const cosmos = tonus.caelum();
+    assert.ok(cosmos.bodies.length > 0, "the sky has bodies");
+    // Earth is the exception, and rightly: seen from Earth it has no apparent
+    // longitude, so its own sign is heliocentric — where it stands, not where
+    // it appears.
+    for (const b of cosmos.bodies.filter((x) => x.name !== "Earth")) {
+      const sector = Math.floor((((b.geo.lon % 360) + 360) % 360) / 30) % 12;
+      assert.equal(b.zodiac, sector,
+        `${b.name}: zodiac ${b.zodiac} vs geo.lon ${b.geo.lon.toFixed(1)} (sector ${sector})`);
+      assert.equal(b.sign, SIGNS[sector], `${b.name}: sign follows the sector`);
+    }
+  });
+
+  test("every body carries the Latin beside the code", () => {
+    // The register rule: English keys carry machine codes, Latin keys carry
+    // Latin. A body already does this with name/nomen (Jupiter/Iuppiter); the
+    // sign was the one place the zodiac stayed English on both sides.
+    for (const b of tonus.caelum().bodies) {
+      assert.equal(typeof b.signum, "string", `${b.name} has a signum`);
+      assert.equal(SIGNA[b.zodiac], b.signum, `${b.name}: signum follows the sector`);
+    }
+    // Eight are already their own Latin nominative; four differ.
+    const differ = SIGNS.map((s, i) => [s, SIGNA[i]]).filter(([a, b]) => a !== b);
+    assert.deepEqual(differ, [["Scorpio", "Scorpius"], ["Capricorn", "Capricornus"]]);
+  });
+});
+

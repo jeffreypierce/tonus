@@ -47,10 +47,9 @@ propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 | `cot`  | Chants of the Church              | Solesmes, 1956     | 16     |
 | `nr`   | Nocturnale Romanum                | Sandhofe, 2002     | 470    |
 
-**2,887 chants in all** — and that number is a deliberate floor, not a ceiling.
-The books hold 9,015 between them; tonus ships only what the calendar actually
-calls for on some day of the year, so a chant with no day to be sung on is not
-here. See [The cut](#the-cut) below.
+**2,887 chants in all.** The books hold 9,015 between them; tonus ships only
+what the calendar calls for on some day of the year, so a chant with no day
+to be sung on is not here. See [The cut](#the-cut) below.
 
 `am`, `ams`, and `psm` are the monastic (Benedictine) books; the rest are
 Roman. Every Solesmes book here bears the rhythmic markings the
@@ -308,9 +307,7 @@ CANTUS's manuscript index, a terminus ante quem, so the filter answers "what
 is attested by then," never "what existed then" — and a chant with no dated
 witness is excluded rather than assumed old, because silence is not evidence
 of age. CANTUS dates only to the century, so a year admits the centuries
-that have CLOSED before it (`before: 1098` → through the 900s). There is one
-spelling: a `century` option existed briefly and was removed, being
-`before: N * 100` in different clothes.
+that have CLOSED before it (`before: 1098` → through the 900s).
 
 The view is the analogue of
 [`festum({ before })`](calendar.md#the-day-as-of-a-year--before) over the
@@ -477,6 +474,19 @@ interface OfficiumQuery extends CantusQuery {
 }
 ```
 
+The eight hours ship as [`HORAE`](index.md#the-appendix), Matins first — read
+them from there rather than transcribing them, and an unrecognised `hora`
+throws rather than matching nothing, so a misspelling cannot read as an empty
+hour.
+
+```js
+import { HORAE } from "tonus";
+// ["matutinum", "laudes", "prima", "tertia", "sexta", "nona",
+//  "vesperae", "completorium"]
+
+tonus.officium({ hora: "vespers" });  // throws: unknown hora "vespers"
+```
+
 ### One cursus, the Benedictine
 
 tonus assembles a single office — the monastic cursus — with no option to
@@ -543,10 +553,9 @@ interface PsalmusQuery {
 
 ### The Solesmes restoration
 
-The melodies in tonus are not medieval manuscripts. They are the Solesmes
-editions, the scholarly restoration produced from the mid-19th century
-onward and matured into the books listed under
-[The corpora](#the-corpora). The 1961 Graduale, the last complete edition
+The melodies in tonus are the Solesmes editions: the scholarly restoration
+produced from the mid-19th century onward and matured into the books listed
+under [The corpora](#the-corpora). The 1961 Graduale, the last complete edition
 before the post-conciliar reforms, covers the full Tridentine cycle the
 calendar in [calendar.md](calendar.md) expects.
 
@@ -591,7 +600,7 @@ as the books do:
   every Mass: Kyrie, Gloria, Credo, Sanctus, Agnus Dei, Ite or Benedicamus.
   Their melodies live in the **Kyriale**, eighteen numbered mass-settings
   plus ad libitum chants, each conventionally assigned to a class of day
-  (Lux et origo for Paschaltide, Orbis factor for ordinary Sundays, the
+  (Lux et origo for Paschaltide, Orbis factor for Sundays throughout the year, the
   Missa de Angelis everywhere). Feast-aware mass selection follows those
   assignments.
 
@@ -603,8 +612,7 @@ at dawn, the little hours of Prima, Tertia, Sexta, and Nona, Vesperae at
 evening, and Completorium before sleep. The backbone of every hour is
 psalmody: psalms and canticles framed by antiphons, with hymns and
 responsories proper to the hour and the day. The eight-hour cursus is a
-medieval inheritance intact in the Tridentine books; a 13th-century
-cantor would recognize it immediately.
+medieval inheritance intact in the Tridentine books.
 
 ### Psalm tones
 
@@ -627,6 +635,5 @@ finalis per mode, are on the tuning page
 
 Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
 `gregobase` (the ten Solesmes books), `nocturnale-romanum`, `divinum-officium`,
-`graduale-toni-communes`, `gregorio-gabc`, `versus-psalmorum`, `apel-chant`,
-`hiley-plainchant`, `treitler-voice-pen`, `saulnier-guide`, `pierik-spirit`,
-`burkard-manual`, `kelly-capturing`.
+`graduale-toni-communes`, `bloomfield-compline`, `gregorio-gabc`, `apel-chant`,
+`hiley-plainchant`, `saulnier-guide`.
