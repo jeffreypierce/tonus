@@ -133,7 +133,7 @@ function skeleton(steps: Array<number | null>): Array<number | null> {
  *
  * That is expected, not broken — Apel tabulates a chant as a SEQUENCE of
  * formulae across its whole respond, and a formula may span several divisiones
- * or share one with its neighbour. Matching at chant scale is a different
+ * or share one with its neighbor. Matching at chant scale is a different
  * algorithm (a segmentation over the whole melody, not a per-phrase fit) and
  * wants its own design pass; the per-phrase fit is honest about what it is,
  * and reports `formula: null` rather than a forced answer.

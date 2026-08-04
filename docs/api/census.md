@@ -20,7 +20,7 @@ is, where it is unusual, and what it is near.
 tonus.census({ id: "gregobase:1210" });
 ```
 
-Everything comes back in one call — profile, balance, neighbours:
+Everything comes back in one call — profile, balance, neighbors:
 
 ```js
 {
@@ -51,9 +51,9 @@ Everything comes back in one call — profile, balance, neighbours:
 ```ts
 interface CensusQuery {
   id: string; // the chant to census
-  k?: number; // how many neighbours, default 8; 0 returns none
+  k?: number; // how many neighbors, default 8; 0 returns none
   by?: CensusBy; // which field group similarity is measured on, default "all"
-  before?: number; // restrict neighbours to chants attested by this year
+  before?: number; // restrict neighbors to chants attested by this year
 }
 ```
 
@@ -124,7 +124,7 @@ The rule, in three lines:
 3. Ties break to the lower id, so the same question always has the same answer.
 
 Cosine on the whole vector is dominated by the 121-float `melodic` block and by
-sheer magnitude, so a long Tract would neighbour other long chants for being
+sheer magnitude, so a long Tract would neighbor other long chants for being
 long. Per-group cosine asks about **shape within each dimension**.
 
 [`CENSUS_GROUPS`](index.md#the-appendix) gives you the group names and their
@@ -227,7 +227,7 @@ vocabulary is its own. One chant can be conventional in one dimension and
 distinctive in another, which is the reason the groups are kept apart.
 
 Typicality is always measured against the **whole shipped corpus**, never the
-filtered pool: `before` restricts who may be a neighbour, it does not move
+filtered pool: `before` restricts who may be a neighbor, it does not move
 the mean.
 
 ## Balance — distance and deviance
@@ -280,7 +280,7 @@ returns all 2,186 others).
 tonus.census({ id: "gregobase:1210", before: 1100 });
 ```
 
-Restricts neighbours to chants a manuscript of the 11th century or earlier
+Restricts neighbors to chants a manuscript of the 11th century or earlier
 already holds — 1,790 of the 2,186 candidates. This is the same rule as
 [`cantus({ before })`](chant.md#the-repertoire-as-of-a-date--the-era-view),
 through the same admissibility door: **evidence, not existence**, so a chant
@@ -292,7 +292,7 @@ The seed chant itself is never filtered — you asked about it by name.
 
 It is not a similarity search over Gregorian chant at large. The blocks
 describe the chants tonus ships, which is the assignment-driven corpus: what
-some day of the calendar calls for. A melody's neighbours are its neighbours
+some day of the calendar calls for. A melody's neighbors are its neighbors
 _within that repertoire_.
 
 It is also not the whole census. The corpus pipeline builds year-shaped

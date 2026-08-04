@@ -34,7 +34,7 @@
 // the observable Le Guennant rhythmic types (IV–VIII; classifyRhythmicType).
 // Not yet: Carroll's textual rules (word-accent → arsic, word-final → thetic —
 // they need a Latin accent model).
-import type { ArsisThesis, CompoundBeat, RhythmicType, Score, ParsedNote, Note, ParseResult, Phrase, Syllable } from "./types.js";
+import type { ArsisThesis, CompoundBeat, RhythmicType, ScoreIR, ParsedNote, Note, ParseResult, Phrase, Syllable } from "./types.js";
 import type { Scale } from "../temper/scale.js";
 import { toPitch } from "../temper/pitch.js";
 import { toStep } from "../temper/step.js";
@@ -287,9 +287,9 @@ function applyCompoundBeats(phrases: Phrase[]): void {
 
 export function buildIR(
   parsed: ParseResult,
-  chant: Score["chant"],
+  chant: ScoreIR["chant"],
   scale: Scale,
-): Score {
+): ScoreIR {
   const phrases: Phrase[] = [];
   let currentPhrase: Phrase = { syllables: [], noteCount: 0, syllableCount: 0, beats: [], rhythmicType: null };
   let currentNotes: Note[] = [];

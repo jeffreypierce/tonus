@@ -303,6 +303,11 @@ function feastsForDate(date: Date): Feast[] {
   return entries.map((e) => calEntryToFeast(e, season, d));
 }
 
+const FEAST_QUERY_KEYS = new Set([
+  "date", "from", "to", "nomen", "season", "grade", "marian", "apostolic",
+  "before",
+]);
+
 /**
  * Calendar lookup (`tonus.festum`). Returns matching feasts sorted
  * `day asc, rank desc` — for a date, the primary feast plus concurrent
@@ -311,11 +316,6 @@ function feastsForDate(date: Date): Feast[] {
  * the liturgical year containing that epoch. Dates are UTC-canonical:
  * build them from ISO strings or `Date.UTC`.
  */
-const FEAST_QUERY_KEYS = new Set([
-  "date", "from", "to", "nomen", "season", "grade", "marian", "apostolic",
-  "before",
-]);
-
 export function getFeast(query?: FeastQuery): Feast[] {
   // A bare Date is the natural guess, and it has no own enumerable keys — so
   // without this it would read as "no query" and quietly return the default

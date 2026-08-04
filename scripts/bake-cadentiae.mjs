@@ -8,6 +8,7 @@
 //
 // Run from repo root:  node scripts/bake-cadentiae.mjs
 import { readFileSync, writeFileSync } from "node:fs";
+import { checkFingerprint } from "./engine-fingerprint.mjs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -34,6 +35,16 @@ const tally = JSON.parse(readFileSync(SRC, "utf8"));
 const books = [...new Set(tally.families.flatMap((f) => Object.keys(f.books ?? {})))]
   .sort()
   .join(", ");
+// Has the engine moved since this was mined? A WARNING, not a throw: the data
+// may well still be right, and refusing to bake would block work over a doc
+// comment in parse.ts. But it must be said out loud, because the silent version
+// of this is exactly how the shipped table went stale under the syllable
+// splitter — 46 event keys moved and nothing failed.
+const drift = checkFingerprint(tally.engineFingerprint, "cadfams-omni.json");
+if (drift) {
+  console.warn(`\n  ⚠ ${drift}\n`);
+}
+
 // The population is baked, so a tally that predates it must fail loudly rather
 // than emit `undefined` into a shipped constant.
 if (!tally.byMode || !tally.phraseEnds) {

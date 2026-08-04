@@ -4,7 +4,7 @@
 // Two calendars, concentric, and the argument is their relationship: the civil
 // year on the outside (months, weeks ticked), the liturgical year within it
 // (seasons as a banded ring), and the movable feasts riding an orbit between
-// them. Septuagesima and Advent are near neighbours on a ring in a way no
+// them. Septuagesima and Advent are near neighbors on a ring in a way no
 // timeline shows, and Easter's wandering drags a third of the year with it.
 //
 // COMPUTED, NOT TRANSCRIBED. The lab round this descends from carried fifteen
@@ -27,7 +27,7 @@
 import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_SANS, HOUSE_MONO, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import {
-  pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighbourMidpoints,
+  pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighborMidpoints,
 } from "./polar.js";
 import { FRAME, wheel, outerRing } from "./frame.js";
 
@@ -182,7 +182,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     // A season may still open before the civil year does — Nativitas starts in
     // December and runs into January — so its arc legitimately crosses the wrap.
     if (a1 < a0) a1 += 360;
-    // A hair of air between neighbours, so the band reads as segments.
+    // A hair of air between neighbors, so the band reads as segments.
     const gap = 0.6;
     root.appendChild(el("path", {
       d: arcPath(a0 + gap, a1 - gap, R_SEASON),

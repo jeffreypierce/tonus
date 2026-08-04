@@ -9,7 +9,7 @@
 //
 // DISTANCE IS COSINE PER FIELD GROUP, never over the flat 225. Cosine
 // on the whole vector is dominated by the 121-float melodic block and by sheer
-// magnitude, so a long Tract would neighbour other long chants for being long.
+// magnitude, so a long Tract would neighbor other long chants for being long.
 // Per-group cosine asks about SHAPE within each dimension, and `all` is the
 // equal-weight mean of those — every dimension one vote, no tunable weights.
 
@@ -25,7 +25,7 @@ import type {
   CensusBy,
   CensusGroup,
   CensusGroupProfile,
-  CensusNeighbour,
+  CensusNeighbor,
   CensusQuery,
 } from "./types.js";
 
@@ -92,7 +92,7 @@ function cosine(a: ArrayLike<number>, b: ArrayLike<number>): number {
 
 // ── The corpus mean, per group, computed once ───────────────────────────────
 // Typicality is measured against the whole SHIPPED corpus, not against the
-// filtered pool: `before` restricts who may be a neighbour, it does not
+// filtered pool: `before` restricts who may be a neighbor, it does not
 // move the mean.
 let _means: Record<CensusGroup, Float32Array> | null = null;
 function means(): Record<CensusGroup, Float32Array> {
@@ -185,11 +185,11 @@ export function getCensus(query: CensusQuery): Census {
   );
 
   // ── neighbors ────────────────────────────────────────────────────────────
-  const neighbors: CensusNeighbour[] = [];
+  const neighbors: CensusNeighbor[] = [];
   if (k > 0) {
     const groupsToUse = by === "all" ? GROUP_NAMES : [by as CensusGroup];
     const selfSlices = groupsToUse.map((g) => slice(self, g));
-    const scored: CensusNeighbour[] = [];
+    const scored: CensusNeighbor[] = [];
     for (let i = 0; i < CENSUS_ORDER.length; i++) {
       if (i === self) continue;
       const otherId = CENSUS_ORDER[i]!;

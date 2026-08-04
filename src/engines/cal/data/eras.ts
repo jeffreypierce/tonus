@@ -56,6 +56,16 @@ export interface FeastEra {
 /**
  * Feast id → when it entered the universal calendar. Ids are the calendar's own
  * (`MM-DD` for the sanctorale, season-relative for the temporale).
+ *
+ * INTERNAL, ruled 2026-08-04. This table does not join the public appendix and
+ * is not re-exported from the index, though it is the last table that could
+ * plausibly have. The appendix carries measurements and vocabularies; these are
+ * forty-three liturgical-historical CLAIMS, and the distinction between `year`
+ * (universal Roman observance) and `local` is a judgement about what a caller
+ * is modelling rather than a fact about the calendar — see the banner above.
+ * Publishing it would invite callers to cite dates tonus is not in a position
+ * to defend. The behaviour it drives, `festum({ before })`, is public and
+ * documented; the reckoning behind it stays here.
  */
 export const FEAST_ERAS: Readonly<Record<string, FeastEra>> = Object.freeze({
   // ── Devotional feasts of the Lord and of Our Lady ──────────────────────────

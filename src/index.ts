@@ -49,7 +49,7 @@ import type {
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
 } from "./engines/planet/types.js";
 import type {
-  Census, CensusQuery, CensusBy, CensusGroup, CensusGroupProfile, CensusNeighbour,
+  Census, CensusQuery, CensusBy, CensusGroup, CensusGroupProfile, CensusNeighbor,
 } from "./engines/census/types.js";
 
 const tonus = {
@@ -120,7 +120,7 @@ export type {
   PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Corpus, GenusCount, ModeCount, SharedCount,
   CorpusLedger, CorpusFullCount, CorpusQuery,
-  Census, CensusQuery, CensusBy, CensusGroup, CensusGroupProfile, CensusNeighbour,
+  Census, CensusQuery, CensusBy, CensusGroup, CensusGroupProfile, CensusNeighbor,
   Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
   Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,

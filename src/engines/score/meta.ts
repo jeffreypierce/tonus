@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // engines/score/meta — chant identity resolution from parsed GABC
 // ---------------------------------------------------------------------------
-import type { ChantType, Score } from "./types.js";
+import type { ChantType, ScoreIR } from "./types.js";
 import type { ModeData } from "../temper/data/modes.js";
 import { MODES } from "../temper/modes.js";
 import { inferChantType, inferMode } from "./infer.js";
@@ -24,7 +24,7 @@ export interface ChantMetaOptions {
   office?: ChantType;
 }
 
-export function computeMeta(ir: Score, options: ChantMetaOptions = {}): ChantMeta {
+export function computeMeta(ir: ScoreIR, options: ChantMetaOptions = {}): ChantMeta {
   const modeNum = options.mode ?? inferMode(ir);
   const modeData: ModeData | undefined = modeNum !== undefined ? MODES.get(modeNum) : undefined;
   const office = options.office ?? inferChantType(ir) ?? null;
@@ -43,7 +43,7 @@ export function computeMeta(ir: Score, options: ChantMetaOptions = {}): ChantMet
   };
 }
 
-function collectIncipit(ir: Score, maxSyllables = 6): string | null {
+function collectIncipit(ir: ScoreIR, maxSyllables = 6): string | null {
   const parts: string[] = [];
   outer: for (const phrase of ir.phrases) {
     for (const syl of phrase.syllables) {

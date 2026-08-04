@@ -23,12 +23,12 @@ export type CensusBy = CensusGroup | "all";
 export interface CensusQuery {
   /** The chant to census. Exactly one block per id (blocks are deduped by id). */
   id: string;
-  /** How many neighbours to return. Default 8; 0 returns none. */
+  /** How many neighbors to return. Default 8; 0 returns none. */
   k?: number;
   /** Which field group similarity is measured on. Default "all". */
   by?: CensusBy;
   /**
-   * Restrict neighbours to chants attested by this year. Unattested chants are
+   * Restrict neighbors to chants attested by this year. Unattested chants are
    * EXCLUDED, not assumed old — the same rule as `cantus({ before })`.
    */
   before?: number;
@@ -45,7 +45,7 @@ export interface CensusGroupProfile {
   typicality: number;
 }
 
-export interface CensusNeighbour {
+export interface CensusNeighbor {
   id: string;
   /** Cosine similarity on the chosen group(s), 0–1. Higher is nearer. */
   similarity: number;
@@ -69,7 +69,7 @@ export interface Census {
     deviantGroups: readonly CensusGroup[];
   };
   /** Nearest chants on the chosen group, nearest first. Ties → lower id. */
-  neighbors: readonly CensusNeighbour[];
-  /** Which group the neighbour sweep measured on. */
+  neighbors: readonly CensusNeighbor[];
+  /** Which group the neighbor sweep measured on. */
   by: CensusBy;
 }

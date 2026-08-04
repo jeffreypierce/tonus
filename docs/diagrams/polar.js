@@ -92,10 +92,10 @@ export function wedgePath(a0, a1, rInner, rOuter) {
     `L ${fmt(xi1)} ${fmt(yi1)} A ${rInner} ${rInner} 0 ${large} 0 ${fmt(xi0)} ${fmt(yi0)} Z`;
 }
 
-/** Midpoints between neighbours on a closed ring — where one mark's wedge ends
+/** Midpoints between neighbors on a closed ring — where one mark's wedge ends
  * and the next begins. `values` must be sorted; `period` is the ring's full
  * turn in the same units (365 days, 360 degrees, 12 tones). */
-export function neighbourMidpoints(values, period) {
+export function neighborMidpoints(values, period) {
   const n = values.length;
   return values.map((v, i) => {
     const prev = values[(i - 1 + n) % n];

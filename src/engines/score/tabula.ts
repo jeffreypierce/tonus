@@ -1,4 +1,4 @@
-import type { Score, Note, Neume, LyricRun } from "./types.js";
+import type { ScoreIR, Note, Neume, LyricRun } from "./types.js";
 import { MODES } from "../temper/modes.js";
 import {
   buildPhrasing,
@@ -15,7 +15,7 @@ export type NoteRole = "finalis" | "tenor" | "other" | null;
 
 // ChantTabulaRow is the DENORMALIZED projection of one note: everything an
 // emitter or analysis pass needs in a flat row, so consumers never re-walk the
-// phrase tree. The normalized source of truth is still Score.phrases (the
+// phrase tree. The normalized source of truth is still ScoreIR.phrases (the
 // composed Note + syllable/phrase structure); this is its flattening, plus
 // context-derived conveniences (staffPosition, solfege, role, the sign flags).
 // New fields belong here when a consumer wants them per-row without grouping —
@@ -110,7 +110,7 @@ export interface TabulaOptions {
 }
 
 export function computeTabula(
-  ir: Score,
+  ir: ScoreIR,
   options: TabulaOptions = {},
 ): ChantTabulaRow[] {
   const modeNum = options.mode ?? inferMode(ir);

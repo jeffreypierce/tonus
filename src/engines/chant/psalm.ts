@@ -63,14 +63,14 @@ function verseToChant(
   };
 }
 
-/**
- * Psalm and canticle retrieval (`tonus.psalmus`) from the Psalterium,
- * intoned to the psalm tones (modes 1-8 plus tonus peregrinus) as GABC.
- */
 const PSALMUS_QUERY_KEYS = new Set([
   "psalm", "verse", "mode", "differentia", "intonatio", "inDirectum", "solemn",
 ]);
 
+/**
+ * Psalm and canticle retrieval (`tonus.psalmus`) from the Psalterium,
+ * intoned to the psalm tones (modes 1-8 plus tonus peregrinus) as GABC.
+ */
 export function getPsalm(query?: PsalmusQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
 

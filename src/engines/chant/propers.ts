@@ -84,17 +84,17 @@ function toArray<T>(v: T | T[] | undefined): T[] | undefined {
   return Array.isArray(v) ? v : [v];
 }
 
-/**
- * Mass proper retrieval (`tonus.proprium`): Introitus, Graduale,
- * Alleluia/Tractus, Offertorium, Communio. A feast narrows the result;
- * feasts without a dedicated proper fall back to the Commune Sanctorum.
- */
 const PROPRIUM_QUERY_KEYS = new Set([
   "feast", "id", "gabc", "incipit", "mode", "office", "source",
   "before", "cursus",
   "limit", "offset", "sort",
 ]);
 
+/**
+ * Mass proper retrieval (`tonus.proprium`): Introitus, Graduale,
+ * Alleluia/Tractus, Offertorium, Communio. A feast narrows the result;
+ * feasts without a dedicated proper fall back to the Commune Sanctorum.
+ */
 export function getPropers(query?: PropriumQuery): Chant[] {
   if (!query || Object.keys(query).length === 0) return [];
   // The reconciled query contract (as festum/cantus): an unknown key is a

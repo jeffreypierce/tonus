@@ -277,7 +277,18 @@ export interface Phrase {
   rhythmicType: RhythmicType;
 }
 
-export interface Score {
+/**
+ * What `buildIR` returns: the parsed, phrased, rhythm-classified melody before
+ * any analysis rides on it. Every downstream pass (meta, infer, tabula) takes
+ * one of these and names its parameter `ir`.
+ *
+ * This was called `Score` and shadowed the real one in api.ts — same name, a
+ * strict subset of its fields, and a `chant` narrowed to three strings. Nothing
+ * distinguished them at an import site, so the wrong one could be imported and
+ * still typecheck against the fields it happened to share. The public Score is
+ * the nine-field record in api.ts; this is its input.
+ */
+export interface ScoreIR {
   chant: { incipit: string; mode: string | null; office: string };
   phrases: Phrase[];
   errors: ParseError[];

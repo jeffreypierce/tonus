@@ -183,7 +183,7 @@ function beatsToPts(anchors: { x: number; idx: number; shape: "arsic" | "thetic"
 /** The chiron-12 wave engine: merge, breathe, chain, loop, settle. */
 function waveEngine(ptsIn: WavePt[], last: number, yM: number, k: number,
   vat: (x: number) => number, vmax: number): string {
-  // Close thetic neighbours merge into one broader trough (never across a div).
+  // Close thetic neighbors merge into one broader trough (never across a div).
   const pts: WavePt[] = [];
   for (const p of ptsIn) {
     const prev = pts[pts.length - 1];
@@ -197,7 +197,7 @@ function waveEngine(ptsIn: WavePt[], last: number, yM: number, k: number,
       pts.push({ ...p, labs: [...p.labs] });
     }
   }
-  // Tight opposite-direction neighbours both relax.
+  // Tight opposite-direction neighbors both relax.
   for (let i = 0; i + 1 < pts.length; i++) {
     if (pts[i + 1]!.x - pts[i]!.x < 18 * k && pts[i]!.up !== pts[i + 1]!.up) {
       pts[i]!.amp *= 0.8;

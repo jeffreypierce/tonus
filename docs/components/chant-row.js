@@ -2,12 +2,12 @@
 // docs/components/chant-row — a chant, listed
 // ---------------------------------------------------------------------------
 // The row that appears wherever chants are offered: the day's music in
-// Calendarium, a chant's census neighbours in Canticum. Its incipit is drawn
+// Calendarium, a chant's census neighbors in Canticum. Its incipit is drawn
 // as real notation rather than named — a few notes of the actual melody, which
 // is how a chant is recognised.
 //
 // The render is the library's, at a small staff: notatio then inscriptio, the
-// same call the full score makes. Cached per id, because a list of neighbours
+// same call the full score makes. Cached per id, because a list of neighbors
 // re-renders whenever anything else on the page moves and the notation for a
 // given chant never changes.
 

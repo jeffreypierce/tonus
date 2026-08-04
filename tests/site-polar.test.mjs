@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighbourMidpoints,
+  pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighborMidpoints,
   eclipticAt, eclipticRotation,
 } from "../docs/diagrams/polar.js";
 
@@ -62,15 +62,15 @@ describe("docs/polar — the ring geometry", () => {
     assert.equal(isLowerHalf(340), false, "ADV's midpoint");
   });
 
-  test("neighbour midpoints close the ring across the wrap", () => {
+  test("neighbor midpoints close the ring across the wrap", () => {
     // Three marks at 10, 100, 300 on a 360 ring.
-    const spans = neighbourMidpoints([10, 100, 300], 360);
+    const spans = neighborMidpoints([10, 100, 300], 360);
     assert.equal(spans.length, 3);
     // The first mark's wedge starts BEFORE zero — it borrows from the last.
     assert.ok(spans[0][0] < 0, "the first wedge reaches back across the wrap");
-    assert.equal(spans[0][1], 55, "…and ends midway to its neighbour");
+    assert.equal(spans[0][1], 55, "…and ends midway to its neighbor");
     // The last mark's wedge closes onto the first across the wrap: its forward
-    // neighbour is 10, a full turn on — (300 + 10 + 360) / 2.
+    // neighbor is 10, a full turn on — (300 + 10 + 360) / 2.
     assert.equal(spans[2][1], 335, "the last wedge closes across the wrap");
     // The ring is closed: the last wedge's end and the first's start are the
     // same point, one turn apart.

@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // engines/score/infer — mode and chant type inference from parsed GABC
 // ---------------------------------------------------------------------------
-import type { ChantType, Score, OrdinaryCode, OfficeCode } from "./types.js";
+import type { ChantType, ScoreIR, OrdinaryCode, OfficeCode } from "./types.js";
 import { OFFICIA } from "../chant/types.js";
 import { MODES } from "../temper/modes.js";
 
@@ -23,7 +23,7 @@ const ORDINARY_INCIPITS: Array<[RegExp, OrdinaryCode]> = [
 
 const OFFICE_CODES = new Set(Object.keys(OFFICIA));
 
-export function inferChantType(ir: Score): ChantType | undefined {
+export function inferChantType(ir: ScoreIR): ChantType | undefined {
   const officePart = ir.chant.office?.toLowerCase().trim();
   if (officePart && OFFICE_CODES.has(officePart)) return officePart as OfficeCode;
 
@@ -36,7 +36,7 @@ export function inferChantType(ir: Score): ChantType | undefined {
   return undefined;
 }
 
-export function inferMode(ir: Score): number | undefined {
+export function inferMode(ir: ScoreIR): number | undefined {
   const headerMode = parseInt(ir.chant.mode ?? "", 10);
   if (headerMode >= 1 && headerMode <= 8) return headerMode;
 
@@ -78,7 +78,7 @@ export function inferMode(ir: Score): number | undefined {
   return (authentic[0] ?? plagal[0])!;
 }
 
-function collectIncipit(ir: Score, maxSyllables: number): string {
+function collectIncipit(ir: ScoreIR, maxSyllables: number): string {
   const parts: string[] = [];
   outer: for (const phrase of ir.phrases) {
     for (const syl of phrase.syllables) {

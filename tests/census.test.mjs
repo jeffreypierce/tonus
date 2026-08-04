@@ -62,7 +62,7 @@ describe("census — the blocks address the right chants", () => {
   test("a block's own numbers survive a live re-parse — the anti-shift anchor", () => {
     // The test that earns its keep: everything else here is self-consistent
     // under a block-index shift: if census read block i+1 for every chant, the
-    // seed's self-similarity would still be 1 and the neighbour ordering would
+    // seed's self-similarity would still be 1 and the neighbor ordering would
     // still be internally coherent. Verified by mutation — shifting the index
     // by one left all other assertions passing.
     //
@@ -92,12 +92,12 @@ describe("census — the blocks address the right chants", () => {
   test("a chant is nearer to itself than to anything else", () => {
     // The sharpest available check that block i really belongs to CENSUS_ORDER[i]:
     // self-similarity is 1 by construction, so if the index were shifted, some
-    // OTHER chant would tie or beat the seed's true neighbours at 1.0 across
+    // OTHER chant would tie or beat the seed's true neighbors at 1.0 across
     // every group at once. Sampled, because it is O(n) per chant.
     for (const id of [SEED, "gregobase:1", CENSUS_ORDER.at(-1)]) {
       const near = census({ id, k: 1 }).neighbors[0];
       assert.ok(near.similarity <= 1, "similarity is bounded by 1");
-      assert.notEqual(near.id, id, "a chant is not its own neighbour");
+      assert.notEqual(near.id, id, "a chant is not its own neighbor");
     }
   });
 
@@ -188,12 +188,12 @@ describe("census — the era view", () => {
 
   test("`before` EXCLUDES the unattested — silence is not evidence of age", () => {
     // The rule the whole era view rests on: an undated chant is left out under
-    // any cutoff rather than assumed old. Every neighbour under a view must
+    // any cutoff rather than assumed old. Every neighbor under a view must
     // itself be admissible under that view via the shared door.
     const viewed = census({ id: SEED, k: 200, before: 1100 }).neighbors;
     for (const n of viewed) {
       const [c] = cantus({ id: n.id, before: 1100 });
-      assert.ok(c, `${n.id} is a census neighbour under before:1100 but cantus excludes it`);
+      assert.ok(c, `${n.id} is a census neighbor under before:1100 but cantus excludes it`);
     }
   });
 });
