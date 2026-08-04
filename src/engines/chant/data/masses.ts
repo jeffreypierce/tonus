@@ -2,7 +2,7 @@
 //
 // WHICH mass a day sings is decided by the Kyriale's own printed rubric, one
 // category per mass, carried here as `rubric` and quoted verbatim in `heading`
-// [biblio: liber-usualis-1961, Kyriale]. The book classifies by RANK — "For
+// [biblio: liber-usualis, Kyriale]. The book classifies by RANK — "For
 // feasts of the I class", "For ferias throughout the Year" — not by subject, and
 // where a category holds several masses it numbers them (II class 1–5), which is
 // the book's own invitation to choose among them.
@@ -40,7 +40,7 @@ export type MassRubric =
 
 // "This Ordinary is NOT meant to be a matter of hard and fast rule: chants from
 // one Mass may be used together with those from others, the Ferial Masses
-// excepted." [liber-usualis-1961, Kyriale] — so slots may mix freely EXCEPT
+// excepted." [liber-usualis, Kyriale] — so slots may mix freely EXCEPT
 // under these two rubrics, whose masses are sung whole.
 export const WHOLE_MASS_RUBRICS: ReadonlySet<MassRubric> = new Set<MassRubric>([
   "feria",

@@ -648,7 +648,7 @@ mode — the local, temporal counterpart to the imprint's global modal
 affinity. Each phrase is scored against all eight modes (the imprint's
 affinity math); a run of phrases that favours a foreign mode, by a margin,
 becomes one `Modulation` span. The margin is calibrated against Suñol's
-worked examples (_Christus resurgens_ modulates toward mode 3). It's
+worked examples (_Christus resurgens_ modulates toward mode 3). It is
 distribution-based: it finds where a passage leans, not a functional analysis.
 
 `kind` says what the span is evidence OF, which matters because the three are
@@ -762,4 +762,5 @@ word-final → thetic) or accentual (spondaic vs. dactylic) cadences.
 
 Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
 `carroll-chironomy`, `carroll-applied`, `gajard-rhythm`, `mocquereau-nombre`,
-`cardine-semiology`, `desrocquettes-values`, `homan-cadence`, `murray-accentual`.
+`cardine-semiology`, `desrocquettes-values`, `sunol-textbook`, `homan-cadence`,
+`pierik-spirit`, `apel-chant`, `liber-usualis`, `bravura-smufl`.

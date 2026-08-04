@@ -547,7 +547,6 @@ tonus.temperamentum({ scale: sclFileString }); // name taken from the file
 ## Sources
 
 Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
-`boethius-institutione`, `ptolemy-harmonics`, `guidonian-gamut`,
-`atkinson-nexus`, `reisenweaver-guido`, `schulter-harmony`, `rockstro-grove`,
-`powers-wiering-mode`, `niedermeyer-ortigue`, `bragers-treatise`,
-`sunol-textbook`, `liber-usualis`, `scala-format`, `wikipedia-tuning`.
+`boethius-institutione`, `ptolemy-harmonics`, `schulter-harmony`,
+`rockstro-grove`, `niedermeyer-ortigue`, `bragers-treatise`,
+`sunol-textbook`, `saulnier-modes`, `liber-usualis`, `scala-format`.

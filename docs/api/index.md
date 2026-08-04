@@ -219,9 +219,9 @@ Dates are UTC-canonical. Local-time constructions like
 `new Date(2026, 0, 6)` resolve to different days depending on the
 machine's timezone. Prefer `new Date("2026-01-06")` instead.
 
-`tonus.festum()` and `tonus.caelum()` default to an emblematic
-medieval epoch, **1 June 991**, the symbolic birthday of Guido d'Arezzo. Pass
-an explicit `date` for any other day.
+`tonus.festum()` and `tonus.caelum()` default to **1 June 991**, the
+symbolic birthday of Guido d'Arezzo. Pass an explicit `date` for any other
+day.
 
 ### Determinism
 
@@ -252,7 +252,7 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 
 ### The bibliography — [`BIBLIOGRAPHY.md`](../BIBLIOGRAPHY.md)
 
-The single source of truth for citations, each with a stables key. Code
+The single source of truth for citations, each with a stable key. Code
 cites by bracketed key (`[biblio: key]`); each page keeps a short `## Sources`
 line pointing to the keys it draws on. Nothing outside `BIBLIOGRAPHY.md` restates
 a full reference.

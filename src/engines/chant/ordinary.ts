@@ -90,7 +90,7 @@ function feastYear(feast: Feast): number {
 }
 
 // "In order to add greater solemnity, one or more of the following 'Chants ad
-// libitum' may be employed." [liber-usualis-1961, Kyriale] — the appendix is a
+// libitum' may be employed." [liber-usualis, Kyriale] — the appendix is a
 // SOLEMNITY boost, so it belongs only to the festal rubrics. Note this is NOT
 // `isHighFeast`: that measures PRECEDENCE, and by it a Lent Sunday
 // (Semiduplex I classis) and Ash Wednesday (Feria privilegiata) both rank high —

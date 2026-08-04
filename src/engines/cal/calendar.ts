@@ -198,7 +198,7 @@ const SUNDAY_GRADES: readonly Grade[] = [
 
 /**
  * The Kyriale rubric this day falls under — the book classifies by RANK and
- * appoints one category per day [biblio: liber-usualis-1961, Kyriale].
+ * appoints one category per day [biblio: liber-usualis, Kyriale].
  *
  * Order matters. "In Paschal Time" is a season rubric and governs inside
  * Paschaltide. The Sunday categories must be tested before the class tiers,
