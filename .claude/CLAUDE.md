@@ -77,7 +77,7 @@ is English. Option keys are addresses (may be Latin); their values are codes.
 - `npm run serve` — the site at <http://localhost:8000>, served from `docs/`
   exactly as GitHub Pages will. `npm run diagrams` regenerates the diagram
   gallery at `working/review/diagram-lab.html`.
-- Green tests **and** clean `tsc` at every commit. (Current floor: 596 tests.)
+- Green tests **and** clean `tsc` at every commit. (Current floor: 601 tests.)
 
 ## Fonts (license discipline)
 
