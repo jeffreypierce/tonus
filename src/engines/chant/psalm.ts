@@ -8,7 +8,7 @@ import {
   type OfficePsalmPortion,
 } from "../../data/office-psalms-monastic.js";
 import { intone } from "./intone.js";
-import { MODE_LABELS, type Chant, type PsalmusQuery } from "./types.js";
+import { MODI, type Chant, type PsalmusQuery } from "./types.js";
 
 // Canticle numbers follow the generated psalms.json numbering (verified against
 // the incipits: 231 "Benedíctus Dóminus", 232 "Magníficat", 233 "Nunc dimíttis",
@@ -51,7 +51,7 @@ function verseToChant(
     office: "ps",
     genus: "Psalmus",
     mode: String(mode),
-    modus: mode === 0 ? "Tonus Peregrinus" : (MODE_LABELS[String(mode)] ?? `Modus ${mode}`),
+    modus: mode === 0 ? "Tonus Peregrinus" : (MODI[String(mode)] ?? `Modus ${mode}`),
     pages: [],
     source: {
       book: "Psalterium",

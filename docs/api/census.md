@@ -109,13 +109,110 @@ ships (see [What the census is not](#what-the-census-is-not)).
 
 ## Distance is cosine per field group
 
-Never over the flat 225. Cosine on the whole vector is dominated by the
-121-float `melodic` block and by sheer magnitude, so a long Tract would
-neighbour other long chants for being long. Per-group cosine asks about
-**shape within each dimension**, and `by: "all"` is the equal-weight mean of
-those — every dimension one vote, no tunable weights.
+**This is a contract, not an implementation note.** The census answers about
+one chant at a time; grouping — "all Communions," "this season," "this
+manuscript" — is yours to do. The moment you pool blocks yourself you are
+computing a distance, and if you compute it differently from the rule below
+your numbers will not agree with `census()`'s. They will not error. They will
+just quietly be answers to a different question.
 
-Ties break to the lower id, so the same question always has the same answer.
+The rule, in three lines:
+
+1. Cosine **per field group**, never over the flat 225.
+2. `by: "all"` is the **equal-weight mean** of the per-group cosines — every
+   dimension one vote, no tunable weights.
+3. Ties break to the lower id, so the same question always has the same answer.
+
+Cosine on the whole vector is dominated by the 121-float `melodic` block and by
+sheer magnitude, so a long Tract would neighbour other long chants for being
+long. Per-group cosine asks about **shape within each dimension**.
+
+[`CENSUS_GROUPS`](index.md#the-appendix) gives you the group names and their
+field counts, and [`CENSUS_ORDER`](index.md#the-appendix) every censused id —
+so you can pool a set without guessing at either.
+
+### Three ways to get a plausible wrong answer
+
+**Similarity is not comparable across `by` values.** A 0.94 on `cadenceFinal`
+and a 0.94 on `melodic` are not the same amount of alike: the groups have
+different widths and different natural spreads. Rank within one `by`; never
+threshold across two.
+
+**A centroid must be pooled per group, then compared per group.** Averaging the
+flat 225 and taking one cosine is the exact mistake rule 1 exists to prevent —
+and it does not announce itself. Pooling the 178 Communions both ways gives
+different winners, and the flat version collapses the top of the field into a
+0.987 tie where the per-group version spreads 0.847 to 0.653. Compression like
+that reads as "these are all much alike" when what happened is that one wide
+block outvoted the other eight.
+
+**`before` filters before ranking.** It restricts the candidate pool, then
+ranks — so `k` stays satisfiable, and a filtered list is *not* a subset of the
+unfiltered one. Chants that were ranked out by later material rise into it.
+Typicality is unaffected: it is always measured against the whole shipped
+corpus (see [Profile and typicality](#profile-and-typicality)).
+
+### Worked example — pooling a genus
+
+Reproducing the rule in full. This gives the same numbers `census()` gives,
+which is the point of printing it:
+
+```js
+import tonus, { CENSUS_GROUPS, CENSUS_ORDER } from "tonus";
+
+const GROUPS = Object.keys(CENSUS_GROUPS);
+
+const cosine = (a, b) => {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i]; na += a[i] ** 2; nb += b[i] ** 2;
+  }
+  return na && nb ? dot / Math.sqrt(na * nb) : 0;
+};
+
+// Pool a set of chants into a centroid — per group, never the flat 225.
+function centroid(ids) {
+  const sums = Object.fromEntries(
+    GROUPS.map((g) => [g, new Array(CENSUS_GROUPS[g].count).fill(0)]),
+  );
+  for (const id of ids) {
+    const { profile } = tonus.census({ id, k: 0 });   // k: 0 — profile only
+    for (const g of GROUPS) profile[g].values.forEach((v, i) => { sums[g][i] += v; });
+  }
+  for (const g of GROUPS) sums[g] = sums[g].map((v) => v / ids.length);
+  return sums;
+}
+
+// Compare against it the same way: cosine per group, then the mean for `all`.
+function similarity(id, c) {
+  const { profile } = tonus.census({ id, k: 0 });
+  const per = Object.fromEntries(GROUPS.map((g) => [g, cosine(profile[g].values, c[g])]));
+  per.all = GROUPS.reduce((s, g) => s + per[g], 0) / GROUPS.length;
+  return per;
+}
+
+// Every censused Communion, pooled — then: which Communion is most a Communion?
+const ids = CENSUS_ORDER.filter((id) => tonus.cantus({ id })[0]?.office === "co");
+const c = centroid(ids);                              // 178 chants
+const ranked = ids
+  .map((id) => ({ id, s: similarity(id, c) }))
+  .sort((a, b) => b.s.all - a.s.all);
+
+// 0.847  Quinque prudentes
+// 0.845  Domus mea
+// 0.839  Joseph fili David
+//   …
+// 0.663  Exiit sermo
+// 0.653  Tollite hostias
+```
+
+The per-group breakdown is where the answer becomes legible. _Quinque
+prudentes_ leads on `textual` 0.998, `cadenceMedial` 0.996 and `trigram` 0.994
+— it sets its text and turns its phrases the way Communions do — while its
+`cadenceFinal` is only 0.824 and `formulas` is 0.000, that last because it
+matches no catalogued formula and neither does the pooled average. A chant is
+typical of its genus in some dimensions and not others, which is the whole
+reason the groups are never flattened together.
 
 ## Profile and typicality
 

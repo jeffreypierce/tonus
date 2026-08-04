@@ -75,18 +75,44 @@ export default tonus;
 // The export law: verbs live on the namespace; return values are plain data;
 // the appendix exports canonical constant tables — nothing with a (). A
 // function that earns public life earns a fifteenth Latin noun instead.
+// A constant is admitted when a caller would otherwise TYPE IT OUT — a mode
+// list, an hour list, the valid `by:` values. Those transcriptions drift, and a
+// caller's drifted copy fails as wrong answers rather than as an error. Naming
+// follows the register rule: a table of Latin values takes a Latin name
+// (TEMPORA, "Tempus Adventus"), a table of codes or English keeps English
+// (SEASON_LABEL, "Advent"). So the name says which one you are holding.
+
+// cal — the liturgical year
 export {
-  SEASON_LABEL,
-  TEMPUS_NAME,
-  GRADE_ORDER,
-  GRADE_NAME,
+  SEASON_LABEL,  // season code → English name        ("adv" → "Advent")
+  TEMPORA,       // season code → Latin name          ("adv" → "Tempus Adventus")
+  GRADE_ORDER,   // grade code → rank, low is higher
+  GRADUS,        // grade code → Latin name
 } from "./engines/cal/types.js";
+
+// chant — the corpus vocabulary
+export {
+  HORAE,      // the eight canonical hours, Matins first — the order is content
+  OFFICIA,    // office code → Latin genus  ("an" → "Antiphona")
+  ORDINARIA,  // ordinary code → Latin name ("kyrie" → "Kyrie eleison")
+  MODI,       // mode number → Latin name   ("1" → "Modus I")
+} from "./engines/chant/types.js";
+export { SOURCES } from "./engines/chant/chant.js";  // book code → bibliographic record
+
+// temper — modes, tones, cadences
 export { MODES } from "./engines/temper/data/modes.js";
-export { SIGNS, SIGNA } from "./engines/planet/planet.js";
 export { TONES } from "./engines/temper/data/tones.js";
 export type { PsalmTone, Differentia } from "./engines/temper/data/tones.js";
 export { CADENTIAE } from "./data/cadentiae.js";
 export type { CadentiaFamilia } from "./data/cadentiae.js";
+
+// planet — the zodiac
+export { SIGNS, SIGNA } from "./engines/planet/planet.js";
+
+// census — the field groups and the block index. CENSUS_GROUPS keys are the
+// valid `by:` values AND the `profile` keys; CENSUS_ORDER holds every censused
+// id, so asking whether a chant is in the census stops needing a try/catch.
+export { CENSUS_GROUPS, CENSUS_ORDER } from "./data/census.js";
 
 export type {
   Feast, FeastQuery, Pascha, Season, Grade,

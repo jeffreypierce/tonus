@@ -5,7 +5,7 @@ import type {
   Chant, CantusQuery, OfficeCode, ChantSource, Corpus, GenusCount, ModeCount, SharedCount,
   CorpusFullCount, CorpusLedger, CorpusQuery,
 } from "./types.js";
-import { OFFICE_LABELS, MODE_LABELS, CANTUS_QUERY_KEYS } from "./types.js";
+import { OFFICIA, MODI, CANTUS_QUERY_KEYS } from "./types.js";
 import { CORPUS_OVERLAP, CORPUS_FULL } from "../../data/corpus-overlap.js";
 import { attestationCutoff, chantAdmissible } from "./attest.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
@@ -26,7 +26,7 @@ import { KY_SOURCE } from "./types.js";
 import { entryToOrdinaryChant } from "./ordinary.js";
 
 function modusOf(mode: string | null): string | null {
-  return mode != null ? (MODE_LABELS[mode] ?? null) : null;
+  return mode != null ? (MODI[mode] ?? null) : null;
 }
 
 const HEADER_FIELD_REGEX = /([A-Za-z0-9_-]+)\s*:\s*([^;]*);/g;
@@ -66,7 +66,7 @@ function chantFromGABC(query: CantusQuery): Chant[] {
   const officeFromHeader = ((): OfficeCode | null => {
     if (!officePart) return null;
     const v = officePart.trim().toLowerCase();
-    for (const [code, label] of Object.entries(OFFICE_LABELS)) {
+    for (const [code, label] of Object.entries(OFFICIA)) {
       if (v === code || v === label.toLowerCase()) return code as OfficeCode;
     }
     return null;
@@ -82,7 +82,7 @@ function chantFromGABC(query: CantusQuery): Chant[] {
     incipit,
     gabc: body,
     office,
-    genus: OFFICE_LABELS[office] ?? office,
+    genus: OFFICIA[office] ?? office,
     mode: mode ?? null,
     modus: modusOf(mode ?? null),
     pages: [],
@@ -94,7 +94,7 @@ function withLabels(c: ChantData, source: Chant["source"]): Chant {
   return {
     ...c,
     source,
-    genus: OFFICE_LABELS[c.office as OfficeCode] ?? c.office,
+    genus: OFFICIA[c.office as OfficeCode] ?? c.office,
     modus: modusOf(c.mode),
   };
 }
@@ -125,7 +125,7 @@ function byId(): Map<string, Chant> {
   return _byId;
 }
 
-const SOURCES: Record<ChantSource, Chant["source"]> = {
+export const SOURCES: Record<ChantSource, Chant["source"]> = {
   gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
   ky: KY_SOURCE,
   // office books — provenance, not acquisition
@@ -171,7 +171,7 @@ function generaRows(tally: Record<string, number>): GenusCount[] {
   return Object.entries(tally)
     .map(([office, count]) => ({
       office: office as OfficeCode,
-      genus: OFFICE_LABELS[office as OfficeCode] ?? office,
+      genus: OFFICIA[office as OfficeCode] ?? office,
       count,
     }))
     .sort((a, b) => b.count - a.count || (a.office < b.office ? -1 : 1));
@@ -182,7 +182,7 @@ function modesRows(tally: Record<string, number>): ModeCount[] {
   const rows: ModeCount[] = [];
   for (const m of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
     const count = tally[m];
-    if (count) rows.push({ mode: m, modus: MODE_LABELS[m]!, count });
+    if (count) rows.push({ mode: m, modus: MODI[m]!, count });
   }
   // The extractor buckets differentia forms, tonus peregrinus and unlabelled
   // chants together under "other" — the same bucket the shipped counts report
@@ -225,7 +225,7 @@ function corpusLedger(): CorpusLedger {
   const modes: Record<string, number> = {};
   for (const c of CORPUS) {
     genera[c.office] = (genera[c.office] ?? 0) + 1;
-    const m = c.mode != null && MODE_LABELS[c.mode] ? c.mode : "other";
+    const m = c.mode != null && MODI[c.mode] ? c.mode : "other";
     modes[m] = (modes[m] ?? 0) + 1;
   }
 
@@ -259,7 +259,7 @@ function oneCorpus(code: ChantSource): Corpus {
   let otherModes = 0;
   for (const c of chants) {
     officeCounts.set(c.office, (officeCounts.get(c.office) ?? 0) + 1);
-    if (c.mode != null && MODE_LABELS[c.mode]) {
+    if (c.mode != null && MODI[c.mode]) {
       modeCounts.set(c.mode, (modeCounts.get(c.mode) ?? 0) + 1);
     } else {
       otherModes++;
@@ -267,13 +267,13 @@ function oneCorpus(code: ChantSource): Corpus {
   }
 
   const genera: GenusCount[] = [...officeCounts.entries()]
-    .map(([office, count]) => ({ office, genus: OFFICE_LABELS[office] ?? office, count }))
+    .map(([office, count]) => ({ office, genus: OFFICIA[office] ?? office, count }))
     .sort((a, b) => b.count - a.count);
 
   const modes: ModeCount[] = [];
   for (const m of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
     const count = modeCounts.get(m);
-    if (count) modes.push({ mode: m, modus: MODE_LABELS[m], count });
+    if (count) modes.push({ mode: m, modus: MODI[m], count });
   }
   if (otherModes > 0) modes.push({ mode: null, modus: null, count: otherModes });
 

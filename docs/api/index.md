@@ -9,7 +9,7 @@ import tonus from "tonus";
 ```
 
 - [The methods](#the-methods) — by engine
-- [The appendix](#the-appendix) — seven constant tables
+- [The appendix](#the-appendix) — the canonical constant tables
 - [Full contents](#full-contents) — every method and section
 - [Conventions](#conventions) — Latin/English, dates, determinism, error contracts, bibliography
 
@@ -61,22 +61,62 @@ t.nota("D4");
 
 ## The appendix
 
-Seven constant tables ship as named exports beside the namespace. Return values are plain data, and the appendix carries
-canonical tables only, never functions.
+The canonical constant tables ship as named exports beside the namespace.
+Return values are plain data, and the appendix carries tables only, never
+functions. A table is here because a caller would otherwise **type it out** —
+a mode list, an hour list, the valid `by:` values — and a transcribed copy
+drifts, failing as wrong answers rather than as an error.
 
 ```js
-import tonus, { SEASON_LABEL, MODES } from "tonus";
+import tonus, { SEASON_LABEL, HORAE, MODES } from "tonus";
 ```
 
-| Export         | What it holds                                                        |
-| -------------- | -------------------------------------------------------------------- |
-| `SEASON_LABEL` | season code → English display label                                  |
-| `TEMPUS_NAME`  | season code → the Latin tempus name                                  |
-| `GRADE_ORDER`  | the fourteen grades in precedence order (sort by `indexOf`)          |
-| `GRADE_NAME`   | grade code → the Latin rank name                                     |
-| `MODES`        | the eight modes' doctrine: final, tenor, ambitus, cadence figures    |
-| `TONES`        | the psalm tones (Graduale Romanum appendix), with their differentiae |
-| `CADENTIAE`    | the cadence families (`CadentiaFamilia`), generated corpus data      |
+Names follow the register rule: a table of Latin values takes a Latin name, a
+table of codes or English keeps English. So the name tells you which you hold.
+
+**Calendar**
+
+| Export         | What it holds                                                   |
+| -------------- | --------------------------------------------------------------- |
+| `SEASON_LABEL` | season code → English display label (`adv` → "Advent")          |
+| `TEMPORA`      | season code → the Latin tempus name (`adv` → "Tempus Adventus") |
+| `GRADE_ORDER`  | the fourteen grades in precedence order (sort by `indexOf`)     |
+| `GRADUS`       | grade code → the Latin rank name                                |
+
+**Chant**
+
+| Export      | What it holds                                                              |
+| ----------- | -------------------------------------------------------------------------- |
+| `HORAE`     | the eight canonical hours, Matins first — the order is the content         |
+| `OFFICIA`   | office code → the Latin genus (`an` → "Antiphona")                         |
+| `ORDINARIA` | ordinary code → the Latin name (`ky` → "Kyrie eleison")                    |
+| `MODI`      | mode number → the Latin name (`"1"` → "Modus I")                           |
+| `SOURCES`   | book code → its bibliographic record; the codes `cantus({ source })` takes |
+
+**Tuning**
+
+| Export      | What it holds                                                        |
+| ----------- | -------------------------------------------------------------------- |
+| `MODES`     | the eight modes' doctrine: final, tenor, ambitus, cadence figures    |
+| `TONES`     | the psalm tones (Graduale Romanum appendix), with their differentiae |
+| `CADENTIAE` | the cadence families (`CadentiaFamilia`), generated corpus data      |
+
+**Heavens**
+
+| Export  | What it holds                                        |
+| ------- | ---------------------------------------------------- |
+| `SIGNS` | the twelve zodiac signs, English, ecliptic order     |
+| `SIGNA` | the same twelve in Latin (`Scorpius`, `Capricornus`) |
+
+**Census**
+
+| Export          | What it holds                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| `CENSUS_GROUPS` | the field groups → `{ offset, count }`; the keys are the valid `by:` values **and** the `profile` keys |
+| `CENSUS_ORDER`  | every censused chant id, in block order — so membership is a lookup, not a `try/catch`                 |
+
+Both census tables exist because pooling blocks yourself means reproducing the
+distance rule; see [the census contract](census.md#distance-is-cosine-per-field-group).
 
 ## Full contents
 

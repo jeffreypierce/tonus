@@ -477,6 +477,19 @@ interface OfficiumQuery extends CantusQuery {
 }
 ```
 
+The eight hours ship as [`HORAE`](index.md#the-appendix), Matins first — read
+them from there rather than transcribing them, and an unrecognised `hora`
+throws rather than matching nothing, so a misspelling cannot read as an empty
+hour.
+
+```js
+import { HORAE } from "tonus";
+// ["matutinum", "laudes", "prima", "tertia", "sexta", "nona",
+//  "vesperae", "completorium"]
+
+tonus.officium({ hora: "vespers" });  // throws: unknown hora "vespers"
+```
+
 ### One cursus, the Benedictine
 
 tonus assembles a single office — the monastic cursus — with no option to

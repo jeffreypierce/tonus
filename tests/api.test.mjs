@@ -164,13 +164,13 @@ describe("tonus namespace", () => {
 describe("the appendix (the export law)", () => {
   // Verbs live on the namespace; return values are plain data; the appendix
   // exports canonical constant tables — nothing with a ().
-  test("the seven tables are exported", async () => {
+  test("the canonical tables are exported", async () => {
     const m = await import("../dist/index.js");
-    const { SEASON_LABEL, TEMPUS_NAME, GRADE_ORDER, GRADE_NAME, MODES, TONES, CADENTIAE } = m;
+    const { SEASON_LABEL, TEMPORA, GRADE_ORDER, GRADUS, MODES, TONES, CADENTIAE } = m;
     assert.equal(SEASON_LABEL.adv, "Advent");
-    assert.equal(TEMPUS_NAME.adv, "Tempus Adventus");
+    assert.equal(TEMPORA.adv, "Tempus Adventus");
     assert.equal(GRADE_ORDER.length, 14);
-    assert.ok(GRADE_NAME["duplex-i"]);
+    assert.ok(GRADUS["duplex-i"]);
     assert.ok(MODES instanceof Map && MODES.get(1).nomen === "Protus Authenticus");
     assert.equal(TONES.length, 9); // eight tones + Tonus Peregrinus
     assert.equal(TONES[0].nomen, "Tonus I");
@@ -213,6 +213,62 @@ describe("the appendix (the export law)", () => {
       sigs.some((sig) => table.has(sig)),
       "no live signature joined the table — the keys have forked again",
     );
+  });
+
+  test("HORAE is the office order, and officium agrees with it", async () => {
+    const { HORAE } = await import("../dist/index.js");
+    // The order IS the content — a day's office read out of sequence is not
+    // the day's office.
+    assert.deepEqual([...HORAE], [
+      "matutinum", "laudes", "prima", "tertia", "sexta", "nona",
+      "vesperae", "completorium",
+    ]);
+    // The list and the check cannot drift: every entry is accepted, and a
+    // plausible near-miss is refused rather than silently matching nothing.
+    for (const hora of HORAE) {
+      assert.ok(Array.isArray(tonus.officium({ hora })), `officium rejected ${hora}`);
+    }
+    assert.throws(() => tonus.officium({ hora: "vespers" }), /unknown hora/);
+  });
+
+  test("the Latin label tables carry Latin", async () => {
+    const { OFFICIA, ORDINARIA, MODI } = await import("../dist/index.js");
+    // The register rule read back off the values: a Latin name means Latin
+    // content. If one of these ever holds "Antiphon", the name is now a lie.
+    assert.equal(OFFICIA.an, "Antiphona");
+    assert.equal(ORDINARIA.ky, "Kyrie eleison");
+    assert.equal(MODI["1"], "Modus I");
+    assert.equal(Object.keys(MODI).length, 8);
+  });
+
+  test("SOURCES is the book ledger cantus filters by", async () => {
+    const { SOURCES } = await import("../dist/index.js");
+    assert.equal(SOURCES.gr.book, "Graduale Romanum");
+    // Every registered code is a code cantus({ source }) actually accepts —
+    // this is the table a caller reads to build a book picker.
+    for (const code of Object.keys(SOURCES)) {
+      assert.equal(SOURCES[code].code, code, `${code} disagrees with its own record`);
+      assert.ok(Array.isArray(tonus.cantus({ source: code, limit: 1 })));
+    }
+  });
+
+  test("CENSUS_GROUPS and CENSUS_ORDER describe the real census", async () => {
+    const { CENSUS_GROUPS, CENSUS_ORDER } = await import("../dist/index.js");
+    // CENSUS_ORDER is the block index, so membership is answerable without a
+    // try/catch — that is the whole reason it is public.
+    assert.ok(CENSUS_ORDER.length > 0);
+    const id = CENSUS_ORDER[0];
+    const c = tonus.census({ id, k: 0 });
+    // The group keys are the `by:` values AND the profile keys. One vocabulary.
+    assert.deepEqual(
+      Object.keys(c.profile).sort(),
+      Object.keys(CENSUS_GROUPS).sort(),
+    );
+    for (const [g, { count }] of Object.entries(CENSUS_GROUPS)) {
+      assert.equal(c.profile[g].values.length, count, `${g} field count disagrees`);
+    }
+    // A censused id resolves; an id outside the index does not.
+    assert.ok(!CENSUS_ORDER.includes("gregobase:none-such"));
   });
 
   test("no functions ride the appendix", async () => {

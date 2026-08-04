@@ -13,8 +13,41 @@ eleven books, the office settled on one cursus, the cadence catalogue was
 re-mined over the sung corpus, and a new verb — `census` — measures every
 chant against the corpus that holds it.
 
+### Changed
+
+- **BREAKING — five appendix tables renamed to match the register rule.**
+  `TEMPUS_NAME` → `TEMPORA`, `GRADE_NAME` → `GRADUS`, and the internal
+  `OFFICE_LABELS` / `ORDINARY_LABELS` / `MODE_LABELS` → `OFFICIA` /
+  `ORDINARIA` / `MODI`, the last three now public. The house rule is that
+  Latin names carry Latin content and English names carry codes or English;
+  the appendix had three spellings of "code → display string" and five tables
+  whose Latin values sat under English names. Names now follow the register of
+  their values, so `SEASON_LABEL` ("Advent") and `TEMPORA` ("Tempus
+  Adventus") are distinguishable by name rather than by memory. Only the two
+  `cal` tables were public before; the rest is new surface.
+- **`officium` throws on an unrecognised `hora`.** It returned `[]`, which
+  read as "no chants at this hour" rather than "there is no such hour" — the
+  same silent-nothing the unknown-query-key guard beside it already refused.
+
 ### Added
 
+- **The appendix widened, so callers stop transcribing the library's own
+  vocabulary.** `HORAE` (the eight canonical hours, Matins first — the order
+  is the content, and `officium`'s validation reads the same list, so the two
+  cannot drift), `OFFICIA`, `ORDINARIA`, `MODI`, `SOURCES` (the book codes
+  `cantus({ source })` takes, with their bibliographic records), and
+  `CENSUS_GROUPS` / `CENSUS_ORDER` — the census field groups and the block
+  index, so asking whether a chant is censused stops needing a `try/catch`.
+  A table is admitted when a caller would otherwise type it out, because a
+  transcribed copy drifts and fails as wrong answers rather than as an error.
+  The appendix is now grouped by engine.
+- **The census distance rule is documented as a contract.** Similarity is
+  cosine per field group, never over the flat 225; `by: "all"` is the
+  equal-weight mean. Grouping is userland, so a caller pooling blocks is
+  computing a distance and must reproduce the rule or silently disagree with
+  `census()`. `census.md` now states it for callers with the three ways to get
+  a plausible wrong answer, and a worked example — pooling the 178 Communions
+  — that was run before it was printed, and reproduces `census()` exactly.
 - **The analysis tracks ship with `inscriptio`.** `tracks: ["chironomia"]`
   draws the conducting hand's wave — arsic crests, thetic
   troughs, pick-up loops, Pierik letters. `tracks: ["tonarium"]`

@@ -20,7 +20,7 @@ export const SEASON_LABEL: Readonly<Record<Season, string>> = Object.freeze({
 
 // Authentic Latin season names (the books' own headings). Feast.tempus
 // carries these; SEASON_LABEL above is the English reference map.
-export const TEMPUS_NAME: Readonly<Record<Season, string>> = Object.freeze({
+export const TEMPORA: Readonly<Record<Season, string>> = Object.freeze({
   adv: "Tempus Adventus",
   nat: "Tempus Nativitatis",
   epi: "Tempus post Epiphaniam",
@@ -86,7 +86,7 @@ export const GRADE_ORDER: readonly Grade[] = [
 // use this map when the canonical grade name is wanted instead (it differs
 // from ritus only for octave compounds, the Triduum, and the privileged-
 // Sunday overrides).
-export const GRADE_NAME: Readonly<Record<Grade, string>> = Object.freeze({
+export const GRADUS: Readonly<Record<Grade, string>> = Object.freeze({
   triduum: "Triduum Sacrum",
   "duplex-i": "Duplex I classis",
   "duplex-majus-i": "Duplex majus I classis",
