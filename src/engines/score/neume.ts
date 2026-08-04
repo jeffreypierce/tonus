@@ -26,6 +26,13 @@ export function classifyNeume(notes: Note[]): Neume {
   // next-to-last is an oriscus" [biblio: cardine-semiology, ch. 16]. The
   // ORISCUS is what makes it one — not the editorial ictus.
   //
+  // RULED 2026-08-04 (Jeffrey): adopt Cardine's definition for DETECTION, not
+  // only for the prolongation. This is a second doctrine call beyond the
+  // original ruling and was ratified on its own terms, because it decides what
+  // the word `salicus` denotes everywhere in tonus — the neume type, the
+  // always-arsic override, the chironomia track, any caller reading
+  // `neume.type`.
+  //
   // This detection was previously keyed on the Solesmes ictus (GABC `'`) on
   // the second-to-last note, which is a different thing and a much larger set:
   // measured over the sung corpus, that rule found 2,795 groups of which 36

@@ -16,8 +16,11 @@ chant against the corpus that holds it.
 ### Changed
 
 - **BEHAVIOUR — the salicus takes Cardine's correction, and stops being
-  confused with the Solesmes ictus.** Two changes, measured separately over
-  the sung corpus (2,887 chants, 28,498 phrases).
+  confused with the Solesmes ictus.** Two changes, each ruled and each
+  measured separately over the sung corpus (2,887 chants, 28,498 phrases).
+  The second — redefining what counts as a salicus at all — was ratified on
+  its own terms, since it decides what the word denotes everywhere in tonus,
+  not just how one note is weighted.
   **Detection.** A salicus is "at least three ascending notes in which the
   next-to-last is an oriscus" [biblio: cardine-semiology, ch. 16]. tonus had
   been calling any ascending run with the editorial ictus a salicus — 2,795
