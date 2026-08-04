@@ -193,6 +193,28 @@ describe("the appendix (the export law)", () => {
     }
   });
 
+  test("CADENTIAE_POPULATION is the honest denominator", async () => {
+    const { CADENTIAE, CADENTIAE_POPULATION: POP } = await import("../dist/index.js");
+    // byMode must be the FULL tally, not the tabled subset — if it were summed
+    // from the 122 families that cleared the floor, every share and every lift
+    // taken against it would be inflated, and nothing would error.
+    const sum = Object.values(POP.byMode).reduce((s, n) => s + n, 0);
+    assert.equal(sum, POP.ends, "byMode does not sum to ends");
+    assert.ok(POP.ends > CADENTIAE.reduce((s, f) => s + f.n, 0),
+      "ends is not larger than the tabled families — it is not the full population");
+    // Every mode digit, plus "?" for the mode-less.
+    for (const m of ["1", "2", "3", "4", "5", "6", "7", "8", "?"]) {
+      assert.ok(POP.byMode[m] > 0, `byMode is missing ${m}`);
+    }
+    // share is n over that denominator, to the baked 4 places.
+    for (const f of CADENTIAE) {
+      assert.ok(Math.abs(f.share - f.n / POP.ends) < 0.00005,
+        `${f.key}: share ${f.share} != n/ends`);
+    }
+    // Frozen, like every other appendix table.
+    assert.ok(Object.isFrozen(POP) && Object.isFrozen(POP.byMode));
+  });
+
   test("CADENTIAE joins live signatures — the key-orphan gap is closed", async () => {
     const { CADENTIAE } = await import("../dist/index.js");
     // Between the signed-arrival re-key and the re-mine, the table spoke
