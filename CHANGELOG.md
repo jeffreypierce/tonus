@@ -2,16 +2,28 @@
 
 All notable changes to tonus. Newest first.
 
-## Unreleased
+## 0.4.5 — 2026-08-04
 
-The rubric true-up and the era view. The 2026-07-27 review found the
-Kyriale selection chain leaking past its own gates; the fixes landed with
-regression tests, the corpus pipeline was corrected and regenerated behind
-them, and the calendar's and the corpus's `before` arguments were
-reconciled into one composable view. Since then the shelf widened to
-eleven books, the office settled on one cursus, the cadence catalogue was
-re-mined over the sung corpus, and a new verb — `census` — measures every
-chant against the corpus that holds it.
+The rubric true-up, the era view, and a long pass of making the library say
+what it means. The 2026-07-27 review found the Kyriale selection chain leaking
+past its own gates; the fixes landed with regression tests, the corpus pipeline
+was corrected and regenerated behind them, and the calendar's and the corpus's
+`before` arguments were reconciled into one composable view. The shelf widened,
+the office settled on one cursus, the cadence catalogue was re-mined over the
+sung corpus, and a new verb — `census` — measures every chant against the
+corpus that holds it.
+
+Then the tidying, most of it prompted by things that turned out to be measured
+rather than assumed. The salicus took Cardine's correction and, in the process,
+stopped being confused with the Solesmes ictus — two nearly disjoint sets under
+one name. The cadence catalogue learned its own denominator and joined itself
+once instead of per consumer. The appendix roughly doubled and was renamed to
+follow the register rule. The corpus ledger stopped needing three numbers to
+say how much chant there is. And the Apel formula matcher came out: what
+shipped could not use the catalogue it shipped with, and saying so was better
+than leaving a public field that answered `null`.
+
+`docs/` is a published site now, which is where 0.5 is headed.
 
 ### Removed
 
