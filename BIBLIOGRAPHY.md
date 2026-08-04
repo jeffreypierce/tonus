@@ -68,9 +68,15 @@ doctrine tables, and the references behind them. Code cites by bracketed key
   1945.** The arsis/thesis synthesis.
 - `mocquereau-nombre` — **Mocquereau, André. _Le nombre musical grégorien_,
   1908–1927.** The Solesmes school's foundation.
-- `cardine-semiology` — **Cardine, Eugène. "Semiology and the Interpretation
-  of Gregorian Chant." Trans. Virginia A. Schubert; from the Festschrift for
-  Joseph Lennards.** The semiological approach to neume interpretation.
+- `cardine-semiology` — **Cardine, Eugène. _Gregorian Semiology_. Trans.
+  Robert M. Fowells. Solesmes.** The semiological reading of the neumes from
+  the manuscripts themselves. Ch. 16 ("Salicus") is the source for tonus's one
+  departure from the Mocquereau lineage: the salicus's principal note is the
+  one following the oriscus, not the oriscus itself. Cited alongside it, the
+  essay "Semiology and the Interpretation of Gregorian Chant" (trans. Virginia
+  A. Schubert, from the Festschrift for Joseph Lennards), and Bevenot,
+  "Plainsong with Dom Cardine: The Salicus" (_Sacred Music_ 115:4, pp. 15–21),
+  which calls the printed middle-note reading "a trap."
 - `desrocquettes-values` — **Desrocquettes, Jean Hébert. "Gregorian Musical
   Values."** The Solesmes rhythmic values, from Mocquereau's collaborator.
 - `niedermeyer-ortigue` — **Niedermeyer, Louis, and Joseph d'Ortigue.

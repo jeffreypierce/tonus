@@ -22,11 +22,28 @@ export function classifyNeume(notes: Note[]): Neume {
 
   const dirs = intervals.map(toDirection);
   let type = classifyShape(dirs);
-  // Salicus: an ascending run whose ictus (GABC `'`) marks it apart from a plain
-  // scandicus. The ictus sits on the second-to-last ascending note — the middle
-  // note of a three-note salicus, the penultimate of a longer one (Suñol).
+  // Salicus: "a neume with at least three ascending notes in which the
+  // next-to-last is an oriscus" [biblio: cardine-semiology, ch. 16]. The
+  // ORISCUS is what makes it one — not the editorial ictus.
+  //
+  // This detection was previously keyed on the Solesmes ictus (GABC `'`) on
+  // the second-to-last note, which is a different thing and a much larger set:
+  // measured over the sung corpus, that rule found 2,795 groups of which 36
+  // (1.3%) carried an oriscus, while missing 188 of the 226 real salici — they
+  // classified as `scandicus`. An ictus-marked ascent with no oriscus IS a
+  // scandicus that Solesmes marked for rhythm; the mark survives on
+  // `context.ictus` for anyone reading it. Bevenot calls the conflation "a
+  // trap" [biblio: cardine-semiology].
+  //
+  // The LIMIT of this, stated because it is easy to mistake for a bug: tonus
+  // sees only what the transcription marks. Bevenot's own example — the mode-6
+  // Requiem introit's fa-sol-la — carries the Solesmes ictus and NO oriscus in
+  // GregoBase (gregobase:766, on "ae" and "do"), so it reads here as a
+  // scandicus. He is reading the manuscripts; we are reading a printed edition
+  // that resolved the oriscus away. Recovering those needs the MSS, not a rule
+  // change: a guess dressed as a measurement is worse than the gap.
   const allAscending = dirs.length >= 2 && dirs.every((d) => d === "up");
-  if (allAscending && notes[notes.length - 2]!.context.ictus) {
+  if (allAscending && notes[notes.length - 2]!.context.oriscus) {
     type = "salicus";
   }
   return { type, intervals, hasQuilisma, hasLiquescent, hasStrophicus };

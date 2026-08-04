@@ -15,6 +15,35 @@ chant against the corpus that holds it.
 
 ### Changed
 
+- **BEHAVIOUR — the salicus takes Cardine's correction, and stops being
+  confused with the Solesmes ictus.** Two changes, measured separately over
+  the sung corpus (2,887 chants, 28,498 phrases).
+  **Detection.** A salicus is "at least three ascending notes in which the
+  next-to-last is an oriscus" [biblio: cardine-semiology, ch. 16]. tonus had
+  been calling any ascending run with the editorial ictus a salicus — 2,795
+  groups, of which **36 (1.3%) actually carried an oriscus** — while missing
+  188 of the corpus's 226 real salici, which classified as `scandicus`. Two
+  nearly disjoint sets under one name. Now: `salicus` 2,795 → **226**, exactly
+  the chants that meet Cardine's definition; `scandicus` 498 → 2,501, and the
+  4-and-5-note ictus ascents (566) join `compound`. An ictus-marked ascent
+  with no oriscus is a scandicus that Solesmes marked for rhythm, and the mark
+  is still readable on `context.ictus`.
+  **Weighting.** The printed editions lengthen the oriscus; the manuscripts
+  show the principal note is the one immediately following it. The 1.3×
+  prolongation moves from the next-to-last note to the **summit** — which is
+  the last note at any length, since the oriscus is next-to-last by
+  definition, so the 4- and 5-note forms need no separate rule. The salicus
+  stays arsic: tension toward the summit is the arsic gesture, so Cardine
+  strengthens that rule rather than contradicting it.
+  **Downstream:** 208 of 28,498 phrases (0.73%) change `rhythmicType`,
+  overwhelmingly toward VIII. This is the one point where tonus's rhythmic
+  layer departs from Mocquereau and Suñol, and `ir.ts` now says so at its
+  header.
+  **The limit, stated plainly:** tonus sees only what the transcription marks.
+  Bevenot's own example — the mode-6 _Requiem_ introit's fa-sol-la — carries
+  the ictus and no oriscus in GregoBase, so it still reads as a scandicus. He
+  is reading the manuscripts; the corpus is a printed edition that resolved
+  the oriscus away. Recovering those wants the sources, not a looser rule.
 - **The tonarium's cadence label says how typical a close is, not which
   family it belongs to.** The bracket read `"2,0,-2 @0"` — the family's name,
   which a reader could not weigh. It now reads `"×2.1"`: the family's share
@@ -56,8 +85,8 @@ chant against the corpus that holds it.
   the 55 families landing on the final, 31 do not close, and their finality
   spans 0.054 to 1.000. Detection stays pure; the corpus table meets detected
   data in the score builder, where `MODES` already does.
-  Both cadence catalogues are now documented as what they are — *tradita*
-  (the treatises' figures, final cadences only) and *inventa* (the corpus
+  Both cadence catalogues are now documented as what they are — _tradita_
+  (the treatises' figures, final cadences only) and _inventa_ (the corpus
   tally, any target, and so the only account of medial closes) — with the
   measured coverage of each and a worked lift example that was run before it
   was printed.

@@ -793,9 +793,23 @@ The classifier applies Carroll's three melodic rules in priority order
 
 The first compound beat of an incise is always arsic. When every rule is inconclusive, the
 shape alternates from the previous group. Two conventional overrides
-precede the rules: the **salicus** (ascending three-note group with a
-middle ictus) is always arsic, and the **doubly-dotted clivis** is always
+precede the rules: the **salicus** is always arsic — the tension toward its
+summit is the arsic gesture — and the **doubly-dotted clivis** is always
 thetic, as a cadential figure.
+
+A salicus here is Cardine's: an ascent of at least three notes whose
+**next-to-last note is an oriscus** [biblio: cardine-semiology, ch. 16]. The
+oriscus is what makes one. An ascending group carrying only the editorial
+Solesmes ictus is a **scandicus** that was marked for rhythm — a distinction
+worth stating because conflating the two is, in Bevenot's word, a trap: over
+the sung corpus the ictus rule matches 2,795 groups of which 36 carry an
+oriscus, while the corpus holds 226 real salici.
+
+Cardine's correction also decides WHICH note is principal. The printed
+editions lengthen the oriscus itself; the manuscripts show the principal note
+is the one **immediately following** it — the summit — so tonus prolongs that
+note and takes the oriscus lightly. This is the one point where the rhythmic
+layer departs from Mocquereau and Suñol, and it does so deliberately.
 
 ### Rhythmic types
 
