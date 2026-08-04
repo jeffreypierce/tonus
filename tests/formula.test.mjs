@@ -81,14 +81,25 @@ describe("detectFormulas", () => {
         assert.ok(s >= -3 && s <= 8, `${f.id} has an out-of-range step ${s}`);
       }
     }
-    // The slots are DERIVED from Apel's tabulation, not transcribed, so assert
-    // the reading that derivation rests on: F- and G- symbols close a unit,
-    // i- symbols open one.
+    // The slots are DERIVED, not transcribed — Apel does not label his symbols
+    // by function — so what is asserted here is HIS OWN TEXT, Remarks A.1
+    // (p. 350): "To the first category [initial] belong A10, A11, A12, A13,
+    // A14(C14), C10, C11, and M… Nearly all the verses close with either F10
+    // or F11." Every slot is checked against the 47-Gradual tabulation by
+    // working/qa-sweep/verify-formula-slots.mjs; these are the named claims.
     const slotOf = (id) => gr5.find((f) => f.id === id)?.slot;
+    for (const id of ["A10", "A11", "A12", "A13", "A14", "C10", "C11", "M"]) {
+      assert.equal(slotOf(id), "opening", `${id} is one of Apel's initial formulae`);
+    }
     assert.equal(slotOf("F10"), "termination");
-    assert.equal(slotOf("G1"), "termination");
+    assert.equal(slotOf("F11"), "termination");
+    // The responds' initial phrases carry inferior LETTERS, not figures — they
+    // open a respond and were misread as terminations while the slot came from
+    // the prefix letter alone.
+    for (const id of ["Fa", "Fb", "Fc", "Fd"]) {
+      assert.equal(slotOf(id), "opening", `${id} opens a respond`);
+    }
     assert.equal(slotOf("i1"), "intonation");
-    assert.equal(slotOf("A15"), "opening");
     // Every id is unique — a duplicate would silently shadow in the matcher.
     assert.equal(new Set(gr5.map((f) => f.id)).size, gr5.length);
   });

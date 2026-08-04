@@ -30,37 +30,120 @@ const ticks = alphabet._ticks ?? {};
 const uncertain = alphabet._uncertain ?? {};
 const symbols = Object.keys(alphabet).filter((k) => !k.startsWith("_"));
 
-// ── Slots, read off the tabulation rather than assumed ─────────────────────
-// Apel does not label his symbols by slot; the tabulation shows where each one
-// sits in a chant's sequence, and the answer is unambiguous by prefix letter:
-//   F, G  close a unit          (49 of 89 appearances final; never opening-only)
-//   i     intonation            (11 of 12 appearances first)
-//   A, C  the body after it     (43 and 29 appearances, NEVER last)
-//   M     an ending-less body   (always first; takes c10/a17 as its ending)
-// A slot is therefore derived, not transcribed — and this is where to look if
-// the matcher ever disagrees with Apel's own tabulation.
-function slotFor(id) {
-  const letter = id[0].toUpperCase();
-  if (letter === "I") return "intonation";
-  if (letter === "F" || letter === "G") return "termination";
-  if (letter === "M") return "mediant";
-  return "opening"; // A, C — the phrase that follows an intonation
+// ── The tabulation, tokenized ───────────────────────────────────────────────
+// A bar-segment can hold MORE THAN ONE symbol, and an earlier version of this
+// script took only the first, which made eleven symbols invisible and
+// undercounted six more. The grammar, measured over all 47 rows:
+//   "ID"  "N+ID"  "ID+ID"  "ID+ID+ID"  "ID ID"  "... ID"  "= Chant"  "(ID)"
+// where "..." is a free section, "N+" means the formula enters N notes in,
+// a trailing prime is a variant form, and "= Chant" refers to another row.
+function tokenize(segment) {
+  let s = segment.trim();
+  if (s.startsWith("=")) return [];            // "= Chant" — as the named chant
+  s = s.replace(/\(([^)]*)\)/g, " ")           // "(a)" — a notation, not a symbol
+       .replace(/\.\.\./g, " ")                 // free section
+       .replace(/^\d+\+/, "");                 // leading entry offset
+  const ids = [];
+  for (const part of s.split(/[+\s]+/)) {
+    const m = /^(?:\d+\+)?([A-Za-z]\w*?)'?$/.exec(part.trim());
+    if (m && m[1]) ids.push(m[1]);
+  }
+  return ids;
 }
 
-// Count each symbol's appearances in the tabulation: a frequency the catalogue
-// can carry as evidence of how standard a "standard phrase" really is.
-const uses = new Map();
-for (const rows of Object.values(tabulation.groups ?? {})) {
-  for (const row of rows) {
-    for (const part of ["respond", "verse"]) {
-      for (const raw of String(row[part] ?? "").split("|")) {
-        const m = /^(?:\d+\+)?([A-Za-z]\w*)/.exec(raw.trim());
-        if (!m) continue;
-        const id = m[1].replace(/'$/, "");
-        uses.set(id, (uses.get(id) ?? 0) + 1);
+/** Every unit (respond or verse) as its ordered symbol sequence. */
+function units() {
+  const out = [];
+  for (const rows of Object.values(tabulation.groups ?? {})) {
+    for (const row of rows) {
+      for (const part of ["respond", "verse"]) {
+        const ids = String(row[part] ?? "")
+          .split("|")
+          .map((seg) => tokenize(seg).filter((id) => alphabet[id]));
+        if (ids.flat().length) out.push({ part, segments: ids });
       }
     }
   }
+  return out;
+}
+
+const UNITS = units();
+
+// ── Slots, MEASURED then arbitrated by Apel's own remark ───────────────────
+// Apel, Remarks A.1 (p. 350), verbatim: "The standard phrases are rather
+// strictly divided into initial, final, and intermediate formulae. To the
+// first category belong A10, A11, A12, A13, A14(C14), C10, C11, and M.
+// Exceptionally, A10 appears as an intermediate phrase in Tribulationes
+// (group VII). Nearly all the verses close with either F10 or F11."
+//
+// So the three categories are HIS, not a guess from prefix letters — the
+// letter rule this script used before misfiled Fa/Fb/Fc/Fd (the responds'
+// initial phrases) and M (an opening melisma) as terminations.
+//
+// Measured against the tabulation, his list holds: A12/A13/C10/C11 open 100%
+// of their verses, A10 83% (his stated exception is the other 17%), M 75%.
+// A11 measures 0% "first" only because it is always JOINED to a tiny
+// intonation — i1+A11, i3+A11 — which is itself evidence that the i-symbols
+// are intonations prefixed to an initial rather than initials in their own
+// right. Nearly all verses do close on F10/F11: 97% and 100% final.
+const APEL_INITIAL = new Set(["A10", "A11", "A12", "A13", "A14", "C14", "C10", "C11", "M"]);
+
+/** Where a symbol actually sits, over every unit that uses it. */
+function positions() {
+  const stat = {};
+  for (const { segments } of UNITS) {
+    const flat = segments.flat();
+    if (!flat.length) continue;
+    // Position is judged by SEGMENT, not by symbol index: a segment like
+    // "i1+A11" is one position holding two symbols, and counting the second
+    // as "not first" would contradict Apel over a notational detail.
+    segments.forEach((seg, si) => {
+      const lastSeg = segments.length - 1;
+      for (const id of seg) {
+        const v = (stat[id] ??= { first: 0, mid: 0, last: 0, n: 0 });
+        v.n++;
+        if (si === 0) v.first++;
+        else if (si === lastSeg) v.last++;
+        else v.mid++;
+      }
+    });
+  }
+  return stat;
+}
+
+const POS = positions();
+
+/**
+ * The slot a symbol fills. Apel's named categories decide first; where he is
+ * silent, the measured position does, and the shares ride into the baked
+ * comment so the claim is checkable rather than asserted.
+ */
+function slotFor(id) {
+  if (APEL_INITIAL.has(id)) return "opening";
+  const v = POS[id];
+  // A symbol Apel does not name and the tabulation never shows: the intonations
+  // (i1-i3) and the shortened forms fall here. The tick forms inherit their
+  // parent's slot; a bare unknown defaults by its own shape below.
+  if (!v || !v.n) {
+    const parent = ticks[id]?.parent;
+    if (parent) return slotFor(parent);
+    return id[0].toLowerCase() === "i" ? "intonation" : "opening";
+  }
+  if (id[0].toLowerCase() === "i") return "intonation";
+  const share = (x) => x / v.n;
+  // Closes its unit more than anything else → a termination. Apel: "nearly all
+  // the verses close with either F10 or F11", and the tabulation agrees at 97%.
+  if (share(v.last) >= 0.5) return "termination";
+  if (share(v.first) >= 0.5) return "opening";
+  if (share(v.mid) >= 0.5) return "mediant";
+  return v.last > v.first ? "termination" : "opening";
+}
+
+// How often each symbol is actually used — evidence of how standard a
+// "standard phrase" really is, counted with the tokenizer above.
+const uses = new Map();
+for (const { segments } of UNITS) {
+  for (const id of segments.flat()) uses.set(id, (uses.get(id) ?? 0) + 1);
 }
 
 // Order: by slot in performance order, then by descending attestation, so the
@@ -84,7 +167,18 @@ const body = rows
   .map((r) => {
     const notes = [];
     if (r.tick) notes.push(`shortened from ${r.tick}`);
-    notes.push(r.n ? `${r.n}× in Apel's tabulation` : "not in the tabulation as read");
+    if (r.n) {
+      const v = POS[r.id];
+      const pct = (x) => `${Math.round((x / v.n) * 100)}%`;
+      // The measured position IS the evidence for the slot — print it, so the
+      // assignment stays checkable against Apel's tabulation without re-running
+      // the bake.
+      notes.push(`${r.n}× in Apel's tabulation (${pct(v.first)} first, ` +
+        `${pct(v.mid)} mid, ${pct(v.last)} last)`);
+    } else {
+      notes.push("not in the tabulation as read");
+    }
+    if (APEL_INITIAL.has(r.id)) notes.push("named initial by Apel, Remarks A.1");
     if (r.flags) notes.push(`${r.flags} note${r.flags > 1 ? "s" : ""} flagged uncertain`);
     return `  // ${r.id} — ${notes.join("; ")}\n` +
       `  { id: ${JSON.stringify(r.id)}, slot: ${JSON.stringify(r.slot)}, steps: [${r.steps.join(", ")}] },`;

@@ -58,7 +58,7 @@ export interface Formula {
 // declaration down is generated; edit the transcription or the bake, not here.
 export const FORMULAE: Record<string, Formula[]> = {
   // ── Graduals, mode 5 ── Apel Figure 104 [biblio: apel-chant, pp. 344-349].
-  // 53 standard phrases (3 intonation, 23 opening, 1 mediant, 26 termination), steps diatonic from F.
+  // 53 standard phrases (3 intonation, 17 opening, 21 mediant, 12 termination), steps diatonic from F.
   // Transcribed from photographs by three independent readers and adjudicated
   // per formula; the earlier PDF-scan read was superseded. Slots are DERIVED
   // from Apel's own tabulation (pp. 346-347), which is also the matcher's
@@ -69,112 +69,112 @@ export const FORMULAE: Record<string, Formula[]> = {
   // drawn), and f7 is referenced by two chants but has no staff in the figure
   // as read. Neither is invented here.
   "gr:5": [
-  // i1 — 7× in Apel's tabulation; 1 note flagged uncertain
+  // i1 — 7× in Apel's tabulation (86% first, 14% mid, 0% last); 1 note flagged uncertain
   { id: "i1", slot: "intonation", steps: [0, 2, 1, 1, 4] },
-  // i3 — 4× in Apel's tabulation
+  // i3 — 4× in Apel's tabulation (100% first, 0% mid, 0% last)
   { id: "i3", slot: "intonation", steps: [0, 2, 4, 4, 5, 6, 4, 4] },
-  // i2 — 1× in Apel's tabulation
+  // i2 — 1× in Apel's tabulation (100% first, 0% mid, 0% last)
   { id: "i2", slot: "intonation", steps: [0, 2, 3, 4] },
-  // A15 — 12× in Apel's tabulation; 6 notes flagged uncertain
-  { id: "A15", slot: "opening", steps: [4, 5, 4, 5, 6, 4, 5, 4, 5, 7, 5, 7, 4, 5, 7, 5, 7, 6, 4, 6, 7, 5, 4, 4, 2, 3, 2] },
-  // C1 — 9× in Apel's tabulation
+  // C1 — 9× in Apel's tabulation (89% first, 11% mid, 0% last)
   { id: "C1", slot: "opening", steps: [-2, 0, 0, 0, 0, 1, 0, 0, 0, 0, -2, 0, 1, -1, 0, 1, -2, -1, -2, -2, -3] },
-  // C12 — 9× in Apel's tabulation
-  { id: "C12", slot: "opening", steps: [2, 4, 5, 5, 5, 5, 4, 6, 7, 5, 4, 4, 2, 4, 2, 4, 4, 4, 4, 2, 3, 4, 5, 4, 5, 6, 4, 4, 5, 5, 4] },
-  // A10 — 6× in Apel's tabulation; 2 notes flagged uncertain
-  { id: "A10", slot: "opening", steps: [0, 2, 2, 4, 5, 4, 5, 4, 5, 2, 0, 2, 4, 5, 2, 0, 2, 4, 2, 3, 2, 4, 5, 4, 5, 4, 5, 2, 0, 1, 0, 0, 0, 0, 2, 4, 5, 6, 4, 4, 4, 4, 4, 4, 4, 3, 5, 6, 5, 4, 4, 3, 5, 4, 6, 5, 4, 3, 4, 2] },
-  // a10 — shortened from A10; 5× in Apel's tabulation
+  // A11 — 8× in Apel's tabulation (100% first, 0% mid, 0% last); named initial by Apel, Remarks A.1; 2 notes flagged uncertain
+  { id: "A11", slot: "opening", steps: [4, 4, 5, 4, 4, 1, 4, 5, 4, 5, 4, 4, 1, 4, 5, 7, 8, 7, 5, 6, 4, 2, 4, 3, 5, 6, 4, 6, 5, 4, 6, 5, 4, 4, 3, 2] },
+  // Fb — 8× in Apel's tabulation (100% first, 0% mid, 0% last)
+  { id: "Fb", slot: "opening", steps: [0, 1, 0, 0, 0, 0, 1, 2, 0, -1, -2, 1, -1, 0, 1, 0] },
+  // a10 — shortened from A10; 6× in Apel's tabulation (50% first, 50% mid, 0% last)
   { id: "a10", slot: "opening", steps: [0, 2, 4, 5, 6, 4, 4, 4, 4, 4, 4, 4, 3, 5, 6, 5, 4, 4, 3, 5, 4, 6, 5, 4, 3, 4, 2] },
-  // A13 — 5× in Apel's tabulation
+  // A10 — 6× in Apel's tabulation (83% first, 17% mid, 0% last); named initial by Apel, Remarks A.1; 2 notes flagged uncertain
+  { id: "A10", slot: "opening", steps: [0, 2, 2, 4, 5, 4, 5, 4, 5, 2, 0, 2, 4, 5, 2, 0, 2, 4, 2, 3, 2, 4, 5, 4, 5, 4, 5, 2, 0, 1, 0, 0, 0, 0, 2, 4, 5, 6, 4, 4, 4, 4, 4, 4, 4, 3, 5, 6, 5, 4, 4, 3, 5, 4, 6, 5, 4, 3, 4, 2] },
+  // A13 — 5× in Apel's tabulation (100% first, 0% mid, 0% last); named initial by Apel, Remarks A.1
   { id: "A13", slot: "opening", steps: [0, 0, 1, 2, 2, 4, 4, 5, 4, 5, 4, 5, 6, 4, 2, 4, 3, 5, 6, 4, 5, 6, 5, 4, 5, 6, 5, 4, 4, 3, 2] },
-  // A12 — 4× in Apel's tabulation; 1 note flagged uncertain
+  // Fa — 5× in Apel's tabulation (100% first, 0% mid, 0% last); 1 note flagged uncertain
+  { id: "Fa", slot: "opening", steps: [0, 0, 1, 0, 1, 2, 1, 2, 1, 0, 1, 0, -2, -2, 1, 0, 1, 2, 1, 1, 2, 3, 1, 0, 0, -2, 0, 1, 0] },
+  // A12 — 4× in Apel's tabulation (100% first, 0% mid, 0% last); named initial by Apel, Remarks A.1; 1 note flagged uncertain
   { id: "A12", slot: "opening", steps: [0, 2, 4, 4, 3, 2, 4, 3, 1, 2, 2, 0, 1, 2, 3, 2, 1, 2, 1, 0, 1, 2, 4, 5, 4, 5, 4, 5, 6, 3, 4, 4, 5, 4, 7, 7, 4, 5, 4, 5, 7, 7, 5, 4, 4, 3, 3, 4, 3, 2, 3, 3, 2] },
-  // A16 — 4× in Apel's tabulation
-  { id: "A16", slot: "opening", steps: [2, 0, 2, 1, 0, 2, 0, 1, 2, 3, 4, 5, 4, 3, 5, 6, 5, 4, 3, 4, 3, 2] },
-  // A1 — 3× in Apel's tabulation; 1 note flagged uncertain
-  { id: "A1", slot: "opening", steps: [0, 2, 4, 2, 4, 4, 4, 4, 3, 5, 5, 4, 4, 3, 4, 4, 2, 4, 5, 4, 4, 2, 3, 2] },
-  // C10 — 3× in Apel's tabulation
-  { id: "C10", slot: "opening", steps: [0, 2, 4, 4, 5, 4, 4, 4, 2, 4, 5, 6, 4, 4, 5, 6, 5, 4, 5, 6, 4, 2, 3, 4, 2, 0, 2, 0, 2, 1, 0, 2, 0, 1, 2, 4, 4, 5, 3, 4, 2, 4, 5, 7, 7, 7, 4] },
-  // c13 — 3× in Apel's tabulation
-  { id: "c13", slot: "opening", steps: [4, 4, 4, 4, 5, 6, 5, 3, 4, 2, 1, 2, 4, 4, 5, 4, 3, 4] },
-  // a17 — 2× in Apel's tabulation; 2 notes flagged uncertain
-  { id: "a17", slot: "opening", steps: [2, 0, 2, 1, 0, 0, 0, 2, 0, 1, 2, 4, 4, 5, 6, 7, 5, 4, 4, 5, 4, 2] },
-  // C11 — 2× in Apel's tabulation; 1 note flagged uncertain
-  { id: "C11", slot: "opening", steps: [4, 4, 5, 4, 4, 2, 4, 0, 2, 4, 4, 4, 5, 4, 4, 2, 4, 3, 4, 5, 3, 5, 4, 4] },
-  // a12 — shortened from A12; 1× in Apel's tabulation
-  { id: "a12", slot: "opening", steps: [5, 4, 7, 7, 4, 5, 4, 5, 7, 7, 5, 4, 4, 3, 3, 4, 3, 2, 3, 3, 2] },
-  // A14 — 1× in Apel's tabulation; 2 notes flagged uncertain
-  { id: "A14", slot: "opening", steps: [4, 4, 5, 4, 4, 4, 4, 2, 4, 4, 2, 4, 4, 1, 3, 2, 3, 1, 0, 4, 4, 3, 5, 6, 5, 4, 4, 3, 2] },
-  // c10 — shortened from C10; 1× in Apel's tabulation
+  // c10 — shortened from C10; 4× in Apel's tabulation (75% first, 25% mid, 0% last)
   { id: "c10", slot: "opening", steps: [2, 0, 2, 1, 0, 2, 0, 1, 2, 4, 4, 5, 3, 4, 2, 4, 5, 7, 7, 7, 4] },
-  // c12 — shortened from C12; 1× in Apel's tabulation
-  { id: "c12", slot: "opening", steps: [4, 2, 4, 4, 4, 4, 2, 3, 4, 5, 4, 5, 6, 4, 4, 5, 5, 4] },
-  // a1 — shortened from A1; not in the tabulation as read
-  { id: "a1", slot: "opening", steps: [4, 4, 2, 4, 5, 4, 4, 2, 3, 2] },
+  // M — 4× in Apel's tabulation (100% first, 0% mid, 0% last); named initial by Apel, Remarks A.1
+  { id: "M", slot: "opening", steps: [5, 4, 3, 4, 2, 4, 5, 4, 3, 4, 5, 2, 0, 2, 4, 4, 5, 4, 3, 4, 2, 4, 5, 4, 3, 4, 5] },
+  // C10 — 3× in Apel's tabulation (100% first, 0% mid, 0% last); named initial by Apel, Remarks A.1
+  { id: "C10", slot: "opening", steps: [0, 2, 4, 4, 5, 4, 4, 4, 2, 4, 5, 6, 4, 4, 5, 6, 5, 4, 5, 6, 4, 2, 3, 4, 2, 0, 2, 0, 2, 1, 0, 2, 0, 1, 2, 4, 4, 5, 3, 4, 2, 4, 5, 7, 7, 7, 4] },
+  // A14 — 2× in Apel's tabulation (100% first, 0% mid, 0% last); named initial by Apel, Remarks A.1; 2 notes flagged uncertain
+  { id: "A14", slot: "opening", steps: [4, 4, 5, 4, 4, 4, 4, 2, 4, 4, 2, 4, 4, 1, 3, 2, 3, 1, 0, 4, 4, 3, 5, 6, 5, 4, 4, 3, 2] },
+  // C11 — 2× in Apel's tabulation (100% first, 0% mid, 0% last); named initial by Apel, Remarks A.1; 1 note flagged uncertain
+  { id: "C11", slot: "opening", steps: [4, 4, 5, 4, 4, 2, 4, 0, 2, 4, 4, 4, 5, 4, 4, 2, 4, 3, 4, 5, 3, 5, 4, 4] },
+  // Fc — 2× in Apel's tabulation (100% first, 0% mid, 0% last); 2 notes flagged uncertain
+  { id: "Fc", slot: "opening", steps: [-2, 0, 0, 0, 2, 2, 3, 2, 1, 2, 1, 1, 0, 1, 0, -1, 1, 2, 1, 2, 0, -1, -2, -1, 0, 1, 1, 0] },
+  // Fd — 2× in Apel's tabulation (100% first, 0% mid, 0% last); 3 notes flagged uncertain
+  { id: "Fd", slot: "opening", steps: [0, 0, 1, 0, 0, 1, 2, 1, 2, 1, 0, 0, 0, 2, 0, 0, 0, 0, -2, -3, -2, 0, 0, 2, 1, 2, 1, 1, 0] },
   // a10_alt — shortened from A10; not in the tabulation as read
   { id: "a10_alt", slot: "opening", steps: [4, 3, 5, 4, 6, 5, 4, 3, 4, 2] },
-  // A11 — not in the tabulation as read; 2 notes flagged uncertain
-  { id: "A11", slot: "opening", steps: [4, 4, 5, 4, 4, 1, 4, 5, 4, 5, 4, 4, 1, 4, 5, 7, 8, 7, 5, 6, 4, 2, 4, 3, 5, 6, 4, 6, 5, 4, 6, 5, 4, 4, 3, 2] },
+  // fa — shortened from Fa; not in the tabulation as read
+  { id: "fa", slot: "opening", steps: [0, 1, 0, -2, -2, 1, 0, 1, 2, 1, 1, 2, 3, 1, 0, 0, -2, 0, 1, 0] },
+  // A15 — 12× in Apel's tabulation (0% first, 100% mid, 0% last); 6 notes flagged uncertain
+  { id: "A15", slot: "mediant", steps: [4, 5, 4, 5, 6, 4, 5, 4, 5, 7, 5, 7, 4, 5, 7, 5, 7, 6, 4, 6, 7, 5, 4, 4, 2, 3, 2] },
+  // C12 — 9× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "C12", slot: "mediant", steps: [2, 4, 5, 5, 5, 5, 4, 6, 7, 5, 4, 4, 2, 4, 2, 4, 4, 4, 4, 2, 3, 4, 5, 4, 5, 6, 4, 4, 5, 5, 4] },
+  // F1 — 6× in Apel's tabulation (0% first, 100% mid, 0% last); 2 notes flagged uncertain
+  { id: "F1", slot: "mediant", steps: [0, 2, 0, 1, 2, 4, 4, 5, 4, 5, 4, 3, 4, 2, 1, 4, 4, 2, 0, 0, 3, 2, 1, 2, 0, 1, 0, 0] },
+  // c1 — shortened from C1; 5× in Apel's tabulation (40% first, 60% mid, 0% last)
+  { id: "c1", slot: "mediant", steps: [0, 1, -1, 0, 1, -2, -1, -2, -2, -3] },
+  // c12 — shortened from C12; 5× in Apel's tabulation (20% first, 80% mid, 0% last)
+  { id: "c12", slot: "mediant", steps: [4, 2, 4, 4, 4, 4, 2, 3, 4, 5, 4, 5, 6, 4, 4, 5, 5, 4] },
+  // F12 — 5× in Apel's tabulation (0% first, 80% mid, 20% last); 2 notes flagged uncertain
+  { id: "F12", slot: "mediant", steps: [2, 4, 5, 5, 4, 6, 7, 5, 4, 4, 2, 2, 4, 2, 4, 4, 1, 0, 2, 0, 0] },
+  // F14 — 5× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "F14", slot: "mediant", steps: [4, 4, 5, 6, 5, 4, 4, 2, 4, 4, 4, 5, 4, 3, 2, 3, 2, 1, 2, 3, 2, 0, 2, 1, 0, 1, 0, 0] },
+  // A16 — 4× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "A16", slot: "mediant", steps: [2, 0, 2, 1, 0, 2, 0, 1, 2, 3, 4, 5, 4, 3, 5, 6, 5, 4, 3, 4, 3, 2] },
+  // c13 — 4× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "c13", slot: "mediant", steps: [4, 4, 4, 4, 5, 6, 5, 3, 4, 2, 1, 2, 4, 4, 5, 4, 3, 4] },
+  // f3 — 4× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "f3", slot: "mediant", steps: [4, 2, 4, 4, 3, 2, 4, 1, 1, 0] },
+  // A1 — 3× in Apel's tabulation (0% first, 100% mid, 0% last); 1 note flagged uncertain
+  { id: "A1", slot: "mediant", steps: [0, 2, 4, 2, 4, 4, 4, 4, 3, 5, 5, 4, 4, 3, 4, 4, 2, 4, 5, 4, 4, 2, 3, 2] },
+  // a17 — 3× in Apel's tabulation (33% first, 67% mid, 0% last); 2 notes flagged uncertain
+  { id: "a17", slot: "mediant", steps: [2, 0, 2, 1, 0, 0, 0, 2, 0, 1, 2, 4, 4, 5, 6, 7, 5, 4, 4, 5, 4, 2] },
+  // F15 — 3× in Apel's tabulation (33% first, 67% mid, 0% last)
+  { id: "F15", slot: "mediant", steps: [0, 0, 2, 1, 2, 4, 4, 5, 4, 4, 4, 4, 5, 4, 4, 3, 5, 6, 5, 5, 4, 6, 7, 6, 6, 4, 5, 6, 5, 4, 5, 3, 4, 5, 4, 4, 2, 4, 3, 4, 2, 1, 1, 0] },
+  // G1 — 3× in Apel's tabulation (33% first, 67% mid, 0% last); 3 notes flagged uncertain
+  { id: "G1", slot: "mediant", steps: [0, 1, 3, 2, 3, 3, 3, 3, 3, 1, 0, 1, 3, 4, 3, 2, 3, 3, 2, 3, 4, 2, 3, 1, 2, 3, 2, 3, 1] },
+  // F17 — 2× in Apel's tabulation (0% first, 100% mid, 0% last); 3 notes flagged uncertain
+  { id: "F17", slot: "mediant", steps: [4, 4, 4, 4, 4, 4, 5, 5, 4, 3, 1, 2, 4, 3, 1, 2, 4, 3, 5, 6, 4, 2, 2, 4, 2, 1, 2, 4, 4, 2, 4, 4, 3, 2, 2, 4, 1, 1, 0] },
+  // f18 — shortened from F18; 2× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "f18", slot: "mediant", steps: [4, 2, 1, 2, 4, 4, 4, 2, 4, 4, 4, 2, 4, 1, 1, 0] },
+  // a1 — shortened from A1; 1× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "a1", slot: "mediant", steps: [4, 4, 2, 4, 5, 4, 4, 2, 3, 2] },
+  // a12 — shortened from A12; 1× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "a12", slot: "mediant", steps: [5, 4, 7, 7, 4, 5, 4, 5, 7, 7, 5, 4, 4, 3, 3, 4, 3, 2, 3, 3, 2] },
+  // f17 — shortened from F17; 1× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "f17", slot: "mediant", steps: [2, 4, 2, 1, 2, 4, 4, 2, 4, 4, 3, 2, 2, 4, 1, 1, 0] },
+  // F18 — 1× in Apel's tabulation (0% first, 100% mid, 0% last)
+  { id: "F18", slot: "mediant", steps: [2, 4, 2, 4, 4, 2, 4, 4, 4, 4, 2, 1, 2, 4, 4, 4, 2, 4, 4, 4, 2, 4, 1, 1, 0] },
   // a17_alt — shortened from a17; not in the tabulation as read
-  { id: "a17_alt", slot: "opening", steps: [4, 5, 6, 7, 5, 4, 4, 5, 4, 2] },
-  // a2 — not in the tabulation as read; 3 notes flagged uncertain
-  { id: "a2", slot: "opening", steps: [0, 2, 4, 3, 4, 5, 3, 4, 2] },
-  // c1 — shortened from C1; not in the tabulation as read
-  { id: "c1", slot: "opening", steps: [0, 1, -1, 0, 1, -2, -1, -2, -2, -3] },
-  // M — 3× in Apel's tabulation
-  { id: "M", slot: "mediant", steps: [5, 4, 3, 4, 2, 4, 5, 4, 3, 4, 5, 2, 0, 2, 4, 4, 5, 4, 3, 4, 2, 4, 5, 4, 3, 4, 5] },
-  // F10 — 28× in Apel's tabulation; 5 notes flagged uncertain
+  { id: "a17_alt", slot: "mediant", steps: [4, 5, 6, 7, 5, 4, 4, 5, 4, 2] },
+  // F10 — 29× in Apel's tabulation (0% first, 0% mid, 100% last); 5 notes flagged uncertain
   { id: "F10", slot: "termination", steps: [2, 0, 2, 2, 4, 3, 2, 5, 4, 4, 2, 3, 3, 2, 3, 1, 0, 2, 3, 1, 0, 2, 1, 4, 4, 4, 4, 2, 2, 2, 0, 2, 2, 1, 1, 0] },
-  // Fb — 8× in Apel's tabulation
-  { id: "Fb", slot: "termination", steps: [0, 1, 0, 0, 0, 0, 1, 2, 0, -1, -2, 1, -1, 0, 1, 0] },
-  // F1 — 6× in Apel's tabulation; 2 notes flagged uncertain
-  { id: "F1", slot: "termination", steps: [0, 2, 0, 1, 2, 4, 4, 5, 4, 5, 4, 3, 4, 2, 1, 4, 4, 2, 0, 0, 3, 2, 1, 2, 0, 1, 0, 0] },
-  // f11 — shortened from F11; 5× in Apel's tabulation
+  // f11 — shortened from F11; 11× in Apel's tabulation (0% first, 0% mid, 100% last)
   { id: "f11", slot: "termination", steps: [4, 4, 4, 2, 4, 4, 4, 2, 4, 4, 2, 0, 1, 2, 4, 4, 5, 3, 4, 2, 3, 3, 1, 2, 0] },
-  // F11 — 5× in Apel's tabulation; 5 notes flagged uncertain
-  { id: "F11", slot: "termination", steps: [4, 4, 4, 5, 4, 4, 5, 4, 5, 4, 3, 4, 4, 4, 2, 4, 4, 4, 2, 4, 4, 2, 0, 1, 2, 4, 4, 5, 3, 4, 2, 3, 3, 1, 2, 0] },
-  // F12 — 5× in Apel's tabulation; 2 notes flagged uncertain
-  { id: "F12", slot: "termination", steps: [2, 4, 5, 5, 4, 6, 7, 5, 4, 4, 2, 2, 4, 2, 4, 4, 1, 0, 2, 0, 0] },
-  // F14 — 5× in Apel's tabulation
-  { id: "F14", slot: "termination", steps: [4, 4, 5, 6, 5, 4, 4, 2, 4, 4, 4, 5, 4, 3, 2, 3, 2, 1, 2, 3, 2, 0, 2, 1, 0, 1, 0, 0] },
-  // Fa — 5× in Apel's tabulation; 1 note flagged uncertain
-  { id: "Fa", slot: "termination", steps: [0, 0, 1, 0, 1, 2, 1, 2, 1, 0, 1, 0, -2, -2, 1, 0, 1, 2, 1, 1, 2, 3, 1, 0, 0, -2, 0, 1, 0] },
-  // F2 — 4× in Apel's tabulation; 5 notes flagged uncertain
-  { id: "F2", slot: "termination", steps: [0, 1, 0, 0, 1, 2, 2, 4, 2, 1, 2, 3, 2, 1, 0, 0, 0, 0, -2, -3, 0, 1, 2, 1, 0, -1, 1, 2, 1, 2, 2, 1, 1, 0] },
-  // F15 — 3× in Apel's tabulation
-  { id: "F15", slot: "termination", steps: [0, 0, 2, 1, 2, 4, 4, 5, 4, 4, 4, 4, 5, 4, 4, 3, 5, 6, 5, 5, 4, 6, 7, 6, 6, 4, 5, 6, 5, 4, 5, 3, 4, 5, 4, 4, 2, 4, 3, 4, 2, 1, 1, 0] },
-  // f16 — 2× in Apel's tabulation; 1 note flagged uncertain
-  { id: "f16", slot: "termination", steps: [1, 2, 4, 3, 4, 1, 3, 4, 2, 3, 1, 0, 1, 2, 4, 2, 5, 2, 0, 1, 0] },
-  // F17 — 2× in Apel's tabulation; 3 notes flagged uncertain
-  { id: "F17", slot: "termination", steps: [4, 4, 4, 4, 4, 4, 5, 5, 4, 3, 1, 2, 4, 3, 1, 2, 4, 3, 5, 6, 4, 2, 2, 4, 2, 1, 2, 4, 4, 2, 4, 4, 3, 2, 2, 4, 1, 1, 0] },
-  // f18 — shortened from F18; 2× in Apel's tabulation
-  { id: "f18", slot: "termination", steps: [4, 2, 1, 2, 4, 4, 4, 2, 4, 4, 4, 2, 4, 1, 1, 0] },
-  // Fc — 2× in Apel's tabulation; 2 notes flagged uncertain
-  { id: "Fc", slot: "termination", steps: [-2, 0, 0, 0, 2, 2, 3, 2, 1, 2, 1, 1, 0, 1, 0, -1, 1, 2, 1, 2, 0, -1, -2, -1, 0, 1, 1, 0] },
-  // Fd — 2× in Apel's tabulation; 3 notes flagged uncertain
-  { id: "Fd", slot: "termination", steps: [0, 0, 1, 0, 0, 1, 2, 1, 2, 1, 0, 0, 0, 2, 0, 0, 0, 0, -2, -3, -2, 0, 0, 2, 1, 2, 1, 1, 0] },
-  // G1 — 2× in Apel's tabulation; 3 notes flagged uncertain
-  { id: "G1", slot: "termination", steps: [0, 1, 3, 2, 3, 3, 3, 3, 3, 1, 0, 1, 3, 4, 3, 2, 3, 3, 2, 3, 4, 2, 3, 1, 2, 3, 2, 3, 1] },
-  // f10 — shortened from F10; 1× in Apel's tabulation
-  { id: "f10", slot: "termination", steps: [2, 1, 4, 4, 4, 4, 2, 2, 2, 0, 2, 2, 1, 1, 0] },
-  // F13 — 1× in Apel's tabulation
-  { id: "F13", slot: "termination", steps: [2, 4, 2, 3, 1, 2, 3, 4, 2, 3, 1, 0, 0, -1, 2, 1, 2, 4, 2, 1, 0, 2, 4, 4, 1, 3, 2, 0] },
-  // f17 — shortened from F17; 1× in Apel's tabulation
-  { id: "f17", slot: "termination", steps: [2, 4, 2, 1, 2, 4, 4, 2, 4, 4, 3, 2, 2, 4, 1, 1, 0] },
-  // F18 — 1× in Apel's tabulation
-  { id: "F18", slot: "termination", steps: [2, 4, 2, 4, 4, 2, 4, 4, 4, 4, 2, 1, 2, 4, 4, 4, 2, 4, 4, 4, 2, 4, 1, 1, 0] },
-  // f4 — 1× in Apel's tabulation
+  // f4 — 7× in Apel's tabulation (0% first, 0% mid, 100% last)
   { id: "f4", slot: "termination", steps: [0, 2, 4, 3, 4, 2, 0, 2, 1, 2, 1, 1, 0] },
+  // f10 — shortened from F10; 5× in Apel's tabulation (0% first, 0% mid, 100% last)
+  { id: "f10", slot: "termination", steps: [2, 1, 4, 4, 4, 4, 2, 2, 2, 0, 2, 2, 1, 1, 0] },
+  // F11 — 5× in Apel's tabulation (0% first, 0% mid, 100% last); 5 notes flagged uncertain
+  { id: "F11", slot: "termination", steps: [4, 4, 4, 5, 4, 4, 5, 4, 5, 4, 3, 4, 4, 4, 2, 4, 4, 4, 2, 4, 4, 2, 0, 1, 2, 4, 4, 5, 3, 4, 2, 3, 3, 1, 2, 0] },
+  // f5 — 5× in Apel's tabulation (0% first, 0% mid, 100% last); 2 notes flagged uncertain
+  { id: "f5", slot: "termination", steps: [2, 3, 1, 0, 1, 2, 1, 2, 4, 2, 2, 0, 1, 0] },
+  // F2 — 4× in Apel's tabulation (0% first, 0% mid, 100% last); 5 notes flagged uncertain
+  { id: "F2", slot: "termination", steps: [0, 1, 0, 0, 1, 2, 2, 4, 2, 1, 2, 3, 2, 1, 0, 0, 0, 0, -2, -3, 0, 1, 2, 1, 0, -1, 1, 2, 1, 2, 2, 1, 1, 0] },
+  // a2 — 3× in Apel's tabulation (0% first, 0% mid, 100% last); 3 notes flagged uncertain
+  { id: "a2", slot: "termination", steps: [0, 2, 4, 3, 4, 5, 3, 4, 2] },
+  // f6 — 3× in Apel's tabulation (0% first, 0% mid, 100% last); 2 notes flagged uncertain
+  { id: "f6", slot: "termination", steps: [0, 1, 0, 0, 2, 4, 2, 0, 4, 4, 3, 1, 0, 2, 1, 2, 1, 1, 0] },
+  // f16 — 2× in Apel's tabulation (0% first, 0% mid, 100% last); 1 note flagged uncertain
+  { id: "f16", slot: "termination", steps: [1, 2, 4, 3, 4, 1, 3, 4, 2, 3, 1, 0, 1, 2, 4, 2, 5, 2, 0, 1, 0] },
+  // F13 — 1× in Apel's tabulation (0% first, 0% mid, 100% last)
+  { id: "F13", slot: "termination", steps: [2, 4, 2, 3, 1, 2, 3, 4, 2, 3, 1, 0, 0, -1, 2, 1, 2, 4, 2, 1, 0, 2, 4, 4, 1, 3, 2, 0] },
   // f11_alt — shortened from F11; not in the tabulation as read
   { id: "f11_alt", slot: "termination", steps: [0, 1, 2, 4, 4, 5, 3, 4, 2, 3, 3, 1, 2, 0] },
-  // f3 — not in the tabulation as read
-  { id: "f3", slot: "termination", steps: [4, 2, 4, 4, 3, 2, 4, 1, 1, 0] },
-  // f5 — not in the tabulation as read; 2 notes flagged uncertain
-  { id: "f5", slot: "termination", steps: [2, 3, 1, 0, 1, 2, 1, 2, 4, 2, 2, 0, 1, 0] },
-  // f6 — not in the tabulation as read; 2 notes flagged uncertain
-  { id: "f6", slot: "termination", steps: [0, 1, 0, 0, 2, 4, 2, 0, 4, 4, 3, 1, 0, 2, 1, 2, 1, 1, 0] },
-  // fa — shortened from Fa; not in the tabulation as read
-  { id: "fa", slot: "termination", steps: [0, 1, 0, -2, -2, 1, 0, 1, 2, 1, 1, 2, 3, 1, 0, 0, -2, 0, 1, 0] },
   ],
 };
 
