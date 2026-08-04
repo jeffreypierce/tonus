@@ -193,3 +193,19 @@ export const CADENTIAE: CadentiaFamilia[] = [
   {"key":"2,-2,-3 @-3","shape":[2,-2,-3],"arrival":-3,"n":50,"share":0.0018,"finality":0.14,"modes":{"1":2,"4":2,"5":19,"6":27}},
   {"key":"1,-1,-2 @7","shape":[1,-1,-2],"arrival":7,"n":50,"share":0.0018,"finality":0.02,"modes":{"1":21,"7":26,"8":3}},
 ];
+
+// THE index, built once and shared. Every consumer joins on the family key, so
+// each one that builds its own Map is a third copy of the same lookup — the
+// renderer had one, the score builder needed one, and any caller wanting a
+// family's statistics had to write a fourth.
+let _index: Map<string, CadentiaFamilia> | null = null;
+
+/**
+ * The catalogued family for a cadence signature, or undefined when the
+ * signature falls below the table's floor. Deferred: a caller who never asks
+ * does not pay for the Map.
+ */
+export function cadentiaFamilia(key: string): CadentiaFamilia | undefined {
+  if (!_index) _index = new Map(CADENTIAE.map((f) => [f.key, f]));
+  return _index.get(key);
+}

@@ -27,7 +27,7 @@
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Cadence } from "../cadence.js";
 import type { Modulation } from "../modulation.js";
-import { CADENTIAE, type CadentiaFamilia } from "../../../data/cadentiae.js";
+import { cadentiaFamilia, type CadentiaFamilia } from "../../../data/cadentiae.js";
 import {
   INK, STRATUM, CONF_FLOOR, nib, sc, esc, HOUSE_SANS, HOUSE_MONO,
   sampleCubic, crSamples, velocityAt, velocityCeiling, ribbonPath, type Pt,
@@ -38,6 +38,14 @@ export type TrackName = "chironomia" | "tonarium";
 /** Analysis fields inscriptio hands the emitters when tracks are requested —
  * the score-level data the flat tabula does not carry. */
 export interface TrackData {
+  /**
+   * Normally `score.cadences`, whose `finality` the score builder has already
+   * joined from the catalogue. Cadences taken straight from `detectCadences`
+   * carry `finality: null` everywhere, and the terminal node quietly falls
+   * back to the modal target — a close on the finalis reads as closing, and
+   * everything else as suspending. Correct behaviour, but coarser than the
+   * measured answer, so pass the built score's cadences unless you mean it.
+   */
   cadences: Cadence[];
   modulations: Modulation[];
   /** Mode digit parsed from the chant's label; absent = no mode line. */
@@ -349,12 +357,6 @@ const MODE_FINAL: Record<number, string> = { 1: "D", 2: "D", 3: "E", 4: "E", 5: 
 const RAIL_ORDER = ["D", "E", "F", "G"]; // the finals ladder, D on the bottom
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
-let _famIndex: Map<string, CadentiaFamilia> | null = null;
-function famIndex(): Map<string, CadentiaFamilia> {
-  if (!_famIndex) _famIndex = new Map(CADENTIAE.map((f) => [f.key, f]));
-  return _famIndex;
-}
-
 /** The tonarium track, every system. */
 export function buildTonarium(notes: TrackNote[], data: TrackData,
   cfg: TonariumConfig): string {
@@ -465,8 +467,11 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       const x0 = Math.min(...fig.map((n) => n.x)) - 2 * k;
       const x1 = Math.max(...fig.map((n) => n.x));
       const op = 0.45 + 0.5 * cad.confidence;
-      const fam = cad.signature ? famIndex().get(cad.signature) : undefined;
-      const closes = (fam?.finality ?? (cad.target === "finalis" ? 1 : 0)) >= 0.5;
+      const fam = cad.signature ? cadentiaFamilia(cad.signature) : undefined;
+      // The score builder already joined finality; read it rather than
+      // re-deriving. A cadence handed in straight from the detector carries
+      // null here, and falls back to the modal target — see TrackData.cadences.
+      const closes = (cad.finality ?? (cad.target === "finalis" ? 1 : 0)) >= 0.5;
 
       // The figure's slice of its phrase's own samples — the same curve at
       // the same width, the ink change alone marking the claim.

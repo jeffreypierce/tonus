@@ -215,6 +215,74 @@ describe("the appendix (the export law)", () => {
     assert.ok(Object.isFrozen(POP) && Object.isFrozen(POP.byMode));
   });
 
+  test("cadentiaFamilia is THE index, not a second one", async () => {
+    const { CADENTIAE } = await import("../dist/index.js");
+    // Not on the appendix: it is a function, and the export law admits tables
+    // only. Consumers reach it through the data module.
+    const { cadentiaFamilia } = await import("../dist/data/cadentiae.js");
+    const fresh = new Map(CADENTIAE.map((f) => [f.key, f]));
+    for (const [key, fam] of fresh) {
+      assert.equal(cadentiaFamilia(key), fam, `${key} resolves to a different object`);
+    }
+    assert.equal(cadentiaFamilia("no such key @99"), undefined);
+  });
+
+  test("a cadence carries its family's finality, joined not re-derived", async () => {
+    const { cadentiaFamilia } = await import("../dist/data/cadentiae.js");
+    let joined = 0, floored = 0;
+    for (const chant of tonus.cantus({ source: "gr", limit: 60 })) {
+      let score;
+      try { score = tonus.notatio(chant); } catch { continue; }
+      for (const cad of score.cadences) {
+        const fam = cad.signature ? cadentiaFamilia(cad.signature) : undefined;
+        if (fam) {
+          // The joined value must BE the family's, not something recomputed
+          // from arrival or target that happens to look similar.
+          assert.equal(cad.finality, fam.finality,
+            `${cad.signature}: cadence says ${cad.finality}, table says ${fam.finality}`);
+          joined++;
+        } else {
+          // Below the floor there is no family — an uncatalogued close, not a
+          // close that never closes.
+          assert.equal(cad.finality, null, `${cad.signature} has no family but finality is set`);
+          floored++;
+        }
+      }
+    }
+    assert.ok(joined > 0 && floored > 0, `saw ${joined} joined / ${floored} floored`);
+  });
+
+  test("detector-fresh cadences carry null finality — the join is the builder's", async () => {
+    const { detectCadences } = await import("../dist/engines/score/cadence.js");
+    const { MODES } = await import("../dist/index.js");
+    const score = tonus.notatio(tonus.cantus({ source: "gr", limit: 1 })[0]);
+    // The detector is a pure pass: it computes the signature and stops, so the
+    // corpus artifact never enters the detection path.
+    const raw = detectCadences(score.phrases, MODES.get(2));
+    assert.ok(raw.length > 0);
+    assert.ok(raw.every((c) => c.finality === null),
+      "detectCadences filled finality — the corpus join leaked into detection");
+    // And the built score DID join it.
+    assert.ok(score.cadences.some((c) => c.finality !== null));
+  });
+
+  test("no formula rides a cadence off the finalis", async () => {
+    // True by construction (cadence.ts assigns `formula` only inside the
+    // target === "finalis" branch), kept as a tripwire: the tradita catalogue
+    // holds only final figures, so widening that branch without widening the
+    // catalogue would silently mislabel medial closes.
+    for (const chant of tonus.cantus({ source: "gr", limit: 80 })) {
+      let score;
+      try { score = tonus.notatio(chant); } catch { continue; }
+      for (const cad of score.cadences) {
+        if (cad.formula != null) {
+          assert.equal(cad.target, "finalis",
+            `${cad.formula} on a ${cad.target} cadence`);
+        }
+      }
+    }
+  });
+
   test("CADENTIAE joins live signatures — the key-orphan gap is closed", async () => {
     const { CADENTIAE } = await import("../dist/index.js");
     // Between the signed-arrival re-key and the re-mine, the table spoke

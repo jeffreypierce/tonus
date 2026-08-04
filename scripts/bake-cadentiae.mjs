@@ -155,6 +155,22 @@ export const CADENTIAE_POPULATION: {
 export const CADENTIAE: CadentiaFamilia[] = [
 ${body}
 ];
+
+// THE index, built once and shared. Every consumer joins on the family key, so
+// each one that builds its own Map is a third copy of the same lookup — the
+// renderer had one, the score builder needed one, and any caller wanting a
+// family's statistics had to write a fourth.
+let _index: Map<string, CadentiaFamilia> | null = null;
+
+/**
+ * The catalogued family for a cadence signature, or undefined when the
+ * signature falls below the table's floor. Deferred: a caller who never asks
+ * does not pay for the Map.
+ */
+export function cadentiaFamilia(key: string): CadentiaFamilia | undefined {
+  if (!_index) _index = new Map(CADENTIAE.map((f) => [f.key, f]));
+  return _index.get(key);
+}
 `;
 
 writeFileSync(OUT, file);

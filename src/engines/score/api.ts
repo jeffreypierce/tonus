@@ -12,6 +12,7 @@ import { detectModulations, type Modulation } from "./modulation.js";
 import { detectFormulas, type FormulaMatch } from "./formula.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import { MODES } from "../temper/modes.js";
+import { cadentiaFamilia } from "../../data/cadentiae.js";
 import type { Chant } from "../chant/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import type {
@@ -121,6 +122,17 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     ir.phrases,
     meta.mode != null ? MODES.get(meta.mode) : undefined,
   );
+
+  // The corpus join, on the same footing as MODES above: a resolved table
+  // meeting detected data. The detector computes the signature and stops, so
+  // this is the one place a cadence learns how often its family closes.
+  // Below the catalogue's floor there is no family, and finality stays null —
+  // an uncatalogued close, not a close that never closes.
+  for (const cadence of cadences) {
+    cadence.finality = cadence.signature
+      ? (cadentiaFamilia(cadence.signature)?.finality ?? null)
+      : null;
+  }
 
   // Modulation: where the tonal centre leans away from the home mode.
   const modulations = detectModulations(ir.phrases, meta.mode ?? undefined);
