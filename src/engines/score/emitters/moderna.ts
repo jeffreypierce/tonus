@@ -39,19 +39,109 @@ const G = {
   quilisma: "EA20",       // medRenQuilismaCMN
 };
 
-// ── geometry constants (from moderna-generator.py) ──
-const MSP = 7.4;                    // staff space
-const SCALE = (MSP * 4) / 1000;     // SMuFL: 1 em = 4 spaces
-const MTOP = 20;                    // top staff line, system-local
-const NH_W = 295 * SCALE;           // noteheadBlack advance ≈ 8.7px
-const ADV = 12.8;                   // per-note advance inside a melisma
-const SYL_GAP = 7;                  // gap after each syllable
-const LYRIC_Y = MTOP + 4 * MSP + 21;
+// ── geometry, as a function of the staff ──────────────────────────────────
+//
+// THE CONTRACT (ruled 2026-08-04): `staffHeight` is the height of the STAFF
+// ITSELF — top line to bottom line — and means the same thing in both species.
+// Quadrata's four lines and moderna's five then occupy the same band, which is
+// what "the same size" means when the two sit on one page: the eye reads the
+// block of staff, not the gap between its lines.
+//
+// Moderna was engraved against a fixed 7.4px space (`MSP_1` below, from
+// moderna-generator.py) and read no option at all — measured, a request of 30,
+// 40 or 60 left it at 7.4 every time while quadrata moved 10 → 13.3 → 20. Two
+// species that could not be brought to one size by anything a caller passed.
+//
+// The fix has to happen BEFORE layout, not after it. Scaling the finished SVG
+// looks right in isolation and fails in a page: it scales the width too, so a
+// wider render is shrunk further by whatever `max-width` the host applies, and
+// the two species land at different on-screen sizes again. (Measured: post-
+// scaling moderna to span 40 pushed its width 1016 → 1373, and the site's
+// column shrank it straight back to 26px against quadrata's 36.)
+//
+// So every constant derives from the space, and the space derives from the
+// requested staff height. `metrics()` is that derivation, computed once per
+// render and threaded through the helpers that draw.
+const MSP_1 = 7.4;                     // the engraved staff space
+const SCALE_1 = (MSP_1 * 4) / 1000;    // SMuFL: 1 em = 4 spaces
+const MTOP_1 = 20;                     // top staff line, system-local
+// Per-note advance inside a melisma — the DENSITY dial, and the number that
+// decides how much music fills a line.
+//
+// 12.8 was the engraved value: 1.47x the notehead, generous modern spacing.
+// Against quadrata's ~6px it meant the same chant took twice the systems, and
+// a reader comparing the two species saw one of them looking half the size —
+// which is what the eye actually reads, more than the staff block does.
+//
+// Ruled 2026-08-04: the species match on DENSITY. Not identically — moderna's
+// noteheads are round and need air where quadrata's squares can abut — but
+// close enough that a line of one holds about as much music as a line of the
+// other.
+const ADV_1 = 8.4;
+const SYL_GAP_1 = 7;                   // gap after each syllable
+// Staff bottom → lyric baseline. NOT scaled with the staff: the duae species
+// share one lyric setting (ruled 2026-07-29), and that ruling is about type,
+// which sits at its own size. Scaling it with the staff broke the parity the
+// moment moderna's staff started moving.
+const LYRIC_GAP = 21;
 const SYSTEM_GAP_DEFAULT = 24;
 
-// Quadrata's default staffHeight — the number a span scale is measured
-// against, so that `staffHeight: 40` means the same size in either species.
-const QUADRATA_DEFAULT_HEIGHT = 40;
+/** The staff height both species answer to when the caller names none. */
+const DEFAULT_STAFF_HEIGHT = 40;
+
+/** Moderna's engraved span: five lines, four spaces. */
+const MODERNA_SPAN_1 = 4 * MSP_1;
+
+/** Every geometric constant, derived from the requested staff height. */
+export interface ModernaMetrics {
+  /** Staff space — the distance between two lines. */
+  MSP: number;
+  /** SMuFL glyph scale: 1 em = 4 staff spaces. */
+  SCALE: number;
+  /** Top staff line, system-local. */
+  MTOP: number;
+  /** noteheadBlack advance. */
+  NH_W: number;
+  /** Per-note advance inside a melisma. */
+  ADV: number;
+  /** Gap after each syllable. */
+  SYL_GAP: number;
+  /** Lyric baseline, system-local. */
+  LYRIC_Y: number;
+  /** The factor against the engraved metrics — 1 at the default. */
+  k: number;
+}
+
+/**
+ * Moderna's metrics for a requested staff height.
+ *
+ * Everything scales together, so the engraving's internal relationships —
+ * notehead to staff, slur to notehead, lyric to baseline — hold at any size;
+ * they were drawn as a set and stay one.
+ */
+export function metrics(staffHeight?: number): ModernaMetrics {
+  // `staffHeight` scales the engraving as a whole. Moderna keeps its own
+  // proportions — a five-line staff at its engraved space — rather than
+  // forcing its span onto quadrata's four-line block: matching the SPANS made
+  // moderna render wider than the caller asked for (1155px for a requested
+  // 900), so a host applying `max-width` shrank it further and the two species
+  // landed at different on-screen sizes again. What a reader compares is how
+  // much music fills a line, and that is the note advance, not the staff.
+  const k = (staffHeight ?? DEFAULT_STAFF_HEIGHT) / DEFAULT_STAFF_HEIGHT;
+  const MSP = MSP_1 * k;
+  const SCALE = (MSP * 4) / 1000;
+  const MTOP = MTOP_1 * k;
+  return {
+    MSP,
+    SCALE,
+    MTOP,
+    NH_W: 295 * SCALE,
+    ADV: ADV_1 * k,
+    SYL_GAP: SYL_GAP_1 * k,
+    LYRIC_Y: MTOP + 4 * MSP + LYRIC_GAP,
+    k,
+  };
+}
 
 const LETTERS: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
 
@@ -59,15 +149,15 @@ const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Written y for a scientific pitch name on the treble-8 staff (bottom line E4). */
-function writtenY(spn: string, systemY: number): { y: number; steps: number } {
+function writtenY(spn: string, systemY: number, gm: ModernaMetrics): { y: number; steps: number } {
   const m = /([A-G])[#b]?(-?\d)/.exec(spn);
-  if (!m) return { y: systemY + MTOP + 4 * MSP, steps: 0 };
+  if (!m) return { y: systemY + gm.MTOP + 4 * gm.MSP, steps: 0 };
   const di = (Number(m[2]) + 2) * 7 + LETTERS[m[1]!]!;
   const steps = di - (4 * 7 + LETTERS["E"]!); // relative to bottom line E4
-  return { y: systemY + MTOP + 4 * MSP - steps * (MSP / 2), steps };
+  return { y: systemY + gm.MTOP + 4 * gm.MSP - steps * (gm.MSP / 2), steps };
 }
 
-function glyph(name: string, x: number, y: number, scale = SCALE): string {
+function glyph(name: string, x: number, y: number, scale: number): string {
   const g = GLYPHS[name];
   if (!g) return "";
   return `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})">` +
@@ -75,26 +165,26 @@ function glyph(name: string, x: number, y: number, scale = SCALE): string {
 }
 
 /** A glyph carrying an SVG class (so downstream tracks / tests can select it). */
-function classedGlyph(cls: string, name: string, x: number, y: number, scale = SCALE): string {
+function classedGlyph(cls: string, name: string, x: number, y: number, scale: number): string {
   const g = GLYPHS[name];
   if (!g) return "";
   return `<g class="${cls}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})">` +
     `<path d="${g.path}" fill="#111"/></g>`;
 }
 
-function notehead(x: number, y: number, small: boolean, half: boolean): string {
-  const s = SCALE * (small ? 0.68 : 1.0);
+function notehead(x: number, y: number, small: boolean, half: boolean, gm: ModernaMetrics): string {
+  const s = gm.SCALE * (small ? 0.68 : 1.0);
   const w = 295 * s;
   return glyph(half ? G.noteheadHalf : G.noteheadBlack, x - w / 2, y, s);
 }
 
-function clef(x: number, systemY: number): string {
-  return glyph(G.gClef8vb, x, systemY + MTOP + 3 * MSP);
+function clef(x: number, systemY: number, gm: ModernaMetrics): string {
+  return glyph(G.gClef8vb, x, systemY + gm.MTOP + 3 * gm.MSP, gm.SCALE);
 }
 
-function moraDots(x: number, y: number, onLine: boolean): string {
-  const dy = onLine ? -MSP / 2 : 0;
-  return glyph(G.augmentationDot, x + 6.4, y + dy);
+function moraDots(x: number, y: number, onLine: boolean, gm: ModernaMetrics): string {
+  const dy = onLine ? -gm.MSP / 2 : 0;
+  return glyph(G.augmentationDot, x + 6.4, y + dy, gm.SCALE);
 }
 
 // The engraved slur: a filled two-cubic shape tapered to points, belly ~1.55.
@@ -111,38 +201,38 @@ function slur(x0: number, y0: number, x1: number, ytop: number): string {
     `C ${c1x.toFixed(2)} ${ci.toFixed(2)} ${c0x.toFixed(2)} ${ci.toFixed(2)} ${x0.toFixed(2)} ${a0.toFixed(2)} Z" fill="#111"/>`;
 }
 
-function quilismaMark(x: number, y: number): string {
-  const s = SCALE * 0.92;
+function quilismaMark(x: number, y: number, gm: ModernaMetrics): string {
+  const s = gm.SCALE * 0.92;
   const w = 416 * s;
-  return glyph(G.quilisma, x - NH_W / 2 - w - 1.2, y + 149 * s, s);
+  return glyph(G.quilisma, x - gm.NH_W / 2 - w - 1.2, y + 149 * s, s);
 }
 
 // Accidental glyph scale (matches quadrata's noteScale * 0.62 factor).
-const ACC_SCALE = SCALE * 0.62;
+
 const ACC_GAP = 1.2; // trailing air between accidental and notehead (as quilisma)
 
 /** Horizontal room an accidental glyph reserves left of the notehead. */
-function accidentalWidth(code: string): number {
+function accidentalWidth(code: string, gm: ModernaMetrics): number {
   const g = GLYPHS[code];
   if (!g) return 0;
-  return g.advance * ACC_SCALE + ACC_GAP;
+  return g.advance * (gm.SCALE * 0.62) + ACC_GAP;
 }
 
 /** Draw a standard/HEJI accidental glyph left of the notehead at (x, y). */
-function accidentalMark(x: number, y: number, code: string): string {
-  return classedGlyph("accidental", code, x - NH_W / 2 - accidentalWidth(code), y, ACC_SCALE);
+function accidentalMark(x: number, y: number, code: string, gm: ModernaMetrics): string {
+  return classedGlyph("accidental", code, x - gm.NH_W / 2 - accidentalWidth(code, gm), y, (gm.SCALE * 0.62));
 }
 
 const DIV_KIND: Record<string, string> = {
   "`": "tick", ",": "tick", ";": "half", ":": "full", "::": "double",
 };
 
-function divisioMark(x: number, kind: string, top: number, final: boolean): string {
-  const bot = top + 4 * MSP;
+function divisioMark(x: number, kind: string, top: number, final: boolean, gm: ModernaMetrics): string {
+  const bot = top + 4 * gm.MSP;
   if (kind === "tick")
     return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top - 7}" x2="${x.toFixed(2)}" y2="${top - 1}" stroke="#111" stroke-width="0.9"/>`;
   if (kind === "half")
-    return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top + MSP}" x2="${x.toFixed(2)}" y2="${top + 3 * MSP}" stroke="#111" stroke-width="0.9"/>`;
+    return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top + gm.MSP}" x2="${x.toFixed(2)}" y2="${top + 3 * gm.MSP}" stroke="#111" stroke-width="0.9"/>`;
   if (kind === "full")
     return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${bot}" stroke="#111" stroke-width="0.9"/>`;
   if (final)
@@ -183,13 +273,17 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const lyricEmbed = typeof lyricSlot === "object" && lyricSlot.embed
     ? fontFaceCss([{ family: lyricFace, weight: lyricWeight, scale: 1, embed: lyricSlot.embed }])
     : "";
+  // Every geometric constant for this render, derived from the requested staff
+  // height. Built once and passed to the helpers that draw — see metrics().
+  const gm = metrics(options.staffHeight);
+
   const padding = options.padding ?? 14;
   const width = options.width ?? null;
   const systemGap = options.systemGap ?? SYSTEM_GAP_DEFAULT;
   // A requested track band widens every system by its reserved room. Moderna's
-  // staff is fixed (MSP), so the track scale is always 1 here.
+  // staff is fixed (gm.MSP), so the track scale is always 1 here.
   const bands = trackBands(options.tracks, 1);
-  const systemHeight = LYRIC_Y + 24 + bands.extra + systemGap;
+  const systemHeight = gm.LYRIC_Y + 24 + bands.extra + systemGap;
 
   // Intonation channel: precompute each row's accidental/cents mark once (the
   // repeat-suppression and heji guard live in the engine), keyed by identity.
@@ -247,7 +341,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   // their first notes through it.
   const CLEF_ZONE = 32;
   let x = padding + CLEF_ZONE;
-  const clefSvgs: string[] = [clef(10, topPad)];
+  const clefSvgs: string[] = [clef(10, topPad, gm)];
 
   // The floating cents band dodges its own collisions: two rows above the
   // staff, greedy — a label crowding the last one on the low row steps up.
@@ -280,7 +374,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       systemY += systemHeight;
       x = padding + CLEF_ZONE;
       centsRowX[0] = centsRowX[1] = -Infinity;
-      clefSvgs.push(clef(10, systemY));
+      clefSvgs.push(clef(10, systemY, gm));
     }
 
     // Display form: trimmed styled runs when markup rides, else the trimmed
@@ -289,39 +383,39 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     const lyr = spans ? spans.map((s) => s.text).join("") : stripLyric(srows[0]!.lyric ?? "");
 
     // Note x-positions within the syllable.
-    let nx = x + NH_W / 2 + 1;
+    let nx = x + gm.NH_W / 2 + 1;
     const notePos: Array<{ mx: number; my: number; steps: number }> = [];
     for (const r of srows) {
       if (r.quilisma) nx += 9.6;      // room for the fused squiggle
       const mk = markByRow.get(r);
-      if (mk?.kind === "glyph") nx += accidentalWidth(mk.glyph!); // room for the accidental
-      const { y, steps } = writtenY(r.spn, systemY);
+      if (mk?.kind === "glyph") nx += accidentalWidth(mk.glyph!, gm); // room for the accidental
+      const { y, steps } = writtenY(r.spn, systemY, gm);
       notePos.push({ mx: nx, my: y, steps });
-      nx += ADV + 4.6 * r.mora;
+      nx += gm.ADV + 4.6 * r.mora;
     }
-    const notesW = nx - x - ADV + NH_W / 2 + 2;
+    const notesW = nx - x - gm.ADV + gm.NH_W / 2 + 2;
     const sylW = Math.max(notesW, textW(lyr));
 
     // Draw notes.
     srows.forEach((r, i) => {
       const { mx, my, steps } = notePos[i]!;
       const onLine = steps % 2 === 0;
-      if (r.quilisma) body.push(quilismaMark(mx, my));
+      if (r.quilisma) body.push(quilismaMark(mx, my, gm));
       const mk = markByRow.get(r);
-      if (mk?.kind === "glyph") body.push(accidentalMark(mx, my, mk.glyph!));
+      if (mk?.kind === "glyph") body.push(accidentalMark(mx, my, mk.glyph!, gm));
       else if (mk?.kind === "cents") {
         // Cents labels float in a band above the staff (not glued to the
         // head) — an analytic overlay, not an engraving mark.
         const bandRow = mx - centsRowX[0] >= CENTS_MIN_GAP ? 0 : 1;
         centsRowX[bandRow] = mx;
         body.push(
-          `<text class="cents" x="${mx.toFixed(2)}" y="${(systemY + MTOP - 10 - bandRow * 10).toFixed(2)}" ` +
+          `<text class="cents" x="${mx.toFixed(2)}" y="${(systemY + gm.MTOP - 10 - bandRow * 10).toFixed(2)}" ` +
           `text-anchor="middle" font-size="${CENTS_SIZE}" fill="#666" ` +
           `font-family="'Crimson Pro', Georgia, serif">${esc(mk.label ?? "")}</text>`,
         );
       }
-      body.push(notehead(mx, my, r.liquescent, r.mora === 2));
-      if (r.mora === 1) body.push(moraDots(mx, my, onLine));
+      body.push(notehead(mx, my, r.liquescent, r.mora === 2, gm));
+      if (r.mora === 1) body.push(moraDots(mx, my, onLine, gm));
       placements.push({ row: r, x: mx, y: my, system, systemY });
     });
 
@@ -350,12 +444,12 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
     // Lyric — collected here, emitted (with centred hyphens between same-word
     // syllables, matching quadrata's Vendôme practice) after the walk.
-    const tx = notePos[0]!.mx - NH_W / 2;
+    const tx = notePos[0]!.mx - gm.NH_W / 2;
     if (lyr) {
       lyricRuns.push({ x: tx, systemY, text: lyr, spans, wordStart: srows[0]!.wordStart });
     }
 
-    x += sylW + SYL_GAP;
+    x += sylW + gm.SYL_GAP;
 
     // Divisio at a phrase end.
     const last = srows[srows.length - 1]!;
@@ -365,14 +459,14 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       const kind = DIV_KIND[last.divisio] ?? "full";
       const pad = { tick: 2, half: 5, full: 7, double: 9 }[kind] ?? 7;
       const isFinal = nextK === null;
-      body.push(divisioMark(x + pad - 4, kind, systemY + MTOP, isFinal));
+      body.push(divisioMark(x + pad - 4, kind, systemY + gm.MTOP, isFinal, gm));
       x += pad + 8;
     }
   }
 
   systemMaxX.push(x + padding);
   const W = Math.ceil(Math.max(...systemMaxX));
-  const height = Math.ceil(systemY + LYRIC_Y + 24 + bands.extra);
+  const height = Math.ceil(systemY + gm.LYRIC_Y + 24 + bands.extra);
 
   // ── The analysis tracks, below each system ──
   // Downstream of the notation: they consume the placements (the same anchors
@@ -386,13 +480,13 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       // interval, near enough to moderna's fixed staff space to read at k: 1.
       body.push(buildChironomia(trackNotes, {
         k: 1,
-        waveMidY: LYRIC_Y + bands.chironomia.top + 33,
+        waveMidY: gm.LYRIC_Y + bands.chironomia.top + 33,
       }));
     }
     if (bands.tonarium) {
       body.push(buildTonarium(trackNotes, options.trackData ?? { cadences: [], modulations: [] }, {
         k: 1,
-        laneTop: LYRIC_Y + bands.tonarium.top + 26,
+        laneTop: gm.LYRIC_Y + bands.tonarium.top + 26,
         rightFor: (s) => (systemMaxX[s] ?? W) - padding,
         serifFamily: lyricFace,
         rubricaColor: options.rubricaColor ?? "#9E2B25",
@@ -406,7 +500,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     const sysY = s * systemHeight + topPad;
     const right = (systemMaxX[s] ?? W) - padding;
     for (let i = 0; i < 5; i++) {
-      const ly = sysY + MTOP + i * MSP;
+      const ly = sysY + gm.MTOP + i * gm.MSP;
       staff.push(`<line x1="4" y1="${ly.toFixed(2)}" x2="${right.toFixed(2)}" y2="${ly.toFixed(2)}" stroke="#111" stroke-width="0.7"/>`);
     }
   }
@@ -421,7 +515,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   for (let k = 0; k < lyricRuns.length; k++) {
     const run = lyricRuns[k]!;
     lyricSvgs.push(
-      `<text class="lyric" x="${run.x.toFixed(2)}" y="${(run.systemY + LYRIC_Y).toFixed(2)}" ` +
+      `<text class="lyric" x="${run.x.toFixed(2)}" y="${(run.systemY + gm.LYRIC_Y).toFixed(2)}" ` +
       `font-size="${lyricSize.toFixed(1)}" ` +
       `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">${lyricMarkup(run.spans, run.text, rubricaColor)}</text>`,
     );
@@ -431,7 +525,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       if (next.x - thisRight > lyricSize * 0.25) {
         const hx = (thisRight + next.x) / 2;
         lyricSvgs.push(
-          `<text class="lyric hyphen" x="${hx.toFixed(2)}" y="${(run.systemY + LYRIC_Y).toFixed(2)}" ` +
+          `<text class="lyric hyphen" x="${hx.toFixed(2)}" y="${(run.systemY + gm.LYRIC_Y).toFixed(2)}" ` +
           `text-anchor="middle" font-size="${lyricSize.toFixed(1)}" ` +
           `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">-</text>`,
         );
@@ -459,41 +553,13 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     );
   });
 
-  // ── staffHeight ──────────────────────────────────────────────────────────
-  //
-  // Moderna's engraving is laid out at a FIXED staff space (MSP), the metrics
-  // its generator was drawn against. That made `staffHeight` a quadrata-only
-  // option: measured, a request of 30, 40 or 60 left moderna at 7.4px every
-  // time while quadrata moved 10 → 13.3 → 20. Two species that cannot be
-  // brought to one size by any option a caller passes.
-  //
-  // Ruled 2026-08-04: they match on TOTAL STAFF SPAN, not on staff space. A
-  // chant staff has four lines and a modern staff five, so equal spaces would
-  // leave moderna standing taller for the same music — the eye reads the block
-  // of staff, not the gap between its lines.
-  //
-  // The whole engraving is scaled as one piece rather than re-deriving thirty
-  // constants: the layout is internally consistent at MSP, so a uniform factor
-  // keeps every relationship inside it — notehead to staff, slur to notehead,
-  // lyric to baseline — exactly as engraved. The geometry contract scales with
-  // it, so `geometry[i]` still lands on the ink it names.
-  //
-  // At the default this factor is 1 and the output is byte-identical.
-  const spanScale = (options.staffHeight ?? QUADRATA_DEFAULT_HEIGHT) / QUADRATA_DEFAULT_HEIGHT;
-  const sw = W * spanScale;
-  const sh = height * spanScale;
-  const scaled = spanScale === 1
-    ? ""
-    : ` transform="scale(${spanScale.toFixed(5)})"`;
-
   const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sw.toFixed(1)} ${sh.toFixed(1)}" ` +
-    `width="${sw.toFixed(1)}" height="${sh.toFixed(1)}" class="tonus-chant moderna">${svgTitle}` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${height}" ` +
+    `width="${W}" height="${height}" class="tonus-chant moderna">${svgTitle}` +
     lyricEmbed +
-    `<g${scaled}>` +
     header.join("") +
     staff.join("") + clefSvgs.join("") + body.join("") + slurs.join("") + lyricSvgs.join("") +
-    `</g></svg>`;
+    `</svg>`;
 
   const geometry: NoteGeometry[] = placements.map((pl) => ({
     phraseIndex: pl.row.phraseIndex,
@@ -501,9 +567,9 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     neumeGroup: pl.row.neumeGroup,
     noteIndex: pl.row.neumeIndex,
     system: pl.system,
-    x: Number((pl.x * spanScale).toFixed(2)),
-    y: Number((pl.y * spanScale).toFixed(2)),
-    systemY: Number((pl.systemY * spanScale).toFixed(2)),
+    x: Number(pl.x.toFixed(2)),
+    y: Number(pl.y.toFixed(2)),
+    systemY: Number(pl.systemY.toFixed(2)),
   }));
 
   return { svg, geometry };
