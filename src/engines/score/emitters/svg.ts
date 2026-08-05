@@ -779,7 +779,33 @@ export function toSvg(
       x = drawClef(activeClef, x + r.interGlyph);
     }
 
-    const newSyllable = syllableIndex !== prevSyllable || phraseIndex !== prevPhrase;
+      const newSyllable = syllableIndex !== prevSyllable || phraseIndex !== prevPhrase;
+
+      // ── The engraver's own break ────────────────────────────────────────
+      //
+      // GABC's `z` says "start a new line here", and it is not a hint: an
+      // editor who set a chant chose where its lines end, and that choice
+      // carries a reading of the piece a width cannot infer. tonus SKIPPED the
+      // token at parse — 41 Graduale chants carry one and every break was
+      // being thrown away, which is why the automatic breaks looked arbitrary
+      // against a printed copy.
+      //
+      // It wins over the fit test. Where it is absent the layout still decides.
+      if (r.width != null && figure[0]!.lineBreak && prevSyllable !== -1) {
+        if (r.custos) {
+          const cp = placeGlyph(GLYPH.punctum, x + r.interGlyph,
+            yFor(figure[0]!.staffPosition, L, r), r, "custos", "", r.noteScale * 0.85);
+          if (cp) body.push(cp.svg);
+        }
+        systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
+        L.systemY += L.systemHeight;
+        system++;
+        x = r.padding;
+        x = drawClef(activeClef, x);
+        prevLyricRight = -Infinity;
+        afterDivisio = true;
+      }
+
     if (newSyllable && prevSyllable !== -1) {
       x += afterDivisio ? 0 : r.interSyllable;
       if (figure[0]!.wordStart && !afterDivisio) x += r.interWord;
