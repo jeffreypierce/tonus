@@ -359,11 +359,20 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     bySyl.get(k)!.push(r);
   }
 
-  const breakBefore = (k: string): boolean => {
-    // A new system starts when the running x overflows the width, at a syllable
-    // boundary. (Moderna breaks between syllables, honouring word/phrase flow.)
-    return width != null && x > width - padding;
-  };
+    const breakBefore = (k: string): boolean => {
+      // A new system starts when the coming syllable will not fit. Moderna
+      // breaks BETWEEN SYLLABLES, a finer granularity than quadrata's divisio,
+      // so the estimate can be exact rather than statistical: the syllable's own
+      // notes at their own advance, plus the gap that follows it.
+      //
+      // The check was `x > width - padding`, which fires only once the boundary
+      // has been crossed — so the last syllable of a system routinely ended past
+      // the canvas and was clipped.
+      if (width == null) return false;
+      const srows = bySyl.get(k) ?? [];
+      const need = srows.length * gm.ADV + gm.SYL_GAP;
+      return x > width - padding || x + need > width - padding;
+    };
 
   for (let si = 0; si < sylKeys.length; si++) {
     const k = sylKeys[si]!;
@@ -479,8 +488,8 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     // inside it; it no longer decides how big the picture is. Without a width
     // there is nothing to wrap to and the content still sets the size.
   const contentW = Math.ceil(Math.max(...systemMaxX));
-  // The requested width, or the content where it is wider — see svg.ts.
-  const W = width != null ? Math.max(Math.ceil(width), contentW) : contentW;
+  // The requested width — see the matching note in svg.ts.
+  const W = width != null ? Math.ceil(width) : contentW;
   const height = Math.ceil(systemY + gm.LYRIC_Y + 24 + bands.extra);
 
   // ── The analysis tracks, below each system ──

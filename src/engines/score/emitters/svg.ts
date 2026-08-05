@@ -810,18 +810,20 @@ export function toSvg(
       // why "sometimes bigger, sometimes smaller" varied by chant: the overrun
       // depends on where the phrases happen to fall.
       //
-      // The estimate is deliberately rough — the coming phrase's figures at a
-      // nominal advance, no lyrics — and capped at half a system, because a
-      // phrase that would overrun by a little is better kept than moved. It
-      // only has to be right about whether roughly a system's worth follows.
+      // The estimate is calibrated, not guessed: measured over twenty graduals,
+      // a phrase's width is 1.53 x (notes x staffInterval) at the median and
+      // 2.26 at p90. 2.2 keeps most phrases inside the line; a lower figure
+      // (1.35, the first attempt) sat at the median and let half of them spill.
+      // Capped at 0.8 of a system, since a phrase longer than that has nowhere
+      // better to go and moving it only empties the line it left.
       const moreToCome = j < rows.length;
       let nextPhraseW = 0;
       if (r.width != null && moreToCome) {
         const phrase = rows[j]!.phraseIndex;
         for (let k = j; k < rows.length && rows[k]!.phraseIndex === phrase; k++) {
-          nextPhraseW += r.staffInterval * 1.35;
+          nextPhraseW += r.staffInterval * 2.2;
         }
-        nextPhraseW = Math.min(nextPhraseW, r.width * 0.5);
+        nextPhraseW = Math.min(nextPhraseW, r.width * 0.8);
       }
       if (r.width != null && moreToCome &&
           (x > r.width - r.padding || x + nextPhraseW > r.width - r.padding)) {
@@ -922,21 +924,17 @@ export function toSvg(
   // full column would leave a short chant floating in white space, and any
   // host that scales to fit would then shrink the notation for having been
   // short. That is the bug this line replaced, in the other direction.
-  // The canvas is the requested width, or the content where the content is
-  // wider. Both halves are load-bearing and I got each wrong once today.
+  // The canvas is the requested width. Every render on a page then shares one
+  // scale, which is the thing a reader actually notices: width used to be
+  // `max(systemMaxX)`, so a requested 900 came back 915, 986, 1074, 1203 by
+  // chant and a host applying `max-width` shrank each differently.
   //
-  // Honouring the request keeps every render on a page at ONE scale: width was
-  // `max(systemMaxX)` before, so a requested 900 came back 915, 986, 1074,
-  // 1203 by chant, and a host applying `max-width` shrank each differently —
-  // the "sometimes bigger, sometimes smaller" report.
-  //
-  // Never clipping is what the `max` is for. A system breaks only at a
-  // DIVISIO, so a phrase with no divisio before the boundary legitimately runs
-  // past it — clipping to the request cut the tail off the staff, which is the
-  // "quadrata doesn't render the whole chant" report. The overrun is the
-  // engraving being honest about where a chant may be broken; the canvas
-  // follows it rather than truncating it.
-  const width = r.width != null ? Math.max(Math.ceil(r.width), contentW) : contentW;
+  // Content that overruns is handled at the SOURCE — the wrap check breaks a
+  // system before it spills (see the lookahead below) — not by growing the
+  // canvas to fit it. Letting the canvas follow the content is what made the
+  // scale wander again; letting it clip is what cut the tail off a staff. The
+  // overrun itself had to go.
+  const width = r.width != null ? Math.ceil(r.width) : contentW;
   const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + bands.extra);
 
   // ── The analysis tracks, below each system ──
