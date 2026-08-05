@@ -58,10 +58,19 @@ export interface TrackData {
  * The same anchors the geometry contract exports, with the row attached. */
 export interface TrackNote {
   row: ChantTabulaRow;
+  /** The note's anchor — where the emitter placed it. */
   x: number;
   y: number;
   system: number;
   systemY: number;
+  /** The figure's measured ink edges. A track that SPANS notes — the cadence
+   *  bracket, an arc over a neume — must reach the ink, not the anchors: a
+   *  span drawn anchor-to-anchor is narrower than the notes it names and sits
+   *  left of their centre, because an anchor is where a glyph starts rather
+   *  than where it sits. The emitters have measured these all along and the
+   *  mapping into TrackNote used to drop them. */
+  inkLeft: number;
+  inkRight: number;
 }
 
 /** One track's room within the band a system reserves below its lyric line. */
@@ -491,8 +500,10 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       if (cad.confidence < CONF_FLOOR) continue; // don't ink weak claims
       const fig = sysNotes.filter((n) => n.row.cadenceRef === ci);
       if (fig.length === 0) continue;
-      const x0 = Math.min(...fig.map((n) => n.x)) - 2 * k;
-      const x1 = Math.max(...fig.map((n) => n.x));
+      // The figure's real extent. This was anchor-to-anchor with a 2k fudge
+      // standing in for the ink the mapping had discarded.
+      const x0 = Math.min(...fig.map((n) => n.inkLeft));
+      const x1 = Math.max(...fig.map((n) => n.inkRight));
       const op = 0.45 + 0.5 * cad.confidence;
       const fam = cad.signature ? cadentiaFamilia(cad.signature) : undefined;
       // The score builder already joined finality; read it rather than

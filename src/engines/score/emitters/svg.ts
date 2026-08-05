@@ -996,6 +996,7 @@ export function toSvg(
   if (bands.chironomia || bands.tonarium) {
     const trackNotes: TrackNote[] = placements.map((pl) => ({
       row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
+      inkLeft: pl.inkLeft, inkRight: pl.inkRight,
     }));
     if (bands.chironomia) {
       body.push(buildChironomia(trackNotes, {

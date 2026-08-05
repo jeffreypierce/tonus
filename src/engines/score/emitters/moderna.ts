@@ -498,6 +498,10 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   if (bands.chironomia || bands.tonarium) {
     const trackNotes: TrackNote[] = placements.map((pl) => ({
       row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
+      // Moderna centres its noteheads on the anchor, so the ink edges are
+      // derived; quadrata's square glyphs start at the anchor and are
+      // measured as they are placed, so it records them.
+      inkLeft: pl.x - gm.NH_W / 2, inkRight: pl.x + gm.NH_W / 2,
     }));
     if (bands.chironomia) {
       // The wave's constants are calibrated at quadrata's default staff
