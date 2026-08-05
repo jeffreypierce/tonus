@@ -828,10 +828,24 @@ export function toSvg(
       if (r.width != null && moreToCome &&
           (x > r.width - r.padding || x + nextPhraseW > r.width - r.padding)) {
         if (r.custos) {
-          // A line-end guide to the next system's first pitch. Drawn as a small
-          // punctum at that pitch (no dedicated custos glyph in the bake yet).
+          // The line-end guide naming the next system's first pitch. Bravura
+          // bakes a real custos — a hooked note whose stem points TOWARD the
+          // pitch it announces — and it was being drawn as a shrunken punctum
+          // instead, on a stale comment claiming no glyph was baked. It reads
+          // as a stray note hanging off the end of the line, which is exactly
+          // what a custos must not look like.
+          //
+          // Stem direction follows the staff position: high on the staff the
+          // hook points down, low it points up. Position 4 is the middle line.
           const nextPos = rows[j]!.staffPosition;
-          const p = placeGlyph(GLYPH.punctum, x + r.interGlyph, yFor(nextPos, L, r), r, "custos", "", r.noteScale * 0.85);
+          const glyph = nextPos > 4 ? GLYPH.custosDown : GLYPH.custosUp;
+          // Snug to the barline, not floating after it. `x` has already taken
+          // the divisio's trailing air (2.1 staff intervals), which put the
+          // custos 41-46px past the last note — reading as a stray note rather
+          // than as a sign belonging to the line's end. The books set it tight
+          // against the margin; pulling that air back does the same.
+          const cx = x - r.staffInterval * 2.1 + r.interGlyph;
+          const p = placeGlyph(glyph, cx, yFor(nextPos, L, r), r, "custos");
           if (p) body.push(p.svg);
         }
         systemMaxX.push(x + r.padding);

@@ -46,6 +46,11 @@ export const GLYPH = {
   oriscusDesc: "E99D",
   strophicus: "E99F",
   punctumDeminutum: "E9A1",
+  // custos — the line-end guide naming the next system's first pitch. Bravura
+  // draws it as a hooked note, stem up or down by where the pitch sits: the
+  // hook points TOWARD the note it announces, which is the whole signal.
+  custosUp: "E8F4",
+  custosDown: "E8F5",
   // note components
   podatusLower: "E9B0",
   podatusUpper: "E9B1",
