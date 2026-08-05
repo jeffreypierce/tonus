@@ -88,6 +88,7 @@ export interface Context {
    *  choice carries information a width cannot: a break at the right place is
    *  an editorial reading of the piece. Where it is absent the layout decides. */
   lineBreak?: boolean;
+  keepWithPrev?: boolean;
   /** Raw GABC pitch letter a–m — the staff slot for square-note rendering. */
   staffLetter: string;
   /** Active GABC clef when this note sounded, e.g. "c4", "fb3". */
@@ -220,6 +221,7 @@ export interface ParsedNote {
    *  choice carries information a width cannot: a break at the right place is
    *  an editorial reading of the piece. Where it is absent the layout decides. */
   lineBreak?: boolean;
+  keepWithPrev?: boolean;
   /** Raw GABC pitch letter a–m — the staff slot for square-note rendering. */
   staffLetter: string;
   /** Active GABC clef when this note sounded, e.g. "c4", "fb3". */

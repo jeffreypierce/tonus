@@ -95,6 +95,7 @@ interface IntermNote {
   degree: number;
   lyric: string;
   runs?: LyricRun[];
+  keepWithPrev?: boolean;
   syllableIndex: number;
   neumeGroup: number;
   staffLetter: string;      // raw GABC pitch letter a–m (drives staff position)
@@ -143,6 +144,7 @@ function parseNeume(
   context: {
     lyric: string;
     runs?: LyricRun[];
+    keepWithPrev?: boolean;
     clef: string;
     oct: number;
     syllableIndex: number;
@@ -151,7 +153,7 @@ function parseNeume(
     profile: ArticulationProfile;
   },
 ): ParseResult["events"] {
-  const { lyric, runs, clef, oct, syllableIndex, accent, accidentalState, profile } =
+  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, accent, accidentalState, profile } =
     context;
   const weights = profile.weights;
   const ruleGain = profile.ruleGain ?? 1.0;
@@ -369,6 +371,7 @@ function parseNeume(
       degree,
       lyric,
       runs,
+      keepWithPrev,
       syllableIndex,
       neumeGroup,
       staffLetter: letter,
@@ -434,6 +437,7 @@ function parseNeume(
       step: note.step,
       lyric: note.lyric,
       runs: note.runs,
+      keepWithPrev: note.keepWithPrev,
       syllableIndex: note.syllableIndex,
       neumeGroup: note.neumeGroup,
       // Tonic word-accent of this note's syllable (Latin accentuation), the same
@@ -533,18 +537,19 @@ export function parseGABC(
           if (!divisioToken) divisioToken = token as RestEvent["divisio"];
           continue;
         }
-          if (isLineBreak(token)) { pendingLineBreak = true; continue; }
+        if (isLineBreak(token)) { pendingLineBreak = true; continue; }
         if (isSkippable(token)) continue;
         noteTokens.push(token);
       }
 
       if (noteTokens.length > 0) {
-          const before = events.length;
+        const before = events.length;
         const accent = opts.useVowelAccent ? detectVowelAccent(text) : false;
         events.push(
           ...parseNeume(noteTokens, {
             lyric: text,
             runs: decoded.runs,
+            keepWithPrev: decoded.keepWithPrev,
             clef: currentClef,
             oct: opts.oct,
             syllableIndex,

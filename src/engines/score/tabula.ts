@@ -38,6 +38,8 @@ export interface ChantTabulaRow {
   wordStart: boolean;
   /** The engraver asked for a line break BEFORE this note (GABC `z`). */
   lineBreak: boolean;
+  /** Inside `<nlba>` — the engraver forbade a break before this note. */
+  keepWithPrev: boolean;
   /** MIDI pitch number (after transpose, clamped 0–127) */
   midi: number;
   /** Pitch class 0–11 (C=0) */
@@ -230,6 +232,7 @@ export function computeTabula(
       // two meanings; the per-word one is what marks words.
       wordStart: n.context.syllableIndex === 0,
       lineBreak: n.context.lineBreak === true,
+      keepWithPrev: n.context.keepWithPrev === true,
       midi: n.pitch.midi,
       pc: n.pitch.pc,
       octave: n.pitch.oct,

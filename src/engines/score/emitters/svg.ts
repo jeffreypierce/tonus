@@ -922,7 +922,21 @@ export function toSvg(
       // against 8) for a four-point gain in line fill — the wrong trade when a
       // uniform scale is what a reader notices.
       const slack = 0;
-      if (r.width != null && moreToCome &&
+      // `<nlba>` seals a seam: the editor set "T. P. Allelúia" and its verse as
+      // one unbreakable run, and a break inside it splits a group the book
+      // keeps whole. Measured across the 35 Graduale chants that carry the tag,
+      // the automatic breaks violated it 5-13 times depending on width — and
+      // every one of them in moderna, which is why a quadrata-only check first
+      // reported none.
+      //
+      // The seal only forbids; it never forces. If this break point is sealed
+      // the line simply runs on to the next candidate, which is what Gregorio's
+      // own renderer does in spirit — nabc-lib pushes the whole kept-together
+      // stack down to the next line rather than breaking inside it. tonus can
+      // take the simpler road because its breaks fall at phrase boundaries: a
+      // sealed boundary is just not a candidate.
+      const sealed = moreToCome && rows[j]!.keepWithPrev;
+      if (r.width != null && moreToCome && !sealed &&
           (x > rightBoundary || x + nextPhraseW > rightBoundary + slack)) {
         // A custos after a FULL STOP is noise. The sign says "the melody
         // continues, at this pitch" — a divisio finalis has already said the
