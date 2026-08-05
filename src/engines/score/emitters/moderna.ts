@@ -282,8 +282,8 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const width = options.width ?? null;
   const systemGap = options.systemGap ?? SYSTEM_GAP_DEFAULT;
   // A requested track band widens every system by its reserved room. Moderna's
-  // staff is fixed (gm.MSP), so the track scale is always 1 here.
-  const bands = trackBands(options.tracks, 1);
+  // tracks scale with the staff they annotate — gm.k is 1 at the default.
+  const bands = trackBands(options.tracks, gm.k);
   const systemHeight = gm.LYRIC_Y + 24 + bands.extra + systemGap;
 
   // Intonation channel: precompute each row's accidental/cents mark once (the
@@ -493,14 +493,14 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       // The wave's constants are calibrated at quadrata's default staff
       // interval, near enough to moderna's fixed staff space to read at k: 1.
       body.push(buildChironomia(trackNotes, {
-        k: 1,
-        waveMidY: gm.LYRIC_Y + bands.chironomia.top + 33,
+        k: gm.k,
+        waveMidY: gm.LYRIC_Y + bands.chironomia.top + 33 * gm.k,
       }));
     }
     if (bands.tonarium) {
       body.push(buildTonarium(trackNotes, options.trackData ?? { cadences: [], modulations: [] }, {
-        k: 1,
-        laneTop: gm.LYRIC_Y + bands.tonarium.top + 26,
+        k: gm.k,
+        laneTop: gm.LYRIC_Y + bands.tonarium.top + 26 * gm.k,
         rightFor: (s) => (systemMaxX[s] ?? W) - padding,
         serifFamily: lyricFace,
         rubricaColor: options.rubricaColor ?? "#9E2B25",
