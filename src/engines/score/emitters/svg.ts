@@ -827,7 +827,15 @@ export function toSvg(
       }
       if (r.width != null && moreToCome &&
           (x > r.width - r.padding || x + nextPhraseW > r.width - r.padding)) {
-        if (r.custos) {
+        // A custos after a FULL STOP is noise. The sign says "the melody
+        // continues, at this pitch" — a divisio finalis has already said the
+        // opposite, and drawing both put two marks in the same place, which
+        // reads as a heavy double barline rather than as a guide. (Gregorio
+        // and exsurge both suppress it there for the same reason.)
+        //
+        // After a minor divisio it earns its place: the phrase is punctuated,
+        // not finished, and the eye still has to find the next pitch.
+        if (r.custos && div !== "::") {
           // The line-end guide naming the next system's first pitch. Bravura
           // bakes a real custos — a hooked note whose stem points TOWARD the
           // pitch it announces — and it was being drawn as a shrunken punctum
@@ -848,7 +856,7 @@ export function toSvg(
           const p = placeGlyph(glyph, cx, yFor(nextPos, L, r), r, "custos");
           if (p) body.push(p.svg);
         }
-        systemMaxX.push(x + r.padding);
+        systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
         system++;
         L.systemY += L.systemHeight;
         x = r.padding;
@@ -917,7 +925,7 @@ export function toSvg(
   }
 
   // Close the final system; height reaches the last.
-  systemMaxX.push(x + r.padding);
+  systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
     // The canvas is what the CALLER asked for, not what the content happened to
     // reach. Width was `max(systemMaxX)` in both species, so a render of a
     // requested 900 came out 915, 986, 1074, 1203 — whatever the widest system
