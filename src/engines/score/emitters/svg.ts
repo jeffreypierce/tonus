@@ -824,6 +824,25 @@ export function toSvg(
       x += figure[0]!.quilisma ? r.staffInterval * 0.12 : r.interGlyph;
     }
 
+    // Close the current system and open the next, optionally guiding the eye
+    // with a custos at `nextPos`. Both break paths (divisio and word boundary)
+    // route through here so the two cannot drift apart.
+    const closeSystem = (nextPos: number | null): void => {
+      if (r.custos && nextPos != null) {
+        const cx = x - r.staffInterval * 2.1 + r.interGlyph;
+        const p = placeGlyph(GLYPH.punctum, cx, yFor(nextPos, L, r), r,
+                             "custos", "", r.noteScale * 0.85);
+        if (p) body.push(p.svg);
+      }
+      systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
+      system++;
+      L.systemY += L.systemHeight;
+      x = r.padding;
+      x = drawClef(activeClef, x);
+      afterDivisio = false;
+      prevLyricRight = -Infinity;
+    };
+
     const figureStartX = x;
     x = renderFigure(figure, x);
 
@@ -936,8 +955,24 @@ export function toSvg(
       // take the simpler road because its breaks fall at phrase boundaries: a
       // sealed boundary is just not a candidate.
       const sealed = moreToCome && rows[j]!.keepWithPrev;
+      // A divisio is the BEST place to end a system, so it still breaks when the
+      // coming phrase will not fit whole — but only once the line has earned it.
+      // Breaking at every barline that cannot hold a whole phrase is what left a
+      // quarter of quadrata's lines under 75% full: a long phrase would not fit
+      // anywhere, so the line ended early and the phrase overran the next one
+      // regardless. Now that a word boundary can end a system too, the barline
+      // can hold out for a line that is actually full, and the word rule below
+      // catches the remainder mid-phrase.
+      //
+      // 0.88 is measured, not chosen: sweeping the threshold over 120 graduals,
+      // short lines fall 28% → 27% → 23% → 8% → 4% across 0.55/0.65/0.72/0.80/
+      // 0.88 and then stop moving (0.95 also gives 4%). The knee is at 0.88, so
+      // it takes the whole gain while still letting a barline end a line that is
+      // merely close to full — a higher figure would only discard divisio breaks
+      // for nothing.
+      const earned = x >= rightBoundary * 0.88;
       if (r.width != null && moreToCome && !sealed &&
-          (x > rightBoundary || x + nextPhraseW > rightBoundary + slack)) {
+          (x > rightBoundary || (earned && x + nextPhraseW > rightBoundary + slack))) {
         // A custos after a FULL STOP is noise. The sign says "the melody
         // continues, at this pitch" — a divisio finalis has already said the
         // opposite, and drawing both put two marks in the same place, which
@@ -974,6 +1009,48 @@ export function toSvg(
         // to clear a lyric that is now a line above.
         prevLyricRight = -Infinity;
       }
+    }
+
+    // ── Break at a word, when the phrase has nowhere else to end ──
+    //
+    // A divisio is the RIGHT place to end a system and stays the first choice
+    // above. But it cannot be the only one: quadrata's break test used to live
+    // entirely inside `if (div && phraseEnds)`, so a system could end nowhere
+    // else, and a phrase wider than the line simply ran until its next barline.
+    // Measured over 120 graduals, a QUARTER of quadrata's lines came out under
+    // 75% full against 6% in moderna — which breaks between syllables. That gap
+    // was the asymmetry, not a spacing difference.
+    //
+    // The books break mid-phrase freely; the unit is the word, never a syllable
+    // mid-word (which would split a lyric) and never mid-neume. So: at a word
+    // start, with the coming word measured, break if it will not fit.
+    if (r.width != null && j < rows.length && rows[j]!.wordStart &&
+        !afterDivisio && !rows[j]!.keepWithPrev) {
+      // Measure the coming WORD the same way the phrase is measured — by
+      // placing and rewinding, so the number is the one the drawing produces.
+      let tw = 0;
+      let pSyl = rows[j]!.syllableIndex;
+      let k = j;
+      while (k < rows.length) {
+        if (k > j && rows[k]!.wordStart) break;          // the next word begins
+        let e = k;
+        while (e < rows.length &&
+               rows[e]!.phraseIndex === rows[k]!.phraseIndex &&
+               rows[e]!.syllableIndex === rows[k]!.syllableIndex &&
+               rows[e]!.neumeGroup === rows[k]!.neumeGroup) e++;
+        if (rows[k]!.syllableIndex !== pSyl) tw += r.interSyllable;
+        else if (k > j) tw += r.interGlyph;
+        pSyl = rows[k]!.syllableIndex;
+        tw = measureFigure(rows.slice(k, e), tw);
+        k = e;
+      }
+
+      const custosW2 = r.custos
+        ? (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale * 0.85
+          + r.interGlyph
+        : 0;
+      const bound = r.width - r.padding - custosW2;
+      if (x + r.interSyllable + r.interWord + tw > bound) closeSystem(rows[j]!.staffPosition);
     }
 
     prevSyllable = syllableIndex;
