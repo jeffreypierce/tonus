@@ -598,16 +598,21 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">${lyricMarkup(run.spans, run.text, rubricaColor)}</text>`,
     );
     const next = lyricRuns[k + 1];
+    const hyphen = (hx: number): void => {
+      lyricSvgs.push(
+        `<text class="lyric hyphen" x="${hx.toFixed(2)}" y="${(run.systemY + gm.LYRIC_Y).toFixed(2)}" ` +
+        `text-anchor="middle" font-size="${lyricSize.toFixed(1)}" ` +
+        `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">-</text>`,
+      );
+    };
     if (next && !next.wordStart && next.systemY === run.systemY) {
       const thisRight = run.x + estW(run.text);
-      if (next.x - thisRight > lyricSize * 0.25) {
-        const hx = (thisRight + next.x) / 2;
-        lyricSvgs.push(
-          `<text class="lyric hyphen" x="${hx.toFixed(2)}" y="${(run.systemY + gm.LYRIC_Y).toFixed(2)}" ` +
-          `text-anchor="middle" font-size="${lyricSize.toFixed(1)}" ` +
-          `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">-</text>`,
-        );
-      }
+      if (next.x - thisRight > lyricSize * 0.25) hyphen((thisRight + next.x) / 2);
+    } else if (next && !next.wordStart) {
+      // A word carried to the next system takes its hyphen at the line's end —
+      // the same bug as quadrata's, and the same fix. The gap rule above cannot
+      // see this case: there is no gap between the halves, there is a break.
+      hyphen(run.x + estW(run.text) + lyricSize * 0.3);
     }
   }
 

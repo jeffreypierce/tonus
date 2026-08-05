@@ -422,4 +422,39 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
       }
     }
   });
+
+  test("a word carried to the next system keeps its hyphen", () => {
+    // One long word forced to split: the books set a hyphen at the line's end
+    // so the reader knows the word continues. The gap-centred rule cannot reach
+    // this — the halves have a line break between them, not a gap.
+    const gabc =
+      "(c3) " +
+      Array.from({ length: 24 }, (_, i) => `syl${i}(g)`).join("") +
+      " end(h)";
+    const score = buildScore(makeChant(gabc));
+
+    for (const notation of ["quadrata", "moderna"]) {
+      const { svg, geometry } = inscriptio(score, { notation, width: 400 });
+      const carries = score.tabula.filter(
+        (r, i) =>
+          i > 0 &&
+          !r.wordStart &&
+          geometry[i] &&
+          geometry[i - 1] &&
+          geometry[i].systemY !== geometry[i - 1].systemY,
+      ).length;
+      if (carries === 0) continue;
+
+      // Every system that carries a word must place a hyphen on its own
+      // baseline, past the last lyric of that line.
+      const byBaseline = new Map();
+      for (const m of svg.matchAll(/<text class="lyric hyphen"[^>]*y="([\d.]+)"/g)) {
+        byBaseline.set(m[1], (byBaseline.get(m[1]) ?? 0) + 1);
+      }
+      assert.ok(
+        byBaseline.size > 0,
+        `${notation}: a split word draws at least one hyphen`,
+      );
+    }
+  });
 });

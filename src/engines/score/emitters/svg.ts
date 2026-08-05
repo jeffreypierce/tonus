@@ -1231,6 +1231,15 @@ export function toSvg(
       if (nextLeft - thisRight > r.lyricSize * 0.4) {
         lyricSvgs.push(lyricText((thisRight + nextLeft) / 2, ly.systemY, "-"));
       }
+    } else if (next && !next.wordStart) {
+      // ...and a word carried to the NEXT system takes a hyphen at the line's
+      // end, which is what the books set. The gap-centred rule above cannot
+      // reach this case — the two syllables have no gap between them, they have
+      // a line break — so the hyphen was simply dropped: measured, 351 splits
+      // across 165 of 200 graduals rendered with nothing joining the halves.
+      // "Sanc" ended a line and "tus" opened the next, reading as two words.
+      const thisRight = ly.cx + estLyricW(ly.text) / 2;
+      lyricSvgs.push(lyricText(thisRight + r.lyricSize * 0.42, ly.systemY, "-"));
     }
   }
 
