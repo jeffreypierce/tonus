@@ -374,6 +374,21 @@ Two notation species, each with its own spacing pass:
 | `"quadrata"` (default) | square-note chant staff, SMuFL glyphs baked inline |
 | `"moderna"` | modern round-note transcription: treble-8 clef, engraved slurs |
 
+**Layout is deterministic, and lyric widths are computed rather than measured.**
+The same score and options give byte-identical SVG on every machine, with no
+DOM, no canvas, and no font file — `inscriptio` runs anywhere Node does. Note
+glyphs carry exact SMuFL advance widths; lyric text is computed from character
+classes, since measuring it would require the font's own metrics. Line breaks,
+system fill, and the width of the returned canvas all rest on that figure. It is
+close, not exact: a lyric set in a face far from the assumed proportions will
+break slightly early or late.
+
+Two consequences worth planning around. `width` is a **request, not a promise** —
+the canvas returned is `max(width, content)`, so a chant whose content cannot fit
+comes back wider rather than clipped. And a caller who needs typographic
+precision should render at a generous `width` and scale the result, rather than
+relying on the estimate to land a tight column exactly.
+
 Options, by group (all optional):
 
 - **layout** — `width` wraps systems to fit (absent = a single line); `systemGap`,
@@ -799,6 +814,43 @@ tonus models the compound-beat classification, the per-note rhythmic index,
 mode-specific cadence figures ([above](#cadences)), and the incise rhythmic types
 (above). It does not yet model Carroll's textual rules (word-accent → arsic,
 word-final → thetic) or accentual (spondaic vs. dactylic) cadences.
+
+### Why the layout estimates
+
+A chant renderer must know how wide a lyric is before it can decide where a line
+ends. The established engines measure: exsurge reads real text metrics through
+canvas, SVG `getBBox`, or opentype.js depending on where it is running;
+nabc-lib inserts a hidden `<text>` node and reads the browser's own box. Both are
+exact, and both require a browser or a font file.
+
+tonus computes the width instead, from character classes. This is a deliberate
+trade rather than a missing feature: the library is a per-chant, deterministic
+engine, and the two properties that follow from computing are worth more here
+than the last few percent of typographic precision.
+
+The first is **portability**. `inscriptio` has no environment: it runs in Node, in
+a worker, in CI, in a build step, with no DOM to construct and no font to load.
+A chant renders the same on a server as in a browser because nothing about the
+host participates in the layout.
+
+The second is **reproducibility**. The same score and options yield byte-identical
+SVG — which is what makes the render suite testable at all. Two of this session's
+layout changes were verified by hashing 2,500 renders and comparing them against
+the previous commit; a layout that consulted the ambient font stack could not be
+checked that way, because the reference bytes would differ per machine.
+
+The cost is a bounded inaccuracy in one place: **inter-word spacing and line fill,
+never pitch or rhythm.** Note positions come from SMuFL advance widths, which are
+exact. A lyric in a face far from the assumed proportions shifts where a line
+happens to break; it does not move a note off its staff position. The layout is
+correct to within the estimate, and the estimate is the accuracy floor for
+everything built above it — line fill, and any future justification or
+mid-syllable splitting.
+
+If exact metrics are ever needed, the honest shape is an optional measuring
+callback on `InscriptioOpts`, so a caller who *has* a DOM can supply real widths
+while the computed estimate remains the default. That preserves determinism for
+everyone who does not.
 
 ## Sources
 

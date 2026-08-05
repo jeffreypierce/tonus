@@ -2,6 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { buildScore } from "../dist/engines/score/api.js";
 import { inscriptio } from "../dist/engines/score/inscriptio.js";
+import { decideBreak } from "../dist/engines/score/emitters/breaking.js";
 
 const KYRIE_GABC = "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (::)";
 
@@ -456,5 +457,95 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
         `${notation}: a split word draws at least one hyphen`,
       );
     }
+  });
+});
+
+describe("breaking: the rules both species share", () => {
+  // These were written twice, once per emitter, until 2026-08-05 — which is how
+  // <nlba> shipped working in quadrata and broken in moderna. Testing the
+  // decision directly is only possible now that there is one of it.
+  const row = (over = {}) => ({ lineBreak: false, keepWithPrev: false, ...over });
+
+  test("`z` outranks the width test", () => {
+    const v = decideBreak({
+      next: row({ lineBreak: true }),
+      x: 0, boundary: 1000, need: 10, lineStart: 0,
+    });
+    assert.equal(v.break, true);
+    assert.equal(v.reason, "forced");
+  });
+
+  test("a caller that already consumed `z` is not told to break again", () => {
+    // Quadrata honours `z` in its own block, because it must repeat the clef and
+    // place a custos before the staff advances. Asking here too broke the same
+    // system twice.
+    const v = decideBreak({
+      next: row({ lineBreak: true }),
+      x: 0, boundary: 1000, need: 10, lineStart: 0, forcedHandled: true,
+    });
+    assert.equal(v.break, false);
+  });
+
+  test("<nlba> seals a seam that would otherwise break on width", () => {
+    const v = decideBreak({
+      next: row({ keepWithPrev: true }),
+      x: 990, boundary: 1000, need: 50, sealedRun: 50, lineStart: 0,
+    });
+    assert.equal(v.break, false, "the seal holds; the break belongs before the group");
+  });
+
+  test("...but yields when the sealed run cannot fit any line", () => {
+    const v = decideBreak({
+      next: row({ keepWithPrev: true }),
+      x: 990, boundary: 1000, need: 5000, sealedRun: 5000, lineStart: 0,
+    });
+    assert.equal(v.break, true, "staying on the page outranks the editor's preference");
+  });
+
+  test("a cursor already past the boundary breaks on its own", () => {
+    // A single figure wider than a whole line can never be rescued by breaking,
+    // but the line before it must still end.
+    const v = decideBreak({
+      next: row(), x: 1200, boundary: 1000, need: 0, lineStart: 0,
+    });
+    assert.equal(v.break, true);
+  });
+});
+
+describe("the layout contract", () => {
+  // Documented in docs/api/score.md → "Why the layout estimates". These are the
+  // properties tonus trades typographic precision FOR, so they are worth a test:
+  // if either breaks, the trade stops being worth making.
+
+  test("the same score and options render byte-identically", () => {
+    const gabc = "(c3) DE(g)us(h) in(i) ad(h)ju(g)tó(hi)ri(h)um(g) (::)";
+    const a = inscriptio(buildScore(makeChant(gabc)), { width: 680 }).svg;
+    const b = inscriptio(buildScore(makeChant(gabc)), { width: 680 }).svg;
+    assert.equal(a, b, "determinism is what makes the render suite testable");
+  });
+
+  test("no font bytes and no host APIs ride in the output", () => {
+    // The library bundles no fonts (license discipline) and touches no DOM, so
+    // `inscriptio` runs in Node, a worker, or CI with nothing installed.
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), { width: 680 });
+    assert.ok(!/data:font/.test(svg), "no font is embedded unless a caller supplies one");
+    assert.ok(!/document\.|window\./.test(svg));
+  });
+
+  test("width is a request, not a promise — content wins over clipping", () => {
+    // A chant that cannot fit comes back WIDER, never clipped: a canvas smaller
+    // than its content would hide notes.
+    //
+    // It must be UNBREAKABLE content, or the test proves nothing. A long line of
+    // separate syllables simply wraps and fits, so the first version of this
+    // test passed against a deliberately broken width rule. One 40-note melisma
+    // on a single syllable cannot wrap, and forces the canvas to 429 against a
+    // request of 200.
+    const melisma = "(c3) al(" + "g".repeat(40) + ")";
+    const { svg, geometry } = inscriptio(buildScore(makeChant(melisma)), { width: 200 });
+    const canvas = Number(/\bwidth="([\d.]+)"/.exec(svg)[1]);
+    const rightmost = Math.max(...geometry.map((g) => g.x));
+    assert.ok(canvas > 200, "the canvas grew past the request rather than clipping");
+    assert.ok(rightmost <= canvas, "every note sits inside the canvas");
   });
 });
