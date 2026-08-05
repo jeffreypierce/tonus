@@ -609,6 +609,33 @@ export function toSvg(
     return prev?.inkRight ?? cx;
   };
 
+  /**
+   * Place a figure, report where it ended, and leave nothing behind.
+   *
+   * PLACEMENT IS THE MEASUREMENT. The break test used to estimate the coming
+   * phrase from a note count times a nominal advance, and that estimate was
+   * wrong in both directions — too small and figures spilled off the line, too
+   * large and the break came early and the line sat 60-78% full. Four separate
+   * attempts at a better estimate failed the same way, because the estimate is
+   * a second code path that has to agree with the drawing code and cannot.
+   *
+   * Exsurge answers this by placing the element and asking whether it fit
+   * (`positionNotationElement`). This is the same move in tonus's shape: the
+   * emitter draws into two arrays, so a trial run records their lengths, calls
+   * the real renderFigure, reads the resulting x, and truncates both arrays
+   * back. What the drawing code would do IS what the measurement reports,
+   * because it is the drawing code.
+   */
+  const measureFigure = (figure: ChantTabulaRow[], atX: number): number => {
+    const bodyMark = body.length;
+    const placeMark = placements.length;
+    const endX = renderFigure(figure, atX);
+    body.length = bodyMark;
+    placements.length = placeMark;
+    return endX;
+  };
+
+
   const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
     // Solesmes practice: an accidental inflecting ANY note of a ligature is
     // printed BEFORE the whole figure, at the inflected note's staff position —
@@ -832,19 +859,42 @@ export function toSvg(
         ? r.width - r.padding - (div === "::" ? 0 : custosW)
         : Infinity;
 
-      // A tolerance, not a hard line — exsurge's `condensingTolerance`. The
-      // phrase estimate is close but never exact, so a phrase that overruns by
-      // less than the line can give back still fits. Without it every
-      // inaccuracy became either a clipped figure or an early break.
+      // How wide is the coming phrase? MEASURED, by placing it and rewinding —
+      // not estimated. See measureFigure above for why every estimate failed.
+      //
+      // The trial walks the phrase figure by figure exactly as the real loop
+      // will, including the syllable and word gaps, so the number it returns is
+      // the number the drawing will produce.
       let nextPhraseW = 0;
       if (r.width != null && moreToCome) {
         const phrase = rows[j]!.phraseIndex;
-        for (let k = j; k < rows.length && rows[k]!.phraseIndex === phrase; k++) {
-          nextPhraseW += r.staffInterval * 2.2;
+        let tx = 0;
+        let prevSyl = -1;
+        for (let k = j; k < rows.length && rows[k]!.phraseIndex === phrase;) {
+          let e = k;
+          while (e < rows.length &&
+                 rows[e]!.phraseIndex === rows[k]!.phraseIndex &&
+                 rows[e]!.syllableIndex === rows[k]!.syllableIndex &&
+                 rows[e]!.neumeGroup === rows[k]!.neumeGroup) e++;
+          if (rows[k]!.syllableIndex !== prevSyl && prevSyl !== -1) {
+            tx += r.interSyllable;
+            if (rows[k]!.wordStart) tx += r.interWord;
+          } else if (prevSyl !== -1) {
+            tx += r.interGlyph;
+          }
+          prevSyl = rows[k]!.syllableIndex;
+          tx = measureFigure(rows.slice(k, e), tx);
+          k = e;
         }
-        nextPhraseW = Math.min(nextPhraseW, r.width * 0.8);
+        nextPhraseW = tx;
       }
-      const slack = (r.width ?? 0) * 0.03;
+
+      // No tolerance. It existed to absorb the error in an ESTIMATED phrase
+      // width; the width is measured now, so slack only buys overruns. Set to
+      // 3% it doubled the renders that exceeded the requested width (16 of 80
+      // against 8) for a four-point gain in line fill — the wrong trade when a
+      // uniform scale is what a reader notices.
+      const slack = 0;
       if (r.width != null && moreToCome &&
           (x > rightBoundary || x + nextPhraseW > rightBoundary + slack)) {
         // A custos after a FULL STOP is noise. The sign says "the melody
