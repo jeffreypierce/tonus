@@ -359,7 +359,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     bySyl.get(k)!.push(r);
   }
 
-    const breakBefore = (k: string): boolean => {
+    const breakBefore = (k: string, si: number): boolean => {
       // A new system starts when the coming syllable will not fit. Moderna
       // breaks BETWEEN SYLLABLES, a finer granularity than quadrata's divisio,
       // so the estimate can be exact rather than statistical: the syllable's own
@@ -370,7 +370,53 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       // the canvas and was clipped.
       if (width == null) return false;
       const srows = bySyl.get(k) ?? [];
-      const need = srows.length * gm.ADV + gm.SYL_GAP;
+      // `<nlba>` seals the seam before this syllable — the editor set the group
+      // whole and a break here would split it. Moderna breaks between syllables,
+      // so this is where the tag lands; quadrata breaks at divisiones, where it
+      // rarely collides. All the measured violations were here.
+      // ...unless honouring it would run off the canvas. A sealed group longer
+      // than a line has nowhere better to go, and refusing forever clips it
+      // instead — measured, two Graduale chants overran by 16 and 51px. The seal
+      // is an editor's preference about where a line ends; staying inside the
+      // page is the stronger claim, so past the boundary the seal yields.
+      // (nabc-lib takes the same escape: its keep-together stack is abandoned
+      // when moving it would leave the line empty.)
+      if (srows[0]?.keepWithPrev) {
+        // Measure the whole sealed run, not just this syllable: what has to fit
+        // is everything up to the group's close. Measuring one syllable let the
+        // escape fire whenever the NEXT one happened to be short, which broke 37
+        // seams that a look-ahead keeps whole.
+        let need = 0;
+        for (let m = si; m < sylKeys.length; m++) {
+          const mr = bySyl.get(sylKeys[m]!) ?? [];
+          if (m > si && !mr[0]?.keepWithPrev) break;   // the group ended
+          need += mr.length * gm.ADV + gm.SYL_GAP;
+        }
+        // Two ways the seal can hold, and it needs BOTH: the group must fit on
+        // a line at all (else no break point could ever save it), and it must
+        // fit in what is left of THIS line (else honouring the seal just runs
+        // off the canvas — measured, 30 renders clipped when only the first
+        // test guarded it). Failing either, the seal yields to the page.
+        // A group that cannot fit on any line has nowhere better to go: the
+        // seal yields rather than running off the canvas.
+        if (padding + CLEF_ZONE + need > width - padding) return true;
+        // Otherwise the seal HOLDS — but that only defers the break; it does
+        // not decide where the break goes. The group's own head is the place
+        // (handled below, where the head is not sealed and tests `need` for the
+        // whole group), which is nabc-lib's move: push the kept-together stack
+        // to the next line rather than break inside it.
+        return false;
+      }
+      // At the head of a sealed group, what must fit is the whole group: admit
+      // the head alone and every seam after it is sealed, so the line can no
+      // longer break and the overflow is unrecoverable. Measuring the group here
+      // is what lets the break land BEFORE it — the one place it belongs.
+      let need = srows.length * gm.ADV + gm.SYL_GAP;
+      for (let m = si + 1; m < sylKeys.length; m++) {
+        const mr = bySyl.get(sylKeys[m]!) ?? [];
+        if (!mr[0]?.keepWithPrev) break;
+        need += mr.length * gm.ADV + gm.SYL_GAP;
+      }
       return x > width - padding || x + need > width - padding;
     };
 
@@ -378,7 +424,11 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     const k = sylKeys[si]!;
     const srows = bySyl.get(k)!;
 
-    if (si > 0 && breakBefore(k)) {
+    // The engraver's own break (GABC `z`), which outranks the fit test — see
+    // the note in svg.ts. A sealed seam cannot suppress it: `z` is an
+    // instruction, not a preference.
+    const forced = si > 0 && srows[0]!.lineBreak;
+    if (si > 0 && (forced || breakBefore(k, si))) {
       systemMaxX.push(x + padding);
       system++;
       systemY += systemHeight;
@@ -548,16 +598,21 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">${lyricMarkup(run.spans, run.text, rubricaColor)}</text>`,
     );
     const next = lyricRuns[k + 1];
+    const hyphen = (hx: number): void => {
+      lyricSvgs.push(
+        `<text class="lyric hyphen" x="${hx.toFixed(2)}" y="${(run.systemY + gm.LYRIC_Y).toFixed(2)}" ` +
+        `text-anchor="middle" font-size="${lyricSize.toFixed(1)}" ` +
+        `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">-</text>`,
+      );
+    };
     if (next && !next.wordStart && next.systemY === run.systemY) {
       const thisRight = run.x + estW(run.text);
-      if (next.x - thisRight > lyricSize * 0.25) {
-        const hx = (thisRight + next.x) / 2;
-        lyricSvgs.push(
-          `<text class="lyric hyphen" x="${hx.toFixed(2)}" y="${(run.systemY + gm.LYRIC_Y).toFixed(2)}" ` +
-          `text-anchor="middle" font-size="${lyricSize.toFixed(1)}" ` +
-          `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">-</text>`,
-        );
-      }
+      if (next.x - thisRight > lyricSize * 0.25) hyphen((thisRight + next.x) / 2);
+    } else if (next && !next.wordStart) {
+      // A word carried to the next system takes its hyphen at the line's end —
+      // the same bug as quadrata's, and the same fix. The gap rule above cannot
+      // see this case: there is no gap between the halves, there is a break.
+      hyphen(run.x + estW(run.text) + lyricSize * 0.3);
     }
   }
 

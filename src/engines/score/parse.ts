@@ -95,6 +95,7 @@ interface IntermNote {
   degree: number;
   lyric: string;
   runs?: LyricRun[];
+  keepWithPrev?: boolean;
   syllableIndex: number;
   neumeGroup: number;
   staffLetter: string;      // raw GABC pitch letter a–m (drives staff position)
@@ -121,12 +122,16 @@ function initialAccidentalState(clef: string): Map<number, AccidentalValue> {
   return state;
 }
 
+function isLineBreak(token: string): boolean {
+  // GABC's explicit break: `z` a line break, `Z` a page break, `z0` a break
+  // that suppresses the custos. tonus paginates nothing, so all three mean the
+  // same thing here — end the system.
+  return token === "z" || token === "Z" || token === "z0";
+}
+
 function isSkippable(token: string): boolean {
   return (
     token === " " ||
-    token === "z" ||
-    token === "Z" ||
-    token === "z0" ||
     token === "\r" ||
     token.startsWith("{") ||
     token.includes("+")
@@ -139,6 +144,7 @@ function parseNeume(
   context: {
     lyric: string;
     runs?: LyricRun[];
+    keepWithPrev?: boolean;
     clef: string;
     oct: number;
     syllableIndex: number;
@@ -147,7 +153,7 @@ function parseNeume(
     profile: ArticulationProfile;
   },
 ): ParseResult["events"] {
-  const { lyric, runs, clef, oct, syllableIndex, accent, accidentalState, profile } =
+  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, accent, accidentalState, profile } =
     context;
   const weights = profile.weights;
   const ruleGain = profile.ruleGain ?? 1.0;
@@ -365,6 +371,7 @@ function parseNeume(
       degree,
       lyric,
       runs,
+      keepWithPrev,
       syllableIndex,
       neumeGroup,
       staffLetter: letter,
@@ -430,6 +437,7 @@ function parseNeume(
       step: note.step,
       lyric: note.lyric,
       runs: note.runs,
+      keepWithPrev: note.keepWithPrev,
       syllableIndex: note.syllableIndex,
       neumeGroup: note.neumeGroup,
       // Tonic word-accent of this note's syllable (Latin accentuation), the same
@@ -480,6 +488,10 @@ export function parseGABC(
   }
 
   let currentClef = "c3";
+  // A `z` sets this, and the next note born carries it. The marker usually sits
+  // in its own group — "…son.(c.) (z) Chri(h)ste…" — so the flag has to outlive
+  // the syllable it appeared in rather than being consumed where it was seen.
+  let pendingLineBreak = false;
   let accidentalState = initialAccidentalState(currentClef);
   // One lyric decoder per source: GABC style tags open and close across
   // syllable (and word) boundaries, so the decode state rides the whole walk.
@@ -525,16 +537,19 @@ export function parseGABC(
           if (!divisioToken) divisioToken = token as RestEvent["divisio"];
           continue;
         }
+        if (isLineBreak(token)) { pendingLineBreak = true; continue; }
         if (isSkippable(token)) continue;
         noteTokens.push(token);
       }
 
       if (noteTokens.length > 0) {
+        const before = events.length;
         const accent = opts.useVowelAccent ? detectVowelAccent(text) : false;
         events.push(
           ...parseNeume(noteTokens, {
             lyric: text,
             runs: decoded.runs,
+            keepWithPrev: decoded.keepWithPrev,
             clef: currentClef,
             oct: opts.oct,
             syllableIndex,
@@ -543,6 +558,16 @@ export function parseGABC(
             profile: articulation,
           }),
         );
+          // The break lands on the FIRST note the marker precedes, and is
+          // spent there. A `z` usually sits in a group with NO notes of its
+          // own — "…(::) (z)Ps. E(g)ru…" — so the flag outlives that group
+          // and is claimed by the next note born, which is the one the
+          // engraver meant to start the new line.
+          if (pendingLineBreak) {
+            const first = events[before];
+            if (first && first.type === "note") first.lineBreak = true;
+            pendingLineBreak = false;
+          }
       }
 
       if (divisioToken) {

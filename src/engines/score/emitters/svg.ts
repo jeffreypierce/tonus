@@ -609,6 +609,33 @@ export function toSvg(
     return prev?.inkRight ?? cx;
   };
 
+  /**
+   * Place a figure, report where it ended, and leave nothing behind.
+   *
+   * PLACEMENT IS THE MEASUREMENT. The break test used to estimate the coming
+   * phrase from a note count times a nominal advance, and that estimate was
+   * wrong in both directions — too small and figures spilled off the line, too
+   * large and the break came early and the line sat 60-78% full. Four separate
+   * attempts at a better estimate failed the same way, because the estimate is
+   * a second code path that has to agree with the drawing code and cannot.
+   *
+   * Exsurge answers this by placing the element and asking whether it fit
+   * (`positionNotationElement`). This is the same move in tonus's shape: the
+   * emitter draws into two arrays, so a trial run records their lengths, calls
+   * the real renderFigure, reads the resulting x, and truncates both arrays
+   * back. What the drawing code would do IS what the measurement reports,
+   * because it is the drawing code.
+   */
+  const measureFigure = (figure: ChantTabulaRow[], atX: number): number => {
+    const bodyMark = body.length;
+    const placeMark = placements.length;
+    const endX = renderFigure(figure, atX);
+    body.length = bodyMark;
+    placements.length = placeMark;
+    return endX;
+  };
+
+
   const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
     // Solesmes practice: an accidental inflecting ANY note of a ligature is
     // printed BEFORE the whole figure, at the inflected note's staff position —
@@ -752,7 +779,33 @@ export function toSvg(
       x = drawClef(activeClef, x + r.interGlyph);
     }
 
-    const newSyllable = syllableIndex !== prevSyllable || phraseIndex !== prevPhrase;
+      const newSyllable = syllableIndex !== prevSyllable || phraseIndex !== prevPhrase;
+
+      // ── The engraver's own break ────────────────────────────────────────
+      //
+      // GABC's `z` says "start a new line here", and it is not a hint: an
+      // editor who set a chant chose where its lines end, and that choice
+      // carries a reading of the piece a width cannot infer. tonus SKIPPED the
+      // token at parse — 41 Graduale chants carry one and every break was
+      // being thrown away, which is why the automatic breaks looked arbitrary
+      // against a printed copy.
+      //
+      // It wins over the fit test. Where it is absent the layout still decides.
+      if (r.width != null && figure[0]!.lineBreak && prevSyllable !== -1) {
+        if (r.custos) {
+          const cp = placeGlyph(GLYPH.punctum, x + r.interGlyph,
+            yFor(figure[0]!.staffPosition, L, r), r, "custos", "", r.noteScale * 0.85);
+          if (cp) body.push(cp.svg);
+        }
+        systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
+        L.systemY += L.systemHeight;
+        system++;
+        x = r.padding;
+        x = drawClef(activeClef, x);
+        prevLyricRight = -Infinity;
+        afterDivisio = true;
+      }
+
     if (newSyllable && prevSyllable !== -1) {
       x += afterDivisio ? 0 : r.interSyllable;
       if (figure[0]!.wordStart && !afterDivisio) x += r.interWord;
@@ -770,6 +823,25 @@ export function toSvg(
     } else if (!newSyllable && prevSyllable !== -1) {
       x += figure[0]!.quilisma ? r.staffInterval * 0.12 : r.interGlyph;
     }
+
+    // Close the current system and open the next, optionally guiding the eye
+    // with a custos at `nextPos`. Both break paths (divisio and word boundary)
+    // route through here so the two cannot drift apart.
+    const closeSystem = (nextPos: number | null): void => {
+      if (r.custos && nextPos != null) {
+        const cx = x - r.staffInterval * 2.1 + r.interGlyph;
+        const p = placeGlyph(GLYPH.punctum, cx, yFor(nextPos, L, r), r,
+                             "custos", "", r.noteScale * 0.85);
+        if (p) body.push(p.svg);
+      }
+      systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
+      system++;
+      L.systemY += L.systemHeight;
+      x = r.padding;
+      x = drawClef(activeClef, x);
+      afterDivisio = false;
+      prevLyricRight = -Infinity;
+    };
 
     const figureStartX = x;
     x = renderFigure(figure, x);
@@ -826,27 +898,81 @@ export function toSvg(
       // A final divisio needs no custos (nothing follows), so the full width is
       // available there.
       const custosW = r.custos
-        ? (GLYPHS[GLYPH.custosUp]?.advance ?? 0) * r.glyphScale + r.interGlyph
+        ? (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale * 0.85
+          + r.interGlyph
         : 0;
       const rightBoundary = r.width != null
         ? r.width - r.padding - (div === "::" ? 0 : custosW)
         : Infinity;
 
-      // A tolerance, not a hard line — exsurge's `condensingTolerance`. The
-      // phrase estimate is close but never exact, so a phrase that overruns by
-      // less than the line can give back still fits. Without it every
-      // inaccuracy became either a clipped figure or an early break.
+      // How wide is the coming phrase? MEASURED, by placing it and rewinding —
+      // not estimated. See measureFigure above for why every estimate failed.
+      //
+      // The trial walks the phrase figure by figure exactly as the real loop
+      // will, including the syllable and word gaps, so the number it returns is
+      // the number the drawing will produce.
       let nextPhraseW = 0;
       if (r.width != null && moreToCome) {
         const phrase = rows[j]!.phraseIndex;
-        for (let k = j; k < rows.length && rows[k]!.phraseIndex === phrase; k++) {
-          nextPhraseW += r.staffInterval * 2.2;
+        let tx = 0;
+        let prevSyl = -1;
+        for (let k = j; k < rows.length && rows[k]!.phraseIndex === phrase;) {
+          let e = k;
+          while (e < rows.length &&
+                 rows[e]!.phraseIndex === rows[k]!.phraseIndex &&
+                 rows[e]!.syllableIndex === rows[k]!.syllableIndex &&
+                 rows[e]!.neumeGroup === rows[k]!.neumeGroup) e++;
+          if (rows[k]!.syllableIndex !== prevSyl && prevSyl !== -1) {
+            tx += r.interSyllable;
+            if (rows[k]!.wordStart) tx += r.interWord;
+          } else if (prevSyl !== -1) {
+            tx += r.interGlyph;
+          }
+          prevSyl = rows[k]!.syllableIndex;
+          tx = measureFigure(rows.slice(k, e), tx);
+          k = e;
         }
-        nextPhraseW = Math.min(nextPhraseW, r.width * 0.8);
+        nextPhraseW = tx;
       }
-      const slack = (r.width ?? 0) * 0.03;
-      if (r.width != null && moreToCome &&
-          (x > rightBoundary || x + nextPhraseW > rightBoundary + slack)) {
+
+      // No tolerance. It existed to absorb the error in an ESTIMATED phrase
+      // width; the width is measured now, so slack only buys overruns. Set to
+      // 3% it doubled the renders that exceeded the requested width (16 of 80
+      // against 8) for a four-point gain in line fill — the wrong trade when a
+      // uniform scale is what a reader notices.
+      const slack = 0;
+      // `<nlba>` seals a seam: the editor set "T. P. Allelúia" and its verse as
+      // one unbreakable run, and a break inside it splits a group the book
+      // keeps whole. Measured across the 35 Graduale chants that carry the tag,
+      // the automatic breaks violated it 5-13 times depending on width — and
+      // every one of them in moderna, which is why a quadrata-only check first
+      // reported none.
+      //
+      // The seal only forbids; it never forces. If this break point is sealed
+      // the line simply runs on to the next candidate, which is what Gregorio's
+      // own renderer does in spirit — nabc-lib pushes the whole kept-together
+      // stack down to the next line rather than breaking inside it. tonus can
+      // take the simpler road because its breaks fall at phrase boundaries: a
+      // sealed boundary is just not a candidate.
+      const sealed = moreToCome && rows[j]!.keepWithPrev;
+      // A divisio is the BEST place to end a system, so it still breaks when the
+      // coming phrase will not fit whole — but only once the line has earned it.
+      // Breaking at every barline that cannot hold a whole phrase is what left a
+      // quarter of quadrata's lines under 75% full: a long phrase would not fit
+      // anywhere, so the line ended early and the phrase overran the next one
+      // regardless. Now that a word boundary can end a system too, the barline
+      // can hold out for a line that is actually full, and the word rule below
+      // catches the remainder mid-phrase.
+      //
+      // 0.88 is measured, not chosen: sweeping the threshold over 120 graduals,
+      // short lines fall 28% → 27% → 23% → 8% → 4% across 0.55/0.65/0.72/0.80/
+      // 0.88 and then stop moving (0.95 also gives 4%). The knee is at 0.88, so
+      // it takes the whole gain while still letting a barline end a line that is
+      // merely close to full — a higher figure would only discard divisio breaks
+      // for nothing.
+      const earned = x >= rightBoundary * 0.88;
+      if (r.width != null && moreToCome && !sealed &&
+          (x > rightBoundary || (earned && x + nextPhraseW > rightBoundary + slack))) {
         // A custos after a FULL STOP is noise. The sign says "the melody
         // continues, at this pitch" — a divisio finalis has already said the
         // opposite, and drawing both put two marks in the same place, which
@@ -856,24 +982,19 @@ export function toSvg(
         // After a minor divisio it earns its place: the phrase is punctuated,
         // not finished, and the eye still has to find the next pitch.
         if (r.custos && div !== "::") {
-          // The line-end guide naming the next system's first pitch. Bravura
-          // bakes a real custos — a hooked note whose stem points TOWARD the
-          // pitch it announces — and it was being drawn as a shrunken punctum
-          // instead, on a stale comment claiming no glyph was baked. It reads
-          // as a stray note hanging off the end of the line, which is exactly
-          // what a custos must not look like.
-          //
-          // Stem direction follows the staff position: high on the staff the
-          // hook points down, low it points up. Position 4 is the middle line.
+          // The line-end guide naming the next system's first pitch, drawn as
+          // a small punctum at that pitch — Bravura's chant range as baked
+          // carries no custos glyph (see gabc-glyphs.ts). A hooked custos
+          // would read better and needs the bake extended first.
           const nextPos = rows[j]!.staffPosition;
-          const glyph = nextPos > 4 ? GLYPH.custosDown : GLYPH.custosUp;
+          const glyph = GLYPH.punctum;
           // Snug to the barline, not floating after it. `x` has already taken
           // the divisio's trailing air (2.1 staff intervals), which put the
           // custos 41-46px past the last note — reading as a stray note rather
           // than as a sign belonging to the line's end. The books set it tight
           // against the margin; pulling that air back does the same.
           const cx = x - r.staffInterval * 2.1 + r.interGlyph;
-          const p = placeGlyph(glyph, cx, yFor(nextPos, L, r), r, "custos");
+          const p = placeGlyph(glyph, cx, yFor(nextPos, L, r), r, "custos", "", r.noteScale * 0.85);
           if (p) body.push(p.svg);
         }
         systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
@@ -888,6 +1009,48 @@ export function toSvg(
         // to clear a lyric that is now a line above.
         prevLyricRight = -Infinity;
       }
+    }
+
+    // ── Break at a word, when the phrase has nowhere else to end ──
+    //
+    // A divisio is the RIGHT place to end a system and stays the first choice
+    // above. But it cannot be the only one: quadrata's break test used to live
+    // entirely inside `if (div && phraseEnds)`, so a system could end nowhere
+    // else, and a phrase wider than the line simply ran until its next barline.
+    // Measured over 120 graduals, a QUARTER of quadrata's lines came out under
+    // 75% full against 6% in moderna — which breaks between syllables. That gap
+    // was the asymmetry, not a spacing difference.
+    //
+    // The books break mid-phrase freely; the unit is the word, never a syllable
+    // mid-word (which would split a lyric) and never mid-neume. So: at a word
+    // start, with the coming word measured, break if it will not fit.
+    if (r.width != null && j < rows.length && rows[j]!.wordStart &&
+        !afterDivisio && !rows[j]!.keepWithPrev) {
+      // Measure the coming WORD the same way the phrase is measured — by
+      // placing and rewinding, so the number is the one the drawing produces.
+      let tw = 0;
+      let pSyl = rows[j]!.syllableIndex;
+      let k = j;
+      while (k < rows.length) {
+        if (k > j && rows[k]!.wordStart) break;          // the next word begins
+        let e = k;
+        while (e < rows.length &&
+               rows[e]!.phraseIndex === rows[k]!.phraseIndex &&
+               rows[e]!.syllableIndex === rows[k]!.syllableIndex &&
+               rows[e]!.neumeGroup === rows[k]!.neumeGroup) e++;
+        if (rows[k]!.syllableIndex !== pSyl) tw += r.interSyllable;
+        else if (k > j) tw += r.interGlyph;
+        pSyl = rows[k]!.syllableIndex;
+        tw = measureFigure(rows.slice(k, e), tw);
+        k = e;
+      }
+
+      const custosW2 = r.custos
+        ? (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale * 0.85
+          + r.interGlyph
+        : 0;
+      const bound = r.width - r.padding - custosW2;
+      if (x + r.interSyllable + r.interWord + tw > bound) closeSystem(rows[j]!.staffPosition);
     }
 
     prevSyllable = syllableIndex;
@@ -1068,6 +1231,15 @@ export function toSvg(
       if (nextLeft - thisRight > r.lyricSize * 0.4) {
         lyricSvgs.push(lyricText((thisRight + nextLeft) / 2, ly.systemY, "-"));
       }
+    } else if (next && !next.wordStart) {
+      // ...and a word carried to the NEXT system takes a hyphen at the line's
+      // end, which is what the books set. The gap-centred rule above cannot
+      // reach this case — the two syllables have no gap between them, they have
+      // a line break — so the hyphen was simply dropped: measured, 351 splits
+      // across 165 of 200 graduals rendered with nothing joining the halves.
+      // "Sanc" ended a line and "tus" opened the next, reading as two words.
+      const thisRight = ly.cx + estLyricW(ly.text) / 2;
+      lyricSvgs.push(lyricText(thisRight + r.lyricSize * 0.42, ly.systemY, "-"));
     }
   }
 

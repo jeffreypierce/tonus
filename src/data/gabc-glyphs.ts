@@ -46,11 +46,13 @@ export const GLYPH = {
   oriscusDesc: "E99D",
   strophicus: "E99F",
   punctumDeminutum: "E9A1",
-  // custos — the line-end guide naming the next system's first pitch. Bravura
-  // draws it as a hooked note, stem up or down by where the pitch sits: the
-  // hook points TOWARD the note it announces, which is the whole signal.
-  custosUp: "E8F4",
-  custosDown: "E8F5",
+  // NO CUSTOS GLYPH. Bravura's chant range as baked here (E8F0-E9D9, 132
+  // glyphs) carries the divisiones at E8F3-E8F7 and no custos at all. Codes
+  // E8F4/E8F5 were briefly mapped as custosUp/custosDown on 2026-08-04, read
+  // off a SMuFL name list without checking them against the divisio map ten
+  // lines above — so every custos drew a `;` or a `:`, and beside a real
+  // barline it read as a doubled bar. If a custos is ever wanted as a glyph,
+  // it has to be added to the bake first.
   // note components
   podatusLower: "E9B0",
   podatusUpper: "E9B1",

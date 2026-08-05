@@ -369,4 +369,92 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
     });
     assert.match(svg, /@font-face\{font-family:"Pfeffer Mediaeval";font-weight:400;/);
   });
+
+  // ── The engraver's own line markers ──
+  //
+  // `z` orders a break; `<nlba>` forbids one. Both are instructions tonus used
+  // to discard at parse, which is why its automatic breaking disagreed with the
+  // books even where the books had said exactly what to do.
+
+  test("`z` forces a system break at the note it precedes", () => {
+    const gabc = "(c3) a(g) b(h) (z) c(i) d(j)";
+    const score = buildScore(makeChant(gabc));
+    const flagged = score.tabula.findIndex((r) => r.lineBreak);
+    assert.ok(flagged > 0, "the marker reaches the tabula");
+
+    const { geometry } = inscriptio(score, { width: 900 });
+    assert.notEqual(
+      geometry[flagged].systemY,
+      geometry[flagged - 1].systemY,
+      "the flagged note opens a new system even though the line had room",
+    );
+  });
+
+  test("`Z` and `z0` break the same way — tonus paginates nothing", () => {
+    for (const marker of ["Z", "z0"]) {
+      const score = buildScore(makeChant(`(c3) a(g) b(h) (${marker}) c(i)`));
+      assert.ok(
+        score.tabula.some((r) => r.lineBreak),
+        `${marker} is read as a break`,
+      );
+    }
+  });
+
+  test("<nlba> keeps its group whole across a break point", () => {
+    // A long lead-in, then a sealed group: without the seal the line breaks
+    // inside it, since that is exactly where the width runs out.
+    const lead = Array.from({ length: 14 }, (_, i) => `syl${i}(g)`).join(" ");
+    const gabc = `(c3) ${lead} <nlba>Al(g)le(h)lú(i)ia(h)</nlba> fi(g)nis(h)`;
+    const score = buildScore(makeChant(gabc));
+    const sealed = score.tabula
+      .map((r, i) => (r.keepWithPrev ? i : -1))
+      .filter((i) => i >= 0);
+    assert.ok(sealed.length > 0, "the seal reaches the tabula");
+
+    for (const notation of ["quadrata", "moderna"]) {
+      const { geometry } = inscriptio(score, { notation, width: 320 });
+      for (const i of sealed) {
+        assert.equal(
+          geometry[i].systemY,
+          geometry[i - 1].systemY,
+          `${notation}: no break inside the sealed group at row ${i}`,
+        );
+      }
+    }
+  });
+
+  test("a word carried to the next system keeps its hyphen", () => {
+    // One long word forced to split: the books set a hyphen at the line's end
+    // so the reader knows the word continues. The gap-centred rule cannot reach
+    // this — the halves have a line break between them, not a gap.
+    const gabc =
+      "(c3) " +
+      Array.from({ length: 24 }, (_, i) => `syl${i}(g)`).join("") +
+      " end(h)";
+    const score = buildScore(makeChant(gabc));
+
+    for (const notation of ["quadrata", "moderna"]) {
+      const { svg, geometry } = inscriptio(score, { notation, width: 400 });
+      const carries = score.tabula.filter(
+        (r, i) =>
+          i > 0 &&
+          !r.wordStart &&
+          geometry[i] &&
+          geometry[i - 1] &&
+          geometry[i].systemY !== geometry[i - 1].systemY,
+      ).length;
+      if (carries === 0) continue;
+
+      // Every system that carries a word must place a hyphen on its own
+      // baseline, past the last lyric of that line.
+      const byBaseline = new Map();
+      for (const m of svg.matchAll(/<text class="lyric hyphen"[^>]*y="([\d.]+)"/g)) {
+        byBaseline.set(m[1], (byBaseline.get(m[1]) ?? 0) + 1);
+      }
+      assert.ok(
+        byBaseline.size > 0,
+        `${notation}: a split word draws at least one hyphen`,
+      );
+    }
+  });
 });

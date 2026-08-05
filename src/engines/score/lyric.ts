@@ -19,6 +19,8 @@ export interface DecodedLyric {
   text: string;
   /** Styled spans covering `text`, present only when some style rides. */
   runs?: LyricRun[];
+  /** Inside an open `<nlba>` — do not break a line before this syllable. */
+  keepWithPrev?: boolean;
 }
 
 // Gregorio's <sp> shortcuts, as they occur in the corpus. The barred letters
@@ -45,6 +47,7 @@ interface DecoderState {
   smallCaps: number;
   rubric: number;
   alt: number;                                    // >0 → discard (above-lines text)
+  nlba: number;                                   // >0 → keep with the next syllable
   capture: { kind: "sp" | "v"; buf: string } | null;
   /** A ℣/℟ was just placed — breathe before a letter that follows directly. */
   pendingSpace: boolean;
@@ -82,7 +85,7 @@ function cleanText(s: string): string {
  */
 export function createLyricDecoder(): { decode(raw: string): DecodedLyric } {
   const st: DecoderState = {
-    italic: 0, bold: 0, smallCaps: 0, rubric: 0, alt: 0, capture: null,
+    italic: 0, bold: 0, smallCaps: 0, rubric: 0, alt: 0, nlba: 0, capture: null,
     pendingSpace: false,
   };
 
@@ -90,6 +93,8 @@ export function createLyricDecoder(): { decode(raw: string): DecodedLyric } {
     decode(raw: string): DecodedLyric {
       const runs: LyricRun[] = [];
       let styled = false;
+      const nlbaAtEntry = st.nlba;
+      let openedHere = false;
 
       const push = (text: string, extraItalic = false): void => {
         if (!text || st.alt > 0) return;
@@ -130,6 +135,13 @@ export function createLyricDecoder(): { decode(raw: string): DecodedLyric } {
             case "c": st.rubric++; break;
             case "/c": st.rubric = Math.max(0, st.rubric - 1); break;
             case "alt": st.alt++; break;
+            // The one layout hint that survives decoding. <nlba> spans a group
+            // the editor will not let a line break inside — "T. P. Allelúia"
+            // and its verse, kept whole. It is a span like <i>, opening in one
+            // syllable and closing several later, so it counts depth here and
+            // is read per-syllable rather than resolved into the text.
+            case "nlba": if (nlbaAtEntry === 0) openedHere = true; st.nlba++; break;
+            case "/nlba": st.nlba = Math.max(0, st.nlba - 1); break;
             case "/alt": st.alt = Math.max(0, st.alt - 1); break;
             case "sp": st.capture = { kind: "sp", buf: "" }; break;
             case "/sp": {
@@ -194,7 +206,15 @@ export function createLyricDecoder(): { decode(raw: string): DecodedLyric } {
         restyle(start, start + ij[2]!.length, { italic: true });
       }
 
-      return out ? { text, runs: out } : { text };
+      // Depth is read AFTER the syllable's own tags are applied. A group opens
+      // with `<nlba>` at the head of its first syllable, so that syllable is
+      // already inside the span and every later one is too — which is what the
+      // flag has to mean: no break BEFORE me. The first syllable of the group
+      // may still start a line; it is the seam inside the group that is sealed.
+      const keep = st.nlba > 0 && !openedHere;
+      const res: DecodedLyric = out ? { text, runs: out } : { text };
+      if (keep) res.keepWithPrev = true;
+      return res;
     },
   };
 }

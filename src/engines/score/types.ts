@@ -82,6 +82,13 @@ export interface Context {
   accent: boolean;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
+  /** The engraver asked for a line break BEFORE this note — GABC's `z` (and
+   *  `Z`, its page-break sibling, honoured the same way since tonus paginates
+   *  nothing). An editor who set a chant chose where its lines end, and that
+   *  choice carries information a width cannot: a break at the right place is
+   *  an editorial reading of the piece. Where it is absent the layout decides. */
+  lineBreak?: boolean;
+  keepWithPrev?: boolean;
   /** Raw GABC pitch letter a–m — the staff slot for square-note rendering. */
   staffLetter: string;
   /** Active GABC clef when this note sounded, e.g. "c4", "fb3". */
@@ -208,6 +215,13 @@ export interface ParsedNote {
   accent: boolean;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
+  /** The engraver asked for a line break BEFORE this note — GABC's `z` (and
+   *  `Z`, its page-break sibling, honoured the same way since tonus paginates
+   *  nothing). An editor who set a chant chose where its lines end, and that
+   *  choice carries information a width cannot: a break at the right place is
+   *  an editorial reading of the piece. Where it is absent the layout decides. */
+  lineBreak?: boolean;
+  keepWithPrev?: boolean;
   /** Raw GABC pitch letter a–m — the staff slot for square-note rendering. */
   staffLetter: string;
   /** Active GABC clef when this note sounded, e.g. "c4", "fb3". */
