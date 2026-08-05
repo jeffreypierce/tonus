@@ -511,3 +511,41 @@ describe("breaking: the rules both species share", () => {
     assert.equal(v.break, true);
   });
 });
+
+describe("the layout contract", () => {
+  // Documented in docs/api/score.md → "Why the layout estimates". These are the
+  // properties tonus trades typographic precision FOR, so they are worth a test:
+  // if either breaks, the trade stops being worth making.
+
+  test("the same score and options render byte-identically", () => {
+    const gabc = "(c3) DE(g)us(h) in(i) ad(h)ju(g)tó(hi)ri(h)um(g) (::)";
+    const a = inscriptio(buildScore(makeChant(gabc)), { width: 680 }).svg;
+    const b = inscriptio(buildScore(makeChant(gabc)), { width: 680 }).svg;
+    assert.equal(a, b, "determinism is what makes the render suite testable");
+  });
+
+  test("no font bytes and no host APIs ride in the output", () => {
+    // The library bundles no fonts (license discipline) and touches no DOM, so
+    // `inscriptio` runs in Node, a worker, or CI with nothing installed.
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), { width: 680 });
+    assert.ok(!/data:font/.test(svg), "no font is embedded unless a caller supplies one");
+    assert.ok(!/document\.|window\./.test(svg));
+  });
+
+  test("width is a request, not a promise — content wins over clipping", () => {
+    // A chant that cannot fit comes back WIDER, never clipped: a canvas smaller
+    // than its content would hide notes.
+    //
+    // It must be UNBREAKABLE content, or the test proves nothing. A long line of
+    // separate syllables simply wraps and fits, so the first version of this
+    // test passed against a deliberately broken width rule. One 40-note melisma
+    // on a single syllable cannot wrap, and forces the canvas to 429 against a
+    // request of 200.
+    const melisma = "(c3) al(" + "g".repeat(40) + ")";
+    const { svg, geometry } = inscriptio(buildScore(makeChant(melisma)), { width: 200 });
+    const canvas = Number(/\bwidth="([\d.]+)"/.exec(svg)[1]);
+    const rightmost = Math.max(...geometry.map((g) => g.x));
+    assert.ok(canvas > 200, "the canvas grew past the request rather than clipping");
+    assert.ok(rightmost <= canvas, "every note sits inside the canvas");
+  });
+});
