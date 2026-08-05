@@ -854,9 +854,22 @@ export function toSvg(
     }
   }
 
-  // Close the final system; width is the widest system, height reaches the last.
+  // Close the final system; height reaches the last.
   systemMaxX.push(x + r.padding);
-  const width = Math.ceil(Math.max(...systemMaxX));
+    // The canvas is what the CALLER asked for, not what the content happened to
+    // reach. Width was `max(systemMaxX)` in both species, so a render of a
+    // requested 900 came out 915, 986, 1074, 1203 — whatever the widest system
+    // ended at. A host applying `max-width: 100%` then shrank each render by a
+    // different factor, which is why the same page showed one chant's notation
+    // a third smaller than another's, and why the two species never agreed:
+    // measured across fourteen graduals, moderna landed between 0.66 and 0.95
+    // of quadrata's on-screen size with no pattern a reader could learn.
+    //
+    // `width` is the wrap point, and now also the canvas. Content still wraps
+    // inside it; it no longer decides how big the picture is. Without a width
+    // there is nothing to wrap to and the content still sets the size.
+  const contentW = Math.ceil(Math.max(...systemMaxX));
+  const width = r.width != null ? Math.ceil(r.width) : contentW;
   const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + bands.extra);
 
   // ── The analysis tracks, below each system ──

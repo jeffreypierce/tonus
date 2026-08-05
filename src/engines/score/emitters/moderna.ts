@@ -73,11 +73,12 @@ const MTOP_1 = 20;                     // top staff line, system-local
 // a reader comparing the two species saw one of them looking half the size —
 // which is what the eye actually reads, more than the staff block does.
 //
-// Ruled 2026-08-04: the species match on DENSITY. Not identically — moderna's
-// noteheads are round and need air where quadrata's squares can abut — but
-// close enough that a line of one holds about as much music as a line of the
-// other.
-const ADV_1 = 8.4;
+// Ruled 2026-08-04: the species answer to one DENSITY, near enough that a line
+// of one holds about as much music as a line of the other. Not identically —
+// round noteheads need air where quadrata's squares can abut, and 8.4 (a true
+// match) read as cramped. 10.4 keeps the air and still fits a chant in about
+// the same number of systems.
+const ADV_1 = 10.4;
 const SYL_GAP_1 = 7;                   // gap after each syllable
 // Staff bottom → lyric baseline. NOT scaled with the staff: the duae species
 // share one lyric setting (ruled 2026-07-29), and that ruling is about type,
@@ -465,7 +466,20 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   }
 
   systemMaxX.push(x + padding);
-  const W = Math.ceil(Math.max(...systemMaxX));
+    // The canvas is what the CALLER asked for, not what the content happened to
+    // reach. Width was `max(systemMaxX)` in both species, so a render of a
+    // requested 900 came out 915, 986, 1074, 1203 — whatever the widest system
+    // ended at. A host applying `max-width: 100%` then shrank each render by a
+    // different factor, which is why the same page showed one chant's notation
+    // a third smaller than another's, and why the two species never agreed:
+    // measured across fourteen graduals, moderna landed between 0.66 and 0.95
+    // of quadrata's on-screen size with no pattern a reader could learn.
+    //
+    // `width` is the wrap point, and now also the canvas. Content still wraps
+    // inside it; it no longer decides how big the picture is. Without a width
+    // there is nothing to wrap to and the content still sets the size.
+  const contentW = Math.ceil(Math.max(...systemMaxX));
+  const W = width != null ? Math.ceil(width) : contentW;
   const height = Math.ceil(systemY + gm.LYRIC_Y + 24 + bands.extra);
 
   // ── The analysis tracks, below each system ──
