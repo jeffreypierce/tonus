@@ -853,7 +853,8 @@ export function toSvg(
       // A final divisio needs no custos (nothing follows), so the full width is
       // available there.
       const custosW = r.custos
-        ? (GLYPHS[GLYPH.custosUp]?.advance ?? 0) * r.glyphScale + r.interGlyph
+        ? (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale * 0.85
+          + r.interGlyph
         : 0;
       const rightBoundary = r.width != null
         ? r.width - r.padding - (div === "::" ? 0 : custosW)
@@ -906,24 +907,19 @@ export function toSvg(
         // After a minor divisio it earns its place: the phrase is punctuated,
         // not finished, and the eye still has to find the next pitch.
         if (r.custos && div !== "::") {
-          // The line-end guide naming the next system's first pitch. Bravura
-          // bakes a real custos — a hooked note whose stem points TOWARD the
-          // pitch it announces — and it was being drawn as a shrunken punctum
-          // instead, on a stale comment claiming no glyph was baked. It reads
-          // as a stray note hanging off the end of the line, which is exactly
-          // what a custos must not look like.
-          //
-          // Stem direction follows the staff position: high on the staff the
-          // hook points down, low it points up. Position 4 is the middle line.
+          // The line-end guide naming the next system's first pitch, drawn as
+          // a small punctum at that pitch — Bravura's chant range as baked
+          // carries no custos glyph (see gabc-glyphs.ts). A hooked custos
+          // would read better and needs the bake extended first.
           const nextPos = rows[j]!.staffPosition;
-          const glyph = nextPos > 4 ? GLYPH.custosDown : GLYPH.custosUp;
+          const glyph = GLYPH.punctum;
           // Snug to the barline, not floating after it. `x` has already taken
           // the divisio's trailing air (2.1 staff intervals), which put the
           // custos 41-46px past the last note — reading as a stray note rather
           // than as a sign belonging to the line's end. The books set it tight
           // against the margin; pulling that air back does the same.
           const cx = x - r.staffInterval * 2.1 + r.interGlyph;
-          const p = placeGlyph(glyph, cx, yFor(nextPos, L, r), r, "custos");
+          const p = placeGlyph(glyph, cx, yFor(nextPos, L, r), r, "custos", "", r.noteScale * 0.85);
           if (p) body.push(p.svg);
         }
         systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
