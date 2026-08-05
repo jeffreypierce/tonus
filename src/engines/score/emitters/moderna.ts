@@ -49,6 +49,10 @@ const SYL_GAP = 7;                  // gap after each syllable
 const LYRIC_Y = MTOP + 4 * MSP + 21;
 const SYSTEM_GAP_DEFAULT = 24;
 
+// Quadrata's default staffHeight — the number a span scale is measured
+// against, so that `staffHeight: 40` means the same size in either species.
+const QUADRATA_DEFAULT_HEIGHT = 40;
+
 const LETTERS: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
 
 const esc = (s: string): string =>
@@ -455,13 +459,41 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     );
   });
 
+  // ── staffHeight ──────────────────────────────────────────────────────────
+  //
+  // Moderna's engraving is laid out at a FIXED staff space (MSP), the metrics
+  // its generator was drawn against. That made `staffHeight` a quadrata-only
+  // option: measured, a request of 30, 40 or 60 left moderna at 7.4px every
+  // time while quadrata moved 10 → 13.3 → 20. Two species that cannot be
+  // brought to one size by any option a caller passes.
+  //
+  // Ruled 2026-08-04: they match on TOTAL STAFF SPAN, not on staff space. A
+  // chant staff has four lines and a modern staff five, so equal spaces would
+  // leave moderna standing taller for the same music — the eye reads the block
+  // of staff, not the gap between its lines.
+  //
+  // The whole engraving is scaled as one piece rather than re-deriving thirty
+  // constants: the layout is internally consistent at MSP, so a uniform factor
+  // keeps every relationship inside it — notehead to staff, slur to notehead,
+  // lyric to baseline — exactly as engraved. The geometry contract scales with
+  // it, so `geometry[i]` still lands on the ink it names.
+  //
+  // At the default this factor is 1 and the output is byte-identical.
+  const spanScale = (options.staffHeight ?? QUADRATA_DEFAULT_HEIGHT) / QUADRATA_DEFAULT_HEIGHT;
+  const sw = W * spanScale;
+  const sh = height * spanScale;
+  const scaled = spanScale === 1
+    ? ""
+    : ` transform="scale(${spanScale.toFixed(5)})"`;
+
   const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${height}" ` +
-    `width="${W}" height="${height}" class="tonus-chant moderna">${svgTitle}` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sw.toFixed(1)} ${sh.toFixed(1)}" ` +
+    `width="${sw.toFixed(1)}" height="${sh.toFixed(1)}" class="tonus-chant moderna">${svgTitle}` +
     lyricEmbed +
+    `<g${scaled}>` +
     header.join("") +
     staff.join("") + clefSvgs.join("") + body.join("") + slurs.join("") + lyricSvgs.join("") +
-    `</svg>`;
+    `</g></svg>`;
 
   const geometry: NoteGeometry[] = placements.map((pl) => ({
     phraseIndex: pl.row.phraseIndex,
@@ -469,9 +501,9 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     neumeGroup: pl.row.neumeGroup,
     noteIndex: pl.row.neumeIndex,
     system: pl.system,
-    x: Number(pl.x.toFixed(2)),
-    y: Number(pl.y.toFixed(2)),
-    systemY: Number(pl.systemY.toFixed(2)),
+    x: Number((pl.x * spanScale).toFixed(2)),
+    y: Number((pl.y * spanScale).toFixed(2)),
+    systemY: Number((pl.systemY * spanScale).toFixed(2)),
   }));
 
   return { svg, geometry };
