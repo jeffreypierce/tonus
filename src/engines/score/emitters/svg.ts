@@ -817,6 +817,25 @@ export function toSvg(
       // Capped at 0.8 of a system, since a phrase longer than that has nowhere
       // better to go and moving it only empties the line it left.
       const moreToCome = j < rows.length;
+      // The line's usable width RESERVES the custos, rather than drawing it
+      // afterwards and hoping. Exsurge computes the same boundary once up front
+      // (`staffRight - CustosLong.width`), which makes a custos structurally
+      // unable to overrun — where tonus used to place it past a finished `x`.
+      // See working/notes/exsurge-line-breaking.md.
+      //
+      // A final divisio needs no custos (nothing follows), so the full width is
+      // available there.
+      const custosW = r.custos
+        ? (GLYPHS[GLYPH.custosUp]?.advance ?? 0) * r.glyphScale + r.interGlyph
+        : 0;
+      const rightBoundary = r.width != null
+        ? r.width - r.padding - (div === "::" ? 0 : custosW)
+        : Infinity;
+
+      // A tolerance, not a hard line — exsurge's `condensingTolerance`. The
+      // phrase estimate is close but never exact, so a phrase that overruns by
+      // less than the line can give back still fits. Without it every
+      // inaccuracy became either a clipped figure or an early break.
       let nextPhraseW = 0;
       if (r.width != null && moreToCome) {
         const phrase = rows[j]!.phraseIndex;
@@ -825,8 +844,9 @@ export function toSvg(
         }
         nextPhraseW = Math.min(nextPhraseW, r.width * 0.8);
       }
+      const slack = (r.width ?? 0) * 0.03;
       if (r.width != null && moreToCome &&
-          (x > r.width - r.padding || x + nextPhraseW > r.width - r.padding)) {
+          (x > rightBoundary || x + nextPhraseW > rightBoundary + slack)) {
         // A custos after a FULL STOP is noise. The sign says "the melody
         // continues, at this pitch" — a divisio finalis has already said the
         // opposite, and drawing both put two marks in the same place, which
@@ -956,7 +976,16 @@ export function toSvg(
   // canvas to fit it. Letting the canvas follow the content is what made the
   // scale wander again; letting it clip is what cut the tail off a staff. The
   // overrun itself had to go.
-  const width = r.width != null ? Math.ceil(r.width) : contentW;
+  // The requested width, so every render on a page shares one scale — a
+  // content-driven width returned 915, 986, 1074, 1203 for the same request
+  // and a host applying `max-width` shrank each differently.
+  //
+  // The `max` is a safety net for the last few pixels. Placement is decided
+  // from an estimate of the coming phrase, absorbed by a tolerance (see the
+  // break above), and the residue is small: over forty chants the worst
+  // overrun is 35px on a 900px line. Growing the canvas by that is invisible;
+  // clipping it takes the end off a staff.
+  const width = r.width != null ? Math.max(Math.ceil(r.width), contentW) : contentW;
   const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + bands.extra);
 
   // ── The analysis tracks, below each system ──
