@@ -212,9 +212,17 @@ function resolveOpts(o: SvgOpts): Resolved {
     lineWeight: Math.max(0.5, staffInterval * 0.11),
     stemWeight: Math.max(0.6, staffInterval * 0.14),
     noteheadH,
-    interGlyph: staffInterval * 0.62,
-    interSyllable: staffInterval * 1.85,
-    interWord: staffInterval * 1.15,
+    // Air between figures within a syllable. 0.62 until 2026-08-04, which set
+    // the square notation tighter than the books do — the neumes read as one
+    // mass rather than as separable figures. Scales with the staff, so the
+    // relationship holds at any size.
+    interGlyph: staffInterval * 0.86,
+    // Syllable and word spacing. Both widened 2026-08-04 (1.85 / 1.15): the
+    // square notation read as one dense mass, and the neumes need enough air
+    // between syllables for a reader to see where one ends. Scales with the
+    // staff, so the relationship holds at any size.
+    interSyllable: staffInterval * 2.35,
+    interWord: staffInterval * 1.55,
     lyricSize: staffInterval * 2.2,
     width: o.width ?? null,
     systemGap: o.systemGap ?? 24,
@@ -295,12 +303,13 @@ interface Layout {
 
 function makeLayout(r: Resolved, trackExtra = 0): Layout {
   const topY = r.staffInterval * 5; // room for high notes + episema above
-  // Lyric baseline sits 21px below the bottom line at the default staffHeight —
-  // MATCHED to moderna's staff→lyric gap (ruled 2026-07-29: one gap across the
-  // duae species), scaling with the staff. Close to the staff, as the books
-  // set it; notes hanging below the staff share this room, as they do in the
-  // books and in moderna.
-  const lyricY = topY + r.staffInterval * 9.15;
+  // Lyric baseline sits 28px below the bottom line at the default staffHeight
+  // — MATCHED to moderna's staff→lyric gap (ruled 2026-07-29: one gap across
+  // the duae species), scaling with the staff. The staff spans SIX intervals,
+  // so the gap is (10.2 − 6) of them; it was 9.15 (a 21px gap) until
+  // 2026-08-04, which crowded the lyrics against notes hanging below the
+  // staff. Those notes share this room, as they do in the books.
+  const lyricY = topY + r.staffInterval * 10.2;
   return {
     topY,
     bottomY: topY + r.staffInterval * 6,

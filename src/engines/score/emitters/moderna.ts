@@ -78,13 +78,13 @@ const MTOP_1 = 20;                     // top staff line, system-local
 // round noteheads need air where quadrata's squares can abut, and 8.4 (a true
 // match) read as cramped. 10.4 keeps the air and still fits a chant in about
 // the same number of systems.
-const ADV_1 = 10.4;
-const SYL_GAP_1 = 7;                   // gap after each syllable
+const ADV_1 = 11.6;
+const SYL_GAP_1 = 9.5;                   // gap after each syllable
 // Staff bottom → lyric baseline. NOT scaled with the staff: the duae species
 // share one lyric setting (ruled 2026-07-29), and that ruling is about type,
 // which sits at its own size. Scaling it with the staff broke the parity the
 // moment moderna's staff started moving.
-const LYRIC_GAP = 21;
+const LYRIC_GAP = 28;
 const SYSTEM_GAP_DEFAULT = 24;
 
 /** The staff height both species answer to when the caller names none. */
