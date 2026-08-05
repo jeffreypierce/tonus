@@ -479,7 +479,8 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     // inside it; it no longer decides how big the picture is. Without a width
     // there is nothing to wrap to and the content still sets the size.
   const contentW = Math.ceil(Math.max(...systemMaxX));
-  const W = width != null ? Math.ceil(width) : contentW;
+  // A ceiling, not a floor — see the matching note in svg.ts.
+  const W = width != null ? Math.min(Math.ceil(width), contentW) : contentW;
   const height = Math.ceil(systemY + gm.LYRIC_Y + 24 + bands.extra);
 
   // ── The analysis tracks, below each system ──

@@ -707,8 +707,23 @@ export function toSvg(
   let activeClef = clefStr;
 
   // Estimated lyric width for column spacing (headless: no text measurement).
-  const estLyricW = (text: string): number => text.length * r.lyricSize * 0.52;
-  const minLyricGap = r.lyricSize * 0.25;
+  // Lyric width, for the collision check below. Case-aware, because a flat
+  // per-character average is wrong exactly where it matters: chant sets its
+  // opening word in capitals ("CAntábo", "DE us"), and capitals run about 0.70
+  // em against lowercase's 0.50. A flat 0.52 underestimated "CAn" by 5px — a
+  // quarter of its width — so the opening syllables were placed as if they
+  // fitted and then collided with what followed.
+  const estLyricW = (text: string): number => {
+    let w = 0;
+    for (const ch of text) {
+      w += /[A-ZÀ-ÞŒÆ]/.test(ch) ? 0.70 : /[.,;:'’\- ]/.test(ch) ? 0.28 : 0.50;
+    }
+    return w * r.lyricSize;
+  };
+  // Clear air between one syllable's right edge and the next one's left.
+  // 0.25 em until 2026-08-04, which let syllables touch even when the width
+  // estimate was right — a space between words has to read as a space.
+  const minLyricGap = r.lyricSize * 0.42;
   let prevLyricRight = -Infinity;
 
   // ── Walk figures grouped by (phraseIndex, syllableIndex, neumeGroup) ──
@@ -878,7 +893,14 @@ export function toSvg(
     // inside it; it no longer decides how big the picture is. Without a width
     // there is nothing to wrap to and the content still sets the size.
   const contentW = Math.ceil(Math.max(...systemMaxX));
-  const width = r.width != null ? Math.ceil(r.width) : contentW;
+  // A CEILING, not a floor. `width` is the room the caller has; content wraps
+  // inside it and the canvas never exceeds it, so a host applying `max-width`
+  // shrinks nothing and every render on a page shares one scale. But a chant
+  // that does not fill the room keeps its own width — padding it out to the
+  // full column would leave a short chant floating in white space, and any
+  // host that scales to fit would then shrink the notation for having been
+  // short. That is the bug this line replaced, in the other direction.
+  const width = r.width != null ? Math.min(Math.ceil(r.width), contentW) : contentW;
   const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + bands.extra);
 
   // ── The analysis tracks, below each system ──
