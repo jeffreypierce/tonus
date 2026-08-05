@@ -31,11 +31,12 @@ export function buildPlates(tonus, fonts = {}) {
     family: JUNICODE, weight, scale,
     ...(fonts.junicode ? { embed: fonts.junicode } : {}),
   });
-  // The house dress: Junicode on every role, lyrics a notch bolder.
-  const JF = { dropcap: jr(700), title: jr(620), annotation: jr(640), lyric: jr(560, 1.06) };
-  // Black-while-refining: overrides the library's liturgical red (dropcap,
-  // annotation, rubric runs) so shape reads before color. Drop when settled.
-  const INK = { rubricaColor: "#111" };
+  // The house dress: Junicode on every role, lyrics a notch bolder. Black
+  // rubrica while refining, so shape reads before colour — drop when settled.
+  const JF = {
+    fonts: { dropcap: jr(700), title: jr(620), annotation: jr(640), lyric: jr(560, 1.06) },
+    colors: { rubrica: "#111" },
+  };
 
   // ── The genus battery ──
   // One real chant per genus, both species, the house dress. This is the
@@ -61,14 +62,14 @@ export function buildPlates(tonus, fonts = {}) {
       title: `${label} — quadrata`,
       note: "the house dress: Junicode by reference, the page supplies the face",
       render: () => tonus.inscriptio(tonus.notatio(byId(id)()), {
-        width: 900, fonts: JF, ...INK,
+        width: 900, theme: JF,
       }),
     },
     {
       title: `${label} — moderna`,
       note: "same chant, same options, same staff span — only the notation differs",
       render: () => tonus.inscriptio(tonus.notatio(byId(id)()), {
-        width: 900, notation: "moderna", fonts: JF, ...INK,
+        width: 900, notation: "moderna", theme: JF,
       }),
     },
   ]);
@@ -80,8 +81,10 @@ export function buildPlates(tonus, fonts = {}) {
     note: "this plate's SVG carries Junicode INSIDE itself, so it renders correctly pasted anywhere. Every other plate names the face and lets the page supply it — which is what the docs site does, and why a score there costs no font bytes.",
     render: () => tonus.inscriptio(tonus.notatio(kyrie()), {
       title: "Kyrie", annotation: "auto", dropcap: true,
-      fonts: { dropcap: jw(700), title: jw(620), annotation: jw(640), lyric: jw(560, 1.06) },
-      ...INK,
+      theme: {
+        fonts: { dropcap: jw(700), title: jw(620), annotation: jw(640), lyric: jw(560, 1.06) },
+        colors: { rubrica: "#111" },
+      },
     }),
   };
 
@@ -91,26 +94,26 @@ export function buildPlates(tonus, fonts = {}) {
     {
       title: "Quadrata — baseline (Junicode)",
       note: "the square-note render, Junicode lyrics at weight 560",
-      render: () => tonus.inscriptio(tonus.notatio(kyrie()), { fonts: JF, ...INK }),
+      render: () => tonus.inscriptio(tonus.notatio(kyrie()), { theme: JF }),
     },
     {
       title: "Quadrata — front matter + dropcap",
       note: "cap owns the first system's margin; lyric carries the remainder",
       render: () => tonus.inscriptio(tonus.notatio(kyrie()), {
-        title: "Kyrie", annotation: "auto", dropcap: true, fonts: JF, ...INK,
+        title: "Kyrie", annotation: "auto", dropcap: true, theme: JF,
       }),
     },
     {
       title: "Moderna — baseline (Junicode)",
       note: "round-note transcription: treble-8, slurs, centred hyphens",
-      render: () => tonus.inscriptio(tonus.notatio(kyrie()), { notation: "moderna", fonts: JF, ...INK }),
+      render: () => tonus.inscriptio(tonus.notatio(kyrie()), { notation: "moderna", theme: JF }),
     },
     {
       title: "Moderna — heji on a flatted chant",
       note: "b molle under Pythagorean: no arrows, no throw (chain regression)",
       render: () => {
         const [c] = tonus.cantus({ gabc: "(c3) A(gxg)b(h)c(i)d(gxg) (::)", incipit: "Flat test", mode: 2 });
-        return tonus.inscriptio(tonus.notatio(c), { notation: "moderna", accidentals: "heji", fonts: JF, ...INK });
+        return tonus.inscriptio(tonus.notatio(c), { notation: "moderna", accidentals: "heji", theme: JF });
       },
     },
     {
@@ -120,7 +123,7 @@ export function buildPlates(tonus, fonts = {}) {
         const [c] = tonus.cantus({ gabc: KYRIE, incipit: "Kyrie", mode: 1 });
         return tonus.inscriptio(
           tonus.notatio(c, { temperamentum: tonus.temperamentum({ tuning: "meantone" }) }),
-          { notation: "moderna", accidentals: "cents", fonts: JF, ...INK },
+          { notation: "moderna", accidentals: "cents", theme: JF },
         );
       },
     },
@@ -130,7 +133,7 @@ export function buildPlates(tonus, fonts = {}) {
       render: () => {
         const gabc = "(c4) pes(fg) cli(hg) tor(ghf) por(hfg) scan(fgh) stro(hhh) quil(fwhg) (::)";
         const [c] = tonus.cantus({ gabc, incipit: "Figurae", mode: 1 });
-        return tonus.inscriptio(tonus.notatio(c), { fonts: JF, ...INK });
+        return tonus.inscriptio(tonus.notatio(c), { theme: JF });
       },
     },
     {
@@ -138,14 +141,14 @@ export function buildPlates(tonus, fonts = {}) {
       note: "a(f) (;) men(gf): both lyrics + both divisios must render",
       render: () => tonus.inscriptio(tonus.notatio(
         tonus.cantus({ gabc: "(c4) a(f) (;) men(gf) (::)", incipit: "Amen", mode: 1 })[0],
-      ), { fonts: JF, ...INK }),
+      ), { theme: JF }),
     },
     {
       title: "Quadrata — flat on a figure's upper note",
       note: "a(jix): the b rotundum prints before the figure (Solesmes)",
       render: () => tonus.inscriptio(tonus.notatio(
         tonus.cantus({ gabc: "(c4) a(jix) (::)", incipit: "Ficta", mode: 1 })[0],
-      ), { fonts: JF, ...INK }),
+      ), { theme: JF }),
     },
     {
       title: "Quadrata — lyric markup (℣, italics, rubric, ligatures)",
@@ -153,14 +156,14 @@ export function buildPlates(tonus, fonts = {}) {
       render: () => tonus.inscriptio(tonus.notatio(tonus.cantus({
         gabc: "(c4) <sp>V/</sp>Ju(f)bi(g)lá(h)te(g) De(f)o(g.) (;) <i>ij.(fgh)</i> (;) o(f)mnis(g) ter(h)ra(g.) (,) <v>\\greheightstar</v>s<sp>'ae</sp>(f)cu(g)la(f.) (;) Ps.(f) Can(g)tá(h)te(g.) (::)",
         incipit: "Markup", mode: 1,
-      })[0]), { fonts: JF, ...INK }),
+      })[0]), { theme: JF }),
     },
     {
       title: "Moderna — Ad te levavi (full piece)",
       note: "the Advent I introit complete: multi-system, hyphens, modern ♭",
       render: () => tonus.inscriptio(tonus.notatio(adTeLevavi()), {
         notation: "moderna", width: 960, title: "Ad te levavi", annotation: "auto",
-        fonts: JF, ...INK,
+        theme: JF,
       }),
     },
     {
@@ -170,7 +173,7 @@ export function buildPlates(tonus, fonts = {}) {
         const score = tonus.notatio(adTeLevavi(), {
           temperamentum: tonus.temperamentum({ tuning: "ptolemy-intense" }),
         });
-        return tonus.inscriptio(score, { notation: "moderna", width: 960, accidentals: "heji", fonts: JF, ...INK });
+        return tonus.inscriptio(score, { notation: "moderna", width: 960, accidentals: "heji", theme: JF });
       },
     },
     {
@@ -180,7 +183,7 @@ export function buildPlates(tonus, fonts = {}) {
         const score = tonus.notatio(adTeLevavi(), {
           temperamentum: tonus.temperamentum({ tuning: "ptolemy-intense" }),
         });
-        return tonus.inscriptio(score, { notation: "moderna", width: 960, accidentals: "cents", fonts: JF, ...INK });
+        return tonus.inscriptio(score, { notation: "moderna", width: 960, accidentals: "cents", theme: JF });
       },
     },
     {
@@ -188,7 +191,7 @@ export function buildPlates(tonus, fonts = {}) {
       note: "b rotundum, Junicode cap + lyrics, custos, multi-system",
       render: () => tonus.inscriptio(tonus.notatio(adTeLevavi()), {
         width: 960, custos: true, title: "Ad te levavi", annotation: "auto",
-        dropcap: true, fonts: JF, ...INK,
+        dropcap: true, theme: JF,
       }),
     },
   ];

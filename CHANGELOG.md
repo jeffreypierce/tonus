@@ -7,7 +7,44 @@ All notable changes to tonus. Newest first.
 Rendering, mostly — a day of looking at real chant on a real page and fixing
 what the page showed.
 
+### Changed — breaking
+
+- **`inscriptio`'s look options are one `theme` object.** `fonts`, `noteColor`,
+  `staffLineColor`, `rubricaColor`, `staffHeight`, `noteScale`, `padding`, and
+  `systemGap` are replaced by `theme: { fonts, colors, metrics }`. These travel
+  together — a caller setting a lyric face is usually setting a whole look — and
+  a house style is worth naming once and passing everywhere.
+
+  ```js
+  // before
+  inscriptio(score, { fonts: { lyric: "Junicode" }, rubricaColor: "#801", staffHeight: 48 })
+  // after
+  inscriptio(score, { theme: {
+    fonts: { lyric: "Junicode" }, colors: { rubrica: "#801" }, metrics: { staffHeight: 48 },
+  } })
+  ```
+
+  `fonts` keeps its four roles unchanged, `dropcap` among them: a book's
+  initial is very often not its lyric face, and the two stay separate.
+
+### Added
+
+- **The ink is themable from CSS.** Colours now reach the SVG as custom
+  properties with the render's own value as the fallback —
+  `fill="var(--tonus-note, #111)"` — so a host stylesheet can retheme a drawn
+  chant without re-rendering it, while a file opened on its own still shows the
+  ink it was drawn with. Three properties: `--tonus-note`, `--tonus-staff-line`,
+  `--tonus-rubrica`. The emitter already carried semantic classes (`note`,
+  `lyric`, `dropcap`, `custos`, `episema`, `divisio`, `clef`, `mora`, `ictus`)
+  but an inline `fill` beats any stylesheet rule, so none of them could be
+  styled. `theme.metrics` deliberately does NOT work this way: staff height and
+  note scale are consumed by line breaking, long before CSS sees the output.
+
 ### Fixed
+
+- **Moderna honoured no note colour at all.** It hardcoded `#111` in seventeen
+  places while quadrata threaded the option, so a caller theming the ink saw one
+  species change and the other not.
 
 - **`staffHeight` means the same thing in both species.** Moderna's staff was
   a hardcoded constant, so the option moved quadrata and did nothing here: a

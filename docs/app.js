@@ -344,11 +344,17 @@ function canticum() {
 // Weights are the lab's house dress. Without this the renders fall back to the
 // library's built-in serif stack at weight 518, which is why the lyrics read
 // heavy and in the wrong face against the rest of the page.
-const SCORE_FONTS = {
-  dropcap:    { family: "Junicode", weight: 700 },
-  title:      { family: "Junicode", weight: 620 },
-  annotation: { family: "Junicode", weight: 640 },
-  lyric:      { family: "Junicode", weight: 400, scale: 1.06 },
+// The site's house dress. Faces only — no colours, because the page themes the
+// chant through CSS custom properties instead (see --tonus-* in styles.css),
+// which is what lets a rendered score follow the site's light/dark without
+// being redrawn.
+const SCORE_THEME = {
+  fonts: {
+    dropcap:    { family: "Junicode", weight: 700 },
+    title:      { family: "Junicode", weight: 620 },
+    annotation: { family: "Junicode", weight: 640 },
+    lyric:      { family: "Junicode", weight: 400, scale: 1.06 },
+  },
 };
 
 function scoreFigure() {
@@ -360,7 +366,7 @@ function scoreFigure() {
   try {
     const { svg, geometry } = tonus.inscriptio(state.score, {
       width,
-      fonts: SCORE_FONTS,
+      theme: SCORE_THEME,
       notation: state.notation,
       tracks: state.tracks.length ? state.tracks : undefined,
     });

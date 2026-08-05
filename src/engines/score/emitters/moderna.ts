@@ -159,11 +159,29 @@ function writtenY(spn: string, systemY: number, gm: ModernaMetrics): { y: number
   return { y: systemY + gm.MTOP + 4 * gm.MSP - steps * (gm.MSP / 2), steps };
 }
 
+// Moderna's ink, as a CSS custom property with the house default as fallback —
+// the same three properties quadrata emits, so one stylesheet themes both
+// species. Every mark here is one colour, so a module constant does the job a
+// threaded parameter would; `theme.colors.note` overrides it through
+// `resolveInk` below.
+//
+// Until now these were 17 literal "#111"s and moderna ignored `noteColor`
+// outright — so a caller theming the note colour saw quadrata change and
+// moderna not.
+let INK = "var(--tonus-note, #111)";
+let RUBRICA = "var(--tonus-rubrica, #9E2B25)";
+
+/** Set the module ink from resolved options. Called once per render. */
+function resolveInk(options: SvgOpts): void {
+  INK = `var(--tonus-note, ${options.noteColor ?? "#111"})`;
+  RUBRICA = `var(--tonus-rubrica, ${options.rubricaColor ?? "#9E2B25"})`;
+}
+
 function glyph(name: string, x: number, y: number, scale: number): string {
   const g = GLYPHS[name];
   if (!g) return "";
   return `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})">` +
-    `<path d="${g.path}" fill="#111"/></g>`;
+    `<path d="${g.path}" fill="${INK}"/></g>`;
 }
 
 /** A glyph carrying an SVG class (so downstream tracks / tests can select it). */
@@ -171,7 +189,7 @@ function classedGlyph(cls: string, name: string, x: number, y: number, scale: nu
   const g = GLYPHS[name];
   if (!g) return "";
   return `<g class="${cls}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})">` +
-    `<path d="${g.path}" fill="#111"/></g>`;
+    `<path d="${g.path}" fill="${INK}"/></g>`;
 }
 
 function notehead(x: number, y: number, small: boolean, half: boolean, gm: ModernaMetrics): string {
@@ -200,7 +218,7 @@ function slur(x0: number, y0: number, x1: number, ytop: number): string {
   const c1x = x1 - span * 0.30;
   return `<path class="slur" d="M ${x0.toFixed(2)} ${a0.toFixed(2)} ` +
     `C ${c0x.toFixed(2)} ${co.toFixed(2)} ${c1x.toFixed(2)} ${co.toFixed(2)} ${x1.toFixed(2)} ${a0.toFixed(2)} ` +
-    `C ${c1x.toFixed(2)} ${ci.toFixed(2)} ${c0x.toFixed(2)} ${ci.toFixed(2)} ${x0.toFixed(2)} ${a0.toFixed(2)} Z" fill="#111"/>`;
+    `C ${c1x.toFixed(2)} ${ci.toFixed(2)} ${c0x.toFixed(2)} ${ci.toFixed(2)} ${x0.toFixed(2)} ${a0.toFixed(2)} Z" fill="${INK}"/>`;
 }
 
 function quilismaMark(x: number, y: number, gm: ModernaMetrics): string {
@@ -232,16 +250,16 @@ const DIV_KIND: Record<string, string> = {
 function divisioMark(x: number, kind: string, top: number, final: boolean, gm: ModernaMetrics): string {
   const bot = top + 4 * gm.MSP;
   if (kind === "tick")
-    return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top - 7}" x2="${x.toFixed(2)}" y2="${top - 1}" stroke="#111" stroke-width="0.9"/>`;
+    return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top - 7}" x2="${x.toFixed(2)}" y2="${top - 1}" stroke="${INK}" stroke-width="0.9"/>`;
   if (kind === "half")
-    return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top + gm.MSP}" x2="${x.toFixed(2)}" y2="${top + 3 * gm.MSP}" stroke="#111" stroke-width="0.9"/>`;
+    return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top + gm.MSP}" x2="${x.toFixed(2)}" y2="${top + 3 * gm.MSP}" stroke="${INK}" stroke-width="0.9"/>`;
   if (kind === "full")
-    return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${bot}" stroke="#111" stroke-width="0.9"/>`;
+    return `<line class="divisio" x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${bot}" stroke="${INK}" stroke-width="0.9"/>`;
   if (final)
-    return `<line class="divisio" x1="${(x - 3.6).toFixed(2)}" y1="${top}" x2="${(x - 3.6).toFixed(2)}" y2="${bot}" stroke="#111" stroke-width="0.9"/>` +
-      `<line class="divisio" x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${bot}" stroke="#111" stroke-width="2.2"/>`;
-  return `<line class="divisio" x1="${(x - 3.2).toFixed(2)}" y1="${top}" x2="${(x - 3.2).toFixed(2)}" y2="${bot}" stroke="#111" stroke-width="0.9"/>` +
-    `<line class="divisio" x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${bot}" stroke="#111" stroke-width="0.9"/>`;
+    return `<line class="divisio" x1="${(x - 3.6).toFixed(2)}" y1="${top}" x2="${(x - 3.6).toFixed(2)}" y2="${bot}" stroke="${INK}" stroke-width="0.9"/>` +
+      `<line class="divisio" x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${bot}" stroke="${INK}" stroke-width="2.2"/>`;
+  return `<line class="divisio" x1="${(x - 3.2).toFixed(2)}" y1="${top}" x2="${(x - 3.2).toFixed(2)}" y2="${bot}" stroke="${INK}" stroke-width="0.9"/>` +
+    `<line class="divisio" x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${bot}" stroke="${INK}" stroke-width="0.9"/>`;
 }
 
 function textW(s: string): number {
@@ -277,6 +295,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     : "";
   // Every geometric constant for this render, derived from the requested staff
   // height. Built once and passed to the helpers that draw — see metrics().
+  resolveInk(options);
   const gm = metrics(options.staffHeight);
 
   const padding = options.padding ?? 14;
@@ -547,7 +566,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
         laneTop: gm.LYRIC_Y + bands.tonarium.top + 26 * gm.k,
         rightFor: (s) => (systemMaxX[s] ?? W) - padding,
         serifFamily: lyricFace,
-        rubricaColor: options.rubricaColor ?? "#9E2B25",
+        rubricaColor: RUBRICA,
       }));
     }
   }
@@ -559,7 +578,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     const right = (systemMaxX[s] ?? W) - padding;
     for (let i = 0; i < 5; i++) {
       const ly = sysY + gm.MTOP + i * gm.MSP;
-      staff.push(`<line x1="4" y1="${ly.toFixed(2)}" x2="${right.toFixed(2)}" y2="${ly.toFixed(2)}" stroke="#111" stroke-width="0.7"/>`);
+      staff.push(`<line x1="4" y1="${ly.toFixed(2)}" x2="${right.toFixed(2)}" y2="${ly.toFixed(2)}" stroke="${INK}" stroke-width="0.7"/>`);
     }
   }
 
@@ -568,21 +587,21 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   // Second pass: lyric texts, with a centred hyphen in the gap between
   // syllables of one word when both sit in the same system.
   const lyricSize = 15 * lyricScale;
-  const rubricaColor = options.rubricaColor ?? "#9E2B25";
+  const rubricaColor = RUBRICA;
   const estW = (t: string): number => t.length * lyricSize * 0.52;
   for (let k = 0; k < lyricRuns.length; k++) {
     const run = lyricRuns[k]!;
     lyricSvgs.push(
       `<text class="lyric" x="${run.x.toFixed(2)}" y="${(run.systemY + gm.LYRIC_Y).toFixed(2)}" ` +
       `font-size="${lyricSize.toFixed(1)}" ` +
-      `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">${lyricMarkup(run.spans, run.text, rubricaColor)}</text>`,
+      `font-weight="${lyricWeight}" fill="${INK}" font-family="${esc(lyricFace)}">${lyricMarkup(run.spans, run.text, rubricaColor)}</text>`,
     );
     const next = lyricRuns[k + 1];
     const hyphen = (hx: number): void => {
       lyricSvgs.push(
         `<text class="lyric hyphen" x="${hx.toFixed(2)}" y="${(run.systemY + gm.LYRIC_Y).toFixed(2)}" ` +
         `text-anchor="middle" font-size="${lyricSize.toFixed(1)}" ` +
-        `font-weight="${lyricWeight}" fill="#111" font-family="${esc(lyricFace)}">-</text>`,
+        `font-weight="${lyricWeight}" fill="${INK}" font-family="${esc(lyricFace)}">-</text>`,
       );
     };
     if (next && !next.wordStart && next.systemY === run.systemY) {
@@ -603,7 +622,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       `<text class="title" x="${(W / 2).toFixed(2)}" y="${titleBaseline.toFixed(2)}" ` +
       `text-anchor="middle" font-family="${esc(faceOf(titleFace))}"` +
       `${weightOf(titleFace) != null ? ` font-weight="${weightOf(titleFace)}"` : ""} ` +
-      `font-size="${titleSize}" fill="#111">${esc(options.title)}</text>`,
+      `font-size="${titleSize}" fill="${INK}">${esc(options.title)}</text>`,
     );
   }
   rubricLines.forEach((line, i) => {

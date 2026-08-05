@@ -20,7 +20,7 @@
 // are all wired in through InscriptioOpts.
 import {
   toSvg, type NoteGeometry, type SvgResult,
-  type FontSpec, type FontSlot, type FontEmbed,
+  type FontSpec, type FontSlot, type FontEmbed, type Theme,
 } from "./emitters/svg.js";
 import { toModerna } from "./emitters/moderna.js";
 import type { TrackData, TrackName } from "./emitters/tracks.js";
@@ -50,42 +50,35 @@ export interface InscriptioOpts {
   // ── layout (the multi-system engine) ──
   /** Wrap systems to this px width. Absent = a single system (current behaviour). */
   width?: number;
-  /** Vertical gap between systems, px. */
-  systemGap?: number;
   /** Draw the quadrata line-end custos guides. */
   custos?: boolean;
-
-  // ── scale & ink ──
-  staffHeight?: number;
-  noteScale?: number;
-  padding?: number;
-  noteColor?: string;
-  staffLineColor?: string;
-  /** Accent red for dropcap / annotations. */
-  rubricaColor?: string;
 
   // ── front matter (all off by default) ──
   title?: string;
   rubric?: string;
   /** Derive the rubric block from chant meta (feast / genus / modus / source). */
   annotation?: "auto";
+  /** Draw a rubricated initial from the first lyric; the first system indents. */
   dropcap?: boolean;
 
-  // ── faces ──
+  // ── dress ──
   /**
-   * Per-role text faces: `dropcap`, `title`, `annotation`, `lyric` — each a
-   * font-family string or `{ family, weight?, scale? }` (scale adjusts the
-   * role's size for faces whose apparent size differs from the house serif).
-   * By default the SVG carries font-family REFERENCES and the host page
-   * supplies the face (`@font-face`). A slot may instead carry `embed`
-   * ({ base64, format? }) — the CALLER's font bytes — and the face then
-   * rides inside the SVG's own `<style>`, making the file self-contained
-   * (at the cost of its size). tonus never bundles font files; with embed
-   * it is a conduit for data the consumer supplies, and the consumer
-   * carries the face's license terms. Anything unset falls back to the
-   * house serif.
+   * Faces, ink, and measurements — the whole look in one object.
+   *
+   * `fonts` carries four roles (`dropcap`, `title`, `annotation`, `lyric`), each
+   * a family string or `{ family, weight?, scale?, embed? }`. Without `embed`
+   * the SVG carries a font-family REFERENCE and the host page supplies the face;
+   * with it the CALLER's bytes ride inside the SVG's own `<style>` and the file
+   * is self-contained. tonus bundles no font files — with `embed` it is a
+   * conduit for data the consumer supplies, and the consumer carries the face's
+   * license terms.
+   *
+   * `colors` reaches the SVG as CSS custom properties with the theme's value as
+   * the fallback, so a host stylesheet can retheme a drawn chant without
+   * re-rendering it. `metrics` cannot work that way: staff height and note scale
+   * are consumed by line breaking long before a stylesheet sees the output.
    */
-  fonts?: FontSpec;
+  theme?: Theme;
 }
 // Queued past 0.2 (declared here once wired, not before): `breaks` / `until`
 // (partial rendering for incipits), lyric font overrides, and an emit-time
@@ -99,11 +92,34 @@ export interface Inscriptio {
 // Options handed through to the species emitters — everything but the species
 // selector itself.
 const EMITTER_KEYS = [
-  "staffHeight", "noteScale", "padding", "noteColor", "staffLineColor",
-  "width", "systemGap", "custos",
-  "title", "rubric", "annotation", "dropcap", "rubricaColor", "fonts",
+  "width", "custos",
+  "title", "rubric", "annotation", "dropcap",
   "accidentals", "centsBaseline", "tracks",
 ] as const;
+
+/**
+ * Flatten a `theme` into the keys the emitters consume.
+ *
+ * The emitters take a flat option bag — one field per measurement, one per
+ * colour — because that is the shape a render loop wants. The theme is the
+ * shape a CALLER wants: faces, ink, and metrics travel together, and a house
+ * style is worth naming once. Resolving between them is this function's whole
+ * job, and it is the only place that knows both shapes.
+ */
+function flattenTheme(theme: Theme | undefined): Record<string, unknown> {
+  if (!theme) return {};
+  const out: Record<string, unknown> = {};
+  if (theme.fonts) out.fonts = theme.fonts;
+  const { colors: c, metrics: m } = theme;
+  if (c?.note !== undefined) out.noteColor = c.note;
+  if (c?.staffLine !== undefined) out.staffLineColor = c.staffLine;
+  if (c?.rubrica !== undefined) out.rubricaColor = c.rubrica;
+  if (m?.staffHeight !== undefined) out.staffHeight = m.staffHeight;
+  if (m?.noteScale !== undefined) out.noteScale = m.noteScale;
+  if (m?.padding !== undefined) out.padding = m.padding;
+  if (m?.systemGap !== undefined) out.systemGap = m.systemGap;
+  return out;
+}
 
 /**
  * Render a `Score` as SVG. Returns the markup plus a geometry array (one entry
@@ -145,7 +161,7 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
   // here. A species ignores, not errors on, options that do not apply to it.
   // Both species honour the front matter (title, rubric/annotation) — the
   // official opening is `title` + `annotation: "auto"`, no dropcap.
-  const emitterOpts: Record<string, unknown> = {};
+  const emitterOpts: Record<string, unknown> = flattenTheme(opts.theme);
   for (const k of EMITTER_KEYS) if (opts[k] !== undefined) emitterOpts[k] = opts[k];
 
   // The tracks consume score-level analysis the flat tabula does not carry;
@@ -167,5 +183,5 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
 }
 
 export type { NoteGeometry } from "./emitters/svg.js";
-export type { FontSpec, FontSlot, FontEmbed } from "./emitters/svg.js";
+export type { FontSpec, FontSlot, FontEmbed, Theme, ThemeColors, ThemeMetrics } from "./emitters/svg.js";
 export type { TrackName, TrackData } from "./emitters/tracks.js";

@@ -56,12 +56,55 @@ export type FontSlot =
   | string
   | { family: string; weight?: number; scale?: number; embed?: FontEmbed };
 
-/** Per-role faces. Anything unset falls back to `fontFamily` (the house serif). */
+/** Per-role faces. Anything unset falls back to `fontFamily` (the house serif).
+ *
+ * The four roles are the four kinds of text a chant page sets, and they are
+ * deliberately separate: a book's dropcap is very often NOT its lyric face —
+ * a Lombardic or uncial initial against a text hand — which is exactly the
+ * pairing the printed books use. */
 export interface FontSpec {
   dropcap?: FontSlot;
   title?: FontSlot;
   annotation?: FontSlot;
   lyric?: FontSlot;
+}
+
+/** The ink. Every value reaches the SVG as a CSS custom property with the
+ * theme's own value as the fallback — `var(--tonus-note, #111)` — so a host
+ * stylesheet can retheme a rendered chant without re-rendering it, while a
+ * file opened on its own still carries the colours it was drawn with. */
+export interface ThemeColors {
+  /** Noteheads, stems, episemata, lyric text. */
+  note?: string;
+  /** The four staff lines. */
+  staffLine?: string;
+  /** Liturgical red: the dropcap, rubrics, and the annotation block. */
+  rubrica?: string;
+}
+
+/** The measurements. These change LAYOUT, not just appearance — they are the
+ * one part of a theme that CSS cannot express, because line breaking has
+ * already consumed them by the time a stylesheet sees the output. */
+export interface ThemeMetrics {
+  /** Staff height in px (the four lines, outermost to outermost). Default 40. */
+  staffHeight?: number;
+  /** Notehead calibration against the staff. Default 1. */
+  noteScale?: number;
+  /** Margin around the whole drawing, px. */
+  padding?: number;
+  /** Vertical gap between systems, px. */
+  systemGap?: number;
+}
+
+/** How a chant is dressed: its faces, its ink, and its measurements.
+ *
+ * One object rather than a scatter of flat options, because these travel
+ * together — a caller setting a lyric face is usually setting a whole look, and
+ * a house style is a thing worth naming once and passing everywhere. */
+export interface Theme {
+  fonts?: FontSpec;
+  colors?: ThemeColors;
+  metrics?: ThemeMetrics;
 }
 
 interface ResolvedFont {
@@ -183,6 +226,9 @@ interface Resolved {
   rubricaColor: string;   // liturgical red
 }
 
+/** A themeable colour: the caller's value, reachable from CSS by name. */
+const cssVar = (name: string, value: string): string => `var(--tonus-${name}, ${value})`;
+
 function resolveOpts(o: SvgOpts): Resolved {
   const staffHeight = o.staffHeight ?? 40;
   // 4 lines span 3 gaps; each gap = 2 staffIntervals ⇒ staffInterval = h/6.
@@ -193,14 +239,26 @@ function resolveOpts(o: SvgOpts): Resolved {
   const noteheadH = punctum
     ? (punctum.bbox[3] - punctum.bbox[1]) * glyphScale * noteScale
     : staffInterval * 1.3;
-  const noteColor = o.noteColor ?? "#111";
+  const rawNote = o.noteColor ?? "#111";
   return {
     staffInterval,
     padding: o.padding ?? 14,
     // Staff lines match the note colour by default (they carry their own
     // option for later, but for now everything is one ink).
-    staffLineColor: o.staffLineColor ?? noteColor,
-    noteColor,
+    //
+    // Each colour reaches the SVG as a CSS custom property with the resolved
+    // value as its FALLBACK — `var(--tonus-note, #111)`. An inline fill beats
+    // any stylesheet rule, so writing the literal made the 17 semantic classes
+    // this emitter already carries (note, lyric, dropcap, custos, episema…)
+    // unstylable from the host page. With the var, a page can retheme a drawn
+    // chant by setting three properties, and a file opened on its own still
+    // shows the ink it was rendered with.
+    // Wrap the RAW value, not the already-wrapped one: defaulting the staff
+    // line to `noteColor` after wrapping nests the vars
+    // (`var(--tonus-staff-line, var(--tonus-note, #111))`), which works but
+    // reads as a mistake and ties the two properties together in CSS.
+    staffLineColor: cssVar("staff-line", o.staffLineColor ?? rawNote),
+    noteColor: cssVar("note", rawNote),
     fontFamily: o.fontFamily ?? HOUSE_SERIF,
     fonts: {
       dropcap: resolveFont(o.fonts?.dropcap, o.fontFamily ?? HOUSE_SERIF),
@@ -232,7 +290,7 @@ function resolveOpts(o: SvgOpts): Resolved {
     // "auto" is resolved in toSvg where the chant meta is in hand.
     rubric: typeof o.rubric === "string" ? o.rubric : null,
     dropcap: o.dropcap ?? false,
-    rubricaColor: o.rubricaColor ?? "#9E2B25",
+    rubricaColor: cssVar("rubrica", o.rubricaColor ?? "#9E2B25"),
   };
 }
 

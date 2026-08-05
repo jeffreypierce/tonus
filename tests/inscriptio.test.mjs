@@ -35,7 +35,7 @@ describe("inscriptio — square-note SVG (single-system)", () => {
 
   test("inscriptio(score).svg sizes glyphs to the SMuFL standard (staff space = upm/4)", () => {
     // staffHeight 48 → staffInterval 8 → staff space 16 px → scale 16/250.
-    const svg = inscriptio(buildScore(makeChant("(c4) a(g) (::)")), { staffHeight: 48 }).svg;
+    const svg = inscriptio(buildScore(makeChant("(c4) a(g) (::)")), { theme: { metrics: { staffHeight: 48 } } }).svg;
     assert.ok(svg.includes("scale(0.06400"), "glyph scale = staffSpace / (upm/4)");
     // The g punctum (position 4) sits at y = topY + 3·staffInterval = 64.
     const m = svg.match(/class="note"[^>]*translate\([\d.]+ ([\d.]+)\)/);
@@ -45,13 +45,13 @@ describe("inscriptio — square-note SVG (single-system)", () => {
   test("inscriptio(score).svg renders the clef from the score and moves it by line", () => {
     // c4 → do clef on the top line (position 7 → y 40 at staffHeight 48);
     // c3 → line 3 (position 5 → y 56). Same letters, same slots, clef moves.
-    const c4 = inscriptio(buildScore(makeChant("(c4) a(g) (::)")), { staffHeight: 48 }).svg;
-    const c3 = inscriptio(buildScore(makeChant("(c3) a(g) (::)", "1")), { staffHeight: 48 }).svg;
+    const c4 = inscriptio(buildScore(makeChant("(c4) a(g) (::)")), { theme: { metrics: { staffHeight: 48 } } }).svg;
+    const c3 = inscriptio(buildScore(makeChant("(c3) a(g) (::)", "1")), { theme: { metrics: { staffHeight: 48 } } }).svg;
     const clefY = (svg) => svg.match(/class="clef"[^>]*translate\([\d.]+ ([\d.]+)\)/)?.[1];
     assert.equal(clefY(c4), "40.00");
     assert.equal(clefY(c3), "56.00");
     // An F clef renders a different glyph than a C clef.
-    const f3 = inscriptio(buildScore(makeChant("(f3) a(g) (::)")), { staffHeight: 48 }).svg;
+    const f3 = inscriptio(buildScore(makeChant("(f3) a(g) (::)")), { theme: { metrics: { staffHeight: 48 } } }).svg;
     const clefGlyph = (svg) => svg.match(/class="clef".*?<path d="([^"]{0,40})/)?.[1];
     assert.ok(clefGlyph(f3) && clefGlyph(c3), "clef glyph paths found");
     assert.notEqual(clefGlyph(f3), clefGlyph(c3), "F clef uses its own glyph");
@@ -254,12 +254,16 @@ describe("inscriptio — front matter", () => {
 
   test("dropcap draws a rubricated initial from the first lyric", () => {
     const { svg } = inscriptio(score, { dropcap: true });
-    assert.ok(/class="dropcap"[^>]*fill="#9E2B25"[^>]*>P</.test(svg));
+    assert.ok(/class="dropcap"[^>]*fill="var\(--tonus-rubrica, #9E2B25\)"[^>]*>P</.test(svg));
   });
 
-  test("rubricaColor sets the liturgical red", () => {
-    const { svg } = inscriptio(score, { dropcap: true, rubricaColor: "#c00" });
-    assert.ok(/class="dropcap"[^>]*fill="#c00"/.test(svg));
+  test("theme.colors.rubrica sets the liturgical red, and CSS can still win", () => {
+    const { svg } = inscriptio(score, { dropcap: true, theme: { colors: { rubrica: "#c00" } } });
+    // The theme value becomes the custom property's FALLBACK, so the file
+    // carries the ink it was drawn with while a host stylesheet setting
+    // --tonus-rubrica still overrides it. An inline literal could not be
+    // overridden at all — an inline fill beats any stylesheet rule.
+    assert.ok(/class="dropcap"[^>]*fill="var\(--tonus-rubrica, #c00\)"/.test(svg));
   });
 
   test("no front-matter options → no header band (bare score)", () => {
@@ -292,10 +296,12 @@ describe("inscriptio — figures never merge across phrases (grouping regression
 describe("inscriptio — the fonts option (references only, never bundled)", () => {
   const opts = {
     title: "Kyrie", annotation: "auto", dropcap: true,
-    fonts: {
-      dropcap: { family: "Pfeffer Simpelgotisch", weight: 700 },
-      title: "Pfeffer Mediaeval",
-      lyric: { family: "Pfeffer Mediaeval", scale: 1.15 },
+    theme: {
+      fonts: {
+        dropcap: { family: "Pfeffer Simpelgotisch", weight: 700 },
+        title: "Pfeffer Mediaeval",
+        lyric: { family: "Pfeffer Mediaeval", scale: 1.15 },
+      },
     },
   };
 
@@ -316,7 +322,7 @@ describe("inscriptio — the fonts option (references only, never bundled)", () 
 
   test("moderna honours the lyric slot", () => {
     const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
-      notation: "moderna", fonts: { lyric: { family: "Pfeffer Mediaeval", weight: 400, scale: 1.1 } },
+      notation: "moderna", theme: { fonts: { lyric: { family: "Pfeffer Mediaeval", weight: 400, scale: 1.1 } } },
     });
     assert.match(svg, /class="lyric" [^>]*font-family="Pfeffer Mediaeval"/);
     assert.match(svg, /class="lyric" [^>]*font-size="16.5"/);
@@ -324,7 +330,7 @@ describe("inscriptio — the fonts option (references only, never bundled)", () 
 
   test("no fonts option → byte-identical to before (pure fallback)", () => {
     const a = inscriptio(buildScore(makeChant(KYRIE_GABC))).svg;
-    const b = inscriptio(buildScore(makeChant(KYRIE_GABC)), { fonts: {} }).svg;
+    const b = inscriptio(buildScore(makeChant(KYRIE_GABC)), { theme: { fonts: {} } }).svg;
     assert.equal(a, b);
   });
 });
@@ -335,7 +341,7 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
   test("an embed slot writes one @font-face into the SVG's own style", () => {
     const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
       dropcap: true,
-      fonts: { dropcap: { family: "Pfeffer Simpelgotisch", weight: 700, embed: { base64: FAKE } } },
+      theme: { fonts: { dropcap: { family: "Pfeffer Simpelgotisch", weight: 700, embed: { base64: FAKE } } } },
     });
     assert.match(svg, /<defs><style>@font-face\{font-family:"Pfeffer Simpelgotisch";font-weight:700;src:url\(data:font\/otf;base64,/);
     assert.ok(svg.includes(FAKE));
@@ -344,9 +350,11 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
   test("the same face in two slots embeds once (dedupe by family + weight)", () => {
     const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
       title: "Kyrie", dropcap: true,
-      fonts: {
-        dropcap: { family: "Pfeffer Mediaeval", embed: { base64: FAKE } },
-        title: { family: "Pfeffer Mediaeval", embed: { base64: FAKE } },
+      theme: {
+        fonts: {
+          dropcap: { family: "Pfeffer Mediaeval", embed: { base64: FAKE } },
+          title: { family: "Pfeffer Mediaeval", embed: { base64: FAKE } },
+        },
       },
     });
     assert.equal((svg.match(/@font-face/g) ?? []).length, 1);
@@ -354,11 +362,11 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
 
   test("no embed → no style block; format woff2 carries its own mime", () => {
     const plain = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
-      fonts: { lyric: "Pfeffer Mediaeval" },
+      theme: { fonts: { lyric: "Pfeffer Mediaeval" } },
     }).svg;
     assert.ok(!plain.includes("@font-face"));
     const woff2 = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
-      fonts: { lyric: { family: "X", embed: { base64: FAKE, format: "woff2" } } },
+      theme: { fonts: { lyric: { family: "X", embed: { base64: FAKE, format: "woff2" } } } },
     }).svg;
     assert.match(woff2, /data:font\/woff2;base64,.*format\("woff2"\)/);
   });
@@ -366,7 +374,7 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
   test("moderna embeds the lyric face too", () => {
     const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
       notation: "moderna",
-      fonts: { lyric: { family: "Pfeffer Mediaeval", weight: 400, embed: { base64: FAKE } } },
+      theme: { fonts: { lyric: { family: "Pfeffer Mediaeval", weight: 400, embed: { base64: FAKE } } } },
     });
     assert.match(svg, /@font-face\{font-family:"Pfeffer Mediaeval";font-weight:400;/);
   });
@@ -547,5 +555,54 @@ describe("the layout contract", () => {
     const rightmost = Math.max(...geometry.map((g) => g.x));
     assert.ok(canvas > 200, "the canvas grew past the request rather than clipping");
     assert.ok(rightmost <= canvas, "every note sits inside the canvas");
+  });
+});
+
+describe("theme — faces, ink, and metrics in one object", () => {
+  test("colours reach the SVG as CSS custom properties, theme value as fallback", () => {
+    // An inline fill beats any stylesheet rule, so a literal `fill="#111"` made
+    // the emitter's own semantic classes (note, lyric, dropcap, custos…)
+    // unstylable from the host page. The var keeps the render self-describing
+    // while letting a page retheme it without re-rendering.
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      theme: { colors: { note: "#234", rubrica: "#801" } },
+    });
+    assert.match(svg, /var\(--tonus-note, #234\)/);
+    assert.ok(!/var\([^)]*var\(/.test(svg), "custom properties do not nest");
+  });
+
+  test("both species honour theme.colors.note", () => {
+    // moderna hardcoded #111 in seventeen places and ignored the note colour
+    // outright, so a caller theming the ink saw quadrata change and moderna not.
+    for (const notation of ["quadrata", "moderna"]) {
+      const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+        notation,
+        theme: { colors: { note: "#07c" } },
+      });
+      assert.match(svg, /var\(--tonus-note, #07c\)/, `${notation} honours the theme`);
+    }
+  });
+
+  test("theme.metrics drives layout, which CSS could never do", () => {
+    // Staff height is consumed by line breaking long before a stylesheet sees
+    // the output — which is why metrics belong in the theme and not in CSS.
+    const small = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      theme: { metrics: { staffHeight: 30 } },
+    }).svg;
+    const large = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      theme: { metrics: { staffHeight: 60 } },
+    }).svg;
+    assert.notEqual(small, large);
+  });
+
+  test("dropcap keeps its own face, separate from the lyric", () => {
+    // The printed books set a Lombardic or uncial initial against a text hand;
+    // the two are not the same face and the theme must not conflate them.
+    const { svg } = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      dropcap: true,
+      theme: { fonts: { dropcap: "Pfeffer Simpelgotisch", lyric: "Junicode" } },
+    });
+    assert.match(svg, /class="dropcap"[^>]*font-family="Pfeffer Simpelgotisch"/);
+    assert.match(svg, /class="lyric"[^>]*font-family="Junicode"/);
   });
 });

@@ -391,33 +391,74 @@ relying on the estimate to land a tight column exactly.
 
 Options, by group (all optional):
 
-- **layout** — `width` wraps systems to fit (absent = a single line); `systemGap`,
-  `custos` (line-end guides).
+- **layout** — `width` wraps systems to fit (absent = a single line); `custos`
+  (line-end guides).
 - **front matter** — set as the Solesmes books open a piece: `title` centers
   over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
-  mark, e.g. _Introitus. 8._) sits upright at the left margin over the
-  dropcap; `dropcap` (a rubricated initial); `rubricaColor` (the liturgical
-  red — dropcap, annotation, and rubric lyric runs all draw in it). Both
-  species honour the front matter. The **official opening** of a tonus score
-  is `title` (the incipit) + `annotation: "auto"` — no dropcap: the
-  illuminated capital remains an option, but it conflicts with the analysis
-  tracks' layouts and the house scores skip it.
+  mark, e.g. _Introitus. 8._) sits upright at the left margin; `dropcap` draws
+  the rubricated initial the printed books open with, taking the first letter
+  out of the lyric and indenting the first system to hold it. Both species
+  honour the front matter.
 - **intonation** — `accidentals: "standard" | "heji" | "cents"` and
   `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
-- **scale & ink** — `staffHeight`, `noteScale`, `padding`, `noteColor`,
-  `staffLineColor`.
-- **faces** — `fonts: { dropcap?, title?, annotation?, lyric? }`, each a
-  font-family string or `{ family, weight?, scale? }` (`scale` adjusts that
-  role's size, for a face whose apparent size differs from the serif). The
-  SVG carries font-family *references* by default — the page that hosts the
-  SVG embeds the face (`@font-face`). A slot may instead carry
-  `embed: { base64, format? }` — the caller's own font bytes — and the face
-  then rides inside the SVG's `<style>`, making the file self-contained (at
-  the cost of its size; one `@font-face` per family + weight, deduped).
-  tonus never bundles font files; with `embed` it is a conduit for data the
-  consumer supplies, so the consumer carries the face's license terms.
-  Unset roles keep the house serif. `moderna` honours the `lyric`, `title`,
-  and `annotation` slots.
+- **theme** — the whole dress in one object: `fonts`, `colors`, `metrics`.
+
+### theme — faces, ink, and measurements
+
+```js
+tonus.inscriptio(score, {
+  width: 900,
+  theme: {
+    fonts: {
+      dropcap:    { family: "Pfeffer Simpelgotisch", weight: 700 },
+      title:      "Junicode",
+      annotation: "Junicode",
+      lyric:      { family: "Junicode", weight: 400, scale: 1.06 },
+    },
+    colors:  { note: "#111", staffLine: "#111", rubrica: "#9E2B25" },
+    metrics: { staffHeight: 40, noteScale: 1, padding: 14, systemGap: 24 },
+  },
+});
+```
+
+**`fonts`** carries four roles, and they are deliberately separate: a book's
+dropcap is very often *not* its lyric face — a Lombardic or uncial initial
+against a text hand, which is the pairing the printed books use. Each role takes
+a font-family string or `{ family, weight?, scale? }` (`scale` adjusts that
+role's size, for a face whose apparent size differs from the house serif).
+
+The SVG carries font-family *references* by default, and the page hosting it
+supplies the face (`@font-face`). A slot may instead carry
+`embed: { base64, format? }` — the caller's own bytes — and the face then rides
+inside the SVG's `<style>`, making the file self-contained (at the cost of its
+size; one `@font-face` per family + weight, deduped). tonus bundles no font
+files: with `embed` it is a conduit for data the consumer supplies, so the
+consumer carries the face's license terms. Unset roles keep the house serif.
+`moderna` honours the `lyric`, `title`, and `annotation` slots.
+
+**`colors`** reach the SVG as CSS custom properties with the theme's own value
+as the fallback — `fill="var(--tonus-note, #111)"`. A rendered chant therefore
+carries the ink it was drawn with *and* stays themable: a host stylesheet that
+sets the property rethemes the score without re-rendering it.
+
+```css
+/* the page follows its own tokens; the chant follows the page */
+.score svg {
+  --tonus-note: var(--ink);
+  --tonus-staff-line: var(--ink);
+  --tonus-rubrica: var(--rubrica);
+}
+```
+
+That is why the colours are custom properties rather than literals: an inline
+`fill` beats any stylesheet rule, so a literal would make the emitter's own
+semantic classes (`note`, `lyric`, `dropcap`, `custos`, `episema`, `divisio`,
+`clef`, `mora`, `ictus`, …) unstylable from the host page.
+
+**`metrics`** cannot work that way. `staffHeight` and `noteScale` are consumed
+by line breaking — they decide how many notes fit a system — so they are settled
+long before a stylesheet sees the output. A metric change re-renders; a colour
+change need not.
 
 **The geometry contract (public API).** `geometry` is one `NoteGeometry` per note,
 in tabula order — the interface analysis _tracks_ build on, so they place marks
