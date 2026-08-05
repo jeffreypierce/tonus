@@ -801,8 +801,30 @@ export function toSvg(
       // Break if the next phrase would overflow the width — but never on the
       // last divisio (nothing follows). A custos guides the eye to the next
       // system's first pitch.
+      // Break when the NEXT phrase will not fit, rather than once this one has
+      // already overrun. The check was `x > width - padding`, which only fires
+      // AFTER the boundary is crossed — and since a system may break only at a
+      // divisio, the overrun was a whole phrase wide. Measured over thirty
+      // graduals, every one of them overran a 900px request, by up to 289px.
+      // That is what made a render wider than the column it was drawn for, and
+      // why "sometimes bigger, sometimes smaller" varied by chant: the overrun
+      // depends on where the phrases happen to fall.
+      //
+      // The estimate is deliberately rough — the coming phrase's figures at a
+      // nominal advance, no lyrics — and capped at half a system, because a
+      // phrase that would overrun by a little is better kept than moved. It
+      // only has to be right about whether roughly a system's worth follows.
       const moreToCome = j < rows.length;
-      if (r.width != null && moreToCome && x > r.width - r.padding) {
+      let nextPhraseW = 0;
+      if (r.width != null && moreToCome) {
+        const phrase = rows[j]!.phraseIndex;
+        for (let k = j; k < rows.length && rows[k]!.phraseIndex === phrase; k++) {
+          nextPhraseW += r.staffInterval * 1.35;
+        }
+        nextPhraseW = Math.min(nextPhraseW, r.width * 0.5);
+      }
+      if (r.width != null && moreToCome &&
+          (x > r.width - r.padding || x + nextPhraseW > r.width - r.padding)) {
         if (r.custos) {
           // A line-end guide to the next system's first pitch. Drawn as a small
           // punctum at that pitch (no dedicated custos glyph in the bake yet).
@@ -900,7 +922,21 @@ export function toSvg(
   // full column would leave a short chant floating in white space, and any
   // host that scales to fit would then shrink the notation for having been
   // short. That is the bug this line replaced, in the other direction.
-  const width = r.width != null ? Math.min(Math.ceil(r.width), contentW) : contentW;
+  // The canvas is the requested width, or the content where the content is
+  // wider. Both halves are load-bearing and I got each wrong once today.
+  //
+  // Honouring the request keeps every render on a page at ONE scale: width was
+  // `max(systemMaxX)` before, so a requested 900 came back 915, 986, 1074,
+  // 1203 by chant, and a host applying `max-width` shrank each differently —
+  // the "sometimes bigger, sometimes smaller" report.
+  //
+  // Never clipping is what the `max` is for. A system breaks only at a
+  // DIVISIO, so a phrase with no divisio before the boundary legitimately runs
+  // past it — clipping to the request cut the tail off the staff, which is the
+  // "quadrata doesn't render the whole chant" report. The overrun is the
+  // engraving being honest about where a chant may be broken; the canvas
+  // follows it rather than truncating it.
+  const width = r.width != null ? Math.max(Math.ceil(r.width), contentW) : contentW;
   const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + bands.extra);
 
   // ── The analysis tracks, below each system ──
