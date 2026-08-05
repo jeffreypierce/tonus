@@ -19,6 +19,7 @@
 // in the printed books.
 
 import type { ChantTabulaRow } from "../tabula.js";
+import { decideBreak } from "./breaking.js";
 import type { Chant } from "../../chant/types.js";
 import type { LyricRun } from "../types.js";
 import { trimRuns } from "../lyric.js";
@@ -971,8 +972,26 @@ export function toSvg(
       // merely close to full — a higher figure would only discard divisio breaks
       // for nothing.
       const earned = x >= rightBoundary * 0.88;
-      if (r.width != null && moreToCome && !sealed &&
-          (x > rightBoundary || (earned && x + nextPhraseW > rightBoundary + slack))) {
+      // The shared rules (breaking.ts) decide `z`, the seal, and the width; the
+      // `earned` threshold is quadrata's own policy — a divisio is the BEST
+      // place to end a system, so it holds out for a line that is nearly full
+      // and lets the word rule below take the remainder.
+      // A sealed seam is not a candidate here at all: quadrata's breaks fall at
+      // phrase boundaries, so refusing is enough — the word rule below finds the
+      // group's head. Testing the seal INSIDE the shared decision instead let a
+      // sealed boundary close a system, which drew a custos on a line that had
+      // none before (measured: 8 custos became 9 on gregobase:697).
+      const divVerdict = r.width != null && moreToCome && !sealed
+        ? decideBreak({
+            next: rows[j]!,
+            x,
+            boundary: rightBoundary,
+            need: earned ? nextPhraseW + slack : 0,
+            lineStart: r.padding,
+            forcedHandled: true,
+          })
+        : { break: false as const, reason: "none" as const };
+      if (divVerdict.break) {
         // A custos after a FULL STOP is noise. The sign says "the melody
         // continues, at this pitch" — a divisio finalis has already said the
         // opposite, and drawing both put two marks in the same place, which
@@ -1050,7 +1069,16 @@ export function toSvg(
           + r.interGlyph
         : 0;
       const bound = r.width - r.padding - custosW2;
-      if (x + r.interSyllable + r.interWord + tw > bound) closeSystem(rows[j]!.staffPosition);
+      const wordVerdict = decideBreak({
+        next: rows[j]!,
+        x: x + r.interSyllable + r.interWord,
+        boundary: bound,
+        need: tw,
+        sealedRun: tw,
+        lineStart: r.padding,
+        forcedHandled: true,
+      });
+      if (wordVerdict.break) closeSystem(rows[j]!.staffPosition);
     }
 
     prevSyllable = syllableIndex;

@@ -2,6 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { buildScore } from "../dist/engines/score/api.js";
 import { inscriptio } from "../dist/engines/score/inscriptio.js";
+import { decideBreak } from "../dist/engines/score/emitters/breaking.js";
 
 const KYRIE_GABC = "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (::)";
 
@@ -456,5 +457,57 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
         `${notation}: a split word draws at least one hyphen`,
       );
     }
+  });
+});
+
+describe("breaking: the rules both species share", () => {
+  // These were written twice, once per emitter, until 2026-08-05 — which is how
+  // <nlba> shipped working in quadrata and broken in moderna. Testing the
+  // decision directly is only possible now that there is one of it.
+  const row = (over = {}) => ({ lineBreak: false, keepWithPrev: false, ...over });
+
+  test("`z` outranks the width test", () => {
+    const v = decideBreak({
+      next: row({ lineBreak: true }),
+      x: 0, boundary: 1000, need: 10, lineStart: 0,
+    });
+    assert.equal(v.break, true);
+    assert.equal(v.reason, "forced");
+  });
+
+  test("a caller that already consumed `z` is not told to break again", () => {
+    // Quadrata honours `z` in its own block, because it must repeat the clef and
+    // place a custos before the staff advances. Asking here too broke the same
+    // system twice.
+    const v = decideBreak({
+      next: row({ lineBreak: true }),
+      x: 0, boundary: 1000, need: 10, lineStart: 0, forcedHandled: true,
+    });
+    assert.equal(v.break, false);
+  });
+
+  test("<nlba> seals a seam that would otherwise break on width", () => {
+    const v = decideBreak({
+      next: row({ keepWithPrev: true }),
+      x: 990, boundary: 1000, need: 50, sealedRun: 50, lineStart: 0,
+    });
+    assert.equal(v.break, false, "the seal holds; the break belongs before the group");
+  });
+
+  test("...but yields when the sealed run cannot fit any line", () => {
+    const v = decideBreak({
+      next: row({ keepWithPrev: true }),
+      x: 990, boundary: 1000, need: 5000, sealedRun: 5000, lineStart: 0,
+    });
+    assert.equal(v.break, true, "staying on the page outranks the editor's preference");
+  });
+
+  test("a cursor already past the boundary breaks on its own", () => {
+    // A single figure wider than a whole line can never be rescued by breaking,
+    // but the line before it must still end.
+    const v = decideBreak({
+      next: row(), x: 1200, boundary: 1000, need: 0, lineStart: 0,
+    });
+    assert.equal(v.break, true);
   });
 });
