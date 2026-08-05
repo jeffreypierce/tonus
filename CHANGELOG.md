@@ -2,6 +2,47 @@
 
 All notable changes to tonus. Newest first.
 
+## Unreleased
+
+Rendering, mostly — a day of looking at real chant on a real page and fixing
+what the page showed.
+
+### Fixed
+
+- **`staffHeight` means the same thing in both species.** Moderna's staff was
+  a hardcoded constant, so the option moved quadrata and did nothing here: a
+  request of 30, 40 or 60 left moderna at 7.4px every time. Every geometric
+  constant now derives from it through one metrics factory.
+- **The canvas is the width you asked for.** It was `max(systemMaxX)` —
+  whatever the widest system happened to reach — so a requested 900 came back
+  915, 986, 1074, 1203 by chant, and a host applying `max-width` shrank each
+  differently. That is why the same page showed one chant's notation a third
+  smaller than the next's.
+- **Lyrics count toward a system's extent.** A syllable is centred on its
+  note, so half of a final wide syllable always hung past the canvas and was
+  cut off. The layout already tracked the lyric's right edge for its collision
+  check; the width calculation never asked.
+- **The custos is a custos.** It was drawn as a shrunken punctum on the
+  authority of a comment saying no custos glyph was baked — Bravura's have
+  been baked all along. The real glyph is a hooked note whose stem points
+  toward the pitch it announces. It also floated 41px past the last note,
+  having been placed after the divisio's trailing air; and it is now
+  suppressed after a full stop, where drawing it put two marks in one place
+  and read as a heavy double barline.
+- **Analysis tracks scale with the staff in moderna**, and a track that SPANS
+  notes now reaches their ink rather than their anchors — the emitters had
+  measured the ink all along and the mapping dropped it.
+- **Capitals are measured as capitals.** The lyric width estimate was a flat
+  per-character average, and chant sets its opening word in capitals; "CAn"
+  was estimated at 22.9px against a real 27.9, so opening syllables collided
+  with what followed.
+
+### Changed
+
+- **More air.** Syllable and word spacing widened in both species, the
+  staff-to-lyric gap from 21px to 28, and moderna's note advance retuned so a
+  chant takes about one system more than quadrata rather than twice as many.
+
 ## 0.4.5 — 2026-08-04
 
 The rubric true-up, the era view, and a long pass of making the library say
