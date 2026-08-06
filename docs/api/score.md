@@ -391,8 +391,13 @@ relying on the estimate to land a tight column exactly.
 
 Options, by group (all optional):
 
-- **layout** — `width` wraps systems to fit (absent = a single line); `custos`
-  (line-end guides).
+- **layout** — `width` wraps systems to fit (absent = a single line); `scale`
+  sets how big the chant is drawn: `"small"`, `"normal"` (default), `"large"`,
+  or a staff height in px for fitting a known column. Everything scales from it
+  — notes, lyrics, the air between systems — and it reflows the music, so a
+  larger scale means fewer notes per line. The page margin does not scale: it
+  belongs to the page rather than the notation, and scaling it gave a large
+  chant *less* usable width than a small one.
 - **front matter** — set as the Solesmes books open a piece: `title` centers
   over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
   mark, e.g. _Introitus. 8._) sits upright at the left margin; `dropcap` draws
@@ -401,9 +406,9 @@ Options, by group (all optional):
   honour the front matter.
 - **intonation** — `accidentals: "standard" | "heji" | "cents"` and
   `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
-- **theme** — the whole dress in one object: `fonts`, `colors`, `metrics`.
+- **theme** — the dress: `fonts` and `colors`.
 
-### theme — faces, ink, and measurements
+### theme — faces and ink
 
 ```js
 tonus.inscriptio(score, {
@@ -415,8 +420,7 @@ tonus.inscriptio(score, {
       annotation: "Junicode",
       lyric:      { family: "Junicode", weight: 400, scale: 1.06 },
     },
-    colors:  { note: "#111", staffLine: "#111", rubrica: "#9E2B25" },
-    metrics: { staffHeight: 40, noteScale: 1, padding: 14, systemGap: 24 },
+    colors: { note: "#111", staffLine: "#111", rubrica: "#9E2B25" },
   },
 });
 ```
@@ -455,10 +459,17 @@ That is why the colours are custom properties rather than literals: an inline
 semantic classes (`note`, `lyric`, `dropcap`, `custos`, `episema`, `divisio`,
 `clef`, `mora`, `ictus`, …) unstylable from the host page.
 
-**`metrics`** cannot work that way. `staffHeight` and `noteScale` are consumed
-by line breaking — they decide how many notes fit a system — so they are settled
-long before a stylesheet sees the output. A metric change re-renders; a colour
-change need not.
+**`scale` is not part of the theme**, and deliberately so: it is consumed by
+line breaking — it decides how many notes fit a system — so it is settled long
+before a stylesheet sees the output. A scale change re-renders; a colour change
+need not. That is the line between the two.
+
+Nothing else about the layout is a caller's decision. The margin, the air
+between systems, the notehead calibration against the staff, and the line-end
+custos were all options until 0.5 and were never once set — not by the docs
+site, the 28 lab plates, or the 13 stress pieces. They are now constants chosen
+to look right at every scale, and the custos simply appears whenever a system
+wraps, which is what a chant book does.
 
 **The geometry contract (public API).** `geometry` is one `NoteGeometry` per note,
 in tabula order — the interface analysis _tracks_ build on, so they place marks

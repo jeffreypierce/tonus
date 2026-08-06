@@ -9,9 +9,29 @@ what the page showed.
 
 ### Changed — breaking
 
+- **The layout options are `width` and `scale`.** `padding`, `noteScale`,
+  `systemGap`, and `custos` are gone. Nothing ever set them — not the docs site,
+  not the 28 lab plates, not the 13 stress pieces — so they were surface without
+  use. They are now constants chosen to look right at every scale, and the
+  custos appears whenever a system wraps, which is what a chant book does.
+
+  `scale` replaces `staffHeight`: `"small"`, `"normal"` (default), `"large"`, or
+  a staff height in px for fitting a known column. A caller decides how big the
+  chant should be, not how tall its staff is in pixels.
+
+  ```js
+  inscriptio(score, { width: 900, scale: "large" })
+  ```
+
+  The page margin deliberately does NOT scale with it — a margin belongs to the
+  page, not the notation, and scaling it gave a large chant *less* usable width
+  than a small one (89% of a 900px canvas against 93%). The air between systems
+  does scale, since flat 24px held the system pitch at 135px whether the staff
+  was 30 or 56.
+
 - **`inscriptio`'s look options are one `theme` object.** `fonts`, `noteColor`,
-  `staffLineColor`, `rubricaColor`, `staffHeight`, `noteScale`, `padding`, and
-  `systemGap` are replaced by `theme: { fonts, colors, metrics }`. These travel
+  `staffLineColor`, and `rubricaColor` are replaced by
+  `theme: { fonts, colors }`. These travel
   together — a caller setting a lyric face is usually setting a whole look — and
   a house style is worth naming once and passing everywhere.
 
@@ -19,8 +39,8 @@ what the page showed.
   // before
   inscriptio(score, { fonts: { lyric: "Junicode" }, rubricaColor: "#801", staffHeight: 48 })
   // after
-  inscriptio(score, { theme: {
-    fonts: { lyric: "Junicode" }, colors: { rubrica: "#801" }, metrics: { staffHeight: 48 },
+  inscriptio(score, { scale: 48, theme: {
+    fonts: { lyric: "Junicode" }, colors: { rubrica: "#801" },
   } })
   ```
 
@@ -37,8 +57,9 @@ what the page showed.
   `--tonus-rubrica`. The emitter already carried semantic classes (`note`,
   `lyric`, `dropcap`, `custos`, `episema`, `divisio`, `clef`, `mora`, `ictus`)
   but an inline `fill` beats any stylesheet rule, so none of them could be
-  styled. `theme.metrics` deliberately does NOT work this way: staff height and
-  note scale are consumed by line breaking, long before CSS sees the output.
+  styled. `scale` deliberately stays outside the theme for the same reason it
+  cannot be a CSS property: line breaking consumes it long before a stylesheet
+  sees the output.
 
 ### Fixed
 

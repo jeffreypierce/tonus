@@ -35,7 +35,7 @@ describe("inscriptio — square-note SVG (single-system)", () => {
 
   test("inscriptio(score).svg sizes glyphs to the SMuFL standard (staff space = upm/4)", () => {
     // staffHeight 48 → staffInterval 8 → staff space 16 px → scale 16/250.
-    const svg = inscriptio(buildScore(makeChant("(c4) a(g) (::)")), { theme: { metrics: { staffHeight: 48 } } }).svg;
+    const svg = inscriptio(buildScore(makeChant("(c4) a(g) (::)")), { scale: 48 }).svg;
     assert.ok(svg.includes("scale(0.06400"), "glyph scale = staffSpace / (upm/4)");
     // The g punctum (position 4) sits at y = topY + 3·staffInterval = 64.
     const m = svg.match(/class="note"[^>]*translate\([\d.]+ ([\d.]+)\)/);
@@ -45,13 +45,13 @@ describe("inscriptio — square-note SVG (single-system)", () => {
   test("inscriptio(score).svg renders the clef from the score and moves it by line", () => {
     // c4 → do clef on the top line (position 7 → y 40 at staffHeight 48);
     // c3 → line 3 (position 5 → y 56). Same letters, same slots, clef moves.
-    const c4 = inscriptio(buildScore(makeChant("(c4) a(g) (::)")), { theme: { metrics: { staffHeight: 48 } } }).svg;
-    const c3 = inscriptio(buildScore(makeChant("(c3) a(g) (::)", "1")), { theme: { metrics: { staffHeight: 48 } } }).svg;
+    const c4 = inscriptio(buildScore(makeChant("(c4) a(g) (::)")), { scale: 48 }).svg;
+    const c3 = inscriptio(buildScore(makeChant("(c3) a(g) (::)", "1")), { scale: 48 }).svg;
     const clefY = (svg) => svg.match(/class="clef"[^>]*translate\([\d.]+ ([\d.]+)\)/)?.[1];
     assert.equal(clefY(c4), "40.00");
     assert.equal(clefY(c3), "56.00");
     // An F clef renders a different glyph than a C clef.
-    const f3 = inscriptio(buildScore(makeChant("(f3) a(g) (::)")), { theme: { metrics: { staffHeight: 48 } } }).svg;
+    const f3 = inscriptio(buildScore(makeChant("(f3) a(g) (::)")), { scale: 48 }).svg;
     const clefGlyph = (svg) => svg.match(/class="clef".*?<path d="([^"]{0,40})/)?.[1];
     assert.ok(clefGlyph(f3) && clefGlyph(c3), "clef glyph paths found");
     assert.notEqual(clefGlyph(f3), clefGlyph(c3), "F clef uses its own glyph");
@@ -207,9 +207,15 @@ describe("inscriptio — multi-system layout", () => {
     assert.equal((svg.match(/class="custos"/g) || []).length, systems.length - 1);
   });
 
-  test("custos: false suppresses the guides", () => {
-    const { svg } = inscriptio(long, { width: 250, custos: false });
-    assert.equal((svg.match(/class="custos"/g) || []).length, 0);
+  test("custos guides appear whenever systems wrap", () => {
+    // No longer an option: a custos is how a chant book ends a line that
+    // continues, so it is standard behaviour rather than a choice. It appears
+    // when there is a next system to point at, and not otherwise.
+    const wrapped = inscriptio(long, { width: 250 }).svg;
+    assert.ok((wrapped.match(/class="custos"/g) || []).length > 0);
+
+    const single = inscriptio(long).svg;   // no width → one system, nothing follows
+    assert.equal((single.match(/class="custos"/g) || []).length, 0);
   });
 });
 
@@ -583,15 +589,11 @@ describe("theme — faces, ink, and metrics in one object", () => {
     }
   });
 
-  test("theme.metrics drives layout, which CSS could never do", () => {
-    // Staff height is consumed by line breaking long before a stylesheet sees
-    // the output — which is why metrics belong in the theme and not in CSS.
-    const small = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
-      theme: { metrics: { staffHeight: 30 } },
-    }).svg;
-    const large = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
-      theme: { metrics: { staffHeight: 60 } },
-    }).svg;
+  test("scale drives layout, which CSS could never do", () => {
+    // Scale is consumed by line breaking long before a stylesheet sees the
+    // output — which is why it is an option and not a CSS property.
+    const small = inscriptio(buildScore(makeChant(KYRIE_GABC)), { scale: "small" }).svg;
+    const large = inscriptio(buildScore(makeChant(KYRIE_GABC)), { scale: "large" }).svg;
     assert.notEqual(small, large);
   });
 
@@ -604,5 +606,40 @@ describe("theme — faces, ink, and metrics in one object", () => {
     });
     assert.match(svg, /class="dropcap"[^>]*font-family="Pfeffer Simpelgotisch"/);
     assert.match(svg, /class="lyric"[^>]*font-family="Junicode"/);
+  });
+});
+
+describe("scale — the one layout decision a caller makes", () => {
+  test("named scales order small < normal < large, and reflow the music", () => {
+    const score = buildScore(makeChant(KYRIE_GABC));
+    const systems = (scale) =>
+      new Set(inscriptio(score, { width: 400, scale }).geometry.map((g) => g.systemY)).size;
+    assert.ok(systems("small") <= systems("normal"));
+    assert.ok(systems("normal") <= systems("large"));
+  });
+
+  test("a number is a staff height in px, for fitting a known column", () => {
+    const a = inscriptio(buildScore(makeChant(KYRIE_GABC)), { scale: 48 }).svg;
+    const b = inscriptio(buildScore(makeChant(KYRIE_GABC)), { scale: 30 }).svg;
+    assert.notEqual(a, b);
+  });
+
+  test("an unknown scale throws with guidance (the builder contract)", () => {
+    assert.throws(
+      () => inscriptio(buildScore(makeChant(KYRIE_GABC)), { scale: "huge" }),
+      /unknown scale "huge".*small, normal, large/s,
+    );
+  });
+
+  test("the page margin does NOT scale — a bigger chant keeps its room", () => {
+    // Scaling the margin with the staff gave a large chant less usable width
+    // than a small one (93% of the canvas against 89%), which is backwards.
+    // The margin belongs to the page, not the notation.
+    const score = buildScore(makeChant(KYRIE_GABC));
+    const clefX = (scale) =>
+      Number(/<g class="clef"[^>]*translate\(([\d.]+)/.exec(
+        inscriptio(score, { width: 900, scale }).svg,
+      )[1]);
+    assert.equal(clefX("small"), clefX("large"));
   });
 });

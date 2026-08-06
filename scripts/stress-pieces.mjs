@@ -42,7 +42,7 @@ export function buildStressPieces(tonus) {
   const jr = (weight, scale) => ({ family: JUNICODE, weight, scale });
   const JF = { dropcap: jr(700), title: jr(620), annotation: jr(640), lyric: jr(560, 1.06) };
   const DRESS = {
-    width: 960, custos: true, annotation: "auto", dropcap: true,
+    width: 960, annotation: "auto", dropcap: true,
     theme: { fonts: JF, colors: { rubrica: "#111" } },
   };
 

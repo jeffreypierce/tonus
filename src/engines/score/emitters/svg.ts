@@ -82,29 +82,9 @@ export interface ThemeColors {
   rubrica?: string;
 }
 
-/** The measurements. These change LAYOUT, not just appearance — they are the
- * one part of a theme that CSS cannot express, because line breaking has
- * already consumed them by the time a stylesheet sees the output. */
-export interface ThemeMetrics {
-  /** Staff height in px (the four lines, outermost to outermost). Default 40. */
-  staffHeight?: number;
-  /** Notehead calibration against the staff. Default 1. */
-  noteScale?: number;
-  /** Margin around the whole drawing, px. */
-  padding?: number;
-  /** Vertical gap between systems, px. */
-  systemGap?: number;
-}
-
-/** How a chant is dressed: its faces, its ink, and its measurements.
- *
- * One object rather than a scatter of flat options, because these travel
- * together — a caller setting a lyric face is usually setting a whole look, and
- * a house style is a thing worth naming once and passing everywhere. */
 export interface Theme {
   fonts?: FontSpec;
   colors?: ThemeColors;
-  metrics?: ThemeMetrics;
 }
 
 interface ResolvedFont {
@@ -242,6 +222,11 @@ function resolveOpts(o: SvgOpts): Resolved {
   const rawNote = o.noteColor ?? "#111";
   return {
     staffInterval,
+    // A FIXED margin, not one derived from the staff. The margin belongs to the
+    // page, not to the notation: a book does not widen its margins when the
+    // staff grows, and scaling it here made a large chant get LESS usable width
+    // than a small one (93% of a 900px canvas at small against 89% at large) —
+    // exactly backwards, since a bigger chant needs more room, not less.
     padding: o.padding ?? 14,
     // Staff lines match the note colour by default (they carry their own
     // option for later, but for now everything is one ink).
@@ -284,7 +269,10 @@ function resolveOpts(o: SvgOpts): Resolved {
     interWord: staffInterval * 1.55,
     lyricSize: staffInterval * 2.2,
     width: o.width ?? null,
-    systemGap: o.systemGap ?? 24,
+    // Likewise the air between systems: flat 24px held the system pitch at
+    // 135px whether the staff was 30 or 56, so a large chant crowded and a
+    // small one sprawled.
+    systemGap: o.systemGap ?? staffHeight * 0.6,
     custos: o.custos ?? (o.width != null),
     title: o.title ?? null,
     // "auto" is resolved in toSvg where the chant meta is in hand.

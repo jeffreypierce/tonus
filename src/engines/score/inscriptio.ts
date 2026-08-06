@@ -50,8 +50,13 @@ export interface InscriptioOpts {
   // ── layout (the multi-system engine) ──
   /** Wrap systems to this px width. Absent = a single system (current behaviour). */
   width?: number;
-  /** Draw the quadrata line-end custos guides. */
-  custos?: boolean;
+  /**
+   * How big the chant is drawn: `"small"`, `"normal"` (default), `"large"`, or
+   * a staff height in px for fitting a known column. Everything scales from it
+   * — notes, lyrics, the gap between systems — and it reflows the music, so a
+   * larger scale means fewer notes per line.
+   */
+  scale?: "small" | "normal" | "large" | number;
 
   // ── front matter (all off by default) ──
   title?: string;
@@ -92,7 +97,7 @@ export interface Inscriptio {
 // Options handed through to the species emitters — everything but the species
 // selector itself.
 const EMITTER_KEYS = [
-  "width", "custos",
+  "width",
   "title", "rubric", "annotation", "dropcap",
   "accidentals", "centsBaseline", "tracks",
 ] as const;
@@ -110,15 +115,39 @@ function flattenTheme(theme: Theme | undefined): Record<string, unknown> {
   if (!theme) return {};
   const out: Record<string, unknown> = {};
   if (theme.fonts) out.fonts = theme.fonts;
-  const { colors: c, metrics: m } = theme;
+  const c = theme.colors;
   if (c?.note !== undefined) out.noteColor = c.note;
   if (c?.staffLine !== undefined) out.staffLineColor = c.staffLine;
   if (c?.rubrica !== undefined) out.rubricaColor = c.rubrica;
-  if (m?.staffHeight !== undefined) out.staffHeight = m.staffHeight;
-  if (m?.noteScale !== undefined) out.noteScale = m.noteScale;
-  if (m?.padding !== undefined) out.padding = m.padding;
-  if (m?.systemGap !== undefined) out.systemGap = m.systemGap;
   return out;
+}
+
+/** The named sizes, as staff heights in px. `normal` is the default 40. */
+const SCALES: Record<string, number> = {
+  small: 30,
+  normal: 40,
+  large: 56,
+};
+
+/**
+ * Resolve `scale` to the emitter's `staffHeight`.
+ *
+ * A caller decides how big the chant should be, not how tall its staff is in
+ * pixels — so the public option is a size and the staff height is what it
+ * resolves to. A raw number still works for the caller who is fitting a known
+ * column, and means exactly what `staffHeight` meant.
+ */
+function resolveScale(scale: InscriptioOpts["scale"]): number | undefined {
+  if (scale === undefined) return undefined;
+  if (typeof scale === "number") return scale;
+  const px = SCALES[scale];
+  if (px === undefined) {
+    throw new Error(
+      `inscriptio: unknown scale "${scale}" ` +
+      `(expected ${Object.keys(SCALES).join(", ")}, or a staff height in px)`,
+    );
+  }
+  return px;
 }
 
 /**
@@ -162,6 +191,8 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
   // Both species honour the front matter (title, rubric/annotation) — the
   // official opening is `title` + `annotation: "auto"`, no dropcap.
   const emitterOpts: Record<string, unknown> = flattenTheme(opts.theme);
+  const staffHeight = resolveScale(opts.scale);
+  if (staffHeight !== undefined) emitterOpts.staffHeight = staffHeight;
   for (const k of EMITTER_KEYS) if (opts[k] !== undefined) emitterOpts[k] = opts[k];
 
   // The tracks consume score-level analysis the flat tabula does not carry;
@@ -183,5 +214,5 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
 }
 
 export type { NoteGeometry } from "./emitters/svg.js";
-export type { FontSpec, FontSlot, FontEmbed, Theme, ThemeColors, ThemeMetrics } from "./emitters/svg.js";
+export type { FontSpec, FontSlot, FontEmbed, Theme, ThemeColors } from "./emitters/svg.js";
 export type { TrackName, TrackData } from "./emitters/tracks.js";

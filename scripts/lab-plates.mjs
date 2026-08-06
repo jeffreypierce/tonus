@@ -190,7 +190,7 @@ export function buildPlates(tonus, fonts = {}) {
       title: "Quadrata — Ad te levavi (full dress)",
       note: "b rotundum, Junicode cap + lyrics, custos, multi-system",
       render: () => tonus.inscriptio(tonus.notatio(adTeLevavi()), {
-        width: 960, custos: true, title: "Ad te levavi", annotation: "auto",
+        width: 960, title: "Ad te levavi", annotation: "auto",
         dropcap: true, theme: JF,
       }),
     },
