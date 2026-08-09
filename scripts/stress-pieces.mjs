@@ -42,8 +42,8 @@ export function buildStressPieces(tonus) {
   const jr = (weight, scale) => ({ family: JUNICODE, weight, scale });
   const JF = { dropcap: jr(700), title: jr(620), annotation: jr(640), lyric: jr(560, 1.06) };
   const DRESS = {
-    width: 960, custos: true, annotation: "auto", dropcap: true,
-    fonts: JF, rubricaColor: "#111",
+    width: 960, annotation: "auto", dropcap: true,
+    theme: { fonts: JF, colors: { rubrica: "#111" } },
   };
 
   const pieces = [];
@@ -70,7 +70,7 @@ export function buildStressPieces(tonus) {
       note: `the same piece transcribed · ${chant.source.book}`,
       render: () => tonus.inscriptio(tonus.notatio(chant), {
         notation: "moderna", width: 960, title: chant.incipit,
-        annotation: "auto", fonts: JF, rubricaColor: "#111",
+        annotation: "auto", theme: { fonts: JF, colors: { rubrica: "#111" } },
       }),
     });
   }

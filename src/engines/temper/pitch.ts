@@ -104,13 +104,23 @@ export function parsePitch(input: PitchInput, ctx: PitchContext = {}): number {
 // Resolves a PitchInput through a Scale into a tuned Pitch.
 // Applies the Scale's transpose and returns a Pitch with midi/pc/oct/spn
 // from the transposed MIDI plus tuning-derived hz/offset/bend/ratio.
-export function toPitch(input: PitchInput, scale: Scale): Pitch {
+export function toPitch(input: PitchInput, scale: Scale, prefer?: "flat" | "sharp"): Pitch {
   const rawMidi = parsePitch(input, { mode: scale.mode, a4: scale.a4 });
   const { hz, offset, bend } = midiToHz(rawMidi, scale);
   const midi = clamp(rawMidi + scale.transpose);
   const pc = midi % 12;
   const oct = Math.floor(midi / 12) - 1;
-  const useFlat = PREFER_FLAT_PCS.has(pc);
+  // Spell as the source WROTE it when the caller knows. Deriving the spelling
+  // from the pitch class alone cannot: pc 1 is D-flat in a chant that wrote a
+  // flat and C-sharp in one that wrote a sharp, and the class is identical.
+  // PREFER_FLAT_PCS ({3, 8, 10}) is a reasonable default but omits pc 1 and 6,
+  // so a written flat landing there came back spelled — and reported in `acc` —
+  // as a SHARP, the opposite of what the source said.
+  //
+  // The Graduale only ever writes B-flat (pc 10, the bmolle), so the corpus
+  // never reached the gap; `notatio` passes the hint because a caller may set
+  // any GABC accidental on any degree.
+  const useFlat = prefer ? prefer === "flat" : PREFER_FLAT_PCS.has(pc);
   const sp = useFlat ? FLAT_SPELLING[pc]! : SHARP_SPELLING[pc]!;
   const accStr = sp.acc === -1 ? "b" : sp.acc === 1 ? "#" : "";
   const spn = `${sp.step}${accStr}${oct}`;

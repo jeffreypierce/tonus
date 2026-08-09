@@ -7,7 +7,88 @@ All notable changes to tonus. Newest first.
 Rendering, mostly — a day of looking at real chant on a real page and fixing
 what the page showed.
 
+### Changed — breaking
+
+- **The layout options are `width` and `scale`.** `padding`, `noteScale`,
+  `systemGap`, and `custos` are gone. Nothing ever set them — not the docs site,
+  not the 28 lab plates, not the 13 stress pieces — so they were surface without
+  use. They are now constants chosen to look right at every scale, and the
+  custos appears whenever a system wraps, which is what a chant book does.
+
+  `scale` replaces `staffHeight`: `"small"`, `"normal"` (default), `"large"`, or
+  a staff height in px for fitting a known column. A caller decides how big the
+  chant should be, not how tall its staff is in pixels.
+
+  ```js
+  inscriptio(score, { width: 900, scale: "large" })
+  ```
+
+  The page margin deliberately does NOT scale with it — a margin belongs to the
+  page, not the notation, and scaling it gave a large chant *less* usable width
+  than a small one (89% of a 900px canvas against 93%). The air between systems
+  does scale, since flat 24px held the system pitch at 135px whether the staff
+  was 30 or 56.
+
+- **`inscriptio`'s look options are one `theme` object.** `fonts`, `noteColor`,
+  `staffLineColor`, and `rubricaColor` are replaced by
+  `theme: { fonts, colors }`. These travel
+  together — a caller setting a lyric face is usually setting a whole look — and
+  a house style is worth naming once and passing everywhere.
+
+  ```js
+  // before
+  inscriptio(score, { fonts: { lyric: "Junicode" }, rubricaColor: "#801", staffHeight: 48 })
+  // after
+  inscriptio(score, { scale: 48, theme: {
+    fonts: { lyric: "Junicode" }, colors: { rubrica: "#801" },
+  } })
+  ```
+
+  `fonts` keeps its four roles unchanged, `dropcap` among them: a book's
+  initial is very often not its lyric face, and the two stay separate.
+
+### Added
+
+- **The ink is themable from CSS.** Colours now reach the SVG as custom
+  properties with the render's own value as the fallback —
+  `fill="var(--tonus-note, #111)"` — so a host stylesheet can retheme a drawn
+  chant without re-rendering it, while a file opened on its own still shows the
+  ink it was drawn with. Three properties: `--tonus-note`, `--tonus-staff-line`,
+  `--tonus-rubrica`. The emitter already carried semantic classes (`note`,
+  `lyric`, `dropcap`, `custos`, `episema`, `divisio`, `clef`, `mora`, `ictus`)
+  but an inline `fill` beats any stylesheet rule, so none of them could be
+  styled. `scale` deliberately stays outside the theme for the same reason it
+  cannot be a CSS property: line breaking consumes it long before a stylesheet
+  sees the output.
+
 ### Fixed
+
+- **An accidental was emitted as a sounding note.** GABC's `fx` means "F is flat
+  from here" — a mark drawn on the staff, not a pitch to sing. The parser set the
+  state correctly and then fell through and pushed a note anyway, so `A(fxfg)`
+  returned three notes for two and duplicated the pitch. 1337 markers across 426
+  Graduale chants: 0.97% of every note in the book was a phantom, at a wrong
+  pitch, inventing a unison before each one and inflating every count, interval
+  and analysis downstream.
+
+  The SIGN still draws, and now on the note that follows it — where the books
+  print it. That needed a new field: `accidentalSign` is what to draw, separate
+  from `accidental`, which is the note's own alteration. In `fe(jx)cit(ih)` the
+  flat is printed before the I while it governs J; the emitter had been reading
+  the alteration and so drew nothing once the phantom was gone.
+
+- **A written flat could come back spelled as a sharp.** Pitch spelling was
+  derived from the pitch class alone, against a preferred-flat set that omitted
+  pc 1 and pc 6 — so a GABC `x` (a flat) landing on those degrees returned
+  `C#`/`F#` rather than `Db`/`Gb`, and reported `accidental: +1` for a source
+  that wrote a flat. The pitch was always right; only the spelling and its sign
+  were wrong. `toPitch` now takes an optional spelling preference and `notatio`
+  passes what the source wrote. The Graduale writes only the bmolle (1821 B-flats
+  and no sharps at all), so the corpus never reached the gap.
+
+- **Moderna honoured no note colour at all.** It hardcoded `#111` in seventeen
+  places while quadrata threaded the option, so a caller theming the ink saw one
+  species change and the other not.
 
 - **`staffHeight` means the same thing in both species.** Moderna's staff was
   a hardcoded constant, so the option moved quadrata and did nothing here: a

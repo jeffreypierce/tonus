@@ -99,38 +99,57 @@ describe("parseGABC", () => {
   });
 
   test("divisio resets accidental state", () => {
-    // Explicit flat on B, then divisio should reset it
-    const n = notes("(c4) A(jx) (,) B(j)");
+    // The marker sounds nothing, so the J it flattens is the first note; after
+    // the divisio the state is cleared and the next J is natural again.
+    const n = notes("(c4) A(jxj) (,) B(j)");
+    assert.equal(n.length, 2);
     assert.equal(n[0].accidental, -1);
     assert.equal(n[0].accidentalSource, "explicit");
+    assert.equal(n[1].accidental, 0);
     assert.equal(n[1].accidentalSource, "none");
   });
 
   // ── Accidentals ──
 
-  test("x modifier applies flat", () => {
-    const n = notes("(c4) A(jx)");
-    assert.equal(n[0].accidental, -1);
-    assert.equal(n[0].accidentalSource, "explicit");
+  // An accidental is a MARK, not a note: `jx` says "J is flat from here" and is
+  // drawn as a flat on that line. Nothing is sung at that moment. It used to
+  // emit a sounding note at the flattened pitch, so `A(fxfg)` returned three
+  // notes for two — 1337 phantoms across 426 Graduale chants.
+
+  test("an accidental token sounds nothing", () => {
+    assert.equal(notes("(c4) A(jx)").length, 0);
+    assert.equal(notes("(c4) A(jy)").length, 0);
+    assert.equal(notes("(c4) A(g#)").length, 0);
   });
 
-  test("y modifier applies natural (cancels flat)", () => {
-    const n = notes("(cb4) A(jy)");
+  test("x flattens the notes that follow, and does not duplicate one", () => {
+    const n = notes("(c4) A(jxjk)");
+    assert.equal(n.length, 2, "two sung notes, not three");
+    assert.equal(n[0].accidental, -1);
+    assert.equal(n[1].accidental, 0, "the flat governs its own degree only");
+  });
+
+  test("y cancels a flat for the notes that follow", () => {
+    const n = notes("(cb4) A(jyj)");
+    assert.equal(n.length, 1);
     assert.equal(n[0].accidental, 0);
-    assert.equal(n[0].accidentalSource, "explicit");
   });
 
-  test("sharp modifier applies sharp", () => {
-    const n = notes("(c4) A(g#)");
+  test("# sharpens the notes that follow", () => {
+    const n = notes("(c4) A(g#g)");
+    assert.equal(n.length, 1);
     assert.equal(n[0].accidental, 1);
-    assert.equal(n[0].accidentalSource, "explicit");
   });
 
-  test("accidental state persists within a phrase", () => {
-    const n = notes("(c4) A(jx)B(j)");
-    assert.equal(n[0].accidental, -1);
-    assert.equal(n[1].accidental, -1);
-    assert.equal(n[1].accidentalSource, "state");
+  test("the SIGN is claimed by the next sung note, wherever it falls", () => {
+    // The books print the flat where it is written and sing on. Only 11% of
+    // corpus markers are immediately followed by their own letter, so the sign
+    // cannot wait for a note of the same degree — it would vanish nine times
+    // out of ten.
+    const same = notes("(c4) A(jxj)");
+    assert.equal(same[0].accidentalSource, "explicit");
+    const other = notes("(c4) A(jx)B(k)");
+    assert.equal(other[0].accidentalSource, "explicit");
   });
 
   test("b-flat key signature from cb clef", () => {
@@ -282,8 +301,12 @@ describe("parseGABC", () => {
     const n = result.events.filter((e) => e.type === "note");
     assert.ok(n.length >= 9);
     // Check the flat is applied
-    const flatNote = n.find((e) => e.accidentalSource === "explicit" && e.accidental === -1);
-    assert.ok(flatNote);
+    // `fe(jx)cit(ih)` — the flat is PRINTED before the I (the next sung note)
+    // and GOVERNS J. Two different facts, two different fields.
+    const signed = n.find((e) => e.accidentalSource === "explicit");
+    assert.ok(signed, "the sign is claimed by a sounding note");
+    assert.equal(signed.accidentalSign, -1, "a flat is drawn");
+    assert.equal(signed.staffLetter, "i", "printed at the note that follows it");
   });
 
   test("parses notation with all letter range a through m", () => {

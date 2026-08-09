@@ -106,6 +106,15 @@ interface IntermNote {
   episema: boolean;         // the written horizontal episema (_) — distinct from ictus
   accidental: AccidentalValue;
   accidentalSource: "none" | "state" | "explicit";
+  /**
+   * The accidental SIGN to draw before this note, when a GABC accidental token
+   * precedes it. Distinct from `accidental`, which is this note's own
+   * alteration: `fe(jx)cit(ih)` draws a flat before the I while the flat itself
+   * governs J. Where the sign is printed and which degree it alters are two
+   * different facts, and conflating them is how the emitter came to depend on a
+   * phantom note.
+   */
+  accidentalSign?: AccidentalValue;
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
@@ -150,10 +159,12 @@ function parseNeume(
     syllableIndex: number;
     accent: boolean;
     accidentalState: Map<number, AccidentalValue>;
+    /** Carries a pending accidental SIGN across syllables — see below. */
+    pending: { acc: AccidentalValue | null };
     profile: ArticulationProfile;
   },
 ): ParseResult["events"] {
-  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, accent, accidentalState, profile } =
+  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, accent, accidentalState, pending, profile } =
     context;
   const weights = profile.weights;
   const ruleGain = profile.ruleGain ?? 1.0;
@@ -164,6 +175,7 @@ function parseNeume(
 
   // bmolle: set from clef key sig, updated by x/y modifiers within tokens
   let bmolle = clef.includes("b");
+
 
   // Count note tokens for initio/melisma detection
   const noteTokenCount = notation.filter((t) =>
@@ -235,6 +247,30 @@ function parseNeume(
       accidentalState.set(degree, 1);
     }
 
+    // An accidental is a MARK, not a note. `fx` says "F is flat from here" and
+    // is drawn as a flat sign on the F line — nothing is sung at that moment.
+    // The state above is its whole effect, so the token ends here.
+    //
+    // It used to fall through and emit a note at the flattened pitch, which is
+    // why `A(fxfg)` returned three notes for two and duplicated the pitch: the
+    // marker sounded, then the F it governs sounded again. 1337 markers across
+    // 426 Graduale chants — 0.97% of every note in the book was a phantom, with
+    // a wrong pitch, inflating counts and inventing an interval of a unison
+    // before each one.
+    //
+    // The token is the mark alone: a bare pitch letter plus x/y/#. A letter
+    // carrying an accidental AND other modifiers is still a real note (nothing
+    // in the corpus writes one, but the reading is the safe one).
+    if (explicitAccidental !== null && /^[a-mA-M][xy#]$/.test(token)) {
+      // The SIGN still belongs on the page — a flat is drawn before the note it
+      // governs, which is where the books put it. The mark had been riding the
+      // phantom note itself; with that gone it is handed to the next real note,
+      // which is both correct notation and what the emitters already expect
+      // (they key the glyph off `accidentalSource === "explicit"`).
+      pending.acc = explicitAccidental;
+      return;
+    }
+
     // Apply bmolle to B (degree 6 = B natural step 11 → B-flat step 10)
     let step = baseStep;
     if (bmolle && degree === 6) step -= 1;
@@ -247,8 +283,19 @@ function parseNeume(
     }
     step += octave * 12;
 
+    // A sign handed over by a preceding accidental token is drawn AT this note,
+    // whatever its degree. A GABC accidental is a key-signature mark, not an
+    // alteration of the note beside it: `gx` says "G is flat for the rest of the
+    // word" and the books print the flat where it is written, then sing on.
+    // Measured across 693 corpus markers, only 11% are immediately followed by
+    // the same letter — so requiring the degrees to agree (my first attempt)
+    // suppressed the sign in nine cases out of ten.
+    const inheritedSign = pending.acc;
+    if (inheritedSign !== null) pending.acc = null;
+    const inherited = inheritedSign !== null;
+
     const accidentalSource: "none" | "state" | "explicit" =
-      explicitAccidental !== null
+      explicitAccidental !== null || inherited
         ? "explicit"
         : accidentalState.has(degree)
           ? "state"
@@ -381,6 +428,8 @@ function parseNeume(
       ictusSign: hasIctusSign,
       episema: hasEpisema,
       accidental: activeAccidental as AccidentalValue,
+      ...(inheritedSign !== null ? { accidentalSign: inheritedSign } : {}),
+      ...(explicitAccidental !== null ? { accidentalSign: explicitAccidental } : {}),
       accidentalSource,
       quilisma: isQuilisma,
       liquescent: isLiquescent,
@@ -453,6 +502,7 @@ function parseNeume(
       weight,
       duration,
       accidental: note.accidental,
+      ...(note.accidentalSign !== undefined ? { accidentalSign: note.accidentalSign } : {}),
       accidentalSource: note.accidentalSource,
       quilisma: note.quilisma,
       liquescent: note.liquescent,
@@ -493,6 +543,11 @@ export function parseGABC(
   // the syllable it appeared in rather than being consumed where it was seen.
   let pendingLineBreak = false;
   let accidentalState = initialAccidentalState(currentClef);
+  // An accidental token draws a sign but sounds nothing, so the sign is claimed
+  // by the next real note. It must survive the syllable boundary: the marker
+  // very often sits ALONE in its own group — "a(gx)b(a)" — so a flag local to
+  // one neume would be discarded before the note it governs is parsed.
+  const pendingAccidental: { acc: AccidentalValue | null } = { acc: null };
   // One lyric decoder per source: GABC style tags open and close across
   // syllable (and word) boundaries, so the decode state rides the whole walk.
   const lyricDecoder = createLyricDecoder();
@@ -504,6 +559,7 @@ export function parseGABC(
     // clears any accidental the previous word set (the clef's own signature
     // persists). This is the scope the header states, now enforced.
     accidentalState = initialAccidentalState(currentClef);
+    pendingAccidental.acc = null;   // a new clef clears any unclaimed sign
 
     SYLLABLES_REGEX.lastIndex = 0;
     let match: RegExpExecArray | null;
@@ -531,6 +587,7 @@ export function parseGABC(
         if (CLEF_OFFSETS.has(token)) {
           currentClef = token;
           accidentalState = initialAccidentalState(currentClef);
+    pendingAccidental.acc = null;   // a new clef clears any unclaimed sign
           continue;
         }
         if (DIVISIO_DURATIONS.has(token as RestEvent["divisio"])) {
@@ -555,6 +612,7 @@ export function parseGABC(
             syllableIndex,
             accent,
             accidentalState,
+            pending: pendingAccidental,
             profile: articulation,
           }),
         );
@@ -577,6 +635,7 @@ export function parseGABC(
           duration: DIVISIO_DURATIONS.get(divisioToken) ?? 0.5,
         });
         accidentalState = initialAccidentalState(currentClef);
+    pendingAccidental.acc = null;   // a new clef clears any unclaimed sign
       }
 
       syllableIndex += 1;

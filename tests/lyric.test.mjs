@@ -104,7 +104,7 @@ describe("lyric markup — the emitters draw it", () => {
     const svg = tonus.inscriptio(marked()).svg;
     assert.ok(svg.includes("℣"), "℣ in the SVG");
     assert.ok(/<tspan font-style="italic">ij\./.test(svg), "italic tspan");
-    assert.ok(/<tspan fill="#9E2B25">Ps\./.test(svg), "rubric-colored tspan");
+    assert.ok(/<tspan fill="var\(--tonus-rubrica, #9E2B25\)">Ps\./.test(svg), "rubric-colored tspan");
     assert.ok(!svg.includes("&lt;sp&gt;"), "no escaped raw tags");
   });
 
@@ -118,7 +118,7 @@ describe("lyric markup — the emitters draw it", () => {
   test("Ps. renders ONE style (rubric) whether the source wrote <i>, <c>, or plain", () => {
     for (const wrap of ["Ps.(f)", "<i>Ps.(f)</i>", "<c>Ps.(f)</c>"]) {
       const svg = tonus.inscriptio(tonus.notatio(chant(`(c4) ${wrap} De(g)us(h.) (::)`))).svg;
-      assert.ok(/<tspan fill="#9E2B25">Ps\.<\/tspan>/.test(svg), `rubric Ps. from ${wrap}`);
+      assert.ok(/<tspan fill="var\(--tonus-rubrica, #9E2B25\)">Ps\.<\/tspan>/.test(svg), `rubric Ps. from ${wrap}`);
       assert.ok(!/<tspan font-style="italic">Ps\./.test(svg), `no italic carryover from ${wrap}`);
     }
   });
@@ -137,9 +137,9 @@ describe("lyric markup — the emitters draw it", () => {
     assert.ok(lyricsOf(tight)[0].startsWith("℣."), `tight period: ${lyricsOf(tight)[0]}`);
   });
 
-  test("a custom rubricaColor reaches the rubric runs", () => {
-    const svg = tonus.inscriptio(marked(), { rubricaColor: "#800020" }).svg;
-    assert.ok(/<tspan fill="#800020">Ps\./.test(svg));
+  test("a themed rubrica reaches the rubric runs", () => {
+    const svg = tonus.inscriptio(marked(), { theme: { colors: { rubrica: "#800020" } } }).svg;
+    assert.ok(/<tspan fill="var\(--tonus-rubrica, #800020\)">Ps\./.test(svg));
   });
 
   test("corpus reality: a real chant with <sp>V/</sp> and <i>ij.</i> renders clean", () => {
