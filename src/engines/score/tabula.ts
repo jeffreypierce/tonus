@@ -78,6 +78,8 @@ export interface ChantTabulaRow {
   accidental: -1 | 0 | 1;
   /** How this note's accidental arose — only "explicit" prints a glyph. */
   accidentalSource: "none" | "state" | "explicit";
+  /** The sign to draw before this note, if any. */
+  accidentalSign?: -1 | 0 | 1;
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
@@ -255,6 +257,7 @@ export function computeTabula(
       episema: n.context.episema,
       accidental: n.pitch.acc,
       accidentalSource: n.context.accidentalSource,
+      accidentalSign: n.context.accidentalSign,
       quilisma: n.context.quilisma,
       liquescent: n.context.liquescent,
       strophicus: n.context.strophicus,

@@ -68,6 +68,7 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
       ictusSign: raw.ictusSign,
       episema: raw.episema,
       accidentalSource: raw.accidentalSource,
+      accidentalSign: raw.accidentalSign,
       quilisma: raw.quilisma,
       liquescent: raw.liquescent,
       strophicus: raw.strophicus,

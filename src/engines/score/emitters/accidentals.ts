@@ -84,7 +84,13 @@ export function computeAccidentals(
       const repeat = row.pc === prevPc;
       prevPc = row.pc;
       if (row.accidentalSource !== "explicit" || repeat) return null;
-      return { kind: "glyph", glyph: GLYPHS_BY_SET[glyphSet][row.accidental] };
+      // Draw the SIGN the source wrote, not this note's own alteration. In
+      // `fe(jx)cit(ih)` the flat is printed before the I while it governs J —
+      // where a sign is printed and which degree it alters are different facts.
+      // Reading `row.accidental` here drew nothing in that case, because the I
+      // is unaltered.
+      const sign = row.accidentalSign ?? row.accidental;
+      return { kind: "glyph", glyph: GLYPHS_BY_SET[glyphSet][sign] };
     });
   }
 

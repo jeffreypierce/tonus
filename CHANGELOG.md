@@ -63,6 +63,20 @@ what the page showed.
 
 ### Fixed
 
+- **An accidental was emitted as a sounding note.** GABC's `fx` means "F is flat
+  from here" — a mark drawn on the staff, not a pitch to sing. The parser set the
+  state correctly and then fell through and pushed a note anyway, so `A(fxfg)`
+  returned three notes for two and duplicated the pitch. 1337 markers across 426
+  Graduale chants: 0.97% of every note in the book was a phantom, at a wrong
+  pitch, inventing a unison before each one and inflating every count, interval
+  and analysis downstream.
+
+  The SIGN still draws, and now on the note that follows it — where the books
+  print it. That needed a new field: `accidentalSign` is what to draw, separate
+  from `accidental`, which is the note's own alteration. In `fe(jx)cit(ih)` the
+  flat is printed before the I while it governs J; the emitter had been reading
+  the alteration and so drew nothing once the phantom was gone.
+
 - **Moderna honoured no note colour at all.** It hardcoded `#111` in seventeen
   places while quadrata threaded the option, so a caller theming the ink saw one
   species change and the other not.

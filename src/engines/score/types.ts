@@ -101,6 +101,8 @@ export interface Context {
   /** Written horizontal episema (_), distinct from `mora`. */
   episema: boolean;
   accidentalSource: "none" | "state" | "explicit";
+  /** The sign to DRAW before this note (see parse.ts) — distinct from `accidental`. */
+  accidentalSign?: -1 | 0 | 1;
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
@@ -237,6 +239,8 @@ export interface ParsedNote {
   duration: number;
   accidental: -1 | 0 | 1;
   accidentalSource: "none" | "state" | "explicit";
+  /** The sign to DRAW before this note (see parse.ts) — distinct from `accidental`. */
+  accidentalSign?: -1 | 0 | 1;
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;

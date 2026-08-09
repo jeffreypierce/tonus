@@ -292,10 +292,18 @@ describe("inscriptio — figures never merge across phrases (grouping regression
     assert.equal(divisios, 2);
   });
 
-  test("an accidental on a non-initial figure note still renders (before the figure)", () => {
-    const { svg } = inscriptio(buildScore(makeChant("(c4) a(jix) (::)")));
-    const accidentals = (svg.match(/class="accidental[^"]*"/g) ?? []).length;
-    assert.ok(accidentals >= 1, "the flat on the upper note must not vanish");
+  test("an accidental mid-figure renders before the note it precedes", () => {
+    // `jxi` — the marker sits between two sung notes, which is how the corpus
+    // writes it (zero of the Graduale's 1337 markers end a group with nothing
+    // following). The sign is drawn at the note after it; the marker itself
+    // sounds nothing.
+    const score = buildScore(makeChant("(c4) a(jxjh) (::)"));
+    assert.equal(score.tabula.length, 2, "two sung notes — the marker is not one");
+    const { svg } = inscriptio(score);
+    assert.ok(
+      (svg.match(/class="accidental[^"]*"/g) ?? []).length >= 1,
+      "the flat must not vanish with the phantom note",
+    );
   });
 });
 
