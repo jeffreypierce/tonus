@@ -77,6 +77,15 @@ what the page showed.
   flat is printed before the I while it governs J; the emitter had been reading
   the alteration and so drew nothing once the phantom was gone.
 
+- **A written flat could come back spelled as a sharp.** Pitch spelling was
+  derived from the pitch class alone, against a preferred-flat set that omitted
+  pc 1 and pc 6 — so a GABC `x` (a flat) landing on those degrees returned
+  `C#`/`F#` rather than `Db`/`Gb`, and reported `accidental: +1` for a source
+  that wrote a flat. The pitch was always right; only the spelling and its sign
+  were wrong. `toPitch` now takes an optional spelling preference and `notatio`
+  passes what the source wrote. The Graduale writes only the bmolle (1821 B-flats
+  and no sharps at all), so the corpus never reached the gap.
+
 - **Moderna honoured no note colour at all.** It hardcoded `#111` in seventeen
   places while quadrata threaded the option, so a caller theming the ink saw one
   species change and the other not.

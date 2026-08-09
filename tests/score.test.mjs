@@ -291,3 +291,41 @@ describe("tabula written-sign fields (engraving substrate)", () => {
     assert.equal(starts[0].lyric.toLowerCase().startsWith("do"), true);
   });
 });
+
+describe("pitch spelling follows the source", () => {
+  // A pitch class cannot know its own spelling: pc 1 is D-flat in a chant that
+  // wrote a flat and C-sharp in one that wrote a sharp. The speller read the
+  // class alone against a PREFER_FLAT_PCS set that omits pc 1 and pc 6, so a
+  // written flat landing on those degrees came back spelled — and reported in
+  // `accidental` — as a SHARP, the opposite of what the source said.
+  const first = (gabc) => buildScore(makeChant(gabc)).tabula[0];
+
+  test("a written flat spells as a flat, on every degree", () => {
+    for (const [gabc, want] of [
+      ["(c3) A(ixi)", "Db"],   // pc 1  — was C#
+      ["(c3) A(exe)", "Gb"],   // pc 6  — was F#
+      ["(c3) A(fxf)", "Ab"],   // pc 8  — already right
+      ["(c3) A(gxg)", "Bb"],   // pc 10 — the corpus's own accidental
+    ]) {
+      const n = first(gabc);
+      assert.ok(n.spn.startsWith(want), `${gabc} → ${n.spn}, expected ${want}`);
+      assert.equal(n.accidental, -1, `${gabc} reports a flat`);
+    }
+  });
+
+  test("the flat lowers the pitch by exactly a semitone", () => {
+    // The spelling was wrong; the pitch never was. Guard both, so a future
+    // spelling change cannot quietly move a note.
+    for (const L of "defghijk") {
+      const bare = first(`(c3) A(${L})`).midi;
+      const flat = first(`(c3) A(${L}x${L})`).midi;
+      assert.equal(flat, bare - 1, `${L}x lowers ${L} by one semitone`);
+    }
+  });
+
+  test("the Graduale's own accidental is unaffected", () => {
+    // Chant writes one accidental, the bmolle. Every altered note in the
+    // corpus spells Bb, and did before this change too.
+    assert.equal(first("(c4) A(ixi)").spn.replace(/\d/, ""), "Bb");
+  });
+});

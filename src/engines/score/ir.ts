@@ -44,7 +44,12 @@ import { classifyNeume } from "./neume.js";
 function rawToNote(raw: ParsedNote, scale: Scale): Note {
   const midi = raw.step;
   return {
-    pitch: toPitch(midi, scale),
+    // Spell the note as the SOURCE wrote it: a GABC `x` is a flat, `#` a sharp.
+    // Without the hint the speller reads the pitch class alone and calls a
+    // written D-flat "C#" — the same note, the opposite spelling, and `acc`
+    // reported +1 for a source that wrote a flat.
+    pitch: toPitch(midi, scale,
+      raw.accidental === -1 ? "flat" : raw.accidental === 1 ? "sharp" : undefined),
     step: toStep(midi, scale),
     performance: {
       velocity: 0,
