@@ -379,7 +379,14 @@ function calendariumPanels() {
   if (!feast) left = el("p", { class: "ghost" }, "No feast at this date.");
   else if (!all.length) left = el("p", { class: "ghost" }, "Nothing is sung today.");
   else left = el("div", {},
-    el("div", { class: "settings filters" },
+    // ONE object made of parts. The five offices are independently on or off
+    // and together they decide one thing — what the list below holds — so they
+    // are a single strip with internal hairlines rather than five detached
+    // boxes, which said "five unrelated actions" and were indistinguishable
+    // from the three date anchors sitting directly above them. The tick each
+    // segment carries is a second channel, so membership is not in colour
+    // alone.
+    el("div", { class: "segset", role: "group", "aria-label": "officia" },
       ...OFFICES.map((o) => {
         const n = all.filter((r) => r.office.key === o.key).length;
         return el("button", {
@@ -393,7 +400,7 @@ function calendariumPanels() {
                   (k) => k === o.key || state.offices.includes(k));
             renderPanels();
           },
-        }, `${o.name} ${n}`);
+        }, o.name, el("span", { class: "seg-n" }, n));
       })),
     shown.length
       ? chantList(tonus, shown.map((r) => r.chant), {
@@ -452,11 +459,15 @@ function calendarium() {
             onchange: (e) => { state.doctrina = e.target.value; renderPanels(); },
           }, ...DOCTRINAE.map((d) =>
             el("option", { value: d, selected: state.doctrina === d }, d))),
-          el("span", { class: "set-name" }, "aspectus"),
-          el("button", {
-            type: "button", "aria-pressed": state.aspects ? "true" : "false",
-            onclick: () => { state.aspects = !state.aspects; renderPanels(); },
-          }, state.aspects ? "visibiles" : "occulti"))
+          // One thing, on or off — a set of one, so it wears the set's costume
+          // rather than a lone bordered button that matched nothing. The tick
+          // carries the state; the name stays put instead of swapping between
+          // visibiles and occulti, which made the control read as an action.
+          el("div", { class: "segset", role: "group", "aria-label": "aspectus" },
+            el("button", {
+              type: "button", "aria-pressed": state.aspects ? "true" : "false",
+              onclick: () => { state.aspects = !state.aspects; renderPanels(); },
+            }, "aspectus")))
       : null,
     left: panels.left,
     right: panels.right,
@@ -648,15 +659,19 @@ function canticum() {
       el("select", { onchange: (e) => { state.notation = e.target.value; render(); } },
         ...["quadrata", "moderna"].map((v) =>
           el("option", { value: v, selected: state.notation === v }, v))),
-      ...["chironomia", "tonarium"].map((name) => el("button", {
-        type: "button",
-        "aria-pressed": state.tracks.includes(name) ? "true" : "false",
-        onclick: () => {
-          state.tracks = state.tracks.includes(name)
-            ? state.tracks.filter((t) => t !== name) : [...state.tracks, name];
-          render();
-        },
-      }, name)),
+      // The two analysis tracks are a SET over one score — independently on,
+      // together deciding what is drawn over the notation. Same object as the
+      // offices in Calendarium, so the same strip.
+      el("div", { class: "segset", role: "group", "aria-label": "vestigia" },
+        ...["chironomia", "tonarium"].map((name) => el("button", {
+          type: "button",
+          "aria-pressed": state.tracks.includes(name) ? "true" : "false",
+          onclick: () => {
+            state.tracks = state.tracks.includes(name)
+              ? state.tracks.filter((t) => t !== name) : [...state.tracks, name];
+            render();
+          },
+        }, name))),
     ),
     rightInputs: state.right.canticum === "temperamentum" ? commaSlider() : null,
     left: panels.left,
@@ -923,15 +938,6 @@ function commaSlider() {
       renderPanels();
     });
 
-    // Dashes on the bar itself, one per named temperament, so the axis shows
-    // its own landmarks. Positioned by value, so they cannot drift from the
-    // list: the same numbers place both.
-    const ticks = el("div", { class: "comma-ticks", "aria-hidden": "true" },
-      ...COMMAS.map((c) => el("span", {
-        class: "comma-tick",
-        style: `left: ${(c.value / COMMA_MAX * 100).toFixed(3)}%`,
-      })));
-
     const readout = el("span", { class: "comma-read" });
 
     const pick = el("select", { "aria-label": "temperamentum",
@@ -949,7 +955,7 @@ function commaSlider() {
     commaControl = {
       node: el("div", { class: "settings comma" },
         el("span", { class: "set-name" }, "temperatura"),
-        el("span", { class: "comma-track" }, input, ticks),
+        el("span", { class: "comma-track" }, input),
         readout, pick),
       input, pick, readout,
       /** Take the value from outside — the list, a link opened. */
@@ -1099,15 +1105,26 @@ const VIEWS = [
 ];
 
 function render() {
-  const nav = document.getElementById("views");
-  nav.replaceChildren(...VIEWS.map((v) => el("button", {
-    type: "button",
-    "aria-selected": state.view === v.key ? "true" : "false",
-    onclick: () => { state.view = v.key; render(); },
-  }, v.name)));
-
   const host = document.getElementById("view");
   const view = VIEWS.find((v) => v.key === state.view) ?? VIEWS[1];
+
+  // The view switch is the SAME strip as the two panel strips, at title size.
+  // It was a hand-built row of buttons that copied the strip's look and none
+  // of its behaviour: `aria-selected` on a plain button with no `role="tab"`,
+  // no `aria-controls`, and no arrow keys — in the one strip a keyboard
+  // reaches first. Built by `tabs()` now, so the three cannot drift again.
+  document.getElementById("views").replaceChildren(tabs({
+    tabs: VIEWS.map((v) => ({ key: v.key, name: v.name })),
+    active: state.view,
+    label: "conspectus",
+    variant: "large",
+    stripOnly: true,
+    controls: "view",
+    onChange: (key) => { state.view = key; render(); },
+  }));
+
+  host.setAttribute("role", "tabpanel");
+  host.setAttribute("aria-labelledby", `tab-conspectus-${view.key}`);
   host.replaceChildren(view.build());
   writeUrl();
 }

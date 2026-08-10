@@ -38,7 +38,7 @@ export const el = (tag, attrs = {}, ...kids) => {
  * @returns {HTMLElement}
  */
 export function tabs({ tabs: items, active, onChange, label = "views", className,
-  stripOnly = false, variant }) {
+  stripOnly = false, variant, controls }) {
   const current = items.some((t) => t.key === active) ? active : items[0]?.key;
   const wrap = el("div", { class: ["tabbed", className].filter(Boolean).join(" ") });
 
@@ -55,7 +55,11 @@ export function tabs({ tabs: items, active, onChange, label = "views", className
       role: "tab",
       id: `tab-${label}-${t.key}`,
       "aria-selected": isCurrent ? "true" : "false",
-      "aria-controls": `panel-${label}-${t.key}`,
+      // A strip usually names the panel it will build. The view switch is the
+      // exception: its panel is the page's own <main>, which exists before any
+      // tab does and is found by id elsewhere — so `controls` names that
+      // instead of a panel id nothing would ever carry.
+      "aria-controls": controls ?? `panel-${label}-${t.key}`,
       tabindex: isCurrent ? "0" : "-1",
       onclick: () => onChange?.(t.key),
       onkeydown: (e) => {

@@ -7,6 +7,18 @@
 
    Junicode carries content and Latin; IBM Plex Mono carries machine data —
    ids, hz, cents, ratios; Jacquard is rationed to the wordmark alone.
+
+   THE THREE RULES THIS SHEET KEEPS
+   1. A BOX means a value lives here.        (a field, a select, a range)
+   2. An UNDERLINE means this is where you are. (tabs, view switch, anchors)
+   3. Neither means this does something.     (a spur, a segment of a set)
+
+   And for state, two moves and no wash:
+   HOVER darkens — the row's rule goes --rule to --edge and its name comes up
+   to full ink.
+   SELECTION is MARKED, not filled — a 2px ink bar in the left margin, and the
+   row stands on pure white. The 6% grey tint this page used to use resolved
+   to a warm #F1F0EE over warm paper, which is mushroom.
 --------------------------------------------------------------------------- */
 
 @font-face {
@@ -49,668 +61,808 @@
   src: url("fonts/Jacquard12.woff2") format("woff2");
 }
 
-:root {
-  --ink: #111;
-  --paper: #FDFDFC;
-  --rubrica: #9E2B25;
-  --label: #6E6A61;
-  --ghost: #BBB6AC;
-  --rule: #DDDAD3;
+/* THE CASCADE, DECLARED. Order here is the only thing that decides a tie, so
+   intent stops depending on which line was typed first. Two rules were being
+   silently overridden before this existed: `.tagline`'s upright, beaten by
+   `.sub`'s italic 125 lines later, and `.filters`' 6px gap, beaten by
+   `.settings`. Both were correct and both lost to the order of the file. */
+@layer tokens, base, layout, components, figures;
 
-  --serif: Junicode, "Crimson Pro", Georgia, serif;
-  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  --display: Jacquard, var(--serif);
+@layer tokens {
+  :root {
+    /* ── the ink ── */
+    --ink: #111;
+    --paper: #FDFDFC;
+    --rubrica: #9E2B25;
+    --label: #6E6A61;
+    --ghost: #BBB6AC;
+    /* A RULE separates paper — a hairline in a book. 1.37:1 against paper is
+       right for it, because it is not asking to be touched. */
+    --rule: #DDDAD3;
+    /* An EDGE is the boundary of a control, and it AFFORDS — so it has to be
+       seen. 3.40:1, which is the floor WCAG sets for a non-text control
+       boundary. The two were one token, and every field on the page wore a
+       separator where it needed an edge. */
+    --edge: #8B8A85;
+    /* The paper a SELECTED row stands on. Pure white against the page's warm
+       off-white: the row lifts rather than dirties, which is what the 6% ink
+       tint got wrong — grey over warm paper resolved to mushroom. */
+    --paper-lit: #FFF;
 
-  /* The type scale the diagrams draw with. */
-  --micro: 9px;
-  --caption: 11px;
-  --step-label: 13.5px;
-  --body: 17px;
-  --title: 21px;
-  --display-size: 26px;
-}
+    /* ── the faces ── */
+    --serif: Junicode, "Crimson Pro", Georgia, serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --display: Jacquard, var(--serif);
+    /* The planetary and musical symbols are in neither text face (see
+       fonts/README.md); this is the one place a system stack is correct. */
+    --symbol: "Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols2", var(--serif);
 
-* { box-sizing: border-box; }
+    /* ── the type scale the diagrams draw with ── */
+    --micro: 9px;
+    --caption: 11px;
+    --step-label: 13.5px;
+    --body: 17px;
+    --title: 21px;
+    --display-size: 26px;
+    /* The wordmark is the one thing off the scale, and it is off it on
+       purpose: a masthead is a picture of a word. Named so it cannot be
+       mistaken for a seventh step. */
+    --wordmark-size: 36px;
 
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--serif);
-  font-size: var(--body);
-  line-height: 1.5;
-}
+    /* ── tracking: two values, not seven ──
+       Tracking is optical, so it falls as size rises: 9px capitals need air
+       that 13.5px capitals do not. There were seven values across the sheet
+       (.14 .12 .10 .08 .06 .04 .005) for what is really two decisions. */
+    --track-micro: 0.09em;   /* capitals at 9px — headings, table heads, labels */
+    --track-caps: 0.05em;    /* capitals and small caps at 11px and up */
+    --track-meta: 0.04em;    /* mono metadata lines, upright or italic */
+    /* Small caps, once `smcp` is in the subset, want less again than capitals
+       — the designer already drew them wide. Budget 0.03em and measure. */
 
-/* ── the head: wordmark, and the one place Jacquard appears ── */
-.head {
-  display: flex;
-  align-items: baseline;
-  gap: 20px;
-  padding: 22px 52px 14px;
-  border-bottom: 1px solid var(--rule);
-  flex-wrap: wrap;
-}
-.wordmark {
-  font-family: var(--display);
-  font-size: 36px;
-  letter-spacing: 0.04em;
-  color: var(--rubrica);
-  line-height: 1;
-}
-/* What the thing IS, before the version that says which one. `.views` already
-   claims the slack with its own auto margin, so this only sits in the line.
-   Upright, though it wears `.sub`: this names the site, and a masthead does
-   not lean. The italic belongs to a panel's aside. */
-.tagline { color: var(--label); font-style: normal; }
-/* The version link IS a doc link — it wears `.doc` and adds nothing. */
+    /* ── spacing: one 4px base ──
+       There were 26 distinct px values in this file, including both 4 and 5,
+       both 8 and 9, and 44 46 48 50 52. A step is now a choice from nine. */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
+    --sp-5: 20px;
+    --sp-6: 24px;
+    --sp-7: 32px;
+    --sp-8: 48px;
+    --sp-9: 64px;
+    /* The page's outer air is its own decision, not a step: it is the margin
+       of the leaf, and it changes with the width of the window. */
+    --page-x: 48px;
 
-/* ── the view switch ── */
-/* The same tab grammar as the panel strips — a rule running the full width,
-   the current name darkening it — but at TITLE size, because choosing a view
-   is the largest choice on the page. It was a boxed segmented control, which
-   made the one navigational act look like a form field and shared nothing
-   with the two strips beneath it. */
-.views {
-  display: flex; gap: 26px; margin-left: auto;
-  /* Aligned to the header's own bottom edge, not to the baseline the wordmark
-     and the tagline share: this strip carries a RULE, and a rule floating
-     above the header's rule reads as a mistake. The negative margin closes
-     the header's bottom padding so the two meet. */
-  align-self: flex-end;
-  margin-bottom: -14px;
-  background-image: linear-gradient(var(--rule), var(--rule));
-  background-size: 100% 2px;
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-}
-.views button {
-  font-family: var(--serif); font-size: var(--title);
-  font-weight: 400; letter-spacing: 0.005em;
-  color: var(--label); background: none;
-  border: 0; border-bottom: 2px solid transparent;
-  padding: 2px 0 8px; cursor: pointer;
-}
-.views button:hover { color: var(--ink); }
-.views button[aria-selected="true"] {
-  color: var(--ink); font-weight: 600;
-  border-bottom-color: var(--ink);
-}
-.views button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: 2px; }
-
-/* ── the two-column body ── */
-
-/* The page's outer air. The header carries the same horizontal inset so its
-   rule starts and stops with the content beneath it. */
-main { padding: 24px 52px 80px; }
-
-/* Five columns, three and two: the subject gets the wider half because a
-   score and a chant list are wide things, and a wheel is not. */
-/* ONE grid for the whole page, not four stacked ones.
-   Wide: four rows by two columns, so the two sides align band for band — a
-   reader's eye runs level from a title to the title opposite.
-   Narrow: the SUBJECT stacks under the subject, the READING under the reading.
-   Four independent row-grids each collapsed on their own, which interleaved
-   the two columns — the reading's tabs landed above the chant's own subtitle,
-   and the temperament slider above the score it does not control. A panel is
-   a self-contained unit and has to stack as one. */
-.page {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  grid-template-rows: auto auto auto 1fr;
-  column-gap: 48px;
-  align-items: end;
-}
-/* The rows are `display: contents`, so their two cells become direct children
-   of the page grid and place themselves in it. The elements stay in the DOM
-   for the repaint to find (renderPanels queries .row-title, .row-detail and
-   .row-body .cell), but they stop being layout boxes of their own. */
-.row { display: contents; }
-.cell { min-width: 0; }
-
-/* Each cell takes its band. Column 1 is the subject, column 2 the reading. */
-.row-title > .cell:first-child { grid-area: 1 / 1; }
-.row-title > .cell:last-child { grid-area: 1 / 2; }
-.row-detail > .cell:first-child { grid-area: 2 / 1; }
-.row-detail > .cell:last-child { grid-area: 2 / 2; }
-.row-inputs > .cell:first-child { grid-area: 3 / 1; }
-.row-inputs > .cell:last-child { grid-area: 3 / 2; }
-.row-body > .cell:first-child { grid-area: 4 / 1; }
-.row-body > .cell:last-child { grid-area: 4 / 2; }
-
-@media (max-width: 900px) {
-  /* One column, and the bands re-order so each panel is contiguous: the
-     subject's title, detail, inputs and body, then the reading's. */
-  .page {
-    grid-template-columns: 1fr;
-    grid-template-rows: repeat(8, auto);
-    align-items: start;
+    /* ── controls ── */
+    --control-h: 28px;
+    --focus: 2px solid var(--rubrica);
+    /* A focus ring sits OUTSIDE a box that has its own edge, and INSIDE
+       anything full-bleed — a table row, a list row, a tab — where an outside
+       ring would be clipped by the scroll box or collide with the row above.
+       That sentence is the whole rule; there is no third case. */
+    --focus-out: 2px;
+    --focus-in: -2px;
   }
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: var(--body);
+    line-height: 1.5;
+  }
+
+  /* ONE link style, worn in the masthead and in every subheader. A dotted
+     hairline reads as "there is more here" without drawing a line under half
+     the line it follows. It sets its own face rather than inheriting: the
+     masthead's siblings are not `.sub`, so relying on inheritance would give
+     the two places different type. Colour and text-decoration must be set
+     either way, or the UA gives an unvisited link its own blue and underline. */
+  .doc {
+    font-family: var(--mono);
+    font-size: var(--caption);
+    font-style: italic;
+    color: var(--label);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--rule);
+  }
+  .doc:hover { color: var(--ink); border-bottom-color: var(--label); }
+  .doc:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
+
+  .ghost { color: var(--ghost); font-style: italic; }
+
+  .note {
+    font-size: var(--caption); color: var(--label);
+    max-width: 58ch; line-height: 1.5; margin: var(--sp-3) 0 0;
+  }
+
+  /* The house label: what a control or a figure IS, set small and lettered
+     out. Defined once, unscoped, because it is worn in several places. */
+  .set-name {
+    font-family: var(--mono);
+    color: var(--label);
+    letter-spacing: var(--track-micro);
+    text-transform: uppercase;
+    font-size: var(--micro);
+  }
+
+  /* The panel subheading is italic — the quiet aside under a title, set apart
+     from the upright mono the tables and readouts use. */
+  .sub {
+    font-family: var(--mono); font-size: var(--caption);
+    font-style: italic;
+    color: var(--label); letter-spacing: var(--track-meta); margin: 0;
+  }
+}
+
+@layer layout {
+  /* ── the head: wordmark, and the one place Jacquard appears ── */
+  .head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-5);
+    padding: var(--sp-5) var(--page-x) var(--sp-4);
+    border-bottom: 1px solid var(--rule);
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-size: var(--wordmark-size);
+    letter-spacing: 0.04em;
+    color: var(--rubrica);
+    line-height: 1;
+  }
+  /* What the thing IS, before the version that says which one. `.views`
+     already claims the slack with its own auto margin, so this only sits in
+     the line. Upright, though it wears `.sub`: this names the site, and a
+     masthead does not lean. The italic belongs to a panel's aside.
+
+     Two classes deep on purpose. As `.tagline` alone this tied with `.sub`
+     and lost on source order, so the masthead leant for months against the
+     comment directly above it. */
+  .sub.tagline { color: var(--label); font-style: normal; }
+  /* The version link IS a doc link — it wears `.doc` and adds nothing. */
+
+  /* ── the page's outer air ──
+     The header carries the same horizontal inset so its rule starts and stops
+     with the content beneath it. */
+  main { padding: var(--sp-6) var(--page-x) var(--sp-9); }
+
+  /* Five columns, three and two: the subject gets the wider half because a
+     score and a chant list are wide things, and a wheel is not. */
+  /* ONE grid for the whole page, not four stacked ones.
+     Wide: four rows by two columns, so the two sides align band for band — a
+     reader's eye runs level from a title to the title opposite.
+     Narrow: the SUBJECT stacks under the subject, the READING under the
+     reading. Four independent row-grids each collapsed on their own, which
+     interleaved the two columns — the reading's tabs landed above the chant's
+     own subtitle, and the temperament slider above the score it does not
+     control. A panel is a self-contained unit and has to stack as one. */
+  .page {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: var(--sp-8);
+  }
+  /* The rows are `display: contents`, so their two cells become direct
+     children of the page grid and place themselves in it. The elements stay
+     in the DOM for the repaint to find (renderPanels queries .row-title,
+     .row-detail and .row-body .cell), but they stop being layout boxes. */
+  .row { display: contents; }
+  .cell { min-width: 0; }
+
+  /* Each cell takes its band. Column 1 is the subject, column 2 the reading. */
   .row-title > .cell:first-child { grid-area: 1 / 1; }
+  .row-title > .cell:last-child { grid-area: 1 / 2; }
   .row-detail > .cell:first-child { grid-area: 2 / 1; }
+  .row-detail > .cell:last-child { grid-area: 2 / 2; }
   .row-inputs > .cell:first-child { grid-area: 3 / 1; }
+  .row-inputs > .cell:last-child { grid-area: 3 / 2; }
   .row-body > .cell:first-child { grid-area: 4 / 1; }
-  .row-title > .cell:last-child { grid-area: 5 / 1; }
-  .row-detail > .cell:last-child { grid-area: 6 / 1; }
-  .row-inputs > .cell:last-child { grid-area: 7 / 1; }
-  .row-body > .cell:last-child { grid-area: 8 / 1; }
-  /* The second panel opens with its own tab strip, which needs air above it. */
-  .row-title > .cell:last-child { margin-top: 44px; }
-  /* The outer air is a luxury of a wide page; on a narrow one the content
-     needs the width more than the margin does. */
-  .head { padding-left: 24px; padding-right: 24px; }
-  main { padding-left: 24px; padding-right: 24px; }
+  .row-body > .cell:last-child { grid-area: 4 / 2; }
+
+  /* ── how the two columns meet across a band ──
+     `align-items: end` aligned the two cells' BOXES, which is not what the
+     frame promises. A 21px title and a 17px tab strip set to the same box
+     bottom still put their two texts on different lines, because each carries
+     its own half-leading: measured, the title's baseline sat about 3px below
+     the tab's and its box ended 5px lower. A reader's eye runs along a
+     BASELINE, so the two header bands align on one. */
+  .row-title > .cell,
+  .row-detail > .cell { align-self: baseline; }
+  .row-inputs > .cell { align-self: end; }
+  /* The body starts at the top of its band: applied to the body, an end
+     alignment sank the short column to the foot of the tall one and left the
+     readings a screen and a half below the score. */
+  .row-body > .cell { align-self: start; margin-top: var(--sp-5); }
+
+  /* The bands hold their height whatever is in them, so a tab that swaps a
+     control row for an empty one — Festum has no inputs where Harmonia has
+     two — does not move everything below it by the height of a button. The
+     floor is the tallest thing each band can carry.
+     Stated on the CELLS, not the rows: the rows are `display: contents` and
+     have no boxes of their own to give a height to. */
+  .row-title > .cell { min-height: 34px; }
+  .row-detail > .cell { min-height: var(--sp-6); padding-top: var(--sp-4); }
+  .row-inputs > .cell {
+    display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2);
+    min-height: var(--control-h);
+    padding-top: var(--sp-4); padding-bottom: var(--sp-2);
+    box-sizing: content-box;
+  }
+
+  .row-title h1 { font-size: var(--title); font-weight: 500; margin: 0; }
+
+  @media (max-width: 900px) {
+    /* One column, and the bands re-order so each panel is contiguous: the
+       subject's title, detail, inputs and body, then the reading's. */
+    .page {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(8, auto);
+    }
+    .row-title > .cell,
+    .row-detail > .cell,
+    .row-inputs > .cell,
+    .row-body > .cell { align-self: start; }
+    .row-title > .cell:first-child { grid-area: 1 / 1; }
+    .row-detail > .cell:first-child { grid-area: 2 / 1; }
+    .row-inputs > .cell:first-child { grid-area: 3 / 1; }
+    .row-body > .cell:first-child { grid-area: 4 / 1; }
+    .row-title > .cell:last-child { grid-area: 5 / 1; }
+    .row-detail > .cell:last-child { grid-area: 6 / 1; }
+    .row-inputs > .cell:last-child { grid-area: 7 / 1; }
+    .row-body > .cell:last-child { grid-area: 8 / 1; }
+    /* The second panel opens with its own tab strip, which needs air above. */
+    .row-title > .cell:last-child { margin-top: var(--sp-8); }
+    /* The outer air is a luxury of a wide page; on a narrow one the content
+       needs the width more than the margin does. */
+    :root { --page-x: var(--sp-6); }
+  }
 }
 
-/* The bands hold their height whatever is in them, so a tab that swaps a
-   control row for an empty one — Festum has no inputs where Harmonia has two
-   — does not move everything below it by the height of a button. The floor is
-   the tallest thing each band can carry: a 28px date field, a 21px select, a
-   title, a line of mono.
-   Stated on the CELLS, not the rows: the rows are `display: contents` and have
-   no boxes of their own to give a height to. */
-.row-title > .cell { min-height: 34px; }
-.row-detail > .cell { min-height: 24px; padding-top: 16px; }
-.row-inputs > .cell {
-  display: flex; align-items: center;
-  min-height: 28px; padding-top: 14px; padding-bottom: 6px;
-  box-sizing: content-box;
-}
-/* The body starts at the top of its band. `align-items: end` on the page is
-   for the three HEADER bands, so a title and the title opposite sit on one
-   line whatever height each carries — but applied to the body it sank the
-   short column to the foot of the tall one, leaving the readings a screen
-   and a half below the score. */
-.row-body > .cell { align-self: start; margin-top: 20px; }
+@layer components {
 
-/* ── the subject: what this column is about ── */
-.row-title h1 { font-size: var(--title); font-weight: 500; margin: 0; }
-/* The panel subheading is italic — the quiet aside under a title, set apart
-   from the upright mono the tables and readouts use. */
-.row-detail .sub, .sub {
-  font-family: var(--mono); font-size: var(--caption);
-  font-style: italic;
-  color: var(--label); letter-spacing: 0.06em; margin: 0;
-}
+  /* ═══ RULE 2 · AN UNDERLINE MEANS THIS IS WHERE YOU ARE ═══
+     One strip grammar, worn by the view switch, the panel readings, and the
+     three date anchors. A name is underlined, not boxed, and the strip carries
+     the rule as its own background — so the current name reads as a DARKENING
+     of a line that runs the whole width, not as a stroke floating under one
+     word.
 
-/* ONE link style, worn in the masthead and in every subheader. A dotted
-   hairline reads as "there is more here" without drawing a line under half
-   the line it follows. It sets its own face rather than inheriting: the
-   masthead's siblings are not `.sub`, so relying on inheritance would give
-   the two places different type. Colour and text-decoration must be set
-   either way, or the UA gives an unvisited link its own blue and underline. */
-.doc {
-  font-family: var(--mono);
-  font-size: var(--caption);
-  font-style: italic;
-  color: var(--label);
-  text-decoration: none;
-  border-bottom: 1px dotted var(--rule);
-}
+     Set in Junicode. The details beneath are mono, and a tab in the same face
+     reads as more machine data rather than as a name you may choose; the serif
+     is also the house's main face and had been left carrying almost nothing. */
+  .tabstrip {
+    display: flex; gap: var(--sp-6); flex-wrap: wrap;
+    background-image: linear-gradient(var(--rule), var(--rule));
+    background-size: 100% 2px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+  }
+  .tabstrip button {
+    font-family: var(--serif); font-size: var(--body);
+    font-weight: 400; letter-spacing: 0;
+    color: var(--label); background: none;
+    border: 0; border-bottom: 2px solid transparent;
+    padding: 2px 0 var(--sp-2); cursor: pointer;
+  }
+  .tabstrip button:hover { color: var(--ink); }
+  .tabstrip button[aria-selected="true"] {
+    color: var(--ink); font-weight: 600;
+    border-bottom-color: var(--ink);
+  }
+  .tabstrip button:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
+  .tabpanel:focus-visible { outline: none; }
 
-.doc:hover { color: var(--ink); border-bottom-color: var(--label); }
-.doc:focus-visible { outline: 2px solid var(--rubrica); outline-offset: 2px; }
+  /* The view switch is the same strip at TITLE size, because choosing a view
+     is the largest choice on the page. It was a hand-built row of buttons that
+     copied twenty-six declarations from here and shipped `aria-selected` on a
+     plain button with no `role="tab"`, no `aria-controls` and no arrow keys —
+     the one strip a keyboard reaches first was the one strip that did not
+     behave like a tab strip. It now comes from `tabs()` like the other two. */
+  .tabstrip-large button { font-size: var(--title); }
 
-/* ── tabs: one strip, three uses ── */
-/* A tab is named and underlined, not boxed, and the strip carries the rule as
-   its own background — so the current tab reads as a DARKENING of a line that
-   runs the whole width, not as a stroke floating under one word.
-   
-   Set in Junicode. The details beneath are mono, and a tab in the same face
-   reads as more machine data rather than as a name you may choose; the serif
-   is also the house's main face and had been left carrying almost nothing. */
-.tabstrip {
-  display: flex; gap: 26px; flex-wrap: wrap;
-  background-image: linear-gradient(var(--rule), var(--rule));
-  background-size: 100% 2px;
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-}
-.tabstrip button {
-  font-family: var(--serif); font-size: var(--body);
-  font-weight: 400; letter-spacing: 0.005em;
-  color: var(--label); background: none;
-  border: 0; border-bottom: 2px solid transparent;
-  padding: 2px 0 8px; cursor: pointer;
-}
-.tabstrip button:hover { color: var(--ink); }
-.tabstrip button[aria-selected="true"] {
-  color: var(--ink); font-weight: 600;
-  border-bottom-color: var(--ink);
-}
-/* The office cascade sits inside a column, quieter than the panel tabs. */
-.tabstrip-quiet { gap: 22px; }
-.tabstrip-quiet button { font-size: var(--step-label); padding-bottom: 6px; }
-.tabstrip button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: -2px; }
-.tabpanel:focus-visible { outline: none; }
+  /* The strip is aligned to the header's own bottom edge, not to the baseline
+     the wordmark and the tagline share: this strip carries a RULE, and a rule
+     floating above the header's rule reads as a mistake.
 
-/* ── the chant row: a list entry with its own notation ── */
-.chant-list { list-style: none; margin: 0; padding: 0; }
-.chant-row { border-bottom: 1px solid var(--rule); }
-/* Name and rubric on the left where a list is scanned, the notation on the
-   right where it is checked.
-   The music STARTS at the halfway mark and runs to the edge. That means the
-   LEFT side is the fixed half — sizing the right column instead lets the gaps
-   shift where the music begins, and the column stops reading as notation and
-   starts reading as ragged fragments. Two columns exactly, with the gap
-   folded out of the first, so the staff's left edge is a true 50%. */
-.chant-row button {
-  display: grid;
-  /* The percentage resolves against the CONTENT box, so any horizontal
-     padding would shift the half-way mark and make it drift with the row's
-     width. There is none: the row's air is vertical, and the text column
-     carries its own left inset instead. The gap follows the first column, so
-     the WHOLE gap comes out of it for the staff's edge to land on a true 40%
-     — verified exact from 420px to 1100px. */
-  grid-template-columns: calc(40% - 14px) 1fr;
-  align-items: center; gap: 14px;
-  width: 100%; text-align: left;
-  background: none; border: 0; padding: 10px 0;
-  font: inherit; color: var(--ink); cursor: pointer;
-}
-/* The name takes the slack, the aside sits at the half's right edge. The
-   left inset lives here rather than on the button, so the row's padding
-   cannot shift where the notation starts. */
-.chant-row-head {
-  display: flex; align-items: baseline; gap: 10px;
-  min-width: 0; justify-content: space-between; padding-left: 4px;
-}
-.chant-row-head .chant-row-text { min-width: 0; }
-.chant-row button:hover { background: rgba(17, 17, 17, 0.035); }
-.chant-row button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: -2px; }
-.chant-row[aria-selected="true"] button { background: rgba(17, 17, 17, 0.06); }
-/* The incipit is one long system, shown from its start and clipped: a few
-   notes of the real melody, which is how a chant is recognised. The box is
-   the full height of the render at this scale — clipping it shorter cut the
-   lyric line off under the staff. The mask fades the cut so the music trails
-   away rather than ending on a hard edge mid-neume. */
-.chant-row .incipit {
-  display: block; overflow: hidden;
-  height: 50px; mask-image: linear-gradient(to right, #000 70%, transparent);
-}
-.chant-row .incipit svg { height: 50px; width: auto; max-width: none; display: block; }
-.chant-row-name { display: block; font-size: var(--step-label); }
-/* Italic, as the panel subheadings are: this is the same kind of line — the
-   quiet aside under a name. */
-.chant-row-meta {
-  display: block; font-family: var(--mono); font-size: var(--micro);
-  font-style: italic;
-  color: var(--label); letter-spacing: 0.06em; margin-top: 2px;
-}
-.chant-row-aside {
-  font-family: var(--mono); font-size: var(--caption);
-  color: var(--label); font-variant-numeric: tabular-nums;
-}
+     The pull is the header's bottom padding PLUS its 1px border. Closing only
+     the padding left the strip's 2px rule sitting directly on top of the
+     header's 1px one — measured, a 3px band under the nav where every other
+     rule on the page is 1px. The two now coincide: the strip's rule covers the
+     header's, and the current view darkens it. */
+  .views {
+    margin-left: auto;
+    align-self: flex-end;
+    margin-bottom: calc(-1 * (var(--sp-4) + 1px));
+  }
 
-.note {
-  font-size: var(--caption); color: var(--label);
-  max-width: 58ch; line-height: 1.5; margin: 10px 0 0;
-}
-/* The date: typed to arrive, stepped to wander, named to jump. A liturgical
-   year is not navigated by number — nobody knows the date Advent starts in
-   991 — so the days the year turns on are buttons beside the field. */
-/* One row: ‹ date › and the three anchors. Every box on the line is the same
-   height, set once here — a date input, a button, and a bordered span each
-   size themselves differently otherwise, and the row reads as a jumble. */
-.dials { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.dials > *, .dial-anchor {
-  height: 28px;
-  box-sizing: border-box;
-  font-family: var(--mono);
-  background: var(--paper);
-  border: 1px solid var(--rule);
-}
-.dials .dial-anchors { border: 0; background: none; height: auto; }
-.dial-date {
-  font-size: var(--caption);
-  color: var(--ink);
-  padding: 0 8px;
-  font-variant-numeric: tabular-nums;
-}
-.dial-date:focus-visible,
-.dial-step:focus-visible,
-.dial-anchor:focus-visible { outline: 2px solid var(--rubrica); outline-offset: 2px; }
-.dial-step {
-  font-size: var(--step-label);
-  line-height: 1;
-  color: var(--ink);
-  padding: 0 10px;
-  cursor: pointer;
-}
-.dial-step:hover { border-color: var(--ink); }
-.dial-anchors { display: flex; flex-wrap: wrap; gap: 6px; margin-left: 6px; }
-.dial-anchor {
-  display: inline-flex;
-  align-items: center;
-  font-size: var(--micro);
-  letter-spacing: 0.08em;
-  color: var(--label);
-  padding: 0 9px;
-  cursor: pointer;
-}
-.dial-anchor:hover { color: var(--ink); border-color: var(--ink); }
-.dial-anchor[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+  /* ── the chant row: a list entry with its own notation ── */
+  .chant-list { list-style: none; margin: 0; padding: 0; }
+  .chant-row { border-bottom: 1px solid var(--rule); }
+  /* Name and rubric on the left where a list is scanned, the notation on the
+     right where it is checked.
+     The music STARTS at the 40% mark and runs to the edge. That means the LEFT
+     side is the fixed half — sizing the right column instead lets the gaps
+     shift where the music begins, and the column stops reading as notation and
+     starts reading as ragged fragments. Two columns exactly, with the gap
+     folded out of the first, so the staff's left edge is a true 40%.
 
-/* The office filters sit above the day's chants, not beside other settings. */
-.filters { margin-bottom: 10px; gap: 6px; }
-.filters button[disabled] { opacity: 0.4; cursor: default; }
+     The percentage resolves against the CONTENT box, so any horizontal padding
+     would shift that mark and make it drift with the row's width. There is
+     none: the row's air is vertical, and the text column carries its own left
+     inset instead. Verified exact from 420px to 1100px — do not fold these
+     14px into the spacing scale without re-measuring. */
+  .chant-row button {
+    display: grid;
+    grid-template-columns: calc(40% - 14px) 1fr;
+    align-items: center; gap: 14px;
+    width: 100%; text-align: left;
+    background: none; border: 0; padding: var(--sp-3) 0;
+    font: inherit; color: var(--ink); cursor: pointer;
+  }
+  /* The name takes the slack, the aside sits at the half's right edge. The
+     left inset lives here rather than on the button, so the row's padding
+     cannot shift where the notation starts. */
+  .chant-row-head {
+    display: flex; align-items: baseline; gap: var(--sp-3);
+    min-width: 0; justify-content: space-between; padding-left: var(--sp-1);
+  }
+  .chant-row-head .chant-row-text { min-width: 0; }
+  .chant-row button:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
 
-/* ── panels ── */
-.panel { margin-bottom: 34px; }
-.panel > h2 {
-  font-family: var(--mono);
-  font-size: var(--micro);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--label);
-  font-weight: 400;
-  margin: 0 0 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--rule);
-}
-.panel svg { max-width: 100%; height: auto; display: block; }
-/* A wheel is a wheel: both wear the same frame, so both take the same room
-   whatever sits in the panel beneath them. Left to the grid, the one with two
-   tables under it stretches and the pair stop being comparable. */
-.panel svg.annulus, .panel svg.rota { width: 100%; max-width: 520px; aspect-ratio: 1; }
+  /* ── SELECTION, IN ONE CHANNEL ──
+     A list of chants is a list of CHOICES, so the ones not taken step back to
+     label grey and the one taken comes forward in full ink. The row's own rule
+     carries the same news: --rule at rest, --edge under the pointer, --ink
+     where you are. No fill. A fill also fought the incipit drawn in the same
+     row, which is the second reason it is gone.
 
+     If a fill is ever wanted back for a denser list, the replacement is a 2px
+     ink bar in the left margin — NOT a tint. */
+  .chant-row-name { display: block; font-size: var(--step-label); color: var(--label); }
+  .chant-row { position: relative; }
+  /* HOVER: the rule darkens and the name comes up. Nothing moves, nothing
+     fills — the row answers the pointer without changing size. */
+  .chant-row:hover { border-bottom-color: var(--edge); }
+  .chant-row button:hover .chant-row-name { color: var(--ink); }
+  /* SELECTED: the mark is in the MARGIN. A bar the height of the row, and the
+     row on pure white — so the chosen chant lifts off the page instead of
+     being washed with a tint. The bar sits outside the text column, in the
+     air the page's own inset provides, which is why it can be full ink
+     without shouting. */
+  .chant-row[aria-selected="true"] { background: var(--paper-lit); }
+  .chant-row[aria-selected="true"]::before {
+    content: "";
+    position: absolute; left: calc(-1 * var(--sp-3)); top: 0; bottom: 0;
+    width: 2px; background: var(--ink);
+  }
+  .chant-row[aria-selected="true"] .chant-row-name { color: var(--ink); }
 
-/* ── the chant list ── */
-.feast {
-  font-family: var(--mono);
-  font-size: var(--micro);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--label);
-  margin: 18px 0 6px;
-}
-.chants { list-style: none; margin: 0; padding: 0; }
-.chants li {
-  border-bottom: 1px solid var(--rule);
-}
-.chants button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: 0;
-  padding: 9px 4px;
-  font: inherit;
-  font-size: var(--step-label);
-  color: var(--ink);
-  cursor: pointer;
-}
-.chants button:hover { background: rgba(17, 17, 17, 0.035); }
-.chants button:focus-visible { outline: 2px solid var(--rubrica); outline-offset: -2px; }
-.chants li[aria-selected="true"] button { background: rgba(17, 17, 17, 0.06); }
-.chants .meta {
-  display: block;
-  font-family: var(--mono);
-  font-size: var(--micro);
-  color: var(--label);
-  letter-spacing: 0.06em;
-  margin-top: 2px;
-}
-.chants .preview { display: block; margin-top: 5px; }
-.chants .preview svg { max-height: 46px; width: auto; }
+  /* The incipit is one long system, shown from its start and clipped: a few
+     notes of the real melody, which is how a chant is recognised. The box is
+     the full height of the render at this scale — clipping it shorter cut the
+     lyric line off under the staff. The mask fades the cut so the music trails
+     away rather than ending on a hard edge mid-neume. */
+  .chant-row .incipit {
+    display: block; overflow: hidden;
+    height: 50px; mask-image: linear-gradient(to right, #000 70%, transparent);
+  }
+  .chant-row .incipit svg { height: 50px; width: auto; max-width: none; display: block; }
+  /* Italic, as the panel subheadings are: this is the same kind of line — the
+     quiet aside under a name. */
+  .chant-row-meta {
+    display: block; font-family: var(--mono); font-size: var(--micro);
+    font-style: italic;
+    color: var(--label); letter-spacing: var(--track-meta); margin-top: 2px;
+  }
+  .chant-row-aside {
+    font-family: var(--mono); font-size: var(--caption);
+    color: var(--label); font-variant-numeric: tabular-nums;
+  }
 
-/* ── the score ── */
-.score-head { margin-bottom: 4px; }
-.score-head h1 {
-  font-size: var(--title);
-  font-weight: 500;
-  margin: 0;
-}
-.score-head .sub {
-  font-family: var(--mono);
-  font-size: var(--caption);
-  color: var(--label);
-  letter-spacing: 0.06em;
-}
-/* No sideways scroll: the score is re-rendered at the column's width rather
-   than overflowing it (see scoreFigure's ResizeObserver). */
-/* The emitter draws its own page margin — a fixed 12px inset, which belongs to
-   the notation's page and is right in a printed score. On a web column the
-   page margin is already the column's, so the two stack and the chant floats
-   inside a gutter it does not need. Pulled back out here, where the page's own
-   air is decided; the render is untouched. */
-.score {
-  /* LEFT ONLY. Pulling both sides widened the wrapper by 24px past its cell,
+  /* ═══ RULE 1 · A BOX MEANS A VALUE LIVES HERE ═══
+     The date, typed to arrive and stepped to wander, is ONE object: a field
+     with two spurs, hairline-divided, inside a single edge. It was three
+     detached boxes at three type sizes — 13.5px arrows around an 11px date —
+     which read as three unrelated controls for what is one reading of one
+     value. */
+  .dials { display: flex; align-items: center; gap: var(--sp-6); flex-wrap: wrap; }
+
+  .field {
+    height: var(--control-h);
+    display: inline-flex; align-items: stretch;
+    border: 1px solid var(--edge);
+    background: var(--paper);
+  }
+  .field:focus-within { outline: var(--focus); outline-offset: var(--focus-out); }
+  .dial-date {
+    border: 0; background: none;
+    font-family: var(--mono); font-size: var(--caption);
+    color: var(--ink); padding: 0 var(--sp-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .dial-date:focus-visible { outline: none; }
+  /* A spur DOES something and holds nothing, so it wears no edge of its own —
+     only the hairline that divides it from the value it steps. */
+  .dial-step {
+    border: 0; border-left: 1px solid var(--rule); background: none;
+    font-family: var(--mono); font-size: var(--step-label); line-height: 1;
+    color: var(--label); width: 26px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .field > .dial-step:first-child { border-left: 0; border-right: 1px solid var(--rule); }
+  .dial-step:hover { color: var(--ink); }
+  .dial-step:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
+
+  /* ── the anchors: three JUMP LINKS ──
+     Nativitas, Pascha and Pentecoste hold no value and set nothing — they are
+     the three days the year is reckoned from, and going to one is going
+     somewhere. Boxed, they were indistinguishable from the office filters
+     below; given the tab grammar they claimed to be a third view switch,
+     which they are not — a tab strip says "one of these is showing", and
+     these are three places you may go.
+
+     So: little links, in the page's existing link idiom — the dotted hairline
+     `.doc` already uses to say "there is more here" — with a leading mark for
+     the jump. The one you are standing on takes full ink and a solid rule. */
+  .dial-anchors { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: baseline; }
+  .dial-anchor {
+    font-family: var(--mono); font-size: var(--caption);
+    letter-spacing: var(--track-meta);
+    color: var(--label); background: none;
+    border: 0; border-bottom: 1px dotted var(--rule);
+    padding: 0 0 2px; cursor: pointer;
+  }
+  .dial-anchor::before { content: "\2192\00A0"; color: var(--ghost); }
+  .dial-anchor:hover { color: var(--ink); border-bottom-color: var(--label); }
+  .dial-anchor:hover::before { color: var(--label); }
+  .dial-anchor[aria-pressed="true"] {
+    color: var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
+  .dial-anchor[aria-pressed="true"]::before { color: var(--ink); }
+  .dial-anchor:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
+
+  /* ═══ RULE 3 · A SET IS ONE OBJECT MADE OF PARTS ═══
+     The five offices are independently on or off, and together they decide one
+     thing: what the list below holds. Five detached boxes said "five unrelated
+     actions". One strip with internal hairlines says what is true.
+
+     The tick is a second channel, so membership is not carried by colour
+     alone — which matters here because the whole state of this control used to
+     live in a border at 1.37:1 against paper. */
+  .segset {
+    display: inline-flex; flex-wrap: wrap;
+    border: 1px solid var(--edge);
+    min-height: var(--control-h);
+    margin-bottom: var(--sp-3);
+  }
+  .settings .segset { margin-bottom: 0; }
+  .segset button {
+    font-family: var(--mono); font-size: var(--caption);
+    letter-spacing: var(--track-meta);
+    color: var(--ghost); background: none;
+    border: 0; border-left: 1px solid var(--rule);
+    padding: 0 var(--sp-3); min-height: 26px;
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    cursor: pointer;
+  }
+  .segset button:first-child { border-left: 0; }
+  .segset button::before {
+    content: ""; width: 5px; height: 5px;
+    border: 1px solid currentColor;
+    transform: translateY(-1px);
+    flex: none;
+  }
+  /* How many the office holds. A count is machine data about the name beside
+     it, so it stays quiet whether the segment is in or out. */
+  .seg-n { color: var(--label); font-size: var(--micro); font-variant-numeric: tabular-nums; }
+  .segset button:hover { color: var(--ink); }
+  .segset button[aria-pressed="true"] { color: var(--ink); }
+  .segset button[aria-pressed="true"]::before { background: var(--ink); border-color: var(--ink); }
+  .segset button[disabled] { color: var(--ghost); cursor: default; opacity: 0.55; }
+  .segset button[disabled]:hover { color: var(--ghost); }
+  .segset button:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
+
+  /* ── settings: the few the toy carries ── */
+  .settings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-5);
+    align-items: center;
+    font-family: var(--mono);
+    font-size: var(--caption);
+    color: var(--label);
+    padding: 0;
+  }
+  .settings label { display: inline-flex; align-items: center; gap: var(--sp-2); cursor: pointer; }
+  /* A select HOLDS a value, so it keeps its box — rule 1. The chevron is drawn
+     from two gradients rather than left to the OS: the native one and the date
+     picker's calendar glyph were the only system-drawn marks on a page that
+     draws everything else itself. */
+  .settings > select,
+  .settings > button {
+    font-family: var(--mono);
+    font-size: var(--caption);
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--edge);
+    height: var(--control-h);
+    box-sizing: border-box;
+    padding: 0 var(--sp-3);
+    cursor: pointer;
+  }
+  .settings > select {
+    appearance: none; -webkit-appearance: none;
+    padding-right: var(--sp-7);
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--label) 50%),
+      linear-gradient(135deg, var(--label) 50%, transparent 50%);
+    background-position: calc(100% - 17px) 12px, calc(100% - 12px) 12px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+  .settings > button:hover,
+  .settings > select:hover { border-color: var(--ink); }
+  /* A setting that is ON darkens its edge AND its text — two channels, so the
+     state does not live in colour alone. */
+  .settings > button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .settings > select:focus-visible,
+  .settings > button:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
+
+  /* ── the temperament slider ──
+     One axis, not six names: the fraction of the comma taken off each fifth,
+     with the historical stops as clickable detents beneath the track. */
+  /* ── the temperament slider ──
+     One axis, not six names: the fraction of the comma taken off each fifth,
+     with the historical stops named in the list beside it.
+
+     THIS BLOCK IS JEFFREY'S, and it is deliberately not folded onto the
+     spacing scale or the no-fill rule — it was measured into these values
+     against the running control. The dashes that used to ride the bar are
+     removed at his call; `.comma-track` stays as the sizing box. */
+  .comma { align-items: center; gap: 6px 10px; }
+  .comma-track {
+    position: relative;
+    display: inline-block;
+    width: 132px;
+    height: 28px;
+    flex: none;
+  }
+  .comma-range {
+    -webkit-appearance: none; appearance: none;
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    background: none; cursor: ew-resize; margin: 0;
+  }
+  .comma-range::-webkit-slider-runnable-track { height: 1px; background: var(--rule); }
+  .comma-range::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--ink); margin-top: -5px;
+  }
+  .comma-range::-moz-range-track { height: 1px; background: var(--rule); }
+  .comma-range::-moz-range-thumb {
+    width: 11px; height: 11px; border: 0; border-radius: 50%; background: var(--ink);
+  }
+  .comma-range:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
+  /* The width of the tempered fifth, in cents, everywhere on the axis. */
+  .comma-read {
+    font-family: var(--mono); font-size: var(--caption);
+    color: var(--ink);
+    min-width: 4.5ch;
+    font-variant-numeric: tabular-nums;
+  }
+  .comma select { max-width: 15rem; }
+  /* ON a named stop: full ink, a firm edge — this is the temperament chosen.
+     NEAR one: greyed, as a disabled control is greyed, because the name is
+     being shown for orientation rather than claimed. The reader can still open
+     the list and pick it; only the display is quiet. */
+  .comma select.at-detent { color: var(--ink); border-color: var(--ink); }
+  .comma select.near-detent {
+    color: var(--ghost);
+    border-color: var(--rule);
+    font-style: italic;
+  }
+
+  /* ── panels ── */
+  .panel { margin-bottom: var(--sp-7); }
+  .panel > h2 {
+    font-family: var(--mono);
+    font-size: var(--micro);
+    letter-spacing: var(--track-micro);
+    text-transform: uppercase;
+    color: var(--label);
+    font-weight: 400;
+    margin: 0 0 var(--sp-3);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* The census neighbours, under the score. */
+  .similar { display: block; margin-top: var(--sp-8); }
+  /* Titled as the readings opposite are titled — the same face, size and rule
+     — because it is the same kind of thing: a named section of a column. It
+     wears the tabstrip's underline without being a tab, since there is only
+     one, and it draws that underline the way the strip does rather than with a
+     border, so the two cannot drift. */
+  .similar-title {
+    font-family: var(--serif); font-size: var(--body);
+    font-weight: 600; letter-spacing: 0;
+    color: var(--ink);
+    margin: 0; padding: 2px 0 var(--sp-2);
+    background-image: linear-gradient(var(--rule), var(--rule));
+    background-size: 100% 2px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+  }
+  .similar .sub { margin-top: var(--sp-3); }
+
+  /* ── the score ── */
+  /* No sideways scroll: the score is re-rendered at the column's width rather
+     than overflowing it (see scoreFigure's ResizeObserver). */
+  /* The emitter draws its own page margin — a fixed 12px inset, which belongs
+     to the notation's page and is right in a printed score. On a web column
+     the page margin is already the column's, so the two stack and the chant
+     floats inside a gutter it does not need. Pulled back out here, where the
+     page's own air is decided; the render is untouched.
+
+     LEFT ONLY. Pulling both sides widened the wrapper by 24px past its cell,
      which is the horizontal scroll: the render is measured to the column, so
      there is nothing on the right to reclaim — the emitter's gutter is at the
      start of the staff, not after it. */
-  margin: 4px 0 8px -12px;
-}
-.score svg { max-width: 100%; height: auto; display: block; }
-
-/* The chant follows the page's ink. inscriptio emits its colours as
-   `var(--tonus-note, #111)` — the render's own value as the fallback — so
-   setting these three properties rethemes a drawn score without re-rendering
-   it, and the site's tokens become the chant's tokens. */
-.score svg {
-  --tonus-note: var(--ink);
-  --tonus-staff-line: var(--ink);
-  --tonus-rubrica: var(--rubrica);
-}
-
-/* ── settings: the few the toy carries ── */
-.settings {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  align-items: center;
-  font-family: var(--mono);
-  font-size: var(--caption);
-  color: var(--label);
-  padding: 0;
-}
-.settings label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-/* The house label: what a control or a figure IS, set small and lettered out.
-   Defined once, unscoped, because it is worn outside .settings too. */
-.set-name {
-  font-family: var(--mono);
-  color: var(--label);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-size: var(--micro);
-}
-/* The same 28px the date field stands at, so the two columns' controls sit on
-   one line and the row's height never depends on which side has a control. */
-.settings select, .settings button {
-  font-family: var(--mono);
-  font-size: var(--caption);
-  color: var(--ink);
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  height: 28px;
-  box-sizing: border-box;
-  padding: 0 8px;
-  cursor: pointer;
-}
-.settings button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); }
-
-/* ── the temperament slider ──
-   One axis, not six names: the fraction of the comma taken off each fifth,
-   with the historical stops as clickable detents beneath the track. */
-.comma { align-items: center; gap: 6px 10px; }
-/* The bar and its dashes share one box, so a tick sits ON the track it marks. */
-.comma-track {
-  position: relative;
-  display: inline-block;
-  width: 132px;
-  height: 28px;
-  flex: none;
-}
-.comma-range {
-  -webkit-appearance: none; appearance: none;
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  background: none; cursor: ew-resize; margin: 0;
-}
-.comma-range::-webkit-slider-runnable-track { height: 1px; background: var(--rule); }
-.comma-range::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 11px; height: 11px; border-radius: 50%;
-  background: var(--ink); margin-top: -5px;
-}
-.comma-range::-moz-range-track { height: 1px; background: var(--rule); }
-.comma-range::-moz-range-thumb {
-  width: 11px; height: 11px; border: 0; border-radius: 50%; background: var(--ink);
-}
-.comma-range:focus-visible { outline: 2px solid var(--rubrica); outline-offset: 2px; }
-/* A dash per named temperament, on the bar. They sit UNDER the thumb (the
-   range input is above them), so the thumb reads as travelling along a ruled
-   axis rather than over a row of marks. Inset by half a thumb at each end so a
-   tick lines up with where the thumb actually centres. */
-.comma-ticks {
-  position: absolute; inset: 0 5.5px;
-  pointer-events: none;
-}
-.comma-tick {
-  position: absolute; top: 50%;
-  width: 1px; height: 7px;
-  margin-top: -3px;
-  background: var(--rule);
-}
-.comma-read {
-  font-family: var(--mono); font-size: var(--caption);
-  color: var(--ink);
-  min-width: 4.5ch;
-  font-variant-numeric: tabular-nums;
-}
-.comma select { max-width: 15rem; }
-/* ON a named stop: full ink, a firm edge — this is the temperament chosen.
-   NEAR one: greyed, as a disabled control is greyed, because the name is
-   being shown for orientation rather than claimed. The reader can still open
-   the list and pick it; only the display is quiet. */
-.comma select.at-detent { color: var(--ink); border-color: var(--ink); }
-.comma select.near-detent {
-  color: var(--ghost);
-  border-color: var(--rule);
-  font-style: italic;
+  .score { margin: var(--sp-1) 0 var(--sp-2) -12px; }
+  /* The chant follows the page's ink. inscriptio emits its colours as
+     `var(--tonus-note, #111)` — the render's own value as the fallback — so
+     setting these three properties rethemes a drawn score without re-rendering
+     it, and the site's tokens become the chant's tokens. */
+  .score svg {
+    max-width: 100%; height: auto; display: block;
+    --tonus-note: var(--ink);
+    --tonus-staff-line: var(--ink);
+    --tonus-rubrica: var(--rubrica);
+  }
 }
 
-/* The census neighbours, under the score. */
-.similar { display: block; margin-top: 40px; }
-/* Titled as the readings opposite are titled — the same face, size and rule —
-   because it is the same kind of thing: a named section of a column. It wears
-   the tabstrip's underline without being a tab, since there is only one. */
-.similar-title {
-  font-family: var(--serif); font-size: var(--body);
-  font-weight: 600; letter-spacing: 0.005em;
-  color: var(--ink);
-  margin: 0; padding: 2px 0 8px;
-  border-bottom: 2px solid var(--rule);
-}
-.similar .sub { margin-top: 10px; }
+@layer figures {
+  /* ── the tabula, shared by every panel ── */
+  /* A wide table scrolls inside its own box; the page never does.
+     This lives on the PANEL, not on `.cell`. On the cell it also made the
+     block axis a scroll container — CSS cannot leave one axis visible when the
+     other is `auto` — which quietly forbids `position: sticky` inside a column
+     and clips anything a figure ever wants to draw outside its box. */
+  .tabpanel { overflow-x: auto; }
 
-/* ── the tabula, shared by every panel ── */
-/* A wide table scrolls inside its own box; the page never does. */
-.tabpanel, .cell { overflow-x: auto; }
-table.tabula { border-collapse: collapse; width: 100%; font-size: var(--step-label); }
-table.tabula caption {
-  font-family: var(--mono); font-size: var(--micro); letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--label); text-align: left; padding-bottom: 10px;
-}
-table.tabula th {
-  font-family: var(--mono); font-size: var(--micro); letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--label); text-align: left;
-  font-weight: 400; white-space: nowrap;
-  padding: 0 10px 6px; border-bottom: 1px solid var(--rule);
-}
-/* Air on BOTH sides of a cell, not just after it: a highlighted row is a band
-   of tint, and with no left inset its first glyph sat hard against the edge. */
-table.tabula td {
-  padding: 5px 10px; border-bottom: 1px solid var(--rule); vertical-align: baseline;
-}
-table.tabula tr[tabindex] { cursor: pointer; }
-table.tabula tr[tabindex]:hover td { background: rgba(17, 17, 17, 0.035); }
-table.tabula tr.sel td { background: rgba(17, 17, 17, 0.06); }
-table.tabula .mono { font-family: var(--mono); font-size: var(--caption); }
-table.tabula .num { text-align: right; font-variant-numeric: tabular-nums; }
-/* THE GAMUT LETTERS, in Junicode's enlarged minuscule.
-   Junicode carries an `ENLA` axis — "Enlarge" — which raises the x-height of
-   the lowercase toward cap height without touching ascenders or capitals
-   (measured: `a` and `g` climb 425 → 676 where the caps stand at 666, and `d`
-   holds its ascender). That is exactly the medieval convention this column
-   is spelling: Γ A B C D E F G then a b c d, one gamut where the case marks
-   the OCTAVE rather than a difference in size. Set with the mono face the
-   lowercase read as a second, smaller alphabet. */
-.litera {
-  font-family: var(--serif);
-  font-variation-settings: "ENLA" 100;
-  font-size: var(--step-label);
-  letter-spacing: 0.04em;
-}
+  table.tabula { border-collapse: collapse; width: 100%; font-size: var(--step-label); }
+  table.tabula caption {
+    font-family: var(--mono); font-size: var(--micro); letter-spacing: var(--track-micro);
+    text-transform: uppercase; color: var(--label); text-align: left;
+    padding-bottom: var(--sp-3);
+  }
+  table.tabula th {
+    font-family: var(--mono); font-size: var(--micro); letter-spacing: var(--track-micro);
+    text-transform: uppercase; color: var(--label); text-align: left;
+    font-weight: 400; white-space: nowrap;
+    padding: 0 var(--sp-3) var(--sp-2); border-bottom: 1px solid var(--rule);
+  }
+  /* Air on BOTH sides of a cell, not just after it. */
+  table.tabula td {
+    padding: var(--sp-1) var(--sp-3); border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+  }
+  table.tabula tr[tabindex] { cursor: pointer; }
+  /* The same one channel the chant list uses: the row's rule at --rule, at
+     --edge under the pointer, at --ink where you are. A table's text stays
+     full ink at rest — every row here is content, where in a list of chants
+     every row is an alternative — so the row that is current says so by
+     weight in its first cell rather than by everything else fading. */
+  table.tabula tr[tabindex]:hover td { border-bottom-color: var(--edge); }
+  /* The same mark the chant list wears: a bar in the margin and lit paper.
+     A table has no outer inset to hang the bar in, so it rides the first
+     cell's inner edge as a shadow — which takes no width and cannot shift the
+     column. */
+  table.tabula tr.sel td { background: var(--paper-lit); }
+  table.tabula tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--ink); }
+  table.tabula tr[tabindex]:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
 
-/* The two gamut letters that are MARKS — b rotundum and b quadratum — drawn
-   with the medieval glyphs rather than set as ♭ ♮. They sit on the text
-   baseline and take the cell's colour. */
-.litera-glyph { display: inline-block; vertical-align: -0.12em; color: inherit; }
+  table.tabula .mono { font-family: var(--mono); font-size: var(--caption); }
+  table.tabula .num { text-align: right; font-variant-numeric: tabular-nums; }
 
-/* A gloss is a WORD — a role (finalis, tenor), a season, a Greek string-name
-   — not machine data. So it takes the serif, small and quiet, rather than the
-   mono the numeric columns use. Upright, since the mono face carries an
-   italic that a Latin term should not inherit. */
-table.tabula .gloss {
-  font-family: var(--serif);
-  font-size: var(--caption);
-  font-style: normal;
-  letter-spacing: 0;
-  color: var(--label);
-  margin-left: 0.5em;
-}
-table.tabula .symbol, table.tabula .pair-grid {
-  font-family: "Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols2", var(--serif);
-}
-table.tabula .symbol {
-  font-size: var(--step-label);
-  line-height: 1;
-  white-space: nowrap;
-  width: 1%;
-}
-/* Two glyphs and a dot on a fixed grid: the glyph columns are equal and the
-   dot's is only as wide as it needs, so the separator falls on one vertical
-   down the whole column. Planetary glyphs differ in width by a third or more
-   — flowed as text, the dot lands somewhere new on every row. */
-table.tabula .pair {
-  width: 1%;
-  white-space: nowrap;
-}
-/* The grid rides on a span inside the cell, not on the cell: a td set to
-   `display: grid` leaves the table's layout altogether, taking its column
-   sizing and its bottom rule with it. */
-table.tabula .pair-grid {
-  display: inline-grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: baseline;
-  gap: 0 0.45em;
-  font-size: var(--step-label);
-  line-height: 1;
-}
-table.tabula .pair-grid > span:first-child { text-align: right; }
-table.tabula .pair-grid > span:last-child { text-align: left; }
-table.tabula .pair-grid .pair-dot { color: var(--label); font-size: var(--caption); }
-/* Two tables stacked in one panel need air between them, or the second reads
-   as more rows of the first. */
-table.tabula + table.tabula { margin-top: 28px; }
-/* A figure and the table under it are one thought; the gap is smaller. */
-svg + table.tabula { margin-top: 16px; }
-/* The diagrams scale to their column by viewBox; without this they draw at
-   their intrinsic width and overflow a narrow cell. */
-.tabpanel > div > svg { display: block; max-width: 100%; height: auto; }
-/* The monochord fills its column. It is a LINE — a string between two bridges
-   — so width is the resolution it is read at: every extra pixel spreads the
-   degrees further apart and makes the drift between the two measures easier
-   to see. The round figures (the wheel, the year ring) are capped instead,
-   since a circle gains nothing past a certain size. */
-.tabpanel > div > svg.chorda-dual { width: 100%; }
-/* The hand is a PICTURE of a hand, not a measuring line: past a certain size
-   it only gets bigger, so it takes half the column and sits centred with its
-   table beneath. */
-.tabpanel > div > svg.hand {
-  width: 50%;
-  min-width: 200px;
-  margin: 0 auto 8px;
-}
+  /* THE GAMUT LETTERS, in Junicode's enlarged minuscule.
+     Junicode carries an `ENLA` axis — "Enlarge" — which raises the x-height of
+     the lowercase toward cap height without touching ascenders or capitals.
+     That is exactly the medieval convention this column is spelling: Γ A B C D
+     E F G then a b c d, one gamut where the case marks the OCTAVE rather than
+     a difference in size. Set with the mono face the lowercase read as a
+     second, smaller alphabet.
+     (Verified 2026-08-10 in the shipped subset: the axis survives subsetting
+     and this rule does real work. The LAYOUT features do not survive — see
+     fonts/README.md.) */
+  .litera {
+    font-family: var(--serif);
+    font-variation-settings: "ENLA" 100;
+    font-size: var(--step-label);
+    letter-spacing: 0.04em;
+  }
+  /* The two gamut letters that are MARKS — b rotundum and b quadratum — drawn
+     with the medieval glyphs rather than set as ♭ ♮. They sit on the text
+     baseline and take the cell's colour. */
+  .litera-glyph { display: inline-block; vertical-align: -0.12em; color: inherit; }
 
-.ghost { color: var(--ghost); font-style: italic; }
+  /* A gloss is a WORD — a role (finalis, tenor), a season, a Greek string-name
+     — not machine data. So it takes the serif, small and quiet, rather than
+     the mono the numeric columns use. Upright, since the mono face carries an
+     italic that a Latin term should not inherit. */
+  table.tabula .gloss {
+    font-family: var(--serif);
+    font-size: var(--caption);
+    font-style: normal;
+    letter-spacing: 0;
+    color: var(--label);
+    margin-left: 0.5em;
+  }
+  table.tabula .symbol, table.tabula .pair-grid { font-family: var(--symbol); }
+  table.tabula .symbol {
+    font-size: var(--step-label);
+    line-height: 1;
+    white-space: nowrap;
+    width: 1%;
+  }
+  /* Two glyphs and a dot on a fixed grid: the glyph columns are equal and the
+     dot's is only as wide as it needs, so the separator falls on one vertical
+     down the whole column. Planetary glyphs differ in width by a third or more
+     — flowed as text, the dot lands somewhere new on every row. */
+  table.tabula .pair { width: 1%; white-space: nowrap; }
+  /* The grid rides on a span inside the cell, not on the cell: a td set to
+     `display: grid` leaves the table's layout altogether, taking its column
+     sizing and its bottom rule with it. */
+  table.tabula .pair-grid {
+    display: inline-grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: baseline;
+    gap: 0 0.45em;
+    font-size: var(--step-label);
+    line-height: 1;
+  }
+  table.tabula .pair-grid > span:first-child { text-align: right; }
+  table.tabula .pair-grid > span:last-child { text-align: left; }
+  table.tabula .pair-grid .pair-dot { color: var(--label); font-size: var(--caption); }
+  /* Two tables stacked in one panel need air between them, or the second reads
+     as more rows of the first. */
+  table.tabula + table.tabula { margin-top: var(--sp-7); }
+  /* A figure and the table under it are one thought; the gap is smaller. */
+  svg + table.tabula { margin-top: var(--sp-4); }
+
+  /* ── the drawn figures ── */
+  .panel svg { max-width: 100%; height: auto; display: block; }
+  /* A wheel is a wheel: both wear the same frame, so both take the same room
+     whatever sits in the panel beneath them. Left to the grid, the one with
+     two tables under it stretches and the pair stop being comparable. */
+  .panel svg.annulus, .panel svg.rota { width: 100%; max-width: 520px; aspect-ratio: 1; }
+  /* The diagrams scale to their column by viewBox; without this they draw at
+     their intrinsic width and overflow a narrow cell. */
+  .tabpanel > div > svg { display: block; max-width: 100%; height: auto; }
+  /* The monochord fills its column. It is a LINE — a string between two
+     bridges — so width is the resolution it is read at: every extra pixel
+     spreads the degrees further apart and makes the drift between the two
+     measures easier to see. The round figures are capped instead, since a
+     circle gains nothing past a certain size. */
+  .tabpanel > div > svg.chorda-dual { width: 100%; }
+  /* The hand is a PICTURE of a hand, not a measuring line: past a certain size
+     it only gets bigger, so it takes half the column and sits centred with its
+     table beneath. */
+  .tabpanel > div > svg.hand {
+    width: 50%;
+    min-width: 200px;
+    margin: 0 auto var(--sp-2);
+  }
+}

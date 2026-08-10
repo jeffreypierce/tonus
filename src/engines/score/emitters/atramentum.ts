@@ -74,8 +74,20 @@ export const STEP = {
 /** The house faces. Junicode is the serif — the real face, not the Crimson Pro
  * stand-in the early rounds carried; Plex Mono is the machine register. */
 export const HOUSE_SERIF = "Junicode, 'Crimson Pro', Georgia, serif";
+/** @deprecated for the documentation site. The site loads three faces —
+ * Junicode, IBM Plex Mono, Jacquard — and no sans, so this stack fell through
+ * to `system-ui` and set the wheels' tick labels in SF Pro / Segoe: a fourth
+ * typeface, on a page whose stylesheet declares three and gives each a job.
+ * The site figures label in HOUSE_SERIF as of 2026-08-10.
+ *
+ * Still consumed by the tracks emitter below. Repointing THAT changes library
+ * output for every consumer, so it is a separate decision, not a restyle. */
 export const HOUSE_SANS = "'IBM Plex Sans', system-ui, sans-serif";
-export const HOUSE_MONO = "ui-monospace, Menlo, 'IBM Plex Mono', monospace";
+/** The machine register. IBM Plex Mono FIRST: the site loads and self-hosts
+ * that face, and with `ui-monospace` at the head of the stack every drawn
+ * label resolved to the system mono — SF Mono on macOS — beside page text in
+ * Plex. Two monospaces, same size, same column. */
+export const HOUSE_MONO = "'IBM Plex Mono', ui-monospace, Menlo, monospace";
 
 /** A scaled measure, at most two places and no trailing zeros: 1.8, not 1.80. */
 export const sc = (v: number): string => Number(v.toFixed(2)).toString();

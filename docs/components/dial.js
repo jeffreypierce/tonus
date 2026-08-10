@@ -82,10 +82,20 @@ function build() {
   const anchorRow = el("div", { class: "dial-anchors", role: "group",
     "aria-label": "tempora" });
 
-  // One line: step, date, step, then the three anchors. They are all ways of
-  // setting the same thing, so they read as one control rather than two rows.
+  // ONE FIELD, TWO SPURS, THREE JUMPS.
+  //
+  // The arrows and the date are one object: a value with two ways of nudging
+  // it, inside a single edge, divided by hairlines. They were three detached
+  // boxes at three type sizes — 13.5px arrows around an 11px date — which read
+  // as three unrelated controls for one reading of one value.
+  //
+  // The anchors are NOT in that box, and no longer wear one. Going to Pascha
+  // is going somewhere, not setting a field, so they take the page's
+  // navigation grammar — a name, underlined where you are — which is what
+  // finally tells them apart from the office filters below.
   made.node = el("div", { class: "dials" },
-    step(-1, "dies prior", "‹"), field, step(1, "dies posterior", "›"),
+    el("div", { class: "field" },
+      step(-1, "dies prior", "‹"), field, step(1, "dies posterior", "›")),
     anchorRow,
   );
 

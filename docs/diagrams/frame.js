@@ -18,7 +18,7 @@
 // offset to say where 0° Aries falls in the civil year. Two wheels that
 // disagree about which way the year turns cannot be laid side by side.
 
-import { INK, STRATUM, STROKE, STEP, HOUSE_SANS, sc } from "./ink.js";
+import { INK, STRATUM, STROKE, STEP, HOUSE_SERIF, sc } from "./ink.js";
 import { pointAt, uprightRotation } from "./polar.js";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -126,8 +126,8 @@ export function outerRing(root, {
     root.appendChild(el("text", {
       transform: `translate(${sc(x)} ${sc(y)}) rotate(${sc(rot(mid))})`,
       "text-anchor": "middle", "dominant-baseline": "central",
-      "font-family": HOUSE_SANS, "font-size": STEP.micro,
-      "letter-spacing": "0.16em",
+      "font-family": HOUSE_SERIF, "font-size": STEP.micro,
+      "letter-spacing": "0.09em",
       fill: INK, "fill-opacity": STRATUM.margin,
     }, name.toUpperCase()));
   });

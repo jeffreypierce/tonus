@@ -19,7 +19,7 @@
 // readings, fa in molle and mi in durum — which is the tradition, not a
 // collision to resolve.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_SANS, HOUSE_MONO, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import { OUTLINE, SPIRAL, LOCUS, VIEWBOX } from "./hand-figure.js";
 import { literaGlyph } from "./litera.js";
@@ -119,7 +119,7 @@ export function hand(tonus, { mode = 1, selected, onSelect, tuning, comma } = {}
     }
     svg.appendChild(el("circle", {
       cx: x, cy: y, r: 21,
-      fill: "#FDFDFC",
+      fill: "var(--paper, #FDFDFC)",
       stroke: isSel ? RUBRICA : INK,
       "stroke-opacity": isSel ? 1 : (structural ? STRATUM.wave : STRATUM.bracket),
       "stroke-width": structural ? STROKE.firm : STROKE.hair,

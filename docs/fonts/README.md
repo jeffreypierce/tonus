@@ -21,12 +21,21 @@ pyftsubset SOURCE.ttf \
   --unicodes="U+0020-007E,U+00A0-00FF,U+0100-017F,U+0300-0301,U+0304,U+0308,\
 U+0366,U+0384-03CE,U+2010-2011,U+2013-2014,U+2018-201D,U+2020-2021,\
 U+2032-2033,U+2192,U+2609,U+263D-2644,U+266D-266F" \
-  --layout-features="kern,liga,ccmp,mark,mkmk" \
+  --layout-features="kern,liga,ccmp,mark,mkmk,smcp,c2sc,onum,lnum,tnum" \
   --flavor=woff2 --output-file=OUT.woff2
 ```
 
+`--layout-features` is a WHITELIST: anything not named is discarded. It once
+read `kern,liga,ccmp,mark,mkmk`, which shipped a Junicode with no small caps
+and no oldstyle figures — `font-variant-caps: small-caps` then had the browser
+FAKE them by scaling capitals, so a word wore two stem weights. `smcp`/`c2sc`
+carry the small caps the site labels its figures with; `onum` the oldstyle
+figures for prose and years; `lnum`/`tnum` the lining tabular figures a numeric
+column needs. Measure the file size after: small-cap glyph closure grows it.
+
 `mark`/`mkmk` are required for combining accents; Junicode's `wght`/`wdth`/
-`ENLA` axes survive subsetting. Two gaps are by design: Plex Mono has no Greek
+`ENLA` axes survive subsetting — verified 2026-08-10 in the shipped file, which
+is why the gamut column's `"ENLA" 100` does real work. Two gaps are by design: Plex Mono has no Greek
 (it falls through to Junicode), and NEITHER has the planetary symbols
 `☉☾♀♂♃♄`, which is why the symbol columns name their own stack in `styles.css`.
 

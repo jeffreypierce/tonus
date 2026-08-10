@@ -22,7 +22,7 @@
 // Ptolemaic order and the glyph sizes follow presence; those are drawing
 // decisions. Everything else is asked.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_SANS, HOUSE_MONO, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import { pointAt } from "./polar.js";
 import { FRAME, wheel, outerRing } from "./frame.js";
@@ -233,8 +233,10 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
   }));
   root.appendChild(el("text", {
     x: 0, y: 22, "text-anchor": "middle",
-    "font-family": HOUSE_MONO, "font-size": STEP.micro,
-    "letter-spacing": "0.1em", fill: INK, "fill-opacity": STRATUM.margin,
+    // TERRA is a NAME — the same kind of word as the twelve signs around it,
+    // which label in the serif. It was the one mono word left in the wheel.
+    "font-family": HOUSE_SERIF, "font-size": STEP.micro,
+    "letter-spacing": "0.09em", fill: INK, "fill-opacity": STRATUM.margin,
   }, "TERRA"));
 
   return svg;
