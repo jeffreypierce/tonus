@@ -187,6 +187,53 @@ describe("harmonia — coherence checks", () => {
   });
 });
 
+describe("harmonia — the doctrina's ratio reaches the tabula", () => {
+  // The ratio is the primary datum: the pitch is derived FROM it, so a caller
+  // comparing doctrinae needs the fraction, not a note name read against A4.
+  // These are the published values in docs/api/heavens.md — if the table and
+  // the code disagree, one of them is lying to a reader.
+  const EXPECTED = {
+    pythagoras: { Sun: [1, 1], Moon: [4, 3], Venus: [9, 8], Saturn: [3, 4] },
+    boethius: { Sun: [1, 1], Moon: [4, 3], Venus: [256, 243], Saturn: [3, 4] },
+    pliny: { Sun: [1, 1], Moon: [3, 4], Mars: [256, 243], Saturn: [4, 3] },
+    ptolemy: { Sun: [1, 1], Moon: [1, 2], Jupiter: [3, 2], Saturn: [2, 1] },
+  };
+
+  for (const [doctrina, bodies] of Object.entries(EXPECTED)) {
+    test(`${doctrina} voices its own ratios`, () => {
+      const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
+      const rows = tonus.harmonia(cosmos, { doctrina }).tabula;
+      for (const [name, ratio] of Object.entries(bodies)) {
+        const row = rows.find((r) => r.name === name);
+        assert.ok(row, `${doctrina} voices ${name}`);
+        assert.deepEqual([...row.ratio], ratio,
+          `${doctrina} ${name} = ${ratio[0]}/${ratio[1]}`);
+      }
+    });
+  }
+
+  test("the pitch is the ratio sounded, not an independent claim", () => {
+    const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
+    for (const row of tonus.harmonia(cosmos).tabula) {
+      const sun = tonus.harmonia(cosmos).tabula.find((r) => r.name === "Sun");
+      const expected = sun.hz * (row.ratio[0] / row.ratio[1]);
+      assert.ok(Math.abs(row.hz - expected) < 1e-9,
+        `${row.name}: ${row.hz} is the mese times ${row.ratio[0]}/${row.ratio[1]}`);
+    }
+  });
+
+  test("Venus alone separates Pythagoras from Boethius — b durum against b molle", () => {
+    const cosmos = tonus.caelum({ date: CHRISTMAS_2026 });
+    const of = (d) => new Map(tonus.harmonia(cosmos, { doctrina: d }).tabula
+      .map((r) => [r.name, r.ratio.join("/")]));
+    const p = of("pythagoras"), b = of("boethius");
+    const differ = [...p.keys()].filter((k) => p.get(k) !== b.get(k));
+    assert.deepEqual(differ, ["Venus"], "Venus is the single disagreement");
+    assert.equal(p.get("Venus"), "9/8", "the disjunct system's whole tone");
+    assert.equal(b.get("Venus"), "256/243", "the conjunct system's semitone");
+  });
+});
+
 describe("harmonia — errors", () => {
   test("throws on empty cosmos array", () => {
     assert.throws(() => tonus.harmonia([]), /at least one/);

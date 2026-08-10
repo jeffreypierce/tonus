@@ -268,9 +268,14 @@ interface PlanetVowel {
 ```js
 h.tabula.find((r) => r.name === "Jupiter");
 // { name: "Jupiter", nomen: "Iuppiter", greekName: "parhypate meson",
-//   spn: "F4", hz: 347.7, presence: 0.55, velocity: 0.55,
+//   ratio: [64, 81], spn: "F4", hz: 347.7, presence: 0.55, velocity: 0.55,
 //   vowelGreek: "Υ", sign: "Leo", aspectCount: 3, … }
 ```
+
+`ratio` is the doctrina's own fraction against the mese, the primary datum of
+the whole scheme — `spn` and `hz` are that ratio sounded against A4, not
+independent claims. Comparing doctrinae means comparing these: the table
+under [Theory & Context](#theory--context) is what the field returns.
 
 ```ts
 interface HarmonyTabulaRow {
@@ -279,6 +284,7 @@ interface HarmonyTabulaRow {
   nomen: string;
   greekName: string;
 
+  ratio: readonly [number, number]; // the doctrina's fraction against the mese
   midi: number;
   pc: number;
   oct: number;
