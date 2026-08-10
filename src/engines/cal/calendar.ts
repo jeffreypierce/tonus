@@ -180,8 +180,11 @@ function findSeason(date: Date): { code: Season; start: Date; end: Date } {
     return s("quad", a.ashWednesday, a.easter);
   if (date >= a.easter && date < trinitySunday(a))
     return s("pasc", a.easter, trinitySunday(a));
-  if (date >= trinitySunday(a) && date < next.adventFirstSunday)
-    return s("pent", trinitySunday(a), next.adventFirstSunday);
+  // Advent of THIS year closes the season after Pentecost — the `adv` branch
+  // above has already claimed those days, so reaching for next year's Advent
+  // put the end date sixteen months out and made the season 547 days long.
+  if (date >= trinitySunday(a) && date < a.adventFirstSunday)
+    return s("pent", trinitySunday(a), a.adventFirstSunday);
 
   return s("epi", epiphanySunday(a), a.septuagesima);
 }
