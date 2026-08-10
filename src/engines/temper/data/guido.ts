@@ -20,8 +20,12 @@ export interface GuidonianEntry {
 // little→index, descend the index, then spiral inward; ee (76) floats above the
 // middle fingertip (region "super"). The two b/♮ pairs (58/59, 70/71) share a
 // locus by design — one joint, two readings (fa in molle, mi in durum), the
-// tradition, not a duplication to fix. After Suñol [biblio: sunol-textbook] and
-// Apel [biblio: apel-chant].
+// tradition, not a duplication to fix. They are one distinction, named for the
+// two shapes of the letter: b rotundum (the round b) against b quadratum (the
+// square b), which is where ♭ and ♮ come from. A RENDERER may draw them with
+// the medieval glyphs (GLYPH.flat / GLYPH.natural); these names stay letters,
+// because this table names joints rather than drawing them. After Suñol
+// [biblio: sunol-textbook] and Apel [biblio: apel-chant].
 // prettier-ignore
 export const GUIDONIAN_DATA = new Map<number, GuidonianEntry>([
   [43, { hand: { finger: "thumb",  region: "tip"   }, name: ["Γ",  "Gammaut"   ], variants: [{ hexachord: "durum",    solmization: "UT"  }] }],

@@ -49,8 +49,15 @@ export interface RatioResult {
   display: string;
 }
 
-// Stern-Brocot rational approximation — finds nearest simple fraction
-function approximate(value: number, maxDen = 1000): [number, number] {
+/** Stern-Brocot rational approximation — the nearest simple fraction to a
+ *  decimal ratio, as `[numerator, denominator]`.
+ *
+ *  Exported because `toRatio` only reaches it through a STRING, and a caller
+ *  holding a computed ratio (a gamut row's `ratio`, a string fraction derived
+ *  from two frequencies) has a number. Without this the caller writes the
+ *  search again — which is how the site came to carry a second copy of this
+ *  same algorithm. */
+export function approximate(value: number, maxDen = 1000): [number, number] {
   if (value === Math.round(value)) return [Math.round(value), 1];
 
   let [a, b, c, d] = [0, 1, 1, 0];
