@@ -6,7 +6,7 @@ the chant books, the calendar that assigns them, the eight modes and their
 psalm tones, the tunings of the treatises, and the harmony of the spheres.
 It resolves what any day calls for, tunes chant in the ratios it was sung
 in, parses and draws the notation, voices the planets as pitch, and
-measures each chant against the whole repertoire.
+measures each chant against the corpus that holds it.
 
 Everything is computed locally and deterministically: the same question always
 returns the same answer, from data that ships inside the package, with no network
@@ -53,6 +53,10 @@ arsis and thesis. And it computes _musica mundana_ as sounding pitch. Where
 the sources run out or contradict one another, tonus makes an editorial call
 and records it in the code.
 
+tonus is an instrument for study. It treats this repertoire as musical and
+historical material to be measured, queried, and understood; what it models is
+the sound and its structure.
+
 ## Sources
 
 tonus is built on primary and scholarly sources, and it names them wherever it
@@ -67,13 +71,8 @@ _Harmonics_; the notation is engraved in Daniel Spreadbury's
 SMuFL standard; the planetary doctrines follow Godwin's sourcebooks of the
 Pythagorean tradition.
 
-Every figure is cited in the code beside what it explains. Where the sources
-disagree, tonus records the editorial call it made in the same place. The complete
-list is [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md).
-
-tonus treats this repertoire as musical and historical material to be measured,
-queried, and understood, and it takes no theological position and asks none of
-its users. What it models is the sound and its structure.
+Every figure is cited in the code beside what it explains. The complete list is
+[BIBLIOGRAPHY.md](BIBLIOGRAPHY.md).
 
 ## Example
 
@@ -117,8 +116,7 @@ one page per engine, in dependency order:
 ## Install and run
 
 ESM only. Node ≥ 20; works in the browser through a bundler. No runtime
-dependencies. About 2,900 chants and the full 650-entry calendar ship in the
-package.
+dependencies. 2,187 chants and the 650-entry calendar ship in the package.
 
 ```sh
 npm test          # builds and runs the suite (node --test)

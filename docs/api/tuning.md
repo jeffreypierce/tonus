@@ -345,13 +345,13 @@ medieval tonaries describe them:
 Each mode also carries its traditional **ethos** (the character medieval theory
 ascribed to it) as both a Latin epithet (`gravis`, `tristis`, …) and an English
 gloss. The full set and its source are at the data, in
-[`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
+[`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
 
 The `modulations` fields (`regular`, `conceded`, and `initials`) are the
 mode's tonal centres and valid openings, each list **ordered by importance**
-(after Rockstro's Grove table [`rockstro-grove`](../BIBLIOGRAPHY.md)). The
+(after Rockstro's Grove table [`rockstro-grove`](../../BIBLIOGRAPHY.md)). The
 modal-affinity scorer reads that order; the reasoning is documented at the
-data, in [`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
+data, in [`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
 
 `modus` resolves the mode's structural pitches through its own
 temperamentum: the **finalis** and **reciting** tone as tuned notes (pitch +
@@ -442,7 +442,7 @@ phrase's cadence ([score.md](score.md#cadences)).
 The catalogue is an editorial synthesis covering the final cadences; its step
 encoding, sources, and known gaps (medial cadences are not yet included) are
 documented at the data — see `CadenceFigure` in
-[`temper/data/modes.ts`](../src/engines/temper/data/modes.ts).
+[`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
 
 This is the **tradita** half — what the treatises say. Its counterpart is the
 corpus tally below, and they are not interchangeable: see [one spine, two
@@ -455,7 +455,7 @@ Where the figures above are received, [`CADENTIAE`](index.md#the-appendix) is
 the melody actually did. A family is a **shape** — the closing tail's
 successive semitone intervals — and an **arrival**, where it landed relative
 to the chant's own closing note. Together they are the key, `"2,0,-2 @0"`, and
-the key is the family's whole name. No editorial titles ride the table.
+the key is the family's whole name.
 
 122 families clear the floor of 50 occurrences, covering 58.7% of all
 phrase-ends. The rest of the tail is real but too thin to characterise.
@@ -473,8 +473,7 @@ interface CadentiaFamilia {
 ```
 
 `share` is taken against **every** phrase-end, not against the 58.7% that
-cleared the floor — a share against the tabled subset would flatter every
-family in it. The denominator ships beside the table:
+cleared the floor. The denominator ships beside the table:
 
 ```ts
 CADENTIAE_POPULATION.ends;   // 28481 — all phrase-ends, sung corpus
@@ -517,11 +516,10 @@ mode 4 almost never. That is the figure the tonarium prints under a cadence
 ([score.md](score.md#the-analysis-tracks)).
 
 **The ratio is not baked.** The table exports the vocabulary — counts and
-their denominators — and leaves the arithmetic to the caller, for the same
-reason `census()` exports profiles rather than answers. Two cautions when you
-take it: below roughly ten in-mode occurrences the ratio is one or two chants
-deciding a number that reads like a measurement, and a mode-less chant (`"?"`)
-has no denominator at all. In both cases fall back to `share`.
+their denominators — and leaves the arithmetic to the caller. Two cautions when
+you take it: below roughly ten in-mode occurrences the ratio is one or two
+chants deciding a number that reads like a measurement, and a mode-less chant
+(`"?"`) has no denominator at all. In both cases fall back to `share`.
 
 ## Psalm tones — `tonus`
 
@@ -576,7 +574,7 @@ Ptolemy's three diatonic shades, and the modern equal division.
 Six ways to fill the table, five historical and one modern. Each has a
 character; the interval arithmetic, the commas that drive it, and the
 editorial choices behind it are documented at the builder, in
-[`temper/scale.ts`](../src/engines/temper/scale.ts).
+[`temper/scale.ts`](../../src/engines/temper/scale.ts).
 
 - **`"pythagorean"`** — the medieval default. All intervals from the pure
   fifth and the octave: perfect melodic fifths and fourths, a narrow keen
@@ -627,7 +625,7 @@ tonus.temperamentum({ scale: sclFileString }); // name taken from the file
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
 `boethius-institutione`, `ptolemy-harmonics`, `schulter-harmony`,
 `rockstro-grove`, `niedermeyer-ortigue`, `bragers-treatise`,
 `sunol-textbook`, `saulnier-modes`, `liber-usualis`, `scala-format`.

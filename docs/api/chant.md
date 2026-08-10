@@ -13,6 +13,7 @@ carries page-level provenance back to its book.
   - [The books — `corpus`](#the-books--corpus)
     - [The ledger of the cut — `full`](#the-ledger-of-the-cut--full)
   - [Retrieval — `cantus`](#retrieval--cantus)
+    - [Reaching the ordinary — `ordinary`](#reaching-the-ordinary--ordinary)
     - [On chant ids](#on-chant-ids)
   - [The repertoire as of a date — the era view](#the-repertoire-as-of-a-date--the-era-view)
   - [The Mass propers — `proprium`](#the-mass-propers--proprium)
@@ -47,19 +48,18 @@ propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 | `nr`   | Nocturnale Romanum                | Sandhofe, 2002     | 470    |
 
 **2,187 chants in all**, plus the Mass ordinary (120 settings, reached by
-[`ordinary`](#the-ordinary--ordinarium) rather than by book — the Kyriale is a
-partition of the Graduale, not a shelf of its own). The books hold 10,156
-between them; tonus ships only what the calendar calls for on some day of the
-year, so a chant with no day to be sung on is not here. See
+[`ordinary`](#reaching-the-ordinary--ordinary) rather than by book). The books
+hold 10,156 between them; tonus ships only what the calendar calls for on some
+day of the year, so a chant with no day to be sung on is not here. See
 [The cut](#the-cut) below.
 
 The ten books list 2,767 rows for those 2,187 chants: a melody printed in two
 books is stored once and listed under both.
 
 `am`, `ams`, and `psm` are the monastic (Benedictine) books; the rest are
-Roman. Every Solesmes book here bears the rhythmic markings the
-score engine reads — that is the admission rule, not the imprint. `nr` is the
-night-office repertoire (responsories, antiphons) from the
+Roman. Every book here bears the rhythmic markings the score engine reads; that
+is the admission rule. `nr` is the night-office repertoire (responsories,
+antiphons) from the
 [Nocturnale Romanum](https://github.com/Nocturnale-Romanum/nocturnale-romanum)
 community restitution, the one non-Solesmes source, admitted because it carries
 those marks too.
@@ -71,17 +71,8 @@ liturgical year calls for it. The calendar is walked year by year until it stops
 finding new assignments (39 years, in the event), and what it never reaches is
 not shipped — 10,156 book chants become 2,187.
 
-This is a working model of a medieval calendar's melodic content, not a complete
-GABC library. The trade is deliberate: everything here answers "what was sung on
-this day", and a query for a chant the calendar never calls for returns nothing
-rather than a melody with no occasion.
-
-Two measurements say what the cut cost musically. The removed chants contribute
-**no cadential vocabulary of their own** — every cadence family the sung
-repertoire uses also occurs in the full books, and the families found only in
-the cut material are 2.2% of phrase endings, of which exactly one is common
-enough to name. And the two populations rank their shared families almost
-identically (Spearman ρ = 0.89). What the cut removed was chants, not a dialect.
+Everything here answers "what was sung on this day". A query for a chant the
+calendar never calls for returns nothing.
 
 ## The books — `corpus`
 
@@ -104,9 +95,9 @@ tonus.corpus();
 ```
 
 **`count` is the number of chants** — the one to quote. `listings` is how long
-the shelf is, and `listings - count` is how much the books overlap (580 chants
-printed in more than one). The breakdowns describe the same population `count`
-does, so `genera` and `modes` sum to it.
+the shelf is, and `listings - count` is 580 extra rows, over the 683 chants
+printed in more than one book. The breakdowns describe the same population
+`count` does, so `genera` and `modes` sum to it.
 
 ```js
 tonus.corpus("am");
@@ -150,16 +141,13 @@ am.genera[0];         // { office: "an", genus: "Antiphona", count: 458 }
 am.full.genera[0];    // { office: "an", genus: "Antiphona", count: 1049 }
 ```
 
-This is what makes [the cut](#the-cut) auditable rather than merely asserted: a
-smaller number tells you something was left out, but not what. Reading the two
-tallies side by side names it — 1,049 antiphons in the book, 458 sung.
+Reading the two tallies side by side names what was left out — 1,049 antiphons
+in the book, 458 sung.
 
 Only the extractor can measure this. By the time tonus loads, the keep set has
 already run, so the pre-cut tally is read from an artifact rather than derived.
 Every shelved book reports one, including the Nocturnale, whose tally comes
-from its own extract rather than from GregoBase — it was the last book
-reporting `full: null`, which read as "not yet measured" when the number had
-existed all along.
+from its own extract rather than from GregoBase.
 
 The metadata is drawn from GregoBase's own catalogue. The `genera` list is the
 office distribution (descending by count); `modes` counts modes I–VIII, with a
@@ -177,9 +165,8 @@ of chants with each), while the Antiphonale Monasticum is almost entirely its ow
 The Nocturnale (`nr`) is compared differently, because it has no GregoBase
 catalogue: its counts come from its own extract, and it shares **nothing** —
 `unique` is all 1,564 chants it holds. That is a measurement, not a gap. The
-crosswalk that pairs a nocturnale chant with a GregoBase twin is *enrichment*,
-a route to metadata, not a claim that the two books print the same chant, so
-counting those as shared would invent a relationship the books do not have.
+nocturnale–GregoBase crosswalk is a route to metadata, not a claim that the two
+books print the same chant, so it does not count as sharing.
 
 The `null` those fields can still carry means **unmeasured**, distinct from a
 measured zero, so a consumer never mistakes "not compared" for "shares
@@ -219,9 +206,8 @@ tonus.cantus({ mode: 1, office: "an", source: "am", limit: 1 });
 ];
 ```
 
-Antiphons are asked of `am` rather than `gr` on purpose: the Graduale is the
-Mass book and holds only four antiphons in the shipped corpus, so the same
-query against `source: "gr"` correctly returns `[]`.
+The Graduale is the Mass book and holds four antiphons in the shipped corpus,
+so the same query against `source: "gr"` returns `[]`.
 
 `cantus` also accepts raw GABC through the `gabc` field. The corpus is
 bypassed and a single user `Chant` returns. The input may be a notation
@@ -291,7 +277,7 @@ interface CantusQuery {
 }
 ```
 
-### The ordinary, and why it is not a `source`
+### Reaching the ordinary — `ordinary`
 
 The Mass ordinary is addressable but not shelved. `ordinary` is the door:
 
@@ -301,15 +287,12 @@ tonus.cantus({ ordinary: "gl", mode: 4 });   // mode-4 Glorias
 tonus.cantus({ ordinary: ["as", "va"] });    // the sprinkle antiphons
 ```
 
-The Kyriale is a **partition of the Graduale**, not a book: there is no Kyriale
-in GregoBase, and the extractor pulls the ordinary out of the Graduale's own
-rows so it can be routed to per-ordinary codes. Listing it beside its parent
-counted the Graduale twice, so it is not a `source` and not a row in the shelf.
+The Kyriale is a **partition of the Graduale**, so it is not a `source` and not
+a row in the shelf. It stays nameable by `id` and by the part of the Mass it
+belongs to.
 
-It is still repertoire, so it stays nameable — by `id`, and by the part of the
-Mass it belongs to. A plain search does not sweep it in: ask for `{ mode: 5 }`
-and you get the shelf, because you should not stumble onto a Kyrie while
-looking for Graduals. Ask for a Kyrie and you get Kyries.
+A plain search does not sweep it in: `{ mode: 5 }` returns the shelf. Ask for a
+Kyrie and you get Kyries.
 
 For the setting a given DAY calls for, [`ordinarium`](#the-ordinary--ordinarium)
 is the verb — it applies the Kyriale's own rubrics. This is flat retrieval.
@@ -340,9 +323,9 @@ Within tonus an id is exactly one chant. A melody printed in several books —
 already holds. This is **evidence, not existence**: the dates come from
 CANTUS's manuscript index, a terminus ante quem, so the filter answers "what
 is attested by then," never "what existed then" — and a chant with no dated
-witness is excluded rather than assumed old, because silence is not evidence
-of age. CANTUS dates only to the century, so a year admits the centuries
-that have CLOSED before it (`before: 1098` → through the 900s).
+witness is excluded rather than assumed old. CANTUS dates only to the century,
+so a year admits the centuries that have CLOSED before it (`before: 1098` →
+through the 900s).
 
 The view is the analogue of
 [`festum({ before })`](calendar.md#the-day-as-of-a-year--before) over the
@@ -359,9 +342,9 @@ What happens to a slot the view excludes differs by verb, on the rubric's
 own logic: `ordinarium` **re-picks** — the Kyriale offers ranked
 alternatives by design, so the rotation runs over the admissible pool and
 the day still sings. `proprium` and `officium` have no pool
-of alternatives, so an excluded chant **falls silent** — an empty slot
-under a view is evidence speaking, not data missing. A `before` given to a day
-verb directly overrides the feast's view; an invalid one throws at every door.
+of alternatives, so an excluded chant **falls silent**. A `before` given to a
+day verb directly overrides the feast's view; an invalid one throws at every
+door.
 
 ## The Mass propers — `proprium`
 
@@ -594,10 +577,10 @@ under [The corpora](#the-corpora). The 1961 Graduale, the last complete edition
 before the post-conciliar reforms, covers the full Tridentine cycle the
 calendar in [calendar.md](calendar.md) expects.
 
-Every reading reflects editorial judgment (no single medieval church
-sang precisely these books), but the Solesmes editions are the only
-machine-readable representation of the whole Gregorian repertoire, and
-the best available proxy for it.
+Every reading reflects editorial judgment (no single medieval church sang
+precisely these books), and the Solesmes books are a complete, internally
+consistent edition of the Tridentine cycle, available machine-readable through
+GregoBase.
 
 ### GABC: neumes as text
 
@@ -668,7 +651,7 @@ finalis per mode, are on the tuning page
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
 `gregobase` (the ten Solesmes books), `nocturnale-romanum`, `divinum-officium`,
 `graduale-toni-communes`, `bloomfield-compline`, `gregorio-gabc`, `apel-chant`,
 `hiley-plainchant`, `saulnier-guide`.

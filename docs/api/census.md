@@ -98,12 +98,9 @@ from the corpus itself — its commonest motifs, its commonest closing gestures,
 one bucket for the rest — so the corpus supplies the vocabulary and the chant
 supplies the usage.
 
-The reference is the mean block over all 2,187 chants, group by group — no
-curated exemplar, no tunable weights. And because blocks are sums of durations
-and counts, they add: a season's blocks, summed and divided by their count,
-are the season's mean profile in the same 221 slots. The corpus repository's
-year-shaped aggregates are built on that closure; only the per-chant half
-ships (see [What the census is not](#what-the-census-is-not)).
+The reference is the mean block over all 2,187 chants, group by group. Because
+blocks are sums of durations and counts, they add: a season's blocks, summed and
+divided by their count, are the season's mean profile in the same 221 slots.
 
 ## Distance is cosine per field group
 
@@ -111,8 +108,7 @@ ships (see [What the census is not](#what-the-census-is-not)).
 one chant at a time; grouping — "all Communions," "this season," "this
 manuscript" — is yours to do. The moment you pool blocks yourself you are
 computing a distance, and if you compute it differently from the rule below
-your numbers will not agree with `census()`'s. They will not error. They will
-just quietly be answers to a different question.
+your numbers will not agree with `census()`'s. Nothing will error.
 
 The rule, in three lines:
 
@@ -129,7 +125,7 @@ long. Per-group cosine asks about **shape within each dimension**.
 field counts, and [`CENSUS_ORDER`](index.md#the-appendix) every censused id —
 so you can pool a set without guessing at either.
 
-### Three ways to get a plausible wrong answer
+### Reading the numbers
 
 **Similarity is not comparable across `by` values.** A 0.94 on `cadenceFinal`
 and a 0.94 on `melodic` are not the same amount of alike: the groups have
@@ -137,12 +133,11 @@ different widths and different natural spreads. Rank within one `by`; never
 threshold across two.
 
 **A centroid must be pooled per group, then compared per group.** Averaging the
-flat 221 and taking one cosine is the exact mistake rule 1 exists to prevent —
-and it does not announce itself. Pooling the 178 Communions both ways gives
-different winners, and the flat version collapses the top of the field into a
-0.987 tie where the per-group version spreads 0.847 to 0.653. Compression like
-that reads as "these are all much alike" when what happened is that one wide
-block outvoted the other eight.
+flat 221 and taking one cosine is the exact mistake rule 1 exists to prevent.
+Pooling the 178 Communions both ways gives different winners, and the flat
+version collapses the top of the field into a 0.987 tie where the per-group
+version spreads 0.847 to 0.653. That compression comes from one wide block
+outvoting the other eight.
 
 **`before` filters before ranking.** It restricts the candidate pool, then
 ranks — so `k` stays satisfiable, and a filtered list is *not* a subset of the
@@ -209,7 +204,7 @@ prudentes_ leads on `textual` 0.998, `cadenceMedial` 0.996 and `trigram` 0.994
 — it sets its text and turns its phrases the way Communions do — while its
 `cadenceFinal` is only 0.824, so the one thing it does unlike a typical
 Communion is end. A chant is typical of its genus in some dimensions and not
-others, which is the whole reason the groups are never flattened together.
+others.
 
 ## Profile and typicality
 
@@ -253,8 +248,7 @@ tonus.census({ id: "gregobase:1210", k: 3 });
 ```
 
 Nothing tells the census what genre or mode a chant is. It recovers them from
-melodic shape alone — which is the readiest evidence that the blocks describe
-something real.
+melodic shape alone.
 
 `by` changes what _near_ means:
 
@@ -291,9 +285,3 @@ It is not a similarity search over Gregorian chant at large. The blocks
 describe the chants tonus ships, which is the assignment-driven corpus: what
 some day of the calendar calls for. A melody's neighbors are its neighbors
 _within that repertoire_.
-
-It is also not the whole census. The corpus pipeline builds year-shaped
-aggregates too — what a season sings, how usage weights a chant across the
-Metonic cycle — and those stay in the corpus repository as analysis data. A
-chant's own profile is a property of the chant, so it ships; the year-shaped
-aggregates are an observatory, and they do not.
