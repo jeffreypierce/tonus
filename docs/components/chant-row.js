@@ -37,9 +37,13 @@ function incipit(tonus, chant, { scale = 18 } = {}) {
       // drawn at the full default size and clipped by its box.
       svg = tonus.inscriptio(tonus.notatio(chant), {
         scale,
-        // Junicode by reference — the page loads the face; see SCORE_FONTS in
-        // app.js for why these rows never embed it.
-        fonts: { lyric: { family: "Junicode", weight: 400, scale: 1.06 } },
+        // Junicode by REFERENCE — the page loads the face, the SVG only names
+        // it. Nothing is embedded here or in the full score.
+        //
+        // It goes under `theme`, like the score's. Passed flat it was ignored
+        // in the same silent way as staffHeight above, and every incipit fell
+        // back to the emitter's default serif stack.
+        theme: { fonts: { lyric: { family: "Junicode", weight: 400, scale: 1.06 } } },
       }).svg;
     } catch {
       svg = null;

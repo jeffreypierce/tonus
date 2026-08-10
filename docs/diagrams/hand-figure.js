@@ -31,14 +31,20 @@ export const LOCUS = new Map([
   [53, [762, 518]],   // F
   [55, [762, 458]],   // G
   [57, [762, 398]],   // a
-  [58, [762, 338]],   // b
+  // B FA and B MI SHARE A JOINT on the historical hand — that is the whole
+  // b molle / b durum distinction, and the reason the hand has a "square b"
+  // and a "round b" at one place. Drawn side by side rather than stacked, so
+  // each can be pointed at: the flat left, the natural right.
+  [58, [744, 338]],   // b (molle — b rotundum)
+  [59, [786, 338]],   // ♮ (durum — b quadratum)
   [60, [650, 240]],   // c
   [62, [532, 182]],   // d
   [64, [414, 240]],   // e
   [65, [414, 328]],   // f
   [67, [414, 416]],   // g
   [69, [532, 392]],   // aa
-  [70, [650, 416]],   // bb
+  [70, [632, 416]],   // bb (molle)
+  [71, [674, 416]],   // ♮♮ (durum)
   [72, [532, 287]],   // cc
   [74, [650, 328]],   // dd
   [76, [532, 36]],   // ee

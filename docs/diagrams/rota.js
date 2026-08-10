@@ -244,7 +244,7 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
  *  wheel is looking for the mark they just clicked, not for a word. Hz is
  *  gone — the note names the pitch, and a frequency to two decimals is a
  *  measurement nobody here is taking. */
-export function rotaTabula(tonus, { date, selected, doctrina } = {}) {
+export function rotaTabula(tonus, { date, selected, doctrina, onSelect } = {}) {
   const rows = rotaRows(tonus, { date, doctrina });
   const sel = selected ?? rows[0]?.key;
 
@@ -261,8 +261,7 @@ export function rotaTabula(tonus, { date, selected, doctrina } = {}) {
     // zero that would read as a silent sphere.
     { key: "presence", head: "praesentia", mono: true, num: true,
       format: (v) => `${(v * 100).toFixed(0)}%` },
-    { key: "sign", head: "signum" },
-  ], { selected: sel });
+  ], { selected: sel, onSelect });
 }
 
 /** The aspects as chords: what the sky is playing, named by the library.
@@ -270,7 +269,7 @@ export function rotaTabula(tonus, { date, selected, doctrina } = {}) {
  *  Every aspect the selected planet stands in is marked, not one row — a
  *  planet is in several aspects at once, and the question the wheel asks by
  *  being clicked is "what is Mars doing", whose answer is all of them. */
-export function rotaAspectTabula(tonus, { date, selected, doctrina } = {}) {
+export function rotaAspectTabula(tonus, { date, selected, doctrina, onSelect } = {}) {
   const symbols = new Map(rotaRows(tonus, { date, doctrina })
     .map((r) => [r.key, r.symbol]));
 
@@ -301,5 +300,14 @@ export function rotaAspectTabula(tonus, { date, selected, doctrina } = {}) {
     // an aspect the library found and the table then denies.
     { key: "vis", head: "vis", mono: true, num: true,
       format: (v) => `${(v * 100).toFixed(1)}%` },
-  ], { marked: (r) => selected != null && r.bodyNames.includes(selected) });
+  ], {
+    marked: (r) => selected != null && r.bodyNames.includes(selected),
+    // A row here is a PAIR of planets, not one — so a click selects whichever
+    // of the two is not already chosen. Clicking Venus–Mars while Venus is
+    // selected moves to Mars, which is how a reader walks a chord.
+    onSelect: onSelect && ((key) => {
+      const pair = rows.find((r) => r.key === key)?.bodyNames ?? [];
+      onSelect(pair.find((b) => b !== selected) ?? pair[0]);
+    }),
+  });
 }

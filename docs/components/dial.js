@@ -53,6 +53,16 @@ export function dateDial(date, onChange, { anchors, anchor } = {}) {
   return dial.node;
 }
 
+/** Move the dial to a date chosen ELSEWHERE — a ring anchor, a table row.
+ *
+ *  The dial deliberately outlives a render, so a repaint that leaves the input
+ *  row alone (which is what lets a drag survive) also leaves the field showing
+ *  the day the reader has just navigated away from. This tells it, without
+ *  rebuilding the element the pointer may be holding. */
+export function syncDateDial(date, { anchors, anchor } = {}) {
+  dial?.sync(date, anchors, anchor);
+}
+
 function build() {
   const made = {};
 

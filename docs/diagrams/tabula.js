@@ -24,10 +24,14 @@
  * @property {boolean} [mono]   machine register — the mono face
  * @property {boolean} [num]    right-aligned, tabular figures
  * @property {boolean} [symbol] a glyph, not a word — set larger and centred
+ * @property {string} [cellClass]  extra class on every cell of the column
  * @property {boolean} [pair]   a two-element array of glyphs, set either side
  *                              of a dot on a fixed three-cell grid so the
  *                              separator aligns down the column
  * @property {(v: any, row: object) => string} [format]  cell text
+ * @property {(v: any, row: object) => Node|null} [render]  a NODE for the cell,
+ *                              for content a string cannot carry (a glyph);
+ *                              returning null falls back to `format`
  * @property {(row: object) => string} [gloss]  quiet secondary text after the value
  */
 
@@ -77,7 +81,8 @@ export function tabula(rows, columns,
     for (const c of columns) {
       const td = document.createElement("td");
       const cls = [c.mono ? "mono" : null, c.num ? "num" : null,
-        c.symbol ? "symbol" : null, c.pair ? "pair" : null].filter(Boolean).join(" ");
+        c.symbol ? "symbol" : null, c.pair ? "pair" : null,
+        c.cellClass ?? null].filter(Boolean).join(" ");
       if (cls) td.className = cls;
       const raw = row[c.key];
 
@@ -103,7 +108,9 @@ export function tabula(rows, columns,
         grid.appendChild(cell(b));
         td.appendChild(grid);
       } else {
-        td.textContent = c.format ? c.format(raw, row) : (raw ?? "");
+        const node = c.render?.(raw, row);
+        if (node) td.appendChild(node);
+        else td.textContent = c.format ? c.format(raw, row) : (raw ?? "");
       }
 
       const g = c.gloss?.(row);
