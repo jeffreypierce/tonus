@@ -24,7 +24,7 @@
 // radial labels cannot work here — Good Friday and Easter are two degrees
 // apart — so selection joins figure and table instead.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_SANS, HOUSE_MONO, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import {
   pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighborMidpoints,
@@ -72,6 +72,16 @@ function monthBounds(year) {
 
 function dayOfYear(date, year) {
   return Math.floor((new Date(date) - Date.UTC(year, 0, 1)) / 86400000) + 1;
+}
+
+/** Two dates on the same UTC day. Compared as instants rather than by
+ *  getUTCDate, so a seasonStart carrying a time of day still matches. */
+function sameDay(a, b) {
+  if (!a || !b) return false;
+  const x = new Date(a), y = new Date(b);
+  return x.getUTCFullYear() === y.getUTCFullYear()
+    && x.getUTCMonth() === y.getUTCMonth()
+    && x.getUTCDate() === y.getUTCDate();
 }
 
 /** A date read in UTC. tonus is UTC-canonical, and local-time formatting moves
@@ -157,25 +167,49 @@ function anchorsFor(tonus, year) {
     .sort((a, b) => a.doy - b.doy);
 }
 
-/** The year's seasons, each self-reported with its own bounds and Latin name.
- * Walking the year and asking is what makes the ring answerable for any year —
- * the boundaries are the library's, not a table of anchor pairs. */
+/** The year's seasons as RUNS of consecutive days — each stretch the civil year
+ * actually shows, in the order it shows them. Walking the year and asking is
+ * what makes the ring answerable for any year: the boundaries are the
+ * library's, not a table of anchor pairs.
+ *
+ * A RUN, NOT A SEASON CODE. Nativitas falls twice in one civil year — the tail
+ * of the last Advent's Christmas in January, and again from December 25 — so
+ * collecting one entry per code kept whichever came first and silently dropped
+ * the other. That is the December band that went missing from the ring.
+ *
+ * Asking each day also means a run is bounded by the year by construction, so
+ * nothing needs clamping into it: a season's own seasonStart/seasonEnd are the
+ * LITURGICAL bounds and need not fall inside the year being drawn (Pentecost
+ * asked about a June day runs to the NEXT Advent, in the following November),
+ * which is what made the band go out of round when those dates were used as
+ * angles directly. */
 function seasonsFor(tonus, year) {
-  const seen = new Map();
+  const runs = [];
   const days = isLeap(year) ? 366 : 365;
   for (let d = 0; d < days; d++) {
     const feast = tonus.festum({ date: new Date(Date.UTC(year, 0, 1 + d)) })[0];
-    if (!feast?.season || seen.has(feast.season)) continue;
-    seen.set(feast.season, {
+    if (!feast?.season) continue;
+    const doy = d + 1;
+    const last = runs[runs.length - 1];
+    // Same season as yesterday, and yesterday was yesterday: extend the run.
+    if (last && last.season === feast.season && last.to === doy - 1) {
+      last.to = doy;
+      continue;
+    }
+    runs.push({
       season: feast.season,
       tempus: feast.tempus ?? null,
-      start: feast.seasonStart,
-      end: feast.seasonEnd,
+      from: doy,
+      to: doy,
+      // Does the season BEGIN here, or is this the tail of one that opened in
+      // the year before? The day reports its own seasonStart, so the run can
+      // say which of the two it is — and the label goes on the opening arc.
+      opens: sameDay(feast.seasonStart, new Date(Date.UTC(year, 0, 1 + d))),
       penitential: PENITENTIAL.has(feast.season),
       paschal: PASCHAL.has(feast.season),
     });
   }
-  return [...seen.values()];
+  return runs;
 }
 
 /**
@@ -198,23 +232,13 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     label: `The liturgical year ${year} as a ring`,
   });
 
-  // ── the season band: each season on the bounds it reports for itself ──
-  for (const s of seasons) {
-    // A season's bounds are the LITURGICAL ones, which need not fall inside the
-    // civil year being drawn: Pentecost runs to the NEXT Advent, so asked about
-    // a June day in 1175 it ends in November 1176. True, and unusable as an
-    // angle — a day past the year's end exceeds 360° and the arc wraps past
-    // itself, which is what made the band go out of round.
-    //
-    // So the ring shows each season's share OF THIS YEAR, clamped to it.
-    const days = isLeap(year) ? 366 : 365;
-    const from = Math.max(1, Math.min(days, dayOfYear(s.start, year)));
-    const to = Math.max(1, Math.min(days, dayOfYear(s.end, year)));
-    let a0 = doyAngle(from);
-    let a1 = doyAngle(to);
-    // A season may still open before the civil year does — Nativitas starts in
-    // December and runs into January — so its arc legitimately crosses the wrap.
-    if (a1 < a0) a1 += 360;
+  // ── the season band: one arc per run of days the year actually shows ──
+  for (const [i, s] of seasons.entries()) {
+    // The run is already inside the year, so these are angles directly — no
+    // clamping, and no arc that wraps past itself. Nativitas draws as the two
+    // arcs it is: a few days in January, and the stretch from December 25.
+    const a0 = doyAngle(s.from);
+    const a1 = doyAngle(s.to);
     // A hair of air between neighbors, so the band reads as segments.
     const gap = 0.6;
     root.appendChild(el("path", {
@@ -226,16 +250,26 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
       "stroke-width": SEASON_WEIGHT,
     }));
 
+    // A season split across the wrap is still ONE season, so it is named once —
+    // on the arc where the season OPENS, which the run itself reports. For
+    // Nativitas that is the December stretch beginning at Christmas, not the
+    // days trailing into January. Deliberately not the longer arc: those two
+    // run 8 days and 7, so width would settle it by a single day and could
+    // move the name from one side of the ring to the other between years.
+    if (!s.opens) continue;
+
     const mid = ((a0 + a1) / 2) % 360;
     const flip = isLowerHalf(mid);
-    const id = `annulus-${year}-arc-${s.season}`;
+    // Indexed, not keyed by season: two runs share a code, and a duplicate id
+    // would send both textPaths to whichever arc the document defined first.
+    const id = `annulus-${year}-arc-${i}-${s.season}`;
     defs.appendChild(el("path", {
       id,
       d: arcPath(a0, a1, R_SEASON_NAME, flip ? 0 : 1),
     }));
     const t = el("text", {
-      "font-family": HOUSE_SANS, "font-size": STEP.micro,
-      "letter-spacing": "0.14em", fill: INK, "fill-opacity": STRATUM.margin,
+      "font-family": HOUSE_SERIF, "font-size": STEP.micro,
+      "letter-spacing": "0.09em", fill: INK, "fill-opacity": STRATUM.margin,
     });
     // The library's own season code, set as the books abbreviate.
     t.appendChild(el("textPath",
