@@ -32,6 +32,14 @@ export interface ChantTabulaRow {
   /** Styled lyric spans; present only when GABC markup styled this syllable. */
   runs?: LyricRun[];
   vowel: string;
+  /**
+   * The diphthong the sung vowel belongs to — `ae` · `oe` · `au`, and `ui` in the
+   * cui/hui stems — or null. `vowel` is its NUCLEUS (what the singer sustains);
+   * the second element is a late off-glide. Only the syllabifier can tell a
+   * diphthong from a hiatus, since the accent decides: `cae` is one syllable,
+   * `sa-é` is two.
+   */
+  diphthong: string | null;
   /** True when this note's syllable bears the Latin tonic word-accent. */
   accent: boolean;
   /** True when this note's syllable is the first of its word. */
@@ -227,6 +235,7 @@ export function computeTabula(
       lyric: n.context.lyric,
       runs: n.context.runs,
       vowel: n.context.vowel,
+      diphthong: n.context.diphthong,
       accent: n.context.accent,
       // wordStart reads the note's CONTEXT syllable index (the parser's, which
       // resets to 0 at each word boundary — so 0 = word start), NOT the row's

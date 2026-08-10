@@ -166,6 +166,19 @@ describe("buildScore", () => {
     assert.ok(notes.some((n) => n.context.vowel.length > 0));
   });
 
+  test("the diphthong reaches the tabula beside its nucleus", () => {
+    const rows = buildScore(makeChant("(c4) cae(g) li(h) quae(g) (::)")).tabula;
+    const [cae, li, quae] = rows;
+    // A true diphthong: the nucleus sings, the pair rides beside it.
+    assert.equal(cae.vowel, "a");
+    assert.equal(cae.diphthong, "ae");
+    // A plain vowel carries none.
+    assert.equal(li.diphthong, null);
+    // qu is a consonantal glide — the nucleus is u, so the ae is not the pair.
+    assert.equal(quae.vowel, "u");
+    assert.equal(quae.diphthong, null);
+  });
+
   test("note has all 4 sub-objects (pitch, step, performance, context)", () => {
     const score = buildScore(makeChant(KYRIE_GABC));
     const note = score.phrases[0].syllables[0].notes[0];

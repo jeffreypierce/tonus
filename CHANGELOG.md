@@ -49,6 +49,24 @@ what the page showed.
 
 ### Added
 
+- **A note knows the diphthong it belongs to.** `Context.diphthong` and
+  `ChantTabulaRow.diphthong` report the pair a sung vowel is part of — `ae` ·
+  `oe` · `au`, and `ui` in the cui/hui stems — or null. `vowel` is unchanged: it
+  stays the NUCLEUS, the single vowel a singer sustains, because that is what
+  the analysis passes key on. The pair rides beside it for anyone rendering the
+  off-glide.
+
+  It has to come from here, because **only the syllabifier can tell a diphthong
+  from a hiatus: the accent decides.** `cae` is one syllable — nucleus `a`,
+  gliding toward `e`; `sa-é` is two, the same letters with the accent on the
+  second and no glide at all. Downstream, given only the lyric, the two are
+  indistinguishable. A scan for the letter pair also misreads `quae`, where `qu`
+  is a consonantal glide: the nucleus is `u`, and the `ae` is not the sung pair.
+  Over the Graduale that is 71 distinct syllables — 1,526 sung notes — a naive
+  reading gets wrong, and 192 syllables over the whole corpus. The detection
+  reuses the syllabifier's own `DIPHTHONGS` set, so the word means the same
+  thing here as it does when a word is split.
+
 - **The ink is themable from CSS.** Colours now reach the SVG as custom
   properties with the render's own value as the fallback —
   `fill="var(--tonus-note, #111)"` — so a host stylesheet can retheme a drawn

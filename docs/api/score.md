@@ -241,6 +241,7 @@ interface Performance {
 interface Context {
   lyric: string;
   vowel: string;
+  diphthong: string | null; // the pair the vowel belongs to: "ae" | "oe" | "au" | "ui"
   syllableIndex: number;
   accent: boolean; // this note's syllable bears the Latin tonic word-accent
   neumeGroup: number; // neume figure within the syllable (0-based)
@@ -337,7 +338,8 @@ interface ChantTabulaRow {
   // context
   lyric: string;
   runs?: LyricRun[];         // styled lyric spans (see Syllable above)
-  vowel: string;
+  vowel: string;             // the NUCLEUS — one of a e i o u, or "" when textless
+  diphthong: string | null;  // the pair it belongs to: "ae" | "oe" | "au" | "ui"
   divisio: string | null;
   cadenceRef: number | null; // index into score.cadences[] when this note closes one
   neume: Neume;

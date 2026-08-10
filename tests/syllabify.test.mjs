@@ -64,6 +64,46 @@ describe("selectVowel", () => {
     assert.equal(vowel, "a");
     assert.equal(accent, true);
   });
+
+  test("reports the diphthong the sung vowel belongs to: ae, oe, au", () => {
+    assert.equal(selectVowel("cae").diphthong, "ae");
+    assert.equal(selectVowel("caelum").diphthong, "ae");
+    assert.equal(selectVowel("poena").diphthong, "oe");
+    assert.equal(selectVowel("laus").diphthong, "au");
+  });
+
+  test("the nucleus stays a single vowel — the diphthong rides beside it", () => {
+    const { vowel, diphthong } = selectVowel("caelum");
+    assert.equal(vowel, "a"); // what the singer sustains
+    assert.equal(diphthong, "ae"); // the pair it flicks toward
+  });
+
+  test("a hiatus is not a diphthong — the accent decides (sa-é, not sae)", () => {
+    // Same letters as `cae`, accent on the second vowel: two syllables, no glide.
+    assert.equal(selectVowel("saé").diphthong, null);
+    assert.equal(selectVowel("daé").diphthong, null);
+    // ei, ui, and eu are hiatus in ecclesiastical Latin.
+    assert.equal(selectVowel("De-i").diphthong, null);
+    assert.equal(selectVowel("fu-it").diphthong, null);
+    assert.equal(selectVowel("eu").diphthong, null);
+  });
+
+  test("ui is a diphthong only in the cui/hui stems", () => {
+    assert.equal(selectVowel("cui").diphthong, "ui");
+    assert.equal(selectVowel("huic").diphthong, "ui");
+    assert.equal(selectVowel("fu-it").diphthong, null);
+  });
+
+  test("qu is a consonantal glide: quae sings u, and its ae is not the pair", () => {
+    const { vowel, diphthong } = selectVowel("quae");
+    assert.equal(vowel, "u");
+    assert.equal(diphthong, null);
+  });
+
+  test("a plain vowel has no diphthong", () => {
+    assert.equal(selectVowel("rex").diphthong, null);
+    assert.equal(selectVowel("a").diphthong, null);
+  });
 });
 
 describe("detectVowelAccent", () => {
