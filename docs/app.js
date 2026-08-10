@@ -34,22 +34,45 @@ const state = {
   chant: null,
   score: null,
   note: null,
-  // which tab is open where
-  office: "proprium",
+  // which offices are shown — see OFFICES_SHOWN below, spelled out here
+  // because `state` is built before that list exists
+  offices: ["proprium", "ordinarium", "matutinum", "laudes", "vesperae"],
   right: { calendarium: "harmonia", canticum: "temperamentum" },
   // the few settings the toy carries
   notation: "quadrata",
   tracks: ["chironomia"],
   tuning: "pythagorean",
   aspects: true,
+  // The Sun is the mese, the middle string the rest are reckoned from — so
+  // the wheel opens on it rather than on whatever sorted first.
+  body: "Sun",
+  doctrina: "boethius",
 };
 
+// Who says which sphere sounds what. Four schemes, each from its own text.
+const DOCTRINAE = ["pythagoras", "boethius", "pliny", "ptolemy"];
+
 // ── the offices a day can be read by ──
+// The Mass twice, then the Office hour by hour. The hours are listed
+// separately because they are separately sung: asking for "the Office" on
+// Christmas returns about a hundred and seventy chants, of which thirty-five
+// are Prime's psalm antiphons — one list, and the day's Mass disappears into
+// it. A reader wants Lauds OR Compline, so each hour is its own toggle.
 const OFFICES = [
   { key: "proprium", name: "Proprium", of: (f) => tonus.proprium({ feast: f }) },
   { key: "ordinarium", name: "Ordinarium", of: (f) => tonus.ordinarium({ feast: f }) },
-  { key: "officium", name: "Officium", of: (f) => tonus.officium({ feast: f, hora: "vesperae" }) },
+  ...[
+    ["matutinum", "Matutinum"], ["laudes", "Laudes"], ["vesperae", "Vesperae"],
+  ].map(([hora, name]) => ({
+    key: hora, name, of: (f) => tonus.officium({ feast: f, hora }),
+  })),
 ];
+
+// The whole surface is shown at once — the three sung hours are small enough
+// together that a day opens complete. The little hours are omitted rather
+// than defaulted off: Prime and Compline are thirty-five psalm antiphons
+// apiece, the same psalter every day, and they drown the day's own music.
+const OFFICES_SHOWN = OFFICES.map((o) => o.key);
 
 const TUNINGS = ["pythagorean", "meantone", "equal",
   "ptolemy-intense", "ptolemy-soft", "ptolemy-equable"];
@@ -89,6 +112,11 @@ function page({ title, rightTitle, detail, rightDetail, inputs, rightInputs, lef
  * moving date rebuilds only the body, and the header rows are never rebuilt at
  * all: the element under the pointer is never touched, which is the only
  * arrangement that cannot break the gesture. */
+// Everything a moving date changes EXCEPT the input row — the date field and
+// its arrows must survive their own event, or a click would tear the button
+// out from under the pointer. The title and the line under it are as much a
+// function of the date as the panels are, and were being left stale: the day
+// moved, the chants changed, and the feast's name went on naming yesterday.
 function renderPanels() {
   const host = document.getElementById("view");
   const body = host.querySelector(".row-body");
@@ -96,6 +124,20 @@ function renderPanels() {
   const view = VIEWS.find((v) => v.key === state.view) ?? VIEWS[1];
   const panels = view.panels?.();
   if (!panels) { render(); return; }
+
+  const heads = view.heads?.();
+  if (heads) {
+    const put = (sel, left, right) => {
+      const row = host.querySelector(sel);
+      if (!row) return;
+      const cells = row.querySelectorAll(".cell");
+      cells[0]?.replaceChildren(...(left ? [left] : []));
+      if (right !== undefined) cells[1]?.replaceChildren(...(right ? [right] : []));
+    };
+    put(".row-title", heads.title);
+    put(".row-detail", heads.detail, heads.rightDetail);
+  }
+
   body.replaceChildren(
     el("div", { class: "cell" }, panels.left),
     el("div", { class: "cell" }, panels.right),
@@ -103,66 +145,162 @@ function renderPanels() {
   writeUrl();
 }
 
-/** A key/value table — the shape half these panels want. */
-function pairs(rows) {
-  const t = el("table", { class: "tabula" });
-  const b = el("tbody");
-  for (const [k, v] of rows) {
-    if (v == null || v === "") continue;
-    b.append(el("tr", {}, el("td", {}, k), el("td", { class: "mono" }, String(v))));
-  }
-  t.append(b);
-  return t;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // CALENDARIUM — a day
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** The two panels of Calendarium, which a moving date rebuilds on their own. */
+/** Which day of its season a date is, and how long that season runs.
+ *  Both ends are inclusive, so the first day of a season is dies 1. Dates are
+ *  floored to UTC midnight first — a season boundary carries a time of day in
+ *  some records, and 23 hours of it would otherwise round a day away. */
+function seasonDay(feast, date) {
+  if (!feast?.seasonStart || !feast?.seasonEnd) return null;
+  const utc = (d) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const start = utc(new Date(feast.seasonStart));
+  const end = utc(new Date(feast.seasonEnd));
+  const day = Math.floor((utc(date) - start) / 86400000) + 1;
+  const total = Math.floor((end - start) / 86400000) + 1;
+  if (!Number.isFinite(day) || !Number.isFinite(total) || total < 1) return null;
+  return { day, total };
+}
+
+// A season in the genitive — "the Nth day OF Paschaltide" — which is how a
+// chant book says it. `Tempus` becomes `Temporis`; what follows agrees with
+// it or, being a prepositional phrase already, simply rides along.
+const TEMPUS_GENITIVE = {
+  "Tempus Adventus": "Temporis Adventus",
+  "Tempus Nativitatis": "Temporis Nativitatis",
+  "Tempus post Epiphaniam": "Temporis post Epiphaniam",
+  "Tempus Septuagesimæ": "Temporis Septuagesimæ",
+  "Tempus Quadragesimæ": "Temporis Quadragesimæ",
+  "Tempus Paschale": "Temporis Paschalis",
+  "Tempus post Pentecosten": "Temporis post Pentecosten",
+};
+
+const ROMAN = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"],
+  [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"],
+  [4, "IV"], [1, "I"]];
+
+const roman = (n) => {
+  if (!Number.isInteger(n) || n < 1 || n > 3999) return String(n);
+  let out = "";
+  for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
+  return out;
+};
+
+/** The line under the feast's name: which day of its season this is.
+ *  "Dies LIII Temporis Paschalis" — the ordinal in Roman numerals, the season
+ *  in the genitive, no arithmetic on display. The total is dropped: a reader
+ *  wants to know where they are, and "53 / 57" reads as a progress bar. */
+function calendariumDetail(feast) {
+  const tempus = feast?.tempus ?? feast?.season ?? "";
+  const n = seasonDay(feast, state.day);
+  const genitive = TEMPUS_GENITIVE[tempus] ?? tempus;
+  return el("p", { class: "sub" },
+    n ? `Dies ${roman(n.day)} ${genitive}` : tempus);
+}
+
+/** The right column's quiet line: whatever the open reading has to say for
+ *  itself — the feast's rank, or where the sky's weight is falling. */
+function calendariumRightDetail(feast) {
+  if (state.right.calendarium === "harmonia") return harmoniaDetail();
+  // The rank alone: the grade is the machine code the ritus reduces to, and
+  // printing both said the same thing twice in two registers.
+  if (feast) return el("p", { class: "sub" }, feast.ritus ?? "");
+  return el("p", { class: "sub" }, state.day.toISOString().slice(0, 10));
+}
+
+/** The anchors of the year a date falls in. A year outside the calendar's
+ *  reach throws rather than answering, and the input simply shows no anchors. */
+function paschaOf(date) {
+  try { return tonus.pascha(date.getUTCFullYear()); }
+  catch { return null; }
+}
+
+/** The title and detail rows, which move with the date exactly as the panels
+ *  do. Split out so `renderPanels` can repaint them without rebuilding the
+ *  input row beneath. */
+function calendariumHeads() {
+  const [feast] = tonus.festum({ date: state.day });
+  return {
+    title: el("h1", {}, feast?.nomen ?? "—"),
+    detail: calendariumDetail(feast),
+    rightDetail: calendariumRightDetail(feast),
+  };
+}
+
+/** Everything sung on a day, each chant tagged with the office it belongs to.
+ *  One query per office, run once and reused by both the list and its filters
+ *  — the counts on the toggles have to agree with the rows beneath them. */
+function daysChants(feast) {
+  if (!feast) return [];
+  // A chant can be sung at more than one hour — the same antiphon returns for
+  // Terce and None — and a list cannot show one row twice. First hour named
+  // wins, so the label says where it is first heard.
+  const seen = new Set();
+  return OFFICES.flatMap((o) => {
+    let chants = [];
+    try { chants = o.of(feast).filter((c) => c.gabc); } catch { chants = []; }
+    return chants.filter((c) => !seen.has(c.id) && seen.add(c.id))
+      .map((c) => ({ chant: c, office: o }));
+  });
+}
+
+/** The day's chants as one list, with the offices as filters over it.
+ *  They were tabs, which made three short lists a caller had to visit in turn
+ *  to see what the day held. A day sings one repertory; the office a chant
+ *  belongs to is a property of the chant, so it labels the row and gates it —
+ *  the same toggle idiom the analysis tracks use in Canticum. */
 function calendariumPanels() {
   const [feast] = tonus.festum({ date: state.day });
-  const officeTabs = OFFICES.map((o) => ({
-    key: o.key,
-    name: o.name,
-    panel: () => {
-      let chants = [];
-      try { chants = o.of(feast).filter((c) => c.gabc); } catch { chants = []; }
-      if (!chants.length) return el("p", { class: "ghost" }, "Nothing is sung here today.");
-      return chantList(tonus, chants, { selectedId: state.chant?.id, onSelect: openChant });
-    },
-  }));
+  const all = daysChants(feast);
+  const shown = all.filter((r) => state.offices.includes(r.office.key));
   const readings = calendariumReadings(feast);
+
+  let left;
+  if (!feast) left = el("p", { class: "ghost" }, "No feast at this date.");
+  else if (!all.length) left = el("p", { class: "ghost" }, "Nothing is sung today.");
+  else left = el("div", {},
+    el("div", { class: "settings filters" },
+      ...OFFICES.map((o) => {
+        const n = all.filter((r) => r.office.key === o.key).length;
+        return el("button", {
+          type: "button",
+          disabled: n === 0,
+          "aria-pressed": state.offices.includes(o.key) ? "true" : "false",
+          onclick: () => {
+            state.offices = state.offices.includes(o.key)
+              ? state.offices.filter((k) => k !== o.key)
+              : OFFICES.map((x) => x.key).filter(
+                  (k) => k === o.key || state.offices.includes(k));
+            renderPanels();
+          },
+        }, `${o.name} ${n}`);
+      })),
+    shown.length
+      ? chantList(tonus, shown.map((r) => r.chant), {
+          selectedId: state.chant?.id,
+          onSelect: openChant,
+          // Which office a chant is sung at leads its line, now that the three
+          // are mixed into one list — otherwise the row loses its context.
+          label: (c) => all.find((r) => r.chant.id === c.id)?.office.name ?? null,
+        })
+      : el("p", { class: "ghost" }, "No office is shown."),
+  );
+
   return {
-    left: feast ? tabs({
-      label: "officium", active: state.office, variant: "quiet",
-      onChange: (k) => { state.office = k; render(); },
-      tabs: officeTabs,
-    }) : el("p", { class: "ghost" }, "No feast at this date."),
+    left,
     right: tabPanel({ tabs: readings, active: state.right.calendarium, label: "lectio" }),
   };
 }
 
 const calendariumReadings = (feast) => [
-  { key: "harmonia", name: "Harmonia Mundi", panel: harmoniaPanel },
+  { key: "harmonia", name: "Harmonia", panel: harmoniaPanel },
   { key: "festum", name: "Festum", panel: () => festumPanel(feast) },
-  { key: "corpus", name: "Corpus", panel: corpusPanel },
 ];
 
 function calendarium() {
   const [feast] = tonus.festum({ date: state.day });
-
-  const officeTabs = OFFICES.map((o) => ({
-    key: o.key,
-    name: o.name,
-    panel: () => {
-      let chants = [];
-      try { chants = o.of(feast).filter((c) => c.gabc); } catch { chants = []; }
-      if (!chants.length) return el("p", { class: "ghost" }, "Nothing is sung here today.");
-      return chantList(tonus, chants, { selectedId: state.chant?.id, onSelect: openChant });
-    },
-  }));
-
   const readings = calendariumReadings(feast);
   const panels = calendariumPanels();
 
@@ -175,23 +313,30 @@ function calendarium() {
       tabs: readings,
     }),
     // row 2 — the quiet detail under each
-    detail: el("p", { class: "sub" }, feast?.tempus ?? feast?.season ?? ""),
-    rightDetail: el("p", { class: "sub" },
-      state.right.calendarium === "festum" && feast
-        ? [feast.ritus, feast.grade].filter(Boolean).join(" · ")
-        : state.day.toISOString().slice(0, 10)),
+    detail: calendariumDetail(feast),
+    rightDetail: calendariumRightDetail(feast),
     // row 3 — what may be changed
-    inputs: dateDial(state.day, (d) => {
+    inputs: dateDial(state.day, (d, anchor) => {
       state.day = d;
       state.chant = null;
-      // The panels only: the row this slider sits in must survive the drag.
+      state.anchor = anchor ?? null;
+      // The panels and the headings only: the row this input sits in must
+      // survive its own click, or the arrow would be replaced mid-press.
       renderPanels();
-    }),
+    }, { anchors: paschaOf(state.day), anchor: state.anchor }),
     rightInputs: state.right.calendarium === "harmonia"
-      ? el("div", { class: "settings" }, el("button", {
-          type: "button", "aria-pressed": state.aspects ? "true" : "false",
-          onclick: () => { state.aspects = !state.aspects; render(); },
-        }, "aspectus"))
+      ? el("div", { class: "settings" },
+          el("span", { class: "set-name" }, "doctrina"),
+          el("select", {
+            "aria-label": "doctrina",
+            onchange: (e) => { state.doctrina = e.target.value; renderPanels(); },
+          }, ...DOCTRINAE.map((d) =>
+            el("option", { value: d, selected: state.doctrina === d }, d))),
+          el("span", { class: "set-name" }, "aspectus"),
+          el("button", {
+            type: "button", "aria-pressed": state.aspects ? "true" : "false",
+            onclick: () => { state.aspects = !state.aspects; renderPanels(); },
+          }, state.aspects ? "visibiles" : "occulti"))
       : null,
     left: panels.left,
     right: panels.right,
@@ -203,52 +348,87 @@ function harmoniaPanel() {
     date: state.day,
     aspects: state.aspects,
     selected: state.body,
-    onSelect: (k) => { state.body = k; render(); },
+    doctrina: state.doctrina,
+    // Only the wheel takes a click. The tables below it are a reading of the
+    // selection, not a second way to make one — two controls for one piece of
+    // state is how a page starts disagreeing with itself.
+    onSelect: (k) => { state.body = k; renderPanels(); },
   };
   return el("div", {},
     rota(tonus, o),
+    // The chords first: the aspects are what a click on the wheel lights up,
+    // so the answer sits directly under the question.
+    rotaAspectTabula(tonus, o),
     rotaTabula(tonus, o),
-    rotaAspectTabula(tonus, { date: state.day }),
   );
 }
 
-function festumPanel(feast) {
+/** The imprint as a bar: where this moment's sky pulls, and how hard.
+ *
+ *  The five attractor weights sum to one, so this is a true part-to-whole and
+ *  the widths carry the reading: each cell is as wide as its share. No fill —
+ *  a rule between cells is enough to divide them, and the row then sits in a
+ *  subtitle without weighing more than the title above it.
+ *
+ *  A cell names itself when it has the room. Below about a tenth of the row a
+ *  name and its percentage cannot be set inside without spilling, so it goes
+ *  bare and the title carries it — a clipped label is worse than none. */
+function harmoniaDetail() {
+  let H;
+  try { H = tonus.harmonia(tonus.caelum({ date: state.day }), { doctrina: state.doctrina }); }
+  catch { return el("p", { class: "sub" }, ""); }
+
+  const attractors = H.imprint?.attractors ?? [];
+  if (!attractors.length) return el("p", { class: "sub" }, "");
+
+  // The weights are normalised already; dividing by the sum keeps the row
+  // full even if a future imprint hands back a partial set.
+  const total = attractors.reduce((s, a) => s + a.weight, 0) || 1;
+
+  return el("div", { class: "imprint" },
+    el("span", { class: "set-name" }, "pitch attractors"),
+    el("div", { class: "imprint-bar" },
+      ...attractors.map((a) => {
+        const share = a.weight / total;
+        // The pitch class, not the pitch: the octave belongs to the sphere
+        // that sounds it, and the attractor is the class the sky leans on.
+        const name = a.pitch.spn.replace(/\d+$/, "").replace("b", "♭");
+        const pct = `${(share * 100).toFixed(0)}%`;
+        return el("span", {
+          class: "imprint-seg",
+          style: `flex: ${share.toFixed(5)}`,
+          title: `${name} — ${(share * 100).toFixed(1)}%`,
+        }, share >= 0.1
+          ? [el("span", { class: "imprint-pitch" }, name),
+             el("span", { class: "imprint-dot" }, "•"),
+             el("span", { class: "imprint-pct" }, pct)]
+          : "");
+      })),
+  );
+}
+
+// The ring and its table read the same selection, so a click on either moves
+// both — the site's interaction model, kept here rather than written twice.
+function festumPanel() {
   const year = state.day.getUTCFullYear();
-  return el("div", {},
-    annulus(tonus, {
-      year, day: state.day, selected: state.anchor,
-      onSelect: (key) => {
-        const p = tonus.pascha(year);
-        if (p[key]) { state.day = new Date(p[key]); state.anchor = key; state.chant = null; }
-        render();
-      },
-    }),
-    feast && pairs([
-      ["nomen", feast.nomen], ["ritus", feast.ritus], ["gradus", feast.grade],
-      ["tempus", feast.tempus], ["dies", feast.weekday],
-      ["a", String(feast.seasonStart).slice(0, 10)],
-      ["ad", String(feast.seasonEnd).slice(0, 10)],
-    ]),
-    annulusTabula(tonus, {
-      year, day: state.day, selected: state.anchor,
-      onSelect: (key) => {
-        const p = tonus.pascha(year);
-        if (p[key]) { state.day = new Date(p[key]); state.anchor = key; state.chant = null; }
-        render();
-      },
-    }),
-  );
-}
-
-function corpusPanel() {
-  const c = tonus.corpus();
-  const rows = (obj) => Object.entries(obj ?? {})
-    .sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, v]);
-  return el("div", {},
-    pairs([["cantus", c.count], ["distincti", c.distinct], ["summa", c.total]]),
-    el("h2", {}, "genera"), pairs(rows(c.genera)),
-    el("h2", {}, "modi"), pairs(rows(c.modes)),
-  );
+  const o = {
+    year, day: state.day, selected: state.anchor,
+    onSelect: (key) => {
+      // A movable anchor is a pascha() key; a fixed feast's key IS its date
+      // (`MM-DD`), which is why the calendar can find it without a lookup.
+      const p = tonus.pascha(year);
+      const fixed = /^(\d{2})-(\d{2})$/.exec(key);
+      const date = p[key]
+        ? new Date(p[key])
+        : fixed ? new Date(Date.UTC(year, +fixed[1] - 1, +fixed[2])) : null;
+      if (date) { state.day = date; state.anchor = key; state.chant = null; }
+      renderPanels();
+    },
+  };
+  // The pairs table that sat between these two repeated the title, the line
+  // under it, and the ring's own selection — every field it held is already
+  // somewhere the eye reaches first.
+  return el("div", {}, annulus(tonus, o), annulusTabula(tonus, o));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -268,7 +448,6 @@ function canticumPanels() {
 const canticumReadings = () => [
   { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel },
   { key: "manus", name: "Manus Guidonius", panel: manusPanel },
-  { key: "tabula", name: "Tabula", panel: tabulaPanel },
 ];
 
 function canticum() {
@@ -454,34 +633,6 @@ function manusPanel() {
   return el("div", {}, hand(tonus, opts), handTabula(tonus, opts));
 }
 
-/** The score's own tabula — a row per note, selection shared with the score. */
-function tabulaPanel() {
-  const t = el("table", { class: "tabula" });
-  t.append(el("thead", {}, el("tr", {},
-    ...["nota", "hz", "nomen", "neuma", "syllaba"].map((h) => el("th", {}, h)))));
-  const b = el("tbody");
-  state.score.tabula.forEach((r, i) => {
-    const tr = el("tr", {
-      class: state.note === i ? "sel" : null,
-      tabindex: "0",
-      onclick: () => { state.note = i; render(); },
-      onkeydown: (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); state.note = i; render(); }
-      },
-    },
-      el("td", { class: "mono" }, r.spn ?? ""),
-      el("td", { class: "mono num" }, r.hz != null ? r.hz.toFixed(1) : ""),
-      el("td", {}, r.nomen ?? ""),
-      // A neume is a shape, not a string — the row wants what it is called.
-      el("td", {}, r.neume?.type ?? ""),
-      el("td", {}, r.lyric ?? ""),
-    );
-    b.append(tr);
-  });
-  t.append(b);
-  return t;
-}
-
 // ── selection ──
 function openChant(chant) {
   state.chant = chant;
@@ -501,6 +652,10 @@ function writeUrl() {
   if (state.chant) p.set("cantus", state.chant.id);
   if (state.notation !== "quadrata") p.set("notatio", state.notation);
   if (state.tracks.length) p.set("tracks", state.tracks.join(","));
+  // Only when narrowed — all three showing is the default, and saying so in
+  // every link would put a parameter in the bar that changes nothing.
+  if (state.offices.join(",") !== OFFICES_SHOWN.join(","))
+    p.set("officia", state.offices.join(","));
   if (state.tuning !== "pythagorean") p.set("temperatura", state.tuning);
   const lectio = state.right[state.view];
   if (lectio) p.set("lectio", lectio);
@@ -521,6 +676,13 @@ function readUrl() {
     state.tracks = p.get("tracks").split(",")
       .filter((t) => t === "chironomia" || t === "tonarium");
   }
+  if (p.has("officia")) {
+    const keys = OFFICES.map((o) => o.key);
+    const want = p.get("officia").split(",").filter((k) => keys.includes(k));
+    // An empty or unrecognised list would leave the day looking chantless
+    // through no choice of the reader's, so it falls back to all three.
+    if (want.length) state.offices = want;
+  }
   if (TUNINGS.includes(p.get("temperatura"))) state.tuning = p.get("temperatura");
   if (p.has("lectio")) state.right[state.view] = p.get("lectio");
   const id = p.get("cantus");
@@ -536,7 +698,8 @@ function readUrl() {
 // ── render ──
 const VIEWS = [
   { key: "canticum", name: "Canticum", build: canticum, panels: canticumPanels },
-  { key: "calendarium", name: "Calendarium", build: calendarium, panels: calendariumPanels },
+  { key: "calendarium", name: "Calendarium", build: calendarium, panels: calendariumPanels,
+    heads: calendariumHeads },
 ];
 
 function render() {

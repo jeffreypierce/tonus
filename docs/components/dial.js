@@ -1,99 +1,127 @@
 // ---------------------------------------------------------------------------
-// docs/components/dial — a date as three sliders
+// docs/components/dial — a date, typed or stepped
 // ---------------------------------------------------------------------------
-// Day, month, year, each on its own track. A date field would be tidier and
-// duller: dragging the day moves the standing mark round the year ring, drags
-// the Sun through the zodiac, and swaps the chants beneath — the whole page is
-// a function of this date, and three sliders make that legible by letting you
-// watch it happen.
+// The whole page is a function of one date, so this input has two jobs that
+// pull against each other: land on a named day exactly, and wander from it a
+// day at a time to watch the chants and the sky change underneath.
 //
-// The month's length follows the month and the year, so February is 28 days or
-// 29, and a day past the end of a shorter month clamps rather than rolling
-// over into the next one.
+// Three sliders did only the second, and did it badly at the year: 1600 years
+// across a few hundred pixels put roughly eight years under every pixel, so a
+// particular year could not be hit at all — only swept past. A typed field
+// does the first job perfectly and the second not at all, which is why the
+// arrows sit beside it: click to walk, type to arrive.
 //
-// THE DIALS OUTLIVE A RENDER. Dragging fires input continuously, and the page
-// redraws on every one — so a strip rebuilt each time would tear the slider out
-// of the document under the pointer and the drag would die after a single step.
-// A click still worked, which is what made the bug look like a slider that
-// almost worked. The element is built once, kept, and its readouts written in
-// place; the rest of the page is free to redraw around it.
+// The anchors are the third way in. A liturgical year is not navigated by
+// number — nobody knows what date Advent starts in 991 — so the days the year
+// actually turns on are named buttons, and the ring in Festum stays the
+// scenic route to the same places.
+//
+// THE INPUT OUTLIVES A RENDER. Typing fires `change` and the page redraws; a
+// field rebuilt each time would lose focus and the caret mid-entry. The
+// element is built once, kept, and its value written in place — the rest of
+// the page redraws around it. (The old three-slider dial needed this for the
+// same reason under a drag; the reason survives the redesign.)
 
 import { el } from "./tabs.js";
 
-const MONTHS = ["Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
-  "Iul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** The three days the year is actually reckoned from. Every other turning —
+ *  Advent, Epiphany, Quadragesima — is a walk from one of these, and the ring
+ *  in Festum is the scenic route to all of them. */
+const ANCHORS = [
+  { key: "christmas", name: "Nativitas" },
+  { key: "easter", name: "Pascha" },
+  { key: "pentecost", name: "Pentecoste" },
+];
 
-const isLeap = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
-const daysIn = (y, m) => [31, isLeap(y) ? 29 : 28, 31, 30, 31, 30,
-  31, 31, 30, 31, 30, 31][m];
+const iso = (d) => `${String(d.getUTCFullYear()).padStart(4, "0")}`
+  + `-${String(d.getUTCMonth() + 1).padStart(2, "0")}`
+  + `-${String(d.getUTCDate()).padStart(2, "0")}`;
+
+let dial = null;
 
 /**
  * @param {Date} date                     the day, read in UTC
- * @param {(d: Date) => void} onChange    fires as a slider moves
+ * @param {(d: Date) => void} onChange    fires when the date lands
  * @param {object} [opts]
- * @param {number} [opts.minYear]
- * @param {number} [opts.maxYear]
+ * @param {object} [opts.anchors]         a `tonus.pascha(year)` record
+ * @param {string} [opts.anchor]          which anchor is current, if any
  */
-let dials = null;
-
-export function dateDial(date, onChange, { minYear = 500, maxYear = 2100 } = {}) {
-  if (!dials) dials = build(minYear, maxYear);
-  dials.onChange = onChange;
-  dials.sync(date);
-  return dials.node;
+export function dateDial(date, onChange, { anchors, anchor } = {}) {
+  if (!dial) dial = build();
+  dial.onChange = onChange;
+  dial.sync(date, anchors, anchor);
+  return dial.node;
 }
 
-function build(minYear, maxYear) {
+function build() {
   const made = {};
 
-  const slider = (name, min, max) => {
-    const input = el("input", {
-      type: "range", min, max, step: 1, value: min, "aria-label": name,
-    });
-    const read = el("span", { class: "dial-read" });
-    input.addEventListener("input", () => made.emit());
-    return {
-      input, read,
-      node: el("label", { class: "dial" },
-        el("span", { class: "dial-name" }, name), input, read),
-    };
+  // A date field parses and validates for us, and gives a picker for free.
+  // `min` reaches back past the corpus so a medieval year is typeable at all —
+  // the default epoch is 991, which most date pickers will not offer.
+  const field = el("input", {
+    type: "date", class: "dial-date", "aria-label": "dies",
+    min: "0001-01-01", max: "9999-12-31",
+  });
+
+  const step = (n, label, glyph) => el("button", {
+    type: "button", class: "dial-step", "aria-label": label,
+    onclick: () => made.walk(n),
+  }, glyph);
+
+  const anchorRow = el("div", { class: "dial-anchors", role: "group",
+    "aria-label": "tempora" });
+
+  // One line: step, date, step, then the three anchors. They are all ways of
+  // setting the same thing, so they read as one control rather than two rows.
+  made.node = el("div", { class: "dials" },
+    step(-1, "dies prior", "‹"), field, step(1, "dies posterior", "›"),
+    anchorRow,
+  );
+
+  /** A typed or picked date. Empty or unparseable input is left alone — the
+   *  field keeps what the user is mid-way through typing. */
+  field.addEventListener("change", () => {
+    const [y, m, d] = field.value.split("-").map(Number);
+    if (!y || !m || !d) return;
+    made.set(new Date(Date.UTC(y, m - 1, d)));
+  });
+
+  /** Walk a day at a time, from the date the dial itself holds.
+   *
+   *  This deliberately does NOT read the field. A caller may repaint the page
+   *  around this input without rebuilding it — that is the whole reason the
+   *  element outlives a render — and in that case `sync` never runs and the
+   *  field still shows the day we started from. Stepping off the DOM value
+   *  therefore computed the same tomorrow forever: the first click moved, and
+   *  every one after it repeated that first move. The dial owns the date; the
+   *  field is a view of it. */
+  made.walk = (n) => {
+    if (!made.date) return;
+    made.set(new Date(made.date.getTime() + n * 86400000));
   };
 
-  const day = slider("dies", 1, 31);
-  const month = slider("mensis", 1, 12);
-  const year = slider("annus", minYear, maxYear);
-
-  made.node = el("div", { class: "dials" }, day.node, month.node, year.node);
-
-  /** Read the three, and say what date they mean. */
-  made.emit = () => {
-    const yy = Number(year.input.value);
-    const mm = Number(month.input.value) - 1;
-    // A shorter month clamps the day rather than spilling into the next one:
-    // dragging months across February should not silently become March.
-    const dd = Math.min(Number(day.input.value), daysIn(yy, mm));
-    made.paint(yy, mm, dd);
-    made.onChange?.(new Date(Date.UTC(yy, mm, dd)));
+  /** Move, remember, and tell — the one path by which this dial changes date. */
+  made.set = (date, anchor) => {
+    made.date = date;
+    field.value = iso(date);
+    made.onChange?.(date, anchor);
   };
 
-  /** Write the readouts and the day's ceiling, without rebuilding anything. */
-  made.paint = (yy, mm, dd) => {
-    day.input.max = String(daysIn(yy, mm));
-    day.read.textContent = String(dd).padStart(2, "0");
-    month.read.textContent = MONTHS[mm];
-    year.read.textContent = String(yy);
-  };
+  /** Take a date from outside — an anchor, the year ring, a link opened. Never
+   *  overwrites the field while it holds the caret, so typing is not fought. */
+  made.sync = (date, anchors, current) => {
+    made.date = date;
+    if (document.activeElement !== field) field.value = iso(date);
 
-  /** Take a date from outside — a click on the year ring, a link opened. Never
-   * moves a slider the pointer is holding, so a drag is not fought. */
-  made.sync = (date) => {
-    const yy = date.getUTCFullYear();
-    const mm = date.getUTCMonth();
-    const dd = date.getUTCDate();
-    if (document.activeElement !== day.input) day.input.value = String(dd);
-    if (document.activeElement !== month.input) month.input.value = String(mm + 1);
-    if (document.activeElement !== year.input) year.input.value = String(yy);
-    made.paint(yy, mm, dd);
+    // The anchors belong to the year on screen, so they move with it.
+    anchorRow.replaceChildren(...(anchors ? ANCHORS.filter((a) => anchors[a.key]).map((a) =>
+      el("button", {
+        type: "button",
+        class: "dial-anchor",
+        "aria-pressed": current === a.key ? "true" : "false",
+        onclick: () => made.set(new Date(anchors[a.key]), a.key),
+      }, a.name)) : []));
   };
 
   return made;

@@ -82,9 +82,9 @@ function el(tag, attrs, text) {
  * @param {object} opts
  * @param {Date}   [opts.date]  the moment (default: the library's own epoch)
  */
-export function rotaRows(tonus, { date } = {}) {
+export function rotaRows(tonus, { date, doctrina } = {}) {
   const cosmos = date ? tonus.caelum({ date }) : tonus.caelum();
-  const H = tonus.harmonia(cosmos);
+  const H = tonus.harmonia(cosmos, doctrina ? { doctrina } : undefined);
 
   return H.tabula
     .map((v, i) => {
@@ -96,9 +96,15 @@ export function rotaRows(tonus, { date } = {}) {
         symbol: body.symbol,
         // The string of the Greater Perfect System this sphere sounds.
         chorda: v.greekName,
+        // The doctrina's own fraction against the mese — the primary datum,
+        // of which the note name is the sounding.
+        ratio: `${v.ratio[0]}/${v.ratio[1]}`,
         spn: v.spn,
         midi: v.midi,
         hz: v.hz,
+        // The vowel this sphere is intoned on — the Greek letter and its name.
+        vocalis: v.vowelGreek,
+        vocalisNomen: v.vowelName,
         presence: v.presence,
         motion: v.motion,
         retrograde: v.retrograde,
@@ -114,9 +120,9 @@ export function rotaRows(tonus, { date } = {}) {
 }
 
 /** The aspects, as the library names them: an angle, a strength, an interval. */
-export function rotaAspects(tonus, { date } = {}) {
+export function rotaAspects(tonus, { date, doctrina } = {}) {
   const cosmos = date ? tonus.caelum({ date }) : tonus.caelum();
-  return tonus.harmonia(cosmos).aspects;
+  return tonus.harmonia(cosmos, doctrina ? { doctrina } : undefined).aspects;
 }
 
 /**
@@ -129,12 +135,12 @@ export function rotaAspects(tonus, { date } = {}) {
  * @param {boolean} [opts.aspects]  draw the aspect chords (default true)
  * @param {(key: string) => void} [opts.onSelect]
  */
-export function rota(tonus, { date, selected, aspects = true, onSelect } = {}) {
+export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina } = {}) {
   const when = date ?? tonus.caelum().date;
   const turn = eclipticTurn(tonus, new Date(when).getUTCFullYear());
   const eclipticAngle = (lon) => (((lon + turn) % 360) + 360) % 360;
-  const rows = rotaRows(tonus, { date });
-  const chords = aspects ? rotaAspects(tonus, { date }) : [];
+  const rows = rotaRows(tonus, { date, doctrina });
+  const chords = aspects ? rotaAspects(tonus, { date, doctrina }) : [];
   const byName = new Map(rows.map((r) => [r.key, r]));
   const sel = selected ?? rows[0]?.key;
 
@@ -167,10 +173,14 @@ export function rota(tonus, { date, selected, aspects = true, onSelect } = {}) {
     const touches = a.key === sel || b.key === sel;
     root.appendChild(el("line", {
       x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
-      stroke: INK,
+      // A selected planet's chords are drawn in the rubric and at weight: the
+      // question a click asks is "what is this planet standing in", and the
+      // answer is several lines at once. The rest stay ink and quiet, so the
+      // lit ones read as a figure against them.
+      stroke: touches ? RUBRICA : INK,
       // Strength is opacity, as confidence is everywhere in this house.
-      "stroke-opacity": (touches ? 0.9 : STRATUM.spark) * asp.strength,
-      "stroke-width": sc(0.6 + 1.2 * asp.strength),
+      "stroke-opacity": (touches ? 0.95 : STRATUM.spark) * asp.strength,
+      "stroke-width": sc((touches ? 1.1 : 0.6) + 1.2 * asp.strength),
     }));
   }
 
@@ -230,28 +240,50 @@ export function rota(tonus, { date, selected, aspects = true, onSelect } = {}) {
   return svg;
 }
 
-/** The spheres and their strings. */
-export function rotaTabula(tonus, { date, selected, onSelect } = {}) {
-  const rows = rotaRows(tonus, { date });
+/** The spheres and their strings. The glyph leads: a reader coming from the
+ *  wheel is looking for the mark they just clicked, not for a word. Hz is
+ *  gone — the note names the pitch, and a frequency to two decimals is a
+ *  measurement nobody here is taking. */
+export function rotaTabula(tonus, { date, selected, doctrina } = {}) {
+  const rows = rotaRows(tonus, { date, doctrina });
   const sel = selected ?? rows[0]?.key;
 
   return tabula(rows, [
+    { key: "symbol", head: "", symbol: true },
     { key: "nomen", head: "sphaera", gloss: (r) => r.retrograde ? "retrogradus" : "" },
-    { key: "chorda", head: "chorda" },
-    { key: "spn", head: "nota", mono: true },
-    { key: "hz", head: "hz", mono: true, num: true, format: (v) => v.toFixed(2) },
+    // The ratio is what the doctrina actually SAYS; the note name was a
+    // reading of it against A4, and the string it sounds names it better —
+    // so chorda becomes the ratio's gloss rather than a column of its own.
+    { key: "ratio", head: "ratio", mono: true, gloss: (r) => r.chorda },
+    { key: "vocalis", head: "vocalis", symbol: true, gloss: (r) => r.vocalisNomen },
+    // A share of full presence, which is what the 0–1 always meant. Whole
+    // numbers: the floor across a year is about 5%, so nothing rounds to a
+    // zero that would read as a silent sphere.
     { key: "presence", head: "praesentia", mono: true, num: true,
-      format: (v) => v.toFixed(3) },
+      format: (v) => `${(v * 100).toFixed(0)}%` },
     { key: "sign", head: "signum" },
-  ], { selected: sel, onSelect, caption: "The seven spheres, sounding" });
+  ], { selected: sel });
 }
 
-/** The aspects as chords: what the sky is playing, named by the library. */
-export function rotaAspectTabula(tonus, { date } = {}) {
-  const rows = rotaAspects(tonus, { date }).map((a, i) => ({
+/** The aspects as chords: what the sky is playing, named by the library.
+ *
+ *  Every aspect the selected planet stands in is marked, not one row — a
+ *  planet is in several aspects at once, and the question the wheel asks by
+ *  being clicked is "what is Mars doing", whose answer is all of them. */
+export function rotaAspectTabula(tonus, { date, selected, doctrina } = {}) {
+  const symbols = new Map(rotaRows(tonus, { date, doctrina })
+    .map((r) => [r.key, r.symbol]));
+
+  const rows = rotaAspects(tonus, { date, doctrina }).map((a, i) => ({
     key: String(i),
     aspectus: a.type,
-    bodies: a.bodies.join(" · "),
+    // The two glyphs the wheel draws, with a dot between them. Each glyph is
+    // set in its own cell of a three-cell grid (see .pair in the stylesheet),
+    // so every row's dot falls on the same vertical and the pairs read as a
+    // column — planetary glyphs have wildly different widths, and letting
+    // them flow puts the separator somewhere new on every line.
+    corpora: a.bodies.map((b) => symbols.get(b) ?? b),
+    bodyNames: a.bodies,
     intervallum: a.interval.alias || a.interval.nomen,
     consonantia: a.interval.consonance,
     angulus: a.angle,
@@ -259,11 +291,15 @@ export function rotaAspectTabula(tonus, { date } = {}) {
   }));
 
   return tabula(rows, [
+    { key: "corpora", head: "corpora", pair: true },
     { key: "aspectus", head: "aspectus" },
-    { key: "bodies", head: "corpora" },
     { key: "intervallum", head: "intervallum", gloss: (r) => r.consonantia },
     { key: "angulus", head: "angulus", mono: true, num: true,
       format: (v) => `${v.toFixed(1)}°` },
-    { key: "vis", head: "vis", mono: true, num: true, format: (v) => v.toFixed(3) },
-  ], { caption: "The chords the spheres sound" });
+    // One decimal, unlike praesentia: a wide-orb aspect can sit near a
+    // thousandth of full strength, and whole numbers would print it "0%" —
+    // an aspect the library found and the table then denies.
+    { key: "vis", head: "vis", mono: true, num: true,
+      format: (v) => `${(v * 100).toFixed(1)}%` },
+  ], { marked: (r) => selected != null && r.bodyNames.includes(selected) });
 }

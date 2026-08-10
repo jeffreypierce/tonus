@@ -99,23 +99,56 @@ function el(tag, attrs, text) {
 }
 
 
-/** The anchors for a year: pascha() dates the movable feasts, and festum()
- * names each one and says which season it falls in. Nothing is transcribed. */
+/** The principal fixed feasts — the ones that hold a place in the year
+ * regardless of where Easter falls. Their ids ARE their dates (`MM-DD`), so
+ * the calendar dates them and this list only says which ones matter enough to
+ * stand beside the movable anchors. Christmas and the Epiphany are deliberately
+ * absent: pascha() already reports both, and a day cannot be two marks.
+ *
+ * All are duplex-i in the Tridentine ranking — the same rank as Easter and
+ * Pentecost — so this is the received hierarchy, not a preference. */
+const FIXED = ["03-25", "06-24", "06-29", "08-15", "09-29", "11-01", "12-08"];
+
+/** The anchors for a year: pascha() dates the movable feasts, festum() names
+ * each one and says which season it falls in, and the principal fixed feasts
+ * join them. Nothing is transcribed. */
 function anchorsFor(tonus, year) {
   const p = tonus.pascha(year);
   // Whatever anchors pascha() reports — not a list of them kept here. It dates
   // fifteen today; a sixteenth would arrive on the ring without an edit.
-  return Object.keys(p)
+  // Two of pascha()'s anchors are not movable at all — Christmas and the
+  // Epiphany keep their dates and are reported here because the year is
+  // reckoned around them, so they are marked as what they are.
+  const FIXED_ANCHORS = new Set(["christmas", "epiphany"]);
+  const movable = Object.keys(p)
     .filter((key) => key !== "year" && p[key] instanceof Date)
-    .map((key) => {
-      const date = p[key];
-      const feast = tonus.festum({ date: new Date(date) })[0] ?? null;
+    .map((key) => ({ key, date: p[key], fixed: FIXED_ANCHORS.has(key) }));
+
+  // A fixed feast may be outranked by the day it lands on — the Annunciation
+  // inside Holy Week, say — in which case festum() reports the occurrent feast
+  // first and this one is simply not kept. The calendar decides, not the list.
+  const fixed = FIXED.map((id) => {
+    const [m, d] = id.split("-").map(Number);
+    const date = new Date(Date.UTC(year, m - 1, d));
+    return { key: id, date, fixed: true, id };
+  }).filter(({ date, id }) =>
+    tonus.festum({ date }).some((f) => f.id === id));
+
+  const taken = new Set(movable.map((a) => a.date.getTime()));
+
+  return [...movable, ...fixed.filter((a) => !taken.has(a.date.getTime()))]
+    .map(({ key, date, fixed: isFixed, id }) => {
+      const all = tonus.festum({ date: new Date(date) });
+      // For a fixed feast, name the feast ITSELF rather than whatever outranks
+      // it that day; for a movable anchor, the day's first feast is the point.
+      const feast = (isFixed && all.find((f) => f.id === id)) || all[0] || null;
       return {
         key,
         nomen: feast?.nomen ?? key,
         season: feast?.season ?? null,
         tempus: feast?.tempus ?? null,
-        dot: ANCHOR_WEIGHT[key] ?? 2.4,
+        fixed: isFixed,
+        dot: ANCHOR_WEIGHT[key] ?? (isFixed ? 2.0 : 2.4),
         date,
         dies: romanDate(date),
         doy: dayOfYear(date, year),
@@ -297,23 +330,17 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
 
 /** The names the ring cannot carry. Selection joins the two: clicking a row or
  * its anchor moves both. `a die` counts from the standing day. */
-export function annulusTabula(tonus, { year, day = null, selected = "easter", onSelect } = {}) {
-  const rows = anchorsFor(tonus, year);
-  const dayDoy = day ? dayOfYear(day, year) : null;
-
-  const columns = [
+export function annulusTabula(tonus, { year, selected = "easter", onSelect } = {}) {
+  // Name, season, date. The signed distance from the standing day that used to
+  // close this table was arithmetic the ring already draws: how far off a feast
+  // is IS the angle between its mark and the day's.
+  return tabula(anchorsFor(tonus, year), [
     // The name and the season are the library's own words.
     { key: "nomen", head: "nomen", gloss: (r) => r.tempus ?? "" },
-    { key: "dies", head: "dies", mono: true },
-  ];
-  if (dayDoy != null) {
-    columns.push({
-      key: "doy", head: "a die", mono: true, num: true,
-      format: (doy) => { const d = doy - dayDoy; return d > 0 ? `+${d}` : String(d); },
-    });
-  }
-
-  return tabula(rows, columns, {
-    selected, onSelect, caption: `The movable feasts of ${year}`,
-  });
+    // A fixed feast keeps its date whatever Easter does; a movable one is
+    // reckoned from Easter. Saying which is which is the whole point of
+    // showing them together, and the date alone cannot say it.
+    { key: "dies", head: "dies", mono: true,
+      gloss: (r) => r.fixed ? "" : "mobilis" },
+  ], { selected, onSelect });
 }
