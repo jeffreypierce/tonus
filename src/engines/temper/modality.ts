@@ -65,10 +65,17 @@ const FINAL_NOTE_BONUS = 0.5;
 
 // Tessitura — how high the melody sits above its final — is the classical
 // authentic/plagal separator (an authentic mode ranges a fifth-and-more above the
-// final; its plagal partner straddles it). Calibrated over the corpus (n≈6,666):
-// mean-pitch-minus-final is ~4.0 semitones for authentic, ~1.7 for plagal, with
-// clean separation. The bonus peaks when the observed tessitura matches the
-// mode's expected value and falls off linearly over TESSITURA_TOLERANCE.
+// final; its plagal partner straddles it). The bonus peaks when the observed
+// tessitura matches the mode's expected value and falls off linearly over
+// TESSITURA_TOLERANCE.
+//
+// THE CALIBRATION IS PENDING RE-DERIVATION (noted 2026-08-11). These constants
+// were fitted over the corpus at n≈6,666 — a count from before the accidental
+// fix in `parse.ts`, which was emitting a phantom note at every accidental and
+// so moved every mean pitch that used one. The SEPARATION still holds on a
+// re-measure (authentic sits higher than plagal, cleanly), which is what these
+// constants encode, so they are left in force rather than replaced by a worse
+// number. What is not yet re-derived is where exactly the two centres sit.
 const TESSITURA_AUTHENTIC = 4.0;
 const TESSITURA_PLAGAL = 1.7;
 const TESSITURA_TOLERANCE = 3;

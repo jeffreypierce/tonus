@@ -21,10 +21,12 @@ import {
 } from "./data/compline.js";
 import { PRIME_ORDINARY, PRIME_SEASONAL } from "./data/prime.js";
 
-// ONE office table. The Roman one was cut: DO's Roman horas gave 811 rows of
-// which 514 (63.4%) carried NO office chant — and `romanum` was the DEFAULT
+// ONE office table. The Roman one was cut: DO's Roman horas were largely
+// hollow — most rows carried NO office chant — and `romanum` was the DEFAULT
 // rite, so the untold call returned nothing. Epiphany 1098 answered 0 for
-// Matins, Lauds and Vespers under Roman and 16/6/5 under monastic. The corpus
+// Matins, Lauds and Vespers under Roman and 16/6/5 under monastic (still true:
+// re-checked 2026-08-11, and the one half of this a shipped package CAN check).
+// The corpus
 // is monastic-flat; the office follows — and with it the Roman little-hours
 // psalmody, whose only consumer was this file. A `rite` option is deliberately
 // absent from the query: there is one cursus, so there is nothing to choose.

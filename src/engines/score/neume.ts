@@ -34,13 +34,20 @@ export function classifyNeume(notes: Note[]): Neume {
   // `neume.type`.
   //
   // This detection was previously keyed on the Solesmes ictus (GABC `'`) on
-  // the second-to-last note, which is a different thing and a much larger set:
-  // measured over the sung corpus, that rule found 2,795 groups of which 36
-  // (1.3%) carried an oriscus, while missing 188 of the 226 real salici — they
-  // classified as `scandicus`. An ictus-marked ascent with no oriscus IS a
-  // scandicus that Solesmes marked for rhythm; the mark survives on
-  // `context.ictus` for anyone reading it. Bevenot calls the conflation "a
+  // the second-to-last note, which is a different thing and a much larger set.
+  // Measured over the sung corpus today: 302 salici against 2,960 scandici, so
+  // the old rule claimed roughly 3,262 groups where 302 are real — and of that
+  // wider set only 9.4% carry an oriscus at all. An ictus-marked ascent with no
+  // oriscus IS a scandicus that Solesmes marked for rhythm; the mark survives
+  // on `context.ictus` for anyone reading it. Bevenot calls the conflation "a
   // trap" [biblio: cardine-semiology].
+  //
+  // (This paragraph read 2,795 / 36 / 226 until 2026-08-11. Those came from
+  // working/qa-sweep/salicus-before.json, a run over 2,887 chants and 28,498
+  // phrases — a corpus that predates the accidental fix in `parse.ts`, which
+  // was emitting a phantom note at every accidental and inflating every count
+  // downstream. The shape of the finding survived re-measurement; the figures
+  // did not.)
   //
   // The LIMIT of this, stated because it is easy to mistake for a bug: tonus
   // sees only what the transcription marks. Bevenot's own example — the mode-6

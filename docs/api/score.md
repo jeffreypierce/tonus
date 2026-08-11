@@ -529,9 +529,9 @@ sum of the two bands.
 
   **Every inked cadence carries a label.** A close that does not join
   [`CADENTIAE`](index.md#the-appendix) at all reads `"rara"` — not a gap but a
-  measurement: the catalogue holds the 122 families above fifty corpus
-  occurrences, so failing to join means rarer than anything it records. About
-  a third of inked cadences land there.
+  measurement: the catalogue holds the 110 families above fifty corpus
+  occurrences, so failing to join means rarer than anything it records. 43.2%
+  of cadences land there.
 
   `rara` is a word rather than a number, so it is not read on the percentage
   scale beside it.
@@ -718,11 +718,10 @@ this before deciding which field to use:
   keyed as `"2,0,-2 @0"` and mined from the corpus. It fires on **any** target,
   so it is the one of the two that speaks about **medial** cadences.
 
-Measured over 27,969 cadences in the shipped corpus: 42.5% carry a formula,
-58.7% join the catalogue, 32.4% carry both, and 31.2% are keyed but fall below
-the catalogue's floor. Neither is derivable from the other — of the 101
-signatures that ever co-occur with a formula, 63 map to more than one, because
-the signature is mode-blind and the formula is mode-relative.
+Measured over 26,787 cadences in the shipped corpus: 25.8% carry a formula,
+56.8% join the catalogue, 19.3% carry both, and 43.2% are keyed but fall below
+the catalogue's floor. Neither is derivable from the other, because the
+signature is mode-blind and the formula is mode-relative.
 
 ### `finality` — how often this family closes
 
@@ -832,8 +831,8 @@ A salicus here is Cardine's: an ascent of at least three notes whose
 oriscus is what makes one. An ascending group carrying only the editorial
 Solesmes ictus is a **scandicus** that was marked for rhythm — a distinction
 worth stating because conflating the two is, in Bevenot's word, a trap: over
-the sung corpus the ictus rule matches 2,795 groups of which 36 carry an
-oriscus, while the corpus holds 226 real salici.
+the sung corpus tonus finds 302 salici against 2,960 scandici, and only 9.4%
+of that wider set carries an oriscus at all.
 
 Cardine's correction also decides WHICH note is principal. The printed
 editions lengthen the oriscus itself; the manuscripts show the principal note

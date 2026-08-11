@@ -229,11 +229,8 @@ export interface CorpusLedger {
   /**
    * How many chants tonus holds — every chant it can name, counted once.
    *
-   * This is THE number, and it used to take three to say: `count` was book
-   * LISTINGS (a chant printed in two books counted twice) and `distinct` was
-   * chants, which made the headline figure depend on how many books happened
-   * to print the same melody. A reader had to know that to read either.
-   * Listings are still available, as `listings` below, where they belong —
+   * This is THE number: distinct chants, so it does not move with how many
+   * books happen to print the same melody. Listings are `listings` below —
    * a fact about the shelf, not about the repertoire.
    */
   count: number;
@@ -310,7 +307,7 @@ export interface OrdinariumQuery extends CantusQuery {
 }
 
 // A `Rite` type and a `rite` option are deliberately absent. tonus assembles
-// one cursus, the Benedictine: the Roman office table was 63.4% hollow rows and
+// one cursus, the Benedictine: the Roman office table was largely hollow and
 // its psalmody had no consumer but that office, so `rite: "romanum"` returned a
 // chimera — Tridentine psalms under monastic hymns and versicles, agreeing on 3
 // chant ids out of 48. An option that cannot produce a cursus anyone sang is

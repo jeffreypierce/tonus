@@ -103,7 +103,7 @@ export const STEP = {
 /** The house faces. Junicode is the serif — the real face, not the Crimson Pro
  * stand-in the early rounds carried; Plex Mono is the machine register. */
 export const HOUSE_SERIF = "Junicode, 'Crimson Pro', Georgia, serif";
-/* HOUSE_SANS is GONE (2026-08-10). The house has three faces and each has a
+/* HOUSE_SANS is GONE. The house has three faces and each has a
  * job: Junicode carries content and Latin, Plex Mono carries machine data,
  * Jacquard is the wordmark. The sans stack named a fourth that no page loads,
  * so every label reaching for it resolved to system-ui — SF Pro on macOS —
