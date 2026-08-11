@@ -322,7 +322,10 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     root.appendChild(el("text", {
       y: 40, "text-anchor": "middle",
       "font-family": FIGURES.family,
-      "font-size": STEP.caption, "letter-spacing": "0.04em",
+      // The same step as the numeral above it: they are one year in two
+      // notations, so neither outranks the other by size. The numeral keeps
+      // the stronger ink; this keeps the lighter.
+      "font-size": STEP.label, "letter-spacing": "0.04em",
       fill: INK, "fill-opacity": STRATUM.letters,
     }, plainDay(day)));
   }
@@ -404,7 +407,10 @@ export function annulusTabula(tonus, { year, selected = "easter", onSelect } = {
     // A fixed feast keeps its date whatever Easter does; a movable one is
     // reckoned from Easter. Saying which is which is the whole point of
     // showing them together, and the date alone cannot say it.
-    { key: "dies", head: "dies", mono: true,
+    // NOT mono: the cell reads "Iun 01" — a month's name and a day, which is
+    // a WORD and a figure, not the hz/ratio/id machine data the mono register
+    // is for. It sets in the serif with the nomen beside it.
+    { key: "dies", head: "dies",
       gloss: (r) => r.fixed ? "" : "mobilis" },
   ], { selected, onSelect });
 }
