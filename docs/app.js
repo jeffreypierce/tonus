@@ -57,6 +57,12 @@ const state = {
   // what a hand teaches; off leaves the twenty places and the five digits, and
   // the knuckle line runs the whole way across to make up for it.
   route: true,
+  // The hand read an OCTAVE UP. Most of the corpus is written low against the
+  // gamut — Agnus Dei I runs midi 43-52, the bottom fifth of a hand that
+  // reaches to 90 — so a chant read straight lands on the thumb and stays
+  // there. Raising it is what a cantor does anyway: the gamut names degrees,
+  // and a choir sings them where its voices lie.
+  octave: 0,
   // The temperament is one number: how much of the syntonic comma comes off
   // each fifth. 0 is Pythagorean, 1/11 is (audibly) equal, 1/4 buys the pure
   // major third. A named list of six could not say that they are one family.
@@ -366,12 +372,42 @@ function paschaOf(date) {
 /** The title and detail rows, which move with the date exactly as the panels
  *  do. Split out so `renderPanels` can repaint them without rebuilding the
  *  input row beneath. */
+/** Harmonia's own inputs: which doctrine voices the spheres, and whether the
+ *  aspects are drawn.
+ *
+ *  A FUNCTION, and named in calendariumHeads, because renderPanels rebuilds
+ *  this cell. Written inline it was built once at first render and never
+ *  again: the wheel's chords answered the click — 67 lines to 60 — while the
+ *  button's own tick never moved off the state it was born with. */
+function harmoniaInputs() {
+  if (state.right.calendarium !== "harmonia") return undefined;
+  return el("div", { class: "settings" },
+    el("span", { class: "set-name" }, "doctrina"),
+    el("select", {
+      "aria-label": "doctrina",
+      onchange: (e) => { state.doctrina = e.target.value; renderPanels(); },
+    }, ...DOCTRINAE.map((d) =>
+      el("option", { value: d, selected: state.doctrina === d }, d))),
+    // One thing, on or off — a set of one, so it wears the set's costume
+    // rather than a lone bordered button that matched nothing. The tick
+    // carries the state; the name stays put instead of swapping between
+    // visibiles and occulti, which made the control read as an action.
+    el("div", { class: "segset", role: "group", "aria-label": "aspectus" },
+      el("button", {
+        type: "button", "aria-pressed": state.aspects ? "true" : "false",
+        onclick: () => { state.aspects = !state.aspects; renderPanels(); },
+      }, "aspectus")));
+}
+
 function calendariumHeads() {
   const [feast] = tonus.festum({ date: state.day });
   return {
     title: el("h1", {}, feast?.nomen ?? "—"),
     detail: calendariumDetail(feast),
     rightDetail: calendariumRightDetail(feast),
+    // As canticumHeads does: the repaint has to rebuild this cell, or a toggle
+    // in it shows the state it was first drawn with forever.
+    rightInputs: harmoniaInputs(),
   };
 }
 
@@ -479,24 +515,7 @@ function calendarium() {
       // survive its own click, or the arrow would be replaced mid-press.
       renderPanels();
     }, { anchors: paschaOf(state.day), anchor: state.anchor }),
-    rightInputs: state.right.calendarium === "harmonia"
-      ? el("div", { class: "settings" },
-          el("span", { class: "set-name" }, "doctrina"),
-          el("select", {
-            "aria-label": "doctrina",
-            onchange: (e) => { state.doctrina = e.target.value; renderPanels(); },
-          }, ...DOCTRINAE.map((d) =>
-            el("option", { value: d, selected: state.doctrina === d }, d))),
-          // One thing, on or off — a set of one, so it wears the set's costume
-          // rather than a lone bordered button that matched nothing. The tick
-          // carries the state; the name stays put instead of swapping between
-          // visibiles and occulti, which made the control read as an action.
-          el("div", { class: "segset", role: "group", "aria-label": "aspectus" },
-            el("button", {
-              type: "button", "aria-pressed": state.aspects ? "true" : "false",
-              onclick: () => { state.aspects = !state.aspects; renderPanels(); },
-            }, "aspectus")))
-      : null,
+    rightInputs: harmoniaInputs() ?? null,
     left: panels.left,
     right: panels.right,
   });
@@ -907,6 +926,17 @@ function selectedPitch() {
  *  So the note is translated once, here, into whatever key each figure uses —
  *  rather than each figure guessing, or the state storing three forms of the
  *  same fact. */
+/** A pitch moved by whole semitones, named as spn — "G2" + 12 -> "G3".
+ *  Asked of the library rather than parsed here: an spn's octave digit is not
+ *  simply the number after the letter (B3 and C4 are a semitone apart), and a
+ *  string edit gets that wrong at every B/C boundary. */
+function spnAt(spn, semitones) {
+  if (!spn) return spn;
+  const T = tonus.temperamentum({});
+  const midi = T.nota(spn)?.midi;
+  return midi == null ? spn : (T.nota(midi + semitones)?.spn ?? spn);
+}
+
 function selectionFor(rows, spn) {
   if (!spn) return undefined;
   // AN EXACT PITCH FIRST. Pitch class alone is right for a row set that spans
@@ -1053,7 +1083,15 @@ function hexachordPicker() {
       el("button", {
         type: "button", "aria-pressed": state.route ? "true" : "false",
         onclick: () => { state.route = !state.route; renderPanels(); },
-      }, "route")),
+      }, "route"),
+      // Read the chant an octave up. It moves where the piece SITS on the
+      // hand, not what it is: the same degrees, the same solmization, one
+      // octave higher up the gamut, which is where most of the corpus lands
+      // when a choir actually sings it.
+      el("button", {
+        type: "button", "aria-pressed": state.octave ? "true" : "false",
+        onclick: () => { state.octave = state.octave ? 0 : 1; renderPanels(); },
+      }, "octava")),
   );
 }
 
@@ -1094,16 +1132,25 @@ function manusPanel() {
   const row = spn ? state.score?.tabula.find((r) => r.spn === spn) : null;
   const tune = { tuning: "meantone", comma: state.comma };
   const gamutRows = handRows(tonus, { mode, ...tune });
+  // THE OCTAVE IS A TRANSPOSITION OF THE READING, NOT OF THE CHANT. The score,
+  // the tables and every other panel keep the pitches the book prints; only
+  // which JOINT a note is read at moves. So the shift is applied here, at the
+  // two points where a chant pitch and a gamut row are matched, and nowhere
+  // else — `state.score` is never rewritten.
+  const shift = state.octave * 12;
+  const raise = (spn_) => (!spn_ || !shift ? spn_ : spnAt(spn_, shift));
   const opts = {
     mode, ...tune,
-    selected: selectionFor(gamutRows, spn),
+    selected: selectionFor(gamutRows, raise(spn)),
     onSelect: (key) => {
       const row = gamutRows.find((r) => r.key === key);
-      // The joint's OWN pitch, matched exactly in the chant where the chant
-      // sings it. Matching by pitch class handed back the first note sharing
-      // the class, which is a lower octave than the one just pointed at.
-      const inChant = state.score?.tabula.find((t) => t.spn === row?.spn);
-      selectPitch(inChant?.spn ?? row?.spn ?? null);
+      // Back down into the chant's own octave to find the note that was
+      // pointed at. The joint's OWN pitch, matched exactly in the chant where
+      // the chant sings it: matching by pitch class handed back the first note
+      // sharing the class, a lower octave than the one just pointed at.
+      const want = shift ? spnAt(row?.spn, -shift) : row?.spn;
+      const inChant = state.score?.tabula.find((t) => t.spn === want);
+      selectPitch(inChant?.spn ?? want ?? null);
     },
   };
   // THE CHART DRIVES THE HAND. `piece` reads the hexachord in force at the
