@@ -494,7 +494,7 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma 
       cx: sc(lx), cy: sc(ly), r: isSel ? 13 : 10,
       // The page's own paper, so the gap follows the theme rather than
       // punching a hardcoded white hole in a themed figure.
-      fill: "var(--paper, #FDFDFC)",
+      fill: "var(--paper, #FDFDFD)",
     }));
     svg.appendChild(el("text", {
       x: sc(lx), y: sc(ly + (isSel ? 7 : 5)),

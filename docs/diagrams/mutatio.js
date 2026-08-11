@@ -25,7 +25,7 @@
 // score and the tables carry — so pointing at the ring is not a second
 // selection, it is the one the whole page already shares.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SYMBOL } from "./ink.js";
 import { FRAME } from "./frame.js";
 import { BOX, CROWN } from "./hand-figure.js";
 import { pointAt } from "./polar.js";
@@ -48,10 +48,6 @@ const LANES = [
   { key: "naturale", sign: "\u25cb", r: 278 },
   { key: "molle", sign: "\u266d", r: 258 },
 ];
-// Neither text face carries the planetary or musical signs (see
-// fonts/README.md), so this is the one place a figure names a system stack.
-const SIGN_FACE = "'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols2', "
-  + "Junicode, Georgia, serif";
 const LANE = new Map(LANES.map((l) => [l.key, l.r]));
 const INNER = 244;                       // where the ring stops and the hand begins
 // ONE UNIT ACROSS THE COMPOSITE. A nested svg scales strokes and type along
@@ -187,9 +183,9 @@ export function mutatio({ rows, note, phrases = [], centre, onSelect } = {}) {
     const [x, y] = P(180, l.r);
     root.appendChild(el("text", {
       x, y: y + 5, "text-anchor": "middle",
-      "font-family": SIGN_FACE, "font-size": STEP.body,
+      "font-family": HOUSE_SYMBOL, "font-size": STEP.body,
       fill: INK, "fill-opacity": STRATUM.label,
-      "paint-order": "stroke", stroke: "var(--paper, #FDFDFC)", "stroke-width": 5,
+      "paint-order": "stroke", stroke: "var(--paper, #FDFDFD)", "stroke-width": 5,
     }, l.sign));
   }
 
