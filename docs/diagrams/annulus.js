@@ -84,19 +84,20 @@ function sameDay(a, b) {
     && x.getUTCDate() === y.getUTCDate();
 }
 
-/** The standing day in FIGURES, in reading order and unpadded: 1.6, the first
- *  of June. UTC, like everything the calendar reports.
+/** The standing day in FIGURES, in reading order and unpadded: 1.6.991, the
+ *  first of June. UTC, like everything the calendar reports.
  *
- *  Day then month, which is the order the date is spoken and the order the
- *  ring is read in — not ISO's month-before-day, which is sorting order for a
- *  machine. No leading zeros: they exist to make strings the same length in a
- *  column, and this is one date under a numeral, not a column.
+ *  Day, month, year — the order a date is spoken, smallest unit first, not
+ *  ISO's year-first, which is sorting order for a machine. No leading zeros:
+ *  they exist to make strings the same length in a column, and this is one
+ *  date under an inscription.
  *
- *  The year is not repeated — the numeral directly above IS the year, and the
- *  ring is drawn for exactly one. */
+ *  The year repeats what the numeral above says, in the other notation — CMXCI
+ *  and 991 are the same year read two ways, which is the whole point of
+ *  setting them together. */
 function plainDay(date) {
   const d = new Date(date);
-  return `${d.getUTCDate()}.${d.getUTCMonth() + 1}`;
+  return `${d.getUTCDate()}.${d.getUTCMonth() + 1}.${d.getUTCFullYear()}`;
 }
 
 /** A date read in UTC. tonus is UTC-canonical, and local-time formatting moves
