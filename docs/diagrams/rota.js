@@ -98,7 +98,7 @@ export function rotaRows(tonus, { date, doctrina } = {}) {
         chorda: v.greekName,
         // The doctrina's own fraction against the mese — the primary datum,
         // of which the note name is the sounding.
-        ratio: `${v.ratio[0]}/${v.ratio[1]}`,
+        ratio: `${v.ratio[0]}:${v.ratio[1]}`,
         spn: v.spn,
         midi: v.midi,
         hz: v.hz,
@@ -203,11 +203,16 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
       "fill-opacity": isSel ? 1 : STRATUM.wave,
     }));
 
-    // The glyph outside its dot, turned to stay upright.
-    const [gx, gy] = pointAt(eclipticAngle(r.longitude), r.radius + dot + 11);
+    // The glyph outside its dot, turned to stay upright. Two more units of
+    // clearance than it used to take, because the glyph is a step larger.
+    const [gx, gy] = pointAt(eclipticAngle(r.longitude), r.radius + dot + 13);
     root.appendChild(el("text", {
       x: sc(gx), y: sc(gy), "text-anchor": "middle", "dominant-baseline": "central",
-      "font-family": HOUSE_SERIF, "font-size": STEP.caption,
+      // A planet glyph IS the named thing in this wheel, the same as a gamut
+      // syllable in the hand — `label` is the step for named things, `caption`
+      // the workhorse for tick labels. This also puts the two figures'
+      // primary labels on one step.
+      "font-family": HOUSE_SERIF, "font-size": STEP.label,
       fill: isSel ? RUBRICA : INK,
       "fill-opacity": isSel ? 1 : STRATUM.letters,
     }, r.symbol + (r.retrograde ? "℞" : "")));

@@ -54,7 +54,17 @@ const SIGN_FACE = "'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols2', "
   + "Junicode, Georgia, serif";
 const LANE = new Map(LANES.map((l) => [l.key, l.r]));
 const INNER = 244;                       // where the ring stops and the hand begins
-const HAND_BOX = 532;                    // the square the hand is fitted into
+// ONE UNIT ACROSS THE COMPOSITE. A nested svg scales strokes and type along
+// with geometry, so fitting the hand into a box wider than its own quietly
+// rescales every rung inside it: at 532 the hand's unit ran ×1.118, and
+// STROKE.firm painted 1.17 where the ring's painted 1.05. A rung is supposed
+// to mean one rendered thing in both.
+//
+// It is BOX.w and not BOX.h because the fit below divides by
+// max(BOX.w, BOX.h) — the box is 476 × 435, so the width is the max and the
+// unit lands at exactly 1. Were the hand ever redrawn taller than it is wide,
+// this would have to become that max.
+const HAND_BOX = BOX.w;                  // 476 — the square the hand is fitted into
 // How far ABOVE the molle lane the crown of the hand hangs. Zero sets ee's top
 // edge exactly on the lane; a little clear of it reads as the hand standing in
 // the ring rather than hooked onto it.
@@ -152,7 +162,21 @@ export function mutatio({ rows, note, phrases = [], centre, onSelect } = {}) {
   });
   root.appendChild(el("path", {
     d: d.join(" "), fill: "none", stroke: INK,
-    "stroke-opacity": STRATUM.letters, "stroke-width": STROKE.firm,
+    // TONED BY WEIGHT, NOT BY OPACITY. This line has to stay the darkest mark
+    // in the band — it is what the figure argues — so it comes off the claim
+    // rung and KEEPS its stratum. Dropping the opacity instead would put it
+    // level with the loci and the figure would stop having a subject.
+    //
+    // Measured as opacity × width, it now leads the loci 0.465 to 0.285. It
+    // used to TRAIL them, 0.651 against 0.788, which was the whole complaint:
+    // the lookup table was inked louder than the claim it serves.
+    //
+    // Note the wheels render at ~0.785 px per unit (640u in ~502px), so every
+    // rung below `heavy` paints under one device pixel — `fine` lands at
+    // 0.59px. That is the house condition, not this line's problem; the
+    // annulus's own principal mark is an 8-unit BAND rather than a rung for
+    // the same reason.
+    "stroke-opacity": STRATUM.letters, "stroke-width": STROKE.fine,
     "stroke-linecap": "round",
   }));
 
