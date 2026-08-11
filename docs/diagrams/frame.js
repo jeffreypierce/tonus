@@ -27,19 +27,12 @@ const NS = "http://www.w3.org/2000/svg";
 export const FRAME = {
   size: 640,          // the viewBox, square
   centre: 320,
-  // THE THREE WHEELS FILL THE SAME BOX. These were 228 / 231.5 / 234 / 240 /
-  // 271 / 255.5, which put the outer band 271 from the centre — while mutatio,
-  // which does not use this frame, draws its outer lane and rubric out to 316.
-  // So two wheels drew 542 units of ink in a 640 box and the third drew 624,
-  // and the Manus figure sat visibly higher on the page than the other two.
-  // Scaled by 1.1513 so the band lands where mutatio's does; every wheel's own
-  // inner radii were scaled with them, so nothing changed shape.
-  compass: 262.5,     // the tick ring: where the contents stop
-  week: 266.5,        // a week tick reaches to here
-  tick: 269.5,        // a division tick reaches further
-  bandIn: 276.5,      // the labelled band
-  bandOut: 312,
-  bandName: 294,      // its names ride the middle
+  compass: 228,       // the tick ring: where the contents stop
+  week: 231.5,        // a week tick reaches to here
+  tick: 234,          // a division tick reaches further
+  bandIn: 240,        // the labelled band
+  bandOut: 271,
+  bandName: 255.5,    // its names ride the middle
 };
 
 export const el = (tag, attrs, text) => {

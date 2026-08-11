@@ -34,11 +34,11 @@ import { FRAME, wheel, outerRing, roundel } from "./frame.js";
 const NS = "http://www.w3.org/2000/svg";
 
 // The concentric systems, outward: season band, anchor orbit, compass, months.
-const R_SEASON = 172.5;        // the banded liturgical ring
-const R_SEASON_NAME = 202.5;   // season names, outside their band
-const R_ANCHOR = 227;        // the feasts' orbit
+const R_SEASON = 150;        // the banded liturgical ring
+const R_SEASON_NAME = 176;   // season names, outside their band
+const R_ANCHOR = 197;        // the feasts' orbit
 const R_COMPASS = FRAME.compass;   // the ring both wheels share begins here
-const SEASON_WEIGHT = 9;     // the season ring is a BAND, not a hairline
+const SEASON_WEIGHT = 8;     // the season ring is a BAND, not a hairline
 
 /** The anchors, in the order pascha() reports them. Only the dot size is the
  * diagram's own business: how much a feast weighs in the drawing is a

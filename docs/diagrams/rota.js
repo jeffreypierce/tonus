@@ -56,7 +56,7 @@ function eclipticTurn(tonus, year) {
 
 // The spheres, inward to outward. The innermost radius and the step between
 // them are drawing choices.
-const R_FIRST = 48, R_STEP = 35.7;
+const R_FIRST = 42, R_STEP = 31;
 
 /** THE CHALDEAN ORDER — Moon nearest, Saturn furthest, by MEAN motion. This is
  * received doctrine, not a measurement: it is the order Ptolemy and Boethius
