@@ -460,6 +460,14 @@
        selected tab — which goes to 600 — losing its distinction. */
     font-weight: 500;
   }
+  /* The chosen VIEW is rubrica — text and rule both. The page's one red marks
+     the largest choice on it, the way a rubric marks the thing being sung; the
+     panel strips below stay in ink, so the header reads as a different order
+     of choice rather than a louder instance of the same one. */
+  .tabstrip-large button[aria-selected="true"] {
+    color: var(--rubrica);
+    border-bottom-color: var(--rubrica);
+  }
 
   /* The strip is aligned to the header's own bottom edge, not to the baseline
      the wordmark and the tagline share: this strip carries a RULE, and a rule
@@ -532,23 +540,30 @@
     font-weight: 400;
   }
   .chant-row { position: relative; }
-  /* HOVER: the rule darkens and the name gains a little weight. Nothing moves,
-     nothing fills — the row answers the pointer without changing size. Junicode
-     carries a real wght axis, so 500 is a drawn weight and the name does not
-     reflow: the advance widens by well under a pixel at this size. */
-  .chant-row:hover { border-bottom-color: var(--edge); }
-  .chant-row button:hover .chant-row-name { font-weight: 500; }
-  /* SELECTED: the mark is in the MARGIN. A bar the height of the row, and the
-     row on pure white — so the chosen chant lifts off the page instead of
-     being washed with a tint. The bar sits outside the text column, in the
-     air the page's own inset provides, which is why it can be full ink
-     without shouting. */
-  .chant-row[aria-selected="true"] { background: var(--paper-lit); }
-  .chant-row[aria-selected="true"]::before {
+  /* ONE MARK IN THE MARGIN, for both states, as the tables wear it: a bar the
+     height of the row, outside the text column in the air the page's own inset
+     provides. Hover used to darken the row's BOTTOM rule, which put the answer
+     to the pointer on the boundary between two rows — at a glance it reads as
+     belonging to the row below as readily as the one above. A left bar belongs
+     to exactly one row.
+
+     Nothing moves and nothing fills: the bar is absolutely positioned in the
+     margin, so it costs the row no width and the list does not shift under the
+     pointer. The name also gains a little weight — Junicode's wght axis is
+     real, so 500 is a drawn weight and the advance does not reflow. */
+  .chant-row::before {
     content: "";
     position: absolute; left: calc(-1 * var(--sp-3)); top: 0; bottom: 0;
-    width: 2px; background: var(--ink);
+    width: 2px; background: transparent;
   }
+  .chant-row:hover::before { background: var(--edge); }
+  .chant-row button:hover .chant-row-name { font-weight: 500; }
+  /* SELECTED is the same bar in RUBRICA — the page's one red, spent on the
+     single thing the reader has chosen — with the row on pure white so it
+     lifts off the page rather than being washed with a tint. Hover is the grey
+     preview of exactly this mark, in the same place at the same width. */
+  .chant-row[aria-selected="true"] { background: var(--paper-lit); }
+  .chant-row[aria-selected="true"]::before { background: var(--rubrica); }
   /* The chosen name keeps the weight the hover previewed. No colour change —
      it already carries full ink, and the margin bar is what marks the row. */
   .chant-row[aria-selected="true"] .chant-row-name { font-weight: 500; }
@@ -876,18 +891,24 @@
     vertical-align: baseline;
   }
   table.tabula tr[tabindex] { cursor: pointer; }
-  /* The same one channel the chant list uses: the row's rule at --rule, at
-     --edge under the pointer, at --ink where you are. A table's text stays
-     full ink at rest — every row here is content, where in a list of chants
-     every row is an alternative — so the row that is current says so by
-     weight in its first cell rather than by everything else fading. */
-  table.tabula tr[tabindex]:hover td { border-bottom-color: var(--edge); }
-  /* The same mark the chant list wears: a bar in the margin and lit paper.
-     A table has no outer inset to hang the bar in, so it rides the first
-     cell's inner edge as a shadow — which takes no width and cannot shift the
-     column. */
+  /* ONE MARK, IN THE LEFT MARGIN, for both states — the bar the chant list
+     wears. Hover used to darken the row's BOTTOM rule, which put the answer to
+     the pointer on the boundary between two rows: at a glance it reads as
+     belonging to the row below as easily as the one above. A left edge belongs
+     to exactly one row.
+
+     It rides the first cell's inner edge as a shadow rather than a border,
+     because a table has no outer inset to hang a bar in and a shadow takes no
+     width — so nothing shifts when the mark appears. */
+  table.tabula tr[tabindex]:hover td:first-child {
+    box-shadow: inset 2px 0 0 var(--edge);
+  }
+  /* SELECTED is the same bar in RUBRICA: the page's one red, spent on the
+     single thing the reader has chosen. Hover is a grey preview of it, in the
+     same place and at the same width, so the pointer shows where the mark will
+     land before it lands. */
   table.tabula tr.sel td { background: var(--paper-lit); }
-  table.tabula tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--ink); }
+  table.tabula tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--rubrica); }
   table.tabula tr[tabindex]:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
 
   table.tabula .mono { font-family: var(--mono); font-size: var(--caption); }
