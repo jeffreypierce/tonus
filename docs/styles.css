@@ -555,10 +555,13 @@
   }
   /* The name takes the slack, the aside sits at the half's right edge. The
      left inset lives here rather than on the button, so the row's padding
-     cannot shift where the notation starts. */
+     cannot shift where the notation starts.
+     It is --sp-3 to match a table cell's: both wear the same selection bar on
+     their left edge, so the text has to stand off it by the same air, or the
+     two marks read as different marks. */
   .chant-row-head {
     display: flex; align-items: baseline; gap: var(--sp-3);
-    min-width: 0; justify-content: space-between; padding-left: var(--sp-1);
+    min-width: 0; justify-content: space-between; padding-left: var(--sp-3);
   }
   .chant-row-head .chant-row-text { min-width: 0; }
   .chant-row button:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
@@ -592,13 +595,18 @@
      belonging to the row below as readily as the one above. A left bar belongs
      to exactly one row.
 
-     Nothing moves and nothing fills: the bar is absolutely positioned in the
-     margin, so it costs the row no width and the list does not shift under the
-     pointer. The name also gains a little weight — Junicode's wght axis is
-     real, so 500 is a drawn weight and the advance does not reflow. */
+     ON THE ROW'S OWN EDGE, which is where the tables put theirs. It used to
+     hang at -12px, out in the page's inset — so the two marks disagreed by a
+     full 12px against the text they mark, and the chant list's bar read as
+     floating off to the left of its own row.
+
+     Nothing moves and nothing fills: the bar is absolutely positioned, so it
+     costs the row no width and the list does not shift under the pointer. The
+     name also gains a little weight — Junicode's wght axis is real, so 500 is
+     a drawn weight and the advance does not reflow. */
   .chant-row::before {
     content: "";
-    position: absolute; left: calc(-1 * var(--sp-3)); top: 0; bottom: 0;
+    position: absolute; left: 0; top: 0; bottom: 0;
     width: 2px; background: transparent;
   }
   .chant-row:hover::before { background: var(--edge); }
