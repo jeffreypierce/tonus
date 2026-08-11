@@ -454,6 +454,11 @@
        name this way and as a label the other. */
     font-variant-caps: small-caps;
     letter-spacing: var(--track-caps);
+    /* Junicode DRAWS its small caps (smcp is in the subset as of 2026-08-10),
+       so weight is a real axis here rather than a synthetic thickening of
+       scaled capitals. 500 gives the strip presence at body size without the
+       selected tab — which goes to 600 — losing its distinction. */
+    font-weight: 500;
   }
 
   /* The strip is aligned to the header's own bottom edge, not to the baseline

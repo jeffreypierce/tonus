@@ -25,13 +25,24 @@ U+2032-2033,U+2192,U+2609,U+263D-2644,U+266D-266F" \
   --flavor=woff2 --output-file=OUT.woff2
 ```
 
-`--layout-features` is a WHITELIST: anything not named is discarded. It once
-read `kern,liga,ccmp,mark,mkmk`, which shipped a Junicode with no small caps
-and no oldstyle figures — `font-variant-caps: small-caps` then had the browser
-FAKE them by scaling capitals, so a word wore two stem weights. `smcp`/`c2sc`
+`--layout-features` is a WHITELIST: anything not named is discarded, and the
+shipped file is the only authority on what survived — this table has been wrong
+about it once. Until 2026-08-10 the invocation above named `smcp`/`c2sc` while
+the woff2 in the repo carried only `ccmp` and `liga`: the file had been built
+from an earlier, shorter list and the docs updated without rebuilding it. So
+`font-variant-caps: small-caps` had the browser FAKE small caps by scaling
+capitals, and a word wore two stem weights. Check rather than trust:
+
+```sh
+python3 -c "from fontTools.ttLib import TTFont; f=TTFont('JunicodeVFsubset.woff2'); \
+print(sorted({r.FeatureTag for r in f['GSUB'].table.FeatureList.FeatureRecord}))"
+```
+
+(woff2 needs `pip install brotli` for both reading and writing.) `smcp`/`c2sc`
 carry the small caps the site labels its figures with; `onum` the oldstyle
 figures for prose and years; `lnum`/`tnum` the lining tabular figures a numeric
-column needs. Measure the file size after: small-cap glyph closure grows it.
+column needs. Small-cap glyph closure costs real bytes: adding them took this
+subset from 120,380 to 150,820 (+30KB, +25%).
 
 `mark`/`mkmk` are required for combining accents; Junicode's `wght`/`wdth`/
 `ENLA` axes survive subsetting — verified 2026-08-10 in the shipped file, which
