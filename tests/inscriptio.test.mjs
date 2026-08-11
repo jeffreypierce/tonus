@@ -258,18 +258,24 @@ describe("inscriptio — front matter", () => {
     assert.ok(svg.includes(">In Nativitate Domini<"));
   });
 
-  test("dropcap draws a rubricated initial from the first lyric", () => {
+  test("dropcap draws the initial from the first lyric, in the note ink", () => {
     const { svg } = inscriptio(score, { dropcap: true });
-    assert.ok(/class="dropcap"[^>]*fill="var\(--tonus-rubrica, #9E2B25\)"[^>]*>P</.test(svg));
+    // BLACK, not rubricated. The books set the initial in black and spend
+    // their red on the genus/mode mark beside it.
+    assert.ok(/class="dropcap"[^>]*fill="var\(--tonus-note, #111\)"[^>]*>P</.test(svg));
   });
 
   test("theme.colors.rubrica sets the liturgical red, and CSS can still win", () => {
-    const { svg } = inscriptio(score, { dropcap: true, theme: { colors: { rubrica: "#c00" } } });
+    // Probed on the RUBRIC mark, which is what the reserved colour is for.
+    // (This used to probe the dropcap, back when the cap was rubricated.)
+    const { svg } = inscriptio(score, {
+      annotation: "auto", theme: { colors: { rubrica: "#c00" } },
+    });
     // The theme value becomes the custom property's FALLBACK, so the file
     // carries the ink it was drawn with while a host stylesheet setting
     // --tonus-rubrica still overrides it. An inline literal could not be
     // overridden at all — an inline fill beats any stylesheet rule.
-    assert.ok(/class="dropcap"[^>]*fill="var\(--tonus-rubrica, #c00\)"/.test(svg));
+    assert.ok(/class="rubric"[^>]*fill="var\(--tonus-rubrica, #c00\)"/.test(svg));
   });
 
   test("no front-matter options → no header band (bare score)", () => {

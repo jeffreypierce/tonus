@@ -298,8 +298,17 @@ const GENUS_ABBREV: Record<string, string> = {
  * books set it ("Intr." over "8.") — shared by both species. */
 export function autoRubricLines(chant: Chant): string[] {
   const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+  // AN ORDINARY CHANT SHOWS ITS MODE ALONE. `genus` for these is "Ordinarium",
+  // which reads identically over every Kyrie, Gloria, Sanctus and Agnus — a
+  // mark that never changes tells a reader nothing. Naming the piece instead
+  // ("Agnus", "Kyrie") only repeats the title set directly above the score,
+  // and this slot is the CATEGORY's, not the piece's. So the line is dropped
+  // and the mode stands on its own.
+  const genus = chant.ordinarium
+    ? null
+    : chant.genus && capitalize(GENUS_ABBREV[chant.genus] ?? `${chant.genus}.`);
   return [
-    chant.genus && capitalize(GENUS_ABBREV[chant.genus] ?? `${chant.genus}.`),
+    genus,
     chant.mode && `${chant.mode}.`,
   ].filter(Boolean) as string[];
 }
@@ -1325,16 +1334,23 @@ export function toSvg(
     }
   }
 
-  // Dropcap — the large rubricated initial in its own left column beside the
-  // first system. The initial IS the lyric's first letter, so the lyric line
-  // carries the remainder only (the book prints "K yrie" as cap + "yrie").
+  // Dropcap — the large initial in its own left column beside the first
+  // system. The initial IS the lyric's first letter, so the lyric line carries
+  // the remainder only (the book prints "K yrie" as cap + "yrie").
+  //
+  // IT TAKES THE NOTE INK, NOT THE RUBRICA. The printed books set the initial
+  // in black and spend their red on the genus/mode mark beside it — see the
+  // Liber's "Intr. 1." over a black R. It was rubricated here, which put the
+  // reserved colour on the largest mark on the page and left the rubric it is
+  // reserved for competing with it. A caller wanting a red initial themes
+  // `--tonus-note` on the cap, or passes its own colour.
   const dropcapSvgs: string[] = [];
   if (capInitial && lyrics.length > 0) {
     const y = headerY + L.lyricY; // bottom-aligned with the first lyric baseline
     dropcapSvgs.push(
       `<text class="dropcap" x="${r.padding.toFixed(2)}" y="${y.toFixed(2)}" ` +
       `${fontAttrs(r.fonts.dropcap)} font-size="${(capSize * r.fonts.dropcap.scale).toFixed(1)}" ` +
-      `fill="${r.rubricaColor}">${esc(capInitial.toUpperCase())}</text>`,
+      `fill="${r.noteColor}">${esc(capInitial.toUpperCase())}</text>`,
     );
   }
 
