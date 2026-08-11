@@ -30,6 +30,11 @@ import { middleOf } from "./diagrams/notehead.js";
 
 const EPOCH = new Date(Date.UTC(991, 5, 1));   // the library's own default day
 
+// The chant Canticum opens on: Agnus Dei I, from the Kyriale. Short enough to
+// read whole, mode 4, and its two b's put the hexachord apparatus to work on
+// first sight — which is what the right-hand column is for.
+const DEFAULT_CANTUS = "gregobase:2977";
+
 const state = {
   view: "calendarium",
   day: EPOCH,
@@ -1183,13 +1188,14 @@ function readUrl() {
     if (Number.isFinite(c) && c >= 0 && c <= COMMA_MAX) state.comma = c;
   }
   if (p.has("lectio")) state.right[state.view] = p.get("lectio");
-  const id = p.get("cantus");
-  if (id) {
-    const [chant] = tonus.cantus({ id });
-    if (chant) {
-      state.chant = chant;
-      try { state.score = tonus.notatio(chant); } catch { state.score = null; }
-    }
+  // A chant from the URL, or the standing one. Canticum with nothing loaded is
+  // a column of empty panels — the whole view is a function of a chant — so it
+  // opens on a piece rather than on the invitation to find one.
+  const id = p.get("cantus") ?? DEFAULT_CANTUS;
+  const [chant] = tonus.cantus({ id });
+  if (chant) {
+    state.chant = chant;
+    try { state.score = tonus.notatio(chant); } catch { state.score = null; }
   }
 }
 

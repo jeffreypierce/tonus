@@ -436,13 +436,21 @@
   .tabstrip button:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
   .tabpanel:focus-visible { outline: none; }
 
-  /* The view switch is the same strip at TITLE size, because choosing a view
-     is the largest choice on the page. It was a hand-built row of buttons that
-     copied twenty-six declarations from here and shipped `aria-selected` on a
-     plain button with no `role="tab"`, no `aria-controls` and no arrow keys —
-     the one strip a keyboard reaches first was the one strip that did not
-     behave like a tab strip. It now comes from `tabs()` like the other two. */
-  .tabstrip-large button { font-size: var(--title); }
+  /* The view switch is the same strip at the same SIZE as the other two, set
+     in small caps. Choosing a view is the largest choice on the page, but it
+     was carrying that in point size and outweighed the masthead beside it;
+     small caps mark it as a different KIND of choice instead — a register
+     change rather than a louder voice.
+
+     (It was a hand-built row of buttons that copied twenty-six declarations
+     from here and shipped `aria-selected` on a plain button with no
+     `role="tab"`, no `aria-controls` and no arrow keys — the one strip a
+     keyboard reaches first was the one strip that did not behave like a tab
+     strip. It comes from `tabs()` now, like the other two.) */
+  .tabstrip-large button {
+    font-variant-caps: all-small-caps;
+    letter-spacing: var(--track-caps);
+  }
 
   /* The strip is aligned to the header's own bottom edge, not to the baseline
      the wordmark and the tagline share: this strip carries a RULE, and a rule
