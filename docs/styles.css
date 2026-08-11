@@ -168,6 +168,14 @@
     --serif: Junicode, "Crimson Pro", Georgia, serif;
     --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
     --display: Jacquard, var(--serif);
+    /* ── the punctum, for a control that marks a note ──
+       Bravura's E990, the square notehead, as a mask so it takes currentColor.
+       Solid is on, hollow is off — one note, inked or not. The path is the
+       same glyph the emitter draws, kept here because CSS cannot reach the
+       baked JSON the diagrams import. */
+    --punctum-solid: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 160 203%22%3E%3Cg transform=%22translate(0 102) scale(1 -1)%22%3E%3Cpath d=%22M0 -97C0 -101 1 -101 2 -101C4 -101 7 -99 8 -97C20 -90 48 -78 80 -77H85C121 -77 145 -89 153 -97C156 -100 157 -101 158 -101C160 -101 160 -97 160 -97V48C160 83 117 102 76 102C37 102 0 85 0 50Z%22 fill=%22black%22/%3E%3C/g%3E%3C/svg%3E");
+    --punctum-hollow: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 160 203%22%3E%3Cg transform=%22translate(0 102) scale(1 -1)%22%3E%3Cpath d=%22M0 -97C0 -101 1 -101 2 -101C4 -101 7 -99 8 -97C20 -90 48 -78 80 -77H85C121 -77 145 -89 153 -97C156 -100 157 -101 158 -101C160 -101 160 -97 160 -97V48C160 83 117 102 76 102C37 102 0 85 0 50Z%22 fill=%22none%22 stroke=%22black%22 stroke-width=%2224%22/%3E%3C/g%3E%3C/svg%3E");
+
     /* The planetary and musical symbols are in neither text face (see
        fonts/README.md); this is the one place a system stack is correct. */
     --symbol: "Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols2", var(--serif);
@@ -688,18 +696,31 @@
     cursor: pointer;
   }
   .segset button:first-child { border-left: 0; }
+  /* THE MARK IS A PUNCTUM — the square notehead the chant books print, and the
+     one this page's own emitter draws. It was a 5x5 CSS box, which is not the
+     shape: a punctum is TALLER than it is wide (160x203 font units, 0.788) and
+     its edges are drawn, not ruled. Off is the same note hollow.
+
+     Carried as a mask rather than a background, so `currentColor` still drives
+     it and the mark follows the button's ink through hover, pressed and
+     disabled without restating a colour. The path is Bravura's E990, the same
+     glyph tonus bakes for the notation. */
   .segset button::before {
-    content: ""; width: 5px; height: 5px;
-    border: 1px solid currentColor;
+    content: ""; width: 7px; height: 9px; flex: none;
     transform: translateY(-1px);
-    flex: none;
+    background: currentColor;
+    -webkit-mask: var(--punctum-hollow) center / contain no-repeat;
+    mask: var(--punctum-hollow) center / contain no-repeat;
   }
   /* How many the office holds. A count is machine data about the name beside
      it, so it stays quiet whether the segment is in or out. */
   .seg-n { color: var(--label); font-size: var(--micro); font-variant-numeric: tabular-nums; }
   .segset button:hover { color: var(--ink); }
   .segset button[aria-pressed="true"] { color: var(--ink); }
-  .segset button[aria-pressed="true"]::before { background: var(--ink); border-color: var(--ink); }
+  .segset button[aria-pressed="true"]::before {
+    -webkit-mask-image: var(--punctum-solid);
+    mask-image: var(--punctum-solid);
+  }
   .segset button[disabled] { color: var(--ghost); cursor: default; opacity: 0.55; }
   .segset button[disabled]:hover { color: var(--ghost); }
   .segset button:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
