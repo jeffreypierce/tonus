@@ -357,7 +357,7 @@ export function getChants(query?: CantusQuery): Chant[] {
   // An empty query is a MALFORMATION here, not a no-match, and that is
   // deliberate: the filters below narrow from CORPUS, so an empty query has no
   // honest answer. Returning [] would claim a search found nothing when none
-  // ran; returning the corpus would dress 2,887 chants as a result. The whole
+  // ran; returning the corpus would dress 2,767 listings as a result. The whole
   // shelf is `corpus()`, which says so in its name.
   if (!query || Object.keys(query).length === 0) {
     throw new Error(

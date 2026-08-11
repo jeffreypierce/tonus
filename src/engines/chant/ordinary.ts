@@ -356,7 +356,7 @@ export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
 // Mass with the Gloria (rung with bells, which then fall silent until the
 // Easter Vigil) despite Lent's penitential omission and the Triduum's
 // otherwise empty ordinary. The Credo and the Sunday sprinkle rite are not
-// part of this evening Mass. See docs/chant.md.
+// part of this evening Mass. See docs/api/chant.md.
 const MAUNDY_THURSDAY_ID = "Quad6-4";
 // The feast carries no numbered Kyriale mass of its own (masses: []); as a
 // paschally-adjacent solemnity it draws on Mass I (Lux et origo) — the same

@@ -1,13 +1,13 @@
 // ---------------------------------------------------------------------------
 // engines/census — where a chant sits against the corpus that holds it
 // ---------------------------------------------------------------------------
-// The corpus repo censuses every shipped chant into a block of 225 float32s:
+// The corpus repo censuses every shipped chant into a block of 221 float32s:
 // modal behaviour, degree histogram, interval bigrams, trigram and cadence
 // vocabulary, chironomy, text setting, formula hits. This engine reads those
 // blocks and answers one question — how typical is this chant, and what is it
 // near?
 //
-// DISTANCE IS COSINE PER FIELD GROUP, never over the flat 225. Cosine
+// DISTANCE IS COSINE PER FIELD GROUP, never over the flat 221. Cosine
 // on the whole vector is dominated by the 121-float melodic block and by sheer
 // magnitude, so a long Tract would neighbor other long chants for being long.
 // Per-group cosine asks about SHAPE within each dimension, and `all` is the
