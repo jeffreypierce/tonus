@@ -64,7 +64,13 @@ const HAND_BOX = BOX.w;                  // 476 — the square the hand is fitte
 // How far ABOVE the molle lane the crown of the hand hangs. Zero sets ee's top
 // edge exactly on the lane; a little clear of it reads as the hand standing in
 // the ring rather than hooked onto it.
-const HAND_LIFT = 16;
+//
+// NEGATIVE NOW, which is the figure being centred rather than hung. The hand's
+// ink is not centred inside its own box — the crown reaches higher than the
+// wrist drops — so hanging it from the lane left its middle 72 units above the
+// ring's. Dropping it puts the two centres nearer together, which is what a
+// figure standing INSIDE a ring should look like.
+const HAND_LIFT = -4;
 // How much paper a lane sign punches out from under itself, so the lane it
 // stands on does not strike through it. A halo, not a line — hence a stated
 // width rather than a STROKE rung.

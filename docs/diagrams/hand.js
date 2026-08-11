@@ -252,10 +252,13 @@ export function hand(tonus, { mode = 1, selected, hexachord, route = true,
     svg.appendChild(el("text", {
       x, y: y + 2, "text-anchor": "middle", "dominant-baseline": "central",
       // A DRAWN LETTER, at the stratum rota.js gives its planet glyphs — the
-      // same kind of mark. STEP.label because a syllable is this figure's
-      // CONTENT, not a tick label, and because fitting the hand to its own
-      // box (mutatio's HAND_BOX) costs it 10% of its rendered size.
-      "font-family": HOUSE_SERIF, "font-size": isPaired(r.midi) ? STEP.caption : STEP.label,
+      // same kind of mark.
+      //
+      // STEP.caption, not label. The syllable went UP a step to pay for the
+      // 10% the HAND_BOX fit costs it — and then the whole scale moved, taking
+      // `label` from 13.5 to 15, so it was paid twice and the letters outgrew
+      // the circles they sit in.
+      "font-family": HOUSE_SERIF, "font-size": isPaired(r.midi) ? STEP.micro : STEP.caption,
       "letter-spacing": "0.09em",
       fill: isSel ? RUBRICA : INK,
       "fill-opacity": lit ? STRATUM.wave : NOT_READ,

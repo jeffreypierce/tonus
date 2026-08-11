@@ -940,7 +940,12 @@
      which is the horizontal scroll: the render is measured to the column, so
      there is nothing on the right to reclaim — the emitter's gutter is at the
      start of the staff, not after it. */
-  .score { margin: var(--sp-1) 0 var(--sp-2) -12px; }
+  /* NO TOP MARGIN. This is the first thing in the left column, and 4px here
+     collapsed up through its wrapper and pushed the whole column 4px below the
+     right one — so Canticum's figures sat lower than Calendarium's, where the
+     left cell has no score in it. The bottom margin still holds it off what
+     follows. */
+  .score { margin: 0 0 var(--sp-2) -12px; }
   /* The chant follows the page's ink. inscriptio emits its colours as
      `var(--tonus-note, #111)` — the render's own value as the fallback — so
      setting these three properties rethemes a drawn score without re-rendering
