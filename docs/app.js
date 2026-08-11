@@ -893,6 +893,13 @@ function scoreFigure() {
       width,
       theme: SCORE_THEME,
       notation: state.notation,
+      // THE INITIAL AND THE MARK BESIDE IT, as the books print them: a large
+      // black capital, with the genus and mode stacked at the left margin over
+      // it ("Intr." over "1."). The library defaults both off — its own
+      // official opening is a centred title — but this page is a chant book,
+      // not an edition's front matter.
+      dropcap: true,
+      annotation: "auto",
       tracks: state.tracks.length ? state.tracks : undefined,
     });
     wrap.innerHTML = svg;
@@ -1087,6 +1094,50 @@ function selectNote(i) {
 // The same spur-and-card every key wears (components/key.js popover), with
 // reading instruction instead of marks: a key can say what a mark IS, but
 // the ribbon needs a sentence.
+/** The prosodia's marks, one entry each — the track draws six kinds and a
+ *  prose line cannot carry them all; the card documents what is drawn. */
+function prosodiaMarks() {
+  const NS = "http://www.w3.org/2000/svg";
+  const sw = (...kids) => {
+    const svg = document.createElementNS(NS, "svg");
+    for (const [k, v] of Object.entries({ class: "key-swatch",
+      viewBox: "0 0 18 14", width: 18, height: 14, "aria-hidden": "true" }))
+      svg.setAttribute(k, v);
+    for (const kid of kids) svg.append(kid);
+    return svg;
+  };
+  const m = (tag, attrs) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  };
+  const tent = (peak) => [
+    m("path", { d: "M 2 12 L 8 4.5 Q 9 3.6 10 4.5 L 16 12", fill: "none",
+      stroke: "#111", "stroke-opacity": 0.38, "stroke-width": 1.1 }),
+    peak,
+  ];
+  const entry = (swatch, word) => el("p", { class: "key-entry" }, swatch, " ", word);
+  return [
+    entry(sw(...tent(m("circle", { cx: 9, cy: 3.9, r: 1.8, fill: "#9E2B25" }))),
+      "the accent, struck: it lands on the rising beat"),
+    entry(sw(...tent(m("circle", { cx: 9, cy: 3.9, r: 1.8, fill: "none",
+      stroke: "#9E2B25", "stroke-width": 0.9 }))),
+      "the accent, deferred: it lands on the settling beat"),
+    entry(sw(m("line", { x1: 9, y1: 12, x2: 9, y2: 4, stroke: "#111",
+      "stroke-opacity": 0.62, "stroke-width": 1.4 })),
+      "a spoken syllable; height, its notes"),
+    entry(sw(m("line", { x1: 4, y1: 9, x2: 14, y2: 9, stroke: "#111",
+      "stroke-opacity": 0.62, "stroke-width": 1.4 })),
+      "a syllable recited on the tenor: it lies flat"),
+    entry(sw(m("path", { d: "M 2 12 L 2 7 L 8 5.5 L 16 8 L 16 12 Z",
+      fill: "#111", "fill-opacity": 0.18 })),
+      "a melisma; width, its real span; its note count inside from eight"),
+    entry(sw(m("line", { x1: 9, y1: 2, x2: 9, y2: 12, stroke: "#111",
+      "stroke-opacity": 0.24, "stroke-width": 0.6 })),
+      "a divisio: the text's breath, through both lanes"),
+  ];
+}
+
 function tracksInfo() {
   const NS = "http://www.w3.org/2000/svg";
   const sample = (draw) => {
@@ -1115,10 +1166,9 @@ function tracksInfo() {
       }),
       el("p", { class: "tracks-name" }, "prosodia"),
       el("p", { class: "tracks-text" }, "The word is a swell whose peak, in "
-        + "red, is the accent: filled when it lands on the rising beat, an "
-        + "open ring when it defers. Below, each syllable stands as a stem, "
-        + "lies flat on the reciting tone, or spreads into a block as wide "
-        + "as its melisma."),
+        + "red, is the accent. Below, one mark per syllable, by how the "
+        + "melody treats it."),
+      ...prosodiaMarks(),
     ],
     chironomia: () => [
       sample((s) => line(s, { d: "M 2 8 C 14 2, 26 12, 40 6 S 58 4, 62 7",
@@ -1386,11 +1436,13 @@ function manusPanel() {
     // The sigla list only the marks actually drawn: the ordo only while its
     // route is, the ring only when a piece is ringed around the hand.
     el("h2", {}, "manus et mutatio", keySpur(
-      "The gamut's twenty places on the hand, and the piece riding them syllable by syllable.",
+      "The gamut's twenty places on the hand; around it, the piece rides the hexachord lanes, stepping where it mutates.",
       state.route && [marks.dashes(),
         "the ordo: the gamut's path, Γ up to ee, in the order a hand learns it"],
       [marks.ring(), "the chosen note"],
-      rows.length && [marks.arc(), "the piece, by syllable"])),
+      rows.length && [marks.arc(), "the piece, by syllable; its lane is the hexachord it sings in"],
+      rows.length && [marks.text("♮ ○ ♭"),
+        "the lanes, outermost in: durum, naturale, molle; a step between lanes is a mutation"])),
     rows.length
       ? mutatio({ rows, note: at, phrases, centre: figure,
                   onSelect: (i) => selectNote(i) })
