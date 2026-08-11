@@ -519,12 +519,25 @@
 
      If a fill is ever wanted back for a denser list, the replacement is a 2px
      ink bar in the left margin — NOT a tint. */
-  .chant-row-name { display: block; font-size: var(--step-label); color: var(--label); }
+  /* The name is the row's SUBJECT, so it carries full ink at rest. At --label
+     it read as one more field of the caption below it — ranked under its own
+     metadata, which is backwards for the thing you choose by. Measured against
+     the paper: --label is 5.29:1, --ink 18.55:1.
+     COLOUR IS THEREFORE SPENT. All three states share one ink, and the climb
+     is carried by WEIGHT and by the margin bar instead — which is the sheet's
+     own rule: selection is marked, not filled. */
+  .chant-row-name {
+    display: block; font-size: var(--step-label);
+    color: var(--ink);
+    font-weight: 400;
+  }
   .chant-row { position: relative; }
-  /* HOVER: the rule darkens and the name comes up. Nothing moves, nothing
-     fills — the row answers the pointer without changing size. */
+  /* HOVER: the rule darkens and the name gains a little weight. Nothing moves,
+     nothing fills — the row answers the pointer without changing size. Junicode
+     carries a real wght axis, so 500 is a drawn weight and the name does not
+     reflow: the advance widens by well under a pixel at this size. */
   .chant-row:hover { border-bottom-color: var(--edge); }
-  .chant-row button:hover .chant-row-name { color: var(--ink); }
+  .chant-row button:hover .chant-row-name { font-weight: 500; }
   /* SELECTED: the mark is in the MARGIN. A bar the height of the row, and the
      row on pure white — so the chosen chant lifts off the page instead of
      being washed with a tint. The bar sits outside the text column, in the
@@ -536,7 +549,9 @@
     position: absolute; left: calc(-1 * var(--sp-3)); top: 0; bottom: 0;
     width: 2px; background: var(--ink);
   }
-  .chant-row[aria-selected="true"] .chant-row-name { color: var(--ink); }
+  /* The chosen name keeps the weight the hover previewed. No colour change —
+     it already carries full ink, and the margin bar is what marks the row. */
+  .chant-row[aria-selected="true"] .chant-row-name { font-weight: 500; }
 
   /* The incipit is one long system, shown from its start and clipped: a few
      notes of the real melody, which is how a chant is recognised. The box is
@@ -904,7 +919,14 @@
   /* A gloss is a WORD — a role (finalis, tenor), a season, a Greek string-name
      — not machine data. So it takes the serif, small and quiet, rather than
      the mono the numeric columns use. Upright, since the mono face carries an
-     italic that a Latin term should not inherit. */
+     italic that a Latin term should not inherit.
+
+     A GLOSS TRAVELS WHOLE. "parhypate hypaton" is one name for one string, and
+     a cell too narrow for the datum and the name together used to break it in
+     the middle of itself — the datum kept its line and the gloss lost a word to
+     the next one. So it does not wrap internally; the break goes in FRONT of it
+     instead (tabula.js puts a zero-width space there), and a gloss that will
+     not fit drops to its own line entire. */
   table.tabula .gloss {
     font-family: var(--serif);
     font-size: var(--caption);
@@ -912,6 +934,7 @@
     letter-spacing: 0;
     color: var(--label);
     margin-left: 0.5em;
+    white-space: nowrap;
   }
   table.tabula .symbol, table.tabula .pair-grid { font-family: var(--symbol); }
   table.tabula .symbol {
