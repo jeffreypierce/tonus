@@ -58,11 +58,6 @@ const PASCHAL = new Set(["pasc"]);
 const MONTHS = ["IANUARIUS", "FEBRUARIUS", "MARTIUS", "APRILIS", "MAIUS", "IUNIUS",
   "IULIUS", "AUGUSTUS", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 
-/** The months in the GENITIVE, for a date: "1 Iunii", the first of June. The
- *  rim above spells them nominative, as a label of the month itself. */
-const MENSES = ["Ianuarii", "Februarii", "Martii", "Aprilis", "Maii", "Iunii",
-  "Iulii", "Augusti", "Septembris", "Octobris", "Novembris", "Decembris"];
-
 const doyAngle = (d) => (d / 365) * 360;
 
 const isLeap = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
@@ -89,16 +84,19 @@ function sameDay(a, b) {
     && x.getUTCDate() === y.getUTCDate();
 }
 
-/** The standing day as a DATE rather than a timestamp: "1 Iunii", the day and
- *  the month it falls in, genitive as a date is spoken. UTC, like everything
- *  the calendar reports.
+/** The standing day in FIGURES, in reading order and unpadded: 1.6, the first
+ *  of June. UTC, like everything the calendar reports.
  *
- *  The year is not repeated — the numeral directly above it is the year, and
- *  the ring is drawn for exactly one. ISO (0991-06-01) said the same thing in
- *  a machine's notation, padded to four digits, under an inscription. */
+ *  Day then month, which is the order the date is spoken and the order the
+ *  ring is read in — not ISO's month-before-day, which is sorting order for a
+ *  machine. No leading zeros: they exist to make strings the same length in a
+ *  column, and this is one date under a numeral, not a column.
+ *
+ *  The year is not repeated — the numeral directly above IS the year, and the
+ *  ring is drawn for exactly one. */
 function plainDay(date) {
   const d = new Date(date);
-  return `${d.getUTCDate()} ${MENSES[d.getUTCMonth()]}`;
+  return `${d.getUTCDate()}.${d.getUTCMonth() + 1}`;
 }
 
 /** A date read in UTC. tonus is UTC-canonical, and local-time formatting moves
@@ -323,8 +321,8 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     root.appendChild(el("text", {
       y: 40, "text-anchor": "middle",
       "font-family": FIGURES.family,
-      "font-size": STEP.micro, "letter-spacing": "0.04em",
-      fill: INK, "fill-opacity": STRATUM.margin,
+      "font-size": STEP.caption, "letter-spacing": "0.04em",
+      fill: INK, "fill-opacity": STRATUM.letters,
     }, plainDay(day)));
   }
 
