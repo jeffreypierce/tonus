@@ -52,10 +52,11 @@ const state = {
   // chant or picking a note on the ring sets it — and the picker can override
   // it. One value, two ways in, so the control always reads what is drawn.
   hexachord: "naturale",
-  // The reading route on the hand — its dashes and its arrows, which are one
-  // mark and switch together. On, because the order the gamut is learned in is
-  // what a hand teaches; off leaves the twenty places and the five digits, and
-  // the knuckle line runs the whole way across to make up for it.
+  // The ORDO: the reading route on the hand — its dashes and its arrows,
+  // which are one mark and switch together. On, because the order the gamut
+  // is learned in is what a hand teaches; off leaves the twenty places and
+  // the five digits, and the knuckle line runs the whole way across to make
+  // up for it.
   route: true,
   // The hand read an OCTAVE UP. Most of the corpus is written low against the
   // gamut — Agnus Dei I runs midi 43-52, the bottom fifth of a hand that
@@ -80,6 +81,11 @@ const state = {
 
 // Who says which sphere sounds what. Four schemes, each from its own text.
 const DOCTRINAE = ["pythagoras", "boethius", "pliny", "ptolemy"];
+
+// The library keys two of the four by their English names, and the keys stay —
+// they are the API. What the READER sees is the Latin the other two already
+// wear: plinius and ptolemaeus, not an exonym in a Latin control row.
+const DOCTRINA_NOMEN = { pliny: "plinius", ptolemy: "ptolemaeus" };
 
 // The three kinds of hexachord, by the b each reads: the round one, neither,
 // the square one.
@@ -387,7 +393,8 @@ function harmoniaInputs() {
       "aria-label": "doctrina",
       onchange: (e) => { state.doctrina = e.target.value; renderPanels(); },
     }, ...DOCTRINAE.map((d) =>
-      el("option", { value: d, selected: state.doctrina === d }, d))),
+      el("option", { value: d, selected: state.doctrina === d },
+        DOCTRINA_NOMEN[d] ?? d))),
     // One thing, on or off — a set of one, so it wears the set's costume
     // rather than a lone bordered button that matched nothing. The tick
     // carries the state; the name stays put instead of swapping between
@@ -683,7 +690,9 @@ function canticumPanels() {
 // Both readings are the tuning engine seen two ways, so both point at tuning.
 const canticumReadings = () => [
   { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel, doc: "tuning" },
-  { key: "manus", name: "Manus Guidonius", panel: manusPanel, doc: "tuning" },
+  // The genitive, as the treatises write it: the hand OF Guido. Manus is
+  // feminine, so the adjectival "Guidonius" agreed with nothing.
+  { key: "manus", name: "Manus Guidonis", panel: manusPanel, doc: "tuning" },
 ];
 
 function canticum() {
@@ -1079,11 +1088,11 @@ function hexachordPicker() {
     // What is drawn OVER the twenty places. One switch, because the dashes and
     // the arrows are one mark: a path a reader is meant to walk has a
     // direction, and a direction with no path to lie along is nothing.
-    el("div", { class: "segset", role: "group", "aria-label": "the route" },
+    el("div", { class: "segset", role: "group", "aria-label": "ordo" },
       el("button", {
         type: "button", "aria-pressed": state.route ? "true" : "false",
         onclick: () => { state.route = !state.route; renderPanels(); },
-      }, "route"),
+      }, "ordo"),
       // Read the chant an octave up. It moves where the piece SITS on the
       // hand, not what it is: the same degrees, the same solmization, one
       // octave higher up the gamut, which is where most of the corpus lands
@@ -1201,7 +1210,7 @@ function writeUrl() {
   if (state.notation !== "quadrata") p.set("notatio", state.notation);
   if (state.tracks.length) p.set("tracks", state.tracks.join(","));
   p.set("hexachordum", state.hexachord);
-  if (!state.route) p.set("route", "0");
+  if (!state.route) p.set("ordo", "0");
   // Only when narrowed — all three showing is the default, and saying so in
   // every link would put a parameter in the bar that changes nothing.
   if (state.offices.join(",") !== OFFICES_SHOWN.join(","))
@@ -1224,7 +1233,7 @@ function readUrl() {
   }
   const n = p.get("notatio");
   if (n === "moderna" || n === "quadrata") state.notation = n;
-  if (p.get("route") === "0") state.route = false;
+  if (p.get("ordo") === "0") state.route = false;
   const hx = p.get("hexachordum");
   if (HEXACHORDA.includes(hx)) state.hexachord = hx;
   if (p.has("tracks")) {
