@@ -31,7 +31,7 @@ import {
   cadentiaFamilia, CADENTIAE_POPULATION, type CadentiaFamilia,
 } from "../../../data/cadentiae.js";
 import {
-  INK, STRATUM, CONF_FLOOR, nib, sc, esc, HOUSE_SANS, HOUSE_MONO,
+  INK, STRATUM, CONF_FLOOR, nib, sc, esc, HOUSE_SERIF, HOUSE_MONO,
   sampleCubic, crSamples, velocityAt, velocityCeiling, ribbonPath, type Pt,
 } from "./atramentum.js";
 
@@ -287,7 +287,7 @@ function waveEngine(ptsIn: WavePt[], last: number, yM: number, k: number,
       letters.push(
         `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="${(9 * k).toFixed(1)}" ` +
         `text-anchor="middle" fill="${INK}" opacity="${STRATUM.letters}" ` +
-        `font-family="${esc(HOUSE_SANS)}">${labs[j]}</text>`,
+        `font-family="${esc(HOUSE_SERIF)}">${labs[j]}</text>`,
       );
     }
   }

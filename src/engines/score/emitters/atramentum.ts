@@ -22,6 +22,35 @@
 // fifteenth type size or a seventh hairline: it picks a step or it does not
 // draw.
 //
+// ─── HOW THIS MEETS THE PAGE ───────────────────────────────────────────────
+// The documentation site keeps a system of its own, stated at the top of
+// docs/styles.css. The two are separate and they AGREE BY SHARING NUMBERS,
+// not by one importing the other:
+//
+//   STEP        mirrors the six CSS type steps  (--micro … --display-size)
+//   INK         mirrors --ink
+//   RUBRICA     mirrors --rubrica
+//   HOUSE_*     mirror --serif and --mono
+//
+// That seam is the thing to watch. A face or a step changed on one side and
+// not the other does not fail — it renders, quietly, in the wrong thing. It
+// has happened twice: HOUSE_MONO once listed ui-monospace first and drew
+// every figure label in the system mono beside page text in Plex; HOUSE_SANS
+// named a face no page loads, so the wheels' names and the tracks' letters
+// came out in system-ui. Both are why the rule below is worth keeping literal.
+//
+// ─── THE FACES HAVE JOBS ───────────────────────────────────────────────────
+// HOUSE_SERIF carries WORDS — a sign name, a month, a role, a gamut letter,
+// a chironomy letter. HOUSE_MONO carries MACHINE DATA — hz, cents, ratios,
+// ids. There is no third: if a label is a word, it is serif, wherever it is
+// drawn. A figure that wants a face outside these two is asking the wrong
+// question about its label.
+//
+// Colour reaches SVG the same way the score's does: a drawn figure names the
+// site's token with its own value as the fallback — `var(--paper-dim,
+// #F7F6F3)` — so the page can re-ink a figure it did not render, and the same
+// figure standing alone still knows what it looks like.
+//
 // This module is INTERNAL. It is not part of the public API — the site reaches
 // it through the vendored render subgraph, and outside consumers have no
 // reason to draw in tonus's hand.
@@ -41,7 +70,7 @@ export const STRATUM = {
   letters: 0.62,  // Pierik letters
   label: 0.9,     // signature labels
   bracket: 0.3,   // the label's end-ticked tie
-  rail: 0.16,     // the maneriae rails
+  rail: 0.24,     // the maneriae rails
   margin: 0.38,   // the "cad" margin word
 } as const;
 
@@ -74,15 +103,13 @@ export const STEP = {
 /** The house faces. Junicode is the serif — the real face, not the Crimson Pro
  * stand-in the early rounds carried; Plex Mono is the machine register. */
 export const HOUSE_SERIF = "Junicode, 'Crimson Pro', Georgia, serif";
-/** @deprecated for the documentation site. The site loads three faces —
- * Junicode, IBM Plex Mono, Jacquard — and no sans, so this stack fell through
- * to `system-ui` and set the wheels' tick labels in SF Pro / Segoe: a fourth
- * typeface, on a page whose stylesheet declares three and gives each a job.
- * The site figures label in HOUSE_SERIF as of 2026-08-10.
- *
- * Still consumed by the tracks emitter below. Repointing THAT changes library
- * output for every consumer, so it is a separate decision, not a restyle. */
-export const HOUSE_SANS = "'IBM Plex Sans', system-ui, sans-serif";
+/* HOUSE_SANS is GONE (2026-08-10). The house has three faces and each has a
+ * job: Junicode carries content and Latin, Plex Mono carries machine data,
+ * Jacquard is the wordmark. The sans stack named a fourth that no page loads,
+ * so every label reaching for it resolved to system-ui — SF Pro on macOS —
+ * and the wheels' names and the tracks' letters were set in it. Both now
+ * label in HOUSE_SERIF. Nothing should reintroduce a sans without a face to
+ * back it. */
 /** The machine register. IBM Plex Mono FIRST: the site loads and self-hosts
  * that face, and with `ui-monospace` at the head of the stack every drawn
  * label resolved to the system mono — SF Mono on macOS — beside page text in
