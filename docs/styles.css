@@ -172,13 +172,22 @@
        fonts/README.md); this is the one place a system stack is correct. */
     --symbol: "Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols2", var(--serif);
 
-    /* ── the type scale the diagrams draw with ── */
-    --micro: 9px;
-    --caption: 11px;
-    --step-label: 13.5px;
-    --body: 17px;
+    /* ── the type scale the diagrams draw with ──
+       A modular scale on 15px, stepped by the PYTHAGOREAN MINOR THIRD, 32:27
+       — three pure fifths up, less an octave, 294.1 cents. Not the tempered
+       6/5: this page is about the tuning the chant was sung in, so the type
+       climbs by an interval the library can name.
+
+       15 is the base because it is the size most of the page is set at — the
+       named things, the table cells, the row headings. Everything else is a
+       step from it. Values are rounded to the half-pixel a screen resolves;
+       none is more than 0.3px off its exact ratio. */
+    --micro: 10.5px;
+    --caption: 12.5px;
+    --step-label: 15px;
+    --body: 18px;
     --title: 21px;
-    --display-size: 26px;
+    --display-size: 25px;
     /* The wordmark is the one thing off the scale, and it is off it on
        purpose: a masthead is a picture of a word. Named so it cannot be
        mistaken for a seventh step. */
