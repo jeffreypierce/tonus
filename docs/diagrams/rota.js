@@ -261,7 +261,9 @@ export function rotaTabula(tonus, { date, selected, doctrina, onSelect } = {}) {
 
   return tabula(rows, [
     { key: "symbol", head: "", symbol: true },
-    { key: "nomen", head: "sphaera", gloss: (r) => r.retrograde ? "retrogradus" : "" },
+    // Agreeing with the column's own noun — sphaera, feminine — so the gloss
+    // holds for Venus and Luna, where a fixed "retrogradus" did not.
+    { key: "nomen", head: "sphaera", gloss: (r) => r.retrograde ? "retrograda" : "" },
     // The ratio is what the doctrina actually SAYS; the note name was a
     // reading of it against A4, and the string it sounds names it better —
     // so chorda becomes the ratio's gloss rather than a column of its own.
