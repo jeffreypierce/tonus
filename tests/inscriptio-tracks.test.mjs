@@ -138,7 +138,7 @@ describe("inscriptio — the tracks are selectable, not species-paired", () => {
 
   test("either track rides either species", () => {
     for (const notation of ["quadrata", "moderna"]) {
-      for (const track of ["chironomia", "tonarium"]) {
+      for (const track of ["prosodia", "chironomia", "tonarium"]) {
         const { svg } = inscriptio(score, { notation, width: 900, tracks: [track] });
         assert.ok(svg.includes(`class="${track}"`), `${track} on ${notation}`);
       }
@@ -159,16 +159,34 @@ describe("inscriptio — the tracks are selectable, not species-paired", () => {
 
   test("the stack order is the renderer's, not the caller's", () => {
     for (const notation of ["quadrata", "moderna"]) {
-      const a = inscriptio(score, { notation, width: 900, tracks: ["chironomia", "tonarium"] });
-      const b = inscriptio(score, { notation, width: 900, tracks: ["tonarium", "chironomia"] });
-      assert.equal(a.svg, b.svg, `${notation}: either order draws the same page`);
+      const a = inscriptio(score, { notation, width: 900, tracks: ["prosodia", "chironomia", "tonarium"] });
+      const b = inscriptio(score, { notation, width: 900, tracks: ["tonarium", "chironomia", "prosodia"] });
+      assert.equal(a.svg, b.svg, `${notation}: any order draws the same page`);
     }
+  });
+
+  test("all three tracks stack on one score", () => {
+    const all = inscriptio(score, { width: 900, tracks: ["prosodia", "chironomia", "tonarium"] });
+    for (const track of ["prosodia", "chironomia", "tonarium"]) {
+      assert.ok(all.svg.includes(`class="${track}"`), `${track} present in the stack`);
+    }
+    const two = inscriptio(score, { width: 900, tracks: ["chironomia", "tonarium"] });
+    assert.ok(height(all.svg) > height(two.svg), "the band pays for the third track");
+  });
+
+  test("the prosodia draws its marks: tents, blocks, and the rubrica claim", () => {
+    const { svg } = inscriptio(score, { width: 900, tracks: ["prosodia"] });
+    const band = /<g class="prosodia">.*?<\/g>/s.exec(svg);
+    assert.ok(band, "the prosodia group");
+    assert.ok(/fill-opacity="0\.18"/.test(band[0]), "a melisma block at the block stratum");
+    assert.ok(/<circle[^>]*(fill|stroke)="[^"]*#9E2B25/.test(band[0]),
+      "an accent claim in the liturgical red");
   });
 
   test("a track disturbs neither the notation nor the geometry contract", () => {
     for (const notation of ["quadrata", "moderna"]) {
       const bare = inscriptio(score, { notation, width: 900 });
-      const tracked = inscriptio(score, { notation, width: 900, tracks: ["chironomia", "tonarium"] });
+      const tracked = inscriptio(score, { notation, width: 900, tracks: ["prosodia", "chironomia", "tonarium"] });
       assert.equal(tracked.geometry.length, bare.geometry.length, `${notation}: same notes`);
       for (let i = 0; i < bare.geometry.length; i++) {
         assert.equal(tracked.geometry[i].x, bare.geometry[i].x, `${notation}: note ${i} x`);

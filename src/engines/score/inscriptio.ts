@@ -174,14 +174,15 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
     );
   }
 
-  // Either track rides either species, and both may ride one score — the
+  // Any track rides either species, and all may ride one score — the
   // selection is independent of the notation, as the notation itself is. An
   // unknown name is a caller bug and throws.
   for (const track of opts.tracks ?? []) {
-    if (track !== "chironomia" && track !== "tonarium") {
+    if (track !== "prosodia" && track !== "chironomia" && track !== "tonarium") {
       throw new Error(
-        `inscriptio: unknown track "${track}" — tracks are "chironomia" ` +
-        `(the rhythmic band) and "tonarium" (the melodic band)`,
+        `inscriptio: unknown track "${track}" — tracks are "prosodia" ` +
+        `(the word band), "chironomia" (the rhythmic band) and "tonarium" ` +
+        `(the melodic band)`,
       );
     }
   }

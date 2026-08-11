@@ -110,6 +110,14 @@ interface LyricRun {
   rubric?: boolean;         // rendered in rubricaColor
 }
 
+interface Neume {
+  type: NeumeShape;    // "punctum", "pes", "clivis", "torculus" …
+  intervals: number[]; // semitones between successive notes
+  hasQuilisma: boolean;
+  hasLiquescent: boolean;
+  hasStrophicus: boolean;
+}
+
 interface RestEvent {
   type: "rest";
   divisio: string;
@@ -480,27 +488,47 @@ interface NoteGeometry {
 
 ### The analysis tracks
 
-`tracks` draws an analysis band beneath every system. Either track rides either
-species, and both may ride one score — the selection is independent of the
-notation, as `notation` itself is. One governing ink system runs through both:
+`tracks` draws an analysis band beneath every system. Any track rides either
+species, and all may ride one score — the selection is independent of the
+notation, as `notation` itself is. One governing ink system runs through them:
 every mark draws in the score's black, strata graded by opacity alone (the
-liturgical red belongs to the mode line and nothing else), and every
-pressure-bearing line shares one nib law — velocity as stroke width.
+liturgical red belongs to the claims — the tonarium's mode line and the
+prosodia's accent dots), and every pressure-bearing line shares one nib law —
+velocity as stroke width.
 
 ```js
+tonus.inscriptio(score, { width: 680, tracks: ["prosodia"] });
 tonus.inscriptio(score, { width: 680, tracks: ["chironomia"] });
 tonus.inscriptio(score, { notation: "moderna", width: 680, tracks: ["tonarium"] });
-tonus.inscriptio(score, { width: 680, tracks: ["tonarium"] });                    // either way
 tonus.inscriptio(score, { width: 680, tracks: ["chironomia", "tonarium"] });      // stacked
+tonus.inscriptio(score, { width: 680, tracks: ["prosodia", "chironomia", "tonarium"] });
 ```
 
 The conventional pairing is the chironomia under `quadrata` and the tonarium
-under `moderna`. The renderer does not enforce it.
+under `moderna`; the prosodia, reading the text rather than the notation,
+rides either as naturally. The renderer enforces none of it.
 
-Requesting both stacks them in a fixed order — the chironomia above, the
-tonarium below — whichever order they are asked for, and the page grows by the
-sum of the two bands.
+Requesting several stacks them in a fixed order — the prosodia first, directly
+under the lyric line it reads; the chironomia next; the tonarium below —
+whichever order they are asked for, and the page grows by the sum of the
+bands.
 
+- **`"prosodia"`** — how the melody treats the word, in two lanes. The upper
+  lane draws one **tent per word** — the hairpin pair's top edge, dynamics'
+  own mark for swell and release — its apex over the accented syllable, with
+  the accent's landing at the peak in the liturgical red: a **filled dot**
+  when the accent lands arsic (struck), an **open ring** when it lands thetic
+  (deferred). Accented words rise past the lane's single rule; unaccented
+  words crest on it. The lower lane is a fence on a rail, one mark per
+  syllable by how the melody treats it: a spoken syllable stands as a stem
+  (height, its notes), a syllable **recited on the tenor lies flat** — a
+  short dash floating above the rail — and a **melisma of four notes or more
+  becomes a block** as wide as its real extent and as tall as its count
+  (counts of eight or more print inside). Connected melismas join into one
+  ridge, each block's top sloping toward its neighbours, the line between
+  them crossing the gaps. A divisio drops a hairline through both lanes.
+  Accents are the book's written accents (the GABC accented vowels) — the
+  track derives none.
 - **`"chironomia"`** — the conducting hand as one continuous line:
   arsic beats crest, thetic beats trough, single-note theses pass through
   shallow, and the hand picks up between close arses in a small backward loop
@@ -530,8 +558,8 @@ sum of the two bands.
   **Every inked cadence carries a label.** A close that does not join
   [`CADENTIAE`](index.md#the-appendix) at all reads `"rara"` — not a gap but a
   measurement: the catalogue holds the 110 families above fifty corpus
-  occurrences, so failing to join means rarer than anything it records. 43.2%
-  of cadences land there.
+  occurrences, so failing to join means rarer than anything it records. About
+  44% of cadences land there.
 
   `rara` is a word rather than a number, so it is not read on the percentage
   scale beside it.
@@ -718,17 +746,18 @@ this before deciding which field to use:
   keyed as `"2,0,-2 @0"` and mined from the corpus. It fires on **any** target,
   so it is the one of the two that speaks about **medial** cadences.
 
-Measured over 26,787 cadences in the shipped corpus: 25.8% carry a formula,
-56.8% join the catalogue, 19.3% carry both, and 43.2% are keyed but fall below
-the catalogue's floor. Neither is derivable from the other, because the
+Measured over the cadences `notatio` reports across the shipped corpus — about
+20,500 of them — roughly 43% carry a formula, 56% join the catalogue, 31% carry
+both, and 44% fall outside it. Neither is derivable from the other, because the
 signature is mode-blind and the formula is mode-relative.
 
 ### `finality` — how often this family closes
 
 `finality` is the share of **this family's** corpus occurrences that fall at a
 final close. It is a measurement, not a property of this particular cadence,
-and it cannot be read off the signature: of the 55 families that land **on**
-the final, 31 do not close, and their finality spans 0.054 to 1.000. So
+and it cannot be read off the signature: of the 50 families that land **on**
+the final, 31 do not close, and finality across the catalogue runs the whole
+range from 0 to 1. So
 `arrival === 0` implies nothing about whether a close is final.
 
 It is `null` when the signature falls below the catalogue's floor — an
@@ -831,8 +860,8 @@ A salicus here is Cardine's: an ascent of at least three notes whose
 oriscus is what makes one. An ascending group carrying only the editorial
 Solesmes ictus is a **scandicus** that was marked for rhythm — a distinction
 worth stating because conflating the two is, in Bevenot's word, a trap: over
-the sung corpus tonus finds 302 salici against 2,960 scandici, and only 9.4%
-of that wider set carries an oriscus at all.
+the sung corpus tonus finds about 260 salici against about 1,900 scandici, so
+only about an eighth of that wider set carries an oriscus at all.
 
 Cardine's correction also decides WHICH note is principal. The printed
 editions lengthen the oriscus itself; the manuscripts show the principal note

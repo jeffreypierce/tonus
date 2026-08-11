@@ -29,7 +29,7 @@ import type { NoteGeometry, SvgResult, SvgOpts } from "./svg.js";
 import { autoRubricLines } from "./svg.js";
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Chant } from "../../chant/types.js";
-import { buildChironomia, buildTonarium, trackBands, type TrackNote } from "./tracks.js";
+import { buildChironomia, buildProsodia, buildTonarium, trackBands, type TrackNote } from "./tracks.js";
 
 // ── Bravura moderna glyph codepoints (baked in smufl-glyphs.json) ──
 const G = {
@@ -580,7 +580,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   // ── The analysis tracks, below each system ──
   // Downstream of the notation: they consume the placements (the same anchors
   // the geometry contract exports), never the transcription's own ink.
-  if (bands.chironomia || bands.tonarium) {
+  if (bands.prosodia || bands.chironomia || bands.tonarium) {
     const trackNotes: TrackNote[] = placements.map((pl) => ({
       row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
       // Moderna centres its noteheads on the anchor, so the ink edges are
@@ -588,6 +588,14 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       // measured as they are placed, so it records them.
       inkLeft: pl.x - gm.NH_W / 2, inkRight: pl.x + gm.NH_W / 2,
     }));
+    if (bands.prosodia) {
+      body.push(buildProsodia(trackNotes, {
+        k: gm.k,
+        laneTop: gm.LYRIC_Y + bands.prosodia.top,
+        rightFor: (s) => (systemMaxX[s] ?? W) - padding,
+        rubricaColor: RUBRICA,
+      }));
+    }
     if (bands.chironomia) {
       // The wave's constants are calibrated at quadrata's default staff
       // interval, near enough to moderna's fixed staff space to read at k: 1.

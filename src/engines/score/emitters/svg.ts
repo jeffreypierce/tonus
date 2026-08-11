@@ -34,7 +34,7 @@ import {
   ligaturaDesc,
 } from "../../../data/gabc-glyphs.js";
 import {
-  buildChironomia, buildTonarium, trackBands,
+  buildChironomia, buildProsodia, buildTonarium, trackBands,
   type TrackData, type TrackName, type TrackNote,
 } from "./tracks.js";
 
@@ -1230,11 +1230,19 @@ export function toSvg(
   // the geometry contract exports), never the score's own ink. Drawn after the
   // page width is known — the tonarium's lane measures itself against each
   // system's right edge.
-  if (bands.chironomia || bands.tonarium) {
+  if (bands.prosodia || bands.chironomia || bands.tonarium) {
     const trackNotes: TrackNote[] = placements.map((pl) => ({
       row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
       inkLeft: pl.inkLeft, inkRight: pl.inkRight,
     }));
+    if (bands.prosodia) {
+      body.push(buildProsodia(trackNotes, {
+        k: trackScale,
+        laneTop: L.lyricY + bands.prosodia.top,
+        rightFor: (s) => (systemMaxX[s] ?? width) - r.padding,
+        rubricaColor: r.rubricaColor,
+      }));
+    }
     if (bands.chironomia) {
       body.push(buildChironomia(trackNotes, {
         k: trackScale,
