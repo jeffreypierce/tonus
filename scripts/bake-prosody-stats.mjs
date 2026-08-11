@@ -1,0 +1,132 @@
+#!/usr/bin/env node
+// ---------------------------------------------------------------------------
+// scripts/bake-prosody-stats — the Census reading's percentile curves
+// ---------------------------------------------------------------------------
+// Bakes docs/data/prosody-stats.js: every chant with gabc (the censused
+// 2,187) → notatio → prosody, sorted into 101-point quantile curves for the
+// whole corpus and per genus (genus groups kept only at n >= 20). Site data
+// for a site figure — the comb reads its percentiles from this file, and the
+// site has no fetch, so it ships as a frozen const and is imported like any
+// module.
+//
+// The file also carries the census profile's TYPICALITY curves, one per
+// group. The subheader's deviant branch fires on corpus rarity — "is this
+// chant in the bottom five percent for this group" — not on raw distance.
+// Raw distance was measured 2026-08-11 and rejected: cadenceFinal typicality
+// is bimodal (a quarter of the corpus sits below 0.10), so (1 − t) made
+// "unlike the corpus in how it closes" the headline of 685 of 2,187 chants —
+// 31%, a phrase that would almost never change. Rarity spreads the branch
+// across all eight groups and caps the commonest headline at ~6%.
+//
+// Re-run after anything that moves prosody or the census — a notation fix, a
+// corpus change, a census re-bake — from the repo root:
+//
+//   node scripts/bake-prosody-stats.mjs
+//
+// It reads the BUILT library, so build first if src has moved.
+
+import { writeFileSync, mkdirSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import tonus from "../dist/index.js";
+import { ORDINARIA } from "../dist/engines/chant/types.js";
+
+const __dir = dirname(fileURLToPath(import.meta.url));
+const OUT = resolve(__dir, "../docs/data/prosody-stats.js");
+
+// Genus groups below this count say nothing stable about their kind.
+const FLOOR = 20;
+const POINTS = 101;
+const METRICS = ["melismaRatio", "leapRate", "ambitus", "tessitura",
+  "noteCount", "phraseCount", "melismaCadential"];
+const CENSUS_GROUPS = ["modal", "degreeHist", "melodic", "trigram",
+  "cadenceFinal", "cadenceMedial", "chironomy", "textual"];
+
+// ── the population: every chant with gabc ──
+// The shelf, plus the Kyriale — which cantus() only surrenders by `ordinary`,
+// deliberately (see chant.ts: you ask for a Kyrie, you do not stumble onto
+// one). Here it is asked for, part by part.
+const seen = new Map();
+for (const c of tonus.cantus({ limit: 100000 })) if (c.gabc) seen.set(c.id, c);
+for (const code of Object.keys(ORDINARIA))
+  for (const c of tonus.cantus({ ordinary: code, limit: 9999 }))
+    if (c.gabc) seen.set(c.id, c);
+const chants = [...seen.values()];
+
+// ── prosody per chant ──
+const rows = [];
+let failed = 0;
+for (const c of chants) {
+  try {
+    const p = tonus.notatio(c).prosody;
+    rows.push({
+      office: c.office, id: c.id,
+      melismaRatio: p.melismaRatio, leapRate: p.intervals?.leapRate,
+      ambitus: p.ambitus, tessitura: p.tessitura,
+      noteCount: p.noteCount, phraseCount: p.phraseCount,
+      melismaCadential: p.melismaCadential,
+    });
+  } catch { failed++; }
+}
+
+// ── 101-point quantile curves, linearly interpolated ──
+const quantiles = (values) => {
+  const s = [...values].sort((a, b) => a - b);
+  if (!s.length) return null;
+  const out = [];
+  for (let p = 0; p < POINTS; p++) {
+    const x = (p / (POINTS - 1)) * (s.length - 1);
+    const i = Math.floor(x), f = x - i;
+    const v = f ? s[i] * (1 - f) + s[i + 1] * f : s[i];
+    out.push(Math.round(v * 1000) / 1000);
+  }
+  return out;
+};
+
+const groupOf = (rowsIn) => {
+  const curves = {};
+  for (const m of METRICS) {
+    const vs = rowsIn.map((r) => r[m]).filter((v) => v != null && Number.isFinite(v));
+    const c = quantiles(vs);
+    if (c) curves[m] = c;
+  }
+  return { n: rowsIn.length, curves };
+};
+
+const groups = { all: groupOf(rows) };
+const byOffice = {};
+for (const r of rows) (byOffice[r.office] ??= []).push(r);
+for (const [k, v] of Object.entries(byOffice))
+  if (v.length >= FLOOR) groups[k] = groupOf(v);
+
+// ── the typicality curves: census profile[group].typicality per chant ──
+const profiles = [];
+for (const r of rows) {
+  try { profiles.push(tonus.census({ id: r.id, k: 0 }).profile); } catch {}
+}
+const typicality = { n: profiles.length, groups: {} };
+for (const g of CENSUS_GROUPS) {
+  const vs = profiles.map((p) => p[g]?.typicality).filter(Number.isFinite);
+  const c = quantiles(vs);
+  if (c) typicality.groups[g] = c.map((v) => Math.round(v * 10000) / 10000);
+}
+
+// ── the module ──
+const stats = { metrics: METRICS, n: rows.length, groups, typicality };
+const body = `// ---------------------------------------------------------------------------
+// docs/data/prosody-stats — the Census reading's percentile curves
+// ---------------------------------------------------------------------------
+// GENERATED by scripts/bake-prosody-stats.mjs — do not edit by hand.
+//
+// 101-point quantile curves over the ${rows.length} chants with gabc: the
+// prosody metrics for the comb (whole corpus + per genus at n >= ${FLOOR}),
+// and the census typicality per group for the subheader's deviant branch.
+// A value's percentile is its mid-rank position on the curve.
+
+export default Object.freeze(${JSON.stringify(stats)});
+`;
+mkdirSync(dirname(OUT), { recursive: true });
+writeFileSync(OUT, body);
+console.log(`bake-prosody-stats: ${rows.length} chants (${failed} failed), ` +
+  `groups ${Object.keys(groups).join(" ")}, ` +
+  `typicality n=${typicality.n}, ${(body.length / 1024).toFixed(1)} KB → ${OUT}`);
