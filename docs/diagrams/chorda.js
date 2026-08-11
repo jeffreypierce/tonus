@@ -28,7 +28,7 @@
 // No sound. The lab round had a Web Audio voice; tonus does no playback, and
 // the sonic labs stay in orreliquum.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, FIGURES, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import { approximate } from "../dist/engines/temper/scale.js";
 
@@ -130,15 +130,21 @@ export function chordaRows(tonus, { mode = 7, tuning, comma } = {}) {
       // irrational is noise: 1/5-comma meantone's fourth came out "603/806",
       // which names nothing and looks like a measurement.
       //
-      // So the fraction is offered only where it is true, and the cents column
+      // So the ratio is offered only where it is true, and the cents column
       // carries the tempered scale instead — which is exactly what cents are
       // for, and why the two measures sit side by side in this panel.
-      fraction: (() => {
+      //
+      // WRITTEN THE WAY MUSIC WRITES ONE: 3:2, not 2/3. `approximate` measures
+      // the STRING, and a string fraction is the sounding ratio inverted — the
+      // finger at two-thirds of the length gives the fifth — so the terms are
+      // read back the other way round. It is the same number said in the
+      // house's own notation, which is what `ratio()` already prints.
+      ratio: (() => {
         const [n, d] = approximate(fr);
-        // Not "is the fraction simple" but "is it EXACT". A just ratio round-
+        // Not "is the ratio simple" but "is it EXACT". A just ratio round-
         // trips to the tuned value; a tempered one only ever approximates, so
-        // any fraction offered for it would be a fit dressed as a measurement.
-        return Math.abs(n / d - fr) < 1e-9 ? `${n}/${d}` : null;
+        // any ratio offered for it would be a fit dressed as a measurement.
+        return Math.abs(n / d - fr) < 1e-9 ? `${d}:${n}` : null;
       })(),
       offset: row.offset,
       intervallum: iv.alias || iv.nomen,
@@ -227,10 +233,10 @@ export function chorda(tonus, { mode = 7, selected, onSelect, tuning, comma } = 
     if (r.role || isSel) {
       svg.appendChild(el("text", {
         x: sc(x), y: STRING_Y + 38, "text-anchor": "middle",
-        "font-family": HOUSE_MONO, "font-size": STEP.caption,
+        "font-family": FIGURES.family, "font-size": STEP.caption,
         fill: isSel ? RUBRICA : INK,
         "fill-opacity": isSel ? 1 : STRATUM.margin,
-      }, r.fraction));
+      }, r.ratio));
     }
 
     if (onSelect) {
@@ -307,7 +313,7 @@ export function regula(tonus, { mode = 7, selected, onSelect, tuning, comma } = 
     if (Math.abs(r.offset) >= 1 && (r.role || isSel)) {
       svg.appendChild(el("text", {
         x: sc(x), y: RULER_Y + 30, "text-anchor": "middle",
-        "font-family": HOUSE_MONO, "font-size": STEP.micro,
+        "font-family": FIGURES.family, "font-size": STEP.micro,
         fill: isSel ? RUBRICA : INK,
         "fill-opacity": isSel ? 1 : STRATUM.margin,
       }, `${r.offset > 0 ? "+" : ""}${r.offset.toFixed(1)}`));
@@ -345,14 +351,21 @@ export function chordaTabula(tonus, { mode = 7, selected, onSelect, tuning, comm
   // whole panel there. Here a degree is named by its note and its role.
   return tabula(rows, [
     { key: "spn", head: "nota", mono: true, gloss: (r) => r.role || "" },
+    // The consonance rides WITH THE INTERVAL'S NAME, which is what it is a
+    // judgement of — Diapente is perfect the way it is a fifth, one fact about
+    // one thing. It was tried along the foot of the chart, on the argument that
+    // the shape of a mode's consonance is worth one glance; but read there it
+    // is a fourth row of marks under a figure whose subject is already two
+    // scales and their disagreement, and it says nothing the interval names
+    // above it do not already imply.
     { key: "intervallum", head: "intervallum", gloss: (r) => r.consonantia },
     { key: "hz", head: "hz", mono: true, num: true, format: (v) => v.toFixed(2) },
     { key: "cents", head: "¢", mono: true, num: true, format: (v) => v.toFixed(1) },
     { key: "offset", head: "¢ vs æq.", mono: true, num: true,
       format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
-    // Blank under a temperament: a string fraction is a claim about a
+    // Blank under a temperament: a just ratio is a claim about a
     // RATIO, and a tempered degree does not have one.
-    { key: "fraction", head: "chorda", mono: true, num: true,
+    { key: "ratio", head: "ratio", mono: true, num: true,
       format: (v) => v ?? "—" },
   ], { selected: sel, onSelect });
 }
@@ -373,10 +386,16 @@ export function chordaTabula(tonus, { mode = 7, selected, onSelect, tuning, comm
 // argument, and neither figure alone can state it.
 
 const DUAL_STRING_Y = 46;
-// The chant's own weight, under the two measures of where a degree IS.
-const DUAL_DWELL_Y = 214;
-const DWELL_H = 54;
 const DUAL_RULER_Y = 126;
+/** What stands where a ratio would, when no ratio can be given.
+ *
+ *  Temper an interval and it stops being a proportion of whole numbers — which
+ *  is not a gap in the data but the definition of what tempering is. The word
+ *  for it is old: an interval no two integers can name is IRRATIONAL, and the
+ *  medieval theorists say so in exactly that sense. Three letters, in the same
+ *  place and at the same size as the ratio it replaces, so the reader watching
+ *  a number sees it become a statement rather than vanish. */
+const NO_RATIO = "irr";
 
 /**
  * The monochord and the ruler, joined.
@@ -384,49 +403,18 @@ const DUAL_RULER_Y = 126;
  * @param {object} tonus
  * @param {object} opts   as chorda/regula — mode, selected, onSelect, tuning, comma
  */
-/** How long the chant sits on each degree.
- *
- *  BY DURATION, NOT BY COUNT. A count weights a ten-note melisma on one
- *  syllable the same as ten separate syllables on that degree, which is not
- *  what dwelling on a note means; `shapedDuration` is how long it sounds.
- *
- *  Keyed by PITCH CLASS, because the string is one octave and the chant is
- *  not: a degree is the same degree wherever the melody sings it.
- *
- *  Cadences are NOT marked here. Where the piece ends its phrases is the
- *  tonarium track's subject, drawn over the score itself where the endings
- *  are; saying it again on a scale axis is the same claim in a worse place. */
-export function dwellByDegree(notes) {
-  const time = new Map();
-  let longest = 0;
-  for (const r of notes ?? []) {
-    if (r?.pc == null) continue;
-    const t = (time.get(r.pc) ?? 0) + (r.shapedDuration ?? 1);
-    time.set(r.pc, t);
-    if (t > longest) longest = t;
-  }
-  return { time, longest };
-}
-
-export function chordaDual(tonus, { mode = 7, selected, onSelect, notes,
-  tuning, comma } = {}) {
+export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma } = {}) {
   // One octave: the string has no more length past its halfway point, and the
   // ruler is ruled to 1200. Both figures already bound themselves this way.
   const rows = chordaRows(tonus, { mode, tuning, comma })
     .filter((r) => r.fr >= 0.5 - 1e-9 && r.cents <= 1200 + 1e-6);
   const sel = selected ?? rows.find((r) => r.role === "tenor")?.key ?? rows[0]?.key;
-  // The band is always there: this reading only opens with a chant loaded, so
-  // there is no chantless state to design for. The guard is against an empty
-  // note stream dividing by zero, not against a second layout.
-  const dwell = notes?.length ? dwellByDegree(notes) : null;
 
   const svg = el("svg", {
-    class: "chorda-dual",
-    viewBox: `${NUT - 14} 0 ${LEN + 28} 280`, xmlns: NS,
+    class: "chorda-dual", viewBox: `${NUT - 14} 0 ${LEN + 28} 170`, xmlns: NS,
     role: "img",
     "aria-label": `Mode ${mode} measured two ways: the monochord's string`
-      + ` fractions above, the same degrees in cents below`
-      + ", and how long the chant dwells on each",
+      + ` fractions above, the same degrees in cents below`,
   });
 
   // ── above: the string, between its bridges ──
@@ -454,36 +442,6 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, notes,
     x1: NUT, y1: DUAL_RULER_Y, x2: NUT + LEN, y2: DUAL_RULER_Y,
     stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": STROKE.fine,
   }));
-
-  // ── beneath: what the chant does with them ──
-  // The two bands above are properties of a TUNING and are true whether or not
-  // anything is open. This one is the piece in hand, so the panel stops being
-  // a table of a scale and becomes a reading of a chant in that scale.
-  if (dwell) {
-    svg.appendChild(el("line", {
-      x1: NUT, y1: DUAL_DWELL_Y, x2: NUT + LEN, y2: DUAL_DWELL_Y,
-      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
-    }));
-    for (const r of rows) {
-      const t = dwell.time.get(r.pc) ?? 0;
-      if (!t) continue;
-      const x = rulerX(r.cents);
-      const h = (t / dwell.longest) * DWELL_H;
-      // A stem, under the degree that produces it, on the ruler's axis — the
-      // cents axis, because that is the one that is linear in pitch and can
-      // carry a bar chart without the spacing lying about the quantities.
-      svg.appendChild(el("line", {
-        x1: sc(x), y1: DUAL_DWELL_Y, x2: sc(x), y2: sc(DUAL_DWELL_Y + h),
-        stroke: INK, "stroke-opacity": r.key === sel ? 1 : STRATUM.spark,
-        "stroke-width": 5, "stroke-linecap": "butt",
-      }));
-    }
-    svg.appendChild(el("text", {
-      x: NUT, y: DUAL_DWELL_Y - 20,
-      "font-family": HOUSE_MONO, "font-size": STEP.micro,
-      "letter-spacing": "0.09em", fill: INK, "fill-opacity": STRATUM.margin,
-    }, "DWELL"));
-  }
 
   // ── the connectors, which are the point ──
   // Each runs from a degree's stop on the string to the same degree's place on
@@ -546,19 +504,39 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, notes,
       fill: ink, "fill-opacity": isSel ? 1 : STRATUM.letters,
     }, r.litera));
 
-    // The numbers belong to the CHOSEN degree only. Eight degrees times a
-    // fraction, a cents figure and a deviation is thirty-odd labels for a
-    // figure whose subject is a shape; the reader asks for the numbers by
-    // choosing a degree, and gets them large enough to read.
-    if (isSel) {
+    // EVERY RATIO IS SHOWN, AT ONE SIZE. It was drawn for the chosen degree
+    // alone, which meant the top of the figure went blank the moment the
+    // slider left pure tuning — no degree has an exact ratio under a
+    // temperament, so the label the reader was watching simply vanished.
+    //
+    // Shown for all of them, the thinning-out becomes the reading: the ratios
+    // are the tuning that can be written down, and temper it and they go.
+    // Choosing a degree changes their COLOUR, not their size — a number that
+    // grows when picked reads as a different number.
+    //
+    // AND WHERE THERE IS NONE, THE CHOSEN DEGREE SAYS SO. Silence at that
+    // place is ambiguous — it could mean the ratio is missing, or that the
+    // figure forgot to draw it. `irr` states the actual fact: under this
+    // temperament no two whole numbers name the interval. Only for the chosen
+    // degree, because a tempered scale would otherwise print it eight times,
+    // which is a wall of the same word where the point is that it is empty.
+    if (r.ratio || isSel) {
       svg.appendChild(el("text", {
         x: sc(xa), y: DUAL_STRING_Y - 22, "text-anchor": "middle",
-        "font-family": HOUSE_MONO, "font-size": STEP.label,
+        "font-family": FIGURES.family, "font-size": STEP.label,
         fill: ink,
-      }, r.fraction ?? ""));
+        "fill-opacity": r.ratio ? (isSel ? 1 : STRATUM.rail) : STRATUM.letters,
+        "font-style": r.ratio ? null : "italic",
+      }, r.ratio || NO_RATIO));
+    }
+
+    // The cents and the deviation stay with the CHOSEN degree: eight of those,
+    // each two numbers wide, is a paragraph under a figure whose subject is a
+    // shape.
+    if (isSel) {
       svg.appendChild(el("text", {
         x: sc(xb), y: DUAL_RULER_Y + 32, "text-anchor": "middle",
-        "font-family": HOUSE_MONO, "font-size": STEP.label,
+        "font-family": FIGURES.family, "font-size": STEP.label,
         fill: ink,
       }, `${r.cents.toFixed(0)}¢`
         + (Math.abs(r.offset) >= 0.05
@@ -574,7 +552,7 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, notes,
         ].join(" "),
         fill: INK, "fill-opacity": 0, cursor: "pointer",
         tabindex: "0", role: "button",
-        "aria-label": `${r.spn} — ${r.fraction ? `${r.fraction} of the string, ` : ""}`
+        "aria-label": `${r.spn} — ${r.ratio ? `${r.ratio}, ` : ""}`
           + `${r.cents.toFixed(0)} cents${r.role ? `, the ${r.role}` : ""}`,
       });
       hit.addEventListener("click", () => onSelect(r.key));

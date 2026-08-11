@@ -24,7 +24,7 @@
 // radial labels cannot work here — Good Friday and Easter are two degrees
 // apart — so selection joins figure and table instead.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, FIGURES, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import {
   pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighborMidpoints,
@@ -82,6 +82,15 @@ function sameDay(a, b) {
   return x.getUTCFullYear() === y.getUTCFullYear()
     && x.getUTCMonth() === y.getUTCMonth()
     && x.getUTCDate() === y.getUTCDate();
+}
+
+/** The plain date, UTC — the notation a reader navigates by, beside the Roman
+ *  numeral the ring wears as an inscription. */
+function isoDay(date) {
+  const d = new Date(date);
+  return `${String(d.getUTCFullYear()).padStart(4, "0")}`
+    + `-${String(d.getUTCMonth() + 1).padStart(2, "0")}`
+    + `-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
 /** A date read in UTC. tonus is UTC-canonical, and local-time formatting moves
@@ -296,6 +305,20 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     "font-size": STEP.label, "letter-spacing": "0.08em",
     fill: INK, "fill-opacity": STRATUM.margin,
   }, roman(year)));
+  // The standing day in figures, under the year the ring is drawn for. The
+  // Roman numeral above it is the ring's SUBJECT and is meant to be read as an
+  // inscription; this is the same moment in the notation a reader actually
+  // navigates by, so it is set quiet — the smallest step, at the margin's ink.
+  // In Junicode's oldstyle figures, which sit in a line of text rather than
+  // standing off it like lining figures do.
+  if (day) {
+    root.appendChild(el("text", {
+      y: 40, "text-anchor": "middle",
+      "font-family": FIGURES.family,
+      "font-size": STEP.micro, "letter-spacing": "0.04em",
+      fill: INK, "fill-opacity": STRATUM.margin,
+    }, isoDay(day)));
+  }
 
   // ── the anchors on their orbit ──
   const marks = el("g", { class: "annulus-anchors" });

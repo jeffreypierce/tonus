@@ -110,6 +110,25 @@ export const HOUSE_SERIF = "Junicode, 'Crimson Pro', Georgia, serif";
  * label resolved to the system mono — SF Mono on macOS — beside page text in
  * Plex. Two monospaces, same size, same column. */
 export const HOUSE_MONO = "'IBM Plex Mono', ui-monospace, Menlo, monospace";
+/** The figures a FIGURE sets: Junicode's own, which are OLDSTYLE by default —
+ *  they sit on the baseline with ascenders and descenders as lowercase letters
+ *  do, so a number reads as part of a line of text rather than standing off it.
+ *
+ *  `features` is empty on purpose, and that is the finding worth keeping: in
+ *  Junicode `zero` IS the oldstyle glyph and `zero.lf` is the lining variant,
+ *  so `onum` maps lining BACK to the default and does nothing unless `lnum` is
+ *  already on. Setting it here looked correct and changed no pixel — measured
+ *  identical advances, 423.2 either way. Reach for `lnum`/`tnum` when a column
+ *  of digits must line up; that is the setting that does work.
+ *
+ *  Nothing in the library's own emitters uses this yet. It lives here because
+ *  this file is the ONE definition of the ink system and the site vendors it
+ *  (scripts/vendor-ink.mjs) — a second copy in the site would be the drift
+ *  this module exists to prevent. */
+export const FIGURES = {
+    family: HOUSE_SERIF,
+    features: "",
+};
 /** A scaled measure, at most two places and no trailing zeros: 1.8, not 1.80. */
 export const sc = (v) => Number(v.toFixed(2)).toString();
 /** XML-escape a string for an SVG attribute or text node. */
