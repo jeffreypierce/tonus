@@ -58,6 +58,11 @@ const PASCHAL = new Set(["pasc"]);
 const MONTHS = ["IANUARIUS", "FEBRUARIUS", "MARTIUS", "APRILIS", "MAIUS", "IUNIUS",
   "IULIUS", "AUGUSTUS", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 
+/** The months in the GENITIVE, for a date: "1 Iunii", the first of June. The
+ *  rim above spells them nominative, as a label of the month itself. */
+const MENSES = ["Ianuarii", "Februarii", "Martii", "Aprilis", "Maii", "Iunii",
+  "Iulii", "Augusti", "Septembris", "Octobris", "Novembris", "Decembris"];
+
 const doyAngle = (d) => (d / 365) * 360;
 
 const isLeap = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
@@ -84,13 +89,16 @@ function sameDay(a, b) {
     && x.getUTCDate() === y.getUTCDate();
 }
 
-/** The plain date, UTC — the notation a reader navigates by, beside the Roman
- *  numeral the ring wears as an inscription. */
-function isoDay(date) {
+/** The standing day as a DATE rather than a timestamp: "1 Iunii", the day and
+ *  the month it falls in, genitive as a date is spoken. UTC, like everything
+ *  the calendar reports.
+ *
+ *  The year is not repeated — the numeral directly above it is the year, and
+ *  the ring is drawn for exactly one. ISO (0991-06-01) said the same thing in
+ *  a machine's notation, padded to four digits, under an inscription. */
+function plainDay(date) {
   const d = new Date(date);
-  return `${String(d.getUTCFullYear()).padStart(4, "0")}`
-    + `-${String(d.getUTCMonth() + 1).padStart(2, "0")}`
-    + `-${String(d.getUTCDate()).padStart(2, "0")}`;
+  return `${d.getUTCDate()} ${MENSES[d.getUTCMonth()]}`;
 }
 
 /** A date read in UTC. tonus is UTC-canonical, and local-time formatting moves
@@ -317,7 +325,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
       "font-family": FIGURES.family,
       "font-size": STEP.micro, "letter-spacing": "0.04em",
       fill: INK, "fill-opacity": STRATUM.margin,
-    }, isoDay(day)));
+    }, plainDay(day)));
   }
 
   // ── the anchors on their orbit ──
