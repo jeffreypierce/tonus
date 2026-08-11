@@ -1,15 +1,30 @@
 // ---------------------------------------------------------------------------
 // docs/components/tabs — one tab strip, used three times
 // ---------------------------------------------------------------------------
-// The view switch, the office cascade on the left, and the analysis panels on
-// the right are all the same thing: a row of names, one of them current, one
-// panel showing. Written once so they cannot drift apart, and so the keyboard
-// behaviour is right in all three rather than in whichever got attention.
+// IN THE SYSTEM: this is RULE 2 — an underline means this is where you are.
+// A name, and the current one darkening a line that runs the strip's whole
+// width. Boxes belong to rule 1 and live in dial.js; a set of parts belongs
+// to rule 4 and is the `.segset` in styles.css. (The four rules are stated at
+// the top of styles.css.)
+//
+// The view switch, the office cascade, and the analysis panels on the right
+// are the same thing: a row of names, one of them current, one panel showing.
+// Written once so they cannot drift apart, and so the keyboard behaviour is
+// right in all of them rather than in whichever got attention.
+//
+// SIZE IS A VARIANT, NOT A COPY. `variant: "large"` gives the view switch the
+// title step, because choosing a view is the largest choice on the page. It
+// is the same strip underneath — the alternative was twenty-six duplicated
+// declarations and an ARIA contract that only one of them kept.
 //
 // Follows the WAI-ARIA tabs pattern: arrows move between tabs, Home and End
 // jump to the ends, and only the current tab is in the tab order — so a
 // keyboard reaches the strip once and steps THROUGH the panel, not through
 // every tab on the way past.
+//
+// `el` HERE BUILDS HTML. diagrams/frame.js exports an `el` of the same name
+// that builds SVG and handles neither listeners nor `class`. Two same-named
+// imports doing different things: check which one a file pulled in.
 
 export const el = (tag, attrs = {}, ...kids) => {
   const e = document.createElement(tag);

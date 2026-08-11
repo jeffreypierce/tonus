@@ -373,6 +373,9 @@ export function chordaTabula(tonus, { mode = 7, selected, onSelect, tuning, comm
 // argument, and neither figure alone can state it.
 
 const DUAL_STRING_Y = 46;
+// The chant's own weight, under the two measures of where a degree IS.
+const DUAL_DWELL_Y = 214;
+const DWELL_H = 54;
 const DUAL_RULER_Y = 126;
 
 /**
@@ -381,18 +384,49 @@ const DUAL_RULER_Y = 126;
  * @param {object} tonus
  * @param {object} opts   as chorda/regula — mode, selected, onSelect, tuning, comma
  */
-export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma } = {}) {
+/** How long the chant sits on each degree.
+ *
+ *  BY DURATION, NOT BY COUNT. A count weights a ten-note melisma on one
+ *  syllable the same as ten separate syllables on that degree, which is not
+ *  what dwelling on a note means; `shapedDuration` is how long it sounds.
+ *
+ *  Keyed by PITCH CLASS, because the string is one octave and the chant is
+ *  not: a degree is the same degree wherever the melody sings it.
+ *
+ *  Cadences are NOT marked here. Where the piece ends its phrases is the
+ *  tonarium track's subject, drawn over the score itself where the endings
+ *  are; saying it again on a scale axis is the same claim in a worse place. */
+export function dwellByDegree(notes) {
+  const time = new Map();
+  let longest = 0;
+  for (const r of notes ?? []) {
+    if (r?.pc == null) continue;
+    const t = (time.get(r.pc) ?? 0) + (r.shapedDuration ?? 1);
+    time.set(r.pc, t);
+    if (t > longest) longest = t;
+  }
+  return { time, longest };
+}
+
+export function chordaDual(tonus, { mode = 7, selected, onSelect, notes,
+  tuning, comma } = {}) {
   // One octave: the string has no more length past its halfway point, and the
   // ruler is ruled to 1200. Both figures already bound themselves this way.
   const rows = chordaRows(tonus, { mode, tuning, comma })
     .filter((r) => r.fr >= 0.5 - 1e-9 && r.cents <= 1200 + 1e-6);
   const sel = selected ?? rows.find((r) => r.role === "tenor")?.key ?? rows[0]?.key;
+  // The band is always there: this reading only opens with a chant loaded, so
+  // there is no chantless state to design for. The guard is against an empty
+  // note stream dividing by zero, not against a second layout.
+  const dwell = notes?.length ? dwellByDegree(notes) : null;
 
   const svg = el("svg", {
-    class: "chorda-dual", viewBox: `${NUT - 14} 0 ${LEN + 28} 170`, xmlns: NS,
+    class: "chorda-dual",
+    viewBox: `${NUT - 14} 0 ${LEN + 28} 280`, xmlns: NS,
     role: "img",
     "aria-label": `Mode ${mode} measured two ways: the monochord's string`
-      + ` fractions above, the same degrees in cents below`,
+      + ` fractions above, the same degrees in cents below`
+      + ", and how long the chant dwells on each",
   });
 
   // ── above: the string, between its bridges ──
@@ -420,6 +454,36 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma 
     x1: NUT, y1: DUAL_RULER_Y, x2: NUT + LEN, y2: DUAL_RULER_Y,
     stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": STROKE.fine,
   }));
+
+  // ── beneath: what the chant does with them ──
+  // The two bands above are properties of a TUNING and are true whether or not
+  // anything is open. This one is the piece in hand, so the panel stops being
+  // a table of a scale and becomes a reading of a chant in that scale.
+  if (dwell) {
+    svg.appendChild(el("line", {
+      x1: NUT, y1: DUAL_DWELL_Y, x2: NUT + LEN, y2: DUAL_DWELL_Y,
+      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
+    }));
+    for (const r of rows) {
+      const t = dwell.time.get(r.pc) ?? 0;
+      if (!t) continue;
+      const x = rulerX(r.cents);
+      const h = (t / dwell.longest) * DWELL_H;
+      // A stem, under the degree that produces it, on the ruler's axis — the
+      // cents axis, because that is the one that is linear in pitch and can
+      // carry a bar chart without the spacing lying about the quantities.
+      svg.appendChild(el("line", {
+        x1: sc(x), y1: DUAL_DWELL_Y, x2: sc(x), y2: sc(DUAL_DWELL_Y + h),
+        stroke: INK, "stroke-opacity": r.key === sel ? 1 : STRATUM.spark,
+        "stroke-width": 5, "stroke-linecap": "butt",
+      }));
+    }
+    svg.appendChild(el("text", {
+      x: NUT, y: DUAL_DWELL_Y - 20,
+      "font-family": HOUSE_MONO, "font-size": STEP.micro,
+      "letter-spacing": "0.09em", fill: INK, "fill-opacity": STRATUM.margin,
+    }, "DWELL"));
+  }
 
   // ── the connectors, which are the point ──
   // Each runs from a degree's stop on the string to the same degree's place on

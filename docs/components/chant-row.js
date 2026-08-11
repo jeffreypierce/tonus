@@ -2,12 +2,28 @@
 // docs/components/chant-row — a chant, listed
 // ---------------------------------------------------------------------------
 // The row that appears wherever chants are offered: the day's music in
-// Calendarium, a chant's census neighbors in Canticum. Its incipit is drawn
-// as real notation rather than named — a few notes of the actual melody, which
-// is how a chant is recognised.
+// Calendarium, a chant's census neighbours in Canticum.
+//
+// IN THE SYSTEM: this is where STATE is spelled out most fully, and the
+// styling lives in styles.css under `.chant-row`. A list of chants is a list
+// of CHOICES, so the ones not taken sit at --label and the one taken comes
+// forward in full ink.
+//
+//   HOVER DARKENS  the row's rule --rule → --edge, the name → --ink
+//   SELECTED       a 2px ink bar in the margin, the row on --paper-lit
+//
+// Nothing fills. A wash would also fight the incipit drawn in the same row,
+// which is the second reason it is gone.
+//
+// THE GEOMETRY IS LOAD-BEARING. The music starts at the 40% mark and runs to
+// the edge, which means the LEFT column is the fixed one — sizing the right
+// instead lets the gap shift where the music begins, and the column stops
+// reading as notation and starts reading as ragged fragments. The row carries
+// no horizontal padding for the same reason; the text column takes its own
+// inset. See the comment on `.chant-row button` before changing either.
 //
 // The render is the library's, at a small staff: notatio then inscriptio, the
-// same call the full score makes. Cached per id, because a list of neighbors
+// same call the full score makes. Cached per id, because a list of neighbours
 // re-renders whenever anything else on the page moves and the notation for a
 // given chant never changes.
 

@@ -1,6 +1,22 @@
 // ---------------------------------------------------------------------------
-// docs/components/dial — a date, typed or stepped
+// docs/components/dial — a date, typed or stepped, and three places to jump
 // ---------------------------------------------------------------------------
+// IN THE SYSTEM: this file carries RULE 1 and RULE 3 side by side, and the
+// contrast between them is the point. (The rules are stated at the top of
+// styles.css.)
+//
+//   THE FIELD holds a value, so it wears a box — one edge around the date and
+//   its two spurs, divided by hairlines. The spurs step the value and hold
+//   nothing, so they carry no edge of their own: rule 3.
+//
+//   THE ANCHORS hold nothing and set nothing. Nativitas, Pascha and Pentecoste
+//   are three days the year is reckoned from, and going to one is going
+//   somewhere — so they are little jump links, in the dotted-hairline idiom
+//   `.doc` uses elsewhere for "there is more here". Not a tab strip: a strip
+//   claims one of its names is showing, and these are three places you may go.
+//   Not boxes either — boxed, they were indistinguishable from the office
+//   filters directly below them.
+//
 // The whole page is a function of one date, so this input has two jobs that
 // pull against each other: land on a named day exactly, and wander from it a
 // day at a time to watch the chants and the sky change underneath.
@@ -9,18 +25,13 @@
 // across a few hundred pixels put roughly eight years under every pixel, so a
 // particular year could not be hit at all — only swept past. A typed field
 // does the first job perfectly and the second not at all, which is why the
-// arrows sit beside it: click to walk, type to arrive.
-//
-// The anchors are the third way in. A liturgical year is not navigated by
-// number — nobody knows what date Advent starts in 991 — so the days the year
-// actually turns on are named buttons, and the ring in Festum stays the
-// scenic route to the same places.
+// spurs sit beside it: click to walk, type to arrive.
 //
 // THE INPUT OUTLIVES A RENDER. Typing fires `change` and the page redraws; a
 // field rebuilt each time would lose focus and the caret mid-entry. The
 // element is built once, kept, and its value written in place — the rest of
-// the page redraws around it. (The old three-slider dial needed this for the
-// same reason under a drag; the reason survives the redesign.)
+// the page redraws around it. This is also why `syncDateDial` exists: a day
+// chosen elsewhere has to be told to the field rather than rebuilt into it.
 
 import { el } from "./tabs.js";
 
@@ -89,10 +100,9 @@ function build() {
   // boxes at three type sizes — 13.5px arrows around an 11px date — which read
   // as three unrelated controls for one reading of one value.
   //
-  // The anchors are NOT in that box, and no longer wear one. Going to Pascha
-  // is going somewhere, not setting a field, so they take the page's
-  // navigation grammar — a name, underlined where you are — which is what
-  // finally tells them apart from the office filters below.
+  // The anchors are NOT in that box, and wear none of their own — see the
+  // header: three jump links, which is what finally tells them apart from the
+  // office filters below.
   made.node = el("div", { class: "dials" },
     el("div", { class: "field" },
       step(-1, "dies prior", "‹"), field, step(1, "dies posterior", "›")),

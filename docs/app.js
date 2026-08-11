@@ -24,6 +24,7 @@ import { chantList } from "./components/chant-row.js";
 import { annulus, annulusTabula } from "./diagrams/annulus.js";
 import { chordaDual, chordaTabula, chordaRows } from "./diagrams/chorda.js";
 import { hand, handTabula, handRows } from "./diagrams/hand.js";
+import { mutatio } from "./diagrams/mutatio.js";
 import { rota, rotaTabula, rotaAspectTabula } from "./diagrams/rota.js";
 import { middleOf } from "./diagrams/notehead.js";
 
@@ -42,6 +43,15 @@ const state = {
   // the few settings the toy carries
   notation: "quadrata",
   tracks: ["chironomia"],
+  // Which hexachord the hand is read by. It FOLLOWS the selection — opening a
+  // chant or picking a note on the ring sets it — and the picker can override
+  // it. One value, two ways in, so the control always reads what is drawn.
+  hexachord: "naturale",
+  // The reading route on the hand — its dashes and its arrows, which are one
+  // mark and switch together. On, because the order the gamut is learned in is
+  // what a hand teaches; off leaves the twenty places and the five digits, and
+  // the knuckle line runs the whole way across to make up for it.
+  route: true,
   // The temperament is one number: how much of the syntonic comma comes off
   // each fifth. 0 is Pythagorean, 1/11 is (audibly) equal, 1/4 buys the pure
   // major third. A named list of six could not say that they are one family.
@@ -59,6 +69,10 @@ const state = {
 
 // Who says which sphere sounds what. Four schemes, each from its own text.
 const DOCTRINAE = ["pythagoras", "boethius", "pliny", "ptolemy"];
+
+// The three kinds of hexachord, by the b each reads: the round one, neither,
+// the square one.
+const HEXACHORDA = ["molle", "naturale", "durum"];
 
 // ── the offices a day can be read by ──
 // The Mass twice, then the Office hour by hour. The hours are listed
@@ -238,11 +252,20 @@ function renderPanels() {
       const row = host.querySelector(sel);
       if (!row) return;
       const cells = row.querySelectorAll(".cell");
-      cells[0]?.replaceChildren(...(left ? [left] : []));
+      if (left !== undefined) cells[0]?.replaceChildren(...(left ? [left] : []));
       if (right !== undefined) cells[1]?.replaceChildren(...(right ? [right] : []));
     };
     put(".row-title", heads.title);
     put(".row-detail", heads.detail, heads.rightDetail);
+    // A READING'S INPUTS CAN BE A FUNCTION OF THE SELECTION TOO. The hexachord
+    // picker shows what is in force, so picking a note on the ring has to move
+    // it — built once and left alone, it went on naming the hexachord you
+    // arrived in, and the toggles beside it never showed their own state.
+    //
+    // Only the RIGHT cell, and only when the reading offers one: the left cell
+    // holds the date dial, and the comma slider is dragged. Neither survives
+    // being replaced under the pointer, so neither is ever named here.
+    put(".row-inputs", undefined, heads.rightInputs);
   }
 
   body.replaceChildren(
@@ -609,6 +632,9 @@ function canticumHeads() {
     title: el("h1", {}, chant.incipit),
     detail: canticumDetail(chant),
     rightDetail: canticumRightDetail(M, row),
+    // Named only for the readings whose inputs are safe to rebuild — see the
+    // note in renderPanels. Temperamentum's slider is deliberately absent.
+    rightInputs: state.right.canticum === "manus" ? hexachordPicker() : undefined,
   };
 }
 
@@ -673,7 +699,8 @@ function canticum() {
           },
         }, name))),
     ),
-    rightInputs: state.right.canticum === "temperamentum" ? commaSlider() : null,
+    rightInputs: state.right.canticum === "temperamentum" ? commaSlider()
+      : state.right.canticum === "manus" ? hexachordPicker() : null,
     left: panels.left,
     right: panels.right,
   });
@@ -868,6 +895,13 @@ function selectedPitch() {
  *  same fact. */
 function selectionFor(rows, spn) {
   if (!spn) return undefined;
+  // AN EXACT PITCH FIRST. Pitch class alone is right for a row set that spans
+  // ONE octave — the monochord's, where the chant sings G2 and the scale
+  // writes G3 and they are one degree. The hand spans THREE, and there the
+  // first row sharing a pitch class is always the lowest: clicking cc landed
+  // on C, dd on D, and the top of the gamut could not be selected at all.
+  const exact = rows.find((r) => r.spn === spn);
+  if (exact) return exact.key;
   // `nota` returns the pitch itself, not a wrapper around one.
   const pc = tonus.temperamentum({}).nota(spn)?.pc;
   if (pc == null) return undefined;
@@ -887,6 +921,10 @@ function selectPitch(spn) {
 function selectNote(i) {
   state.note = i;
   state.pitch = null;
+  // The hand is read by the hexachord in force where the reader is standing,
+  // so a note carries its own reading with it.
+  const h = state.score?.tabula[i]?.hexachord;
+  if (h) state.hexachord = h;
   renderPanels();
 }
 
@@ -979,6 +1017,32 @@ function commaSlider() {
   return commaControl.node;
 }
 
+/** Which hexachord the hand is read by.
+ *
+ *  A doctrinal choice about the figure, so it wears the same box `doctrina`
+ *  does. It is not a mode the reader has to keep in step by hand: picking a
+ *  note — on the ring, in the score, anywhere the selection travels — sets it,
+ *  and the picker shows what is in force and can still override it. */
+function hexachordPicker() {
+  return el("div", { class: "settings" },
+    el("span", { class: "set-name" }, "hexachordum"),
+    el("select", {
+      "aria-label": "hexachordum",
+      onchange: (e) => { state.hexachord = e.target.value; renderPanels(); },
+    },
+      ...HEXACHORDA.map((v) =>
+        el("option", { value: v, selected: state.hexachord === v }, v))),
+    // What is drawn OVER the twenty places. One switch, because the dashes and
+    // the arrows are one mark: a path a reader is meant to walk has a
+    // direction, and a direction with no path to lie along is nothing.
+    el("div", { class: "segset", role: "group", "aria-label": "the route" },
+      el("button", {
+        type: "button", "aria-pressed": state.route ? "true" : "false",
+        onclick: () => { state.route = !state.route; renderPanels(); },
+      }, "route")),
+  );
+}
+
 function temperamentumPanel() {
   const mode = modeOf(state.chant);
   const sel = selectedPitch();
@@ -1021,11 +1085,36 @@ function manusPanel() {
     selected: selectionFor(gamutRows, spn),
     onSelect: (key) => {
       const row = gamutRows.find((r) => r.key === key);
-      const inChant = state.score?.tabula.find((t) => t.pc === row?.pc);
+      // The joint's OWN pitch, matched exactly in the chant where the chant
+      // sings it. Matching by pitch class handed back the first note sharing
+      // the class, which is a lower octave than the one just pointed at.
+      const inChant = state.score?.tabula.find((t) => t.spn === row?.spn);
       selectPitch(inChant?.spn ?? row?.spn ?? null);
     },
   };
-  return el("div", {}, hand(tonus, opts), handTabula(tonus, opts));
+  // THE CHART DRIVES THE HAND. `piece` reads the hexachord in force at the
+  // selected note; a named value pins it. Both end in the same argument, so
+  // the hand knows nothing about where the choice came from.
+  const rows = state.score?.tabula ?? [];
+  const at = state.note != null ? state.note : null;
+  const hexachord = state.hexachord;
+
+  // Where each phrase begins, in notes — the divisions a mutation is read
+  // against. The tabula is one row per note, and a phrase knows its own count.
+  const phrases = [];
+  let n = 0;
+  for (const ph of state.score?.phrases ?? []) { n += ph.noteCount ?? 0; phrases.push(n); }
+
+  // The ring CARRIES the hand: one figure, the piece around the outside and
+  // the gamut it is read on at the centre. With no chant loaded there is no
+  // piece to ring, so the hand stands on its own.
+  const figure = hand(tonus, { ...opts, hexachord, route: state.route });
+  return el("div", {},
+    rows.length
+      ? mutatio({ rows, note: at, phrases, centre: figure,
+                  onSelect: (i) => selectNote(i) })
+      : figure,
+    handTabula(tonus, opts));
 }
 
 // ── selection ──
@@ -1035,6 +1124,9 @@ function openChant(chant) {
   try { state.score = tonus.notatio(chant); }
   catch { state.score = null; }
   state.view = "canticum";
+  // A chant opens on the hexachord it opens in.
+  const h = state.score?.tabula.find((r) => r.hexachord)?.hexachord;
+  if (h) state.hexachord = h;
   render();
 }
 
@@ -1047,6 +1139,8 @@ function writeUrl() {
   if (state.chant) p.set("cantus", state.chant.id);
   if (state.notation !== "quadrata") p.set("notatio", state.notation);
   if (state.tracks.length) p.set("tracks", state.tracks.join(","));
+  p.set("hexachordum", state.hexachord);
+  if (!state.route) p.set("route", "0");
   // Only when narrowed — all three showing is the default, and saying so in
   // every link would put a parameter in the bar that changes nothing.
   if (state.offices.join(",") !== OFFICES_SHOWN.join(","))
@@ -1069,6 +1163,9 @@ function readUrl() {
   }
   const n = p.get("notatio");
   if (n === "moderna" || n === "quadrata") state.notation = n;
+  if (p.get("route") === "0") state.route = false;
+  const hx = p.get("hexachordum");
+  if (HEXACHORDA.includes(hx)) state.hexachord = hx;
   if (p.has("tracks")) {
     state.tracks = p.get("tracks").split(",")
       .filter((t) => t === "chironomia" || t === "tonarium");

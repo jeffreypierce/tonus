@@ -1,24 +1,98 @@
 /* ---------------------------------------------------------------------------
    site/styles — Dieter Rams designs a liturgical book
    ---------------------------------------------------------------------------
-   Blacks, greys, one liturgical red. The ink system the diagrams draw with,
-   stated once for the page around them: the same #111, the same rubrica, the
-   same six type steps. Nothing decorative that is not also informative.
+   Blacks, greys, one liturgical red. Nothing decorative that is not also
+   informative.
 
-   Junicode carries content and Latin; IBM Plex Mono carries machine data —
-   ids, hz, cents, ratios; Jacquard is rationed to the wordmark alone.
+   THE SYSTEM ANSWERS FOUR QUESTIONS. Everything below is a token or a rule,
+   and each belongs to one of them.
 
-   THE THREE RULES THIS SHEET KEEPS
-   1. A BOX means a value lives here.        (a field, a select, a range)
-   2. An UNDERLINE means this is where you are. (tabs, view switch, anchors)
-   3. Neither means this does something.     (a spur, a segment of a set)
+   ─── 1 · WHAT COLOUR IS THIS? ────────────────────────────────────────────
+   Six values, and three of them name a JOB rather than a shade.
 
-   And for state, two moves and no wash:
-   HOVER darkens — the row's rule goes --rule to --edge and its name comes up
-   to full ink.
-   SELECTION is MARKED, not filled — a 2px ink bar in the left margin, and the
-   row stands on pure white. The 6% grey tint this page used to use resolved
-   to a warm #F1F0EE over warm paper, which is mushroom.
+   --ink --rubrica --label --ghost carry text.
+
+   --rule SEPARATES and --edge AFFORDS. A rule is a hairline in a book: it
+   divides a row from the next, and 1.37:1 against paper is right for it,
+   because nothing asks to touch it. An edge is the boundary of a control and
+   has to be seen — 3.40:1, the floor WCAG sets for a non-text boundary. One
+   token doing both work gave every field on the page a separator where it
+   needed an edge.
+
+   THE PAPER IS ONE COLOUR, with one step up: --paper-lit, which a selected
+   row stands on so it lifts rather than dirties. Nothing else changes a
+   background. A figure is given weight by its own structure — the strokes it
+   is drawn with — not by a panel of tint behind it.
+
+   ─── 2 · HOW BIG, AND HOW LOOSE? ─────────────────────────────────────────
+   Six type steps, --micro 9 through --display-size 26. They are the same six
+   the figures draw with (STEP in diagrams/ink.js), so a wheel's label and a
+   table's label at the same step are the same size. The wordmark is off the
+   scale deliberately and is named --wordmark-size, not a seventh step.
+
+   TRACKING IS OPTICAL, so it falls as size rises. Three values:
+   --track-micro  .09em  capitals at 9px — headings, table heads, labels
+   --track-caps   .05em  capitals at 11px and up
+   --track-meta   .04em  mono metadata, upright or italic
+   Serif names take none.
+
+   THREE FACES, EACH WITH A JOB.
+   Junicode carries words and Latin. IBM Plex Mono carries machine data — ids,
+   hz, cents, ratios. Jacquard is the wordmark, once. That rule decides every
+   label: a month name, a sign name, a gamut role and a chironomy letter are
+   all WORDS, so all of them are serif, wherever they are drawn. There is no
+   sans, because a fourth face would have no job and no file behind it.
+
+   ─── 3 · HOW MUCH AIR? ───────────────────────────────────────────────────
+   --sp-1 … --sp-9, on a 4px base. A step is a choice from nine.
+
+   Three things are deliberately NOT on the scale, each said so where it
+   sits: --page-x (the margin of the leaf, which changes with the window),
+   the chant row's `calc(40% - 14px)` (load-bearing for where the staff
+   starts — re-measure before touching), and the temperament slider (hand
+   tuned against the running control).
+
+   ─── 4 · WHAT IS THIS THING, AND WHAT STATE IS IT IN? ────────────────────
+   THE COSTUME RULES. These are what tell a filter from a jump.
+
+   1. A BOX means a value lives here.          a field, a select, a range
+   2. An UNDERLINE means this is where you are. tabs, the view switch
+   3. Neither means this does something.        a spur, a segment of a set
+   4. A SET IS ONE OBJECT MADE OF PARTS.        adjacent segments, one edge,
+      a tick each — the offices, the analysis tracks, aspectus.
+
+   STATE IS TWO MOVES AND NO WASH.
+   HOVER DARKENS — the row's rule goes --rule to --edge, and its name comes
+   up to full ink.
+   SELECTION IS MARKED, NOT FILLED — a 2px ink bar in the margin, and the row
+   stands on --paper-lit. In a table the bar rides the first cell as an inset
+   shadow, so it takes no width and cannot shift the column.
+
+   FOCUS IS ONE SENTENCE: 2px rubrica, OUTSIDE a box that carries its own
+   edge, INSIDE anything full-bleed — a row, a tab — where an outside ring
+   would be clipped or collide with the row above. There is no third case.
+
+   ─── WHAT KEEPS IT HONEST ────────────────────────────────────────────────
+   @layer, declared below. Order there decides a tie, so intent stops
+   depending on which line was typed first.
+
+   One trap layers do not catch: a container that styles bare element
+   selectors repaints anything nested inside it. `.settings button` (0,1,1)
+   ties `.segset button` (0,1,1) and wins on source order. The answer is the
+   child combinator — `.settings > button` — so a container dresses its own
+   controls and nothing else. Worth checking whenever a component is nested
+   inside one.
+
+   ─── WHERE THE SYSTEM STOPS ──────────────────────────────────────────────
+   It governs the page. It does NOT restyle the score: inscriptio emits
+   `var(--tonus-note, #111)` and this sheet rebinds three properties, so a
+   drawn chant is re-inked without being re-rendered.
+
+   It does not govern the figures' insides either — those obey
+   diagrams/ink.js: one ink graded by opacity, one nib, four stroke rungs.
+   The two systems agree by SHARING NUMBERS, not by one importing the other,
+   which is the seam to watch: a face or a step changed on one side and not
+   the other is how two monospaces once ended up on one screen.
 --------------------------------------------------------------------------- */
 
 @font-face {
@@ -84,9 +158,10 @@
        boundary. The two were one token, and every field on the page wore a
        separator where it needed an edge. */
     --edge: #8B8A85;
-    /* The paper a SELECTED row stands on. Pure white against the page's warm
-       off-white: the row lifts rather than dirties, which is what the 6% ink
-       tint got wrong — grey over warm paper resolved to mushroom. */
+    /* THE PAPER LADDER — three steps, all warm, all off the same hue.
+       A selected row stands one step UP, into pure white, so it lifts rather
+       than dirties. There is no step DOWN: a figure is given weight by its own
+       structure — see STRATUM.rail — not by a panel of tint behind it. */
     --paper-lit: #FFF;
 
     /* ── the faces ── */
@@ -621,21 +696,26 @@
 
   /* ── the temperament slider ──
      One axis, not six names: the fraction of the comma taken off each fifth,
-     with the historical stops as clickable detents beneath the track. */
-  /* ── the temperament slider ──
-     One axis, not six names: the fraction of the comma taken off each fifth,
      with the historical stops named in the list beside it.
 
-     THIS BLOCK IS JEFFREY'S, and it is deliberately not folded onto the
-     spacing scale or the no-fill rule — it was measured into these values
-     against the running control. The dashes that used to ride the bar are
-     removed at his call; `.comma-track` stays as the sizing box. */
-  .comma { align-items: center; gap: 6px 10px; }
+     ON THE SYSTEM'S TERMS. The track is a control's own rail, so it takes
+     --edge and not --rule — you drag on it, and a boundary you touch has to
+     be seen. The box round the list is the same box every select wears, and
+     the readout is machine data, so it is mono and tabular like every other
+     number on the page.
+
+     The BEHAVIOUR is untouched: no snap, COMMA_STEP resolution, and a readout
+     that is always cents. See commaSlider() in app.js — the reasoning for each
+     is there, and none of it depends on anything here. */
+  .comma { gap: var(--sp-2) var(--sp-3); }
+  /* The rail's own box. Its width is a control dimension, not a step: it is
+     the resolution the axis is read at, and every pixel spreads the seven
+     named stops further apart. */
   .comma-track {
     position: relative;
     display: inline-block;
     width: 132px;
-    height: 28px;
+    height: var(--control-h);
     flex: none;
   }
   .comma-range {
@@ -644,18 +724,20 @@
     width: 100%; height: 100%;
     background: none; cursor: ew-resize; margin: 0;
   }
-  .comma-range::-webkit-slider-runnable-track { height: 1px; background: var(--rule); }
+  .comma-range::-webkit-slider-runnable-track { height: 1px; background: var(--edge); }
   .comma-range::-webkit-slider-thumb {
     -webkit-appearance: none; appearance: none;
     width: 11px; height: 11px; border-radius: 50%;
     background: var(--ink); margin-top: -5px;
   }
-  .comma-range::-moz-range-track { height: 1px; background: var(--rule); }
+  .comma-range::-moz-range-track { height: 1px; background: var(--edge); }
   .comma-range::-moz-range-thumb {
     width: 11px; height: 11px; border: 0; border-radius: 50%; background: var(--ink);
   }
   .comma-range:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
-  /* The width of the tempered fifth, in cents, everywhere on the axis. */
+  /* The width of the tempered fifth, in cents, everywhere on the axis — so it
+     is a number, and numbers on this page are mono and tabular. The width is
+     held so the row does not shuffle as digits change. */
   .comma-read {
     font-family: var(--mono); font-size: var(--caption);
     color: var(--ink);
@@ -663,10 +745,12 @@
     font-variant-numeric: tabular-nums;
   }
   .comma select { max-width: 15rem; }
-  /* ON a named stop: full ink, a firm edge — this is the temperament chosen.
-     NEAR one: greyed, as a disabled control is greyed, because the name is
-     being shown for orientation rather than claimed. The reader can still open
-     the list and pick it; only the display is quiet. */
+  /* The list reads the axis in the page's own state vocabulary.
+     AT a named stop: ink text, ink edge — two channels, the same way every
+     other setting says it is on.
+     NEAR one: the ghost the page uses for a thing that is present but not
+     claimed, because the name is being shown for orientation. The reader can
+     still open the list and choose it; only the display is quiet. */
   .comma select.at-detent { color: var(--ink); border-color: var(--ink); }
   .comma select.near-detent {
     color: var(--ghost);
@@ -777,26 +861,28 @@
   table.tabula .mono { font-family: var(--mono); font-size: var(--caption); }
   table.tabula .num { text-align: right; font-variant-numeric: tabular-nums; }
 
-  /* THE GAMUT LETTERS, in Junicode's enlarged minuscule.
-     Junicode carries an `ENLA` axis — "Enlarge" — which raises the x-height of
-     the lowercase toward cap height without touching ascenders or capitals.
-     That is exactly the medieval convention this column is spelling: Γ A B C D
-     E F G then a b c d, one gamut where the case marks the OCTAVE rather than
-     a difference in size. Set with the mono face the lowercase read as a
-     second, smaller alphabet.
-     (Verified 2026-08-10 in the shipped subset: the axis survives subsetting
-     and this rule does real work. The LAYOUT features do not survive — see
-     fonts/README.md.) */
+  /* THE GAMUT LETTERS, in plain Junicode: Γ A B C D E F G then a b c d, one
+     gamut where the case marks the OCTAVE. The lowercase keeps its ordinary
+     x-height — Junicode's ENLA axis was raising it toward cap height here,
+     which spelled the medieval convention but read as an effect at this size. */
   .litera {
     font-family: var(--serif);
-    font-variation-settings: "ENLA" 100;
     font-size: var(--step-label);
     letter-spacing: 0.04em;
   }
-  /* The two gamut letters that are MARKS — b rotundum and b quadratum — drawn
-     with the medieval glyphs rather than set as ♭ ♮. They sit on the text
-     baseline and take the cell's colour. */
-  .litera-glyph { display: inline-block; vertical-align: -0.12em; color: inherit; }
+  /* The two b's are MARKS, so they are engraved rather than set: Bravura's
+     standard ♭ and ♮ as inline SVG, matching the page's weight instead of
+     whatever a text font carries. The glyph box is trimmed to its ink, which
+     costs two corrections — the cell's tracking would hang off its right edge
+     as a phantom space, and a box taller than a letter's cap height rides ~4px
+     high. Measured: this seats the glyph on the same baseline as every letter
+     in the column. */
+  .litera-glyph {
+    display: inline-block;
+    vertical-align: -0.445em;
+    letter-spacing: 0;
+    color: inherit;
+  }
 
   /* A gloss is a WORD — a role (finalis, tenor), a season, a Greek string-name
      — not machine data. So it takes the serif, small and quiet, rather than
@@ -847,7 +933,8 @@
   /* A wheel is a wheel: both wear the same frame, so both take the same room
      whatever sits in the panel beneath them. Left to the grid, the one with
      two tables under it stretches and the pair stop being comparable. */
-  .panel svg.annulus, .panel svg.rota { width: 100%; max-width: 520px; aspect-ratio: 1; }
+  .panel svg.annulus, .panel svg.rota, .tabpanel svg.mutatio
+    { width: 100%; max-width: 520px; aspect-ratio: 1; margin: 0 auto var(--sp-4); }
   /* The diagrams scale to their column by viewBox; without this they draw at
      their intrinsic width and overflow a narrow cell. */
   .tabpanel > div > svg { display: block; max-width: 100%; height: auto; }
@@ -857,12 +944,12 @@
      measures easier to see. The round figures are capped instead, since a
      circle gains nothing past a certain size. */
   .tabpanel > div > svg.chorda-dual { width: 100%; }
-  /* The hand is a PICTURE of a hand, not a measuring line: past a certain size
-     it only gets bigger, so it takes half the column and sits centred with its
-     table beneath. */
+  /* The hand standing ALONE — no chant, so no ring around it. Capped, because
+     past a certain size a picture only gets bigger. */
   .tabpanel > div > svg.hand {
-    width: 50%;
-    min-width: 200px;
-    margin: 0 auto var(--sp-2);
+    width: 74%;
+    min-width: 220px;
+    max-width: 380px;
+    margin: 0 auto var(--sp-4);
   }
 }
