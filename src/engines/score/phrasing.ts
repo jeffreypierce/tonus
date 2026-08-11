@@ -230,9 +230,10 @@ const TENOR_DISTANCE_DIVISOR = 6;
 const CADENCE_VELOCITY_FACTOR = 0.5;
 const CADENCE_DURATION_FACTOR = 0.6;
 
-// The phrasing-side reading of the divisio (bar-line) hierarchy. This is the same
-// bar hierarchy tabulated canonically in docs/api/score.md and weighted for analysis
-// by prosody.ts's cadenceWeight ladder — but here the weights differ on purpose:
+// The phrasing-side reading of the divisio (bar-line) hierarchy. This is the
+// same bar hierarchy tabulated canonically in ../../../docs/api/score.md and
+// weighted for analysis by prosody.ts's cadenceWeight ladder — but here the
+// weights differ on purpose:
 // this is a *shaping* factor, so the virgula (`) gets 0 (a breath, no cadential
 // stress), where the analytic ladder still counts it. Do not unify the three.
 const DIVISIO_STRENGTH: Record<string, number> = {
