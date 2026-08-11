@@ -457,7 +457,7 @@ successive semitone intervals — and an **arrival**, where it landed relative
 to the chant's own closing note. Together they are the key, `"2,0,-2 @0"`, and
 the key is the family's whole name.
 
-110 families clear the floor of 50 occurrences, covering 56.8% of all
+About 110 families clear the floor of 50 occurrences, covering about 57% of all
 phrase-ends. The rest of the tail is real but too thin to characterise.
 
 ```ts
@@ -472,7 +472,7 @@ interface CadentiaFamilia {
 }
 ```
 
-`share` is taken against **every** phrase-end, not against the 56.8% that
+`share` is taken against **every** phrase-end, not against the ~57% that
 cleared the floor. The denominator ships beside the table:
 
 ```ts
@@ -493,24 +493,12 @@ const fam = CADENTIAE.find((f) => f.key === "2,0,-2 @0");
 const lift = (f, mode) =>
   (f.modes[String(mode)] / POP.byMode[String(mode)]) / f.share;
 
-lift(fam, 6); // 2.19
-lift(fam, 4); // 0.06
+lift(fam, 6); // 2.15
+lift(fam, 4); // 0.07
 ```
 
-The commonest family in the corpus (n = 1131, share 0.0397, finality 0.434),
-read mode by mode:
-
-| Mode | Occurrences | Lift  |
-| ---- | ----------- | ----- |
-| 1    | 157         | ×0.72 |
-| 2    | 206         | ×1.34 |
-| 3    | 34          | ×0.32 |
-| 4    | 8           | ×0.06 |
-| 5    | 146         | ×1.26 |
-| 6    | 146         | ×2.19 |
-| 7    | 109         | ×0.80 |
-| 8    | 323         | ×1.64 |
-
+The commonest family in the corpus — about 1,100 occurrences, about 4% of all
+phrase-ends, closing a little under half the time — is not reached for evenly.
 Mode 6 reaches for this close more than twice as often as the corpus does;
 mode 4 almost never. That is the figure the tonarium prints under a cadence
 ([score.md](score.md#the-analysis-tracks)).

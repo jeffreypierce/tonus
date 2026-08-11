@@ -7,6 +7,24 @@ All notable changes to tonus. Newest first.
 Rendering, mostly — a day of looking at real chant on a real page and fixing
 what the page showed.
 
+### Added
+
+- **A third analysis track: `"prosodia"`** — how the melody treats the word.
+  One tent per word (the hairpin's top edge), its apex over the accented
+  syllable, the landing at the peak in the liturgical red — filled for arsic
+  (struck), an open ring for thetic (deferred). Below it a fence on a rail:
+  a stem per spoken syllable, a flat dash for a syllable recited on the tenor,
+  and a block per melisma — as wide as its real extent, as tall as its note
+  count, connected melismas joining into one ridge. It rides first in the
+  stack, directly under the lyric line it reads, and the site's vestigia strip
+  and tracks key carry it. Shaped across eight lab rounds
+  (`working/review/diagram-word-track-01…08.html`).
+- **The rubrica reservation, amended.** Ruled 2026-07-29 as the mode line's
+  alone, the liturgical red now belongs to the claims: the tonarium's mode
+  line and the prosodia's accent dots. The precedent is the score's own text
+  apparatus — the dropcap and annotations were always rubricated, and in the
+  books red is the word's colour.
+
 ### Changed — breaking
 
 - **The layout options are `width` and `scale`.** `padding`, `noteScale`,

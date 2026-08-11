@@ -27,9 +27,9 @@ Everything comes back in one call — profile, balance, neighbors:
   id: "gregobase:1210",
   by: "all",
   profile: {
-    modal:         { values: [...12], typicality: 0.986 },
+    modal:         { values: [...12], typicality: 0.99 },
     degreeHist:    { values: [...15], typicality: … },
-    melodic:       { values: [...121], typicality: 0.694 },
+    melodic:       { values: [...121], typicality: 0.70 },
     trigram:       { values: [...16], typicality: … },
     cadenceFinal:  { values: [...16], typicality: … },
     cadenceMedial: { values: [...16], typicality: … },
@@ -37,7 +37,7 @@ Everything comes back in one call — profile, balance, neighbors:
     textual:       { values: [...7],  typicality: … },
   },
   balance: {
-    distance: 0.0920,
+    distance: 0.091,
     deviantGroups: ["degreeHist", "melodic"],
   },
   neighbors: [
@@ -135,9 +135,9 @@ threshold across two.
 **A centroid must be pooled per group, then compared per group.** Averaging the
 flat 221 and taking one cosine is the exact mistake rule 1 exists to prevent.
 Pooling the 178 Communions both ways gives different winners, and the flat
-version collapses the top of the field into a 0.987 tie where the per-group
-version spreads 0.847 to 0.653. That compression comes from one wide block
-outvoting the other eight.
+version collapses the top of the field into a tie around 0.99 where the
+per-group version spreads from about 0.85 down to 0.65. That compression comes
+from one wide block outvoting the other eight.
 
 **`before` filters before ranking.** It restricts the candidate pool, then
 ranks — so `k` stays satisfiable, and a filtered list is *not* a subset of the
@@ -200,9 +200,9 @@ const ranked = ids
 ```
 
 The per-group breakdown is where the answer becomes legible. _Quinque
-prudentes_ leads on `textual` 0.998, `cadenceMedial` 0.996 and `trigram` 0.994
-— it sets its text and turns its phrases the way Communions do — while its
-`cadenceFinal` is only 0.824, so the one thing it does unlike a typical
+prudentes_ leads on `textual`, `cadenceMedial` and `trigram`, at about 0.99 on
+each — it sets its text and turns its phrases the way Communions do — while its
+`cadenceFinal` is only about 0.82, so the one thing it does unlike a typical
 Communion is end. A chant is typical of its genus in some dimensions and not
 others.
 
@@ -213,8 +213,9 @@ Each group's `typicality` is its cosine against the corpus mean for that group:
 "unlike the rest."
 
 The two numbers above are a fair illustration. _Ab occultis meis_ is a mode-2
-Gradual whose `modal` typicality is 0.986 — modally it is a typical mode-2
-chant — while its `melodic` typicality is 0.694, because its interval
+Gradual whose `modal` typicality is about 0.99 — modally it is a typical
+mode-2 chant — while its `melodic` typicality is about 0.70, because its
+interval
 vocabulary is its own. One chant can be conventional in one dimension and
 distinctive in another, which is the reason the groups are kept apart.
 
@@ -225,7 +226,7 @@ the mean.
 ## Balance — distance and deviance
 
 ```js
-balance: { distance: 0.0920, deviantGroups: ["degreeHist", "melodic"] }
+balance: { distance: 0.091, deviantGroups: ["degreeHist", "melodic"] }
 ```
 
 `distance` is 1 minus the mean typicality across all groups: 0 is a chant at
