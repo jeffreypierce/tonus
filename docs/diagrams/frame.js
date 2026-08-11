@@ -18,7 +18,7 @@
 // offset to say where 0° Aries falls in the civil year. Two wheels that
 // disagree about which way the year turns cannot be laid side by side.
 
-import { INK, STRATUM, STROKE, STEP, HOUSE_SERIF, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, sc } from "./ink.js";
 import { pointAt, uprightRotation } from "./polar.js";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -72,6 +72,22 @@ export function wheel({ className, label }) {
  * @param {number} [opts.ticks]       minor tick every N units (a week, 10°)
  * @param {number} [opts.offset]      turn the whole ring by this many degrees
  */
+/** THE RUBRICATED ROUNDEL — the ring drawn round the thing you have chosen.
+ *  The same mark in all three wheels, which is why it lives here: it was three
+ *  copies of `stroke-width: 1.6`, and 1.6 is not a rung. STROKE.heavy is, and
+ *  is what an axis or a boundary takes — which is what this is, drawn round one
+ *  mark rather than across the figure.
+ *
+ *  `gap` is how far clear of the mark it sits: the wheels give a dot 7 units,
+ *  the hand's larger locus 6.
+ */
+export function roundel(cx, cy, r, gap = 7) {
+  return el("circle", {
+    cx: sc(cx), cy: sc(cy), r: sc(r + gap),
+    fill: "none", stroke: RUBRICA, "stroke-width": STROKE.heavy,
+  });
+}
+
 export function outerRing(root, {
   names, bounds, period = 360, ticks = 0, offset = 0,
 }) {
@@ -95,7 +111,7 @@ export function outerRing(root, {
       const [x2, y2] = at(a, FRAME.week);
       root.appendChild(el("line", {
         x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
-        stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": 0.4,
+        stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
       }));
     }
   }
@@ -107,7 +123,7 @@ export function outerRing(root, {
     const [x2, y2] = at(a, FRAME.tick);
     root.appendChild(el("line", {
       x1: sc(x1), y1: sc(y1), x2: sc(x2), y2: sc(y2),
-      stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": 0.5,
+      stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": STROKE.hair,
     }));
     const [bx1, by1] = at(a, FRAME.bandIn);
     const [bx2, by2] = at(a, FRAME.bandOut);

@@ -65,6 +65,10 @@ const HAND_BOX = BOX.w;                  // 476 — the square the hand is fitte
 // edge exactly on the lane; a little clear of it reads as the hand standing in
 // the ring rather than hooked onto it.
 const HAND_LIFT = 16;
+// How much paper a lane sign punches out from under itself, so the lane it
+// stands on does not strike through it. A halo, not a line — hence a stated
+// width rather than a STROKE rung.
+const KNOCKOUT = 5;
 
 const P = (deg, r) => pointAt(deg, r).map((v) => Number(v.toFixed(1)));
 
@@ -123,7 +127,10 @@ export function mutatio({ rows, note, phrases = [], centre, onSelect } = {}) {
   for (const l of LANES) {
     root.appendChild(el("circle", {
       r: l.r, fill: "none", stroke: INK,
-      "stroke-opacity": 0.10, "stroke-width": STROKE.hair,
+      // The lanes are a graticule you read the line against, so they take
+      // the rung named for exactly that. 0.10 was a value invented BELOW
+      // the floor of the ladder — a third of the quietest named stratum.
+      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
     }));
   }
 
@@ -185,7 +192,13 @@ export function mutatio({ rows, note, phrases = [], centre, onSelect } = {}) {
       x, y: y + 5, "text-anchor": "middle",
       "font-family": HOUSE_SYMBOL, "font-size": STEP.body,
       fill: INK, "fill-opacity": STRATUM.label,
-      "paint-order": "stroke", stroke: "var(--paper, #FDFDFD)", "stroke-width": 5,
+      // KNOCKOUT: the sign punches paper out from under itself so the lane
+      // it sits on does not strike through it. hand.js does the same job
+      // with a fill, because a circle can; a glyph cannot, so it is a
+      // stroke laid under the fill. KNOCKOUT is the width that clears
+      // this glyph at STEP.body — not a rung, because it is not a line.
+      "paint-order": "stroke", stroke: "var(--paper, #FDFDFD)",
+      "stroke-width": KNOCKOUT,
     }, l.sign));
   }
 

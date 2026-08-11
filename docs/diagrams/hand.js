@@ -22,6 +22,8 @@
 import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import { literaGlyph } from "./litera.js";
+// The rubricated roundel, shared with the three wheels — see frame.js.
+import { roundel } from "./frame.js";
 import { LOCUS, DIGITS, KNUCKLE, KNUCKLE_FULL, ROUTE, BOW, VIEWBOX }
   from "./hand-figure.js";
 
@@ -218,10 +220,7 @@ export function hand(tonus, { mode = 1, selected, hexachord, route = true,
     const rad = isPaired(r.midi) ? 13 : 16;
 
     if (isSel) {
-      svg.appendChild(el("circle", {
-        cx: x, cy: y, r: rad + 6, fill: "none",
-        stroke: RUBRICA, "stroke-width": 1.6,
-      }));
+      svg.appendChild(roundel(x, y, rad, 6));
     }
     svg.appendChild(el("circle", {
       cx: x, cy: y, r: rad,

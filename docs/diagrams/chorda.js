@@ -215,7 +215,7 @@ export function chorda(tonus, { mode = 7, selected, onSelect, tuning, comma } = 
       x2: sc(x), y2: isSel ? STRING_Y + 20 : STRING_Y + 14,
       stroke: isSel ? RUBRICA : INK,
       "stroke-opacity": isSel ? 1 : STRATUM.wave,
-      "stroke-width": isSel ? 1.6 : 0.85,
+      "stroke-width": isSel ? STROKE.heavy : STROKE.fine,
     }));
     if (isSel) {
       svg.appendChild(el("circle", { cx: sc(x), cy: STRING_Y, r: 3.4, fill: RUBRICA }));
@@ -300,7 +300,7 @@ export function regula(tonus, { mode = 7, selected, onSelect, tuning, comma } = 
       x1: sc(x), y1: RULER_Y - (isSel ? 18 : 13), x2: sc(x), y2: RULER_Y + (isSel ? 18 : 13),
       stroke: isSel ? RUBRICA : INK,
       "stroke-opacity": isSel ? 1 : STRATUM.wave,
-      "stroke-width": isSel ? 1.6 : 0.85,
+      "stroke-width": isSel ? STROKE.heavy : STROKE.fine,
     }));
     svg.appendChild(el("text", {
       x: sc(x), y: RULER_Y - 26, "text-anchor": "middle",
@@ -455,8 +455,8 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma 
       x1: sc(stringX(r.fr)), y1: DUAL_STRING_Y + 12,
       x2: sc(rulerX(r.cents)), y2: DUAL_RULER_Y - 12,
       stroke: isSel ? RUBRICA : INK,
-      "stroke-opacity": isSel ? 0.9 : STRATUM.rail,
-      "stroke-width": isSel ? 1.3 : STROKE.hair,
+      "stroke-opacity": isSel ? STRATUM.label : STRATUM.rail,
+      "stroke-width": isSel ? STROKE.heavy : STROKE.hair,
     }));
   }
 
@@ -472,7 +472,7 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma 
         x2: sc(x), y2: y + (isSel ? reach + 4 : reach),
         stroke: ink,
         "stroke-opacity": isSel ? 1 : STRATUM.wave,
-        "stroke-width": isSel ? 1.6 : 0.85,
+        "stroke-width": isSel ? STROKE.heavy : STROKE.fine,
       }));
     }
     if (isSel) {

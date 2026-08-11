@@ -10,7 +10,7 @@
 //
 // Run it after `npm run build`; `npm run site` does both.
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -56,3 +56,78 @@ if (!m) {
 await writeFile(SIGNS_OUT,
   `${BANNER.replace("src/engines/score/emitters/atramentum.ts", "src/engines/planet/planet.ts")}\n${m[0]}\n`);
 console.log("vendored the zodiac → docs/diagrams/signs.js");
+
+// ── THE SEAM, ASSERTED ──────────────────────────────────────────────────────
+// The two systems agree by SHARING NUMBERS, not by one importing the other,
+// and this file's own banner calls that the thing to watch. It has been missed
+// three times: HOUSE_MONO listed ui-monospace first and drew a second mono
+// beside the page's; HOUSE_SANS named a face no page loads; and STEP drifted
+// off the CSS scale on every step but one. A comment cannot fail. These can.
+
+const CSS = resolve(HERE, "..", "docs", "styles.css");
+const css = await readFile(CSS, "utf8");
+
+// 1 — the six type steps are the page's six. `STEP` is parsed out of the
+// vendored source rather than imported, because this script copies text and
+// never evaluates it.
+const STEP_PAIRS = {
+  micro: "micro", caption: "caption", label: "step-label",
+  body: "body", title: "title", display: "display-size",
+};
+const stepBlock = src.match(/export const STEP = \{([\s\S]*?)\}/);
+if (!stepBlock) {
+  console.error("vendor-ink: STEP not found in atramentum — did it move?");
+  process.exit(1);
+}
+for (const [key, prop] of Object.entries(STEP_PAIRS)) {
+  const ink = Number(stepBlock[1].match(new RegExp(`\\b${key}:\\s*([\\d.]+)`))?.[1]);
+  const page = Number(css.match(new RegExp(`--${prop}:\\s*([\\d.]+)px`))?.[1]);
+  if (!Number.isFinite(ink) || !Number.isFinite(page)) {
+    console.error(`vendor-ink: could not read STEP.${key} / --${prop}`);
+    process.exit(1);
+  }
+  if (ink !== page) {
+    console.error(
+      `vendor-ink: STEP.${key} is ${ink}, styles.css --${prop} is ${page}.\n` +
+      `  The figures and the page would set the same step at different sizes.`);
+    process.exit(1);
+  }
+}
+
+// 2 — nothing in diagrams/ names a weight or an opacity directly. The ladders
+// are exported so a figure picks a rung instead of inventing one.
+//
+// THE VALUE IS SCANNED, NOT JUST ITS FIRST TOKEN. The obvious regex — a digit
+// straight after the colon — misses the form these actually take: a literal
+// inside a ternary, `isSel ? 1.6 : 0.85`, which is where seven of them were
+// hiding. So the whole value up to the line-ending comma is read.
+//
+// Two numbers are ENDPOINTS rather than rungs and are allowed: 1 is full ink
+// (what a chosen mark takes) and 0 is an invisible hit target. A number
+// SCALING a named value — `NOT_READ * 0.6` — is a stated fraction of a rung
+// and is allowed too; that is the ladder being used, not bypassed.
+const VALUE = /"(?:stroke|fill)-opacity"\s*:\s*([^,\n]*)|"stroke-width"\s*:\s*([^,\n]*)/g;
+const NUMBER = /(?<![\w.])\d*\.?\d+(?![\w.])/g;
+const SCALED = /[A-Z_][A-Z_.a-z]*\s*\*\s*\d*\.?\d+|\d*\.?\d+\s*\*\s*[A-Z_][A-Z_.a-z]*/g;
+
+const DIAGRAMS = resolve(HERE, "..", "docs", "diagrams");
+const offenders = [];
+for (const name of await readdir(DIAGRAMS)) {
+  if (!name.endsWith(".js") || name === "ink.js" || name === "signs.js") continue;
+  const text = await readFile(resolve(DIAGRAMS, name), "utf8");
+  text.split("\n").forEach((line, i) => {
+    for (const m of line.matchAll(VALUE)) {
+      const value = (m[1] ?? m[2] ?? "").trim().replace(SCALED, "");
+      const bare = [...value.matchAll(NUMBER)]
+        .map((n) => Number(n[0])).filter((n) => n !== 0 && n !== 1);
+      if (bare.length) offenders.push(`  ${name}:${i + 1}  [${bare}]  ${line.trim()}`);
+    }
+  });
+}
+if (offenders.length) {
+  console.error("vendor-ink: a figure names a width or an opacity directly — "
+    + "pick a rung from STROKE/STRATUM:\n" + offenders.join("\n"));
+  process.exit(1);
+}
+
+console.log("the ink seam holds: six type steps paired, no invented rungs");
