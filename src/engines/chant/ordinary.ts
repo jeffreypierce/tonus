@@ -464,13 +464,14 @@ function ordinaryForFeast(
       const best = named ?? selectBestChant(credoEntries, mode);
       if (best) {
         const cr = entryToOrdinaryChant(best);
-        // The label follows the chant actually SERVED. When the asked-for
+        // `ordinarium` is the PART — "Credo", as ORDINARIA spells it, beside
+        // "Gloria" and "Sanctus". Which credo of the six sings is the chant's
+        // own identity and is already in its incipit ("Credo II"), which is
+        // where the honest-label rule below reads it: when the asked-for
         // credo is not in the pool (an era view excluded it, or the mode
-        // filter did), the pool's best sings instead — labeling that chant
-        // with the asked-for number would put one credo's name on another's
-        // melody.
-        const served = credoNumeral(best.incipit) ?? credoCode;
-        cr.ordinarium = `Credo ${served}`;
+        // filter did), the pool's best sings instead, under its own name.
+        // Numbering the part here made Credo the one ordinary whose category
+        // was not a category.
         results.push(cr);
       }
     }

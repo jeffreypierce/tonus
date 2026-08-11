@@ -1,7 +1,6 @@
 {
   "name": "tonus",
   "version": "0.4.5",
-  "private": true,
   "type": "module",
   "description": "Medieval music analysis and performance: GABC plainchant exports, liturgical calendar, tuning systems, ephemeris, and the harmony of the spheres",
   "author": "Jeffrey Pierce <jeffrey@jeffreypierce.net>",
@@ -39,7 +38,7 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "docs",
+    "docs/api",
     "!dist/**/*.js.map",
     "!dist/**/*.d.ts.map",
     "LICENSE",
@@ -51,6 +50,7 @@
     "clean": "rm -rf dist",
     "test": "npm run build && node --test --test-reporter=spec tests/*.test.mjs",
     "prepublishOnly": "npm run clean && npm run build",
+    "check:links": "node scripts/check-doc-links.mjs",
     "site": "npm run build && node scripts/vendor-ink.mjs && rm -rf docs/dist && cp -R dist docs/dist",
     "serve": "npm run site && node scripts/serve.mjs",
     "diagrams": "npm run site && node scripts/diagram-lab.mjs",

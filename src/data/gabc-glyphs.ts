@@ -61,9 +61,12 @@ export const GLYPH = {
   ictusBelow: "E9D1",
   episema: "E9D8",
   mora: "E9D9",
-  // accidentals (medieval soft-b flat / natural; standard sharp fallback)
+  // accidentals (medieval soft-b flat / natural; standard sharp fallback).
+  // The natural is E9E1, the b quadratum — the square hard b that pairs with
+  // E9E0's round soft b, and the glyph the emitter actually draws (see
+  // GLYPHS_BY_SET in emitters/accidentals.ts). E9E2 was a different mark.
   flat: "E9E0",
-  natural: "E9E2",
+  natural: "E9E1",
   sharp: "E262",
 } as const;
 

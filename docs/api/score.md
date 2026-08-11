@@ -12,6 +12,8 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
   - [The tabula](#the-tabula)
   - [Rendering](#rendering)
     - [inscriptio — the standalone renderer](#inscriptio--the-standalone-renderer)
+    - [theme — faces and ink](#theme--faces-and-ink)
+    - [The analysis tracks](#the-analysis-tracks)
     - [The intonation channel](#the-intonation-channel)
   - [The imprint](#the-imprint)
   - [Prosody](#prosody)
@@ -54,8 +56,8 @@ notation, signs of punctuation rather than measure:
 
 This hierarchy is read three ways in the engine, each weighting the bars for its
 own end: an analytic cadence weight (prosody), a phrasing strength (which zeroes
-the virgula), and a rest duration (the divisio's pause length). The differences are intentional and
-documented at each table in the code.
+the virgula), and a rest duration (the divisio's pause length). Each weighting
+is documented at its table in the code.
 
 ```ts
 interface Score {
@@ -239,6 +241,7 @@ interface Performance {
 interface Context {
   lyric: string;
   vowel: string;
+  diphthong: string | null; // the pair the vowel belongs to: "ae" | "oe" | "au" | "ui"
   syllableIndex: number;
   accent: boolean; // this note's syllable bears the Latin tonic word-accent
   neumeGroup: number; // neume figure within the syllable (0-based)
@@ -335,7 +338,8 @@ interface ChantTabulaRow {
   // context
   lyric: string;
   runs?: LyricRun[];         // styled lyric spans (see Syllable above)
-  vowel: string;
+  vowel: string;             // the NUCLEUS — one of a e i o u, or "" when textless
+  diphthong: string | null;  // the pair it belongs to: "ae" | "oe" | "au" | "ui"
   divisio: string | null;
   cadenceRef: number | null; // index into score.cadences[] when this note closes one
   neume: Neume;
@@ -347,13 +351,8 @@ interface ChantTabulaRow {
 The score is drawn as **SVG** — a self-contained, square-note chant staff with
 SMuFL glyphs baked as inline paths (no external font). It consumes `score.tabula`,
 so the interpretation applied through `pondus` and `accentus` is already in the
-geometry.
-
-> **Retired in 0.2:** the MusicXML and MIDI emitters (`score.musicxml()`,
-> `score.midi()`) were removed. tonus emits one format: SVG. Microtuning still
-> lives on each tabula row's `bend`/`hz`/`offset` for a Web-Audio player to read
-> directly (microtonally exact, which MIDI never was); it is no longer serialized
-> to a MIDI file here.
+geometry. Microtuning lives on each tabula row's `bend`, `hz`, and `offset` for
+a Web-Audio player to read directly.
 
 ### inscriptio — the standalone renderer
 
@@ -425,11 +424,11 @@ tonus.inscriptio(score, {
 });
 ```
 
-**`fonts`** carries four roles, and they are deliberately separate: a book's
-dropcap is very often *not* its lyric face — a Lombardic or uncial initial
-against a text hand, which is the pairing the printed books use. Each role takes
-a font-family string or `{ family, weight?, scale? }` (`scale` adjusts that
-role's size, for a face whose apparent size differs from the house serif).
+**`fonts`** carries four roles. A book's dropcap is very often *not* its lyric
+face — a Lombardic or uncial initial against a text hand, which is the pairing
+the printed books use. Each role takes a font-family string or
+`{ family, weight?, scale? }` (`scale` adjusts that role's size, for a face
+whose apparent size differs from the house serif).
 
 The SVG carries font-family *references* by default, and the page hosting it
 supplies the face (`@font-face`). A slot may instead carry
@@ -454,22 +453,16 @@ sets the property rethemes the score without re-rendering it.
 }
 ```
 
-That is why the colours are custom properties rather than literals: an inline
-`fill` beats any stylesheet rule, so a literal would make the emitter's own
-semantic classes (`note`, `lyric`, `dropcap`, `custos`, `episema`, `divisio`,
-`clef`, `mora`, `ictus`, …) unstylable from the host page.
+The emitter's semantic classes — `note`, `lyric`, `dropcap`, `custos`,
+`episema`, `divisio`, `clef`, `mora`, `ictus` — are stylable from the host page.
 
-**`scale` is not part of the theme**, and deliberately so: it is consumed by
-line breaking — it decides how many notes fit a system — so it is settled long
-before a stylesheet sees the output. A scale change re-renders; a colour change
-need not. That is the line between the two.
+**`scale` is not part of the theme**: line breaking consumes it, so a scale
+change re-renders while a colour change does not.
 
 Nothing else about the layout is a caller's decision. The margin, the air
 between systems, the notehead calibration against the staff, and the line-end
-custos were all options until 0.5 and were never once set — not by the docs
-site, the 28 lab plates, or the 13 stress pieces. They are now constants chosen
-to look right at every scale, and the custos simply appears whenever a system
-wraps, which is what a chant book does.
+custos are constants. The custos appears whenever a system wraps, as it does in
+a chant book.
 
 **The geometry contract (public API).** `geometry` is one `NoteGeometry` per note,
 in tabula order — the interface analysis _tracks_ build on, so they place marks
@@ -501,9 +494,8 @@ tonus.inscriptio(score, { width: 680, tracks: ["tonarium"] });                  
 tonus.inscriptio(score, { width: 680, tracks: ["chironomia", "tonarium"] });      // stacked
 ```
 
-The **two-register principle** is the house pairing: the rhythmic band under the
-square notation (the body), the melodic band under the transcription (the mind).
-It is a default worth keeping, not a constraint the renderer enforces.
+The conventional pairing is the chironomia under `quadrata` and the tonarium
+under `moderna`. The renderer does not enforce it.
 
 Requesting both stacks them in a fixed order — the chironomia above, the
 tonarium below — whichever order they are asked for, and the page grows by the
@@ -528,23 +520,26 @@ sum of the two bands.
   A **cadence is the melody's own ending re-inked black**: the same curve at
   the same width turns pure black across the cadential figure and lands on a
   terminal node — filled when the family's measured `finality` closes, open
-  when it suspends. The row beneath labels it with its **lift** against the
-  chant's own mode — `"×2.1"`, how much more (or less) that mode reaches for
-  this close than the corpus at large. A lift below 1.0 prints too: an
-  atypical close is information. Where the chant has no mode, or the family
-  has too few occurrences in it to divide honestly, the label falls back to
-  the plain corpus share (`"3.8%"`). The family **key** has not vanished — it
-  rides the cadence group as `data-cadentia`, which is the join back to
-  [`CADENTIAE`](index.md#the-appendix) and the provenance a margin gloss can
-  print. A light end-ticked bracket ties the label to the figure's span; a
-  label always follows its figure, clamping to the margin at the system's
-  edge, and crowded labels dodge to a second row.
+  when it suspends. Beneath the node, centred on it, sits the family's
+  **in-mode share**: `"3.9%"`, how often this close ends a chant in this
+  chant's mode — the frequency a singer actually meets it at. Where the chant
+  has no mode, or the family has too few occurrences in it to divide honestly,
+  the label falls back to the plain corpus share, which is the same kind of
+  number.
 
-  > **Layout in progress.** The tonarium's label row and band geometry are
-  > being reworked now that the data behind them settled. The grammar above
-  > is stable — what the marks MEAN will not change — but exact placement,
-  > spacing, and the dodge behaviour are not yet final. This note comes out
-  > when they are.
+  **Every inked cadence carries a label.** A close that does not join
+  [`CADENTIAE`](index.md#the-appendix) at all reads `"rara"` — not a gap but a
+  measurement: the catalogue holds the 122 families above fifty corpus
+  occurrences, so failing to join means rarer than anything it records. About
+  a third of inked cadences land there.
+
+  `rara` is a word rather than a number, so it is not read on the percentage
+  scale beside it.
+
+  The lift rides the group as `data-lift` for a caller who wants distinctiveness
+  rather than frequency, beside `data-cadentia` — the family key, which is the
+  join back to [`CADENTIAE`](index.md#the-appendix) and the provenance a margin
+  gloss can print. Crowded labels dodge to a second row.
 
 Everywhere, confidence is opacity, and a claim below confidence 0.45 draws
 nothing — weak claims are not inked. Every mark sits under the notation that
@@ -721,7 +716,7 @@ this before deciding which field to use:
   finalis**, because the received catalogue holds only final figures.
 - **`signature`** is _inventa_: the tail's interval shape and where it lands,
   keyed as `"2,0,-2 @0"` and mined from the corpus. It fires on **any** target,
-  which makes it the only thing that speaks about **medial** cadences at all.
+  so it is the one of the two that speaks about **medial** cadences.
 
 Measured over 27,969 cadences in the shipped corpus: 42.5% carry a formula,
 58.7% join the catalogue, 32.4% carry both, and 31.2% are keyed but fall below
@@ -761,9 +756,8 @@ interface Cadence {
 A one-note phrase is a cadence — a landing with no gesture — and keys with an
 empty shape (`" @0"`), which is why `signature` is that key rather than null.
 
-`arrival` is deliberately **not** octave-reduced. Folding it pooled a fifth
-above the final with a fourth below: of 3,499 phrase-ends that landed on `@-5`
-under the fold, 2,427 were really `+7`. Two opposite gestures under one key.
+`arrival` is signed and not octave-reduced: `@-5`, a fourth below the final,
+and `@+7`, a fifth above, are distinct families.
 
 ## Modulations
 
@@ -801,8 +795,8 @@ interface Modulation {
 The rhythm model is the Solesmes school's arsis/thesis synthesis, taken
 from Gajard's lectures and Carroll's chironomy manuals. The full
 treatise-level model lives at the classifier in
-[`score/ir.ts`](../src/engines/score/ir.ts), which also derives Le Guennant's
-incise rhythmic types ([above](#rhythmic-types)).
+[`score/ir.ts`](../../src/engines/score/ir.ts), which also derives Le Guennant's
+incise rhythmic types ([below](#rhythmic-types)).
 
 ### The model
 
@@ -858,7 +852,7 @@ contraction — two simple rhythms overlapping at a shared ictus, after Suñol).
 Types I–III use sub-beat cells that never surface in isolation and are not
 labeled; an incise that fits no type is `null`. The classification rules live at
 the data — see `classifyRhythmicType` in
-[`score/ir.ts`](../src/engines/score/ir.ts).
+[`score/ir.ts`](../../src/engines/score/ir.ts).
 
 ### Modeled and not
 
@@ -867,46 +861,9 @@ mode-specific cadence figures ([above](#cadences)), and the incise rhythmic type
 (above). It does not yet model Carroll's textual rules (word-accent → arsic,
 word-final → thetic) or accentual (spondaic vs. dactylic) cadences.
 
-### Why the layout estimates
-
-A chant renderer must know how wide a lyric is before it can decide where a line
-ends. The established engines measure: exsurge reads real text metrics through
-canvas, SVG `getBBox`, or opentype.js depending on where it is running;
-nabc-lib inserts a hidden `<text>` node and reads the browser's own box. Both are
-exact, and both require a browser or a font file.
-
-tonus computes the width instead, from character classes. This is a deliberate
-trade rather than a missing feature: the library is a per-chant, deterministic
-engine, and the two properties that follow from computing are worth more here
-than the last few percent of typographic precision.
-
-The first is **portability**. `inscriptio` has no environment: it runs in Node, in
-a worker, in CI, in a build step, with no DOM to construct and no font to load.
-A chant renders the same on a server as in a browser because nothing about the
-host participates in the layout.
-
-The second is **reproducibility**. The same score and options yield byte-identical
-SVG — which is what makes the render suite testable at all. Two of this session's
-layout changes were verified by hashing 2,500 renders and comparing them against
-the previous commit; a layout that consulted the ambient font stack could not be
-checked that way, because the reference bytes would differ per machine.
-
-The cost is a bounded inaccuracy in one place: **inter-word spacing and line fill,
-never pitch or rhythm.** Note positions come from SMuFL advance widths, which are
-exact. A lyric in a face far from the assumed proportions shifts where a line
-happens to break; it does not move a note off its staff position. The layout is
-correct to within the estimate, and the estimate is the accuracy floor for
-everything built above it — line fill, and any future justification or
-mid-syllable splitting.
-
-If exact metrics are ever needed, the honest shape is an optional measuring
-callback on `InscriptioOpts`, so a caller who *has* a DOM can supply real widths
-while the computed estimate remains the default. That preserves determinism for
-everyone who does not.
-
 ## Sources
 
-Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
 `carroll-chironomy`, `carroll-applied`, `gajard-rhythm`, `mocquereau-nombre`,
 `cardine-semiology`, `desrocquettes-values`, `sunol-textbook`, `homan-cadence`,
 `pierik-spirit`, `apel-chant`, `liber-usualis`, `bravura-smufl`.

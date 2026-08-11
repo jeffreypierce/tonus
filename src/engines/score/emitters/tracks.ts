@@ -31,7 +31,7 @@ import {
   cadentiaFamilia, CADENTIAE_POPULATION, type CadentiaFamilia,
 } from "../../../data/cadentiae.js";
 import {
-  INK, STRATUM, CONF_FLOOR, nib, sc, esc, HOUSE_SANS, HOUSE_MONO,
+  INK, STRATUM, CONF_FLOOR, nib, sc, esc, HOUSE_SERIF, HOUSE_MONO,
   sampleCubic, crSamples, velocityAt, velocityCeiling, ribbonPath, type Pt,
 } from "./atramentum.js";
 
@@ -287,7 +287,7 @@ function waveEngine(ptsIn: WavePt[], last: number, yM: number, k: number,
       letters.push(
         `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="${(9 * k).toFixed(1)}" ` +
         `text-anchor="middle" fill="${INK}" opacity="${STRATUM.letters}" ` +
-        `font-family="${esc(HOUSE_SANS)}">${labs[j]}</text>`,
+        `font-family="${esc(HOUSE_SERIF)}">${labs[j]}</text>`,
       );
     }
   }
@@ -368,29 +368,66 @@ const MODE_FINAL: Record<number, string> = { 1: "D", 2: "D", 3: "E", 4: "E", 5: 
 const RAIL_ORDER = ["D", "E", "F", "G"]; // the finals ladder, D on the bottom
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
-// A family's occurrences in one mode must reach this before its lift is
-// printed. Under it the ratio is a rumour: one or two chants deciding a number
-// that reads like a measurement.
-const LIFT_FLOOR = 10;
+// A family's occurrences in one mode must reach this before its in-mode share
+// is printed. Under it the figure is a rumour: one or two chants deciding a
+// percentage that reads like a measurement.
+const SHARE_FLOOR = 10;
 
 /**
- * What the bracket says about a cadence: its lift against the chant's own
- * mode, or — when the mode is unknown or the in-mode count too thin to divide
- * — the family's plain corpus share.
+ * What the label says about a cadence: HOW OFTEN THIS FAMILY ENDS A CHANT IN
+ * THIS MODE. "3.9%" — the frequency a singer actually meets it at.
  *
- * The lift is read against the CHANT'S mode even where the mode line above
+ * It used to print a lift, the family's in-mode share over its corpus share
+ * ("×2.3"). That number answered a real question — is this close distinctive
+ * of this mode — but it read as a verdict it could not support. Measured over
+ * the corpus: 89% of cadences score above ×1 and the median is ×2.29, so a
+ * "×1.9" that looks like a strong claim is in fact below average. Worse, it
+ * ORDERS WRONGLY: in mode 8 the family at ×1.8 ends 3.9% of chants where the
+ * one at ×2.3 ends 2.0%, so the more distinctive-looking label marks the
+ * rarer close. A share has neither problem — it is directly readable, needs
+ * no baseline held in the reader's head, and sorts the way a singer meets
+ * them. The lift stays available on the group (`data-lift`) for a caller who
+ * wants distinctiveness rather than frequency.
+ *
+ * The share is read against the CHANT'S mode even where the mode line above
  * shows a governing modulation at that phrase. Deliberate: the question is
- * "is this close characteristic of this chant's mode?", and re-basing
- * per-phrase would make two adjacent labels incomparable.
+ * "how common is this close in this chant's mode?", and re-basing per-phrase
+ * would make two adjacent labels incomparable.
  */
 function cadenceLabel(fam: CadentiaFamilia | undefined, mode?: number): string {
-  if (!fam) return ""; // no catalogue join, no claim
+  // NO CATALOGUE FAMILY IS ITSELF A MEASUREMENT. CADENTIAE holds the families
+  // above a floor of fifty corpus occurrences — 122 of them — so a close that
+  // fails to join is not unknown, it is RARER than anything the catalogue
+  // records. A third of inked cadences land here, and leaving them bare made
+  // the rarest closes look like the ones the analysis had nothing to say
+  // about.
+  //
+  // A WORD, NOT A NUMBER. The shares printed beside it run down to 0.2%, so
+  // any numeral here would be read on their scale — and "<1%" put an
+  // uncatalogued close ABOVE a catalogued 0.3%, exactly backwards. `rara`
+  // cannot be compared to a percentage by accident, agrees with the cadentia
+  // it describes, and sits in the Latin the rest of the page already speaks
+  // (finalis, tenor, diapason).
+  if (!fam) return "rara";
   const share = (n: number) => `${(n * 100).toFixed(1)}%`;
   if (mode == null) return share(fam.share);
   const inMode = fam.modes[String(mode)] ?? 0;
   const modeEnds = CADENTIAE_POPULATION.byMode[String(mode)] ?? 0;
-  if (inMode < LIFT_FLOOR || !modeEnds || !fam.share) return share(fam.share);
-  return `×${((inMode / modeEnds) / fam.share).toFixed(1)}`;
+  // Too thin to divide, or no mode population: fall back to the corpus share,
+  // which is the same KIND of number — a frequency, not a ratio.
+  if (inMode < SHARE_FLOOR || !modeEnds) return share(fam.share);
+  return share(inMode / modeEnds);
+}
+
+/** The family's lift — its in-mode share against its corpus share. Not shown
+ *  on the page (see cadenceLabel), but carried on the group so a caller can
+ *  ask how DISTINCTIVE a close is rather than how common. */
+function cadenceLift(fam: CadentiaFamilia | undefined, mode?: number): string | null {
+  if (!fam || mode == null || !fam.share) return null;
+  const inMode = fam.modes[String(mode)] ?? 0;
+  const modeEnds = CADENTIAE_POPULATION.byMode[String(mode)] ?? 0;
+  if (inMode < SHARE_FLOOR || !modeEnds) return null;
+  return ((inMode / modeEnds) / fam.share).toFixed(2);
 }
 
 /** The tonarium track, every system. */
@@ -514,18 +551,22 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       // The family key rides the group, not the page: the label now carries
       // the measure, so the NAME lives here — machine-readable, the join back
       // to CADENTIAE, and the provenance a margin gloss can print.
+      const lift = cadenceLift(fam, data.mode);
       g.push(cad.signature
-        ? `<g data-cadentia="${esc(cad.signature)}">`
+        ? `<g data-cadentia="${esc(cad.signature)}"${lift ? ` data-lift="${lift}"` : ""}>`
         : "<g>");
 
       // The figure's slice of its phrase's own samples — the same curve at
       // the same width, the ink change alone marking the claim.
       const samples = (samplesByPhrase.get(fig[0]!.row.phraseIndex) ?? [])
         .filter(([px]) => px >= x0 && px <= x1 + 2 * k);
+      // Where the cadence LANDS — the closing dot, which the label centres on.
+      let dot: number | undefined;
       if (samples.length >= 2) {
         const d = ribbonPath(samples, vat, vmax, 1);
         g.push(`<path d="${d}" fill="${INK}" fill-opacity="${(STRATUM.cadence * op).toFixed(2)}"/>`);
         const [nx, ny] = samples[samples.length - 1]!;
+        dot = nx;
         const r = sc(1.8 * k);
         g.push(closes
           ? `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="${INK}" opacity="${op.toFixed(2)}"/>`
@@ -542,33 +583,28 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       // figure's other side. A light end-ticked bracket ties it to the span.
       const lab = cadenceLabel(fam, data.mode);
       if (lab) {
+        // The label sits UNDER THE CLOSING DOT, centred on it. The dot is
+        // where the cadence lands — the one point the measure is about — so
+        // the number belongs beneath it rather than trailing the figure at
+        // the end of a bracket. The bracket is gone with it: it drew the
+        // figure's span, which the re-inked sparkline above already draws,
+        // and two marks for one extent read as two claims.
         const estW = lab.length * 5.6 * k; // 9px mono advance, measured
+        const dotX = dot ?? x1;
+        const left = xL;
         const right = cfg.rightFor(s) - 2 * k;
-        const anchor = Math.min(x1 + 4.5 * k, right - estW);
+        // Centred, then clamped into the system rather than allowed to hang
+        // off either edge.
+        const anchor = Math.max(left, Math.min(dotX - estW / 2, right - estW));
         const span: [number, number] = [anchor, anchor + estW];
         const row = span[0] < labelRight[0] + 8 * k ? 1 : 0;
         labelRight[row] = Math.max(labelRight[row], span[1]);
         const yRow = yC + row * 9.5 * k;
-        const yB = yRow - 0.5 * k;
-        const xB = x1 + 2 * k;
-        const yTick = yB - 3.5 * k;
-        const bw = `stroke="${INK}" stroke-opacity="${(STRATUM.bracket * op).toFixed(2)}" ` +
-          `stroke-width="${sc(0.6 * k)}"`;
-        g.push(
-          `<line x1="${x0.toFixed(1)}" y1="${yB.toFixed(1)}" x2="${xB.toFixed(1)}" y2="${yB.toFixed(1)}" ${bw}/>` +
-          `<line x1="${x0.toFixed(1)}" y1="${yB.toFixed(1)}" x2="${x0.toFixed(1)}" y2="${yTick.toFixed(1)}" ${bw}/>` +
-          `<line x1="${xB.toFixed(1)}" y1="${yB.toFixed(1)}" x2="${xB.toFixed(1)}" y2="${yTick.toFixed(1)}" ${bw}/>`,
-        );
         g.push(`<text x="${anchor.toFixed(1)}" y="${(yRow + 2.8 * k).toFixed(1)}" font-size="${sc(9 * k)}" ` +
           `opacity="${(STRATUM.label * op).toFixed(2)}" fill="${INK}" ` +
           `font-family="${esc(HOUSE_MONO)}">${esc(lab)}</text>`);
       }
       g.push("</g>");
-    }
-    if (s === 0) {
-      g.push(`<text x="${(xL - 2 * k).toFixed(1)}" y="${(yC + 3 * k).toFixed(1)}" font-size="${sc(9 * k)}" ` +
-        `text-anchor="end" fill="${INK}" opacity="${STRATUM.margin}" ` +
-        `font-family="${esc(HOUSE_MONO)}">cad</text>`);
     }
     g.push("</g>");
     out.push(g.join(""));

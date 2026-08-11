@@ -25,6 +25,10 @@ export interface VoicedBody extends Body {
   presence: number; // 0–1
   motion: number;   // 0–1
   greekName: string;
+  /** The doctrina's own ratio for this sphere, [num, den] against the mese.
+   *  The pitch is DERIVED from it, so this is the primary datum and the note
+   *  name is the reading — a caller comparing doctrinae wants the fraction. */
+  ratio: readonly [number, number];
   vowel: PlanetVowel;
 }
 
@@ -59,6 +63,7 @@ function voiceOne(body: Body, voice: Voice, vowel: PlanetVowel, scale: Scale): V
     presence,
     motion,
     greekName: voice.greekName,
+    ratio: voice.ratio,
     vowel,
   };
 }

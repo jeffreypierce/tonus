@@ -1,8 +1,8 @@
 # tonus API
 
 The technical center of tonus: the full public API, the conventions every method
-obeys, the error contract, and the standards the code and docs are held to. The
-API is **fourteen methods on the `tonus` namespace**, no sub-namespaces.
+obeys, and the error contract. The API is **fourteen methods on the `tonus`
+namespace**, no sub-namespaces.
 
 ```js
 import tonus from "tonus";
@@ -42,12 +42,10 @@ chant results sort by rank then incipit.
 **Builder functions** (`temperamentum`,
 `notatio`, `harmonia`, and `inscriptio`) construct and return context objects, and throw
 `Error` on invalid input. Only `Temperamentum` carries methods; `Score` is a
-plain data record, and rendering is the standalone `inscriptio`. Voice
-synthesis (`vox`, `chorus`) now lives in the private orreliquum app.
+plain data record, and rendering is the standalone `inscriptio`.
 
-`census` takes the query form but answers for exactly one chant, so an id with
-no block throws rather than returning an empty answer — a silent nothing would
-read as "this chant is unlike everything," which is a different claim.
+`census` takes the query form but answers for exactly one chant: an id with no
+block throws rather than returning `[]`.
 
 Context objects can be passed back into query functions as filters:
 
@@ -63,16 +61,15 @@ t.nota("D4");
 
 The canonical constant tables ship as named exports beside the namespace.
 Return values are plain data, and the appendix carries tables only, never
-functions. A table is here because a caller would otherwise **type it out** —
-a mode list, an hour list, the valid `by:` values — and a transcribed copy
-drifts, failing as wrong answers rather than as an error.
+functions. It holds the tables a caller would otherwise transcribe: the mode
+list, the hour list, the valid `by:` values.
 
 ```js
 import tonus, { SEASON_LABEL, HORAE, MODES } from "tonus";
 ```
 
 Names follow the register rule: a table of Latin values takes a Latin name, a
-table of codes or English keeps English. So the name tells you which you hold.
+table of codes or English keeps English.
 
 **Calendar**
 
@@ -102,10 +99,10 @@ table of codes or English keeps English. So the name tells you which you hold.
 | `CADENTIAE`            | the **mined** cadence families (`CadentiaFamilia`) — shape, arrival, share, finality, per-mode counts |
 | `CADENTIAE_POPULATION` | the denominator behind every `share`: all phrase-ends, and the same total per mode                    |
 
-The two cadence tables are not duplicates. `MODES.cadences` is what the
+The two cadence tables answer different questions. `MODES.cadences` is what the
 treatises say a mode closes on (final cadences only); `CADENTIAE` is what the
-corpus was measured doing (any target, which makes it the only account of
-medial closes). See [one spine, two
+corpus was measured doing (any target, so it is the one of the two that
+accounts for medial closes). See [one spine, two
 annotations](score.md#one-spine-two-annotations), and
 [lift](tuning.md#lift--how-mode-bound-a-close-is) for what `CADENTIAE_POPULATION`
 is for.
@@ -124,8 +121,8 @@ is for.
 | `CENSUS_GROUPS` | the field groups → `{ offset, count }`; the keys are the valid `by:` values **and** the `profile` keys |
 | `CENSUS_ORDER`  | every censused chant id, in block order — so membership is a lookup, not a `try/catch`                 |
 
-Both census tables exist because pooling blocks yourself means reproducing the
-distance rule; see [the census contract](census.md#distance-is-cosine-per-field-group).
+Use these to pool blocks without reproducing the distance rule — see [the census
+contract](census.md#distance-is-cosine-per-field-group).
 
 ## Full contents
 
@@ -158,7 +155,7 @@ the list resolve their pitches through the ones before.
 
 - [The corpora](chant.md#the-corpora)
 - [The books — `corpus`](chant.md#the-books--corpus)
-- [Retrieval — `cantus`](chant.md#retrieval--cantus)
+- [Retrieval — `cantus`](chant.md#retrieval--cantus) · [Reaching the ordinary](chant.md#reaching-the-ordinary--ordinary)
 - [The repertoire as of a date — the era view](chant.md#the-repertoire-as-of-a-date--the-era-view)
 - [The Mass propers — `proprium`](chant.md#the-mass-propers--proprium)
 - [The ordinary — `ordinarium`](chant.md#the-ordinary--ordinarium)
@@ -172,7 +169,7 @@ the list resolve their pitches through the ones before.
 - [Interpretation — `pondus` and `accentus`](score.md#interpretation--pondus-and-accentus)
 - [The note](score.md#the-note)
 - [The tabula](score.md#the-tabula)
-- [Rendering — `inscriptio`](score.md#rendering)
+- [Rendering — `inscriptio`](score.md#rendering) · [theme](score.md#theme--faces-and-ink) · [The analysis tracks](score.md#the-analysis-tracks)
 - [The intonation channel](score.md#the-intonation-channel)
 - [The imprint](score.md#the-imprint)
 - [Prosody](score.md#prosody)
@@ -193,6 +190,7 @@ the list resolve their pitches through the ones before.
 
 - [The method](census.md#the-method)
 - [What a block holds](census.md#what-a-block-holds)
+- [How the measurement works](census.md#how-the-measurement-works)
 - [Distance is cosine per field group](census.md#distance-is-cosine-per-field-group)
 - [Profile and typicality](census.md#profile-and-typicality)
 - [Balance — distance and deviance](census.md#balance--distance-and-deviance)
@@ -258,7 +256,7 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 - `census` throws on an id with no block (the census covers only the chants
   tonus ships) and on an unknown query key or field group.
 
-### The bibliography — [`BIBLIOGRAPHY.md`](../BIBLIOGRAPHY.md)
+### The bibliography — [`BIBLIOGRAPHY.md`](../../BIBLIOGRAPHY.md)
 
 The single source of truth for citations, each with a stable key. Code
 cites by bracketed key (`[biblio: key]`); each page keeps a short `## Sources`

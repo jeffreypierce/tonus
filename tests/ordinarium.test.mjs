@@ -135,7 +135,10 @@ describe("ordinarium — the credo rotation", () => {
         const day = getFeast({ date: new Date(Date.UTC(y, 0, d)) })[0];
         if (!day || day.weekday !== 0) continue;
         const cr = getOrdinary({ feast: day }).find((c) => c.ordinary === "cr");
-        if (cr) { seen.add(cr.ordinarium); break; }
+        // WHICH credo sings is read from the incipit, the chant's own name.
+        // `ordinarium` names the part — "Credo", as ORDINARIA spells it —
+        // and is the same string for all six.
+        if (cr) { seen.add(cr.incipit); break; }
       }
     }
     for (const n of ["I", "II", "III", "IV", "V", "VI"]) {
@@ -144,6 +147,16 @@ describe("ordinarium — the credo rotation", () => {
         `Credo ${n} is heard (heard: ${[...seen].sort().join(", ")})`,
       );
     }
+  });
+
+  test("the part is the category, and the numeral stays in the incipit", () => {
+    const day = getFeast({ date: new Date(Date.UTC(2026, 11, 25)) })[0];
+    const cr = getOrdinary({ feast: day }).find((c) => c.ordinary === "cr");
+    assert.ok(cr, "Christmas sings a Credo");
+    assert.equal(cr.ordinarium, "Credo",
+      "the part is named as ORDINARIA spells it, beside Gloria and Sanctus");
+    assert.match(cr.incipit, /^Credo [IVX]+$/,
+      "which of the six it is stays the chant's own name");
   });
 });
 

@@ -356,4 +356,33 @@ describe("the calendar has no silent days", () => {
     // In a year with exactly 24 Sundays, Pent24 sits where linear placement
     // put it — covered by the no-silent-days scan above.
   });
+
+  test("a season ends in its own year, and holds the day that reported it", () => {
+    // Tempus post Pentecosten once ended at NEXT year's Advent, which made the
+    // season sixteen months long — 547 days in 991 against a true 176. Nothing
+    // read seasonEnd, so nothing caught it until the site printed the day's
+    // place in its season under the feast's name.
+    const utc = (d) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    const day = 86400000;
+
+    for (const year of [991, 1000, 2024]) {
+      for (let i = 0; i < 366; i++) {
+        const date = new Date(Date.UTC(year, 0, 1 + i));
+        if (date.getUTCFullYear() !== year) break;
+        const [feast] = getFeast({ date });
+        if (!feast) continue;
+
+        const start = utc(new Date(feast.seasonStart));
+        const end = utc(new Date(feast.seasonEnd));
+        const where = `${date.toISOString().slice(0, 10)} (${feast.tempus})`;
+
+        assert.ok(start <= utc(date) && utc(date) <= end,
+          `${where}: the day sits inside the season it names`);
+        // A liturgical season is bounded by the year that carries it; the
+        // longest, after Pentecost, still runs well under nine months.
+        assert.ok((end - start) / day + 1 <= 250,
+          `${where}: season spans ${(end - start) / day + 1} days`);
+      }
+    }
+  });
 });

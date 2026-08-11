@@ -181,8 +181,7 @@ An aspect's interval is graded by class:
 | all others     | dissonant  |
 
 Bodies without a classical vowel are not voiced: Earth and the Fixed
-Stars. Pliny's Earth-as-proslambanomenos is dropped in v1 as a
-consequence.
+Stars, Pliny's Earth-as-proslambanomenos among them.
 
 ```js
 tonus.harmonia(sky, { doctrina: "ptolemy" });
@@ -268,9 +267,14 @@ interface PlanetVowel {
 ```js
 h.tabula.find((r) => r.name === "Jupiter");
 // { name: "Jupiter", nomen: "Iuppiter", greekName: "parhypate meson",
-//   spn: "F4", hz: 347.7, presence: 0.55, velocity: 0.55,
+//   ratio: [64, 81], spn: "F4", hz: 347.7, presence: 0.55, velocity: 0.55,
 //   vowelGreek: "Υ", sign: "Leo", aspectCount: 3, … }
 ```
+
+`ratio` is the doctrina's own fraction against the mese, the primary datum of
+the whole scheme — `spn` and `hz` are that ratio sounded against A4, not
+independent claims. Comparing doctrinae means comparing these: the table
+under [Theory & Context](#theory--context) is what the field returns.
 
 ```ts
 interface HarmonyTabulaRow {
@@ -279,6 +283,7 @@ interface HarmonyTabulaRow {
   nomen: string;
   greekName: string;
 
+  ratio: readonly [number, number]; // the doctrina's fraction against the mese
   midi: number;
   pc: number;
   oct: number;
@@ -310,7 +315,7 @@ Joscelyn Godwin's syntheses, mapping each body to a Greek tone-name and
 deriving its ratio by Pythagorean interval arithmetic normalized to the
 mese (Sun = 1/1). The full method, the taxonomy, and the decisions taken
 along the way are documented at the data — see `DOCTRINAE` in
-[`harmonia/data/doctrines.ts`](../src/engines/harmonia/data/doctrines.ts).
+[`harmonia/data/doctrines.ts`](../../src/engines/harmonia/data/doctrines.ts).
 The same arithmetic is laid out from the tuning side in
 [tuning.md](tuning.md#theory--context).
 
@@ -331,14 +336,11 @@ The resulting ratios, by sphere from the outermost:
 The single pitch separating Pythagoras from Boethius is Venus: a whole
 tone above the Sun in the disjunct system (9/8, B durum), a semitone in
 the conjunct (256/243, B molle) — the origin of the durum/molle
-distinction that runs through all of medieval music theory. The editorial
-decisions behind the table (why Boethius carries Nicomachus's ratios, how
-Pliny's off-mese Sun is handled, the Fixed Stars left unvoiced) are
-recorded in the code beside the data.
+distinction that runs through all of medieval music theory.
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
 `godwin-harmonies`, `godwin-spheres`, `godwin-vowels`, `boethius-institutione`,
 `doctrina-primaries` (Nicomachus, Plato, Pliny, Ptolemy, and the vowel
 attestations), `standish-jpl`, `schlyter-positions`.

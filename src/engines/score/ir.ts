@@ -43,6 +43,8 @@ import { classifyNeume } from "./neume.js";
 
 function rawToNote(raw: ParsedNote, scale: Scale): Note {
   const midi = raw.step;
+  // One read of the lyric: the nucleus and the diphthong it belongs to.
+  const sung = selectVowel(raw.lyric);
   return {
     // Spell the note as the SOURCE wrote it: a GABC `x` is a flat, `#` a sharp.
     // Without the hint the speller reads the pitch class alone and calls a
@@ -60,7 +62,8 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
     context: {
       lyric: raw.lyric,
       runs: raw.runs,
-      vowel: selectVowel(raw.lyric).vowel,
+      vowel: sung.vowel,
+      diphthong: sung.diphthong,
       syllableIndex: raw.syllableIndex,
       accent: raw.accent,
       neumeGroup: raw.neumeGroup,

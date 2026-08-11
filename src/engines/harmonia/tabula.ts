@@ -16,6 +16,9 @@ export interface HarmonyTabulaRow {
   oct: number;
   spn: string;
   hz: number;
+  /** The doctrina's ratio against the mese, [num, den] — what the sphere IS
+   *  in the scheme, of which spn and hz are the sounding. */
+  ratio: readonly [number, number];
 
   presence: number;
   motion: number;
@@ -56,6 +59,7 @@ export function computeHarmonyTabula(
     oct: b.nota.pitch.oct,
     spn: b.nota.pitch.spn,
     hz: b.nota.pitch.hz,
+    ratio: b.ratio,
 
     presence: b.presence,
     motion: b.motion,

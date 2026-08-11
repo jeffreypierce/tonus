@@ -77,6 +77,14 @@ export interface Context {
   /** Styled lyric spans; present only when GABC markup styled this syllable. */
   runs?: LyricRun[];
   vowel: string;
+  /**
+   * The diphthong this syllable's sung vowel belongs to (`ae` · `oe` · `au`, and
+   * `ui` in the cui/hui stems), or null. `vowel` above is its NUCLEUS — what the
+   * singer sustains; the pair's second element is a late off-glide. Reported
+   * here because only the syllabifier can tell a diphthong from a hiatus: the
+   * accent decides (`cae` is one syllable, `sa-é` is two).
+   */
+  diphthong: string | null;
   syllableIndex: number;
   /** True when this note's syllable bears the Latin tonic word-accent. */
   accent: boolean;

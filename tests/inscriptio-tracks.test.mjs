@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import tonus from "../dist/index.js";
 import { buildScore } from "../dist/engines/score/api.js";
 import { inscriptio } from "../dist/engines/score/inscriptio.js";
+import { STRATUM } from "../dist/engines/score/emitters/atramentum.js";
 
 // The analysis tracks ride inscriptio (`tracks`): chironomia under quadrata,
 // tonarium under moderna — the two-register principle. Puer natus est is the
@@ -48,7 +49,11 @@ describe("inscriptio — the tonarium track (moderna)", () => {
     // Four rails per system, D on the bottom — categories, not pitches;
     // rail ink = the governing black at the rail stratum.
     const systems = new Set(tracked.geometry.map((g) => g.system)).size;
-    const rails = (tracked.svg.match(/stroke="#111" stroke-opacity="0\.16"/g) || []).length;
+    // Matched against STRATUM.rail rather than a copy of its value: the ink is
+    // the emitter's to set, and a literal here fails as a red suite when the
+    // stratum is retuned — which says the rails vanished, not that they moved.
+    const rails = (tracked.svg.match(
+      new RegExp(`stroke="#111" stroke-opacity="${STRATUM.rail}"`, "g")) || []).length;
     assert.equal(rails, systems * 4, "all four rails, every system");
     // The home mode's numeral (VII) rides the strip in rubrica.
     assert.ok(/font-style="italic">VII</.test(tracked.svg), "the governing numeral");

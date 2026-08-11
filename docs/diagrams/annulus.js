@@ -24,7 +24,7 @@
 // radial labels cannot work here — Good Friday and Easter are two degrees
 // apart — so selection joins figure and table instead.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_SANS, HOUSE_MONO, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, FIGURES, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import {
   pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighborMidpoints,
@@ -74,6 +74,32 @@ function dayOfYear(date, year) {
   return Math.floor((new Date(date) - Date.UTC(year, 0, 1)) / 86400000) + 1;
 }
 
+/** Two dates on the same UTC day. Compared as instants rather than by
+ *  getUTCDate, so a seasonStart carrying a time of day still matches. */
+function sameDay(a, b) {
+  if (!a || !b) return false;
+  const x = new Date(a), y = new Date(b);
+  return x.getUTCFullYear() === y.getUTCFullYear()
+    && x.getUTCMonth() === y.getUTCMonth()
+    && x.getUTCDate() === y.getUTCDate();
+}
+
+/** The standing day in FIGURES, in reading order and unpadded: 1.6.991, the
+ *  first of June. UTC, like everything the calendar reports.
+ *
+ *  Day, month, year — the order a date is spoken, smallest unit first, not
+ *  ISO's year-first, which is sorting order for a machine. No leading zeros:
+ *  they exist to make strings the same length in a column, and this is one
+ *  date under an inscription.
+ *
+ *  The year repeats what the numeral above says, in the other notation — CMXCI
+ *  and 991 are the same year read two ways, which is the whole point of
+ *  setting them together. */
+function plainDay(date) {
+  const d = new Date(date);
+  return `${d.getUTCDate()}.${d.getUTCMonth() + 1}.${d.getUTCFullYear()}`;
+}
+
 /** A date read in UTC. tonus is UTC-canonical, and local-time formatting moves
  * a date across midnight — west of Greenwich Easter reads as the day before. */
 function romanDate(date) {
@@ -99,23 +125,56 @@ function el(tag, attrs, text) {
 }
 
 
-/** The anchors for a year: pascha() dates the movable feasts, and festum()
- * names each one and says which season it falls in. Nothing is transcribed. */
+/** The principal fixed feasts — the ones that hold a place in the year
+ * regardless of where Easter falls. Their ids ARE their dates (`MM-DD`), so
+ * the calendar dates them and this list only says which ones matter enough to
+ * stand beside the movable anchors. Christmas and the Epiphany are deliberately
+ * absent: pascha() already reports both, and a day cannot be two marks.
+ *
+ * All are duplex-i in the Tridentine ranking — the same rank as Easter and
+ * Pentecost — so this is the received hierarchy, not a preference. */
+const FIXED = ["03-25", "06-24", "06-29", "08-15", "09-29", "11-01", "12-08"];
+
+/** The anchors for a year: pascha() dates the movable feasts, festum() names
+ * each one and says which season it falls in, and the principal fixed feasts
+ * join them. Nothing is transcribed. */
 function anchorsFor(tonus, year) {
   const p = tonus.pascha(year);
   // Whatever anchors pascha() reports — not a list of them kept here. It dates
   // fifteen today; a sixteenth would arrive on the ring without an edit.
-  return Object.keys(p)
+  // Two of pascha()'s anchors are not movable at all — Christmas and the
+  // Epiphany keep their dates and are reported here because the year is
+  // reckoned around them, so they are marked as what they are.
+  const FIXED_ANCHORS = new Set(["christmas", "epiphany"]);
+  const movable = Object.keys(p)
     .filter((key) => key !== "year" && p[key] instanceof Date)
-    .map((key) => {
-      const date = p[key];
-      const feast = tonus.festum({ date: new Date(date) })[0] ?? null;
+    .map((key) => ({ key, date: p[key], fixed: FIXED_ANCHORS.has(key) }));
+
+  // A fixed feast may be outranked by the day it lands on — the Annunciation
+  // inside Holy Week, say — in which case festum() reports the occurrent feast
+  // first and this one is simply not kept. The calendar decides, not the list.
+  const fixed = FIXED.map((id) => {
+    const [m, d] = id.split("-").map(Number);
+    const date = new Date(Date.UTC(year, m - 1, d));
+    return { key: id, date, fixed: true, id };
+  }).filter(({ date, id }) =>
+    tonus.festum({ date }).some((f) => f.id === id));
+
+  const taken = new Set(movable.map((a) => a.date.getTime()));
+
+  return [...movable, ...fixed.filter((a) => !taken.has(a.date.getTime()))]
+    .map(({ key, date, fixed: isFixed, id }) => {
+      const all = tonus.festum({ date: new Date(date) });
+      // For a fixed feast, name the feast ITSELF rather than whatever outranks
+      // it that day; for a movable anchor, the day's first feast is the point.
+      const feast = (isFixed && all.find((f) => f.id === id)) || all[0] || null;
       return {
         key,
         nomen: feast?.nomen ?? key,
         season: feast?.season ?? null,
         tempus: feast?.tempus ?? null,
-        dot: ANCHOR_WEIGHT[key] ?? 2.4,
+        fixed: isFixed,
+        dot: ANCHOR_WEIGHT[key] ?? (isFixed ? 2.0 : 2.4),
         date,
         dies: romanDate(date),
         doy: dayOfYear(date, year),
@@ -124,25 +183,49 @@ function anchorsFor(tonus, year) {
     .sort((a, b) => a.doy - b.doy);
 }
 
-/** The year's seasons, each self-reported with its own bounds and Latin name.
- * Walking the year and asking is what makes the ring answerable for any year —
- * the boundaries are the library's, not a table of anchor pairs. */
+/** The year's seasons as RUNS of consecutive days — each stretch the civil year
+ * actually shows, in the order it shows them. Walking the year and asking is
+ * what makes the ring answerable for any year: the boundaries are the
+ * library's, not a table of anchor pairs.
+ *
+ * A RUN, NOT A SEASON CODE. Nativitas falls twice in one civil year — the tail
+ * of the last Advent's Christmas in January, and again from December 25 — so
+ * collecting one entry per code kept whichever came first and silently dropped
+ * the other. That is the December band that went missing from the ring.
+ *
+ * Asking each day also means a run is bounded by the year by construction, so
+ * nothing needs clamping into it: a season's own seasonStart/seasonEnd are the
+ * LITURGICAL bounds and need not fall inside the year being drawn (Pentecost
+ * asked about a June day runs to the NEXT Advent, in the following November),
+ * which is what made the band go out of round when those dates were used as
+ * angles directly. */
 function seasonsFor(tonus, year) {
-  const seen = new Map();
+  const runs = [];
   const days = isLeap(year) ? 366 : 365;
   for (let d = 0; d < days; d++) {
     const feast = tonus.festum({ date: new Date(Date.UTC(year, 0, 1 + d)) })[0];
-    if (!feast?.season || seen.has(feast.season)) continue;
-    seen.set(feast.season, {
+    if (!feast?.season) continue;
+    const doy = d + 1;
+    const last = runs[runs.length - 1];
+    // Same season as yesterday, and yesterday was yesterday: extend the run.
+    if (last && last.season === feast.season && last.to === doy - 1) {
+      last.to = doy;
+      continue;
+    }
+    runs.push({
       season: feast.season,
       tempus: feast.tempus ?? null,
-      start: feast.seasonStart,
-      end: feast.seasonEnd,
+      from: doy,
+      to: doy,
+      // Does the season BEGIN here, or is this the tail of one that opened in
+      // the year before? The day reports its own seasonStart, so the run can
+      // say which of the two it is — and the label goes on the opening arc.
+      opens: sameDay(feast.seasonStart, new Date(Date.UTC(year, 0, 1 + d))),
       penitential: PENITENTIAL.has(feast.season),
       paschal: PASCHAL.has(feast.season),
     });
   }
-  return [...seen.values()];
+  return runs;
 }
 
 /**
@@ -165,23 +248,13 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     label: `The liturgical year ${year} as a ring`,
   });
 
-  // ── the season band: each season on the bounds it reports for itself ──
-  for (const s of seasons) {
-    // A season's bounds are the LITURGICAL ones, which need not fall inside the
-    // civil year being drawn: Pentecost runs to the NEXT Advent, so asked about
-    // a June day in 1175 it ends in November 1176. True, and unusable as an
-    // angle — a day past the year's end exceeds 360° and the arc wraps past
-    // itself, which is what made the band go out of round.
-    //
-    // So the ring shows each season's share OF THIS YEAR, clamped to it.
-    const days = isLeap(year) ? 366 : 365;
-    const from = Math.max(1, Math.min(days, dayOfYear(s.start, year)));
-    const to = Math.max(1, Math.min(days, dayOfYear(s.end, year)));
-    let a0 = doyAngle(from);
-    let a1 = doyAngle(to);
-    // A season may still open before the civil year does — Nativitas starts in
-    // December and runs into January — so its arc legitimately crosses the wrap.
-    if (a1 < a0) a1 += 360;
+  // ── the season band: one arc per run of days the year actually shows ──
+  for (const [i, s] of seasons.entries()) {
+    // The run is already inside the year, so these are angles directly — no
+    // clamping, and no arc that wraps past itself. Nativitas draws as the two
+    // arcs it is: a few days in January, and the stretch from December 25.
+    const a0 = doyAngle(s.from);
+    const a1 = doyAngle(s.to);
     // A hair of air between neighbors, so the band reads as segments.
     const gap = 0.6;
     root.appendChild(el("path", {
@@ -193,16 +266,26 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
       "stroke-width": SEASON_WEIGHT,
     }));
 
+    // A season split across the wrap is still ONE season, so it is named once —
+    // on the arc where the season OPENS, which the run itself reports. For
+    // Nativitas that is the December stretch beginning at Christmas, not the
+    // days trailing into January. Deliberately not the longer arc: those two
+    // run 8 days and 7, so width would settle it by a single day and could
+    // move the name from one side of the ring to the other between years.
+    if (!s.opens) continue;
+
     const mid = ((a0 + a1) / 2) % 360;
     const flip = isLowerHalf(mid);
-    const id = `annulus-${year}-arc-${s.season}`;
+    // Indexed, not keyed by season: two runs share a code, and a duplicate id
+    // would send both textPaths to whichever arc the document defined first.
+    const id = `annulus-${year}-arc-${i}-${s.season}`;
     defs.appendChild(el("path", {
       id,
       d: arcPath(a0, a1, R_SEASON_NAME, flip ? 0 : 1),
     }));
     const t = el("text", {
-      "font-family": HOUSE_SANS, "font-size": STEP.micro,
-      "letter-spacing": "0.14em", fill: INK, "fill-opacity": STRATUM.margin,
+      "font-family": HOUSE_SERIF, "font-size": STEP.micro,
+      "letter-spacing": "0.09em", fill: INK, "fill-opacity": STRATUM.margin,
     });
     // The library's own season code, set as the books abbreviate.
     t.appendChild(el("textPath",
@@ -229,6 +312,23 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     "font-size": STEP.label, "letter-spacing": "0.08em",
     fill: INK, "fill-opacity": STRATUM.margin,
   }, roman(year)));
+  // The standing day in figures, under the year the ring is drawn for. The
+  // Roman numeral above it is the ring's SUBJECT and is meant to be read as an
+  // inscription; this is the same moment in the notation a reader actually
+  // navigates by, so it is set quiet — the smallest step, at the margin's ink.
+  // In Junicode's oldstyle figures, which sit in a line of text rather than
+  // standing off it like lining figures do.
+  if (day) {
+    root.appendChild(el("text", {
+      y: 40, "text-anchor": "middle",
+      "font-family": FIGURES.family,
+      // The same step as the numeral above it: they are one year in two
+      // notations, so neither outranks the other by size. The numeral keeps
+      // the stronger ink; this keeps the lighter.
+      "font-size": STEP.label, "letter-spacing": "0.04em",
+      fill: INK, "fill-opacity": STRATUM.letters,
+    }, plainDay(day)));
+  }
 
   // ── the anchors on their orbit ──
   const marks = el("g", { class: "annulus-anchors" });
@@ -297,23 +397,20 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
 
 /** The names the ring cannot carry. Selection joins the two: clicking a row or
  * its anchor moves both. `a die` counts from the standing day. */
-export function annulusTabula(tonus, { year, day = null, selected = "easter", onSelect } = {}) {
-  const rows = anchorsFor(tonus, year);
-  const dayDoy = day ? dayOfYear(day, year) : null;
-
-  const columns = [
+export function annulusTabula(tonus, { year, selected = "easter", onSelect } = {}) {
+  // Name, season, date. The signed distance from the standing day that used to
+  // close this table was arithmetic the ring already draws: how far off a feast
+  // is IS the angle between its mark and the day's.
+  return tabula(anchorsFor(tonus, year), [
     // The name and the season are the library's own words.
     { key: "nomen", head: "nomen", gloss: (r) => r.tempus ?? "" },
-    { key: "dies", head: "dies", mono: true },
-  ];
-  if (dayDoy != null) {
-    columns.push({
-      key: "doy", head: "a die", mono: true, num: true,
-      format: (doy) => { const d = doy - dayDoy; return d > 0 ? `+${d}` : String(d); },
-    });
-  }
-
-  return tabula(rows, columns, {
-    selected, onSelect, caption: `The movable feasts of ${year}`,
-  });
+    // A fixed feast keeps its date whatever Easter does; a movable one is
+    // reckoned from Easter. Saying which is which is the whole point of
+    // showing them together, and the date alone cannot say it.
+    // NOT mono: the cell reads "Iun 01" — a month's name and a day, which is
+    // a WORD and a figure, not the hz/ratio/id machine data the mono register
+    // is for. It sets in the serif with the nomen beside it.
+    { key: "dies", head: "dies",
+      gloss: (r) => r.fixed ? "" : "mobilis" },
+  ], { selected, onSelect });
 }

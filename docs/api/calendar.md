@@ -150,10 +150,8 @@ and the masses carrying that rubric are the masses it may sing, in the
 book's own numbering — where a rubric names several (II class 1–5), that
 numbering is the book's invitation to choose, and `ordinarium` rotates
 among them by year. The book's per-mass nicknames (_Orbis factor_ for
-Sundays, and so on) record CUSTOMARY use, which disagrees with the rubric
-for 9 of the 18 — they are kept as documentation, never as a selector. The
-encoding is `src/engines/chant/data/masses.ts`, one commented entry per
-mass, `heading` carrying the printed rubric verbatim.
+Sundays, and so on) record customary use, which disagrees with the rubric for 9
+of the 18; `ordinarium` selects on the rubric.
 
 ## Rank — `ritus` and `grade`
 
@@ -185,13 +183,11 @@ Duplex feast never displaces a Lent Sunday:
 | 13  | `vigilia`            | Vigilia                              |                                                             |
 | 14  | `feria`              | Feria                                | weekdays with no feast                                      |
 
-Four privileged Sundays receive a per-id override. Divinum Officium marks
-Advent I and the three Septuagesima-block Sundays plain `"Semiduplex"`;
-the `PRIVILEGED_SUNDAYS` map lifts Advent I to `semiduplex-i` and
-Septuagesima, Sexagesima, and Quinquagesima to `semiduplex-ii`, matching
-the classes DO gives the Lent and late-Advent Sundays. `ritus` stays
-verbatim. Without the override, St. Andrew would displace Advent I Sunday
-in the example above.
+Four Sundays are graded above their Divinum Officium rank, which marks Advent I
+and the three Septuagesima-block Sundays plain `"Semiduplex"`. Advent I resolves
+to `semiduplex-i`; Septuagesima, Sexagesima, and Quinquagesima to
+`semiduplex-ii`, matching the classes DO gives the Lent and late-Advent Sundays.
+`ritus` stays verbatim.
 
 ## Seasons — the temporale
 
@@ -272,15 +268,12 @@ interface Pascha {
 
 The calendar's structure is medieval: the temporale from Advent through the
 season after Pentecost (Septuagesima included), the eight-hour office cursus,
-and the duplex/semiduplex/simplex dignity system. The data, though, is the
-Tridentine codification (1570–1962) via Divinum Officium, continuous with
-late-medieval usage but carrying feasts as recent as the 1950s. The accurate
-description is "Tridentine Roman, continuous with medieval practice," not "a
-medieval calendar." Why those later feasts are kept rather than pruned is
-recorded in the code — see the era note at
-[`cal/calendar.ts`](../src/engines/cal/calendar.ts).
+and the duplex/semiduplex/simplex dignity system. The data is the Tridentine
+codification (1570–1962) via Divinum Officium, continuous with late-medieval
+usage and carrying feasts as recent as the 1950s. tonus describes this calendar
+as Tridentine Roman, continuous with medieval practice.
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
 `divinum-officium`, `computus`, `liber-usualis`.

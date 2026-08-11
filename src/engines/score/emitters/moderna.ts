@@ -192,10 +192,46 @@ function classedGlyph(cls: string, name: string, x: number, y: number, scale: nu
     `<path d="${g.path}" fill="${INK}"/></g>`;
 }
 
-function notehead(x: number, y: number, small: boolean, half: boolean, gm: ModernaMetrics): string {
-  const s = gm.SCALE * (small ? 0.68 : 1.0);
-  const w = 295 * s;
-  return glyph(half ? G.noteheadHalf : G.noteheadBlack, x - w / 2, y, s);
+// The notehead is drawn at 0.825 of its engraved size. Only the GLYPH
+// shrinks: advance still comes from NH_W and ADV, so the spacing — and
+// therefore every x in the geometry — is exactly what it was. Bravura's black
+// notehead is drawn for a five-line orchestral staff, and against chant's
+// wider spacing and single melodic line it reads heavy; reduced, the note is a
+// mark on the staff rather than a blot. Three quarters proved too far — the
+// head lost the staff line it sits on — so this is that, opened back up a
+// tenth.
+const HEAD_K = 0.825;
+
+/** Which head a written shape takes in the modern transcription.
+ *
+ * ONLY the double mora takes an open head. The square notation's other shapes
+ * — inclinatum, virga, quilisma, oriscus — are written distinctions, not
+ * durational ones, and moderna transcribes them all as the plain black head
+ * the modern staff means by "a note".
+ *
+ * This briefly mapped inclinatum to a half note, on the reasoning that the
+ * ambitus figure uses that shape to mark a mode's tenor. That confused a
+ * DIAGRAM's private vocabulary with the notation's: an inclinatum is 10.4% of
+ * every note in the corpus, so a tenth of every transcribed chant came out
+ * hollow, each one implying a length it does not have.
+ */
+function notehead(
+  x: number, y: number, small: boolean, half: boolean,
+  gm: ModernaMetrics,
+): string {
+  const s = gm.SCALE * (small ? 0.68 : 1.0) * HEAD_K;
+  // Centred on the ADVANCE, not on the shrunken glyph: the note has to sit
+  // where the engraving puts it, not drift left as the head gets smaller.
+  const w = 295 * gm.SCALE * (small ? 0.68 : 1.0);
+  const code = half ? G.noteheadHalf : G.noteheadBlack;
+  // The whole note is a wider glyph (422 units against 295), so it is centred
+  // on its OWN width — otherwise it would hang right of its advance.
+  const own = (GLYPHS[code]?.advance ?? 295) * s;
+  // Classed `note`, as quadrata's heads are. The class is the contract a
+  // caller selects on — the site rings and reddens the chosen note through it
+  // — and moderna emitted its heads bare, so nothing downstream could find
+  // them and selection did nothing in the modern transcription.
+  return classedGlyph("note", code, x - own / 2, y, s);
 }
 
 function clef(x: number, systemY: number, gm: ModernaMetrics): string {

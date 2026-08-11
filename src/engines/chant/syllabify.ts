@@ -218,25 +218,68 @@ export function hyphenateWord(word: string): string {
 
 const ACCENTED = /[\u0301]/; // combining acute accent (NFD form)
 
-export function selectVowel(text: string): { vowel: string; accent: boolean } {
+export function selectVowel(text: string): {
+  vowel: string;
+  accent: boolean;
+  diphthong: string | null;
+} {
   const expanded = text.replace(/ǽ/g, "áe").replace(/æ/g, "ae").replace(/œ/g, "oe");
   const nfd = expanded.normalize("NFD");
   let firstVowel = "";
   let accentedVowel = "";
+  // Every vowel in order with the index it sat at, so the diphthong pass below
+  // can ask whether two of them are adjacent in the source.
+  const found: { v: string; at: number }[] = [];
 
   for (let i = 0; i < nfd.length; i++) {
     const ch = nfd[i];
     const base = ch.replace(/[\u0300-\u036f]/g, "").toLowerCase();
     if (!isVowelBase(base)) continue;
     const v = base === "y" ? "i" : base;
+    found.push({ v, at: i });
     if (!firstVowel) firstVowel = v;
     if (!accentedVowel && i + 1 < nfd.length && ACCENTED.test(nfd[i + 1])) {
       accentedVowel = v;
     }
   }
 
-  if (accentedVowel) return { vowel: accentedVowel, accent: true };
-  return { vowel: firstVowel, accent: false };
+  const vowel = accentedVowel || firstVowel;
+  return { vowel, accent: Boolean(accentedVowel), diphthong: findDiphthong(nfd, found, vowel) };
+}
+
+/**
+ * The diphthong the SUNG vowel belongs to, or null. `vowel` is the nucleus — what
+ * a singer sustains — and a diphthong's second element is a late off-glide; this
+ * reports the pair so a renderer can flick toward it without re-deriving which
+ * pairs are real.
+ *
+ * It reuses the syllabifier's own DIPHTHONGS set, so "diphthong" here means
+ * exactly what it means when the word is split: ae · oe · au, plus ui in the
+ * cui/hui stems only. ei, ui elsewhere, and eu are hiatus (De-i, fu-it, de-us).
+ *
+ * THE ACCENT IS THE DISCRIMINATOR, which is why this cannot be recovered
+ * downstream from the lyric alone. `cae` is one syllable (nucleus a, glide e);
+ * `sa-é` is two — the same letters with the accent on the second, and no glide.
+ * A substring scan confuses the two, and also misreads `quae`, where `qu` is a
+ * consonantal glide: the nucleus is u, and the `ae` is not the sung pair.
+ */
+function findDiphthong(
+  nfd: string,
+  found: { v: string; at: number }[],
+  vowel: string,
+): string | null {
+  const lower = [...nfd].map(baseChar).join("");
+  for (let i = 0; i < found.length - 1; i++) {
+    const a = found[i];
+    const b = found[i + 1];
+    // Adjacent in the source, and the pair's nucleus is the vowel we selected —
+    // anything else belongs to a different syllable.
+    if (b.at !== a.at + 1 || a.v !== vowel) continue;
+    const pair = a.v + b.v;
+    if (DIPHTHONGS.has(pair)) return pair;
+    if (pair === "ui" && /^(cui|hui)/.test(lower)) return pair;
+  }
+  return null;
 }
 
 export function detectVowelAccent(text: string): boolean {

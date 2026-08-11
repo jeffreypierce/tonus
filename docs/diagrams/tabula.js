@@ -23,7 +23,15 @@
  * @property {string} head      column heading (uppercased by CSS)
  * @property {boolean} [mono]   machine register — the mono face
  * @property {boolean} [num]    right-aligned, tabular figures
+ * @property {boolean} [symbol] a glyph, not a word — set larger and centred
+ * @property {string} [cellClass]  extra class on every cell of the column
+ * @property {boolean} [pair]   a two-element array of glyphs, set either side
+ *                              of a dot on a fixed three-cell grid so the
+ *                              separator aligns down the column
  * @property {(v: any, row: object) => string} [format]  cell text
+ * @property {(v: any, row: object) => Node|null} [render]  a NODE for the cell,
+ *                              for content a string cannot carry (a glyph);
+ *                              returning null falls back to `format`
  * @property {(row: object) => string} [gloss]  quiet secondary text after the value
  */
 
@@ -36,10 +44,14 @@
  * @param {string}   [opts.idKey]     field identifying a row (default "key")
  * @param {string}   [opts.selected]  id of the selected row
  * @param {(id: string) => void} [opts.onSelect]
+ * @param {(row: object) => boolean} [opts.marked]  rows to highlight, when
+ *                                   what is selected elsewhere implicates
+ *                                   SEVERAL rows rather than identifying one
  * @param {string}   [opts.caption]   accessible caption
  * @returns {HTMLTableElement}
  */
-export function tabula(rows, columns, { idKey = "key", selected, onSelect, caption } = {}) {
+export function tabula(rows, columns,
+  { idKey = "key", selected, onSelect, marked, caption } = {}) {
   const table = document.createElement("table");
   table.className = "tabula";
 
@@ -64,14 +76,43 @@ export function tabula(rows, columns, { idKey = "key", selected, onSelect, capti
   for (const row of rows) {
     const id = row[idKey];
     const tr = document.createElement("tr");
-    if (id != null && id === selected) tr.className = "sel";
+    if ((id != null && id === selected) || marked?.(row)) tr.className = "sel";
 
     for (const c of columns) {
       const td = document.createElement("td");
-      const cls = [c.mono ? "mono" : null, c.num ? "num" : null].filter(Boolean).join(" ");
+      const cls = [c.mono ? "mono" : null, c.num ? "num" : null,
+        c.symbol ? "symbol" : null, c.pair ? "pair" : null,
+        c.cellClass ?? null].filter(Boolean).join(" ");
       if (cls) td.className = cls;
       const raw = row[c.key];
-      td.textContent = c.format ? c.format(raw, row) : (raw ?? "");
+
+      if (c.pair) {
+        // Three cells: glyph, dot, glyph. The grid does the aligning, so the
+        // dot sits on one vertical however wide the glyphs either side are.
+        //
+        // The grid goes on a span INSIDE the td, never on the td itself:
+        // `display: grid` on a table cell takes it out of the table's own
+        // layout, and the column stops sizing with its neighbours while the
+        // row's rule and padding go with it.
+        const [a, b] = Array.isArray(raw) ? raw : [raw, null];
+        const cell = (t, klass) => {
+          const s = document.createElement("span");
+          if (klass) s.className = klass;
+          s.textContent = t ?? "";
+          return s;
+        };
+        const grid = document.createElement("span");
+        grid.className = "pair-grid";
+        grid.appendChild(cell(a));
+        grid.appendChild(cell(b == null ? "" : "·", "pair-dot"));
+        grid.appendChild(cell(b));
+        td.appendChild(grid);
+      } else {
+        const node = c.render?.(raw, row);
+        if (node) td.appendChild(node);
+        else td.textContent = c.format ? c.format(raw, row) : (raw ?? "");
+      }
+
       const g = c.gloss?.(row);
       if (g) {
         const span = document.createElement("span");

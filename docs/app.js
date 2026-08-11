@@ -19,14 +19,21 @@
 
 import tonus from "./dist/index.js";
 import { el, tabs, tabPanel } from "./components/tabs.js";
-import { dateDial } from "./components/dial.js";
+import { dateDial, syncDateDial } from "./components/dial.js";
 import { chantList } from "./components/chant-row.js";
 import { annulus, annulusTabula } from "./diagrams/annulus.js";
-import { chorda, regula, chordaTabula } from "./diagrams/chorda.js";
-import { hand, handTabula } from "./diagrams/hand.js";
+import { chordaDual, chordaTabula, chordaRows } from "./diagrams/chorda.js";
+import { hand, handTabula, handRows } from "./diagrams/hand.js";
+import { mutatio } from "./diagrams/mutatio.js";
 import { rota, rotaTabula, rotaAspectTabula } from "./diagrams/rota.js";
+import { middleOf } from "./diagrams/notehead.js";
 
 const EPOCH = new Date(Date.UTC(991, 5, 1));   // the library's own default day
+
+// The chant Canticum opens on: Agnus Dei I, from the Kyriale. Short enough to
+// read whole, mode 4, and its two b's put the hexachord apparatus to work on
+// first sight — which is what the right-hand column is for.
+const DEFAULT_CANTUS = "gregobase:2977";
 
 const state = {
   view: "calendarium",
@@ -34,27 +41,175 @@ const state = {
   chant: null,
   score: null,
   note: null,
-  // which tab is open where
-  office: "proprium",
+  // which offices are shown — see OFFICES_SHOWN below, spelled out here
+  // because `state` is built before that list exists
+  offices: ["proprium", "ordinarium", "matutinum", "laudes", "vesperae"],
   right: { calendarium: "harmonia", canticum: "temperamentum" },
   // the few settings the toy carries
   notation: "quadrata",
   tracks: ["chironomia"],
-  tuning: "pythagorean",
+  // Which hexachord the hand is read by. It FOLLOWS the selection — opening a
+  // chant or picking a note on the ring sets it — and the picker can override
+  // it. One value, two ways in, so the control always reads what is drawn.
+  hexachord: "naturale",
+  // The reading route on the hand — its dashes and its arrows, which are one
+  // mark and switch together. On, because the order the gamut is learned in is
+  // what a hand teaches; off leaves the twenty places and the five digits, and
+  // the knuckle line runs the whole way across to make up for it.
+  route: true,
+  // The hand read an OCTAVE UP. Most of the corpus is written low against the
+  // gamut — Agnus Dei I runs midi 43-52, the bottom fifth of a hand that
+  // reaches to 90 — so a chant read straight lands on the thumb and stays
+  // there. Raising it is what a cantor does anyway: the gamut names degrees,
+  // and a choir sings them where its voices lie.
+  octave: 0,
+  // The temperament is one number: how much of the syntonic comma comes off
+  // each fifth. 0 is Pythagorean, 1/11 is (audibly) equal, 1/4 buys the pure
+  // major third. A named list of six could not say that they are one family.
+  comma: 0,
+  // A pitch chosen in the theory column — a degree of the scale, not a note of
+  // the chant. Kept apart from `note` because they answer different questions
+  // and choosing one has to release the other.
+  pitch: null,
   aspects: true,
+  // The Sun is the mese, the middle string the rest are reckoned from — so
+  // the wheel opens on it rather than on whatever sorted first.
+  body: "Sun",
+  doctrina: "boethius",
 };
 
+// Who says which sphere sounds what. Four schemes, each from its own text.
+const DOCTRINAE = ["pythagoras", "boethius", "pliny", "ptolemy"];
+
+// The three kinds of hexachord, by the b each reads: the round one, neither,
+// the square one.
+const HEXACHORDA = ["molle", "naturale", "durum"];
+
 // ── the offices a day can be read by ──
+// The Mass twice, then the Office hour by hour. The hours are listed
+// separately because they are separately sung: asking for "the Office" on
+// Christmas returns about a hundred and seventy chants, of which thirty-five
+// are Prime's psalm antiphons — one list, and the day's Mass disappears into
+// it. A reader wants Lauds OR Compline, so each hour is its own toggle.
 const OFFICES = [
   { key: "proprium", name: "Proprium", of: (f) => tonus.proprium({ feast: f }) },
   { key: "ordinarium", name: "Ordinarium", of: (f) => tonus.ordinarium({ feast: f }) },
-  { key: "officium", name: "Officium", of: (f) => tonus.officium({ feast: f, hora: "vesperae" }) },
+  ...[
+    ["matutinum", "Matutinum"], ["laudes", "Laudes"], ["vesperae", "Vesperae"],
+  ].map(([hora, name]) => ({
+    key: hora, name, of: (f) => tonus.officium({ feast: f, hora }),
+  })),
 ];
 
-const TUNINGS = ["pythagorean", "meantone", "equal",
-  "ptolemy-intense", "ptolemy-soft", "ptolemy-equable"];
+// The whole surface is shown at once — the three sung hours are small enough
+// together that a day opens complete. The little hours are omitted rather
+// than defaulted off: Prime and Compline are thirty-five psalm antiphons
+// apiece, the same psalter every day, and they drown the day's own music.
+const OFFICES_SHOWN = OFFICES.map((o) => o.key);
 
-const modeOf = (chant) => Number(String(chant?.mode ?? "1").replace(/\D/g, "")) || 1;
+// The temperaments as ONE axis: the fraction of the syntonic comma taken off
+// each fifth. They are not six unrelated tunings but points on a continuum,
+// which a dropdown of names actively hides — and the interesting places are
+// between the names as much as on them.
+//
+// The detents are the historical stops, in order along the axis: pure fifths
+// at 0, then the regular meantones, each named for what it buys. 1/11 is
+// where the fifth lands on 700¢ — equal temperament, arrived at rather than
+// declared, which is the honest way to show that ET is a meantone too.
+// Each is named by its comma fraction and what that fraction IS — the thing a
+// reader is choosing between. The old labels carried a theorist's name beside
+// each ("Zarlino", "Silbermann"), which said who rather than what.
+const COMMAS = [
+  { value: 0, name: "0", gloss: "Pythagorean" },
+  { value: 1 / 11, name: "1/11", gloss: "near ET" },
+  { value: 1 / 6, name: "1/6", gloss: "meantone" },
+  { value: 1 / 5, name: "1/5", gloss: "meantone" },
+  { value: 1 / 4, name: "1/4", gloss: "meantone" },
+  { value: 2 / 7, name: "2/7", gloss: "meantone" },
+  { value: 1 / 3, name: "1/3", gloss: "meantone" },
+];
+const COMMA_MAX = 1 / 3;
+// The slider's resolution — a division OF the range rather than a round
+// decimal, so the far end lands on 1/3 exactly. (0.0005 stopped at 0.333, a
+// third of a step short, and the last detent could never be reached.)
+//
+// It is also the tolerance for "is it ON a detent": a stepped input cannot
+// land exactly on 1/11 or 1/6, so a value within half a step IS that one. At
+// 1e-6 the readout showed cents for four of the seven named stops.
+const COMMA_STEP = COMMA_MAX / 666;
+const atDetent = (v) => COMMAS.find((c) => Math.abs(c.value - v) <= COMMA_STEP / 2);
+
+// The FIRST digit, not every digit run together. Three chants in the corpus
+// carry a differentia in their mode — "3a3", "7c2" — and stripping the
+// non-digits turned those into mode 33 and 72, which temperamentum rightly
+// refuses. That threw while building the panel, so those three chants opened
+// a blank Canticum.
+const modeOf = (chant) => Number(String(chant?.mode ?? "1").match(/[1-8]/)?.[0]) || 1;
+
+/** The book a chant is printed in, and where in it — "Graduale Romanum, p. 130".
+ *
+ *  The page is a STRING because the books number themselves in more ways than
+ *  a number can hold: plain (`130`), bracketed for the prefatory quires
+ *  (`[179]`), lettered for an inserted leaf (`587A`), starred for the
+ *  supplement (`278*`), occasionally a span (`1141-1143`). All of those are
+ *  the page as the book prints it, so they are shown as they are rather than
+ *  parsed into a number that would lose the distinction — the brackets and
+ *  stars are how a reader finds the leaf.
+ *
+ *  What IS tidied: the abbreviation matches the form (p./pp.), and a page
+ *  string that is empty — seven chants carry one — is dropped rather than
+ *  printing a bare "p." with nothing after it. */
+function bookAndPage(chant) {
+  const book = chant?.source?.book;
+  if (!book) return null;
+  const page = String(chant?.pages?.[0]?.page ?? "").trim();
+  if (!page) return book;
+  // A span names two leaves, so it takes the plural abbreviation.
+  const many = /[-–]/.test(page);
+  return `${book}, ${many ? "pp." : "p."} ${page.replace(/-/g, "–")}`;
+}
+
+// ── the documentation ──
+// The API reference is markdown in this repo, and GitHub renders it. The
+// alternative — building the pages into the site — is the better answer and a
+// larger job; until then this is the shortest route that actually renders and
+// honours an #anchor. Pinned to `main` rather than a tag so a link cannot rot
+// against a branch that no longer exists.
+const DOCS = "https://github.com/jeffreypierce/tonus/blob/main/docs/api/";
+
+/** A quiet link into the reference, for a panel's subheader.
+ *
+ *  It names the PAGE in English — `§score docs`, `§calendar docs` — not the
+ *  method it happens to document. A reader deciding whether to click is asking
+ *  "is this about the thing I am looking at", and `§notatio` only answers that
+ *  if you already know what notatio is. The page is also the honest target:
+ *  these go to the top of a document, not to a section within it.
+ *
+ *  Opens in a new tab: this leaves the site for github.com, and a reader
+ *  cross-referencing while exploring should not lose the loaded chant, the
+ *  chosen note and the temperament to read one paragraph. Because that is a
+ *  surprise unless announced, the accessible name says so — there is no
+ *  visually-hidden utility in the stylesheet, and a visible ↗ would add a
+ *  sixth mark to a line already carrying genus, mode and book.
+ */
+function docLink(page) {
+  const name = `${page} documentation (opens in a new tab)`;
+  // A separator and the link. The dot is a plain character in the line, so it
+  // inherits that line's face and size like every other character — which is
+  // all it ever needed to match its surroundings.
+  return [" • ", el("a", {
+    class: "doc", href: `${DOCS}${page}.md`,
+    target: "_blank", rel: "noopener noreferrer",
+    "aria-label": name, title: name,
+  }, `§${page} docs`)];
+}
+
+/** The doc link for whichever reading is open — the same `find` the tab strip
+ *  uses to resolve the current tab. A reading without a `doc` simply has none. */
+function readingLink(readings, active) {
+  const doc = readings.find((r) => r.key === active)?.doc;
+  return doc ? docLink(doc) : null;
+}
 
 // ── a panel: a titled block in a column ──
 const panel = (title, ...body) =>
@@ -89,6 +244,11 @@ function page({ title, rightTitle, detail, rightDetail, inputs, rightInputs, lef
  * moving date rebuilds only the body, and the header rows are never rebuilt at
  * all: the element under the pointer is never touched, which is the only
  * arrangement that cannot break the gesture. */
+// Everything a moving date changes EXCEPT the input row — the date field and
+// its arrows must survive their own event, or a click would tear the button
+// out from under the pointer. The title and the line under it are as much a
+// function of the date as the panels are, and were being left stale: the day
+// moved, the chants changed, and the feast's name went on naming yesterday.
 function renderPanels() {
   const host = document.getElementById("view");
   const body = host.querySelector(".row-body");
@@ -96,73 +256,242 @@ function renderPanels() {
   const view = VIEWS.find((v) => v.key === state.view) ?? VIEWS[1];
   const panels = view.panels?.();
   if (!panels) { render(); return; }
+
+  const heads = view.heads?.();
+  if (heads) {
+    const put = (sel, left, right) => {
+      const row = host.querySelector(sel);
+      if (!row) return;
+      const cells = row.querySelectorAll(".cell");
+      if (left !== undefined) cells[0]?.replaceChildren(...(left ? [left] : []));
+      if (right !== undefined) cells[1]?.replaceChildren(...(right ? [right] : []));
+    };
+    put(".row-title", heads.title);
+    put(".row-detail", heads.detail, heads.rightDetail);
+    // A READING'S INPUTS CAN BE A FUNCTION OF THE SELECTION TOO. The hexachord
+    // picker shows what is in force, so picking a note on the ring has to move
+    // it — built once and left alone, it went on naming the hexachord you
+    // arrived in, and the toggles beside it never showed their own state.
+    //
+    // Only the RIGHT cell, and only when the reading offers one: the left cell
+    // holds the date dial, and the comma slider is dragged. Neither survives
+    // being replaced under the pointer, so neither is ever named here.
+    put(".row-inputs", undefined, heads.rightInputs);
+  }
+
   body.replaceChildren(
     el("div", { class: "cell" }, panels.left),
     el("div", { class: "cell" }, panels.right),
   );
+  // The date field lives in the input row, which this deliberately does not
+  // rebuild — so it is TOLD the day instead. Without this, choosing a feast
+  // from the ring or its table moved the whole page and left the dial reading
+  // the day you came from.
+  syncDateDial(state.day, { anchors: paschaOf(state.day), anchor: state.anchor });
   writeUrl();
-}
-
-/** A key/value table — the shape half these panels want. */
-function pairs(rows) {
-  const t = el("table", { class: "tabula" });
-  const b = el("tbody");
-  for (const [k, v] of rows) {
-    if (v == null || v === "") continue;
-    b.append(el("tr", {}, el("td", {}, k), el("td", { class: "mono" }, String(v))));
-  }
-  t.append(b);
-  return t;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CALENDARIUM — a day
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** The two panels of Calendarium, which a moving date rebuilds on their own. */
+/** Which day of its season a date is, and how long that season runs.
+ *  Both ends are inclusive, so the first day of a season is dies 1. Dates are
+ *  floored to UTC midnight first — a season boundary carries a time of day in
+ *  some records, and 23 hours of it would otherwise round a day away. */
+function seasonDay(feast, date) {
+  if (!feast?.seasonStart || !feast?.seasonEnd) return null;
+  const utc = (d) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const start = utc(new Date(feast.seasonStart));
+  const end = utc(new Date(feast.seasonEnd));
+  const day = Math.floor((utc(date) - start) / 86400000) + 1;
+  const total = Math.floor((end - start) / 86400000) + 1;
+  if (!Number.isFinite(day) || !Number.isFinite(total) || total < 1) return null;
+  return { day, total };
+}
+
+// A season in the genitive — "the Nth day OF Paschaltide" — which is how a
+// chant book says it. `Tempus` becomes `Temporis`; what follows agrees with
+// it or, being a prepositional phrase already, simply rides along.
+const TEMPUS_GENITIVE = {
+  "Tempus Adventus": "Temporis Adventus",
+  "Tempus Nativitatis": "Temporis Nativitatis",
+  "Tempus post Epiphaniam": "Temporis post Epiphaniam",
+  "Tempus Septuagesimæ": "Temporis Septuagesimæ",
+  "Tempus Quadragesimæ": "Temporis Quadragesimæ",
+  "Tempus Paschale": "Temporis Paschalis",
+  "Tempus post Pentecosten": "Temporis post Pentecosten",
+};
+
+const ROMAN = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"],
+  [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"],
+  [4, "IV"], [1, "I"]];
+
+const roman = (n) => {
+  if (!Number.isInteger(n) || n < 1 || n > 3999) return String(n);
+  let out = "";
+  for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
+  return out;
+};
+
+/** The line under the feast's name: which day of its season this is.
+ *  "Dies LIII Temporis Paschalis" — the ordinal in Roman numerals, the season
+ *  in the genitive, no arithmetic on display. The total is dropped: a reader
+ *  wants to know where they are, and "53 / 57" reads as a progress bar. */
+function calendariumDetail(feast) {
+  const tempus = feast?.tempus ?? feast?.season ?? "";
+  const n = seasonDay(feast, state.day);
+  const genitive = TEMPUS_GENITIVE[tempus] ?? tempus;
+  // The chant page: what stands under this heading is the day's music — where
+  // it comes from, and which office sings it.
+  return el("p", { class: "sub" },
+    n ? `Dies ${roman(n.day)} ${genitive}` : tempus,
+    docLink("chant"));
+}
+
+/** The right column's quiet line: whatever the open reading has to say for
+ *  itself — the feast's rank, or where the sky's weight is falling. */
+function calendariumRightDetail(feast) {
+  // The open reading names its own reference — see the `doc` field on
+  // calendariumReadings. One lookup rather than a URL per branch.
+  const link = readingLink(calendariumReadings(feast), state.right.calendarium);
+  if (state.right.calendarium === "harmonia") return harmoniaDetail(link);
+  // The rank alone: the grade is the machine code the ritus reduces to, and
+  // printing both said the same thing twice in two registers.
+  if (feast) return el("p", { class: "sub" }, feast.ritus ?? "", link);
+  return el("p", { class: "sub" }, state.day.toISOString().slice(0, 10), link);
+}
+
+/** The anchors of the year a date falls in. A year outside the calendar's
+ *  reach throws rather than answering, and the input simply shows no anchors. */
+function paschaOf(date) {
+  try { return tonus.pascha(date.getUTCFullYear()); }
+  catch { return null; }
+}
+
+/** The title and detail rows, which move with the date exactly as the panels
+ *  do. Split out so `renderPanels` can repaint them without rebuilding the
+ *  input row beneath. */
+/** Harmonia's own inputs: which doctrine voices the spheres, and whether the
+ *  aspects are drawn.
+ *
+ *  A FUNCTION, and named in calendariumHeads, because renderPanels rebuilds
+ *  this cell. Written inline it was built once at first render and never
+ *  again: the wheel's chords answered the click — 67 lines to 60 — while the
+ *  button's own tick never moved off the state it was born with. */
+function harmoniaInputs() {
+  if (state.right.calendarium !== "harmonia") return undefined;
+  return el("div", { class: "settings" },
+    el("span", { class: "set-name" }, "doctrina"),
+    el("select", {
+      "aria-label": "doctrina",
+      onchange: (e) => { state.doctrina = e.target.value; renderPanels(); },
+    }, ...DOCTRINAE.map((d) =>
+      el("option", { value: d, selected: state.doctrina === d }, d))),
+    // One thing, on or off — a set of one, so it wears the set's costume
+    // rather than a lone bordered button that matched nothing. The tick
+    // carries the state; the name stays put instead of swapping between
+    // visibiles and occulti, which made the control read as an action.
+    el("div", { class: "segset", role: "group", "aria-label": "aspectus" },
+      el("button", {
+        type: "button", "aria-pressed": state.aspects ? "true" : "false",
+        onclick: () => { state.aspects = !state.aspects; renderPanels(); },
+      }, "aspectus")));
+}
+
+function calendariumHeads() {
+  const [feast] = tonus.festum({ date: state.day });
+  return {
+    title: el("h1", {}, feast?.nomen ?? "—"),
+    detail: calendariumDetail(feast),
+    rightDetail: calendariumRightDetail(feast),
+    // As canticumHeads does: the repaint has to rebuild this cell, or a toggle
+    // in it shows the state it was first drawn with forever.
+    rightInputs: harmoniaInputs(),
+  };
+}
+
+/** Everything sung on a day, each chant tagged with the office it belongs to.
+ *  One query per office, run once and reused by both the list and its filters
+ *  — the counts on the toggles have to agree with the rows beneath them. */
+function daysChants(feast) {
+  if (!feast) return [];
+  // A chant can be sung at more than one hour — the same antiphon returns for
+  // Terce and None — and a list cannot show one row twice. First hour named
+  // wins, so the label says where it is first heard.
+  const seen = new Set();
+  return OFFICES.flatMap((o) => {
+    let chants = [];
+    try { chants = o.of(feast).filter((c) => c.gabc); } catch { chants = []; }
+    return chants.filter((c) => !seen.has(c.id) && seen.add(c.id))
+      .map((c) => ({ chant: c, office: o }));
+  });
+}
+
+/** The day's chants as one list, with the offices as filters over it.
+ *  They were tabs, which made three short lists a caller had to visit in turn
+ *  to see what the day held. A day sings one repertory; the office a chant
+ *  belongs to is a property of the chant, so it labels the row and gates it —
+ *  the same toggle idiom the analysis tracks use in Canticum. */
 function calendariumPanels() {
   const [feast] = tonus.festum({ date: state.day });
-  const officeTabs = OFFICES.map((o) => ({
-    key: o.key,
-    name: o.name,
-    panel: () => {
-      let chants = [];
-      try { chants = o.of(feast).filter((c) => c.gabc); } catch { chants = []; }
-      if (!chants.length) return el("p", { class: "ghost" }, "Nothing is sung here today.");
-      return chantList(tonus, chants, { selectedId: state.chant?.id, onSelect: openChant });
-    },
-  }));
+  const all = daysChants(feast);
+  const shown = all.filter((r) => state.offices.includes(r.office.key));
   const readings = calendariumReadings(feast);
+
+  let left;
+  if (!feast) left = el("p", { class: "ghost" }, "No feast at this date.");
+  else if (!all.length) left = el("p", { class: "ghost" }, "Nothing is sung today.");
+  else left = el("div", {},
+    // ONE object made of parts. The five offices are independently on or off
+    // and together they decide one thing — what the list below holds — so they
+    // are a single strip with internal hairlines rather than five detached
+    // boxes, which said "five unrelated actions" and were indistinguishable
+    // from the three date anchors sitting directly above them. The tick each
+    // segment carries is a second channel, so membership is not in colour
+    // alone.
+    el("div", { class: "segset", role: "group", "aria-label": "officia" },
+      ...OFFICES.map((o) => {
+        const n = all.filter((r) => r.office.key === o.key).length;
+        return el("button", {
+          type: "button",
+          disabled: n === 0,
+          "aria-pressed": state.offices.includes(o.key) ? "true" : "false",
+          onclick: () => {
+            state.offices = state.offices.includes(o.key)
+              ? state.offices.filter((k) => k !== o.key)
+              : OFFICES.map((x) => x.key).filter(
+                  (k) => k === o.key || state.offices.includes(k));
+            renderPanels();
+          },
+        }, o.name, el("span", { class: "seg-n" }, n));
+      })),
+    shown.length
+      ? chantList(tonus, shown.map((r) => r.chant), {
+          selectedId: state.chant?.id,
+          onSelect: openChant,
+          // Which office a chant is sung at leads its line, now that the three
+          // are mixed into one list — otherwise the row loses its context.
+          label: (c) => all.find((r) => r.chant.id === c.id)?.office.name ?? null,
+        })
+      : el("p", { class: "ghost" }, "No office is shown."),
+  );
+
   return {
-    left: feast ? tabs({
-      label: "officium", active: state.office, variant: "quiet",
-      onChange: (k) => { state.office = k; render(); },
-      tabs: officeTabs,
-    }) : el("p", { class: "ghost" }, "No feast at this date."),
+    left,
     right: tabPanel({ tabs: readings, active: state.right.calendarium, label: "lectio" }),
   };
 }
 
+// `doc` names the reference page this reading is described in. It rides the
+// registry because it is a property OF the reading, like its name and panel.
 const calendariumReadings = (feast) => [
-  { key: "harmonia", name: "Harmonia Mundi", panel: harmoniaPanel },
-  { key: "festum", name: "Festum", panel: () => festumPanel(feast) },
-  { key: "corpus", name: "Corpus", panel: corpusPanel },
+  { key: "harmonia", name: "Harmonia", panel: harmoniaPanel, doc: "heavens" },
+  { key: "festum", name: "Festum", panel: () => festumPanel(feast), doc: "calendar" },
 ];
 
 function calendarium() {
   const [feast] = tonus.festum({ date: state.day });
-
-  const officeTabs = OFFICES.map((o) => ({
-    key: o.key,
-    name: o.name,
-    panel: () => {
-      let chants = [];
-      try { chants = o.of(feast).filter((c) => c.gabc); } catch { chants = []; }
-      if (!chants.length) return el("p", { class: "ghost" }, "Nothing is sung here today.");
-      return chantList(tonus, chants, { selectedId: state.chant?.id, onSelect: openChant });
-    },
-  }));
-
   const readings = calendariumReadings(feast);
   const panels = calendariumPanels();
 
@@ -175,24 +504,18 @@ function calendarium() {
       tabs: readings,
     }),
     // row 2 — the quiet detail under each
-    detail: el("p", { class: "sub" }, feast?.tempus ?? feast?.season ?? ""),
-    rightDetail: el("p", { class: "sub" },
-      state.right.calendarium === "festum" && feast
-        ? [feast.ritus, feast.grade].filter(Boolean).join(" · ")
-        : state.day.toISOString().slice(0, 10)),
+    detail: calendariumDetail(feast),
+    rightDetail: calendariumRightDetail(feast),
     // row 3 — what may be changed
-    inputs: dateDial(state.day, (d) => {
+    inputs: dateDial(state.day, (d, anchor) => {
       state.day = d;
       state.chant = null;
-      // The panels only: the row this slider sits in must survive the drag.
+      state.anchor = anchor ?? null;
+      // The panels and the headings only: the row this input sits in must
+      // survive its own click, or the arrow would be replaced mid-press.
       renderPanels();
-    }),
-    rightInputs: state.right.calendarium === "harmonia"
-      ? el("div", { class: "settings" }, el("button", {
-          type: "button", "aria-pressed": state.aspects ? "true" : "false",
-          onclick: () => { state.aspects = !state.aspects; render(); },
-        }, "aspectus"))
-      : null,
+    }, { anchors: paschaOf(state.day), anchor: state.anchor }),
+    rightInputs: harmoniaInputs() ?? null,
     left: panels.left,
     right: panels.right,
   });
@@ -203,52 +526,55 @@ function harmoniaPanel() {
     date: state.day,
     aspects: state.aspects,
     selected: state.body,
-    onSelect: (k) => { state.body = k; render(); },
+    doctrina: state.doctrina,
+    // The wheel AND its tables take a click, as the monochord and the hand do
+    // opposite. They are one selection shown three ways, not three controls:
+    // whichever the reader reaches for, the other two follow.
+    onSelect: (k) => { state.body = k; renderPanels(); },
   };
   return el("div", {},
     rota(tonus, o),
+    // The chords first: the aspects are what a click on the wheel lights up,
+    // so the answer sits directly under the question.
+    rotaAspectTabula(tonus, o),
     rotaTabula(tonus, o),
-    rotaAspectTabula(tonus, { date: state.day }),
   );
 }
 
-function festumPanel(feast) {
+/** The line under Harmonia: whose scheme the wheel is drawn from.
+ *
+ *  The doctrina selector beneath names it in shorthand ("boethius"); this
+ *  says who that was, which is the thing a reader of the wheel wants and the
+ *  short name cannot carry. */
+function harmoniaDetail(link) {
+  try {
+    const H = tonus.harmonia(tonus.caelum({ date: state.day }), { doctrina: state.doctrina });
+    return el("p", { class: "sub" }, H.auctor ?? "", link);
+  } catch { return el("p", { class: "sub" }, "", link); }
+}
+
+// The ring and its table read the same selection, so a click on either moves
+// both — the site's interaction model, kept here rather than written twice.
+function festumPanel() {
   const year = state.day.getUTCFullYear();
-  return el("div", {},
-    annulus(tonus, {
-      year, day: state.day, selected: state.anchor,
-      onSelect: (key) => {
-        const p = tonus.pascha(year);
-        if (p[key]) { state.day = new Date(p[key]); state.anchor = key; state.chant = null; }
-        render();
-      },
-    }),
-    feast && pairs([
-      ["nomen", feast.nomen], ["ritus", feast.ritus], ["gradus", feast.grade],
-      ["tempus", feast.tempus], ["dies", feast.weekday],
-      ["a", String(feast.seasonStart).slice(0, 10)],
-      ["ad", String(feast.seasonEnd).slice(0, 10)],
-    ]),
-    annulusTabula(tonus, {
-      year, day: state.day, selected: state.anchor,
-      onSelect: (key) => {
-        const p = tonus.pascha(year);
-        if (p[key]) { state.day = new Date(p[key]); state.anchor = key; state.chant = null; }
-        render();
-      },
-    }),
-  );
-}
-
-function corpusPanel() {
-  const c = tonus.corpus();
-  const rows = (obj) => Object.entries(obj ?? {})
-    .sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, v]);
-  return el("div", {},
-    pairs([["cantus", c.count], ["distincti", c.distinct], ["summa", c.total]]),
-    el("h2", {}, "genera"), pairs(rows(c.genera)),
-    el("h2", {}, "modi"), pairs(rows(c.modes)),
-  );
+  const o = {
+    year, day: state.day, selected: state.anchor,
+    onSelect: (key) => {
+      // A movable anchor is a pascha() key; a fixed feast's key IS its date
+      // (`MM-DD`), which is why the calendar can find it without a lookup.
+      const p = tonus.pascha(year);
+      const fixed = /^(\d{2})-(\d{2})$/.exec(key);
+      const date = p[key]
+        ? new Date(p[key])
+        : fixed ? new Date(Date.UTC(year, +fixed[1] - 1, +fixed[2])) : null;
+      if (date) { state.day = date; state.anchor = key; state.chant = null; }
+      renderPanels();
+    },
+  };
+  // The pairs table that sat between these two repeated the title, the line
+  // under it, and the ring's own selection — every field it held is already
+  // somewhere the eye reaches first.
+  return el("div", {}, annulus(tonus, o), annulusTabula(tonus, o));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -256,19 +582,108 @@ function corpusPanel() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** The two panels of Canticum. */
+/** The chants this one is most like, as the census reckons it.
+ *
+ *  Same rows as the day's list in Calendarium — a list of chants is a list of
+ *  chants — with the similarity where the office label sits there. The census
+ *  answers for exactly one chant and throws rather than returning empty, so a
+ *  chant it cannot place simply has no neighbours here. */
+function similarChants() {
+  let neighbours = [];
+  try {
+    neighbours = tonus.census({ id: state.chant.id }).neighbors ?? [];
+  } catch { return null; }
+  if (!neighbours.length) return null;
+
+  // The census returns eight; four is a comparison, eight is a second list
+  // competing with the day's own. They arrive sorted by similarity.
+  const found = neighbours
+    .map((n) => ({ n, chant: tonus.cantus({ id: n.id })[0] }))
+    .filter((r) => r.chant?.gabc)
+    .slice(0, 4);
+  if (!found.length) return null;
+
+  return el("div", { class: "similar" },
+    // Titled like the readings opposite — it is the same kind of thing, a
+    // named section of a column — with its own reference beneath.
+    el("h2", { class: "similar-title" }, "Similes"),
+    el("p", { class: "sub" }, docLink("census")),
+    chantList(tonus, found.map((r) => r.chant), {
+      selectedId: state.chant?.id,
+      onSelect: openChant,
+      label: (c) => {
+        const hit = found.find((r) => r.chant.id === c.id);
+        return hit ? `${(hit.n.similarity * 100).toFixed(0)}%` : null;
+      },
+    }),
+  );
+}
+
+/** Canticum's heading rows, which move with the selection exactly as the
+ *  panels do — the right-hand line names the chosen note, or the mode and
+ *  where the chant's weight falls. */
+/** What the chant IS: its genus, its mode, and the book it is printed in. */
+function canticumDetail(chant) {
+  return el("p", { class: "sub" },
+    [chant.genus, chant.modus, bookAndPage(chant)].filter(Boolean).join(" · "),
+    docLink("score"));
+}
+
+/** The right column's line: the mode's name under the theory reading, or the
+ *  chosen note under any other. */
+function canticumRightDetail(M, row) {
+  return el("p", { class: "sub" },
+    state.right.canticum === "temperamentum"
+      ? M.nomen
+      : row ? manusLine(row) : "no note chosen",
+    readingLink(canticumReadings(), state.right.canticum));
+}
+
+/** The chosen note as the HAND names it: its Guidonian name and the joint it
+ *  is read at. The scientific pitch is dropped here — spn is the tuning
+ *  panel's currency, and this reading is the medieval one, where a pitch IS a
+ *  place on the hand. The joint is what the figure beside it is pointing at. */
+function manusLine(row) {
+  const joint = row.hand ? `${row.hand.finger} · ${row.hand.region}` : null;
+  return [row.nomen, joint].filter(Boolean).join(" · ") || row.spn;
+}
+
+/** Canticum's heading rows. Both this and `canticum()` build the page's
+ *  headings — this on every repaint, that on the first render — so they call
+ *  the SAME helpers. They used to carry byte-identical copies of the markup,
+ *  which is a standing invitation for the two paths to drift apart. */
+function canticumHeads() {
+  if (!state.chant || !state.score) return null;
+  const { chant } = state.score;
+  const mode = modeOf(chant);
+  const row = state.note != null ? state.score.tabula[state.note] : null;
+  const M = tonus.temperamentum({
+    mode, tuning: "meantone", comma: state.comma,
+  }).modus(mode);
+
+  return {
+    title: el("h1", {}, chant.incipit),
+    detail: canticumDetail(chant),
+    rightDetail: canticumRightDetail(M, row),
+    // Named only for the readings whose inputs are safe to rebuild — see the
+    // note in renderPanels. Temperamentum's slider is deliberately absent.
+    rightInputs: state.right.canticum === "manus" ? hexachordPicker() : undefined,
+  };
+}
+
 function canticumPanels() {
   if (!state.chant || !state.score) return { left: null, right: null };
   const readings = canticumReadings();
   return {
-    left: scoreFigure(),
+    left: el("div", {}, scoreFigure(), similarChants()),
     right: tabPanel({ tabs: readings, active: state.right.canticum, label: "lectio" }),
   };
 }
 
+// Both readings are the tuning engine seen two ways, so both point at tuning.
 const canticumReadings = () => [
-  { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel },
-  { key: "manus", name: "Manus Guidonius", panel: manusPanel },
-  { key: "tabula", name: "Tabula", panel: tabulaPanel },
+  { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel, doc: "tuning" },
+  { key: "manus", name: "Manus Guidonius", panel: manusPanel, doc: "tuning" },
 ];
 
 function canticum() {
@@ -287,7 +702,7 @@ function canticum() {
   const readings = canticumReadings();
   const panels = canticumPanels();
 
-  const M = tonus.temperamentum({ mode, tuning: state.tuning }).modus(mode);
+  const M = tonus.temperamentum({ mode, tuning: "meantone", comma: state.comma }).modus(mode);
 
   return page({
     title: el("h1", {}, chant.incipit),
@@ -296,33 +711,29 @@ function canticum() {
       onChange: (k) => { state.right.canticum = k; render(); },
       tabs: readings,
     }),
-    detail: el("p", { class: "sub" },
-      [chant.genus, chant.modus, chant.source?.book].filter(Boolean).join(" \u00b7 ")),
-    rightDetail: el("p", { class: "sub" },
-      state.right.canticum === "temperamentum"
-        ? [M.nomen, `finalis ${M.finalis.pitch.spn}`, `tenor ${M.reciting.pitch.spn}`].join(" \u00b7 ")
-        : row ? `${row.spn} \u00b7 ${row.nomen ?? ""}` : "no note chosen"),
+    detail: canticumDetail(chant),
+    rightDetail: canticumRightDetail(M, row),
     inputs: el("div", { class: "settings" },
       el("span", { class: "set-name" }, "notatio"),
       el("select", { onchange: (e) => { state.notation = e.target.value; render(); } },
         ...["quadrata", "moderna"].map((v) =>
           el("option", { value: v, selected: state.notation === v }, v))),
-      ...["chironomia", "tonarium"].map((name) => el("button", {
-        type: "button",
-        "aria-pressed": state.tracks.includes(name) ? "true" : "false",
-        onclick: () => {
-          state.tracks = state.tracks.includes(name)
-            ? state.tracks.filter((t) => t !== name) : [...state.tracks, name];
-          render();
-        },
-      }, name)),
+      // The two analysis tracks are a SET over one score — independently on,
+      // together deciding what is drawn over the notation. Same object as the
+      // offices in Calendarium, so the same strip.
+      el("div", { class: "segset", role: "group", "aria-label": "vestigia" },
+        ...["chironomia", "tonarium"].map((name) => el("button", {
+          type: "button",
+          "aria-pressed": state.tracks.includes(name) ? "true" : "false",
+          onclick: () => {
+            state.tracks = state.tracks.includes(name)
+              ? state.tracks.filter((t) => t !== name) : [...state.tracks, name];
+            render();
+          },
+        }, name))),
     ),
-    rightInputs: state.right.canticum === "temperamentum"
-      ? el("div", { class: "settings" },
-          el("span", { class: "set-name" }, "temperatura"),
-          el("select", { onchange: (e) => { state.tuning = e.target.value; render(); } },
-            ...TUNINGS.map((v) => el("option", { value: v, selected: state.tuning === v }, v))))
-      : null,
+    rightInputs: state.right.canticum === "temperamentum" ? commaSlider()
+      : state.right.canticum === "manus" ? hexachordPicker() : null,
     left: panels.left,
     right: panels.right,
   });
@@ -359,6 +770,9 @@ const SCORE_THEME = {
 
 function scoreFigure() {
   const wrap = el("div", { class: "score" });
+  // A new score supersedes the old one's repainter; if this render throws, the
+  // stale closure must not survive to paint marks onto a discarded element.
+  repaintScoreMarks = null;
   // Measured, not assumed: the element is not in the document yet, so ask the
   // column it is about to join. Falling back to a fixed width is what made the
   // score overflow a narrower window on first paint.
@@ -374,29 +788,72 @@ function scoreFigure() {
     const NS = "http://www.w3.org/2000/svg";
     const target = wrap.querySelector("svg");
     if (!target) return wrap;
-    const layer = document.createElementNS(NS, "g");
-    geometry.forEach((g, i) => {
-      const cy = g.y + g.systemY;
-      if (state.note === i) {
-        const ring = document.createElementNS(NS, "circle");
+    // The emitter tags every head `class="note"` in drawing order, so heads[i]
+    // and geometry[i] are the same note.
+    const heads = target.querySelectorAll(".note");
+
+    // Where the head actually sits. `geometry` reports the note's ANCHOR — its
+    // left edge and its pitch line — which is the right thing for a renderer
+    // to report and the wrong thing to centre a ring on: the head extends
+    // about three pixels right of x, and further on the shapes with their own
+    // path origin. `middleOf` reads the drawn glyph instead. See
+    // diagrams/notehead.js for why it is computed rather than measured.
+    const centreOf = (i, g) => middleOf(heads[i]) ?? { x: g.x, y: g.y, r: 7 };
+
+    const paint = () => {
+      wrap.querySelector(".marks")?.remove();
+      // Put every head back to the emitter's own ink before reddening one:
+      // paint runs again on each selection, and without this the previously
+      // selected note would stay red and the score would slowly fill up.
+      wrap.querySelectorAll(".note path[fill='#9E2B25']")
+        .forEach((p) => p.setAttribute("fill", "var(--tonus-note, #111)"));
+      const layer = document.createElementNS(NS, "g");
+      layer.setAttribute("class", "marks");
+      geometry.forEach((g, i) => {
+        // `y` is ALREADY absolute on the canvas — `systemY` is the staff's own
+        // origin, reported so a caller can tell which system a note is in, not
+        // an offset to add. Adding it double-counted: the second system's hits
+        // sat where the third was drawn, and the last five landed past the
+        // bottom of the SVG entirely. Only system one worked, its systemY being 0.
+        const c = centreOf(i, g);
+        if (state.note === i) {
+          // The head takes the rubric AND wears a ring: the ink says which
+          // note, the ring finds it on a page of three hundred.
+          //
+          // The emitter fills each head with `var(--tonus-note, #111)`, and an
+          // inline fill on the group is inherited by the path only if the path
+          // does not set its own — which it does. So the fill is set on the
+          // PATH, where it wins.
+          heads[i]?.querySelectorAll("path")
+            ?.forEach((p) => p.setAttribute("fill", "#9E2B25"));
+          const ring = document.createElementNS(NS, "circle");
+          for (const [k, v] of Object.entries({
+            cx: c.x, cy: c.y, r: (c.r ?? 7) + 4.5,
+            fill: "none", stroke: "#9E2B25", "stroke-width": "1.4",
+          })) ring.setAttribute(k, v);
+          layer.append(ring);
+        }
+        const hit = document.createElementNS(NS, "circle");
         for (const [k, v] of Object.entries({
-          cx: g.x, cy, r: 7, fill: "none", stroke: "#9E2B25", "stroke-width": "1.4",
-        })) ring.setAttribute(k, v);
-        layer.append(ring);
-      }
-      const hit = document.createElementNS(NS, "circle");
-      for (const [k, v] of Object.entries({
-        cx: g.x, cy, r: 8, fill: "#111", "fill-opacity": "0",
-        cursor: "pointer", tabindex: "0", role: "button",
-        "aria-label": `nota ${i + 1}`,
-      })) hit.setAttribute(k, v);
-      hit.addEventListener("click", () => { state.note = i; render(); });
-      hit.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); state.note = i; render(); }
+          cx: c.x, cy: c.y, r: Math.max((c.r ?? 7) + 4, 9),
+          fill: "#111", "fill-opacity": "0",
+          cursor: "pointer", tabindex: "0", role: "button",
+          "aria-label": `nota ${i + 1}`,
+        })) hit.setAttribute(k, v);
+        hit.addEventListener("click", () => selectNote(i));
+        hit.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectNote(i); }
+        });
+        layer.append(hit);
       });
-      layer.append(hit);
-    });
-    target.append(layer);
+      target.append(layer);
+    };
+    paint();
+    // Kept so a changed selection can repaint the marks WITHOUT re-rendering
+    // the score. Re-drawing a 300-note chant to move one ring throws away the
+    // element that was just clicked, and with it the browser's focus and the
+    // measured layout the ring depends on.
+    repaintScoreMarks = paint;
   } catch (err) {
     wrap.append(el("p", { class: "ghost" }, `inscriptio: ${err.message}`));
   }
@@ -404,17 +861,28 @@ function scoreFigure() {
   return wrap;
 }
 
+// Repaints the score's selection marks in place. Set when a score is drawn;
+// cleared when one is thrown away.
+let repaintScoreMarks = null;
+
 // The width the score was last drawn at. Kept outside the render so a re-render
 // does not start from a guess, and so the observer can tell a real change from
 // the noise a scrollbar makes appearing and disappearing.
 let lastScoreWidth = 880;
+// The readings column, for the figures that render notation into it. Only used
+// before the cell has been measured once — every render after that asks.
+let lastReadingWidth = 560;
 let scoreObserver = null;
 
 /** The width the score's column will give it. Read from a cell already laid
  * out, since the score's own wrapper has no layout until it is appended. */
-function measureColumn() {
-  const cell = document.querySelector(".row-body .cell");
-  const w = cell?.getBoundingClientRect?.().width;
+/** The width a figure has to draw into. `which` picks the column — 0 is the
+ *  subject, 1 the readings — because inscriptio wraps to a width in PIXELS and
+ *  the two columns are not the same size. Measuring the wrong one is how a
+ *  score ends up either overflowing or drawn into a third of its cell. */
+function measureColumn(which = 0) {
+  const cells = document.querySelectorAll(".row-body .cell");
+  const w = cells[which]?.getBoundingClientRect?.().width;
   return w && w > 1 ? w : null;
 }
 
@@ -433,53 +901,281 @@ function watchWidth(node) {
   scoreObserver.observe(node);
 }
 
+/** Which pitch the theory column is showing.
+ *
+ *  Two things can put a pitch here and they are not the same act: choosing a
+ *  NOTE of the chant (in the score, or on the range staff) says "this note,
+ *  which happens to sound that degree"; choosing a DEGREE (on the monochord,
+ *  the ruler, the table) says "that degree, wherever the chant uses it". So a
+ *  note selection wins while it lasts, and picking a degree releases it —
+ *  otherwise the score would go on ringing a note the column is no longer
+ *  about. */
+function selectedPitch() {
+  if (state.note != null) return state.score?.tabula[state.note]?.spn ?? null;
+  return state.pitch;
+}
+
+/** The theory column's selection, in each figure's own currency.
+ *
+ *  A chant and a scale do not live in the same octave — this chant sings G2
+ *  while mode 8's gamut is written G3 — so a note's SPN never matched a
+ *  monochord row's key and selecting in the score highlighted nothing. What
+ *  they genuinely share is the pitch CLASS: the degree, whatever octave it is
+ *  sung in, which is exactly what the monochord and the hand are about.
+ *
+ *  So the note is translated once, here, into whatever key each figure uses —
+ *  rather than each figure guessing, or the state storing three forms of the
+ *  same fact. */
+/** A pitch moved by whole semitones, named as spn — "G2" + 12 -> "G3".
+ *  Asked of the library rather than parsed here: an spn's octave digit is not
+ *  simply the number after the letter (B3 and C4 are a semitone apart), and a
+ *  string edit gets that wrong at every B/C boundary. */
+function spnAt(spn, semitones) {
+  if (!spn) return spn;
+  const T = tonus.temperamentum({});
+  const midi = T.nota(spn)?.midi;
+  return midi == null ? spn : (T.nota(midi + semitones)?.spn ?? spn);
+}
+
+function selectionFor(rows, spn) {
+  if (!spn) return undefined;
+  // AN EXACT PITCH FIRST. Pitch class alone is right for a row set that spans
+  // ONE octave — the monochord's, where the chant sings G2 and the scale
+  // writes G3 and they are one degree. The hand spans THREE, and there the
+  // first row sharing a pitch class is always the lowest: clicking cc landed
+  // on C, dd on D, and the top of the gamut could not be selected at all.
+  const exact = rows.find((r) => r.spn === spn);
+  if (exact) return exact.key;
+  // `nota` returns the pitch itself, not a wrapper around one.
+  const pc = tonus.temperamentum({}).nota(spn)?.pc;
+  if (pc == null) return undefined;
+  const hit = rows.find((r) => r.pc === pc);
+  return hit?.key;
+}
+
+/** Choose a degree: the theory column's own selection, which releases the
+ *  chant's note rather than pretending both are current. */
+function selectPitch(spn) {
+  state.pitch = spn;
+  state.note = null;
+  renderPanels();
+}
+
+/** Choose a note of the chant, by its index in the score's tabula. */
+function selectNote(i) {
+  state.note = i;
+  state.pitch = null;
+  // The hand is read by the hexachord in force where the reader is standing,
+  // so a note carries its own reading with it.
+  const h = state.score?.tabula[i]?.hexachord;
+  if (h) state.hexachord = h;
+  renderPanels();
+}
+
+// THE SLIDER OUTLIVES A RENDER, for the reason the date field does: dragging
+// fires `input` continuously and each one repaints the panels, so a control
+// rebuilt every time would be torn out from under the pointer after one step.
+let commaControl = null;
+
+/** The temperament as one continuous axis, with the historical stops marked.
+ *
+ *  A dropdown of six names said these were six tunings. They are one — a
+ *  fifth narrowed by some fraction of the comma — and the slider says so:
+ *  drag from pure fifths at one end to Salinas at the other and the thirds
+ *  come into tune as the fifths go out, which is the whole trade the
+ *  Renaissance was arguing about. The detents are where the argument stopped. */
+/** The width of the tempered fifth, in cents — ALWAYS.
+ *
+ *  This used to print the comma fraction at a named stop and cents between,
+ *  so the readout changed KIND as the thumb moved: "1/4" then "697.2¢" then
+ *  "2/7". Two units alternating in one field is hard to read as a value
+ *  moving. The fraction is what the list beside it already says; this says
+ *  what the fraction DOES, on one scale, everywhere on the axis — and it
+ *  gives Pythagorean a real number (702.0¢, the pure fifth) rather than "0".
+ */
+function commaReadout(v) {
+  try {
+    const T = tonus.temperamentum({ tuning: "meantone", comma: v });
+    return `${(1200 * Math.log2(T.nota("G4").hz / T.nota("C4").hz)).toFixed(1)}¢`;
+  } catch { return ""; }
+}
+
+function commaSlider() {
+  if (!commaControl) {
+    // Fine enough that a drag feels continuous rather than stepped: 667 stops
+    // across the axis, where 0.001 gave 333 and the thumb visibly ratcheted.
+    const input = el("input", {
+      type: "range", min: "0", max: String(COMMA_MAX), step: String(COMMA_STEP),
+      value: String(state.comma), "aria-label": "temperatura",
+      class: "comma-range",
+    });
+
+    // NO SNAP. It fought the drag — the thumb stuck to a detent and jumped out
+    // of it, which is what made the control feel broken. The named stops are
+    // reachable exactly from the list beside it, and the ticks show where they
+    // are; the slider's job is the places BETWEEN them.
+    input.addEventListener("input", () => {
+      state.comma = Number(input.value);
+      commaControl.paint();
+      renderPanels();
+    });
+
+    const readout = el("span", { class: "comma-read" });
+
+    const pick = el("select", { "aria-label": "temperamentum",
+      onchange: (e) => {
+        const c = COMMAS[Number(e.target.value)];
+        if (!c) return;
+        state.comma = c.value;
+        commaControl.sync();
+        commaControl.paint();
+        renderPanels();
+      } },
+      ...COMMAS.map((c, i) => el("option", { value: String(i) }, `${c.name} ${c.gloss}`)),
+    );
+
+    commaControl = {
+      node: el("div", { class: "settings comma" },
+        el("span", { class: "set-name" }, "temperatura"),
+        el("span", { class: "comma-track" }, input),
+        readout, pick),
+      input, pick, readout,
+      /** Take the value from outside — the list, a link opened. */
+      sync: () => { if (document.activeElement !== input) input.value = String(state.comma); },
+      paint: () => {
+        readout.textContent = commaReadout(state.comma);
+        // Between two stops the list still shows the NEAREST — a "—" told the
+        // reader nothing when it could tell them where they are. It is drawn
+        // greyed to say the slider is not ON that stop, only near it.
+        const at = atDetent(state.comma);
+        const near = at ?? COMMAS.reduce((best, c) =>
+          Math.abs(c.value - state.comma) < Math.abs(best.value - state.comma) ? c : best);
+        pick.value = String(COMMAS.indexOf(near));
+        pick.classList.toggle("at-detent", Boolean(at));
+        pick.classList.toggle("near-detent", !at);
+      },
+    };
+  }
+  commaControl.sync();
+  commaControl.paint();
+  return commaControl.node;
+}
+
+/** Which hexachord the hand is read by.
+ *
+ *  A doctrinal choice about the figure, so it wears the same box `doctrina`
+ *  does. It is not a mode the reader has to keep in step by hand: picking a
+ *  note — on the ring, in the score, anywhere the selection travels — sets it,
+ *  and the picker shows what is in force and can still override it. */
+function hexachordPicker() {
+  return el("div", { class: "settings" },
+    el("span", { class: "set-name" }, "hexachordum"),
+    el("select", {
+      "aria-label": "hexachordum",
+      onchange: (e) => { state.hexachord = e.target.value; renderPanels(); },
+    },
+      ...HEXACHORDA.map((v) =>
+        el("option", { value: v, selected: state.hexachord === v }, v))),
+    // What is drawn OVER the twenty places. One switch, because the dashes and
+    // the arrows are one mark: a path a reader is meant to walk has a
+    // direction, and a direction with no path to lie along is nothing.
+    el("div", { class: "segset", role: "group", "aria-label": "the route" },
+      el("button", {
+        type: "button", "aria-pressed": state.route ? "true" : "false",
+        onclick: () => { state.route = !state.route; renderPanels(); },
+      }, "route"),
+      // Read the chant an octave up. It moves where the piece SITS on the
+      // hand, not what it is: the same degrees, the same solmization, one
+      // octave higher up the gamut, which is where most of the corpus lands
+      // when a choir actually sings it.
+      el("button", {
+        type: "button", "aria-pressed": state.octave ? "true" : "false",
+        onclick: () => { state.octave = state.octave ? 0 : 1; renderPanels(); },
+      }, "octava")),
+  );
+}
+
 function temperamentumPanel() {
   const mode = modeOf(state.chant);
-  const row = state.note != null ? state.score?.tabula[state.note] : null;
-  const opts = { mode, selected: row?.spn ?? undefined, tuning: state.tuning };
-  const T = tonus.temperamentum({ mode, tuning: state.tuning });
-  const M = T.modus(mode);
+  const sel = selectedPitch();
+  const tune = { tuning: "meantone", comma: state.comma };
+  // The scale's rows are keyed by their OWN spn, an octave from the chant's,
+  // so the selection is translated into their currency rather than compared
+  // across octaves and silently missing.
+  const scaleRows = chordaRows(tonus, { mode, ...tune });
+  const opts = {
+    mode, selected: selectionFor(scaleRows, sel), ...tune,
+    // A degree chosen here is reported back as the CHANT's pitch where it has
+    // one, so the score and the range staff can ring the note the reader
+    // actually clicked toward.
+    onSelect: (key) => {
+      const row = scaleRows.find((r) => r.key === key);
+      const inChant = state.score?.tabula.find((t) => t.pc === row?.pc);
+      selectPitch(inChant?.spn ?? key);
+    },
+  };
 
   return el("div", {},
-    chorda(tonus, opts),
-    regula(tonus, opts),
+    // The string and the ruler as ONE figure: the same degrees on two axes,
+    // joined, so the disagreement between the medieval measure and the modern
+    // one is the thing drawn rather than something to infer across two panels.
+    chordaDual(tonus, opts),
     chordaTabula(tonus, opts),
   );
 }
 
 function manusPanel() {
   const mode = modeOf(state.chant);
-  const row = state.note != null ? state.score?.tabula[state.note] : null;
-  const opts = { mode, selected: row ? String(row.midi) : undefined };
-  return el("div", {}, hand(tonus, opts), handTabula(tonus, opts));
-}
-
-/** The score's own tabula — a row per note, selection shared with the score. */
-function tabulaPanel() {
-  const t = el("table", { class: "tabula" });
-  t.append(el("thead", {}, el("tr", {},
-    ...["nota", "hz", "nomen", "neuma", "syllaba"].map((h) => el("th", {}, h)))));
-  const b = el("tbody");
-  state.score.tabula.forEach((r, i) => {
-    const tr = el("tr", {
-      class: state.note === i ? "sel" : null,
-      tabindex: "0",
-      onclick: () => { state.note = i; render(); },
-      onkeydown: (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); state.note = i; render(); }
-      },
+  const spn = selectedPitch();
+  // The hand keys on midi, the monochord on spn — both name the same degree,
+  // so the selection is translated rather than stored twice.
+  const row = spn ? state.score?.tabula.find((r) => r.spn === spn) : null;
+  const tune = { tuning: "meantone", comma: state.comma };
+  const gamutRows = handRows(tonus, { mode, ...tune });
+  // THE OCTAVE IS A TRANSPOSITION OF THE READING, NOT OF THE CHANT. The score,
+  // the tables and every other panel keep the pitches the book prints; only
+  // which JOINT a note is read at moves. So the shift is applied here, at the
+  // two points where a chant pitch and a gamut row are matched, and nowhere
+  // else — `state.score` is never rewritten.
+  const shift = state.octave * 12;
+  const raise = (spn_) => (!spn_ || !shift ? spn_ : spnAt(spn_, shift));
+  const opts = {
+    mode, ...tune,
+    selected: selectionFor(gamutRows, raise(spn)),
+    onSelect: (key) => {
+      const row = gamutRows.find((r) => r.key === key);
+      // Back down into the chant's own octave to find the note that was
+      // pointed at. The joint's OWN pitch, matched exactly in the chant where
+      // the chant sings it: matching by pitch class handed back the first note
+      // sharing the class, a lower octave than the one just pointed at.
+      const want = shift ? spnAt(row?.spn, -shift) : row?.spn;
+      const inChant = state.score?.tabula.find((t) => t.spn === want);
+      selectPitch(inChant?.spn ?? want ?? null);
     },
-      el("td", { class: "mono" }, r.spn ?? ""),
-      el("td", { class: "mono num" }, r.hz != null ? r.hz.toFixed(1) : ""),
-      el("td", {}, r.nomen ?? ""),
-      // A neume is a shape, not a string — the row wants what it is called.
-      el("td", {}, r.neume?.type ?? ""),
-      el("td", {}, r.lyric ?? ""),
-    );
-    b.append(tr);
-  });
-  t.append(b);
-  return t;
+  };
+  // THE CHART DRIVES THE HAND. `piece` reads the hexachord in force at the
+  // selected note; a named value pins it. Both end in the same argument, so
+  // the hand knows nothing about where the choice came from.
+  const rows = state.score?.tabula ?? [];
+  const at = state.note != null ? state.note : null;
+  const hexachord = state.hexachord;
+
+  // Where each phrase begins, in notes — the divisions a mutation is read
+  // against. The tabula is one row per note, and a phrase knows its own count.
+  const phrases = [];
+  let n = 0;
+  for (const ph of state.score?.phrases ?? []) { n += ph.noteCount ?? 0; phrases.push(n); }
+
+  // The ring CARRIES the hand: one figure, the piece around the outside and
+  // the gamut it is read on at the centre. With no chant loaded there is no
+  // piece to ring, so the hand stands on its own.
+  const figure = hand(tonus, { ...opts, hexachord, route: state.route });
+  return el("div", {},
+    rows.length
+      ? mutatio({ rows, note: at, phrases, centre: figure,
+                  onSelect: (i) => selectNote(i) })
+      : figure,
+    handTabula(tonus, opts));
 }
 
 // ── selection ──
@@ -489,6 +1185,9 @@ function openChant(chant) {
   try { state.score = tonus.notatio(chant); }
   catch { state.score = null; }
   state.view = "canticum";
+  // A chant opens on the hexachord it opens in.
+  const h = state.score?.tabula.find((r) => r.hexachord)?.hexachord;
+  if (h) state.hexachord = h;
   render();
 }
 
@@ -501,7 +1200,15 @@ function writeUrl() {
   if (state.chant) p.set("cantus", state.chant.id);
   if (state.notation !== "quadrata") p.set("notatio", state.notation);
   if (state.tracks.length) p.set("tracks", state.tracks.join(","));
-  if (state.tuning !== "pythagorean") p.set("temperatura", state.tuning);
+  p.set("hexachordum", state.hexachord);
+  if (!state.route) p.set("route", "0");
+  // Only when narrowed — all three showing is the default, and saying so in
+  // every link would put a parameter in the bar that changes nothing.
+  if (state.offices.join(",") !== OFFICES_SHOWN.join(","))
+    p.set("officia", state.offices.join(","));
+  // Only when tempered — 0 is the default and saying so in every link
+  // would put a parameter in the bar that changes nothing.
+  if (state.comma) p.set("comma", state.comma.toFixed(4));
   const lectio = state.right[state.view];
   if (lectio) p.set("lectio", lectio);
   const q = p.toString();
@@ -517,38 +1224,66 @@ function readUrl() {
   }
   const n = p.get("notatio");
   if (n === "moderna" || n === "quadrata") state.notation = n;
+  if (p.get("route") === "0") state.route = false;
+  const hx = p.get("hexachordum");
+  if (HEXACHORDA.includes(hx)) state.hexachord = hx;
   if (p.has("tracks")) {
     state.tracks = p.get("tracks").split(",")
       .filter((t) => t === "chironomia" || t === "tonarium");
   }
-  if (TUNINGS.includes(p.get("temperatura"))) state.tuning = p.get("temperatura");
+  if (p.has("officia")) {
+    const keys = OFFICES.map((o) => o.key);
+    const want = p.get("officia").split(",").filter((k) => keys.includes(k));
+    // An empty or unrecognised list would leave the day looking chantless
+    // through no choice of the reader's, so it falls back to all three.
+    if (want.length) state.offices = want;
+  }
+  if (p.has("comma")) {
+    const c = Number(p.get("comma"));
+    // Anything outside the axis is not a temperament this page can draw.
+    if (Number.isFinite(c) && c >= 0 && c <= COMMA_MAX) state.comma = c;
+  }
   if (p.has("lectio")) state.right[state.view] = p.get("lectio");
-  const id = p.get("cantus");
-  if (id) {
-    const [chant] = tonus.cantus({ id });
-    if (chant) {
-      state.chant = chant;
-      try { state.score = tonus.notatio(chant); } catch { state.score = null; }
-    }
+  // A chant from the URL, or the standing one. Canticum with nothing loaded is
+  // a column of empty panels — the whole view is a function of a chant — so it
+  // opens on a piece rather than on the invitation to find one.
+  const id = p.get("cantus") ?? DEFAULT_CANTUS;
+  const [chant] = tonus.cantus({ id });
+  if (chant) {
+    state.chant = chant;
+    try { state.score = tonus.notatio(chant); } catch { state.score = null; }
   }
 }
 
 // ── render ──
 const VIEWS = [
-  { key: "canticum", name: "Canticum", build: canticum, panels: canticumPanels },
-  { key: "calendarium", name: "Calendarium", build: calendarium, panels: calendariumPanels },
+  { key: "canticum", name: "Canticum", build: canticum, panels: canticumPanels,
+    heads: canticumHeads },
+  { key: "calendarium", name: "Calendarium", build: calendarium, panels: calendariumPanels,
+    heads: calendariumHeads },
 ];
 
 function render() {
-  const nav = document.getElementById("views");
-  nav.replaceChildren(...VIEWS.map((v) => el("button", {
-    type: "button",
-    "aria-selected": state.view === v.key ? "true" : "false",
-    onclick: () => { state.view = v.key; render(); },
-  }, v.name)));
-
   const host = document.getElementById("view");
   const view = VIEWS.find((v) => v.key === state.view) ?? VIEWS[1];
+
+  // The view switch is the SAME strip as the two panel strips, at title size.
+  // It was a hand-built row of buttons that copied the strip's look and none
+  // of its behaviour: `aria-selected` on a plain button with no `role="tab"`,
+  // no `aria-controls`, and no arrow keys — in the one strip a keyboard
+  // reaches first. Built by `tabs()` now, so the three cannot drift again.
+  document.getElementById("views").replaceChildren(tabs({
+    tabs: VIEWS.map((v) => ({ key: v.key, name: v.name })),
+    active: state.view,
+    label: "conspectus",
+    variant: "large",
+    stripOnly: true,
+    controls: "view",
+    onChange: (key) => { state.view = key; render(); },
+  }));
+
+  host.setAttribute("role", "tabpanel");
+  host.setAttribute("aria-labelledby", `tab-conspectus-${view.key}`);
   host.replaceChildren(view.build());
   writeUrl();
 }
