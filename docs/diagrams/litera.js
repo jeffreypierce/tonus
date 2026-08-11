@@ -17,15 +17,22 @@
 // drawing them. The drawing happens here.
 
 import { GLYPHS, GLYPH_UPM } from "../dist/data/smufl-glyphs.js";
-import { GLYPH } from "../dist/data/gabc-glyphs.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
-/** Which medieval mark a gamut name calls for, if any. `bb`/`♮♮` are the same
- *  marks an octave up — the doubling is the octave, not a different sign. */
+/** The STANDARD accidentals, not the medieval ones tonus draws on a staff.
+ *  Bravura carries both, and the score emitter uses `GLYPH.flat`/`GLYPH.natural`
+ *  (E9E0/E9E1, b rotundum and b quadratum) because a square-note staff wants
+ *  the shapes the books print. This table is read as type rather than as
+ *  notation, so it takes the modern descendants — engraved, so they match the
+ *  page's weight instead of whatever ♭ ♮ a text font happens to carry. */
+const SIGN = { flat: "E260", natural: "E261" };
+
+/** Which mark a gamut name calls for, if any. `bb`/`♮♮` are the same marks an
+ *  octave up — the doubling is the octave, not a different sign. */
 function markFor(litera) {
-  if (/^b+$/.test(litera)) return { code: GLYPH.flat, repeat: litera.length };
-  if (/^♮+$/.test(litera)) return { code: GLYPH.natural, repeat: litera.length };
+  if (/^b+$/.test(litera)) return { code: SIGN.flat, repeat: litera.length };
+  if (/^♮+$/.test(litera)) return { code: SIGN.natural, repeat: litera.length };
   return null;
 }
 
@@ -66,7 +73,11 @@ export function litera(litera_, { x, y, size, fill, opacity = 1 }) {
   const [, yMin, , yMax] = g.bbox;
   const s = (size * 1.15) / (yMax - yMin);
   const w = g.advance * s;
-  const gap = w * 0.12;
+  // The octave doubles the sign, and these glyphs have NO side bearings — the
+  // ink fills the advance edge to edge (measured: 226/226 and 168/168 units) —
+  // so consecutive marks touch unless the space is put here. The whole gap is
+  // this number, which is why it is large next to ordinary letter tracking.
+  const gap = w * 0.55;
   const total = w * mark.repeat + gap * (mark.repeat - 1);
 
   for (let i = 0; i < mark.repeat; i++) {
@@ -95,9 +106,15 @@ export function literaGlyph(litera_, { size = 13 } = {}) {
   if (!g) return null;
 
   const [, yMin, , yMax] = g.bbox;
-  const s = (size * 1.15) / (yMax - yMin);
+  // The mark stands at the nominal size, no correction: these two are tall for
+  // their size and towered over the letters they sit between at 1.15.
+  const s = size / (yMax - yMin);
   const w = g.advance * s;
-  const gap = w * 0.12;
+  // The octave doubles the sign, and these glyphs have NO side bearings — the
+  // ink fills the advance edge to edge (measured: 226/226 and 168/168 units) —
+  // so consecutive marks touch unless the space is put here. The whole gap is
+  // this number, which is why it is large next to ordinary letter tracking.
+  const gap = w * 0.55;
   const total = w * mark.repeat + gap * (mark.repeat - 1);
   const h = (yMax - yMin) * s;
 
