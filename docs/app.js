@@ -616,8 +616,17 @@ function canticumRightDetail(M, row) {
   return el("p", { class: "sub" },
     state.right.canticum === "temperamentum"
       ? M.nomen
-      : row ? `${row.spn} · ${row.nomen ?? ""}` : "no note chosen",
+      : row ? manusLine(row) : "no note chosen",
     readingLink(canticumReadings(), state.right.canticum));
+}
+
+/** The chosen note as the HAND names it: its Guidonian name and the joint it
+ *  is read at. The scientific pitch is dropped here — spn is the tuning
+ *  panel's currency, and this reading is the medieval one, where a pitch IS a
+ *  place on the hand. The joint is what the figure beside it is pointing at. */
+function manusLine(row) {
+  const joint = row.hand ? `${row.hand.finger} · ${row.hand.region}` : null;
+  return [row.nomen, joint].filter(Boolean).join(" · ") || row.spn;
 }
 
 /** Canticum's heading rows. Both this and `canticum()` build the page's
