@@ -22,10 +22,22 @@
 import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import { literaGlyph } from "./litera.js";
+// The rubricated roundel, shared with the three wheels — see frame.js.
+import { roundel } from "./frame.js";
 import { LOCUS, DIGITS, KNUCKLE, KNUCKLE_FULL, ROUTE, BOW, VIEWBOX }
   from "./hand-figure.js";
 
 const NS = "http://www.w3.org/2000/svg";
+
+/** NOT READ IS A RATIO, NOT A FLOOR. What tells a joint this hexachord reads
+ *  from one it does not is the GAP between them — so when the lit marks come
+ *  down, this has to come down with them. The old hardcoded 0.34 was set
+ *  against a lit syllable at full ink: 2.9:1. Lower the lit mark to
+ *  STRATUM.wave and leave the floor, and the ratio falls under 2:1 — every
+ *  joint reads as disabled, which is the one distinction the hand exists to
+ *  teach. 0.18 restores 4.2:1. The ring and the litera take stated fractions
+ *  of it, so all three move together. */
+const NOT_READ = 0.18;
 
 function el(tag, attrs, text) {
   const e = document.createElementNS(NS, tag);
@@ -208,17 +220,24 @@ export function hand(tonus, { mode = 1, selected, hexachord, route = true,
     const rad = isPaired(r.midi) ? 13 : 16;
 
     if (isSel) {
-      svg.appendChild(el("circle", {
-        cx: x, cy: y, r: rad + 6, fill: "none",
-        stroke: RUBRICA, "stroke-width": 1.6,
-      }));
+      svg.appendChild(roundel(x, y, rad, 6));
     }
     svg.appendChild(el("circle", {
       cx: x, cy: y, r: rad,
-      fill: "var(--paper, #FDFDFC)",
+      // A KNOCKOUT, NEVER TRANSPARENT: the circle occludes the route passing
+      // behind it, so it always holds a fill — this is the only thing stopping
+      // the dashes striking through the syllables, which is why the loci are
+      // appended AFTER the route and must stay there. The fill is the LEAF,
+      // because a locus is not lifted off the page; the sheet's one step up is
+      // spent on the joint you have CHOSEN, which stands on --paper-lit as a
+      // selected row does.
+      fill: isSel ? "var(--paper-lit, #FFF)" : "var(--paper, #FDFDFD)",
       stroke: isSel ? RUBRICA : INK,
-      "stroke-opacity": isSel ? 1 : (lit ? STRATUM.wave : STRATUM.rail),
-      "stroke-width": lit ? STROKE.firm : STROKE.hair,
+      // The ring is the WELL a syllable sits in, not a claim. The wheels draw
+      // their sphere rings at rail/hair; this lands a rung above pure
+      // graticule because it is also a hit target.
+      "stroke-opacity": isSel ? 1 : (lit ? STRATUM.margin : NOT_READ * 0.6),
+      "stroke-width": lit ? STROKE.fine : STROKE.hair,
     }));
 
     // THE SOLFÈGE SYLLABLE ALONE, which is what the hand is FOR: a cantor
@@ -232,10 +251,17 @@ export function hand(tonus, { mode = 1, selected, hexachord, route = true,
       : (r.solmisatio ?? r.litera);
     svg.appendChild(el("text", {
       x, y: y + 2, "text-anchor": "middle", "dominant-baseline": "central",
+      // A DRAWN LETTER, at the stratum rota.js gives its planet glyphs — the
+      // same kind of mark.
+      //
+      // STEP.caption, not label. The syllable went UP a step to pay for the
+      // 10% the HAND_BOX fit costs it — and then the whole scale moved, taking
+      // `label` from 13.5 to 15, so it was paid twice and the letters outgrew
+      // the circles they sit in.
       "font-family": HOUSE_SERIF, "font-size": isPaired(r.midi) ? STEP.micro : STEP.caption,
       "letter-spacing": "0.09em",
       fill: isSel ? RUBRICA : INK,
-      "fill-opacity": lit ? 1 : 0.34,
+      "fill-opacity": lit ? STRATUM.wave : NOT_READ,
     }, String(syl).toUpperCase()));
 
     // The litera: which joint this is, for a reader matching the figure against
@@ -254,7 +280,7 @@ export function hand(tonus, { mode = 1, selected, hexachord, route = true,
       "text-anchor": pair ? "middle" : "start",
       "font-family": HOUSE_SERIF, "font-size": STEP.caption,
       "letter-spacing": "0.06em", fill: INK,
-      "fill-opacity": lit ? STRATUM.margin : 0.2,
+      "fill-opacity": lit ? STRATUM.margin : NOT_READ * 0.55,
     }, r.litera));
 
     if (onSelect) {

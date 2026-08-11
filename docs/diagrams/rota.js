@@ -22,10 +22,10 @@
 // Ptolemaic order and the glyph sizes follow presence; those are drawing
 // decisions. Everything else is asked.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, sc } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, nib, sc } from "./ink.js";
 import { tabula } from "./tabula.js";
 import { pointAt } from "./polar.js";
-import { FRAME, wheel, outerRing } from "./frame.js";
+import { FRAME, wheel, outerRing, roundel } from "./frame.js";
 // The twelve signs come from the library, not a copy of them: a body's `sign`
 // is one of these, so the wheel's sectors and the table's words are the same
 // list. (A named export, like MODES and CADENTIAE — not on the default object.)
@@ -98,7 +98,7 @@ export function rotaRows(tonus, { date, doctrina } = {}) {
         chorda: v.greekName,
         // The doctrina's own fraction against the mese — the primary datum,
         // of which the note name is the sounding.
-        ratio: `${v.ratio[0]}/${v.ratio[1]}`,
+        ratio: `${v.ratio[0]}:${v.ratio[1]}`,
         spn: v.spn,
         midi: v.midi,
         hz: v.hz,
@@ -178,9 +178,16 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
       // answer is several lines at once. The rest stay ink and quiet, so the
       // lit ones read as a figure against them.
       stroke: touches ? RUBRICA : INK,
-      // Strength is opacity, as confidence is everywhere in this house.
-      "stroke-opacity": (touches ? 0.95 : STRATUM.spark) * asp.strength,
-      "stroke-width": sc((touches ? 1.1 : 0.6) + 1.2 * asp.strength),
+      // Strength is opacity, as confidence is everywhere in this house — and
+      // width, through THE nib, which is the one pressure law: an aspect's
+      // strength is a velocity like any other. This was a second, unnamed ramp
+      // (0.6 + 1.2·s) that tracked nib() to within a tenth over its whole
+      // range, so it was the house law written out again by hand.
+      //
+      // A lit chord takes the same law plus one rung of lift, so the selected
+      // planet's several chords read as a figure against the rest.
+      "stroke-opacity": (touches ? STRATUM.label : STRATUM.spark) * asp.strength,
+      "stroke-width": sc(nib(asp.strength) + (touches ? STROKE.fine : 0)),
     }));
   }
 
@@ -192,10 +199,7 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
     const dot = 2.2 + 4.6 * r.presence;
 
     if (isSel) {
-      root.appendChild(el("circle", {
-        cx: sc(x), cy: sc(y), r: sc(dot + 7),
-        fill: "none", stroke: RUBRICA, "stroke-width": 1.6,
-      }));
+      root.appendChild(roundel(x, y, dot));
     }
     root.appendChild(el("circle", {
       cx: sc(x), cy: sc(y), r: sc(dot),
@@ -203,11 +207,16 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
       "fill-opacity": isSel ? 1 : STRATUM.wave,
     }));
 
-    // The glyph outside its dot, turned to stay upright.
-    const [gx, gy] = pointAt(eclipticAngle(r.longitude), r.radius + dot + 11);
+    // The glyph outside its dot, turned to stay upright. Two more units of
+    // clearance than it used to take, because the glyph is a step larger.
+    const [gx, gy] = pointAt(eclipticAngle(r.longitude), r.radius + dot + 13);
     root.appendChild(el("text", {
       x: sc(gx), y: sc(gy), "text-anchor": "middle", "dominant-baseline": "central",
-      "font-family": HOUSE_SERIF, "font-size": STEP.caption,
+      // A planet glyph IS the named thing in this wheel, the same as a gamut
+      // syllable in the hand — `label` is the step for named things, `caption`
+      // the workhorse for tick labels. This also puts the two figures'
+      // primary labels on one step.
+      "font-family": HOUSE_SERIF, "font-size": STEP.label,
       fill: isSel ? RUBRICA : INK,
       "fill-opacity": isSel ? 1 : STRATUM.letters,
     }, r.symbol + (r.retrograde ? "℞" : "")));
@@ -252,7 +261,9 @@ export function rotaTabula(tonus, { date, selected, doctrina, onSelect } = {}) {
 
   return tabula(rows, [
     { key: "symbol", head: "", symbol: true },
-    { key: "nomen", head: "sphaera", gloss: (r) => r.retrograde ? "retrogradus" : "" },
+    // Agreeing with the column's own noun — sphaera, feminine — so the gloss
+    // holds for Venus and Luna, where a fixed "retrogradus" did not.
+    { key: "nomen", head: "sphaera", gloss: (r) => r.retrograde ? "retrograda" : "" },
     // The ratio is what the doctrina actually SAYS; the note name was a
     // reading of it against A4, and the string it sounds names it better —
     // so chorda becomes the ratio's gloss rather than a column of its own.

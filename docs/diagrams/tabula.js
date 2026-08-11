@@ -115,6 +115,15 @@ export function tabula(rows, columns,
 
       const g = c.gloss?.(row);
       if (g) {
+        // A ZERO-WIDTH SPACE, so the cell has somewhere to break. The value and
+        // the gloss are appended with no whitespace between them, which left no
+        // break point THERE and only break points inside each of them: "64/81
+        // parhypate hypaton" came apart as "64/81 parhypate" over "hypaton",
+        // splitting the one thing in the cell that is a single name. With this
+        // here the line breaks between the datum and its gloss first, and the
+        // gloss (nowrap, in the sheet) travels whole. The gap is still the
+        // gloss's own margin — this character has no width and is not a space.
+        td.appendChild(document.createTextNode("​"));
         const span = document.createElement("span");
         span.className = "gloss";
         span.textContent = g;

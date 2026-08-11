@@ -29,7 +29,7 @@ import { tabula } from "./tabula.js";
 import {
   pointAt, arcPath, wedgePath, uprightRotation, isLowerHalf, neighborMidpoints,
 } from "./polar.js";
-import { FRAME, wheel, outerRing } from "./frame.js";
+import { FRAME, wheel, outerRing, roundel } from "./frame.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -344,10 +344,7 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
 
     // Selection is a rubricated roundel — the one place colour is spent here.
     if (isSel) {
-      marks.appendChild(el("circle", {
-        cx: sc(x), cy: sc(y), r: sc(a.dot + 7),
-        fill: "none", stroke: RUBRICA, "stroke-width": 1.6,
-      }));
+      marks.appendChild(roundel(x, y, a.dot));
     }
     marks.appendChild(el("circle", {
       cx: sc(x), cy: sc(y), r: sc(a.dot),
@@ -386,7 +383,12 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
     const [ox, oy] = pointAt(a, FRAME.tick);
     marks.appendChild(el("line", {
       x1: sc(ix), y1: sc(iy), x2: sc(ox), y2: sc(oy),
-      stroke: RUBRICA, "stroke-width": 1, "stroke-opacity": 0.5,
+      // A CLAIM — the hand on the year — so it takes the claim rung rather
+      // than an invented width, and STRATUM.spark to sit under the anchors
+      // it crosses. It was width 1 at opacity 0.5: neither on either
+      // ladder, and the one place the reserved colour was diluted by hand.
+      stroke: RUBRICA, "stroke-width": STROKE.firm,
+      "stroke-opacity": STRATUM.spark,
     }));
     const [dx, dy] = pointAt(a, R_ANCHOR);
     marks.appendChild(el("circle", { cx: sc(dx), cy: sc(dy), r: 3.4, fill: RUBRICA }));

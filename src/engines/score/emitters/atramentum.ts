@@ -89,21 +89,32 @@ export const STROKE = {
   heavy: 1.5,   // an axis, a frame, a boundary
 } as const;
 
-/** The type scale, ~1.25 between steps. Derived from what the diagrams
- * actually used (17 ad-hoc sizes clustering on these six), not imposed. */
+/** The type scale, and it is THE PAGE'S: a modular scale on 15px stepped by
+ *  the Pythagorean minor third, 32:27 — the same six `--micro` … `--display-size`
+ *  that docs/styles.css declares. So a wheel's label and a table's label at the
+ *  same step are the same size.
+ *
+ *  It was 9/11/13.5/17/21/26, derived from what the diagrams happened to use.
+ *  That was honest when the page had no scale of its own; once the page took
+ *  one, the two agreed on `title` alone and every drawn label sat 1.5–2px under
+ *  the prose around it. scripts/vendor-ink.mjs asserts the pairing now, so this
+ *  cannot drift again silently.
+ *
+ *  Nothing inside tonus reads STEP — the site's diagrams are its only consumer
+ *  — so moving it changes no emitted SVG for a package consumer. */
 export const STEP = {
-  micro: 9,      // superscripts, tick labels
-  caption: 11,   // the workhorse — most diagram labels
-  label: 13.5,   // named things
-  body: 17,      // running text
+  micro: 10.5,   // superscripts, tick labels
+  caption: 12.5, // the workhorse — most diagram labels
+  label: 15,     // named things
+  body: 18,      // running text
   title: 21,     // a panel's name
-  display: 26,   // the rare headline
+  display: 25,   // the rare headline
 } as const;
 
 /** The house faces. Junicode is the serif — the real face, not the Crimson Pro
  * stand-in the early rounds carried; Plex Mono is the machine register. */
 export const HOUSE_SERIF = "Junicode, 'Crimson Pro', Georgia, serif";
-/* HOUSE_SANS is GONE (2026-08-10). The house has three faces and each has a
+/* HOUSE_SANS is GONE. The house has three faces and each has a
  * job: Junicode carries content and Latin, Plex Mono carries machine data,
  * Jacquard is the wordmark. The sans stack named a fourth that no page loads,
  * so every label reaching for it resolved to system-ui — SF Pro on macOS —
@@ -115,6 +126,14 @@ export const HOUSE_SERIF = "Junicode, 'Crimson Pro', Georgia, serif";
  * label resolved to the system mono — SF Mono on macOS — beside page text in
  * Plex. Two monospaces, same size, same column. */
 export const HOUSE_MONO = "'IBM Plex Mono', ui-monospace, Menlo, monospace";
+
+/** The fourth stack, and NOT a fourth face: neither text face carries the
+ *  planetary or musical signs (see fonts/README.md), so a figure that draws one
+ *  falls back to the system. Mirrors `--symbol` in docs/styles.css — the same
+ *  sharing-by-numbers seam as HOUSE_SERIF and HOUSE_MONO, and it was duplicated
+ *  inline in mutatio.js as a local SIGN_FACE before this existed. */
+export const HOUSE_SYMBOL = "'Apple Symbols', 'Segoe UI Symbol', "
+  + "'Noto Sans Symbols2', " + HOUSE_SERIF;
 
 /** The figures a FIGURE sets: Junicode's own, which are OLDSTYLE by default —
  *  they sit on the baseline with ascenders and descenders as lowercase letters

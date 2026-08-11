@@ -161,7 +161,7 @@ const _corpusCache = new Map<ChantSource, Corpus>();
  *
  * `corpus("am")` and `corpus({ book: "am" })` are the same question — the bare
  * code came first and keeps working, the object form matches every other verb.
- * `corpus()` with no argument returns the rollup, which used to throw.
+ * `corpus()` with no argument returns the rollup.
  */
 export function getCorpus(): CorpusLedger;
 export function getCorpus(code: ChantSource): Corpus;
@@ -218,10 +218,8 @@ function fullCount(code: ChantSource): CorpusFullCount | null {
 }
 
 /**
- * The whole shelf: every book, plus the corpus-wide rollup. `corpus()` with no
- * argument used to throw ("Unknown corpus code: undefined"), which made the
- * commonest question — what IS this corpus — the one thing the verb could not
- * answer.
+ * The whole shelf: every book, plus the corpus-wide rollup. No argument
+ * answers the commonest question — what IS this corpus.
  *
  * `count` is how many chants tonus holds, each counted once — including the
  * ordinary, which is addressable but not shelved. `listings` is how many rows
@@ -357,7 +355,7 @@ export function getChants(query?: CantusQuery): Chant[] {
   // An empty query is a MALFORMATION here, not a no-match, and that is
   // deliberate: the filters below narrow from CORPUS, so an empty query has no
   // honest answer. Returning [] would claim a search found nothing when none
-  // ran; returning the corpus would dress 2,887 chants as a result. The whole
+  // ran; returning the corpus would dress 2,767 listings as a result. The whole
   // shelf is `corpus()`, which says so in its name.
   if (!query || Object.keys(query).length === 0) {
     throw new Error(

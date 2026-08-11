@@ -457,7 +457,7 @@ successive semitone intervals — and an **arrival**, where it landed relative
 to the chant's own closing note. Together they are the key, `"2,0,-2 @0"`, and
 the key is the family's whole name.
 
-122 families clear the floor of 50 occurrences, covering 58.7% of all
+110 families clear the floor of 50 occurrences, covering 56.8% of all
 phrase-ends. The rest of the tail is real but too thin to characterise.
 
 ```ts
@@ -472,11 +472,11 @@ interface CadentiaFamilia {
 }
 ```
 
-`share` is taken against **every** phrase-end, not against the 58.7% that
+`share` is taken against **every** phrase-end, not against the 56.8% that
 cleared the floor. The denominator ships beside the table:
 
 ```ts
-CADENTIAE_POPULATION.ends;   // 28481 — all phrase-ends, sung corpus
+CADENTIAE_POPULATION.ends;   // 26787 — all phrase-ends, sung corpus
 CADENTIAE_POPULATION.byMode; // the same total per mode digit
 ```
 

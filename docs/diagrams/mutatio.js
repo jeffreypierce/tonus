@@ -25,7 +25,7 @@
 // score and the tables carry — so pointing at the ring is not a second
 // selection, it is the one the whole page already shares.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SYMBOL } from "./ink.js";
 import { FRAME } from "./frame.js";
 import { BOX, CROWN } from "./hand-figure.js";
 import { pointAt } from "./polar.js";
@@ -48,17 +48,33 @@ const LANES = [
   { key: "naturale", sign: "\u25cb", r: 278 },
   { key: "molle", sign: "\u266d", r: 258 },
 ];
-// Neither text face carries the planetary or musical signs (see
-// fonts/README.md), so this is the one place a figure names a system stack.
-const SIGN_FACE = "'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols2', "
-  + "Junicode, Georgia, serif";
 const LANE = new Map(LANES.map((l) => [l.key, l.r]));
 const INNER = 244;                       // where the ring stops and the hand begins
-const HAND_BOX = 532;                    // the square the hand is fitted into
+// ONE UNIT ACROSS THE COMPOSITE. A nested svg scales strokes and type along
+// with geometry, so fitting the hand into a box wider than its own quietly
+// rescales every rung inside it: at 532 the hand's unit ran ×1.118, and
+// STROKE.firm painted 1.17 where the ring's painted 1.05. A rung is supposed
+// to mean one rendered thing in both.
+//
+// It is BOX.w and not BOX.h because the fit below divides by
+// max(BOX.w, BOX.h) — the box is 476 × 435, so the width is the max and the
+// unit lands at exactly 1. Were the hand ever redrawn taller than it is wide,
+// this would have to become that max.
+const HAND_BOX = BOX.w;                  // 476 — the square the hand is fitted into
 // How far ABOVE the molle lane the crown of the hand hangs. Zero sets ee's top
 // edge exactly on the lane; a little clear of it reads as the hand standing in
 // the ring rather than hooked onto it.
-const HAND_LIFT = 16;
+//
+// NEGATIVE NOW, which is the figure being centred rather than hung. The hand's
+// ink is not centred inside its own box — the crown reaches higher than the
+// wrist drops — so hanging it from the lane left its middle 72 units above the
+// ring's. Dropping it puts the two centres nearer together, which is what a
+// figure standing INSIDE a ring should look like.
+const HAND_LIFT = -4;
+// How much paper a lane sign punches out from under itself, so the lane it
+// stands on does not strike through it. A halo, not a line — hence a stated
+// width rather than a STROKE rung.
+const KNOCKOUT = 5;
 
 const P = (deg, r) => pointAt(deg, r).map((v) => Number(v.toFixed(1)));
 
@@ -117,7 +133,10 @@ export function mutatio({ rows, note, phrases = [], centre, onSelect } = {}) {
   for (const l of LANES) {
     root.appendChild(el("circle", {
       r: l.r, fill: "none", stroke: INK,
-      "stroke-opacity": 0.10, "stroke-width": STROKE.hair,
+      // The lanes are a graticule you read the line against, so they take
+      // the rung named for exactly that. 0.10 was a value invented BELOW
+      // the floor of the ladder — a third of the quietest named stratum.
+      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
     }));
   }
 
@@ -152,7 +171,21 @@ export function mutatio({ rows, note, phrases = [], centre, onSelect } = {}) {
   });
   root.appendChild(el("path", {
     d: d.join(" "), fill: "none", stroke: INK,
-    "stroke-opacity": STRATUM.letters, "stroke-width": STROKE.firm,
+    // TONED BY WEIGHT, NOT BY OPACITY. This line has to stay the darkest mark
+    // in the band — it is what the figure argues — so it comes off the claim
+    // rung and KEEPS its stratum. Dropping the opacity instead would put it
+    // level with the loci and the figure would stop having a subject.
+    //
+    // Measured as opacity × width, it now leads the loci 0.465 to 0.285. It
+    // used to TRAIL them, 0.651 against 0.788, which was the whole complaint:
+    // the lookup table was inked louder than the claim it serves.
+    //
+    // Note the wheels render at ~0.785 px per unit (640u in ~502px), so every
+    // rung below `heavy` paints under one device pixel — `fine` lands at
+    // 0.59px. That is the house condition, not this line's problem; the
+    // annulus's own principal mark is an 8-unit BAND rather than a rung for
+    // the same reason.
+    "stroke-opacity": STRATUM.letters, "stroke-width": STROKE.fine,
     "stroke-linecap": "round",
   }));
 
@@ -163,9 +196,15 @@ export function mutatio({ rows, note, phrases = [], centre, onSelect } = {}) {
     const [x, y] = P(180, l.r);
     root.appendChild(el("text", {
       x, y: y + 5, "text-anchor": "middle",
-      "font-family": SIGN_FACE, "font-size": STEP.body,
+      "font-family": HOUSE_SYMBOL, "font-size": STEP.body,
       fill: INK, "fill-opacity": STRATUM.label,
-      "paint-order": "stroke", stroke: "var(--paper, #FDFDFC)", "stroke-width": 5,
+      // KNOCKOUT: the sign punches paper out from under itself so the lane
+      // it sits on does not strike through it. hand.js does the same job
+      // with a fill, because a circle can; a glyph cannot, so it is a
+      // stroke laid under the fill. KNOCKOUT is the width that clears
+      // this glyph at STEP.body — not a rung, because it is not a line.
+      "paint-order": "stroke", stroke: "var(--paper, #FDFDFD)",
+      "stroke-width": KNOCKOUT,
     }, l.sign));
   }
 

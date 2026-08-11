@@ -10,7 +10,7 @@
 //
 // Like compline.ts and masses.ts (its siblings here) this is a hand-authored table that
 // references chants already in the corpus by id; it carries no GABC of its own.
-// See docs/chant.md and BIBLIOGRAPHY.md.
+// See docs/api/chant.md and BIBLIOGRAPHY.md.
 
 import type { Season } from "../../cal/types.js";
 

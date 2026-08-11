@@ -19,7 +19,7 @@ export interface Interval {
 }
 
 // The three-tier consonance taxonomy [biblio: schulter-harmony] (the same table
-// stated at docs/heavens.md and docs/tuning.md). Note that the perfect fourth is
+// stated at docs/api/heavens.md and docs/api/tuning.md). Note that the perfect fourth is
 // deliberately NOT perfect here: in medieval counterpoint the P4 above the bass
 // is treated as a dissonance, unlike the melodic P4. So P1/P5/P8 are perfect,
 // the thirds and sixths imperfect, and everything else — including P4 and the
@@ -55,7 +55,7 @@ export function classifyInterval(a: number, b?: number): Interval {
     semitones,
     // Nominal equal-tempered cents (100 per semitone), NOT the tuned distance —
     // the actual sounding interval depends on the temperament (see the ratio a
-    // temperamentum reports for a nota, and docs/tuning.md on nominal vs tuned).
+    // temperamentum reports for a nota, and docs/api/tuning.md on nominal vs tuned).
     cents: semitones * 100,
     consonance: classifyConsonance(entry.class),
   };
