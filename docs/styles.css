@@ -426,7 +426,7 @@
     font-weight: 400; letter-spacing: 0;
     color: var(--label); background: none;
     border: 0; border-bottom: 2px solid transparent;
-    padding: 2px 0 var(--sp-2); cursor: pointer;
+    padding: 2px var(--sp-1) var(--sp-2); cursor: pointer;
   }
   .tabstrip button:hover { color: var(--ink); }
   .tabstrip button[aria-selected="true"] {
@@ -448,7 +448,11 @@
      keyboard reaches first was the one strip that did not behave like a tab
      strip. It comes from `tabs()` now, like the other two.) */
   .tabstrip-large button {
-    font-variant-caps: all-small-caps;
+    /* `small-caps`, not `all-small-caps`: the first letter keeps its full cap
+       height and only the rest of the word comes down. All-small-caps levels
+       the initial too, which loses the word's own shape — Canticum reads as a
+       name this way and as a label the other. */
+    font-variant-caps: small-caps;
     letter-spacing: var(--track-caps);
   }
 
