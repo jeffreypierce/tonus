@@ -57,7 +57,7 @@ function el(tag, attrs, text) {
  * The scale as the chorda draws it: one row per degree of the octave, carrying
  * both ways of measuring — the string fraction and the cents.
  */
-export function chordaRows(tonus, { mode = 7, tuning, comma } = {}) {
+export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
   // The tuning is the whole subject of this panel — a monochord IS a picture
   // of one. It used to be dropped here: the caller passed it, the destructure
   // ignored it, and every temperament drew the same string.
@@ -149,6 +149,9 @@ export function chordaRows(tonus, { mode = 7, tuning, comma } = {}) {
       offset: row.offset,
       intervallum: iv.alias || iv.nomen,
       consonantia: iv.consonance,
+      // How much of the CALLER'S chant sits on this degree — absent unless a
+      // chant is in question; the scale itself has no weight (§4.1).
+      weight: weights?.[row.pc] ?? null,
       // The medieval name of the step, and where it falls on the hand.
       nomen: step?.nomen ?? null,
       solmisatio: step?.solmization ?? null,
@@ -343,14 +346,19 @@ export function regula(tonus, { mode = 7, selected, onSelect, tuning, comma } = 
 }
 
 /** The numbers behind both figures. */
-export function chordaTabula(tonus, { mode = 7, selected, onSelect, tuning, comma } = {}) {
-  const rows = chordaRows(tonus, { mode, tuning, comma });
+export function chordaTabula(tonus, { mode = 7, selected, onSelect, tuning, comma, weights } = {}) {
+  const rows = chordaRows(tonus, { mode, tuning, comma, weights });
   const sel = selected ?? rows.find((r) => r.role === "tenor")?.key ?? rows[0]?.key;
 
   // No nomen column: the medieval step-name is the hand's subject and has a
-  // whole panel there. Here a degree is named by its note and its role.
+  // whole panel there. Here a degree is named by its note and its role —
+  // and, when a chant is loaded, how much of it sits there ("finalis · 35%").
+  // Below half a percent nothing is said: a trace is not a residence.
   return tabula(rows, [
-    { key: "spn", head: "nota", mono: true, gloss: (r) => r.role || "" },
+    { key: "spn", head: "nota", mono: true,
+      gloss: (r) => [r.role || null,
+        r.weight >= 0.005 ? `${Math.round(r.weight * 100)}%` : null]
+        .filter(Boolean).join(" · ") },
     // The consonance rides WITH THE INTERVAL'S NAME, which is what it is a
     // judgement of — Diapente is perfect the way it is a fifth, one fact about
     // one thing. It was tried along the foot of the chart, on the argument that
@@ -545,6 +553,7 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma 
 
     if (onSelect) {
       // One hit area per degree, spanning both scales: they are one thing.
+      // (the margin title is appended after this loop)
       const hit = el("polygon", {
         points: [
           `${sc(xa - 12)},${DUAL_STRING_Y - 18}`, `${sc(xa + 12)},${DUAL_STRING_Y - 18}`,
@@ -562,6 +571,7 @@ export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma 
       svg.appendChild(hit);
     }
   }
+
 
   return svg;
 }

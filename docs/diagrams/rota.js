@@ -248,6 +248,7 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
     "letter-spacing": "0.09em", fill: INK, "fill-opacity": STRATUM.margin,
   }, "TERRA"));
 
+
   return svg;
 }
 

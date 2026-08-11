@@ -19,10 +19,12 @@
    token doing both work gave every field on the page a separator where it
    needed an edge.
 
-   THE PAPER IS ONE COLOUR, with one step up: --paper-lit, which a selected
-   row stands on so it lifts rather than dirties. Nothing else changes a
-   background. A figure is given weight by its own structure — the strokes it
-   is drawn with — not by a panel of tint behind it.
+   THE PAPER IS ONE COLOUR. --paper-lit is declared and currently unspent: a
+   selected row is marked by its rubrica bar alone. Lit paper under a row read
+   as a panel rather than a lift — in a table it sat between two hairlines,
+   and in the chant list it made a band across a column that has no other
+   fills. Nothing changes a background: a figure is given weight by its own
+   structure — the strokes it is drawn with — not by a panel of tint.
 
    ─── 2 · HOW BIG, AND HOW LOOSE? ─────────────────────────────────────────
    Six type steps, --micro 9 through --display-size 26. They are the same six
@@ -64,9 +66,9 @@
    STATE IS TWO MOVES AND NO WASH.
    HOVER DARKENS — the row's rule goes --rule to --edge, and its name comes
    up to full ink.
-   SELECTION IS MARKED, NOT FILLED — a 2px ink bar in the margin, and the row
-   stands on --paper-lit. In a table the bar rides the first cell as an inset
-   shadow, so it takes no width and cannot shift the column.
+   SELECTION IS MARKED, NOT FILLED — a 2px rubrica bar in the margin, and
+   nothing else. In a table the bar rides the first cell as an inset shadow,
+   so it takes no width and cannot shift the column.
 
    FOCUS IS ONE SENTENCE: 2px rubrica, OUTSIDE a box that carries its own
    edge, INSIDE anything full-bleed — a row, a tab — where an outside ring
@@ -419,6 +421,23 @@
   }
 
   .row-title h1 { font-size: var(--title); font-weight: 500; margin: 0; }
+  /* The chant's title and the way back beside it, on one baseline. */
+  .title-row { display: flex; align-items: baseline; gap: var(--sp-4); min-width: 0; }
+  .title-row h1 { min-width: 0; }
+  .ad-festum {
+    font-family: var(--mono);
+    font-size: var(--micro);
+    letter-spacing: var(--track-meta);
+    white-space: nowrap;
+  }
+
+  /* Between ~900 and 1200 the 3fr/2fr split starves the readings — the
+     right column bottoms out near 380px and the figures stop being
+     readable. Here the two columns split EVENLY; past 1200 the subject
+     earns its extra width back, and below 900 the page already stacks. */
+  @media (max-width: 1199px) and (min-width: 901px) {
+    .page { grid-template-columns: 1fr 1fr; }
+  }
 
   @media (max-width: 900px) {
     /* One column, and the bands re-order so each panel is contiguous: the
@@ -615,7 +634,6 @@
      single thing the reader has chosen — with the row on pure white so it
      lifts off the page rather than being washed with a tint. Hover is the grey
      preview of exactly this mark, in the same place at the same width. */
-  .chant-row[aria-selected="true"] { background: var(--paper-lit); }
   .chant-row[aria-selected="true"]::before { background: var(--rubrica); }
   /* The chosen name keeps the weight the hover previewed. No colour change —
      it already carries full ink, and the margin bar is what marks the row. */
@@ -643,6 +661,20 @@
     font-style: italic;
     color: var(--label); letter-spacing: var(--track-meta); margin-top: 2px;
   }
+  /* ── how to read the tracks: the same spur, a card of instruction ── */
+  .tracks-sample { display: block; margin-bottom: var(--sp-1); }
+  .tracks-name {
+    font-family: var(--mono); font-size: var(--micro);
+    letter-spacing: var(--track-micro); text-transform: uppercase;
+    color: var(--label); margin: 0 0 var(--sp-1);
+  }
+  .tracks-text {
+    font-size: var(--caption); line-height: 1.5;
+    color: var(--label); margin: 0;
+    width: 40ch; max-width: 70vw;
+  }
+  .tracks-text + .tracks-sample { margin-top: var(--sp-3); }
+
   .chant-row-aside {
     font-family: var(--mono); font-size: var(--caption);
     color: var(--label); font-variant-numeric: tabular-nums;
@@ -934,6 +966,9 @@
     background-repeat: no-repeat;
   }
   .similar .sub { margin-top: var(--sp-3); }
+  /* The subheader and the list each take their own air — the rows were
+     sitting straight on the line above. */
+  .similar .chant-list { margin-top: var(--sp-4); }
 
   /* ── the score ── */
   /* No sideways scroll: the score is re-rendered at the column's width rather
@@ -976,10 +1011,13 @@
   .tabpanel { overflow-x: auto; }
 
   table.tabula { border-collapse: collapse; width: 100%; font-size: var(--step-label); }
+  /* The caption belongs to the table BENEATH it. At sp-3 it floated midway
+     between its own rows and the table above, reading as either's; the air
+     now sits above the caption (the inter-table margin), not under it. */
   table.tabula caption {
     font-family: var(--mono); font-size: var(--micro); letter-spacing: var(--track-micro);
     text-transform: uppercase; color: var(--label); text-align: left;
-    padding-bottom: var(--sp-3);
+    padding-bottom: var(--sp-1);
   }
   table.tabula th {
     font-family: var(--mono); font-size: var(--micro); letter-spacing: var(--track-micro);
@@ -1009,7 +1047,6 @@
      single thing the reader has chosen. Hover is a grey preview of it, in the
      same place and at the same width, so the pointer shows where the mark will
      land before it lands. */
-  table.tabula tr.sel td { background: var(--paper-lit); }
   table.tabula tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--rubrica); }
   table.tabula tr[tabindex]:focus-visible { outline: var(--focus); outline-offset: var(--focus-in); }
 
@@ -1091,6 +1128,125 @@
   /* A figure and the table under it are one thought; the gap is smaller. */
   svg + table.tabula { margin-top: var(--sp-4); }
 
+  /* ── the sigla: what a figure's marks mean, on request ── */
+  /* One idiom: a thin-ringed ? at the right of the figure's title line,
+     opening a card of entries — the drawn mark, then its word. The ring is
+     not a box (no value lives here); it is the one affordance that says
+     "an answer waits behind me". The tracks' card wears the same dress. */
+  /* A hair of air around the spur: the tabpanel is a scroll box, and a
+     focus ring drawn OUTSIDE a spur flush with its edge was clipped. */
+  .key-info { position: relative; float: right; margin: 2px 4px 0 0; }
+  .key-spur {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px solid var(--edge);
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: var(--micro);
+    line-height: 1;
+    color: var(--label);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .key-spur:hover { color: var(--ink); border-color: var(--ink); }
+  .key-spur:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
+  .key-card {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 10;
+    background: var(--paper);
+    border: 1px solid var(--edge);
+    padding: var(--sp-4);
+    width: max-content;
+    max-width: 44ch;
+    /* The card hangs INSIDE the h2, so the title's costume — caps, mono,
+       tracking — would flow into it. A card is prose, not a heading. */
+    font-family: var(--serif);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .key-card[hidden] { display: none; }
+  /* In the inputs row the card hangs from the left edge instead — its spur
+     sits mid-page, not at a column's right. */
+  .settings .key-info { float: none; }
+  .settings .key-card { left: 0; right: auto; }
+  .key-desc {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: var(--caption);
+    color: var(--ink);
+    line-height: 1.5;
+    margin: 0 0 var(--sp-2);
+  }
+  .key-entry {
+    font-family: var(--serif);
+    font-size: var(--caption);
+    color: var(--label);
+    line-height: 1.6;
+    margin: 0;
+  }
+  /* Inline BY SPECIFICITY: `.tabpanel svg { display: block }` outranks a
+     bare class, and a block swatch put every mark on its own line above
+     its word (seen in the wild). */
+  .key-card .key-swatch, .key-swatch {
+    display: inline-block;
+    vertical-align: -0.14em;
+  }
+  .key-entry + .key-entry { margin-top: var(--sp-1); }
+  .key-mark { color: var(--ink); }
+  .key-italic { font-style: italic; }
+  /* Four radars in a row — the ROW is the figure; a radar of one says
+     nothing. Fixed at four columns, not responsive: nothing else on the
+     site rewrites its own layout as the window moves. */
+  .census-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--sp-1);
+    align-items: start;
+  }
+  /* A cell with a click is a CHOICE, so it follows the chant rows' law:
+     the ones not taken sit at --label, hover brings one to ink, and the
+     subject — not a choice, already open — stands at full ink unbuttoned. */
+  .census-row button {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    cursor: pointer;
+  }
+  .census-row button:focus-visible {
+    outline: var(--focus);
+    outline-offset: var(--focus-out);
+  }
+  .census-who {
+    font-family: var(--serif);
+    font-size: var(--caption);
+    font-style: italic;
+    text-align: center;
+    line-height: 1.25;
+    margin: 2px 0 0;
+    color: var(--label);
+  }
+  .census-row .subject .census-who { color: var(--ink); }
+  .census-row button:hover .census-who { color: var(--ink); }
+  .census-meta {
+    font-family: var(--mono);
+    font-size: var(--micro);
+    color: var(--ghost);
+    text-align: center;
+    margin: 0;
+  }
+
   /* ── the drawn figures ── */
   .panel svg { max-width: 100%; height: auto; display: block; }
   /* A wheel is a wheel: both wear the same frame, so both take the same room
@@ -1099,17 +1255,18 @@
   .panel svg.annulus, .panel svg.rota, .tabpanel svg.mutatio
     { width: 100%; max-width: 520px; aspect-ratio: 1; margin: 0 auto var(--sp-4); }
   /* The diagrams scale to their column by viewBox; without this they draw at
-     their intrinsic width and overflow a narrow cell. */
-  .tabpanel > div > svg { display: block; max-width: 100%; height: auto; }
+     their intrinsic width and overflow a narrow cell. Descendant, not child:
+     every figure now sits inside its titled section. */
+  .tabpanel svg { display: block; max-width: 100%; height: auto; }
   /* The monochord fills its column. It is a LINE — a string between two
      bridges — so width is the resolution it is read at: every extra pixel
      spreads the degrees further apart and makes the drift between the two
      measures easier to see. The round figures are capped instead, since a
      circle gains nothing past a certain size. */
-  .tabpanel > div > svg.chorda-dual { width: 100%; }
+  .tabpanel svg.chorda-dual { width: 100%; }
   /* The hand standing ALONE — no chant, so no ring around it. Capped, because
      past a certain size a picture only gets bigger. */
-  .tabpanel > div > svg.hand {
+  .tabpanel svg.hand {
     width: 74%;
     min-width: 220px;
     max-width: 380px;

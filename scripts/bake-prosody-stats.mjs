@@ -9,7 +9,13 @@
 // site has no fetch, so it ships as a frozen const and is imported like any
 // module.
 //
-// The file also carries the census profile's TYPICALITY curves, one per
+// The file also carries the DIES curves — the Calendarium Census comb's
+// day-native metrics (chants sung, notes sung, mean melisma, mean census
+// distance, scatter), 101 points over the 365 days of the library's own
+// year, for the whole year and per RANK (the day's own kind, where the
+// chant's comb has genus). rankOf() below must match the site's copy.
+//
+// And the census profile's TYPICALITY curves, one per
 // group. The subheader's deviant branch fires on corpus rarity — "is this
 // chant in the bottom five percent for this group" — not on raw distance.
 // Raw distance was measured 2026-08-11 and rejected: cadenceFinal typicality
@@ -111,8 +117,92 @@ for (const g of CENSUS_GROUPS) {
   if (c) typicality.groups[g] = c.map((v) => Math.round(v * 10000) / 10000);
 }
 
+// ── the dies curves: the day-native metrics, over one year ──
+// A day's rank, bucketed from festum.ritus. Test the narrower phrase first —
+// "Duplex II classis" would otherwise be swallowed by "duplex". THE SITE
+// CARRIES A COPY of this function (diagrams/census.js); change both or the
+// day reads its rank against the wrong curve.
+const rankOf = (ritus) => {
+  const s = (ritus ?? "").toLowerCase();
+  if (s.includes("duplex ii classis")) return "duplex-2";
+  if (s.includes("i classis") && s.includes("duplex")) return "duplex-1";
+  if (s.includes("duplex majus")) return "duplex-majus";
+  if (s.includes("semiduplex")) return "semiduplex";
+  if (s.includes("duplex")) return "duplex";
+  if (s.includes("feria")) return "feria";
+  if (s.includes("simplex")) return "simplex";
+  return "aliud";
+};
+
+const DIES_YEAR = 991;   // the library's own default year
+const DIES_METRICS = ["chants", "notes", "melisma", "distance", "scatter"];
+const OFFICES = [
+  (f) => tonus.proprium({ feast: f }),
+  (f) => tonus.ordinarium({ feast: f }),
+  (f) => tonus.officium({ feast: f, hora: "matutinum" }),
+  (f) => tonus.officium({ feast: f, hora: "laudes" }),
+  (f) => tonus.officium({ feast: f, hora: "vesperae" }),
+];
+
+// Memoised per chant — the same antiphon returns day after day, so the year
+// costs one corpus pass, not 365 of them.
+const prosodyOf = new Map(rows.map((r) => [r.id, r]));
+const distanceOf = new Map();
+const chantDistance = (id) => {
+  if (!distanceOf.has(id)) {
+    try { distanceOf.set(id, tonus.census({ id, k: 0 }).balance.distance); }
+    catch { distanceOf.set(id, null); }
+  }
+  return distanceOf.get(id);
+};
+
+const dayRows = [];
+for (let d = 0; d < 365; d++) {
+  const date = new Date(Date.UTC(DIES_YEAR, 0, 1 + d));
+  const [feast] = tonus.festum({ date });
+  if (!feast) continue;
+  const seenDay = new Set();
+  const day = [];
+  for (const of_ of OFFICES) {
+    let cs = [];
+    try { cs = of_(feast).filter((c) => c.gabc); } catch { cs = []; }
+    for (const c of cs) if (!seenDay.has(c.id) && seenDay.add(c.id)) day.push(c);
+  }
+  if (!day.length) continue;
+  const ps = day.map((c) => prosodyOf.get(c.id)).filter(Boolean);
+  const ds = day.map((c) => chantDistance(c.id)).filter(Number.isFinite);
+  const mean = (vs) => vs.reduce((a, b) => a + b, 0) / vs.length;
+  const mDist = ds.length ? mean(ds) : null;
+  dayRows.push({
+    rank: rankOf(feast.ritus),
+    chants: day.length,
+    notes: ps.reduce((a, p) => a + (p.noteCount ?? 0), 0),
+    melisma: ps.length ? mean(ps.map((p) => p.melismaRatio).filter(Number.isFinite)) : null,
+    distance: mDist,
+    scatter: ds.length > 1 && mDist != null
+      ? Math.sqrt(mean(ds.map((v) => (v - mDist) ** 2))) : null,
+  });
+}
+
+const diesGroupOf = (rs) => {
+  const curves = {};
+  for (const m of DIES_METRICS) {
+    const vs = rs.map((r) => r[m]).filter((v) => v != null && Number.isFinite(v));
+    const c = quantiles(vs);
+    if (c) curves[m] = c;
+  }
+  return { n: rs.length, curves };
+};
+const diesGroups = { all: diesGroupOf(dayRows) };
+const byRank = {};
+for (const r of dayRows) (byRank[r.rank] ??= []).push(r);
+for (const [k, v] of Object.entries(byRank))
+  if (v.length >= FLOOR) diesGroups[k] = diesGroupOf(v);
+const dies = { year: DIES_YEAR, n: dayRows.length, metrics: DIES_METRICS,
+  groups: diesGroups };
+
 // ── the module ──
-const stats = { metrics: METRICS, n: rows.length, groups, typicality };
+const stats = { metrics: METRICS, n: rows.length, groups, typicality, dies };
 const body = `// ---------------------------------------------------------------------------
 // docs/data/prosody-stats — the Census reading's percentile curves
 // ---------------------------------------------------------------------------
@@ -120,7 +210,8 @@ const body = `// ---------------------------------------------------------------
 //
 // 101-point quantile curves over the ${rows.length} chants with gabc: the
 // prosody metrics for the comb (whole corpus + per genus at n >= ${FLOOR}),
-// and the census typicality per group for the subheader's deviant branch.
+// the census typicality per group for the subheader's deviant branch, and
+// the day-native dies curves (year ${DIES_YEAR}, whole year + per rank).
 // A value's percentile is its mid-rank position on the curve.
 
 export default Object.freeze(${JSON.stringify(stats)});
@@ -129,4 +220,6 @@ mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, body);
 console.log(`bake-prosody-stats: ${rows.length} chants (${failed} failed), ` +
   `groups ${Object.keys(groups).join(" ")}, ` +
-  `typicality n=${typicality.n}, ${(body.length / 1024).toFixed(1)} KB → ${OUT}`);
+  `typicality n=${typicality.n}, ` +
+  `dies ${dies.n} days [${Object.keys(diesGroups).join(" ")}], ` +
+  `${(body.length / 1024).toFixed(1)} KB → ${OUT}`);

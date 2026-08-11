@@ -21,6 +21,9 @@ import tonus from "./dist/index.js";
 import { el, tabs, tabPanel } from "./components/tabs.js";
 import { dateDial, syncDateDial } from "./components/dial.js";
 import { chantList } from "./components/chant-row.js";
+import { CENSUS_NOMEN, censusPanel, censusHeadline, censusDiesPanel,
+  censusDiesHeadline } from "./diagrams/census.js";
+import { keySpur, marks, popover } from "./components/key.js";
 import { annulus, annulusTabula } from "./diagrams/annulus.js";
 import { chordaDual, chordaTabula, chordaRows } from "./diagrams/chorda.js";
 import { hand, handTabula, handRows } from "./diagrams/hand.js";
@@ -175,6 +178,31 @@ function bookAndPage(chant) {
   return `${book}, ${many ? "pp." : "p."} ${page.replace(/-/g, "–")}`;
 }
 
+// ── the attestation century ──
+// No attestation field rides a Chant — `source.year` is the printing — but
+// `cantus({ id, before })` is gated by chantAdmissible, so probing the
+// centuries recovers the earliest wholly-attested one. Measured: 1.4 ms a
+// chant, and it dated 5/5 of Christmas's propers. Memoised because the
+// detail line repaints with every selection and the answer never changes.
+// Absent when the probe finds nothing — an undated chant shows no mark,
+// never a guess. A probe standing in for a field is fine in a site panel
+// and is not an API; logged as a small library gap.
+const attestations = new Map();
+function attestedCentury(chant) {
+  if (!attestations.has(chant.id)) {
+    let found = null;
+    try {
+      for (let c = 6; c <= 16; c++)
+        if (tonus.cantus({ id: chant.id, before: c * 100 + 1 }).length) {
+          found = c - 1;
+          break;
+        }
+    } catch { found = null; }
+    attestations.set(chant.id, found);
+  }
+  return attestations.get(chant.id);
+}
+
 // ── the documentation ──
 // The API reference is markdown in this repo, and GitHub renders it. The
 // alternative — building the pages into the site — is the better answer and a
@@ -199,13 +227,17 @@ const DOCS = "https://github.com/jeffreypierce/tonus/blob/main/docs/api/";
  *  sixth mark to a line already carrying genus, mode and book.
  */
 function docLink(page) {
-  const name = `${page} documentation (opens in a new tab)`;
+  const name = `${page} documentation`;
   // A separator and the link. The dot is a plain character in the line, so it
   // inherits that line's face and size like every other character — which is
   // all it ever needed to match its surroundings.
+  //
+  // SAME TAB. These used to open a new one, on the reasoning that a reader
+  // cross-referencing should not lose the loaded chant and its selection —
+  // but a link that steals a tab is a decision made for the reader, and the
+  // back button restores the page anyway. A link goes where it says it goes.
   return [" • ", el("a", {
     class: "doc", href: `${DOCS}${page}.md`,
-    target: "_blank", rel: "noopener noreferrer",
     "aria-label": name, title: name,
   }, `§${page} docs`)];
 }
@@ -362,6 +394,11 @@ function calendariumRightDetail(feast) {
   // calendariumReadings. One lookup rather than a URL per branch.
   const link = readingLink(calendariumReadings(feast), state.right.calendarium);
   if (state.right.calendarium === "harmonia") return harmoniaDetail(link);
+  // Census's line is the reading's HEADLINE — one computed conclusion about
+  // the day — per the panel-header rules. It never restates a figure below.
+  if (state.right.calendarium === "census")
+    return el("p", { class: "sub" },
+      censusDiesHeadline(tonus, { feast, rows: daysChants(feast) }), link);
   // The rank alone: the grade is the machine code the ritus reduces to, and
   // printing both said the same thing twice in two registers.
   if (feast) return el("p", { class: "sub" }, feast.ritus ?? "", link);
@@ -495,6 +532,12 @@ function calendariumPanels() {
 const calendariumReadings = (feast) => [
   { key: "harmonia", name: "Harmonia", panel: harmoniaPanel, doc: "heavens" },
   { key: "festum", name: "Festum", panel: () => festumPanel(feast), doc: "calendar" },
+  // The same reading Canticum carries, with the DAY as its subject — one
+  // name (CENSUS_NOMEN, named once), one module, two subjects. The panel is
+  // the wiring: the figures read data, never state.
+  { key: "census", name: CENSUS_NOMEN, doc: "census",
+    panel: () => censusDiesPanel(tonus, { feast, rows: daysChants(feast),
+      onSelect: openChant }) },
 ];
 
 function calendarium() {
@@ -539,7 +582,11 @@ function harmoniaPanel() {
     // whichever the reader reaches for, the other two follow.
     onSelect: (k) => { state.body = k; renderPanels(); },
   };
-  return el("div", {},
+  return el("section", { class: "panel" },
+    // The figure's name, in the one title style — CAELUM, his own API verb:
+    // the wheel draws caelum({date}), the sky of the day. TERRA at the hub
+    // is data. No key: the tabulae's glosses carry the reading.
+    el("h2", {}, "caelum"),
     rota(tonus, o),
     // The chords first: the aspects are what a click on the wheel lights up,
     // so the answer sits directly under the question.
@@ -581,7 +628,11 @@ function festumPanel() {
   // The pairs table that sat between these two repeated the title, the line
   // under it, and the ring's own selection — every field it held is already
   // somewhere the eye reaches first.
-  return el("div", {}, annulus(tonus, o), annulusTabula(tonus, o));
+  return el("section", { class: "panel" },
+    // The ring's name moved up here from its own hub — one title style for
+    // every figure; the hub keeps the year alone.
+    el("h2", {}, "annus domini"),
+    annulus(tonus, o), annulusTabula(tonus, o));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -614,26 +665,58 @@ function similarChants() {
     // Titled like the readings opposite — it is the same kind of thing, a
     // named section of a column — with its own reference beneath.
     el("h2", { class: "similar-title" }, "Similes"),
-    el("p", { class: "sub" }, docLink("census")),
+    // A subheader with CONTENT, not an orphaned link: it says what the list
+    // is and the order it comes in. The old neighbour-fact ("four of 2,187,
+    // all above 97%") was cut for never changing; a section's descriptor is
+    // allowed to be constant — it is a name, not a finding.
+    el("p", { class: "sub" }, "the nearest in the census, most alike first",
+      docLink("census")),
+    // No similarity figure on the rows — CUT 2026-08-11 with the sublabel
+    // numbers: a percentage with no header is a random number, and the line
+    // has no room for a header. Membership in this list IS the claim; the
+    // census doc linked above says how it is reckoned.
     chantList(tonus, found.map((r) => r.chant), {
       selectedId: state.chant?.id,
       onSelect: openChant,
-      label: (c) => {
-        const hit = found.find((r) => r.chant.id === c.id);
-        return hit ? `${(hit.n.similarity * 100).toFixed(0)}%` : null;
-      },
     }),
   );
+}
+
+/** The chant's title with the way back beside it: a jump link in the
+ *  anchors' own idiom (mono, →, the dotted hairline) that returns to the
+ *  standing day in Calendarium — *ad festum*. The day never moved; only
+ *  the view does. */
+function canticumTitle(chant) {
+  return el("div", { class: "title-row" },
+    el("h1", {}, chant.incipit),
+    el("a", { class: "doc ad-festum", href: "#",
+      onclick: (e) => { e.preventDefault(); state.view = "calendarium"; render(); },
+    }, "← ad festum"));
 }
 
 /** Canticum's heading rows, which move with the selection exactly as the
  *  panels do — the right-hand line names the chosen note, or the mode and
  *  where the chant's weight falls. */
-/** What the chant IS: its genus, its mode, and the book it is printed in. */
+/** What the chant IS: its genus, its mode, the book it is printed in — and
+ *  how early it is attested, terse. The tilde does real work: the century is
+ *  a floor recovered by probe, not a date read from a field. */
 function canticumDetail(chant) {
+  const c = attestedCentury(chant);
   return el("p", { class: "sub" },
-    [chant.genus, chant.modus, bookAndPage(chant)].filter(Boolean).join(" · "),
+    [chant.genus, chant.modus, bookAndPage(chant),
+      c ? `~${c}th c.` : null].filter(Boolean).join(" · "),
     docLink("score"));
+}
+
+/** The subheader's dissent: the one thing on the site that tests the mode
+ *  name standing beside it. ONLY the disagreement speaks — agreement says
+ *  nothing the name has not — and it is worded as a second measurement, not
+ *  a correction: mode accuracy is 67% top-1, and this is an aggregate
+ *  ranking from the pitch weight, NOT the tonarium's moving centre. */
+function affinityDissent(bookMode) {
+  const top = state.score?.imprint?.modalAffinity?.[0];
+  if (!top?.mode || top.mode === bookMode) return null;
+  return `its own weight ranks ${roman(top.mode)} first`;
 }
 
 /** The right column's line: the mode's name under the theory reading, or the
@@ -641,8 +724,16 @@ function canticumDetail(chant) {
 function canticumRightDetail(M, row) {
   return el("p", { class: "sub" },
     state.right.canticum === "temperamentum"
-      ? M.nomen
-      : row ? manusLine(row) : "no note chosen",
+      ? [M.nomen, affinityDissent(modeOf(state.score.chant))]
+          .filter(Boolean).join(" — ")
+      // Census's line is its HEADLINE — one computed conclusion about the
+      // chant. The engine lives with the figures in diagrams/census.js.
+      : state.right.canticum === "census"
+        ? censusHeadline(tonus, { chant: state.score.chant, score: state.score })
+        // With no note chosen the hand still has something true to say:
+        // the hexachord it is being read by. It moves with the picker and
+        // with the selection, so the line is never a shrug.
+        : row ? manusLine(row) : `hexachordum ${state.hexachord}`,
     readingLink(canticumReadings(), state.right.canticum));
 }
 
@@ -651,7 +742,10 @@ function canticumRightDetail(M, row) {
  *  panel's currency, and this reading is the medieval one, where a pitch IS a
  *  place on the hand. The joint is what the figure beside it is pointing at. */
 function manusLine(row) {
-  const joint = row.hand ? `${row.hand.finger} · ${row.hand.region}` : null;
+  // The joint is ONE place — a finger, then where on it — so the pair is
+  // joined by the arrow the arch already uses, not the mid-dot that would
+  // read it as two separate facts beside the name.
+  const joint = row.hand ? `${row.hand.finger} → ${row.hand.region}` : null;
   return [row.nomen, joint].filter(Boolean).join(" · ") || row.spn;
 }
 
@@ -669,7 +763,7 @@ function canticumHeads() {
   }).modus(mode);
 
   return {
-    title: el("h1", {}, chant.incipit),
+    title: canticumTitle(chant),
     detail: canticumDetail(chant),
     rightDetail: canticumRightDetail(M, row),
     // Named only for the readings whose inputs are safe to rebuild — see the
@@ -687,12 +781,19 @@ function canticumPanels() {
   };
 }
 
-// Both readings are the tuning engine seen two ways, so both point at tuning.
+// The first two readings are the tuning engine seen two ways, so both point
+// at tuning; the third is the census, and points at its own page.
 const canticumReadings = () => [
   { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel, doc: "tuning" },
   // The genitive, as the treatises write it: the hand OF Guido. Manus is
   // feminine, so the adjectival "Guidonius" agreed with nothing.
   { key: "manus", name: "Manus Guidonis", panel: manusPanel, doc: "tuning" },
+  // The chant against the corpus. `year` names the calendar the mass row
+  // walks — the feast index is memoised per year, movable feasts being
+  // movable. Census wears no inputs, so no rightInputs branch names it.
+  { key: "census", name: CENSUS_NOMEN, doc: "census",
+    panel: () => censusPanel(tonus, { chant: state.chant, score: state.score,
+      year: state.day.getUTCFullYear(), onSelect: openChant }) },
 ];
 
 function canticum() {
@@ -714,7 +815,7 @@ function canticum() {
   const M = tonus.temperamentum({ mode, tuning: "meantone", comma: state.comma }).modus(mode);
 
   return page({
-    title: el("h1", {}, chant.incipit),
+    title: canticumTitle(chant),
     rightTitle: tabs({
       label: "lectio", active: state.right.canticum, stripOnly: true,
       onChange: (k) => { state.right.canticum = k; render(); },
@@ -731,7 +832,7 @@ function canticum() {
       // together deciding what is drawn over the notation. Same object as the
       // offices in Calendarium, so the same strip.
       el("div", { class: "segset", role: "group", "aria-label": "vestigia" },
-        ...["chironomia", "tonarium"].map((name) => el("button", {
+        ...["prosodia", "chironomia", "tonarium"].map((name) => el("button", {
           type: "button",
           "aria-pressed": state.tracks.includes(name) ? "true" : "false",
           onclick: () => {
@@ -740,6 +841,7 @@ function canticum() {
             render();
           },
         }, name))),
+      tracksInfo(),
     ),
     rightInputs: state.right.canticum === "temperamentum" ? commaSlider()
       : state.right.canticum === "manus" ? hexachordPicker() : null,
@@ -981,6 +1083,77 @@ function selectNote(i) {
   renderPanels();
 }
 
+// ── how to read the tracks ──
+// The same spur-and-card every key wears (components/key.js popover), with
+// reading instruction instead of marks: a key can say what a mark IS, but
+// the ribbon needs a sentence.
+function tracksInfo() {
+  const NS = "http://www.w3.org/2000/svg";
+  const sample = (draw) => {
+    const svg = document.createElementNS(NS, "svg");
+    for (const [k, v] of Object.entries({ class: "tracks-sample",
+      viewBox: "0 0 64 14", width: 64, height: 14, "aria-hidden": "true" }))
+      svg.setAttribute(k, v);
+    draw(svg);
+    return svg;
+  };
+  const line = (svg, attrs) => {
+    const e = document.createElementNS(NS, "path");
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    svg.append(e);
+  };
+  const BLOCKS = {
+    prosodia: () => [
+      sample((s) => {
+        // a word's tent with its rubrica peak, over a melisma block
+        line(s, { d: "M 2 10 L 20 4.5 Q 23 3.6 26 4.5 L 44 10", fill: "none",
+          stroke: "#111", "stroke-opacity": 0.38, "stroke-width": 1.2 });
+        line(s, { d: "M 46 12 L 46 7 L 52 5.6 L 60 8 L 60 12 Z",
+          fill: "#111", "fill-opacity": 0.18, stroke: "none" });
+        line(s, { d: "M 23 3.8 m -1.6 0 a 1.6 1.6 0 1 0 3.2 0 a 1.6 1.6 0 1 0 -3.2 0",
+          fill: "#9E2B25", stroke: "none" });
+      }),
+      el("p", { class: "tracks-name" }, "prosodia"),
+      el("p", { class: "tracks-text" }, "The word is a swell whose peak, in "
+        + "red, is the accent: filled when it lands on the rising beat, an "
+        + "open ring when it defers. Below, each syllable stands as a stem, "
+        + "lies flat on the reciting tone, or spreads into a block as wide "
+        + "as its melisma."),
+    ],
+    chironomia: () => [
+      sample((s) => line(s, { d: "M 2 8 C 14 2, 26 12, 40 6 S 58 4, 62 7",
+        fill: "none", stroke: "#111", "stroke-opacity": 0.75,
+        "stroke-width": 2.6, "stroke-linecap": "round" })),
+      el("p", { class: "tracks-name" }, "chironomia"),
+      el("p", { class: "tracks-text" }, "The ribbon's shape is the hand's "
+        + "gesture; its width is each note's velocity, so the line presses "
+        + "where the voice does. A cadence re-inks at full strength, and "
+        + "below confidence nothing is drawn at all."),
+    ],
+    tonarium: () => [
+      sample((s) => {
+        line(s, { d: "M 2 10 H 22 V 5 H 44 V 8 H 62", fill: "none",
+          stroke: "#111", "stroke-opacity": 0.45, "stroke-width": 1.4 });
+        line(s, { d: "M 44 2 V 12", stroke: "#111", "stroke-width": 1.4 });
+      }),
+      el("p", { class: "tracks-name" }, "tonarium"),
+      el("p", { class: "tracks-text" }, "The line is the tonal centre "
+        + "moving, event by event, along the piece: a cadence lands it, a "
+        + "modulation moves it. It is not the census's aggregate ranking, "
+        + "which has no time axis."),
+    ],
+  };
+  return popover("how to read the tracks", () => {
+    // The card reads in the STACK's order, not the order the reader
+    // toggled them — the page and its key should agree.
+    const active = ["prosodia", "chironomia", "tonarium"]
+      .filter((t) => state.tracks.includes(t) && BLOCKS[t]);
+    return active.length
+      ? active.flatMap((t) => BLOCKS[t]())
+      : [el("p", { class: "tracks-text ghost" }, "No track is drawn over the score.")];
+  });
+}
+
 // THE SLIDER OUTLIVES A RENDER, for the reason the date field does: dragging
 // fires `input` continuously and each one repaints the panels, so a control
 // rebuilt every time would be torn out from under the pointer after one step.
@@ -1124,12 +1297,27 @@ function temperamentumPanel() {
     },
   };
 
-  return el("div", {},
+  return el("section", { class: "panel" },
+    // ONE title style for every figure — the panel h2, its key's spur at
+    // the right (ruled 2026-08-11; the in-figure margin captions retired).
+    el("h2", {}, "monochordum", keySpur(
+      "The chant's scale on one string, measured twice: the just ratios above, the modern cents below.",
+      [marks.text("3:2"), "the just string"],
+      [marks.text("irr", { italic: true }), "no ratio under temperament"],
+      [marks.text("±¢"), "against equal"],
+      [marks.rubric(), "the chosen degree"])),
     // The string and the ruler as ONE figure: the same degrees on two axes,
     // joined, so the disagreement between the medieval measure and the modern
     // one is the thing drawn rather than something to infer across two panels.
     chordaDual(tonus, opts),
-    chordaTabula(tonus, opts),
+    // This chant's weight on each degree rides the tabula as its quiet
+    // gloss — the panel stops being a scale in the abstract and becomes this
+    // chant's scale, on an axis already drawn. Matched by pitch class, as
+    // the panel already matches selection (plan-site-marks §4.1). The
+    // affinity dissent rides the SUBHEADER, beside the mode name it tests —
+    // not the middle of the page.
+    chordaTabula(tonus, { ...opts,
+      weights: state.score?.imprint?.pcDistribution ?? null }),
   );
 }
 
@@ -1148,9 +1336,24 @@ function manusPanel() {
   // else — `state.score` is never rewritten.
   const shift = state.octave * 12;
   const raise = (spn_) => (!spn_ || !shift ? spn_ : spnAt(spn_, shift));
+  // THE HAND CLAIMS NO JOINT IT CANNOT NAME. selectionFor's pitch-class
+  // fallback is the monochord's law — one octave, where a class IS a degree —
+  // and on the hand it silently promoted any note OUTSIDE the gamut to a
+  // joint in another octave. Measured: 9,238 of the corpus's 21,817 distinct
+  // sung pitches sit below their mode's gamut, so with octava off nearly half
+  // the repertory lit a joint an octave above where it was sung — and the
+  // octava button then moved the in-gamut notes and not these, which read as
+  // "sometimes up, sometimes down". A note the gamut cannot place lights
+  // NOTHING — absent, not a guess — and the octava button is the honest way
+  // to bring a low chant onto the hand.
+  const exactJoint = (spn_) => gamutRows.find((r) => r.spn === spn_)?.key;
+  // Two absences, kept apart: NOTHING CHOSEN lets the hand rest on its own
+  // default (the finalis), but a note CHOSEN AND UNPLACEABLE must light
+  // nothing at all — passed as a key no row carries, because a nullish
+  // `selected` would wake the default and dress the finalis as an answer.
   const opts = {
     mode, ...tune,
-    selected: selectionFor(gamutRows, raise(spn)),
+    selected: spn ? (exactJoint(raise(spn)) ?? "off-the-gamut") : undefined,
     onSelect: (key) => {
       const row = gamutRows.find((r) => r.key === key);
       // Back down into the chant's own octave to find the note that was
@@ -1179,7 +1382,15 @@ function manusPanel() {
   // the gamut it is read on at the centre. With no chant loaded there is no
   // piece to ring, so the hand stands on its own.
   const figure = hand(tonus, { ...opts, hexachord, route: state.route });
-  return el("div", {},
+  return el("section", { class: "panel" },
+    // The sigla list only the marks actually drawn: the ordo only while its
+    // route is, the ring only when a piece is ringed around the hand.
+    el("h2", {}, "manus et mutatio", keySpur(
+      "The gamut's twenty places on the hand, and the piece riding them syllable by syllable.",
+      state.route && [marks.dashes(),
+        "the ordo: the gamut's path, Γ up to ee, in the order a hand learns it"],
+      [marks.ring(), "the chosen note"],
+      rows.length && [marks.arc(), "the piece, by syllable"])),
     rows.length
       ? mutatio({ rows, note: at, phrases, centre: figure,
                   onSelect: (i) => selectNote(i) })
@@ -1238,7 +1449,7 @@ function readUrl() {
   if (HEXACHORDA.includes(hx)) state.hexachord = hx;
   if (p.has("tracks")) {
     state.tracks = p.get("tracks").split(",")
-      .filter((t) => t === "chironomia" || t === "tonarium");
+      .filter((t) => t === "prosodia" || t === "chironomia" || t === "tonarium");
   }
   if (p.has("officia")) {
     const keys = OFFICES.map((o) => o.key);

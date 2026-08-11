@@ -29,18 +29,26 @@
 
 import { el } from "./tabs.js";
 
-const cache = new Map();
+const cache = new Map();   // id → { svg, score }
 
-/** The first notes, drawn small. Failures degrade to a dash rather than
- * throwing — a chant whose gabc will not parse should not empty the list.
+/** The row's render, cached WHOLE: the markup and the score it came from.
  *
- * The cache holds MARKUP, not a node: a node can only be in one place, so
- * handing the cached one out twice moves it out of the first list into the
- * second. Markup is inert and each row builds its own element from it. */
-function incipit(tonus, chant, { scale = 18 } = {}) {
-  let svg = cache.get(chant.id);
-  if (svg === undefined) {
+ * The cache used to keep only the SVG and throw the score away — but
+ * `.prosody` and `.imprint` ride every score, so keeping it makes a chant's
+ * numbers free to anything else that wants them (the Census reading reads
+ * a whole day through this), at a cost the incipit is already paying.
+ *
+ * The markup half is still MARKUP, not a node: a node can only be in one
+ * place, so handing a cached one out twice moves it out of the first list
+ * into the second. That reasoning does not bar the score — it is data,
+ * read rather than adopted. Failures degrade each half to null alone: a
+ * score whose drawing throws is still a score. */
+function entryOf(tonus, chant, { scale = 18 } = {}) {
+  let e = cache.get(chant.id);
+  if (e === undefined) {
+    let score = null, svg = null;
     try {
+      score = tonus.notatio(chant);
       // Rendered as ONE long system and clipped by the box it sits in. Passing
       // a narrow width instead wraps the whole chant into five stacked staves,
       // which is a score, not an incipit — the row wants the first few notes,
@@ -51,7 +59,7 @@ function incipit(tonus, chant, { scale = 18 } = {}) {
       // which this row went on passing after they were removed — an unknown
       // option is ignored rather than refused, so every incipit was quietly
       // drawn at the full default size and clipped by its box.
-      svg = tonus.inscriptio(tonus.notatio(chant), {
+      svg = tonus.inscriptio(score, {
         scale,
         // Junicode by REFERENCE — the page loads the face, the SVG only names
         // it. Nothing is embedded here or in the full score.
@@ -61,11 +69,23 @@ function incipit(tonus, chant, { scale = 18 } = {}) {
         // back to the emitter's default serif stack.
         theme: { fonts: { lyric: { family: "Junicode", weight: 400, scale: 1.06 } } },
       }).svg;
-    } catch {
-      svg = null;
-    }
-    cache.set(chant.id, svg);
+    } catch { /* either call failing leaves that half absent */ }
+    e = { svg, score };
+    cache.set(chant.id, e);
   }
+  return e;
+}
+
+/** A chant's score, from the same cache the incipit fills — the reason the
+ *  cache keeps it. Null when the gabc will not parse. */
+export function scoreOf(tonus, chant) {
+  return entryOf(tonus, chant).score;
+}
+
+/** The first notes, drawn small. Failures degrade to a dash rather than
+ * throwing — a chant whose gabc will not parse should not empty the list. */
+function incipit(tonus, chant, opts) {
+  const { svg } = entryOf(tonus, chant, opts);
   if (svg == null) return el("span", { class: "ghost" }, "—");
   const node = el("span", { class: "incipit" });
   node.innerHTML = svg;
@@ -92,6 +112,11 @@ export function chantRow(tonus, chant, { selected = false, aside, label, onSelec
   // text — Gloria, Credo — which REPLACES its genus rather than joining it,
   // every ordinary's genus being the word "Ordinarium" over again.
   const kind = chant.ordinarium || chant.genus;
+  // The note count and melisma figures were BUILT here at five marks and CUT
+  // the same evening (2026-08-11): a bare number in a list has no header to
+  // say what it is, and the line has no room for one — "random numbers don't
+  // help anyone." The score cache that made them free stays; the Census
+  // reading feeds on it.
   const meta = [label, kind, chant.modus].filter(Boolean).join(" · ");
 
   // Name first, notation last. A list is scanned down its left edge, and what
