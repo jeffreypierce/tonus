@@ -1080,7 +1080,13 @@
     text-transform: capitalize;
     letter-spacing: var(--track-caps);
     color: var(--heading); text-align: left;
-    padding-bottom: var(--sp-1);
+    /* THE CAPTION BELONGS TO THE TABLE BENEATH IT, so it sits on it. At sp-1
+       it floated between its own first rule and the table above, reading as
+       either's; the air goes above the caption (the inter-table margin), not
+       under it. Negative, because the line box carries descender space the
+       small caps never use — closing to 0 still leaves a visible gap. */
+    padding-bottom: 0;
+    margin-bottom: -9px;
   }
   table.tabula th {
     font-family: var(--mono); font-size: var(--micro); letter-spacing: var(--track-micro);
