@@ -25,7 +25,8 @@ import { CENSUS_NOMEN, censusPanel, censusHeadline, censusDiesPanel,
   censusDiesHeadline } from "./diagrams/census.js";
 import { keySpur, marks, popover } from "./components/key.js";
 import { annulus, annulusTabula } from "./diagrams/annulus.js";
-import { chordaDual, chordaTabula, chordaRows } from "./diagrams/chorda.js";
+import { chordaTabula, chordaRows } from "./diagrams/chorda.js";
+import { wheel } from "./diagrams/temperamentum.js";
 import { hand, handTabula, handRows } from "./diagrams/hand.js";
 import { mutatio } from "./diagrams/mutatio.js";
 import { rota, rotaTabula, rotaAspectTabula } from "./diagrams/rota.js";
@@ -44,9 +45,18 @@ const state = {
   chant: null,
   score: null,
   note: null,
+  // A chord of the temper wheel, held for inspection: [pcA, pcB] or null.
+  // Clicking a drawn chord sets it and the wheel's centre names the interval
+  // the pair makes — live under the slider, which is the point. Ephemeral:
+  // not in the URL, cleared by a note-click or a chant switch.
+  temperEdge: null,
   // which offices are shown — see OFFICES_SHOWN below, spelled out here
   // because `state` is built before that list exists
   offices: ["proprium", "ordinarium", "matutinum", "laudes", "vesperae"],
+  // Which mode the day's list is narrowed to, or null for all eight. A day
+  // sings in several, and the question "what does this feast sound like in
+  // mode 4" is one the calendar can answer and could not before.
+  modus: null,
   right: { calendarium: "harmonia", canticum: "temperamentum" },
   // the few settings the toy carries
   notation: "quadrata",
@@ -226,8 +236,12 @@ const DOCS = "https://github.com/jeffreypierce/tonus/blob/main/docs/api/";
  *  visually-hidden utility in the stylesheet, and a visible ↗ would add a
  *  sixth mark to a line already carrying genus, mode and book.
  */
-function docLink(page) {
-  const name = `${page} documentation`;
+function docLink(page, { anchor, label } = {}) {
+  // An ANCHOR deep-links into the page, and a LABEL names the destination
+  // where the page's own name is not what the reader is being sent to: the
+  // hand's method is `gradus`, on the tuning page, and "§gradus" would name
+  // a file that does not exist while "§tuning" names the whole engine.
+  const name = `${label ?? page} documentation`;
   // A separator and the link. The dot is a plain character in the line, so it
   // inherits that line's face and size like every other character — which is
   // all it ever needed to match its surroundings.
@@ -237,19 +251,19 @@ function docLink(page) {
   // but a link that steals a tab is a decision made for the reader, and the
   // back button restores the page anyway. A link goes where it says it goes.
   return [" • ", el("a", {
-    class: "doc", href: `${DOCS}${page}.md`,
+    class: "doc", href: `${DOCS}${page}.md${anchor ? `#${anchor}` : ""}`,
     "aria-label": name, title: name,
     // No "docs" in the visible text: the § is the sigil for a section and the
     // page's own name follows it, so the word only repeated what both already
     // said. The accessible name keeps it, where there is no sigil to read.
-  }, `§${page}`)];
+  }, `§${label ?? page}`)];
 }
 
 /** The doc link for whichever reading is open — the same `find` the tab strip
  *  uses to resolve the current tab. A reading without a `doc` simply has none. */
 function readingLink(readings, active) {
-  const doc = readings.find((r) => r.key === active)?.doc;
-  return doc ? docLink(doc) : null;
+  const r = readings.find((x) => x.key === active);
+  return r?.doc ? docLink(r.doc, { anchor: r.anchor, label: r.label }) : null;
 }
 
 // ── a panel: a titled block in a column ──
@@ -480,10 +494,49 @@ function daysChants(feast) {
  *  to see what the day held. A day sings one repertory; the office a chant
  *  belongs to is a property of the chant, so it labels the row and gates it —
  *  the same toggle idiom the analysis tracks use in Canticum. */
+/** The mode filter: which of the eight the day's list is narrowed to.
+ *
+ *  A day sings in several modes at once — a Matins responsory in II beside an
+ *  Introit in VII — and "what does this feast sound like in mode 4" was a
+ *  question the calendar held the answer to and could not be asked.
+ *
+ *  THE NAMES ARE THE LIBRARY'S. `modus(m).nomen` gives the Latin the treatises
+ *  use (Protus Authenticus, Deuterus Plagalis), which is the same string the
+ *  Canticum subheader names a chant's mode with — so the filter and the
+ *  reading it filters toward speak one vocabulary. A list written out here
+ *  would be a second opinion about what the modes are called.
+ *
+ *  A mode nothing on the day is sung in is DISABLED rather than hidden: the
+ *  eight are a fixed set, and a menu that changes length day to day makes the
+ *  reader re-find the one they want.
+ */
+function modusFilter(all) {
+  const T = tonus.temperamentum({});
+  const count = (m) => all.filter((r) => modeOf(r.chant) === m).length;
+  return el("select", {
+    "aria-label": "modus",
+    onchange: (e) => {
+      state.modus = e.target.value ? Number(e.target.value) : null;
+      renderPanels();
+    },
+  },
+    el("option", { value: "", selected: state.modus == null }, "omnes modi"),
+    ...[1, 2, 3, 4, 5, 6, 7, 8].map((m) => {
+      const n = count(m);
+      return el("option", {
+        value: String(m), disabled: n === 0,
+        selected: state.modus === m,
+      }, `${roman(m)}. ${T.modus(m).nomen}`);
+    }),
+  );
+}
+
 function calendariumPanels() {
   const [feast] = tonus.festum({ date: state.day });
   const all = daysChants(feast);
-  const shown = all.filter((r) => state.offices.includes(r.office.key));
+  const shown = all
+    .filter((r) => state.offices.includes(r.office.key))
+    .filter((r) => state.modus == null || modeOf(r.chant) === state.modus);
   const readings = calendariumReadings(feast);
 
   let left;
@@ -551,6 +604,10 @@ function calendarium() {
   const [feast] = tonus.festum({ date: state.day });
   const readings = calendariumReadings(feast);
   const panels = calendariumPanels();
+  // The day's whole repertory, for the mode filter's own counts: it names how
+  // many chants each mode holds BEFORE the office strip narrows anything, so
+  // the menu says what the day contains rather than what is currently shown.
+  const dayChants = daysChants(feast);
 
   return page({
     // row 1 — what this is, and what may be read of it
@@ -564,14 +621,19 @@ function calendarium() {
     detail: calendariumDetail(feast),
     rightDetail: calendariumRightDetail(feast),
     // row 3 — what may be changed
-    inputs: dateDial(state.day, (d, anchor) => {
-      state.day = d;
-      state.chant = null;
-      state.anchor = anchor ?? null;
-      // The panels and the headings only: the row this input sits in must
-      // survive its own click, or the arrow would be replaced mid-press.
-      renderPanels();
-    }, { anchors: paschaOf(state.day), anchor: state.anchor }),
+    // The date, and beside it the mode the day is read in. Two controls on one
+    // line because they narrow the same thing — which of the day's music is
+    // in front of you — where the office strip below gates it by hour.
+    inputs: el("div", { class: "settings" },
+      dateDial(state.day, (d, anchor) => {
+        state.day = d;
+        state.chant = null;
+        state.anchor = anchor ?? null;
+        // The panels and the headings only: the row this input sits in must
+        // survive its own click, or the arrow would be replaced mid-press.
+        renderPanels();
+      }, { anchors: paschaOf(state.day), anchor: state.anchor }),
+      modusFilter(dayChants)),
     rightInputs: harmoniaInputs() ?? null,
     left: panels.left,
     right: panels.right,
@@ -837,7 +899,12 @@ const canticumReadings = () => [
   { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel, doc: "tuning" },
   // The genitive, as the treatises write it: the hand OF Guido. Manus is
   // feminine, so the adjectival "Guidonius" agreed with nothing.
-  { key: "manus", name: "Manus Guidonis", panel: manusPanel, doc: "tuning" },
+  // THE HAND'S OWN METHOD IS `gradus` — the twenty places, each a step. It
+  // lives on the tuning page, so the link goes to that section rather than
+  // the page's top, and still reads "tuning": the reader is being sent to
+  // the engine, and §gradus would name a file that does not exist.
+  { key: "manus", name: "Manus Guidonis", panel: manusPanel, doc: "tuning",
+    anchor: "steps-gradus", label: "tuning" },
   // The chant against the corpus. `year` names the calendar the mass row
   // walks — the feast index is memoised per year, movable feasts being
   // movable. Census wears no inputs, so no rightInputs branch names it.
@@ -1485,27 +1552,62 @@ function temperamentumPanel() {
     mode, selected: selectionFor(scaleRows, sel), ...tune,
     // A degree chosen here is reported back as the CHANT's pitch where it has
     // one, so the score and the range staff can ring the note the reader
-    // actually clicked toward.
+    // actually clicked toward. Choosing a NOTE releases any chord held for
+    // inspection — the drawn chord set follows the note, and a held pair the
+    // figure no longer draws would leave the centre naming a ghost.
     onSelect: (key) => {
+      state.temperEdge = null;
       const row = scaleRows.find((r) => r.key === key);
       const inChant = state.score?.tabula.find((t) => t.pc === row?.pc);
       selectPitch(inChant?.spn ?? key);
     },
+    // A chord clicked for inspection: held in state so the centre's reading
+    // rides the slider live. Clicking the held chord again lets it go.
+    edge: state.temperEdge,
+    onEdge: (pair) => { state.temperEdge = pair; renderPanels(); },
   };
 
   return el("section", { class: "panel" },
     // ONE title style for every figure — the panel h2, its key's spur at
     // the right (ruled 2026-08-11; the in-figure margin captions retired).
     el("h2", {}, "monochordum", keySpur(
-      "The chant's scale on one string, measured twice: the just ratios above, the modern cents below.",
-      [marks.text("3:2"), "the just string"],
-      [marks.text("irr", { italic: true }), "no ratio under temperament"],
-      [marks.text("±¢"), "against equal"],
-      [marks.rubric(), "the chosen degree"])),
+      "The mode's degrees twice over: placed by cents around the octave, and "
+      + "laid along a divided string beneath. The final sits at the top of "
+      + "the ring and at both ends of the string.",
+      [marks.roundel(), "the degree you have chosen",
+        "its intervals arch above the string, its neighbours' below"],
+      [marks.dot(), "a degree of the scale",
+        "the dot's area is how much of the chant is sung there"],
+      [marks.hollow(), "in the scale, never sung"],
+      [marks.chord(), "a fifth, drawn across the ring",
+        "a scale is built from these, and six of them chain seven degrees; "
+        + "click any drawn chord and the interval its two notes make reads "
+        + "at the wheel's centre, live under the slider; click it again to "
+        + "let it go"],
+      [marks.dottedChord(), "the tritone",
+        "the fifth the chain of fifths cannot make: no chord closes B back "
+        + "to F. The scale's own interval, in every tuning; choose B or F "
+        + "and it speaks with its size"],
+      [marks.brokenChord(), "the wolf",
+        "the tempered chain's leftover fifth; its ends are not degrees any "
+        + "mode sings, so they wear no letter"],
+      [marks.gauge(), "how far the degree has moved",
+        "the tick is where pure fifths put it and the needle is where the "
+        + "slider has; the travel is drawn four times life size, because at "
+        + "true scale the smallest of them is two degrees of arc"],
+      [marks.arch(), "an interval, and its size",
+        "written as the theorists wrote it: 3:2−1/4c is a fifth narrowed by a "
+        + "quarter of the comma of 81:80"])),
     // The string and the ruler as ONE figure: the same degrees on two axes,
     // joined, so the disagreement between the medieval measure and the modern
     // one is the thing drawn rather than something to infer across two panels.
-    chordaDual(tonus, opts),
+    // THE WHEEL AND ITS STRING, one figure. chordaDual drew here until the
+    // wheel carried its work: the string beneath says everything the old
+    // monochord-and-ruler pair said about where a degree falls, and says it
+    // against the wheel rather than against a second axis the reader had to
+    // hold in mind.
+    wheel(tonus, { ...opts,
+      weights: state.score?.imprint?.pcDistribution ?? null }),
     // This chant's weight on each degree rides the tabula as its quiet
     // gloss — the panel stops being a scale in the abstract and becomes this
     // chant's scale, on an axis already drawn. Matched by pitch class, as
@@ -1600,6 +1702,7 @@ function manusPanel() {
 function openChant(chant) {
   state.chant = chant;
   state.note = null;
+  state.temperEdge = null;
   try { state.score = tonus.notatio(chant); }
   catch { state.score = null; }
   state.view = "canticum";
@@ -1624,6 +1727,9 @@ function writeUrl() {
   // every link would put a parameter in the bar that changes nothing.
   if (state.offices.join(",") !== OFFICES_SHOWN.join(","))
     p.set("officia", state.offices.join(","));
+  // Only when narrowed, for the same reason the offices are: a day read in one
+  // mode is worth linking to, and "all eight" is what a bare URL already means.
+  if (state.modus != null) p.set("modus", String(state.modus));
   // Only when tempered — 0 is the default and saying so in every link
   // would put a parameter in the bar that changes nothing.
   if (state.comma) p.set("comma", state.comma.toFixed(4));
@@ -1655,6 +1761,12 @@ function readUrl() {
     // An empty or unrecognised list would leave the day looking chantless
     // through no choice of the reader's, so it falls back to all three.
     if (want.length) state.offices = want;
+  }
+  if (p.has("modus")) {
+    // 1-8 or nothing. A junk value leaves the day unfiltered rather than
+    // empty, on the same reasoning as the offices above.
+    const m = Number(p.get("modus"));
+    if (Number.isInteger(m) && m >= 1 && m <= 8) state.modus = m;
   }
   if (p.has("comma")) {
     const c = Number(p.get("comma"));

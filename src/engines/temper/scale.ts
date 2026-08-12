@@ -267,6 +267,69 @@ function ratiosToCents(ratios: number[]): number[] {
 
 // ── Public ──
 
+/** The wolf: what is left of the octave when the chain of fifths runs out. */
+export interface Lupus {
+  /** Pitch class the wolf is measured UP from — the chain's last link. */
+  from: number;
+  /** Pitch class it lands on — the chain's first. */
+  to: number;
+  /** The two, spelled as the chain spells them. */
+  spn: [string, string];
+  /** Its size, tempered, in cents. */
+  cents: number;
+  /** A pure fifth, for the comparison this exists to invite. */
+  pure: number;
+  /** Signed: positive is wide of a pure fifth, negative narrow. */
+  fromPure: number;
+}
+
+const PURE_FIFTH_CENTS = 1200 * Math.log2(3 / 2);
+// The chain's own spelling, in its own order. A wolf is named by where it
+// falls in the chain, not by an enharmonic the gamut might prefer: the
+// interval G♯–E♭ is the wolf, and calling either end by its other name
+// ("A♭–D♯") describes a different reading of the same two frequencies.
+const CHAIN_SPELLING = ["Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#", "G#"];
+
+/**
+ * THE WOLF, from the chain the ratios are built on.
+ *
+ * Twelve fifths do not close an octave. Stack them from E♭ and the twelfth
+ * lands beside the first rather than on it, and the gap it leaves has to go
+ * somewhere: it goes into the one interval nobody stacked, G♯ up to E♭. That
+ * interval is a fifth by position and not by size, which is why it howls.
+ *
+ * Under pure fifths it comes out NARROW (678.5¢, the Pythagorean comma taken
+ * out of it). Temper the fifths and the leftover grows: every cent taken off
+ * eleven fifths is given back to this one, so it passes a pure fifth and goes
+ * wide (737.6¢ at quarter-comma). That sign change is the thing a reader of
+ * the slider is watching, and it is why `fromPure` is signed.
+ *
+ * Derived from the SAME walk `buildPythagoreanRatios` does, deliberately.
+ * There is a closed form (1200·7 − 11·fifth, which agrees to the decimal),
+ * but two derivations of one number is how they drift apart.
+ *
+ * Null when no chain built the scale: a Ptolemaic genus and a custom Scala
+ * list are given as ratios, and have no fifths chain to leave a remainder.
+ */
+export function wolfOf(commaN: number): Lupus {
+  const ratios = buildPythagoreanRatios(commaN);
+  const cents = ratios.map((r) => 1200 * Math.log2(r));
+  const from = FIFTH_TO_CHROM[11]!;
+  const to = FIFTH_TO_CHROM[0]!;
+  // Upward and octave-folded: the chain's ends sit either side of the fold,
+  // so the raw difference is negative about as often as not.
+  let span = cents[to]! - cents[from]!;
+  if (span < 0) span += 1200;
+  return {
+    from,
+    to,
+    spn: [CHAIN_SPELLING[11]!, CHAIN_SPELLING[0]!] as [string, string],
+    cents: span,
+    pure: PURE_FIFTH_CENTS,
+    fromPure: span - PURE_FIFTH_CENTS,
+  };
+}
+
 export function buildRatios(opts: ScaleOpts = {}): Scale {
   const mode = opts.mode ?? 1;
   const a4 = opts.a4 ?? 440;

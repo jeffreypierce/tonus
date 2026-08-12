@@ -88,6 +88,29 @@ export const marks = {
   chord: () => sw(n("line", { x1: 2, y1: 11, x2: 14, y2: 3,
     stroke: INK, "stroke-opacity": STRATUM.spark,
     "stroke-width": STROKE.firm * 2 })),
+  /** A degree the scale has and the chant never sings: present, unsounded. */
+  hollow: () => sw(n("circle", { cx: 8, cy: 7, r: 3, fill: "none",
+    stroke: INK, "stroke-opacity": STRATUM.letters, "stroke-width": STROKE.fine * 2 })),
+  /** The wolf: the tempered chain's leftover fifth, drawn broken. */
+  brokenChord: () => sw(n("line", { x1: 2, y1: 11, x2: 14, y2: 3,
+    stroke: INK, "stroke-opacity": STRATUM.rail,
+    "stroke-width": STROKE.fine * 2, "stroke-dasharray": "3 3" })),
+  /** The tritonus: the chord the chain of fifths cannot make, drawn dotted
+   *  — a different absence from the wolf's dashes. */
+  dottedChord: () => sw(n("line", { x1: 2, y1: 11, x2: 14, y2: 3,
+    stroke: INK, "stroke-opacity": STRATUM.wave,
+    "stroke-width": STROKE.fine * 2, "stroke-dasharray": "1.5 3" })),
+  /** An interval, arched between two stops on the string. */
+  arch: () => sw(n("path", { d: "M 2 12 A 7 7 0 0 1 14 12", fill: "none",
+    stroke: RUBRICA, "stroke-width": STROKE.firm * 2 })),
+  /** The vernier: a start tick, its travel, and the needle on it. */
+  gauge: () => sw(
+    n("path", { d: "M 2 10 A 8 8 0 0 1 15 10", fill: "none", stroke: INK,
+      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair * 2 }),
+    n("line", { x1: 2.5, y1: 12, x2: 2.5, y2: 6, stroke: INK,
+      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair * 2 }),
+    n("line", { x1: 10, y1: 12, x2: 10, y2: 5, stroke: INK,
+      "stroke-opacity": STRATUM.cadence, "stroke-width": STROKE.firm * 2 })),
   /** A mark that IS text — a ratio, a letter — set as the figure sets it. */
   text: (t, { italic = false } = {}) =>
     el("span", { class: `key-mark${italic ? " key-italic" : ""}` }, t),

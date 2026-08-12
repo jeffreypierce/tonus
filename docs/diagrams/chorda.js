@@ -91,6 +91,10 @@ export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
   stepFor.set(finalisPc, M.finalis.step);
   stepFor.set(tenorPc, M.reciting.step);
 
+  // The just table the DEGREE spellings read against — resolved here, once,
+  // so every row of one call spells against one tuning.
+  const just = degreeJust(T);
+
   return g.map((row, i) => {
     // The interval the library names, from the finalis to this degree; it
     // carries the Latin (Diapente, Diapason) and the consonance class.
@@ -105,6 +109,7 @@ export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
     // A pitch at ratio r stops the string at 1/r of its length, so the string
     // fraction is the sounding ratio inverted.
     const fr = base / row.hz;
+    const cents = 1200 * Math.log2(row.hz / base);
     // The diapason is the finalis an octave up, not merely the last row of
     // the gamut — in a plagal mode those are different notes.
     const isOctave = row.midi === tonic.midi + 12;
@@ -120,7 +125,7 @@ export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
       hz: row.hz,
       // Cents of the TUNING, from the library's own table — the whole point of
       // the regula is that these are not the equal-tempered round numbers.
-      cents: 1200 * Math.log2(row.hz / base),
+      cents,
       aequalis: iv.cents,          // where equal temperament would put it
       fr,
       // A STRING FRACTION ONLY MEANS SOMETHING IN JUST INTONATION. Stopping a
@@ -144,7 +149,16 @@ export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
         // Not "is the ratio simple" but "is it EXACT". A just ratio round-
         // trips to the tuned value; a tempered one only ever approximates, so
         // any ratio offered for it would be a fit dressed as a measurement.
-        return Math.abs(n / d - fr) < 1e-9 ? `${d}:${n}` : null;
+        if (Math.abs(n / d - fr) < 1e-9) return `${d}:${n}`;
+        // RULED 2026-08-12: mid-slider a degree is SPELLED rather than
+        // silent — "5:4+1c", the comma notation — because where the
+        // temperament put each degree is the panel's whole subject, and a
+        // spelling that counts the comma is a reading, not a fit dressed as
+        // a measurement. Within the octave only: past the diapason a
+        // spelling would repeat the degree an octave below it, where the
+        // exact branch above genuinely distinguishes octaves (512:243).
+        const a = Math.abs(cents);
+        return a <= 1200 + 1e-6 ? commaForm(a, just) : null;
       })(),
       offset: row.offset,
       intervallum: iv.alias || iv.nomen,
@@ -369,209 +383,69 @@ export function chordaTabula(tonus, { mode = 7, selected, onSelect, tuning, comm
     { key: "intervallum", head: "intervallum", gloss: (r) => r.consonantia },
     { key: "hz", head: "hz", mono: true, num: true, format: (v) => v.toFixed(2) },
     { key: "cents", head: "¢", mono: true, num: true, format: (v) => v.toFixed(1) },
-    { key: "offset", head: "¢ vs æq.", mono: true, num: true,
-      format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
-    // Blank under a temperament: a just ratio is a claim about a
-    // RATIO, and a tempered degree does not have one.
+    // "¢ vs æq." IS CUT. Equal temperament is the one tuning this panel is not
+    // about: the wheel's twelve ticks already show where equal would put each
+    // degree, and a reader watching the slider is comparing tempered against
+    // JUST, not against a piano. The field rides chordaRows still (`offset`),
+    // for anything that wants the number.
+    // Under a temperament the exact ratio gives way to the COMMA SPELLING
+    // ("5:4+1c") — chordaRows spells it, this column just prints it. The
+    // dash survives only past the diapason, where a spelling would repeat
+    // the octave below.
     { key: "ratio", head: "ratio", mono: true, num: true,
       format: (v) => v ?? "—" },
   ], { selected: sel, onSelect });
 }
 
-// ── the two measures, as one figure ──────────────────────────────────────
+// ── the comma spelling ────────────────────────────────────────────────────
+// THE ONE PIECE OF ARITHMETIC THAT IS THE FIGURES' OWN, and it is a NOTATION
+// rather than a fact about a tuning: a way of writing a tempered size the way
+// the meantone theorists wrote it. Every interval here sits an exact
+// comma-multiple from a just ratio — the Pythagorean third 81:64 IS 5:4 plus
+// one comma of 81:80 — so a size can be spelled "5:4+1c" instead of "408¢",
+// and the spelling says WHERE the temperament put it.
 //
-// The monochord and the regula are the SAME seven degrees on two different
-// x-axes: string fraction, which is reciprocal and crowds toward the octave,
-// and cents, which is linear. Drawn apart, a reader has to hold one figure in
-// mind while looking at the other to see that they disagree.
-//
-// Drawn together, the disagreement is the figure. A connector runs from each
-// degree's stop on the string to the same degree's place on the ruler, and its
-// SLANT is the reading: vertical where the two measures agree (the octave's
-// ends, which are fixed points of both), leaning hardest in the middle of the
-// octave where a linear reading of pitch and a proportional division of a
-// string are furthest apart. That arc is the whole medieval-versus-modern
-// argument, and neither figure alone can state it.
+// It lives HERE, beside chordaRows, because the rows spell their own degrees
+// now (ruled 2026-08-12) and the wheel imports it for its arches — one copy,
+// downstream of the row data it annotates. The just ratios come from
+// T.ratio(), not a copy of them: the library holds the arithmetic and a
+// second table here would be a second opinion.
+const COMMA = 21.506;   // the syntonic comma, 81:80
+// The consonances the ARCH labels spell against — the intervals a reader of
+// the string actually meets.
+const JUST_KEYS = ["3/2", "4/3", "5/4", "6/5", "5/3", "8/5"];
+// The DEGREE spellings need the steps too: a mode has seconds and sevenths,
+// and a table without 9:8 could not say where the temperament put the tone
+// (at 1/4 comma it sits exactly half a comma flat of it).
+const DEGREE_KEYS = [...JUST_KEYS, "9/8", "16/9", "16/15", "15/8"];
+// The fractions a reader of the slider actually meets. Anything else prints a
+// decimal: a spelling is only worth having when it is nameable.
+const NICE = [[0, "0"], [1 / 9, "1/9"], [1 / 6, "1/6"], [2 / 9, "2/9"],
+  [1 / 4, "1/4"], [1 / 3, "1/3"], [4 / 9, "4/9"], [1 / 2, "1/2"],
+  [2 / 3, "2/3"], [3 / 4, "3/4"], [1, "1"], [4 / 3, "4/3"], [3 / 2, "3/2"],
+  [2, "2"]];
 
-const DUAL_STRING_Y = 46;
-const DUAL_RULER_Y = 126;
-/** What stands where a ratio would, when no ratio can be given.
- *
- *  Temper an interval and it stops being a proportion of whole numbers — which
- *  is not a gap in the data but the definition of what tempering is. The word
- *  for it is old: an interval no two integers can name is IRRATIONAL, and the
- *  medieval theorists say so in exactly that sense. Three letters, in the same
- *  place and at the same size as the ratio it replaces, so the reader watching
- *  a number sees it become a statement rather than vanish. */
-const NO_RATIO = "irr";
+const table = (T, keys) => keys.map((k) => {
+  const r = T.ratio(k);
+  return [r.cents, r.display];
+});
+/** The arch consonances, resolved once per render from the library. */
+export const justTable = (T) => table(T, JUST_KEYS);
+/** The degree table: the consonances and the steps. */
+export const degreeJust = (T) => table(T, DEGREE_KEYS);
 
-/**
- * The monochord and the ruler, joined.
- *
- * @param {object} tonus
- * @param {object} opts   as chorda/regula — mode, selected, onSelect, tuning, comma
- */
-export function chordaDual(tonus, { mode = 7, selected, onSelect, tuning, comma } = {}) {
-  // One octave: the string has no more length past its halfway point, and the
-  // ruler is ruled to 1200. Both figures already bound themselves this way.
-  const rows = chordaRows(tonus, { mode, tuning, comma })
-    .filter((r) => r.fr >= 0.5 - 1e-9 && r.cents <= 1200 + 1e-6);
-  const sel = selected ?? rows.find((r) => r.role === "tenor")?.key ?? rows[0]?.key;
-
-  const svg = el("svg", {
-    class: "chorda-dual", viewBox: `${NUT - 14} 0 ${LEN + 28} 170`, xmlns: NS,
-    role: "img",
-    "aria-label": `Mode ${mode} measured two ways: the monochord's string`
-      + ` fractions above, the same degrees in cents below`,
-  });
-
-  // ── above: the string, between its bridges ──
-  for (const x of [NUT, NUT + LEN]) {
-    svg.appendChild(el("line", {
-      x1: x, y1: DUAL_STRING_Y - 18, x2: x, y2: DUAL_STRING_Y + 18,
-      stroke: INK, "stroke-opacity": STRATUM.cadence, "stroke-width": STROKE.heavy,
-    }));
+/** A tempered span as the theorists would write it, or null when it sits too
+ *  far from anything just — beyond about two commas the spelling stops being
+ *  a reading and becomes arithmetic, and the size speaks better in cents. */
+export function commaForm(span, just) {
+  let best = null;
+  for (const [c, display] of just) {
+    const k = (span - c) / COMMA;
+    if (!best || Math.abs(k) < Math.abs(best.k)) best = { k, display };
   }
-  svg.appendChild(el("line", {
-    x1: NUT, y1: DUAL_STRING_Y, x2: NUT + LEN, y2: DUAL_STRING_Y,
-    stroke: INK, "stroke-opacity": STRATUM.wave, "stroke-width": STROKE.fine,
-  }));
-
-  // ── below: the equal-tempered grid, and the ruler over it ──
-  for (let c = 0; c <= 1200; c += 100) {
-    const x = rulerX(c);
-    const edge = c % 1200 === 0;
-    svg.appendChild(el("line", {
-      x1: sc(x), y1: DUAL_RULER_Y - (edge ? 9 : 6), x2: sc(x), y2: DUAL_RULER_Y + (edge ? 9 : 6),
-      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
-    }));
-  }
-  svg.appendChild(el("line", {
-    x1: NUT, y1: DUAL_RULER_Y, x2: NUT + LEN, y2: DUAL_RULER_Y,
-    stroke: INK, "stroke-opacity": STRATUM.bracket, "stroke-width": STROKE.fine,
-  }));
-
-  // ── the connectors, which are the point ──
-  // Each runs from a degree's stop on the string to the same degree's place on
-  // the ruler. The SLANT is the reading: vertical where the two measures agree
-  // (the octave's ends, fixed points of both), leaning hardest mid-octave
-  // where a proportional division of a string and a linear reading of pitch
-  // are furthest apart.
-  for (const r of rows) {
-    const isSel = r.key === sel;
-    svg.appendChild(el("line", {
-      x1: sc(stringX(r.fr)), y1: DUAL_STRING_Y + 12,
-      x2: sc(rulerX(r.cents)), y2: DUAL_RULER_Y - 12,
-      stroke: isSel ? RUBRICA : INK,
-      "stroke-opacity": isSel ? STRATUM.label : STRATUM.rail,
-      "stroke-width": isSel ? STROKE.heavy : STROKE.hair,
-    }));
-  }
-
-  // ── each degree, marked on both scales ──
-  for (const r of rows) {
-    const xa = stringX(r.fr), xb = rulerX(r.cents);
-    const isSel = r.key === sel;
-    const ink = isSel ? RUBRICA : INK;
-
-    for (const [x, y, reach] of [[xa, DUAL_STRING_Y, 11], [xb, DUAL_RULER_Y, 10]]) {
-      svg.appendChild(el("line", {
-        x1: sc(x), y1: y - (isSel ? reach + 4 : reach),
-        x2: sc(x), y2: y + (isSel ? reach + 4 : reach),
-        stroke: ink,
-        "stroke-opacity": isSel ? 1 : STRATUM.wave,
-        "stroke-width": isSel ? STROKE.heavy : STROKE.fine,
-      }));
-    }
-    if (isSel) {
-      svg.appendChild(el("circle", { cx: sc(xa), cy: DUAL_STRING_Y, r: 3.2, fill: RUBRICA }));
-      svg.appendChild(el("circle", { cx: sc(xb), cy: DUAL_RULER_Y, r: 3.2, fill: RUBRICA }));
-    }
-
-    // THE LETTER NAMES THE DEGREE, ONCE, BETWEEN THE TWO SCALES — on its own
-    // connector, which is the one place that belongs to both. Set above the
-    // string it read as that axis's last label, which made every mode look
-    // like it ended where its penultimate letter fell.
-    //
-    // It sits ON the connector, so the line would run straight through the
-    // glyph and read as a strike-through. A disc of paper behind it opens a
-    // gap in the line instead — the connector arrives at the letter and
-    // leaves it, which is what the letter means.
-    const lx = (xa + xb) / 2, ly = (DUAL_STRING_Y + DUAL_RULER_Y) / 2;
-    svg.appendChild(el("circle", {
-      cx: sc(lx), cy: sc(ly), r: isSel ? 13 : 10,
-      // The page's own paper, so the gap follows the theme rather than
-      // punching a hardcoded white hole in a themed figure.
-      fill: "var(--paper, #FDFDFD)",
-    }));
-    svg.appendChild(el("text", {
-      x: sc(lx), y: sc(ly + (isSel ? 7 : 5)),
-      "text-anchor": "middle",
-      "font-family": HOUSE_SERIF,
-      "font-size": isSel ? STEP.title : STEP.body,
-      fill: ink, "fill-opacity": isSel ? 1 : STRATUM.letters,
-    }, r.litera));
-
-    // EVERY RATIO IS SHOWN, AT ONE SIZE. It was drawn for the chosen degree
-    // alone, which meant the top of the figure went blank the moment the
-    // slider left pure tuning — no degree has an exact ratio under a
-    // temperament, so the label the reader was watching simply vanished.
-    //
-    // Shown for all of them, the thinning-out becomes the reading: the ratios
-    // are the tuning that can be written down, and temper it and they go.
-    // Choosing a degree changes their COLOUR, not their size — a number that
-    // grows when picked reads as a different number.
-    //
-    // AND WHERE THERE IS NONE, THE CHOSEN DEGREE SAYS SO. Silence at that
-    // place is ambiguous — it could mean the ratio is missing, or that the
-    // figure forgot to draw it. `irr` states the actual fact: under this
-    // temperament no two whole numbers name the interval. Only for the chosen
-    // degree, because a tempered scale would otherwise print it eight times,
-    // which is a wall of the same word where the point is that it is empty.
-    if (r.ratio || isSel) {
-      svg.appendChild(el("text", {
-        x: sc(xa), y: DUAL_STRING_Y - 22, "text-anchor": "middle",
-        "font-family": FIGURES.family, "font-size": STEP.label,
-        fill: ink,
-        "fill-opacity": r.ratio ? (isSel ? 1 : STRATUM.rail) : STRATUM.letters,
-        "font-style": r.ratio ? null : "italic",
-      }, r.ratio || NO_RATIO));
-    }
-
-    // The cents and the deviation stay with the CHOSEN degree: eight of those,
-    // each two numbers wide, is a paragraph under a figure whose subject is a
-    // shape.
-    if (isSel) {
-      svg.appendChild(el("text", {
-        x: sc(xb), y: DUAL_RULER_Y + 32, "text-anchor": "middle",
-        "font-family": FIGURES.family, "font-size": STEP.label,
-        fill: ink,
-      }, `${r.cents.toFixed(0)}¢`
-        + (Math.abs(r.offset) >= 0.05
-          ? `  ${r.offset > 0 ? "+" : "\u2212"}${Math.abs(r.offset).toFixed(1)} æq.` : "")));
-    }
-
-    if (onSelect) {
-      // One hit area per degree, spanning both scales: they are one thing.
-      // (the margin title is appended after this loop)
-      const hit = el("polygon", {
-        points: [
-          `${sc(xa - 12)},${DUAL_STRING_Y - 18}`, `${sc(xa + 12)},${DUAL_STRING_Y - 18}`,
-          `${sc(xb + 12)},${DUAL_RULER_Y + 18}`, `${sc(xb - 12)},${DUAL_RULER_Y + 18}`,
-        ].join(" "),
-        fill: INK, "fill-opacity": 0, cursor: "pointer",
-        tabindex: "0", role: "button",
-        "aria-label": `${r.spn} — ${r.ratio ? `${r.ratio}, ` : ""}`
-          + `${r.cents.toFixed(0)} cents${r.role ? `, the ${r.role}` : ""}`,
-      });
-      hit.addEventListener("click", () => onSelect(r.key));
-      hit.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(r.key); }
-      });
-      svg.appendChild(hit);
-    }
-  }
-
-
-  return svg;
+  if (!best || Math.abs(best.k) > 2.05) return null;
+  if (Math.abs(best.k) < 0.02) return best.display;   // it IS the just ratio
+  const nice = NICE.find(([v]) => Math.abs(Math.abs(best.k) - v) <= 0.02);
+  const size = nice ? nice[1] : Math.abs(best.k).toFixed(1);
+  return `${best.display}${best.k > 0 ? "+" : "−"}${size}c`;
 }

@@ -374,6 +374,62 @@ function capAdvance(letter: string, family: string): number {
   return CAP_ADVANCE.serif![ch] ?? CAP_ADVANCE_FALLBACK;
 }
 
+/** Where a custos sits: AT THE LINE'S END, tucked inside the staff's edge.
+ *
+ *  The three break paths each arrived at their own `x` — after a divisio,
+ *  after a forced break, at the width test — and each drew the custos there,
+ *  so it landed anywhere from 16 to 96 units inside the staff's right edge on
+ *  one page. The books put it in one place: at the end of the line it belongs
+ *  to, hard against the margin, because that is what tells the eye it is the
+ *  line ENDING rather than a note in it.
+ *
+ *  The staff's own right edge is `max(x, prevLyricRight) + padding` — the same
+ *  value each path pushes into systemMaxX a moment later — so the custos is
+ *  set from that rather than from wherever the cursor happens to be. */
+function custosX(x: number, prevLyricRight: number, r: Resolved): number {
+  // The staff line is drawn to `systemMaxX - padding`, and systemMaxX is
+  // pushed as `max(x, prevLyricRight) + padding` — so the edge IS that max.
+  //
+  // The custos ENDS at that edge rather than starting a fixed way inside it:
+  // it is the last thing on the line and should meet the line's end, which is
+  // where the books put it. All six cuts share one width (60 units), so the
+  // inked width is the same whichever is drawn.
+  const edge = Math.max(x, prevLyricRight);
+  const g = GLYPHS[GLYPH.custosUp[0]];
+  const inked = g ? (g.bbox[2] - g.bbox[0]) * r.glyphScale * r.noteScale * CUSTOS_FACTOR : 0;
+  return edge - inked;
+}
+
+// A tenth over a notehead's own scale: the sign is small by design, and this
+// is the size it reads at without competing with the notes it guides.
+const CUSTOS_FACTOR = 0.85 * 1.1;
+
+/** The custos for a pitch: which of the six cuts.
+ *
+ *  EA04-EA09 are COMPLETE signs — a skinny neume, head and stroke in one
+ *  closed shape, 60 units wide. The narrowness is the sign, not a missing
+ *  half: it is the mark the books set at the right of the staff.
+ *
+ *  The stroke runs AWAY from the staff, so a pitch below the middle takes a
+ *  stem-up cut and one above takes stem-down, and the three lengths each way
+ *  reach back toward the staff as the pitch gets further from it.
+ *
+ *  `staffPosition` counts upward from the bottom line, so 4 is the middle. */
+function custosGlyph(staffPosition: number): string {
+  const from = staffPosition - 4;
+  // THE NAMES SAY THE MAPPING, and the heights agree with them:
+  //   PosMiddle  416  the shortest stem — the pitch is already at the middle
+  //   PosLow     541
+  //   PosLowest  666  the longest — furthest out, most stem to draw
+  // So the stem grows with the DISTANCE from the middle, and the arrays run
+  // [Lowest, Low, Middle] with rung 0 at the far edge.
+  // custosUp runs [Lowest, Low, Middle] and custosDown [Middle, High,
+  // Highest] — the two arrays read outward from opposite ends, so the index
+  // is mirrored between them.
+  const rung = Math.min(2, Math.floor(Math.abs(from) / 2));
+  return from <= 0 ? GLYPH.custosUp[2 - rung]! : GLYPH.custosDown[rung]!;
+}
+
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
@@ -747,16 +803,25 @@ export function toSvg(
    *
    * Exsurge answers this by placing the element and asking whether it fit
    * (`positionNotationElement`). This is the same move in tonus's shape: the
-   * emitter draws into two arrays, so a trial run records their lengths, calls
-   * the real renderFigure, reads the resulting x, and truncates both arrays
-   * back. What the drawing code would do IS what the measurement reports,
-   * because it is the drawing code.
+   * emitter draws into arrays, so a trial run records their lengths, calls the
+   * real renderFigure, reads the resulting x, and truncates them back. What
+   * the drawing code would do IS what the measurement reports, because it is
+   * the drawing code.
+   *
+   * EVERY ARRAY THE DRAWING TOUCHES HAS TO ROLL BACK. `behind` was added later
+   * for ledger lines and was not on this list, so every trial run left its
+   * ledgers in place: a note above the staff drew three of them, at the two
+   * positions the measurement tried and the one it settled on, and the strays
+   * landed wherever those attempts happened to fall — including left of the
+   * clef, at x 4.5, where the staff has not started yet.
    */
   const measureFigure = (figure: ChantTabulaRow[], atX: number): number => {
     const bodyMark = body.length;
+    const behindMark = behind.length;
     const placeMark = placements.length;
     const endX = renderFigure(figure, atX);
     body.length = bodyMark;
+    behind.length = behindMark;
     placements.length = placeMark;
     return endX;
   };
@@ -919,9 +984,17 @@ export function toSvg(
       // It wins over the fit test. Where it is absent the layout still decides.
       if (r.width != null && figure[0]!.lineBreak && prevSyllable !== -1) {
         if (r.custos) {
-          const cp = placeGlyph(GLYPH.punctum, x + r.interGlyph,
-            yFor(figure[0]!.staffPosition, L, r), r, "custos", "", r.noteScale * 0.85);
-          if (cp) body.push(cp.svg);
+          const cp = placeGlyph(custosGlyph(figure[0]!.staffPosition),
+            custosX(x, prevLyricRight, r),
+            yFor(figure[0]!.staffPosition, L, r), r, "custos", "",
+            r.noteScale * CUSTOS_FACTOR);
+          if (cp) {
+            // A custos outside the staff needs its ledger like any other
+            // sign at that pitch: it names a note, and a note above or below
+            // the lines is unreadable without one.
+            ledger(figure[0]!.staffPosition, cp.inkLeft, cp.inkRight);
+            body.push(cp.svg);
+          }
         }
         systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
         L.systemY += L.systemHeight;
@@ -955,10 +1028,10 @@ export function toSvg(
     // route through here so the two cannot drift apart.
     const closeSystem = (nextPos: number | null): void => {
       if (r.custos && nextPos != null) {
-        const cx = x - r.staffInterval * 2.1 + r.interGlyph;
-        const p = placeGlyph(GLYPH.punctum, cx, yFor(nextPos, L, r), r,
-                             "custos", "", r.noteScale * 0.85);
-        if (p) body.push(p.svg);
+        const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
+                             yFor(nextPos, L, r), r, "custos", "",
+                             r.noteScale * CUSTOS_FACTOR);
+        if (p) { ledger(nextPos, p.inkLeft, p.inkRight); body.push(p.svg); }
       }
       systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
       system++;
@@ -1127,19 +1200,12 @@ export function toSvg(
         // not finished, and the eye still has to find the next pitch.
         if (r.custos && div !== "::") {
           // The line-end guide naming the next system's first pitch, drawn as
-          // a small punctum at that pitch — Bravura's chant range as baked
-          // carries no custos glyph (see gabc-glyphs.ts). A hooked custos
-          // would read better and needs the bake extended first.
+          // the real custos now that the bake carries one (see gabc-glyphs.ts).
           const nextPos = rows[j]!.staffPosition;
-          const glyph = GLYPH.punctum;
-          // Snug to the barline, not floating after it. `x` has already taken
-          // the divisio's trailing air (2.1 staff intervals), which put the
-          // custos 41-46px past the last note — reading as a stray note rather
-          // than as a sign belonging to the line's end. The books set it tight
-          // against the margin; pulling that air back does the same.
-          const cx = x - r.staffInterval * 2.1 + r.interGlyph;
-          const p = placeGlyph(glyph, cx, yFor(nextPos, L, r), r, "custos", "", r.noteScale * 0.85);
-          if (p) body.push(p.svg);
+
+          const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
+            yFor(nextPos, L, r), r, "custos", "", r.noteScale * CUSTOS_FACTOR);
+          if (p) { ledger(nextPos, p.inkLeft, p.inkRight); body.push(p.svg); }
         }
         systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
         system++;
@@ -1447,9 +1513,18 @@ export function toSvg(
     // stack; a blackletter's flourishes climb into that band, and the numeral
     // landed on top of one. Sitting at the margin the mark clears the letter's
     // reach whatever face draws it, and the books set it there anyway.
-    // Both cases now start at the margin, so there is one x and one anchor.
-    const cx = r.padding;
-    const anchor = "";
+    // CENTRED OVER THE INITIAL when there is one, and left-aligned when there
+    // is not. The stack names the chant the cap opens, so it belongs over that
+    // letter's own width rather than at the margin beside it — and the width
+    // is the letter's real advance, so an M centres over an M and an I over an
+    // I. (It was briefly left-aligned for Jacquard, whose flourishes climb
+    // into the numeral's band; Junicode's capitals do not, and the initial is
+    // Junicode again.)
+    const cx = inMargin
+      ? r.padding + capSize * r.fonts.dropcap.scale
+        * capAdvance(capInitial, r.fonts.dropcap.family) / 2
+      : r.padding;
+    const anchor = inMargin ? 'text-anchor="middle" ' : "";
     // The stack sits ABOVE the cap, not beside it. Its last line lands a clear
     // markSize over the cap's own ink, which is what the books do — "Grad."
     // over "5." over a large Q, each clear of the next.

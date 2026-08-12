@@ -4,7 +4,7 @@
 analysis. It carries the Gregorian repertoire and the theory it was built on:
 it resolves what any day calls for, tunes chant in the ratios it was sung in,
 parses and draws the notation, voices the planets as pitch, and measures each
-chant against the rest.
+chant in comparison.
 
 Everything is computed locally and deterministically: the same question always
 returns the same answer, from data that ships inside the package, with no network

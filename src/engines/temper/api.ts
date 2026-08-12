@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // engines/temper/api — Temperamentum context builder
 // ---------------------------------------------------------------------------
-import { buildRatios, parseScala, getPtolemaicRatios, toRatio } from "./scale.js";
-import type { Scale, ScaleOpts, ScalaFile, RatioResult } from "./scale.js";
+import { buildRatios, parseScala, getPtolemaicRatios, toRatio, wolfOf } from "./scale.js";
+import type { Scale, ScaleOpts, ScalaFile, RatioResult, Lupus } from "./scale.js";
 import { parsePitch, toPitch } from "./pitch.js";
 import type { Pitch, PitchInput } from "./pitch.js";
 import { toStep } from "./step.js";
@@ -80,6 +80,9 @@ export interface Temperamentum {
   intervallum(a: PitchInput, b: PitchInput): Interval;
   neuma(inputs: PitchInput[]): Neume;
   ratio(input: string): RatioResult & { step: Step | null };
+  /** The wolf, or null when no fifths chain built this scale. UNDOCUMENTED:
+   *  the site is its only caller and the shape is still settling. */
+  lupus(): Lupus | null;
   gamut(opts?: GamutOptions): Pitch[];
   modus(mode: number): Modus;
   tonus(opts?: TonusOpts): Tonus;
@@ -193,6 +196,18 @@ export function buildTemper(input?: TemperamentumInput): Temperamentum {
 
     neuma(inputs: PitchInput[]): Neume {
       return buildNeume(inputs, scala);
+    },
+
+    /** The wolf of THIS temperament.
+     *
+     *  Null when the scale was supplied rather than stacked: a Ptolemaic
+     *  genus and a Scala list arrive as ratios, so there is no chain of
+     *  fifths and nothing is left over. Returning a number there would be
+     *  inventing one.
+     */
+    lupus(): Lupus | null {
+      if (scalaOpts.steps != null) return null;
+      return wolfOf(scala.comma);
     },
 
     ratio(input: string): RatioResult & { step: Step | null } {
