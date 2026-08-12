@@ -893,35 +893,14 @@
   }
   /* A settings block that stacks: each row keeps the flex line the flat
      `.settings` gives, and the rows sit one under the other. */
-  /* THE SAME AIR CALENDARIUM PUTS between its date field and its office
-     strip, so the two views read as one layout: measured there at 28px,
-     against 8px here. That view's strip sits in the page body BELOW this
-     cell, so it clears the cell's own padding-bottom (--sp-2) as well; this
-     one sits inside it. sp-6, and the row's own leading makes up the rest:
-     measured, both views put 28px between the control and the strip. */
-  .settings-stack {
-    display: flex; flex-direction: column; align-items: flex-start;
-    /* +4: the row's min-height is --control-h and the select inside it is
-       4px shorter, so the flex gap starts from the row's edge, not the
-       control's. Measured: this puts both views at 28. */
-    gap: calc(var(--sp-6) + 4px);
-  }
-  /* A ROW IS A CONTAINER TOO. The select and button rules use the child
-     combinator on purpose (see the sheet header: `.settings button` would
-     repaint anything nested inside), so wrapping the controls in a row made
-     them grandchildren and every one of those rules stopped applying. The
-     select lost its box, its face and its size. `.settings-row` is named
-     beside `.settings` in each of them rather than loosening the
-     combinator, which would bring the original trap back. */
-  .settings-row {
-    display: flex; flex-wrap: wrap; align-items: center;
-    gap: var(--sp-2) var(--sp-5);
+  /* The track strip, where Calendarium's office strip sits: in the body,
+     under the inputs band, with the same air beneath it. */
+  .track-strip {
+    display: flex; align-items: center; gap: var(--sp-2) var(--sp-5);
     position: relative;
-    /* The same floor a control has. The right column's slider sets its own
-       track to --control-h, so without this the left row took its height
-       from the select alone and the two columns' labels sat 5px apart. */
-    min-height: var(--control-h);
+    margin-bottom: var(--sp-5);
   }
+
   .settings label { display: inline-flex; align-items: center; gap: var(--sp-2); cursor: pointer; }
   /* A select HOLDS a value, so it keeps its box — rule 1. The chevron is drawn
      from two gradients rather than left to the OS: the native one and the date

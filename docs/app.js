@@ -826,7 +826,7 @@ function canticumPanels() {
   if (!state.chant || !state.score) return { left: null, right: null };
   const readings = canticumReadings();
   return {
-    left: el("div", {}, scoreFigure(), similarChants()),
+    left: el("div", {}, trackStrip(), scoreFigure(), similarChants()),
     right: tabPanel({ tabs: readings, active: state.right.canticum, label: "lectio" }),
   };
 }
@@ -878,31 +878,20 @@ function canticum() {
     // tracks sat inline with `notatio` and the strip had to compete with a
     // select for the eye. The strip is the same object as Calendarium's
     // offices, and it now sits where that one does.
-    inputs: el("div", { class: "settings settings-stack" },
-      // NO SET-NAME, matching Calendarium: the date field carries none either,
-      // and the select's own value says what it is ("quadrata", "moderna").
-      // The label also pushed the box 71px right of where Calendarium's sits,
-      // so the two views' first control started in different places.
-      el("div", { class: "settings-row" },
-        el("select", { "aria-label": "notatio",
-          onchange: (e) => { state.notation = e.target.value; render(); } },
-          ...["quadrata", "moderna"].map((v) =>
-            el("option", { value: v, selected: state.notation === v }, v)))),
-      // The three analysis tracks are a SET over one score — independently on,
-      // together deciding what is drawn over the notation.
-      el("div", { class: "settings-row" },
-        el("div", { class: "segset", role: "group", "aria-label": "vestigia" },
-          ...["prosodia", "chironomia", "tonarium"].map((name) => el("button", {
-            type: "button",
-            "aria-pressed": state.tracks.includes(name) ? "true" : "false",
-            onclick: () => {
-              state.tracks = state.tracks.includes(name)
-                ? state.tracks.filter((t) => t !== name) : [...state.tracks, name];
-              render();
-            },
-          }, name))),
-        tracksInfo()),
-    ),
+    // ONE ROW, like Calendarium's. Its office strip is not in this band at
+    // all — it sits in the BODY beneath, and the band holds only the date.
+    // Stacking the tracks here instead made this cell 108px against the other
+    // column's 52, and the grid row sizes to the tallest cell, so the RIGHT
+    // panel's figure was pushed 56px down: the monochord sat 84px below its
+    // controls where the wheel sits 28. The strip moves to the body with it.
+    //
+    // NO SET-NAME, matching Calendarium: the date field carries none either,
+    // and the select's own value says what it is ("quadrata", "moderna").
+    inputs: el("div", { class: "settings" },
+      el("select", { "aria-label": "notatio",
+        onchange: (e) => { state.notation = e.target.value; render(); } },
+        ...["quadrata", "moderna"].map((v) =>
+          el("option", { value: v, selected: state.notation === v }, v)))),
     rightInputs: state.right.canticum === "temperamentum" ? commaSlider()
       : state.right.canticum === "manus" ? hexachordPicker() : null,
     left: panels.left,
@@ -945,6 +934,25 @@ const SCORE_THEME = {
     lyric:      { family: "Junicode", weight: 400, scale: 1.06 },
   },
 };
+
+/** The three analysis tracks: a SET over one score, independently on and
+ *  together deciding what is drawn over the notation. It sits in the BODY,
+ *  where Calendarium puts its office strip, so the two views read alike and
+ *  neither pushes its own inputs band taller than the other's. */
+function trackStrip() {
+  return el("div", { class: "track-strip" },
+    el("div", { class: "segset", role: "group", "aria-label": "vestigia" },
+      ...["prosodia", "chironomia", "tonarium"].map((name) => el("button", {
+        type: "button",
+        "aria-pressed": state.tracks.includes(name) ? "true" : "false",
+        onclick: () => {
+          state.tracks = state.tracks.includes(name)
+            ? state.tracks.filter((t) => t !== name) : [...state.tracks, name];
+          render();
+        },
+      }, name))),
+    tracksInfo());
+}
 
 function scoreFigure() {
   const wrap = el("div", { class: "score" });
