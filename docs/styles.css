@@ -697,6 +697,9 @@
     color: var(--label); margin: 0;
     width: 40ch; max-width: 70vw;
   }
+  /* A block may need a second paragraph (the tonarium draws four things and
+     one paragraph buries the last two). Space them, or they set as one. */
+  .tracks-text + .tracks-text { margin-top: var(--sp-2); }
   /* THE GAP BETWEEN BLOCKS. Up to three tracks stack in one card, each opening
      with its sample; the space before that sample is what separates one track
      from the last. A block can end in prose OR in a run of mark entries, so

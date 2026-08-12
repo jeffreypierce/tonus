@@ -1123,18 +1123,59 @@ function prosodiaMarks() {
     entry(sw(...tent(m("circle", { cx: 9, cy: 3.9, r: 1.8, fill: "none",
       stroke: "#9E2B25", "stroke-width": 0.9 }))),
       "the accent, deferred: it lands on the settling beat"),
+    // NOT "a spoken syllable": nothing here is spoken, it is all sung. The
+    // distinction the mark draws is how MANY notes the syllable carries —
+    // under four it stands as a stem, four or more it becomes a melisma block.
     entry(sw(m("line", { x1: 9, y1: 12, x2: 9, y2: 4, stroke: "#111",
       "stroke-opacity": 0.62, "stroke-width": 1.4 })),
-      "a spoken syllable; height, its notes"),
+      "a syllable of one to three notes. The stem's height is that count"),
     entry(sw(m("line", { x1: 4, y1: 9, x2: 14, y2: 9, stroke: "#111",
       "stroke-opacity": 0.62, "stroke-width": 1.4 })),
-      "a syllable recited on the tenor: it lies flat"),
+      "a syllable held on the reciting note. It lies flat, because "
+      + "recitation does not move"),
     entry(sw(m("path", { d: "M 2 12 L 2 7 L 8 5.5 L 16 8 L 16 12 Z",
       fill: "#111", "fill-opacity": 0.18 })),
-      "a melisma; width, its real span; its note count inside from eight"),
+      "a melisma, four notes or more. The block spans the notes themselves, "
+      + "and its height is their count; from eight the count prints inside"),
     entry(sw(m("line", { x1: 9, y1: 2, x2: 9, y2: 12, stroke: "#111",
       "stroke-opacity": 0.24, "stroke-width": 0.6 })),
-      "a divisio: the text's breath, through both lanes"),
+      "a divisio: a breath in the text, drawn through both lanes"),
+  ];
+}
+
+/** The tonarium's marks. The lane's prose names the rails, the mode line and
+ *  the melody; these are the four marks that carry a claim about a close —
+ *  which a sentence cannot distinguish, because the difference between them
+ *  is a fill and a dash. */
+function tonariumMarks() {
+  const NS = "http://www.w3.org/2000/svg";
+  const sw = (...kids) => {
+    const svg = document.createElementNS(NS, "svg");
+    for (const [k, v] of Object.entries({ class: "key-swatch",
+      viewBox: "0 0 18 14", width: 18, height: 14, "aria-hidden": "true" }))
+      svg.setAttribute(k, v);
+    for (const kid of kids) svg.append(kid);
+    return svg;
+  };
+  const m = (tag, attrs) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  };
+  const entry = (swatch, word) => el("p", { class: "key-entry" }, swatch, " ", word);
+  return [
+    entry(sw(m("path", { d: "M 1 9 H 8 V 4 H 17", fill: "none", stroke: "#9E2B25",
+      "stroke-width": 1.3 })),
+      "the mode steps, and the melody stays inside it"),
+    entry(sw(m("path", { d: "M 1 9 H 8 V 4 H 17", fill: "none", stroke: "#9E2B25",
+      "stroke-width": 1.3, "stroke-dasharray": "2.5 2" })),
+      "the same melody, sung from a different degree of the scale"),
+    entry(sw(m("circle", { cx: 9, cy: 7, r: 2.4, fill: "#111",
+      "fill-opacity": 0.8 })),
+      "a close that comes to rest"),
+    entry(sw(m("circle", { cx: 9, cy: 7, r: 2.4, fill: "none", stroke: "#111",
+      "stroke-opacity": 0.8, "stroke-width": 1.1 })),
+      "a close that hangs, waiting for the phrase after it"),
   ];
 }
 
@@ -1180,11 +1221,12 @@ function tracksInfo() {
         + "where the voice does. A cadence re-inks at full strength, and "
         + "below confidence nothing is drawn at all."),
       el("p", { class: "key-entry" }, marks.text("A"), " ",
-        "an arsis: the rising beat, the hand's lift; the wave crests"),
+        "arsis: the hand lifts and the voice rises. The ribbon crests"),
       el("p", { class: "key-entry" }, marks.text("T"), " ",
-        "a thesis: the settling beat; the wave troughs"),
+        "thesis: the hand falls and the voice settles. The ribbon troughs"),
       el("p", { class: "key-entry" }, marks.text("PT"), " ",
-        "a passing thesis: a one-note settling the hand moves through shallow"),
+        "a passing thesis: a settling of one note, which the hand moves "
+        + "through rather than resting on. The trough is shallow"),
     ],
     tonarium: () => [
       sample((s) => {
@@ -1193,10 +1235,21 @@ function tracksInfo() {
         line(s, { d: "M 44 2 V 12", stroke: "#111", "stroke-width": 1.4 });
       }),
       el("p", { class: "tracks-name" }, "tonarium"),
-      el("p", { class: "tracks-text" }, "The line is the tonal centre "
-        + "moving, event by event, along the piece: a cadence lands it, a "
-        + "modulation moves it. It is not the census's aggregate ranking, "
-        + "which has no time axis."),
+      // THE OLD TEXT NAMED ONE MARK AND SPENT ITS SECOND SENTENCE ON A
+      // NEGATION (what the lane is not), which needs the census in the
+      // reader's head before it says anything. The lane draws four things;
+      // they are named here in the order the eye meets them.
+      el("p", { class: "tracks-text" }, "Which mode governs the melody, "
+        + "phrase by phrase. The four rails are the four finals (D, E, F, G "
+        + "from the bottom), and the red line steps between them as the mode "
+        + "changes, its numeral above. A solid step is an inflection within "
+        + "the mode. A dashed one is the same shape sung from another degree."),
+      el("p", { class: "tracks-text" }, "The grey trace behind it is the "
+        + "melody itself, and it thickens where the voice moves faster. "
+        + "Where a phrase closes, its last few notes darken: that is a "
+        + "cadence, named beneath by its own shape and by how often chants "
+        + "in this mode end that way."),
+      ...tonariumMarks(),
     ],
   };
   return popover("how to read the tracks", () => {
