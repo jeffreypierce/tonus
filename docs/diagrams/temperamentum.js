@@ -80,9 +80,14 @@ const pointAt = (a, r) => [CX + r * Math.cos(a), CY + r * Math.sin(a)];
  * @param {string} [opts.tuning]
  * @param {number} [opts.comma]     the tempering fraction, live from the slider
  * @param {object} [opts.weights]   pc → share, from imprint.pcDistribution
- * @param {number} [opts.selected]  the chosen degree's pc; null means the final
+ * @param {string} [opts.selected]  the chosen degree's row key (its spn).
+ *                                  Absent means the final: there is always a
+ *                                  selection, so the resting figure shows the
+ *                                  mode's own spine.
+ * @param {(key: string) => void} [opts.onSelect]
  */
-export function wheel(tonus, { mode = 7, tuning, comma, weights, selected = null } = {}) {
+export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
+  onSelect } = {}) {
   // ONE TURN IS ONE OCTAVE, and a mode's ambitus is not: the plagal modes
   // start a fourth below their final (mode 4 opens at −203.9¢) and every mode
   // runs past the diapason. Folding by cents would stack those onto the same
@@ -123,6 +128,19 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected = null
   // same weights, so a degree that is heavy on one is heavy on the other.
   const wmax = Math.max(...Object.values(weights ?? {}), 1e-6);
 
+  // THE SELECTION IS ALWAYS SOMETHING. `selected` absent means the FINAL, so
+  // the resting figure shows the mode's spine rather than nothing at all —
+  // and both drawings resolve it once, here, so they cannot disagree.
+  //
+  // The chorda figures rest on the TENOR instead (chorda.js, four call
+  // sites). They are drawings of a scale, where the reciting note is the one
+  // a reader wants first; this is a drawing of a MODE, and a mode is reckoned
+  // from its final. The two differ only until the reader clicks, after which
+  // one selection drives all of them — but the difference is real and worth
+  // settling in context rather than by quietly changing four defaults.
+  const finalRow = rows.find((r) => r.role === "finalis") ?? rows[0];
+  const sel = rows.find((r) => r.key === selected) ?? finalRow;
+
   // ── the degrees ──
   // A dot's AREA carries how much the chant sings the degree, so the radius
   // goes as the root: doubling the area is doubling the time spent there.
@@ -144,10 +162,17 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected = null
       "stroke-opacity": sung ? null : STRATUM.letters,
       "stroke-width": sung ? null : STROKE.fine * GRID,
     }));
+    // THE CHOSEN DEGREE WEARS A RING, not a colour: the final is already
+    // rubrica, and recolouring the selection would make those two claims
+    // fight whenever the final IS the selection, which is the resting state.
+    if (r.pc === sel.pc) {
+      svg.append(n("circle", {
+        cx: sc(x), cy: sc(y), r: 8, fill: "none", stroke: RUBRICA,
+        "stroke-width": STROKE.firm * GRID,
+      }));
+    }
+    hit(svg, { x, y, row: r, sel, onSelect, finalKey: finalRow.key });
 
-    // The letter outside, its ratio stacked with it. BELOW everywhere except
-    // the top arc, where below would put the ratio between the letter and the
-    // ring — the one place the stack has to invert.
     // THE LETTER IS ALWAYS NEAREST THE RING, and the ratio always outside it.
     // On the top arc that means the ratio goes ABOVE the letter — putting it
     // below would slide it between the letter and the ring, which reads as a
@@ -173,9 +198,29 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected = null
   }
 
   // ── the string beneath ──
-  drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, selected });
+  drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel, onSelect });
 
   return svg;
+}
+
+/** A degree's click target, over its dot.
+ *
+ *  The dots run from 2 to 6 units and a pointer does not, so the target is a
+ *  transparent circle of its own — big enough to hit, invisible either way.
+ *  CLICKING THE SELECTED DEGREE RETURNS TO THE FINAL: one law, so a reader
+ *  never has to hunt for the way back to the resting figure.
+ */
+function hit(svg, { x, y, row, sel, onSelect, finalKey }) {
+  if (!onSelect) return;
+  const t = n("circle", {
+    cx: sc(x), cy: sc(y), r: 11, fill: "transparent",
+    style: "cursor:pointer",
+  });
+  t.addEventListener("click", () => {
+    onSelect(row.key === sel.key ? finalKey : row.key);
+  });
+  t.append(n("title", {}, row.litera));
+  svg.append(t);
 }
 
 /** Cents to a place along the string, linear across the octave. */
@@ -189,17 +234,13 @@ const stringX = (c) => X0 + (norm(c) / 1200) * (X1 - X0);
  * read as a span. One figure, two drawings: the wheel says where, the string
  * says how far.
  */
-function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, selected }) {
-  // THE SELECTION IS ALWAYS SOMETHING: null means the final, so the resting
-  // figure shows the mode's own spine rather than nothing at all.
+function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel, onSelect }) {
   const finalPc = rows.find((r) => r.role === "finalis")?.pc ?? rows[0].pc;
-  const sel = selected ?? finalPc;
-  const selRow = rows.find((r) => r.pc === sel);
 
   // The two either side in cents order, wrapping: an interval's partners are
   // its neighbours on the ring, and the ring has no first or last.
   const byCents = [...rows].sort((a, b) => norm(a.cents) - norm(b.cents));
-  const si = byCents.findIndex((r) => r.pc === sel);
+  const si = byCents.findIndex((r) => r.pc === sel.pc);
   const nbrs = new Set(si < 0 ? [] : [
     byCents[(si + byCents.length - 1) % byCents.length].pc,
     byCents[(si + 1) % byCents.length].pc,
@@ -229,7 +270,7 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sele
   for (let i = 0; i < rows.length; i++) {
     for (let k = i + 1; k < rows.length; k++) {
       const a = rows[i], b = rows[k];
-      const touchesSel = a.pc === sel || b.pc === sel;
+      const touchesSel = a.pc === sel.pc || b.pc === sel.pc;
       const touchesNbr = nbrs.has(a.pc) || nbrs.has(b.pc);
       if (!touchesSel && !touchesNbr) continue;
       // WHAT THE INTERVAL IS, from the library. A cents window would be a
@@ -270,6 +311,14 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sele
       "stroke-opacity": sung ? null : STRATUM.letters,
       "stroke-width": sung ? null : STROKE.fine * GRID,
     }));
+    if (r.pc === sel.pc) {
+      svg.append(n("circle", {
+        cx: sc(x), cy: sc(STRING_Y), r: 7, fill: "none", stroke: RUBRICA,
+        "stroke-width": STROKE.firm * GRID,
+      }));
+    }
+    hit(svg, { x, y: STRING_Y, row: r, sel, onSelect,
+      finalKey: rows.find((q) => q.pc === finalPc)?.key });
     svg.append(n("text", {
       x: sc(x), y: sc(STRING_Y + 26), "text-anchor": "middle",
       "font-family": HOUSE_SERIF, "font-size": STEP.label,
