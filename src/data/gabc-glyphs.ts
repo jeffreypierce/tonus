@@ -59,19 +59,20 @@ export const GLYPH = {
   // beside a real barline it read as a doubled bar. Hence the bbox check in
   // the extractor, and hence these names carry their SMuFL ones.)
   //
-  // EA0A IS THE CUSTOS THE BOOKS PRINT: a lozenge head with the stroke rising
-  // off it, the sign at the end of every line in the Liber. THREE neighbours
-  // were tried before it and none of them is one:
-  //   EA04-EA09 (60 wide) are bare ledger STEMS. EA05 drew a 1.9px vertical
-  //     stroke and nothing else.
-  //   EA02 (613 wide) is a liquescent ZIGZAG — a lightning bolt at the line's
-  //     end.
-  //   EA00 (285 wide) is the ornate Solesmes curl with two dots. Authentic,
-  //     and unreadable at score size: it renders as an "S".
-  // A codepoint's SMuFL name is not enough to identify it. Every one of those
-  // was caught by rendering the outline and LOOKING at it, which is the check
-  // to make before trusting anything in this block.
-  custos: "EA0A",
+  // THE CUSTOS, six cuts: a small head ON THE BASELINE with a stem running
+  // AWAY from the staff. The stem's length is how far the pitch sits from the
+  // staff's middle, which is what Lowest/Low/Middle name, and the sign is
+  // narrow (60 units) because the stem IS the sign.
+  //
+  // Three wrong guesses came before this, each from reading a SMuFL name and
+  // trusting it: EA02 is a liquescent zigzag, EA00 the ornate Solesmes
+  // curl-and-dots (authentic, unreadable at score size), EA0A a lozenge with a
+  // rising stroke that draws three and a half times a notehead's width. This
+  // block was dismissed as "bare ledger stems" on the strength of its 60-unit
+  // width — the narrowness is the point. Render an outline against a baseline
+  // before trusting any of it.
+  custosUp: ["EA04", "EA05", "EA06"] as const,     // lowest, low, middle
+  custosDown: ["EA07", "EA08", "EA09"] as const,   // middle, high, highest
   // note components
   podatusLower: "E9B0",
   podatusUpper: "E9B1",

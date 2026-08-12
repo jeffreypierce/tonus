@@ -388,22 +388,42 @@ function capAdvance(letter: string, family: string): number {
  *  set from that rather than from wherever the cursor happens to be. */
 function custosX(x: number, prevLyricRight: number, r: Resolved): number {
   // The staff line is drawn to `systemMaxX - padding`, and systemMaxX is
-  // pushed as `max(x, prevLyricRight) + padding` — so the edge IS that max,
-  // and subtracting the padding again would set the custos a margin short.
+  // pushed as `max(x, prevLyricRight) + padding` — so the edge IS that max.
+  //
+  // The custos ENDS at that edge rather than starting a fixed way inside it:
+  // it is the last thing on the line and should meet the line's end, which is
+  // where the books put it. All six cuts share one width (60 units), so the
+  // inked width is the same whichever is drawn.
   const edge = Math.max(x, prevLyricRight);
-  return edge - r.staffInterval * 1.35;
+  const g = GLYPHS[GLYPH.custosUp[0]];
+  const inked = g ? (g.bbox[2] - g.bbox[0]) * r.glyphScale * r.noteScale * 0.85 : 0;
+  return edge - inked;
 }
 
-/** The custos: ONE SIGN, whichever way the next pitch lies.
+/** The custos for a pitch: which of the six cuts.
  *
- *  Bravura's chant range has a stem-up and a stem-down family, and the
- *  stem-down cuts turned out to be either bare ledger stems or a liquescent
- *  zigzag — see gabc-glyphs.ts. The plain hooked sign at EA00 is what the
- *  books print, and it reads the same at any height, so there is nothing to
- *  choose between: the parameter is gone rather than left taking a value it
- *  cannot act on. */
-function custosGlyph(): string {
-  return GLYPH.custos;
+ *  EA04-EA09 are COMPLETE signs — a skinny neume, head and stroke in one
+ *  closed shape, 60 units wide. The narrowness is the sign, not a missing
+ *  half: it is the mark the books set at the right of the staff.
+ *
+ *  The stroke runs AWAY from the staff, so a pitch below the middle takes a
+ *  stem-up cut and one above takes stem-down, and the three lengths each way
+ *  reach back toward the staff as the pitch gets further from it.
+ *
+ *  `staffPosition` counts upward from the bottom line, so 4 is the middle. */
+function custosGlyph(staffPosition: number): string {
+  const from = staffPosition - 4;
+  // THE NAMES SAY THE MAPPING, and the heights agree with them:
+  //   PosMiddle  416  the shortest stem — the pitch is already at the middle
+  //   PosLow     541
+  //   PosLowest  666  the longest — furthest out, most stem to draw
+  // So the stem grows with the DISTANCE from the middle, and the arrays run
+  // [Lowest, Low, Middle] with rung 0 at the far edge.
+  // custosUp runs [Lowest, Low, Middle] and custosDown [Middle, High,
+  // Highest] — the two arrays read outward from opposite ends, so the index
+  // is mirrored between them.
+  const rung = Math.min(2, Math.floor(Math.abs(from) / 2));
+  return from <= 0 ? GLYPH.custosUp[2 - rung]! : GLYPH.custosDown[rung]!;
 }
 
 const esc = (s: string): string =>
@@ -951,9 +971,10 @@ export function toSvg(
       // It wins over the fit test. Where it is absent the layout still decides.
       if (r.width != null && figure[0]!.lineBreak && prevSyllable !== -1) {
         if (r.custos) {
-          const cp = placeGlyph(custosGlyph(),
+          const cp = placeGlyph(custosGlyph(figure[0]!.staffPosition),
             custosX(x, prevLyricRight, r),
-            yFor(figure[0]!.staffPosition, L, r), r, "custos", "", r.noteScale * 0.85);
+            yFor(figure[0]!.staffPosition, L, r), r, "custos", "",
+            r.noteScale * 0.85);
           if (cp) body.push(cp.svg);
         }
         systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
@@ -988,9 +1009,9 @@ export function toSvg(
     // route through here so the two cannot drift apart.
     const closeSystem = (nextPos: number | null): void => {
       if (r.custos && nextPos != null) {
-        const p = placeGlyph(custosGlyph(), custosX(x, prevLyricRight, r),
-                             yFor(nextPos, L, r), r,
-                             "custos", "", r.noteScale * 0.85);
+        const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
+                             yFor(nextPos, L, r), r, "custos", "",
+                             r.noteScale * 0.85);
         if (p) body.push(p.svg);
       }
       systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
@@ -1162,8 +1183,8 @@ export function toSvg(
           // The line-end guide naming the next system's first pitch, drawn as
           // the real custos now that the bake carries one (see gabc-glyphs.ts).
           const nextPos = rows[j]!.staffPosition;
-          const glyph = custosGlyph();
-          const p = placeGlyph(glyph, custosX(x, prevLyricRight, r),
+
+          const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
             yFor(nextPos, L, r), r, "custos", "", r.noteScale * 0.85);
           if (p) body.push(p.svg);
         }
