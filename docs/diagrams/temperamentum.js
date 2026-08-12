@@ -36,6 +36,29 @@ const GRID = 2;
 const CX = 220, CY = 206, R = 128;
 const LABEL_R = R + 30;
 
+// The string, under the wheel in the same box. Its bridges sit inside the
+// wheel's own width so the two figures read as one drawing rather than a
+// figure and a ruler that happen to share a column.
+//
+// THE FINAL SITS AT BOTH BRIDGES. A string sounds its whole length and its
+// half, so the octave is the same degree twice — and drawing the final at the
+// left bridge alone would leave an arch springing from nothing at the right.
+// The degrees between run in CENTS order, which is not the row order: mode 4
+// opens on D a tone BELOW its final, and that D belongs at 996¢, near the far
+// bridge, not first.
+// STRING_Y CLEARS THE WHEEL'S LOWEST INK plus everything the string draws
+// upward — a fifth arches 74 above it and its name sits on a plate above
+// that. Measured: the wheel bottoms at 364, the tallest arch and its label
+// reached 351 from a string at 470, so 13 short. 490 clears it with air.
+const X0 = 40, X1 = 400, STRING_Y = 490;
+
+// An interval's arch height, by what the LIBRARY calls it. The lab keyed
+// these off cents windows (m3 [270,340] and so on), which is a second opinion
+// about naming that intervallum already holds — and a window drifts under
+// temperament where a name does not. Only the four consonances arch; the rest
+// of the pairs are silent, which is what keeps the figure readable.
+const ARCH_H = { m3: 26, M3: 40, P4: 56, P5: 74 };
+
 function n(tag, attrs, text) {
   const e = document.createElementNS(NS, tag);
   for (const k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
@@ -59,7 +82,7 @@ const pointAt = (a, r) => [CX + r * Math.cos(a), CY + r * Math.sin(a)];
  * @param {object} [opts.weights]   pc → share, from imprint.pcDistribution
  * @param {number} [opts.selected]  the chosen degree's pc; null means the final
  */
-export function wheel(tonus, { mode = 7, tuning, comma, weights } = {}) {
+export function wheel(tonus, { mode = 7, tuning, comma, weights, selected = null } = {}) {
   // ONE TURN IS ONE OCTAVE, and a mode's ambitus is not: the plagal modes
   // start a fourth below their final (mode 4 opens at −203.9¢) and every mode
   // runs past the diapason. Folding by cents would stack those onto the same
@@ -76,10 +99,10 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights } = {}) {
   if (!rows.length) return null;
 
   const svg = n("svg", {
-    class: "temper-wheel", viewBox: "0 8 440 396", xmlns: NS,
+    class: "temper-wheel", viewBox: "0 8 440 550", xmlns: NS,
     role: "img",
-    "aria-label": `Mode ${mode}, its degrees placed by cents around the octave`
-      + ", the final at the top",
+    "aria-label": `Mode ${mode} twice: its degrees placed by cents around the`
+      + " octave, and the same degrees along a divided string beneath",
   });
 
   // ── the ring, and the equal grid the ±æq. numbers refer to ──
@@ -96,13 +119,16 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights } = {}) {
     }));
   }
 
+  // ONE SCALE FOR BOTH DRAWINGS: the wheel's dots and the string's read the
+  // same weights, so a degree that is heavy on one is heavy on the other.
+  const wmax = Math.max(...Object.values(weights ?? {}), 1e-6);
+
   // ── the degrees ──
   // A dot's AREA carries how much the chant sings the degree, so the radius
   // goes as the root: doubling the area is doubling the time spent there.
   // A degree the scale has and the chant never sings draws OPEN — absent is
   // not the same as zero, and a filled dot at minimum size would claim a
   // weight the chant does not have.
-  const wmax = Math.max(...Object.values(weights ?? {}), 1e-6);
   for (const r of rows) {
     const a = angleOf(r.cents);
     const [x, y] = pointAt(a, R);
@@ -146,5 +172,146 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights } = {}) {
     }
   }
 
+  // ── the string beneath ──
+  drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, selected });
+
   return svg;
+}
+
+/** Cents to a place along the string, linear across the octave. */
+const stringX = (c) => X0 + (norm(c) / 1200) * (X1 - X0);
+
+/**
+ * The divided string, under the wheel and in the same SVG.
+ *
+ * The wheel shows a degree's PLACE in the turn; the string shows the same
+ * degrees laid flat, where an interval can arch between two of them and be
+ * read as a span. One figure, two drawings: the wheel says where, the string
+ * says how far.
+ */
+function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, selected }) {
+  // THE SELECTION IS ALWAYS SOMETHING: null means the final, so the resting
+  // figure shows the mode's own spine rather than nothing at all.
+  const finalPc = rows.find((r) => r.role === "finalis")?.pc ?? rows[0].pc;
+  const sel = selected ?? finalPc;
+  const selRow = rows.find((r) => r.pc === sel);
+
+  // The two either side in cents order, wrapping: an interval's partners are
+  // its neighbours on the ring, and the ring has no first or last.
+  const byCents = [...rows].sort((a, b) => norm(a.cents) - norm(b.cents));
+  const si = byCents.findIndex((r) => r.pc === sel);
+  const nbrs = new Set(si < 0 ? [] : [
+    byCents[(si + byCents.length - 1) % byCents.length].pc,
+    byCents[(si + 1) % byCents.length].pc,
+  ]);
+
+  // the string, between its bridges
+  for (const x of [X0, X1]) {
+    svg.append(n("line", {
+      x1: sc(x), y1: sc(STRING_Y - 12), x2: sc(x), y2: sc(STRING_Y + 12),
+      stroke: INK, "stroke-opacity": STRATUM.cadence,
+      "stroke-width": STROKE.heavy * GRID,
+    }));
+  }
+  svg.append(n("line", {
+    x1: sc(X0), y1: sc(STRING_Y), x2: sc(X1), y2: sc(STRING_Y),
+    stroke: INK, "stroke-opacity": STRATUM.wave, "stroke-width": STROKE.fine * GRID,
+  }));
+
+  // ── the arches, spoken for the selection ──
+  // The selected degree's intervals spring ABOVE in rubrica; its two
+  // neighbours' hang BELOW in light ink. Two registers, so they cannot
+  // overlap, and everything else is silent — the full set of consonances
+  // across seven degrees is more lines than a reader can hold.
+  //
+  // Labels are COLLECTED and drawn after every arc, so no line strikes a word.
+  const plates = [];
+  for (let i = 0; i < rows.length; i++) {
+    for (let k = i + 1; k < rows.length; k++) {
+      const a = rows[i], b = rows[k];
+      const touchesSel = a.pc === sel || b.pc === sel;
+      const touchesNbr = nbrs.has(a.pc) || nbrs.has(b.pc);
+      if (!touchesSel && !touchesNbr) continue;
+      // WHAT THE INTERVAL IS, from the library. A cents window would be a
+      // second opinion about naming, and it drifts under temperament.
+      const iv = tonus.temperamentum({ mode, ...(tuning ? { tuning } : {}),
+        ...(comma != null ? { comma } : {}) }).intervallum(a.spn, b.spn);
+      const h = ARCH_H[iv?.class];
+      if (!h) continue;
+      const [xa, xb] = [stringX(a.cents), stringX(b.cents)].sort((p, q) => p - q);
+      const under = !touchesSel;
+      const hgt = under ? h * 0.72 : h;
+      svg.append(n("path", {
+        d: `M ${sc(xa)} ${sc(STRING_Y)} A ${sc((xb - xa) / 2)} ${sc(hgt)} 0 0 `
+          + `${under ? 0 : 1} ${sc(xb)} ${sc(STRING_Y)}`,
+        fill: "none",
+        stroke: touchesSel ? RUBRICA : INK,
+        "stroke-opacity": touchesSel ? STRATUM.label : STRATUM.rail,
+        "stroke-width": (touchesSel ? STROKE.firm : STROKE.fine) * GRID,
+      }));
+      if (touchesSel) {
+        plates.push({ x: (xa + xb) / 2, y: STRING_Y - hgt - 5, text: iv.nomen });
+      }
+    }
+  }
+
+  // ── the degrees on the string ──
+  for (const r of rows) {
+    const x = stringX(r.cents);
+    const w = weights?.[r.pc] ?? 0;
+    const sung = w > 0;
+    const isFinal = r.role === "finalis";
+    svg.append(n("circle", {
+      cx: sc(x), cy: sc(STRING_Y),
+      r: sc(sung ? 2 + Math.sqrt(w / wmax) * 3 : 2),
+      fill: sung ? (isFinal ? RUBRICA : INK) : "none",
+      "fill-opacity": sung && !isFinal ? STRATUM.letters : null,
+      stroke: sung ? null : INK,
+      "stroke-opacity": sung ? null : STRATUM.letters,
+      "stroke-width": sung ? null : STROKE.fine * GRID,
+    }));
+    svg.append(n("text", {
+      x: sc(x), y: sc(STRING_Y + 26), "text-anchor": "middle",
+      "font-family": HOUSE_SERIF, "font-size": STEP.label,
+      fill: isFinal ? RUBRICA : INK,
+      "fill-opacity": isFinal ? null : STRATUM.letters,
+    }, r.litera));
+  }
+
+  // THE DIAPASON, AT THE FAR BRIDGE. A string sounds its whole length and its
+  // half, so the octave is the final again and the right bridge is not a bare
+  // end. It is drawn plainly, not rubricated: the final proper wears the red,
+  // and two red dots would read as two claims where there is one degree.
+  const fin = rows.find((r) => r.pc === finalPc);
+  if (fin) {
+    const w = weights?.[fin.pc] ?? 0;
+    svg.append(n("circle", {
+      cx: sc(X1), cy: sc(STRING_Y),
+      r: sc(w > 0 ? 2 + Math.sqrt(w / wmax) * 3 : 2),
+      fill: w > 0 ? INK : "none",
+      "fill-opacity": w > 0 ? STRATUM.letters : null,
+      stroke: w > 0 ? null : INK,
+      "stroke-opacity": w > 0 ? null : STRATUM.letters,
+      "stroke-width": w > 0 ? null : STROKE.fine * GRID,
+    }));
+    svg.append(n("text", {
+      x: sc(X1), y: sc(STRING_Y + 26), "text-anchor": "middle",
+      "font-family": HOUSE_SERIF, "font-size": STEP.label,
+      fill: INK, "fill-opacity": STRATUM.letters,
+    }, fin.litera));
+  }
+
+  // ── the labels, last, each on its own paper plate ──
+  for (const pl of plates) {
+    const wPlate = pl.text.length * 5.8 + 7;
+    svg.append(n("rect", {
+      x: sc(pl.x - wPlate / 2), y: sc(pl.y - 9), width: sc(wPlate), height: 13,
+      rx: 2, fill: "var(--paper, #FDFDFC)",
+    }));
+    svg.append(n("text", {
+      x: sc(pl.x), y: sc(pl.y), "text-anchor": "middle",
+      "font-family": HOUSE_SERIF, "font-size": STEP.micro,
+      fill: RUBRICA,
+    }, pl.text));
+  }
 }
