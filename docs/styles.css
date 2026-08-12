@@ -914,6 +914,13 @@
   /* A settings block that stacks: each row keeps the flex line the flat
      `.settings` gives, and the rows sit one under the other. */
   .settings-stack { display: flex; flex-direction: column; align-items: flex-start; }
+  /* A ROW IS A CONTAINER TOO. The select and button rules use the child
+     combinator on purpose (see the sheet header: `.settings button` would
+     repaint anything nested inside), so wrapping the controls in a row made
+     them grandchildren and every one of those rules stopped applying. The
+     select lost its box, its face and its size. `.settings-row` is named
+     beside `.settings` in each of them rather than loosening the
+     combinator, which would bring the original trap back. */
   .settings-row {
     display: flex; flex-wrap: wrap; align-items: center;
     gap: var(--sp-2) var(--sp-5);
@@ -929,7 +936,9 @@
      picker's calendar glyph were the only system-drawn marks on a page that
      draws everything else itself. */
   .settings > select,
-  .settings > button {
+  .settings-row > select,
+  .settings > button,
+  .settings-row > button {
     font-family: var(--mono);
     font-size: var(--caption);
     color: var(--ink);
@@ -949,7 +958,8 @@
      background rather than masked: the colour is therefore stated once here
      and again on hover, which is the price of putting a mark on this element
      at all. It sits in the padding the select already reserved. */
-  .settings > select {
+  .settings > select,
+  .settings-row > select {
     appearance: none; -webkit-appearance: none;
     padding-right: var(--sp-7);
     background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 150 226%22%3E%3Cg transform=%22translate(0 113) scale(1 -1)%22%3E%3Cpath d=%22M0 0C0 -1 0 -4 2 -6L69 -106C71 -110 74 -113 75 -113C77 -113 78 -110 82 -106L149 -5C150 -2 150 -1 150 0C150 2 149 5 148 7C144 12 81 109 81 109C78 112 76 113 75 113C72 113 71 112 70 109C70 109 5 10 3 6C0 4 0 2 0 0Z%22 fill=%22%23111111%22/%3E%3C/g%3E%3C/svg%3E");
@@ -958,15 +968,20 @@
     background-repeat: no-repeat;
   }
   .settings > button:hover,
+  .settings-row > button:hover,
   /* Hover darkens the EDGE. The diamond does not change: it already rests at
      full ink, and a second copy of the same image here would be 400 characters
      of URI restating what the resting rule says. */
-  .settings > select:hover { border-color: var(--ink); }
+  .settings > select:hover,
+  .settings-row > select:hover { border-color: var(--ink); }
   /* A setting that is ON darkens its edge AND its text — two channels, so the
      state does not live in colour alone. */
-  .settings > button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .settings > button[aria-pressed="true"],
+  .settings-row > button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); font-weight: 600; }
   .settings > select:focus-visible,
-  .settings > button:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
+  .settings-row > select:focus-visible,
+  .settings > button:focus-visible,
+  .settings-row > button:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
 
   /* ── the temperament slider ──
      One axis, not six names: the fraction of the comma taken off each fifth,
