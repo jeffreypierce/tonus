@@ -195,6 +195,7 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
   // the selection, so it does not brighten with a click — but the hub names
   // its size, and the size is what the slider changes.
   const lupus = T.lupus?.();
+  let wolfEnds = null;
   if (lupus) {
     const finC = T.cents[sel.pc] != null ? T.cents[finalRow.pc] : 0;
     const relOf = (pc) => norm(T.cents[pc] - finC);
@@ -205,69 +206,30 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
       stroke: INK, "stroke-opacity": STRATUM.rail,
       "stroke-width": STROKE.fine, "stroke-dasharray": "4 4",
     }));
+    wolfEnds = [wx1, wy1, wx2, wy2];
   }
 
-  const hubPlates = [];
-
-  // ── THE HUB: what the slider is doing, in three lines ──
-  // Over the star's crossings, on a paper plate, because that is the one part
-  // of the ring the chords leave empty and because the fifth IS the star: the
-  // number names the thing those lines are drawn from.
+  // NO HUB. Three lines of numbers over the star's crossings read as a
+  // caption pinned to the middle of a figure, and the two of them a reader
+  // wants are already elsewhere: the fifth is the slider's own readout, and
+  // the wolf's size belongs beside the wolf.
   //
-  // Three lines and nothing else. The fifth spelled as the theorists wrote it,
-  // the fifth measured, and the wolf — which is the fifth's cost. Narrow the
-  // eleven and the twelfth pays for it, so the two numbers move together and
-  // belong in one plate.
-  {
-    const just = justTable(T);
-    // MEASURED FROM THE SCALE, not assumed: C up to G in the built table is
-    // the fifth this temperament actually makes.
-    const fifthC = norm(T.cents[7] - T.cents[0]);
-    const spelled = commaForm(fifthC, just);
-    const lines = [];
-    // At Pythagorean the spelling IS "3:2" and the line below already says
-    // 702.0¢, so printing both says one thing twice. The spelling earns its
-    // line only when it has something to add — which is the moment the
-    // slider leaves zero, and exactly when a reader wants it.
-    if (spelled && spelled !== "3:2") lines.push(spelled);
-    lines.push(`the fifth · ${fifthC.toFixed(1)}¢`);
-    if (lupus) {
-      lines.push(`the wolf · ${lupus.cents.toFixed(0)}¢ · `
-        + `${lupus.fromPure > 0 ? "+" : "\u2212"}${Math.abs(lupus.fromPure).toFixed(0)} from 3:2`);
-    }
-    const LH = 15;
-    const hubY = CY - (lines.length - 1) * LH / 2;
-    lines.forEach((text, i) => {
-      const t = n("text", {
-        x: sc(CX), y: sc(hubY + i * LH), "text-anchor": "middle",
-        "font-family": HOUSE_SERIF,
-        "font-size": i === 0 ? STEP.label : STEP.caption,
-        fill: INK, "fill-opacity": i === 0 ? STRATUM.letters : STRATUM.rail,
-      }, text);
-      svg.append(t);
-      hubPlates.push(t);
-    });
-  }
-  // ONE PLATE UNDER ALL THREE LINES, sized on the next frame for the reason
-  // the arch labels are: getBBox reads zero before layout. The chords cross
-  // exactly here — that is what makes the middle the only empty part of the
-  // ring — so without it they strike straight through the numbers.
-  if (hubPlates.length && typeof requestAnimationFrame === "function") {
-    const plate = n("rect", { rx: 3, fill: "var(--paper, #FDFDFC)" });
-    svg.insertBefore(plate, hubPlates[0]);
-    requestAnimationFrame(() => {
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      for (const t of hubPlates) {
-        const b = t.getBBox();
-        if (!b.width) return;
-        x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y);
-        x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height);
-      }
-      plate.setAttribute("x", sc(x0 - 6));
-      plate.setAttribute("y", sc(y0 - 4));
-      plate.setAttribute("width", sc(x1 - x0 + 12));
-      plate.setAttribute("height", sc(y1 - y0 + 8));
-    });
+  // THE WOLF'S SIZE RIDES ITS LINE, at the midpoint and off to one side, so
+  // it travels as the line does — the number and the thing it measures move
+  // together, which is what makes the slider legible.
+  if (lupus) {
+    const mid = [(wolfEnds[0] + wolfEnds[2]) / 2, (wolfEnds[1] + wolfEnds[3]) / 2];
+    // Perpendicular to the chord, toward the ring's centre: the label sits
+    // off the line rather than on it, and the chord is a diameter's worth of
+    // clear paper either side.
+    const dx = wolfEnds[2] - wolfEnds[0], dy = wolfEnds[3] - wolfEnds[1];
+    const len = Math.hypot(dx, dy) || 1;
+    const OFF = 13;
+    svg.append(n("text", {
+      x: sc(mid[0] - (dy / len) * OFF), y: sc(mid[1] + (dx / len) * OFF),
+      "text-anchor": "middle", "font-family": HOUSE_SERIF,
+      "font-size": STEP.caption, fill: INK, "fill-opacity": STRATUM.margin,
+    }, `${lupus.cents.toFixed(0)}¢`));
   }
 
   // ── THE VERNIERS: the travel, magnified ──
@@ -312,23 +274,25 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
     svg.append(n("path", {
       d: `M ${sc(gx0)} ${sc(gy0)} A ${R + 10} ${R + 10} 0 0 ${sc(sweep)} `
         + `${sc(gx1)} ${sc(gy1)}`,
-      fill: "none", stroke: INK, "stroke-opacity": STRATUM.rail,
-      "stroke-width": STROKE.hair,
+      fill: "none", stroke: INK, "stroke-opacity": STRATUM.bracket,
+      // heavy on the grid: the lab's 2.2, which is this rung to a hundredth.
+      "stroke-width": STROKE.heavy * GRID,
     }));
-    // The Pythagorean end, heavier: the tuning the road starts from.
+    // The Pythagorean end: where pure fifths put the degree, and the mark the
+    // needle is read against. Full height, like the needle.
     const [tx0, ty0] = pointAt(a0, R + 5);
     const [tx1, ty1] = pointAt(a0, R + 16);
     svg.append(n("line", {
       x1: sc(tx0), y1: sc(ty0), x2: sc(tx1), y2: sc(ty1),
-      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
+      stroke: INK, "stroke-opacity": STRATUM.margin, "stroke-width": STROKE.fine,
     }));
     // The needle, at the live position. INK, NOT RUBRICA: the red on this
     // figure belongs to the selection and to the final, and a needle on every
     // moving degree would spend it on seven things at once — the eye would
     // read the gauges as the claim and the chords as decoration. It is the
     // darkest mark in its own gauge, which is all it needs to be.
-    const [nx0, ny0] = pointAt(aNow, R + 6);
-    const [nx1, ny1] = pointAt(aNow, R + 15);
+    const [nx0, ny0] = pointAt(aNow, R + 5);
+    const [nx1, ny1] = pointAt(aNow, R + 16);
     svg.append(n("line", {
       x1: sc(nx0), y1: sc(ny0), x2: sc(nx1), y2: sc(ny1),
       stroke: INK, "stroke-opacity": STRATUM.cadence,
@@ -546,7 +510,7 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
         // is the thing that MOVES under the slider, and it is the whole
         // subject of the panel.
         const span = Math.abs(norm(b.cents) - norm(a.cents));
-        plates.push({ x: (xa + xb) / 2, y: STRING_Y - hgt - 5,
+        plates.push({ x: (xa + xb) / 2, y: STRING_Y - hgt - 7,
           text: commaForm(span, just) ?? `${span.toFixed(0)}¢` });
       }
     }
@@ -606,38 +570,23 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
     }, fin.litera));
   }
 
-  // ── the labels, last, each on its own paper plate ──
-  // THE PLATE IS CUT TO ITS OWN WORD. A per-character estimate overshoots a
-  // short label and pinches a long one — measured, "Quinta" wore 12.5 units of
-  // padding a side against "Tertia minor"'s 6.6 — but getBBox() cannot be read
-  // at build time either: the text has no layout until the SVG is in the
-  // document, and it returns zero width. So the plate is drawn first at a
-  // placeholder and RESIZED on the next frame, when the browser has laid the
-  // text out and can be asked how wide it really is.
-  const PLATE_PAD = 3.5;
-  const pending = [];
+  // ── the labels, last ──
+  // NO PAPER PLATES. A white box behind a word is a patch over a collision
+  // rather than a layout, and eight of them scattered through a figure read
+  // as cheap. The collision they were patching was the label sitting ON its
+  // own arch's apex, which is a position chosen and therefore a position that
+  // can be un-chosen: each label clears its apex instead.
+  //
+  // They cannot collide with EACH OTHER either, and that is structural rather
+  // than lucky: only the selection's arches are labelled, they share one end
+  // (the selected degree), and their heights are keyed by interval class — a
+  // third, a fourth and a fifth arch to 26, 56 and 74, so their apexes are
+  // always a rung apart.
   for (const pl of plates) {
-    const plate = n("rect", {
-      y: sc(pl.y - 9), height: 13, rx: 2, fill: "var(--paper, #FDFDFC)",
-    });
-    const t = n("text", {
+    svg.append(n("text", {
       x: sc(pl.x), y: sc(pl.y), "text-anchor": "middle",
       "font-family": HOUSE_SERIF, "font-size": STEP.micro,
       fill: RUBRICA,
-    }, pl.text);
-    svg.append(plate, t);
-    pending.push([plate, t]);
-  }
-  if (pending.length && typeof requestAnimationFrame === "function") {
-    requestAnimationFrame(() => {
-      for (const [plate, t] of pending) {
-        const bb = t.getBBox();
-        if (!bb.width) continue;
-        plate.setAttribute("x", sc(bb.x - PLATE_PAD));
-        plate.setAttribute("width", sc(bb.width + PLATE_PAD * 2));
-        plate.setAttribute("y", sc(bb.y - 1));
-        plate.setAttribute("height", sc(bb.height + 2));
-      }
-    });
+    }, pl.text));
   }
 }
