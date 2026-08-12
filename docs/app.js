@@ -599,11 +599,9 @@ function harmoniaPanel() {
     el("h2", {}, "caelum", keySpur(
       "The seven planets, each on its own ring, placed where it stood in the "
       + "sky on this day. The rings run in the Chaldean order, slowest "
-      + "furthest out, which is how the Middle Ages ranked them. That "
-      + "order is also a scale: each planet sounds one note, the lowest at "
-      + "the rim and the highest at the centre. Which notes they are is a "
-      + "question antiquity answered four ways, and the doctrina names "
-      + "whose answer the wheel is tuned to.",
+      + "furthest out. That order is also a scale: each planet sounds one "
+      + "note, the lowest at the rim and the highest at the centre. "
+      + "Antiquity gave the ratios four ways; the doctrina picks which.",
       [marks.chord(), "an aspect: two planets standing at an angle",
         "the line is heavier the stronger the aspect, and it sounds an "
         + "interval: a trine is a third, a square a tritone"],
