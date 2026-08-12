@@ -925,7 +925,16 @@ function canticum() {
 // being redrawn.
 const SCORE_THEME = {
   fonts: {
-    dropcap:    { family: "Junicode", weight: 700 },
+    // JACQUARD 24 FOR THE INITIAL. The 24 cut, not the 12: 12 exists for
+    // small sizes where 24's fine strokes fill in, and an initial is the
+    // largest letter on the page. The rest of the score stays Junicode —
+    // this is the illuminated capital, not a change of voice.
+    // Scaled to match the INKED HEIGHT Junicode gave, not the nominal font
+    // size. Measured in the rendered SVG at the same size and baseline:
+    // Junicode's initial stands 93 units tall, Jacquard's 73, because the
+    // blackletter sits smaller inside its em box. 93/73 = 1.27, and without
+    // it the cap reads as a smaller letter rather than a different one.
+    dropcap:    { family: "Jacquard", weight: 400, scale: 1.27 },
     title:      { family: "Junicode", weight: 620 },
     annotation: { family: "Junicode", weight: 640 },
     lyric:      { family: "Junicode", weight: 400, scale: 1.06 },
