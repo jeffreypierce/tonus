@@ -239,7 +239,10 @@ function docLink(page) {
   return [" • ", el("a", {
     class: "doc", href: `${DOCS}${page}.md`,
     "aria-label": name, title: name,
-  }, `§${page} docs`)];
+    // No "docs" in the visible text: the § is the sigil for a section and the
+    // page's own name follows it, so the word only repeated what both already
+    // said. The accessible name keeps it, where there is no sigil to read.
+  }, `§${page}`)];
 }
 
 /** The doc link for whichever reading is open — the same `find` the tab strip
@@ -876,9 +879,13 @@ function canticum() {
     // select for the eye. The strip is the same object as Calendarium's
     // offices, and it now sits where that one does.
     inputs: el("div", { class: "settings settings-stack" },
+      // NO SET-NAME, matching Calendarium: the date field carries none either,
+      // and the select's own value says what it is ("quadrata", "moderna").
+      // The label also pushed the box 71px right of where Calendarium's sits,
+      // so the two views' first control started in different places.
       el("div", { class: "settings-row" },
-        el("span", { class: "set-name" }, "notatio"),
-        el("select", { onchange: (e) => { state.notation = e.target.value; render(); } },
+        el("select", { "aria-label": "notatio",
+          onchange: (e) => { state.notation = e.target.value; render(); } },
           ...["quadrata", "moderna"].map((v) =>
             el("option", { value: v, selected: state.notation === v }, v)))),
       // The three analysis tracks are a SET over one score — independently on,
@@ -929,12 +936,10 @@ const SCORE_THEME = {
     // small sizes where 24's fine strokes fill in, and an initial is the
     // largest letter on the page. The rest of the score stays Junicode —
     // this is the illuminated capital, not a change of voice.
-    // Scaled to match the INKED HEIGHT Junicode gave, not the nominal font
-    // size. Measured in the rendered SVG at the same size and baseline:
-    // Junicode's initial stands 93 units tall, Jacquard's 73, because the
-    // blackletter sits smaller inside its em box. 93/73 = 1.27, and without
-    // it the cap reads as a smaller letter rather than a different one.
-    dropcap:    { family: "Jacquard", weight: 400, scale: 1.27 },
+    // JUNICODE, not Jacquard. The blackletter was tried as the initial and
+    // looked worse at size than it promised: Jacquard is the wordmark, and
+    // that is the whole of its job here.
+    dropcap:    { family: "Junicode", weight: 700 },
     title:      { family: "Junicode", weight: 620 },
     annotation: { family: "Junicode", weight: 640 },
     lyric:      { family: "Junicode", weight: 400, scale: 1.06 },
