@@ -48,6 +48,10 @@ const state = {
   // which offices are shown — see OFFICES_SHOWN below, spelled out here
   // because `state` is built before that list exists
   offices: ["proprium", "ordinarium", "matutinum", "laudes", "vesperae"],
+  // Which mode the day's list is narrowed to, or null for all eight. A day
+  // sings in several, and the question "what does this feast sound like in
+  // mode 4" is one the calendar can answer and could not before.
+  modus: null,
   right: { calendarium: "harmonia", canticum: "temperamentum" },
   // the few settings the toy carries
   notation: "quadrata",
@@ -485,10 +489,49 @@ function daysChants(feast) {
  *  to see what the day held. A day sings one repertory; the office a chant
  *  belongs to is a property of the chant, so it labels the row and gates it —
  *  the same toggle idiom the analysis tracks use in Canticum. */
+/** The mode filter: which of the eight the day's list is narrowed to.
+ *
+ *  A day sings in several modes at once — a Matins responsory in II beside an
+ *  Introit in VII — and "what does this feast sound like in mode 4" was a
+ *  question the calendar held the answer to and could not be asked.
+ *
+ *  THE NAMES ARE THE LIBRARY'S. `modus(m).nomen` gives the Latin the treatises
+ *  use (Protus Authenticus, Deuterus Plagalis), which is the same string the
+ *  Canticum subheader names a chant's mode with — so the filter and the
+ *  reading it filters toward speak one vocabulary. A list written out here
+ *  would be a second opinion about what the modes are called.
+ *
+ *  A mode nothing on the day is sung in is DISABLED rather than hidden: the
+ *  eight are a fixed set, and a menu that changes length day to day makes the
+ *  reader re-find the one they want.
+ */
+function modusFilter(all) {
+  const T = tonus.temperamentum({});
+  const count = (m) => all.filter((r) => modeOf(r.chant) === m).length;
+  return el("select", {
+    "aria-label": "modus",
+    onchange: (e) => {
+      state.modus = e.target.value ? Number(e.target.value) : null;
+      renderPanels();
+    },
+  },
+    el("option", { value: "", selected: state.modus == null }, "omnes modi"),
+    ...[1, 2, 3, 4, 5, 6, 7, 8].map((m) => {
+      const n = count(m);
+      return el("option", {
+        value: String(m), disabled: n === 0,
+        selected: state.modus === m,
+      }, `${roman(m)}. ${T.modus(m).nomen}`);
+    }),
+  );
+}
+
 function calendariumPanels() {
   const [feast] = tonus.festum({ date: state.day });
   const all = daysChants(feast);
-  const shown = all.filter((r) => state.offices.includes(r.office.key));
+  const shown = all
+    .filter((r) => state.offices.includes(r.office.key))
+    .filter((r) => state.modus == null || modeOf(r.chant) === state.modus);
   const readings = calendariumReadings(feast);
 
   let left;
@@ -556,6 +599,10 @@ function calendarium() {
   const [feast] = tonus.festum({ date: state.day });
   const readings = calendariumReadings(feast);
   const panels = calendariumPanels();
+  // The day's whole repertory, for the mode filter's own counts: it names how
+  // many chants each mode holds BEFORE the office strip narrows anything, so
+  // the menu says what the day contains rather than what is currently shown.
+  const dayChants = daysChants(feast);
 
   return page({
     // row 1 — what this is, and what may be read of it
@@ -569,14 +616,19 @@ function calendarium() {
     detail: calendariumDetail(feast),
     rightDetail: calendariumRightDetail(feast),
     // row 3 — what may be changed
-    inputs: dateDial(state.day, (d, anchor) => {
-      state.day = d;
-      state.chant = null;
-      state.anchor = anchor ?? null;
-      // The panels and the headings only: the row this input sits in must
-      // survive its own click, or the arrow would be replaced mid-press.
-      renderPanels();
-    }, { anchors: paschaOf(state.day), anchor: state.anchor }),
+    // The date, and beside it the mode the day is read in. Two controls on one
+    // line because they narrow the same thing — which of the day's music is
+    // in front of you — where the office strip below gates it by hour.
+    inputs: el("div", { class: "settings" },
+      dateDial(state.day, (d, anchor) => {
+        state.day = d;
+        state.chant = null;
+        state.anchor = anchor ?? null;
+        // The panels and the headings only: the row this input sits in must
+        // survive its own click, or the arrow would be replaced mid-press.
+        renderPanels();
+      }, { anchors: paschaOf(state.day), anchor: state.anchor }),
+      modusFilter(dayChants)),
     rightInputs: harmoniaInputs() ?? null,
     left: panels.left,
     right: panels.right,
@@ -1674,6 +1726,9 @@ function writeUrl() {
   // every link would put a parameter in the bar that changes nothing.
   if (state.offices.join(",") !== OFFICES_SHOWN.join(","))
     p.set("officia", state.offices.join(","));
+  // Only when narrowed, for the same reason the offices are: a day read in one
+  // mode is worth linking to, and "all eight" is what a bare URL already means.
+  if (state.modus != null) p.set("modus", String(state.modus));
   // Only when tempered — 0 is the default and saying so in every link
   // would put a parameter in the bar that changes nothing.
   if (state.comma) p.set("comma", state.comma.toFixed(4));
@@ -1705,6 +1760,12 @@ function readUrl() {
     // An empty or unrecognised list would leave the day looking chantless
     // through no choice of the reader's, so it falls back to all three.
     if (want.length) state.offices = want;
+  }
+  if (p.has("modus")) {
+    // 1-8 or nothing. A junk value leaves the day unfiltered rather than
+    // empty, on the same reasoning as the offices above.
+    const m = Number(p.get("modus"));
+    if (Number.isInteger(m) && m >= 1 && m <= 8) state.modus = m;
   }
   if (p.has("comma")) {
     const c = Number(p.get("comma"));
