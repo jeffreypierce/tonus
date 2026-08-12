@@ -1374,10 +1374,28 @@ export function toSvg(
     const inMargin = r.dropcap && capIndent > 0;
     const cx = inMargin ? r.padding + capIndent * 0.42 : r.padding;
     const anchor = inMargin ? 'text-anchor="middle" ' : "";
-    // The stack STARTS at the top of the staff — first baseline roughly level
-    // with the top line, the mode numeral tucked beneath.
+    // The stack sits ABOVE the cap, not beside it. Its last line lands a clear
+    // markSize over the cap's own ink, which is what the books do — "Grad."
+    // over "5." over a large Q, each clear of the next.
+    //
+    // It used to start at the staff's top line (topY + 0.2 × markSize) on the
+    // reasoning that the mark rides the staff. But the CAP rises far above the
+    // staff — its ink began at y 41.3 while the numeral ran to 54.5, measured,
+    // a 13-unit overlap — so the two collided in the one column they share.
+    const capTop = capInitial
+      ? headerY + L.lyricY - capSize * r.fonts.dropcap.scale * 0.72
+      : headerY + L.topY;
+    // ABOVE THE CAP, as low as it will go. The two bounds cannot both be met:
+    // measured, the cap's ink begins only 8 units below the staff's top line
+    // while a two-line stack needs 26.4, so a mark level with the staff runs
+    // straight through the initial. It therefore sits above, and the only
+    // question is how far. 0.46 of the mark size puts about 4 units of air
+    // between the numeral's descenders and the cap's ink — solved from the
+    // measurement, not guessed: 0.55 floated it 18.6 units clear of the staff,
+    // and 0.1 dropped it 13.5 units INTO the cap, because the mark's ink runs
+    // ~3 units below its own baseline.
     const y0 = inMargin
-      ? headerY + L.topY + markSize * 0.2
+      ? capTop - markLineH * (rubricLines.length - 1) - markSize * 1.15
       : rubricTop;
     rubricLines.forEach((line, i) => {
       header.push(
@@ -1385,7 +1403,7 @@ export function toSvg(
         `${anchor}${fontAttrs(r.fonts.annotation)} ` +
         `font-size="${(markSize * r.fonts.annotation.scale).toFixed(1)}" ` +
         `style="font-feature-settings:'onum'" ` +
-        `fill="${r.rubricaColor}">${esc(line)}</text>`,
+        `fill="${r.noteColor}">${esc(line)}</text>`,
       );
     });
   }

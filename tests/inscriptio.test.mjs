@@ -266,16 +266,16 @@ describe("inscriptio — front matter", () => {
   });
 
   test("theme.colors.rubrica sets the liturgical red, and CSS can still win", () => {
-    // Probed on the RUBRIC mark, which is what the reserved colour is for.
-    // (This used to probe the dropcap, back when the cap was rubricated.)
-    const { svg } = inscriptio(score, {
-      annotation: "auto", theme: { colors: { rubrica: "#c00" } },
-    });
+    // Probed on a LYRIC RUBRIC RUN — GABC's `<c>` — which is what the reserved
+    // colour now marks. (It probed the dropcap, then the genus/mode mark; both
+    // have since gone black, following the printed books.)
+    const rubricated = buildScore(makeChant("(c4) <c>Ky</c>(g)ri(h)e(g.) (::)"));
+    const { svg } = inscriptio(rubricated, { theme: { colors: { rubrica: "#c00" } } });
     // The theme value becomes the custom property's FALLBACK, so the file
     // carries the ink it was drawn with while a host stylesheet setting
     // --tonus-rubrica still overrides it. An inline literal could not be
     // overridden at all — an inline fill beats any stylesheet rule.
-    assert.ok(/class="rubric"[^>]*fill="var\(--tonus-rubrica, #c00\)"/.test(svg));
+    assert.ok(/fill="var\(--tonus-rubrica, #c00\)"/.test(svg));
   });
 
   test("no front-matter options → no header band (bare score)", () => {
