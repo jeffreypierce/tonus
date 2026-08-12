@@ -207,6 +207,69 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
     }));
   }
 
+  const hubPlates = [];
+
+  // ── THE HUB: what the slider is doing, in three lines ──
+  // Over the star's crossings, on a paper plate, because that is the one part
+  // of the ring the chords leave empty and because the fifth IS the star: the
+  // number names the thing those lines are drawn from.
+  //
+  // Three lines and nothing else. The fifth spelled as the theorists wrote it,
+  // the fifth measured, and the wolf — which is the fifth's cost. Narrow the
+  // eleven and the twelfth pays for it, so the two numbers move together and
+  // belong in one plate.
+  {
+    const just = justTable(T);
+    // MEASURED FROM THE SCALE, not assumed: C up to G in the built table is
+    // the fifth this temperament actually makes.
+    const fifthC = norm(T.cents[7] - T.cents[0]);
+    const spelled = commaForm(fifthC, just);
+    const lines = [];
+    // At Pythagorean the spelling IS "3:2" and the line below already says
+    // 702.0¢, so printing both says one thing twice. The spelling earns its
+    // line only when it has something to add — which is the moment the
+    // slider leaves zero, and exactly when a reader wants it.
+    if (spelled && spelled !== "3:2") lines.push(spelled);
+    lines.push(`the fifth · ${fifthC.toFixed(1)}¢`);
+    if (lupus) {
+      lines.push(`the wolf · ${lupus.cents.toFixed(0)}¢ · `
+        + `${lupus.fromPure > 0 ? "+" : "\u2212"}${Math.abs(lupus.fromPure).toFixed(0)} from 3:2`);
+    }
+    const LH = 15;
+    const hubY = CY - (lines.length - 1) * LH / 2;
+    lines.forEach((text, i) => {
+      const t = n("text", {
+        x: sc(CX), y: sc(hubY + i * LH), "text-anchor": "middle",
+        "font-family": HOUSE_SERIF,
+        "font-size": i === 0 ? STEP.label : STEP.caption,
+        fill: INK, "fill-opacity": i === 0 ? STRATUM.letters : STRATUM.rail,
+      }, text);
+      svg.append(t);
+      hubPlates.push(t);
+    });
+  }
+  // ONE PLATE UNDER ALL THREE LINES, sized on the next frame for the reason
+  // the arch labels are: getBBox reads zero before layout. The chords cross
+  // exactly here — that is what makes the middle the only empty part of the
+  // ring — so without it they strike straight through the numbers.
+  if (hubPlates.length && typeof requestAnimationFrame === "function") {
+    const plate = n("rect", { rx: 3, fill: "var(--paper, #FDFDFC)" });
+    svg.insertBefore(plate, hubPlates[0]);
+    requestAnimationFrame(() => {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const t of hubPlates) {
+        const b = t.getBBox();
+        if (!b.width) return;
+        x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y);
+        x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height);
+      }
+      plate.setAttribute("x", sc(x0 - 6));
+      plate.setAttribute("y", sc(y0 - 4));
+      plate.setAttribute("width", sc(x1 - x0 + 12));
+      plate.setAttribute("height", sc(y1 - y0 + 8));
+    });
+  }
+
   // ── the degrees ──
   // A dot's AREA carries how much the chant sings the degree, so the radius
   // goes as the root: doubling the area is doubling the time spent there.
@@ -273,6 +336,49 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
   return svg;
 }
 
+// ── the comma spelling ────────────────────────────────────────────────────
+// THE ONE PIECE OF ARITHMETIC THAT IS THE FIGURE'S OWN, and it is a NOTATION
+// rather than a fact about a tuning: a way of writing a tempered size the way
+// the meantone theorists wrote it. Every interval here sits an exact
+// comma-multiple from a just ratio — the Pythagorean third 81:64 IS 5:4 plus
+// one comma of 81:80 — so a size can be spelled "5:4+1c" instead of "408¢",
+// and the spelling says WHERE the temperament put it.
+//
+// The just ratios come from T.ratio(), not a copy of them: the library holds
+// the arithmetic and a second table here would be a second opinion.
+const JUST_KEYS = ["3/2", "4/3", "5/4", "6/5", "5/3", "8/5"];
+const COMMA = 21.506;   // the syntonic comma, 81:80
+// The fractions a reader of the slider actually meets. Anything else prints a
+// decimal: a spelling is only worth having when it is nameable.
+const NICE = [[0, "0"], [1 / 9, "1/9"], [1 / 6, "1/6"], [2 / 9, "2/9"],
+  [1 / 4, "1/4"], [1 / 3, "1/3"], [4 / 9, "4/9"], [1 / 2, "1/2"],
+  [2 / 3, "2/3"], [3 / 4, "3/4"], [1, "1"], [4 / 3, "4/3"], [3 / 2, "3/2"],
+  [2, "2"]];
+
+/** The just intervals, resolved once per render from the library. */
+function justTable(T) {
+  return JUST_KEYS.map((k) => {
+    const r = T.ratio(k);
+    return [r.cents, r.display];
+  });
+}
+
+/** A tempered span as the theorists would write it, or null when it sits too
+ *  far from anything just — beyond about two commas the spelling stops being
+ *  a reading and becomes arithmetic, and the size speaks better in cents. */
+function commaForm(span, just) {
+  let best = null;
+  for (const [c, display] of just) {
+    const k = (span - c) / COMMA;
+    if (!best || Math.abs(k) < Math.abs(best.k)) best = { k, display };
+  }
+  if (!best || Math.abs(best.k) > 2.05) return null;
+  if (Math.abs(best.k) < 0.02) return best.display;   // it IS the just ratio
+  const nice = NICE.find(([v]) => Math.abs(Math.abs(best.k) - v) <= 0.02);
+  const size = nice ? nice[1] : Math.abs(best.k).toFixed(1);
+  return `${best.display}${best.k > 0 ? "+" : "\u2212"}${size}c`;
+}
+
 /** A degree's click target, over its dot.
  *
  *  The dots run from 2 to 6 units and a pointer does not, so the target is a
@@ -306,6 +412,9 @@ const stringX = (c) => X0 + (norm(c) / 1200) * (X1 - X0);
  */
 function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel, onSelect }) {
   const finalPc = rows.find((r) => r.role === "finalis")?.pc ?? rows[0].pc;
+  const T = tonus.temperamentum({ mode, ...(tuning ? { tuning } : {}),
+    ...(comma != null ? { comma } : {}) });
+  const just = justTable(T);
 
   // The two either side in cents order, wrapping: an interval's partners are
   // its neighbours on the ring, and the ring has no first or last.
@@ -345,8 +454,7 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
       if (!touchesSel && !touchesNbr) continue;
       // WHAT THE INTERVAL IS, from the library. A cents window would be a
       // second opinion about naming, and it drifts under temperament.
-      const iv = tonus.temperamentum({ mode, ...(tuning ? { tuning } : {}),
-        ...(comma != null ? { comma } : {}) }).intervallum(a.spn, b.spn);
+      const iv = T.intervallum(a.spn, b.spn);
       const h = ARCH_H[iv?.class];
       if (!h) continue;
       const [xa, xb] = [stringX(a.cents), stringX(b.cents)].sort((p, q) => p - q);
@@ -366,7 +474,14 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
         "stroke-width": touchesSel ? STROKE.firm : STROKE.hair,
       }));
       if (touchesSel) {
-        plates.push({ x: (xa + xb) / 2, y: STRING_Y - hgt - 5, text: iv.nomen });
+        // WHAT THE INTERVAL MEASURES, not what it is called. The name is
+        // already the arch's height — a fifth arches higher than a third — so
+        // printing "Quinta" over a fifth says the same thing twice. The size
+        // is the thing that MOVES under the slider, and it is the whole
+        // subject of the panel.
+        const span = Math.abs(norm(b.cents) - norm(a.cents));
+        plates.push({ x: (xa + xb) / 2, y: STRING_Y - hgt - 5,
+          text: commaForm(span, just) ?? `${span.toFixed(0)}¢` });
       }
     }
   }

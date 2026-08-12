@@ -1369,10 +1369,29 @@ let commaControl = null;
  *  what the fraction DOES, on one scale, everywhere on the axis — and it
  *  gives Pythagorean a real number (702.0¢, the pure fifth) rather than "0".
  */
+// The fractions the historical stops sit on. A reader dragging the slider
+// meets these by name in every treatise on the subject; between them the
+// fraction prints as a decimal, because a spelling is only worth having when
+// it is nameable.
+const COMMA_NICE = [[1 / 9, "1/9"], [1 / 6, "1/6"], [2 / 9, "2/9"],
+  [1 / 4, "1/4"], [1 / 3, "1/3"], [2 / 5, "2/5"], [1 / 2, "1/2"]];
+
+/** The fifth, NAMED and measured.
+ *
+ *  The cents alone said what the fifth is without saying what was done to it,
+ *  and what was done is the whole subject of the control: a fifth narrowed by
+ *  some fraction of the syntonic comma. So the line spells the operation —
+ *  "3:2 − 1/4·(81:80)" — and then gives the size it lands on. At zero there is
+ *  no operation to name and the pure ratio stands alone.
+ */
 function commaReadout(v) {
   try {
     const T = tonus.temperamentum({ tuning: "meantone", comma: v });
-    return `${(1200 * Math.log2(T.nota("G4").hz / T.nota("C4").hz)).toFixed(1)}¢`;
+    const cents = 1200 * Math.log2(T.nota("G4").hz / T.nota("C4").hz);
+    if (!v) return `3:2 · ${cents.toFixed(1)}¢`;
+    const nice = COMMA_NICE.find(([f]) => Math.abs(v - f) <= 0.008);
+    const frac = nice ? nice[1] : v.toFixed(3).replace(/0+$/, "");
+    return `3:2 − ${frac}·(81:80) · ${cents.toFixed(1)}¢`;
   } catch { return ""; }
 }
 
@@ -1507,11 +1526,22 @@ function temperamentumPanel() {
     // ONE title style for every figure — the panel h2, its key's spur at
     // the right (ruled 2026-08-11; the in-figure margin captions retired).
     el("h2", {}, "monochordum", keySpur(
-      "The chant's scale on one string, measured twice: the just ratios above, the modern cents below.",
-      [marks.text("3:2"), "the just string"],
-      [marks.text("irr", { italic: true }), "no ratio under temperament"],
-      [marks.text("±¢"), "against equal"],
-      [marks.rubric(), "the chosen degree"])),
+      "The mode's degrees twice over: placed by cents around the octave, and "
+      + "laid along a divided string beneath. The final sits at the top of "
+      + "the ring and at both ends of the string.",
+      [marks.roundel(), "the degree you have chosen",
+        "its intervals arch above the string, its neighbours' below"],
+      [marks.dot(), "a degree of the scale",
+        "the dot's area is how much of the chant is sung there"],
+      [marks.hollow(), "in the scale, never sung"],
+      [marks.chord(), "a fifth, drawn across the ring",
+        "a scale is built from these, and six of them chain seven degrees"],
+      [marks.brokenChord(), "the wolf",
+        "the fifth the chain cannot make; its ends are not degrees this mode "
+        + "sings, so they wear no letter"],
+      [marks.arch(), "an interval, and its size",
+        "written as the theorists wrote it: 3:2−1/4c is a fifth narrowed by a "
+        + "quarter of the comma of 81:80"])),
     // The string and the ruler as ONE figure: the same degrees on two axes,
     // joined, so the disagreement between the medieval measure and the modern
     // one is the thing drawn rather than something to infer across two panels.
