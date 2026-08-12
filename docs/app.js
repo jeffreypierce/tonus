@@ -585,8 +585,26 @@ function harmoniaPanel() {
   return el("section", { class: "panel" },
     // The figure's name, in the one title style — CAELUM, his own API verb:
     // the wheel draws caelum({date}), the sky of the day. TERRA at the hub
-    // is data. No key: the tabulae's glosses carry the reading.
-    el("h2", {}, "caelum"),
+    // is data.
+    //
+    // A key after all. The tabulae's glosses were held to carry the reading,
+    // and they do carry the ROWS — but the wheel's own claim (that the
+    // Ptolemaic order IS the scale order, so a ring's distance out is a
+    // pitch) is nowhere in a table, and it is the whole reason the figure
+    // is a wheel.
+    el("h2", {}, "caelum", keySpur(
+      "Seven planets, each on its own ring, at its true longitude for this "
+      + "day. The rings run in Ptolemaic order — Saturn slowest and furthest "
+      + "out, the Moon nearest — and that order is also the scale: each "
+      + "planet sounds one string of the Greater Perfect System, Saturn the "
+      + "lowest and the Sun the mese at the middle.",
+      [marks.chord(), "an aspect: two planets standing at an angle",
+        "the line is heavier the stronger the aspect, and it sounds an "
+        + "interval — a trine is a third, a square a tritone"],
+      [marks.dot(), "a planet, on its ring",
+        "drawn larger where its presence in the sky is greater"],
+      [marks.roundel(), "the planet you have chosen",
+        "every aspect it stands in is marked with it"])),
     rota(tonus, o),
     // The chords first: the aspects are what a click on the wheel lights up,
     // so the answer sits directly under the question.
@@ -631,7 +649,22 @@ function festumPanel() {
   return el("section", { class: "panel" },
     // The ring's name moved up here from its own hub — one title style for
     // every figure; the hub keeps the year alone.
-    el("h2", {}, "annus domini"),
+    //
+    // The key reads OUTSIDE IN, which is the order the ring is built in and
+    // the order a reader meets it: the civil year on the rim, the seasons
+    // within it, the feasts on the orbit between.
+    el("h2", {}, "annus domini", keySpur(
+      "Two calendars, one inside the other: the civil year around the rim, "
+      + "the Church's year banded within it. The point of the ring is what a "
+      + "list cannot show — Advent and Septuagesima are neighbours, and "
+      + "Easter's date drags a third of the year with it.",
+      [marks.band(), "a season, banded",
+        "its arc is how long it lasts; the darker bands are the penitential seasons"],
+      [marks.dot(), "a feast, on the orbit between the two calendars",
+        "the larger dots are the greater feasts"],
+      [marks.roundel(), "the feast you have chosen", "its row in the table is lit with it"],
+      [marks.radius(), "the day the page stands on",
+        "a hand on the year, pointing out through the ring"])),
     annulus(tonus, o), annulusTabula(tonus, o));
 }
 

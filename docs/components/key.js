@@ -67,6 +67,27 @@ export const marks = {
   arc: () => sw(n("path", { d: "M 2 12 A 9 9 0 0 1 14 12", fill: "none",
     stroke: INK, "stroke-opacity": STRATUM.wave,
     "stroke-width": STROKE.firm * 2 })),
+  /** The annulus's season band: a thick arc of the ring's own wash. */
+  band: () => sw(n("path", { d: "M 2 11 A 9 9 0 0 1 16 11", fill: "none",
+    stroke: INK, "stroke-opacity": STRATUM.block,
+    "stroke-width": 5 })),
+  /** A feast on the orbit: an ink dot. Larger ones are the greater feasts. */
+  dot: () => sw(n("circle", { cx: 8, cy: 7, r: 2.6,
+    fill: INK, "fill-opacity": STRATUM.letters })),
+  /** The chosen feast: a rubricated roundel, the one colour the ring spends. */
+  roundel: () => sw(
+    n("circle", { cx: 8, cy: 7, r: 5, fill: "none", stroke: RUBRICA,
+      "stroke-width": STROKE.fine * 2 }),
+    n("circle", { cx: 8, cy: 7, r: 2.4, fill: RUBRICA })),
+  /** The standing day: a rubrica radius out through the ring, with its dot. */
+  radius: () => sw(
+    n("line", { x1: 8, y1: 13, x2: 8, y2: 3, stroke: RUBRICA,
+      "stroke-opacity": STRATUM.spark, "stroke-width": STROKE.firm * 2 }),
+    n("circle", { cx: 8, cy: 6, r: 2.4, fill: RUBRICA })),
+  /** The rota's aspect chord: a line across the wheel, weighted by strength. */
+  chord: () => sw(n("line", { x1: 2, y1: 11, x2: 14, y2: 3,
+    stroke: INK, "stroke-opacity": STRATUM.spark,
+    "stroke-width": STROKE.firm * 2 })),
   /** A mark that IS text — a ratio, a letter — set as the figure sets it. */
   text: (t, { italic = false } = {}) =>
     el("span", { class: `key-mark${italic ? " key-italic" : ""}` }, t),

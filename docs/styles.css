@@ -1071,8 +1071,13 @@
      --micro because small caps read smaller than capitals at one size. */
   table.tabula caption {
     font-family: var(--serif);
-    font-size: var(--caption);
+    font-size: var(--step-label);
     font-variant-caps: small-caps;
+    /* The captions arrive lowercase ("extent"), and `small-caps` only lowers
+       the letters that are already minuscule — so without this the initial
+       has no cap height to keep and the word sets as small caps throughout.
+       Capitalizing first gives the E its full height and the rest the cut. */
+    text-transform: capitalize;
     letter-spacing: var(--track-caps);
     color: var(--heading); text-align: left;
     padding-bottom: var(--sp-1);
