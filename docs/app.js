@@ -226,8 +226,12 @@ const DOCS = "https://github.com/jeffreypierce/tonus/blob/main/docs/api/";
  *  visually-hidden utility in the stylesheet, and a visible ↗ would add a
  *  sixth mark to a line already carrying genus, mode and book.
  */
-function docLink(page) {
-  const name = `${page} documentation`;
+function docLink(page, { anchor, label } = {}) {
+  // An ANCHOR deep-links into the page, and a LABEL names the destination
+  // where the page's own name is not what the reader is being sent to: the
+  // hand's method is `gradus`, on the tuning page, and "§gradus" would name
+  // a file that does not exist while "§tuning" names the whole engine.
+  const name = `${label ?? page} documentation`;
   // A separator and the link. The dot is a plain character in the line, so it
   // inherits that line's face and size like every other character — which is
   // all it ever needed to match its surroundings.
@@ -237,19 +241,19 @@ function docLink(page) {
   // but a link that steals a tab is a decision made for the reader, and the
   // back button restores the page anyway. A link goes where it says it goes.
   return [" • ", el("a", {
-    class: "doc", href: `${DOCS}${page}.md`,
+    class: "doc", href: `${DOCS}${page}.md${anchor ? `#${anchor}` : ""}`,
     "aria-label": name, title: name,
     // No "docs" in the visible text: the § is the sigil for a section and the
     // page's own name follows it, so the word only repeated what both already
     // said. The accessible name keeps it, where there is no sigil to read.
-  }, `§${page}`)];
+  }, `§${label ?? page}`)];
 }
 
 /** The doc link for whichever reading is open — the same `find` the tab strip
  *  uses to resolve the current tab. A reading without a `doc` simply has none. */
 function readingLink(readings, active) {
-  const doc = readings.find((r) => r.key === active)?.doc;
-  return doc ? docLink(doc) : null;
+  const r = readings.find((x) => x.key === active);
+  return r?.doc ? docLink(r.doc, { anchor: r.anchor, label: r.label }) : null;
 }
 
 // ── a panel: a titled block in a column ──
@@ -837,7 +841,12 @@ const canticumReadings = () => [
   { key: "temperamentum", name: "Temperamentum", panel: temperamentumPanel, doc: "tuning" },
   // The genitive, as the treatises write it: the hand OF Guido. Manus is
   // feminine, so the adjectival "Guidonius" agreed with nothing.
-  { key: "manus", name: "Manus Guidonis", panel: manusPanel, doc: "tuning" },
+  // THE HAND'S OWN METHOD IS `gradus` — the twenty places, each a step. It
+  // lives on the tuning page, so the link goes to that section rather than
+  // the page's top, and still reads "tuning": the reader is being sent to
+  // the engine, and §gradus would name a file that does not exist.
+  { key: "manus", name: "Manus Guidonis", panel: manusPanel, doc: "tuning",
+    anchor: "steps-gradus", label: "tuning" },
   // The chant against the corpus. `year` names the calendar the mass row
   // walks — the feast index is memoised per year, movable feasts being
   // movable. Census wears no inputs, so no rightInputs branch names it.
