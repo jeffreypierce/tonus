@@ -501,7 +501,7 @@ export function censusPanel(tonus, { chant, score, year, onSelect }) {
     return el("p", { class: "ghost" }, "Nothing to read.");
   const wrap = el("div", {});
   const rows = chantCombRows(score.prosody, chant.office);
-  wrap.append(section("percentile", combKey("its own genus"), comb(rows)));
+  wrap.append(section("how it compares", combKey("its own genus"), comb(rows)));
 
   // The mass: the feast this chant is first sung at, and of its chants the
   // THREE MOST DISTANT from the subject by census profile — the row exists to
@@ -609,7 +609,7 @@ export function censusDiesPanel(tonus, { feast, rows, onSelect }) {
   const rank = rankOf(feast?.ritus);
   const combRows = dayCombRows(m, rank);
   const wrap = el("div", {});
-  wrap.append(section("percentile", combKey("its own rank"), comb(combRows)));
+  wrap.append(section("how it compares", combKey("its own rank"), comb(combRows)));
 
   // THE MASS — ruled 2026-08-11: the day's radar row is its mass, propers
   // and ordinary, because the mass is the day's own music; the office hours
