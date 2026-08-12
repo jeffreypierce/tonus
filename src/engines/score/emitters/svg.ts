@@ -396,9 +396,13 @@ function custosX(x: number, prevLyricRight: number, r: Resolved): number {
   // inked width is the same whichever is drawn.
   const edge = Math.max(x, prevLyricRight);
   const g = GLYPHS[GLYPH.custosUp[0]];
-  const inked = g ? (g.bbox[2] - g.bbox[0]) * r.glyphScale * r.noteScale * 0.85 : 0;
+  const inked = g ? (g.bbox[2] - g.bbox[0]) * r.glyphScale * r.noteScale * CUSTOS_FACTOR : 0;
   return edge - inked;
 }
+
+// A tenth over a notehead's own scale: the sign is small by design, and this
+// is the size it reads at without competing with the notes it guides.
+const CUSTOS_FACTOR = 0.85 * 1.1;
 
 /** The custos for a pitch: which of the six cuts.
  *
@@ -799,16 +803,25 @@ export function toSvg(
    *
    * Exsurge answers this by placing the element and asking whether it fit
    * (`positionNotationElement`). This is the same move in tonus's shape: the
-   * emitter draws into two arrays, so a trial run records their lengths, calls
-   * the real renderFigure, reads the resulting x, and truncates both arrays
-   * back. What the drawing code would do IS what the measurement reports,
-   * because it is the drawing code.
+   * emitter draws into arrays, so a trial run records their lengths, calls the
+   * real renderFigure, reads the resulting x, and truncates them back. What
+   * the drawing code would do IS what the measurement reports, because it is
+   * the drawing code.
+   *
+   * EVERY ARRAY THE DRAWING TOUCHES HAS TO ROLL BACK. `behind` was added later
+   * for ledger lines and was not on this list, so every trial run left its
+   * ledgers in place: a note above the staff drew three of them, at the two
+   * positions the measurement tried and the one it settled on, and the strays
+   * landed wherever those attempts happened to fall — including left of the
+   * clef, at x 4.5, where the staff has not started yet.
    */
   const measureFigure = (figure: ChantTabulaRow[], atX: number): number => {
     const bodyMark = body.length;
+    const behindMark = behind.length;
     const placeMark = placements.length;
     const endX = renderFigure(figure, atX);
     body.length = bodyMark;
+    behind.length = behindMark;
     placements.length = placeMark;
     return endX;
   };
@@ -974,8 +987,14 @@ export function toSvg(
           const cp = placeGlyph(custosGlyph(figure[0]!.staffPosition),
             custosX(x, prevLyricRight, r),
             yFor(figure[0]!.staffPosition, L, r), r, "custos", "",
-            r.noteScale * 0.85);
-          if (cp) body.push(cp.svg);
+            r.noteScale * CUSTOS_FACTOR);
+          if (cp) {
+            // A custos outside the staff needs its ledger like any other
+            // sign at that pitch: it names a note, and a note above or below
+            // the lines is unreadable without one.
+            ledger(figure[0]!.staffPosition, cp.inkLeft, cp.inkRight);
+            body.push(cp.svg);
+          }
         }
         systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
         L.systemY += L.systemHeight;
@@ -1011,8 +1030,8 @@ export function toSvg(
       if (r.custos && nextPos != null) {
         const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
                              yFor(nextPos, L, r), r, "custos", "",
-                             r.noteScale * 0.85);
-        if (p) body.push(p.svg);
+                             r.noteScale * CUSTOS_FACTOR);
+        if (p) { ledger(nextPos, p.inkLeft, p.inkRight); body.push(p.svg); }
       }
       systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
       system++;
@@ -1185,8 +1204,8 @@ export function toSvg(
           const nextPos = rows[j]!.staffPosition;
 
           const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
-            yFor(nextPos, L, r), r, "custos", "", r.noteScale * 0.85);
-          if (p) body.push(p.svg);
+            yFor(nextPos, L, r), r, "custos", "", r.noteScale * CUSTOS_FACTOR);
+          if (p) { ledger(nextPos, p.inkLeft, p.inkRight); body.push(p.svg); }
         }
         systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
         system++;
