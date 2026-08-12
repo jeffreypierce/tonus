@@ -597,14 +597,16 @@ function harmoniaPanel() {
     // pitch) is nowhere in a table, and it is the whole reason the figure
     // is a wheel.
     el("h2", {}, "caelum", keySpur(
-      "Seven planets, each on its own ring, placed where it stood in the sky "
-      + "on this day. The rings run outward in order of speed. Saturn is the "
-      + "slowest, so it sits furthest out; the Moon is the fastest and sits "
-      + "nearest. That order is also a scale: each planet sounds one note, "
-      + "the lowest at the rim and the highest at the centre.",
+      "The seven planets, each on its own ring, placed where it stood in the "
+      + "sky on this day. The rings run in the Chaldean order, slowest "
+      + "furthest out, which is how the Middle Ages ranked them. That "
+      + "order is also a scale: each planet sounds one note, the lowest at "
+      + "the rim and the highest at the centre. Which notes they are is a "
+      + "question antiquity answered four ways, and the doctrina names "
+      + "whose answer the wheel is tuned to.",
       [marks.chord(), "an aspect: two planets standing at an angle",
         "the line is heavier the stronger the aspect, and it sounds an "
-        + "interval — a trine is a third, a square a tritone"],
+        + "interval: a trine is a third, a square a tritone"],
       [marks.dot(), "a planet, on its ring",
         "drawn larger where its presence in the sky is greater"],
       [marks.roundel(), "the planet you have chosen",

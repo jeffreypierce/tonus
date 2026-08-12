@@ -4,7 +4,7 @@
 // Seven planets on seven rings, each at its true longitude for a moment, and
 // each sounding one string of the Greater Perfect System: Saturn the lowest
 // (hypate meson) out at the slowest sphere, the Sun the mese at the middle,
-// the Moon the highest and nearest. The Ptolemaic order IS the scale order,
+// the Moon the highest and nearest. The Chaldean order IS the scale order,
 // which is the whole claim of the musica mundana — the spheres are a tuning.
 //
 // The chords are the ASPECTS. Two planets at a trine stand a third apart; at a
@@ -19,7 +19,7 @@
 // matches the transcription, and the aspects arrive already named.
 //
 // Nothing here is a fact about the sky. The radii are evenly spaced in
-// Ptolemaic order and the glyph sizes follow presence; those are drawing
+// Chaldean order and the glyph sizes follow presence; those are drawing
 // decisions. Everything else is asked.
 
 import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, nib, sc } from "./ink.js";
