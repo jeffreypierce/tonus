@@ -15,7 +15,7 @@
 //                             own kind — genus for a chant, rank for a day
 //   2  the mass / day row     four chants side by side: radar on the axes
 //                             they most disagree on, note weight beneath
-//   3  the numbers            tabula()s, grouped by caption
+//   3  the measurements       tabula()s, grouped by caption
 //
 // Percentiles come off docs/data/prosody-stats.js — baked curves, no fetch —
 // and a value's percentile is its MID-RANK on the curve (ties take the middle
@@ -227,9 +227,13 @@ export function comb(rows) {
       // STEP.micro, optically corrected: the mono face runs large beside the
       // serif label at the same step, so the value takes the step at 0.8 —
       // a size match, not a new rung (as tracking is optical, so is this).
+      //
+      // ONE RUNG UP FROM `rail`: the value is TEXT, and rail is the opacity of
+      // the hairline it sits beside. `margin` is the ladder's quiet-text rung
+      // (it carries the tonarium's margin word), which is where this belongs.
       svg.append(n("text", { x: W - padR + 5, y: y + 3,
         "font-family": HOUSE_MONO, "font-size": STEP.micro * 0.8,
-        fill: INK, "fill-opacity": STRATUM.rail }, r.raw));
+        fill: INK, "fill-opacity": STRATUM.margin }, r.raw));
   });
   return svg;
 }
@@ -285,6 +289,10 @@ function smallRadar(cell, axes, labeled, accent) {
 // the rubrica naming serves for both; two labels on one stem would collide
 // and say one thing twice. Absolute pitch classes, not folded to each final
 // — ruled: the fact worth showing is that a mass does not share a home.
+// The stem's width, in grid units — a named rung, not a literal, because the
+// key's swatch draws the same mark and the two must not drift apart.
+const WEIGHT_STEM = 3;
+
 function weightChart(cell, accent) {
   const W = 224, H = 58, padX = 10, base = 50, STEM = 26;
   const svg = n("svg", { class: "census-weight", viewBox: `0 0 ${W} ${H}`,
@@ -299,14 +307,18 @@ function weightChart(cell, accent) {
   let top = null;
   for (const [pc, v] of ws) {
     const h = (v / max) * STEM;
-    // The RULED 2px stem, on the grid. Its width carries nothing — height
-    // is the weight — so it never varies. The company sits at the wave's
-    // own stratum; the subject re-inks at the label's.
+    // The RULED 3px stem, on the grid. Its width carries nothing (height is
+    // the weight) so it never varies. The company sits at the wave's own
+    // stratum; the subject re-inks at the label's.
+    //
+    // Widened from 2px: at twelve slots across 224 units the stems read as a
+    // scatter of hairlines rather than a profile, and the shape of where a
+    // chant spends its time is the whole point of the chart.
     svg.append(n("line", {
       x1: sc(X(pc)), y1: base, x2: sc(X(pc)), y2: sc(base - h),
       stroke: accent ? RUBRICA : INK,
       "stroke-opacity": accent ? STRATUM.label : STRATUM.wave,
-      "stroke-width": 2 * GRID,
+      "stroke-width": WEIGHT_STEM * GRID,
       "stroke-linecap": "butt" }));
     if (!top || v > top[1]) top = [pc, v];
   }
@@ -360,7 +372,7 @@ function censusRow(cells, { ipse = false, onSelect } = {}) {
   );
 }
 
-// ── 3 · the numbers, as tabulas ────────────────────────────────────────────
+// ── 3 · the measurements, as tabulas ───────────────────────────────────────
 // tabula() with its gloss column — built and never used until now — one small
 // table per group, titled by the tabula's own caption.
 const NUM_COLS = [
@@ -560,10 +572,12 @@ export function censusPanel(tonus, { chant, score, year, onSelect }) {
         censusRow(cells, { ipse: true, onSelect })));
   }
 
-  // "the numbers" — English, like every census section title beside it
+  // "the measurements" — English, like every census section title beside it
   // (numeri was the one Latin word in an English set; re-ruled 2026-08-11).
-  // The FIELD is still .prosody — only the shown title differs.
-  wrap.append(section("the numbers", null, ...prosodyTables(tonus, score.prosody)));
+  // "The numbers" named the form and not the content, and read as bare
+  // integers where half of these are ratios. The FIELD is still .prosody —
+  // only the shown title differs.
+  wrap.append(section("the measurements", null, ...prosodyTables(tonus, score.prosody)));
   return wrap;
 }
 
