@@ -136,6 +136,37 @@ describe("inscriptio — duae species parity (ruled 2026-07-29)", () => {
     assert.ok(!mod.includes('class="rubric"'), "moderna: no margin mark");
     assert.ok(!mod.includes('class="dropcap"'), "moderna: no initial");
   });
+
+  // A mode standing alone (an ordinary chant, whose genus line is dropped —
+  // "Ordinarium" over every Kyrie tells a reader nothing) kept the TOP row,
+  // which floated it clear off the staff. The stack is bottom-aligned, so the
+  // mode holds the mode's row whether or not a genus stands above it.
+  test("a lone mode keeps the mode's row, not the genus's", () => {
+    const opts = { annotation: "auto", dropcap: true };
+    const mk = (extra) => buildScore({
+      id: "test:2", incipit: "Test", gabc: "(c4) Ky(g)ri(h)e(g.) (::)",
+      pages: [], source: { book: "Test", year: null, editor: null }, ...extra,
+    });
+    const rows = (svg) =>
+      [...svg.matchAll(/<text[^>]*class="rubric"[^>]*y="([\d.]+)"[^>]*>([^<]*)</g)]
+        .map((m) => ({ text: m[2], y: Number(m[1]) }));
+
+    const stacked = rows(inscriptio(
+      mk({ office: "ma", genus: "Introitus", mode: "4", modus: "Modus IV" }), opts,
+    ).svg);
+    const alone = rows(inscriptio(
+      mk({ office: "or", genus: "Ordinarium", ordinarium: true, mode: "8",
+        modus: "Modus VIII" }), opts,
+    ).svg);
+
+    assert.equal(stacked.length, 2, "a proper chant stacks genus over mode");
+    assert.equal(alone.length, 1, "an ordinary chant shows its mode alone");
+    assert.equal(
+      alone[0].y, stacked[1].y,
+      `the lone mode sits at ${alone[0].y}, the stacked mode at ${stacked[1].y} `
+      + "— a mode alone must not rise into the genus's row",
+    );
+  });
 });
 
 describe("inscriptio — the tracks are selectable, not species-paired", () => {

@@ -481,6 +481,10 @@ export function toSvg(
   const rubricLines: string[] = r.rubric ? [r.rubric] : autoLines;
   const markSize = r.lyricSize * 1.05;
   const markLineH = markSize * 0.98;   // tight, as the books stack Intr. over 8.
+  // The stack's full height in rows — genus over mode. In the margin it is
+  // bottom-aligned to this, so a lone mode keeps the mode's row rather than
+  // rising into the genus's.
+  const MARK_ROWS = 2;
   let headerY = 0;
   let titleBaseline = 0;
   let rubricTop = 0;
@@ -1390,8 +1394,14 @@ export function toSvg(
     // Sitting ON the staff's top line — where the books set it. The stack was
     // floating well above the staff, reading as a header rather than as a mark
     // in the margin beside the music.
+    //
+    // BOTTOM-ALIGNED, so the stack grows upward from a fixed last row. A mode
+    // standing alone (no genus above it) belongs on the SECOND row, level with
+    // where it sits when "Intr." is over it — anchoring the top row instead
+    // would float a lone numeral high and off the staff.
     const y0 = inMargin
       ? headerY + L.topY + markSize * 0.18
+        + markLineH * (MARK_ROWS - rubricLines.length)
       : rubricTop;
     rubricLines.forEach((line, i) => {
       header.push(
