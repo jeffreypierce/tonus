@@ -4,6 +4,8 @@ All notable changes to tonus. Newest first.
 
 ## Unreleased
 
+## 0.5.0 — 2026-08-12
+
 Rendering, mostly — a day of looking at real chant on a real page and fixing
 what the page showed.
 
