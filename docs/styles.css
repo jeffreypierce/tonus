@@ -728,10 +728,19 @@
     letter-spacing: var(--track-micro); text-transform: uppercase;
     color: var(--label); margin: 0 0 var(--sp-1);
   }
+  /* The tracks card's prose is the same thing .key-desc is — the paragraph
+     that opens a popover — so it takes the same dress. */
   .tracks-text {
-    font-size: var(--caption); line-height: 1.5;
+    font-family: var(--mono);
+    font-size: var(--micro); line-height: 1.65;
+    letter-spacing: var(--track-meta);
     color: var(--label); margin: 0;
-    width: 40ch; max-width: 70vw;
+    /* 40ch was set for the serif. A mono ch is wider, so the same count
+       wrapped these paragraphs well short of the entries beside them and the
+       card read as two ragged columns. The card's own max-width is the
+       measure now, and `pretty` keeps a lone word off the last line. */
+    max-width: 70vw;
+    text-wrap: pretty;
   }
   /* A block may need a second paragraph (the tonarium draws four things and
      one paragraph buries the last two). Space them, or they set as one. */
@@ -1273,13 +1282,21 @@
      sits mid-page, not at a column's right. */
   .settings .key-info { float: none; }
   .settings .key-card { left: 0; right: auto; }
+  /* MONO, UPRIGHT. This is the card's opening statement and the longest prose
+     on it, and small italic Junicode is the hardest setting to read at length:
+     the slant plus the serif's fine strokes at --caption cost more than the
+     "aside" the italic was buying. The mono is a size down, and upright, so
+     the paragraph is legible and still sits apart from the serif entries
+     under it. */
   .key-desc {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: var(--caption);
+    font-family: var(--mono);
+    font-size: var(--micro);
+    letter-spacing: var(--track-meta);
     color: var(--ink);
-    line-height: 1.5;
-    margin: 0 0 var(--sp-2);
+    line-height: 1.65;
+    margin: 0 0 var(--sp-3);
+    /* Balances the last line rather than leaving one word alone on it. */
+    text-wrap: pretty;
   }
   .key-entry {
     font-family: var(--serif);

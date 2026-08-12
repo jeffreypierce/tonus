@@ -139,7 +139,10 @@ export function chantRow(tonus, chant, { selected = false, aside, label, length 
   // the first thing read on every row while being the field that varies
   // least. It rides the notation's tail end instead (see .chant-row-cat),
   // where the staff has run out and there is white to sit in.
-  const meta = [kind, chant.modus, notes != null && `${notes} notes`]
+  // The box may already be showing the kind (Similes boxes the genus, the
+  // day's list boxes the office). Drop it from the line rather than printing
+  // the same word twice across one row.
+  const meta = [label === kind ? null : kind, chant.modus, notes != null && `${notes} notes`]
     .filter(Boolean).join(" · ");
 
   // Name first, notation last. A list is scanned down its left edge, and what

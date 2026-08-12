@@ -688,12 +688,12 @@ function similarChants() {
   } catch { return null; }
   if (!neighbours.length) return null;
 
-  // The census returns eight; four is a comparison, eight is a second list
+  // The census returns eight; five is a comparison, eight is a second list
   // competing with the day's own. They arrive sorted by similarity.
   const found = neighbours
     .map((n) => ({ n, chant: tonus.cantus({ id: n.id })[0] }))
     .filter((r) => r.chant?.gabc)
-    .slice(0, 4);
+    .slice(0, 5);
   if (!found.length) return null;
 
   return el("div", { class: "similar" },
@@ -716,11 +716,12 @@ function similarChants() {
       // and usually its genus, so without a figure that moves the subline
       // repeats itself four times.
       length: true,
-      // NO BOXED CATEGORY HERE. `chant.office` is a genre code ("co", "an"),
-      // not one of OFFICES' keys — it is already what `kind` reads to name
-      // the genus in the subline, so a box would repeat the field beside it.
-      // The day's list boxes a real office because its rows are gathered BY
-      // office; a census neighbour has no such context to carry.
+      // THE GENUS RIDES THE BOX, as the office does in the day's list: the
+      // box takes the broadest grouping a row belongs to and the subline
+      // keeps the specifics. A neighbour has no office worth boxing
+      // (`chant.office` here is a genre code, "co" or "an", which is what
+      // the genus already says), so the genus is that grouping.
+      label: (c) => c.ordinarium || c.genus || null,
       onSelect: openChant,
     }),
   );
