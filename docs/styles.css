@@ -827,7 +827,11 @@
     min-height: var(--control-h);
     margin-bottom: var(--sp-3);
   }
-  .settings .segset { margin-bottom: 0; }
+  /* A strip inside a control row carries no bottom margin: the row owns the
+     air beneath it. Left on, flex centres a 40px box (28 + 12) against the
+     spur's 18 and the ? sits 6px low — half the margin, exactly. */
+  .settings .segset,
+  .track-strip .segset { margin-bottom: 0; }
   .segset button {
     font-family: var(--mono); font-size: var(--caption);
     letter-spacing: var(--track-meta);
@@ -896,6 +900,9 @@
   /* The track strip, where Calendarium's office strip sits: in the body,
      under the inputs band, with the same air beneath it. */
   .track-strip {
+    /* CENTER, and the spur is a flex ITEM here — not the floated thing that
+       hangs inside an h2. Its `position: relative` box is 27px tall against
+       the strip's 28, and without this it sat 6px low against the buttons. */
     display: flex; align-items: center; gap: var(--sp-2) var(--sp-5);
     position: relative;
     margin-bottom: var(--sp-5);
@@ -1286,10 +1293,16 @@
     text-transform: none;
   }
   .key-card[hidden] { display: none; }
-  /* In the inputs row the card hangs from the left edge instead — its spur
-     sits mid-page, not at a column's right. */
-  .settings .key-info { float: none; }
-  .settings .key-card { left: 0; right: auto; }
+  /* In a CONTROL ROW the card hangs from the left edge instead — its spur
+     sits mid-page, not at a column's right, so a card anchored right runs off
+     the window. (Measured on the track strip: left −122px.)
+     The float goes too. It is there for the spur that hangs inside an h2, and
+     in a flex row it drops the spur out of the line: the strip centred at 254
+     and the spur at 261. */
+  .settings .key-info,
+  .track-strip .key-info { float: none; margin: 0; display: flex; align-items: center; }
+  .settings .key-card,
+  .track-strip .key-card { left: 0; right: auto; }
   /* MONO, UPRIGHT. This is the card's opening statement and the longest prose
      on it, and small italic Junicode is the hardest setting to read at length:
      the slant plus the serif's fine strokes at --caption cost more than the

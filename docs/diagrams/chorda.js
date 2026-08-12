@@ -369,8 +369,11 @@ export function chordaTabula(tonus, { mode = 7, selected, onSelect, tuning, comm
     { key: "intervallum", head: "intervallum", gloss: (r) => r.consonantia },
     { key: "hz", head: "hz", mono: true, num: true, format: (v) => v.toFixed(2) },
     { key: "cents", head: "¢", mono: true, num: true, format: (v) => v.toFixed(1) },
-    { key: "offset", head: "¢ vs æq.", mono: true, num: true,
-      format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}` },
+    // "¢ vs æq." IS CUT. Equal temperament is the one tuning this panel is not
+    // about: the wheel's twelve ticks already show where equal would put each
+    // degree, and a reader watching the slider is comparing tempered against
+    // JUST, not against a piano. The field rides chordaRows still (`offset`),
+    // for anything that wants the number.
     // Blank under a temperament: a just ratio is a claim about a
     // RATIO, and a tempered degree does not have one.
     { key: "ratio", head: "ratio", mono: true, num: true,
