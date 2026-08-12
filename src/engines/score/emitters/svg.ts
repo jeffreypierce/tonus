@@ -1387,10 +1387,11 @@ export function toSvg(
     const capTop = capInitial
       ? headerY + L.lyricY - capSize * r.fonts.dropcap.scale * 0.72
       : headerY + L.topY;
-    // Just above the staff's top line — where the books set it, and about 4px
-    // higher than flush so the numeral's descenders clear the initial below.
+    // Sitting ON the staff's top line — where the books set it. The stack was
+    // floating well above the staff, reading as a header rather than as a mark
+    // in the margin beside the music.
     const y0 = inMargin
-      ? headerY + L.topY - markSize * 0.05
+      ? headerY + L.topY + markSize * 0.18
       : rubricTop;
     rubricLines.forEach((line, i) => {
       header.push(
