@@ -25,7 +25,7 @@ import { CENSUS_NOMEN, censusPanel, censusHeadline, censusDiesPanel,
   censusDiesHeadline } from "./diagrams/census.js";
 import { keySpur, marks, popover } from "./components/key.js";
 import { annulus, annulusTabula } from "./diagrams/annulus.js";
-import { chordaDual, chordaTabula, chordaRows } from "./diagrams/chorda.js";
+import { chordaTabula, chordaRows } from "./diagrams/chorda.js";
 import { wheel } from "./diagrams/temperamentum.js";
 import { hand, handTabula, handRows } from "./diagrams/hand.js";
 import { mutatio } from "./diagrams/mutatio.js";
@@ -1515,12 +1515,13 @@ function temperamentumPanel() {
     // The string and the ruler as ONE figure: the same degrees on two axes,
     // joined, so the disagreement between the medieval measure and the modern
     // one is the thing drawn rather than something to infer across two panels.
-    // STEP 2 of the temperamentum plan: the wheel, above the string it will
-    // replace. Both draw while the new figure is checked against the lab;
-    // chordaDual retires from this panel once the wheel carries its work.
+    // THE WHEEL AND ITS STRING, one figure. chordaDual drew here until the
+    // wheel carried its work: the string beneath says everything the old
+    // monochord-and-ruler pair said about where a degree falls, and says it
+    // against the wheel rather than against a second axis the reader had to
+    // hold in mind.
     wheel(tonus, { ...opts,
       weights: state.score?.imprint?.pcDistribution ?? null }),
-    chordaDual(tonus, opts),
     // This chant's weight on each degree rides the tabula as its quiet
     // gloss — the panel stops being a scale in the abstract and becomes this
     // chant's scale, on an axis already drawn. Matched by pitch class, as

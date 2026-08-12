@@ -190,9 +190,13 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
     // slot stays empty rather than printing an approximation.
     if (r.ratio) {
       svg.append(n("text", {
-        x: sc(lx), y: sc(letterY + (top ? -14 : 12)),
+        x: sc(lx), y: sc(letterY + (top ? -15 : 13)),
         "text-anchor": "middle", "font-family": HOUSE_SERIF,
-        "font-size": STEP.micro, fill: INK, "fill-opacity": STRATUM.rail,
+        // A STEP UP FROM micro. Measured on the page: the letter renders at
+        // 22px and the ratio at 12.9, which reads as a footnote to the letter
+        // rather than as the other half of the label. It IS the reading — the
+        // letter only says which degree — so it takes the caption rung.
+        "font-size": STEP.caption, fill: INK, "fill-opacity": STRATUM.letters,
       }, r.ratio));
     }
   }
@@ -288,7 +292,12 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
         fill: "none",
         stroke: touchesSel ? RUBRICA : INK,
         "stroke-opacity": touchesSel ? STRATUM.label : STRATUM.rail,
-        "stroke-width": (touchesSel ? STROKE.firm : STROKE.fine) * GRID,
+        // THINNER THAN THE LAB'S. These are long spans, and a long line at a
+        // short line's weight reads far heavier: at firm×GRID (2.1) the
+        // arches were the darkest thing in the figure and the ring, at 1.1,
+        // disappeared under them. The selection keeps the claim's rung; the
+        // neighbours drop to the hairline they are.
+        "stroke-width": touchesSel ? STROKE.fine * GRID : STROKE.hair * GRID,
       }));
       if (touchesSel) {
         plates.push({ x: (xa + xb) / 2, y: STRING_Y - hgt - 5, text: iv.nomen });
