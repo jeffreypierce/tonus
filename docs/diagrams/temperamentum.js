@@ -141,6 +141,72 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
   const finalRow = rows.find((r) => r.role === "finalis") ?? rows[0];
   const sel = rows.find((r) => r.key === selected) ?? finalRow;
 
+  // ── THE STAR: the chain of fifths, drawn across the ring ──
+  // A scale is BUILT from fifths, and the chords are that construction made
+  // visible: six of them for seven degrees, because the diatonic chain is
+  // open — F–C–G–D–A–E–B, with no chord closing B back to F. That missing
+  // seventh chord is the tritone, and its absence is the figure's own
+  // argument rather than something a caption has to assert.
+  //
+  // Partners come from intervallum, not a cents window: a fifth and its
+  // inversion (P5 up, P4 up from the other end) are the same relationship,
+  // and the library knows which is which under any temperament.
+  //
+  // ONLY THE SELECTION SPEAKS. The full star is six lines crossing one small
+  // circle and it reads as a scribble; the selected degree's chords draw in
+  // rubrica, its neighbours' faintly, the rest not at all.
+  const T = tonus.temperamentum({ mode, ...(tuning ? { tuning } : {}),
+    ...(comma != null ? { comma } : {}) });
+  const byCents = [...rows].sort((a, b) => norm(a.cents) - norm(b.cents));
+  const si = byCents.findIndex((r) => r.pc === sel.pc);
+  const nbrs = new Set(si < 0 ? [] : [
+    byCents[(si + byCents.length - 1) % byCents.length].pc,
+    byCents[(si + 1) % byCents.length].pc,
+  ]);
+  for (let i = 0; i < rows.length; i++) {
+    for (let k = i + 1; k < rows.length; k++) {
+      const a = rows[i], b = rows[k];
+      const touchesSel = a.pc === sel.pc || b.pc === sel.pc;
+      const touchesNbr = nbrs.has(a.pc) || nbrs.has(b.pc);
+      if (!touchesSel && !touchesNbr) continue;
+      const cls = T.intervallum(a.spn, b.spn)?.class;
+      if (cls !== "P5" && cls !== "P4") continue;
+      const [ax, ay] = pointAt(angleOf(a.cents), R);
+      const [bx, by] = pointAt(angleOf(b.cents), R);
+      svg.append(n("line", {
+        x1: sc(ax), y1: sc(ay), x2: sc(bx), y2: sc(by),
+        stroke: touchesSel ? RUBRICA : INK,
+        "stroke-opacity": touchesSel ? STRATUM.label : STRATUM.rail,
+        "stroke-width": touchesSel ? STROKE.firm : STROKE.hair,
+      }));
+    }
+  }
+
+  // ── THE WOLF: the fifth the chain cannot make ──
+  // Twelve fifths do not close an octave, and the leftover falls on the one
+  // interval nobody stacked. Its ends are G♯ and E♭, which no mode sings, so
+  // they wear NO DOT AND NO LETTER — a dot would claim the chant goes there.
+  // The ring is a circle of cents, so a pitch has a place on it whether or not
+  // it is drawn: verified across all eight modes and the whole comma range, a
+  // wolf end never comes within 19° of a drawn degree, so the chord always has
+  // clear arc to spring from.
+  //
+  // Dashed, and always faint. It is a fact about the TUNING rather than about
+  // the selection, so it does not brighten with a click — but the hub names
+  // its size, and the size is what the slider changes.
+  const lupus = T.lupus?.();
+  if (lupus) {
+    const finC = T.cents[sel.pc] != null ? T.cents[finalRow.pc] : 0;
+    const relOf = (pc) => norm(T.cents[pc] - finC);
+    const [wx1, wy1] = pointAt(angleOf(relOf(lupus.from)), R);
+    const [wx2, wy2] = pointAt(angleOf(relOf(lupus.to)), R);
+    svg.append(n("line", {
+      x1: sc(wx1), y1: sc(wy1), x2: sc(wx2), y2: sc(wy2),
+      stroke: INK, "stroke-opacity": STRATUM.rail,
+      "stroke-width": STROKE.fine, "stroke-dasharray": "4 4",
+    }));
+  }
+
   // ── the degrees ──
   // A dot's AREA carries how much the chant sings the degree, so the radius
   // goes as the root: doubling the area is doubling the time spent there.
