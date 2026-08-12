@@ -114,7 +114,11 @@ export function keySpur(desc, ...entries) {
   if (!live.length) return null;
   return popover("what the marks mean", () => [
     el("p", { class: "key-desc" }, desc),
-    ...live.map(([mark, word]) =>
-      el("p", { class: "key-entry" }, ...(mark ? [mark, " "] : []), word)),
+    // A third element GLOSSES the entry: the word names the mark, the gloss
+    // says what it measures. Optional, so a mark whose word is self-evident
+    // ("the corpus", "the gap") stays a bare line and is not padded out.
+    ...live.map(([mark, word, gloss]) =>
+      el("p", { class: "key-entry" }, ...(mark ? [mark, " "] : []), word,
+        ...(gloss ? [el("span", { class: "key-gloss" }, gloss)] : []))),
   ]);
 }

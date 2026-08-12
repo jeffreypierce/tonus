@@ -1232,6 +1232,23 @@
     vertical-align: -0.14em;
   }
   .key-entry + .key-entry { margin-top: var(--sp-1); }
+  /* The gloss: what the mark MEASURES, under the word that names it. Set a
+     stratum down and on its own line, so the list still scans by its words
+     and the explanation is there for the reader who stops. `text-indent`
+     resets because the entry hangs its wraps under the word, and the gloss
+     is already there — it must not pull left into the swatch column. */
+  .key-gloss {
+    display: block;
+    text-indent: 0;
+    font-size: var(--micro);
+    /* --label, NOT --ghost: quiet text is still text, and --ghost is a
+       hairline colour that composites to 1.43:1. The italic is what carries
+       "subordinate", per the token's own note. */
+    font-style: italic;
+    color: var(--label);
+    line-height: 1.45;
+  }
+  .key-entry:has(.key-gloss) + .key-entry { margin-top: var(--sp-2); }
   .key-mark { color: var(--ink); }
   .key-italic { font-style: italic; }
   /* Four radars in a row — the ROW is the figure; a radar of one says

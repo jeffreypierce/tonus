@@ -124,15 +124,35 @@ const GROUP_WORD = {
   degreeHist: "degrees", melodic: "melodic", trigram: "trigram",
   cadenceMedial: "medial cadence", cadenceFinal: "final cadence",
 };
+// What each spoke MEASURES. The letter names the axis and the word labels it,
+// but neither says what is being counted, and a reader cannot tell "trigram"
+// from "melodic" by name alone. These follow the group table in
+// ../api/census.md — the same descriptions, shortened to a key's line.
+const GROUP_GLOSS = {
+  degreeHist: "how long it dwells on each scale degree",
+  melodic: "which step follows which, over every pair",
+  trigram: "its three-note figures, against the commonest",
+  cadenceMedial: "how its interior phrases land",
+  cadenceFinal: "how it closes",
+};
 
 // ── the sigla, shared by both subjects ──
 const combKey = (kind) => keySpur(
   "Each measure runs 0 to 100; the marks place this chant in the corpus and among its own kind.",
   [marks.upright(), "the corpus"], [marks.ring(), kind], [marks.gap(), "the gap"]);
+// THE DIRECTION IS THE THING THE KEY NEVER SAID. Each spoke is that group's
+// cosine against the corpus mean (see census/types.ts: "low means the chant
+// uses this dimension unlike the rest"), so a LONG spoke is typical and a
+// short one is not — without that, a big shape and a small one are equally
+// readable as "more" of something.
 const rowKey = (intro) => keySpur(
-  `One radar per chant, five axes of the census; beside this one, ${intro}.`,
-  ...AXES.map((a) => [marks.text(GROUP_LETTER[a]), GROUP_WORD[a]]),
-  [marks.stem(), "note weight"], [marks.finial(), "the final"]);
+  `One radar per chant, five axes of the census; beside this one, ${intro}. `
+  + "Each spoke runs from the centre: the further out it reaches, the more "
+  + "this chant behaves like the corpus in that dimension — so a wide shape "
+  + "is a typical chant, and a pinched one is doing something of its own.",
+  ...AXES.map((a) => [marks.text(GROUP_LETTER[a]), GROUP_WORD[a], GROUP_GLOSS[a]]),
+  [marks.stem(), "note weight", "where its time is spent, by pitch"],
+  [marks.finial(), "the final", "the pitch it comes to rest on"]);
 const GENUS_ONE = {
   in: "an Introit", gr: "a Gradual", an: "an antiphon", of: "an Offertory",
   co: "a Communion", al: "an Alleluia", tr: "a Tract", re: "a responsory",
