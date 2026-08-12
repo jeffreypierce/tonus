@@ -597,11 +597,11 @@ function harmoniaPanel() {
     // pitch) is nowhere in a table, and it is the whole reason the figure
     // is a wheel.
     el("h2", {}, "caelum", keySpur(
-      "Seven planets, each on its own ring, at its true longitude for this "
-      + "day. The rings run in Ptolemaic order — Saturn slowest and furthest "
-      + "out, the Moon nearest — and that order is also the scale: each "
-      + "planet sounds one string of the Greater Perfect System, Saturn the "
-      + "lowest and the Sun the mese at the middle.",
+      "Seven planets, each on its own ring, placed where it stood in the sky "
+      + "on this day. The rings run outward in order of speed. Saturn is the "
+      + "slowest, so it sits furthest out; the Moon is the fastest and sits "
+      + "nearest. That order is also a scale: each planet sounds one note, "
+      + "the lowest at the rim and the highest at the centre.",
       [marks.chord(), "an aspect: two planets standing at an angle",
         "the line is heavier the stronger the aspect, and it sounds an "
         + "interval — a trine is a third, a square a tritone"],
@@ -659,9 +659,7 @@ function festumPanel() {
     // within it, the feasts on the orbit between.
     el("h2", {}, "annus domini", keySpur(
       "Two calendars, one inside the other: the civil year around the rim, "
-      + "the Church's year banded within it. The point of the ring is what a "
-      + "list cannot show — Advent and Septuagesima are neighbours, and "
-      + "Easter's date drags a third of the year with it.",
+      + "the Church's year banded within it.",
       [marks.band(), "a season, banded",
         "its arc is how long it lasts; the darker bands are the penitential seasons"],
       [marks.dot(), "a feast, on the orbit between the two calendars",
@@ -718,6 +716,11 @@ function similarChants() {
       // and usually its genus, so without a figure that moves the subline
       // repeats itself four times.
       length: true,
+      // NO BOXED CATEGORY HERE. `chant.office` is a genre code ("co", "an"),
+      // not one of OFFICES' keys — it is already what `kind` reads to name
+      // the genus in the subline, so a box would repeat the field beside it.
+      // The day's list boxes a real office because its rows are gathered BY
+      // office; a census neighbour has no such context to carry.
       onSelect: openChant,
     }),
   );
@@ -1346,10 +1349,22 @@ function commaSlider() {
     // of it, which is what made the control feel broken. The named stops are
     // reachable exactly from the list beside it, and the ticks show where they
     // are; the slider's job is the places BETWEEN them.
+    // ONE REPAINT PER FRAME. `input` fires per pixel of drag, and each one
+    // was running a synchronous renderPanels() — every panel, every figure,
+    // every score re-rendered before the next mouse move could be read.
+    // Measured across the track: 18ms a step at the median and 53ms at the
+    // worst, which is the ratchet.
+    //
+    // The thumb and the readout still move on EVERY event, because they are
+    // cheap and they are what the hand is watching. Only the panels are
+    // coalesced, so a drag repaints at most once a frame and drops the
+    // intermediate states nobody sees.
+    let queued = 0;
     input.addEventListener("input", () => {
       state.comma = Number(input.value);
       commaControl.paint();
-      renderPanels();
+      if (queued) return;
+      queued = requestAnimationFrame(() => { queued = 0; renderPanels(); });
     });
 
     const readout = el("span", { class: "comma-read" });

@@ -134,7 +134,12 @@ export function chantRow(tonus, chant, { selected = false, aside, label, length 
   // labelling and leaving a bare number on a line of its own, which is the
   // very thing that got the earlier figures cut.
   const notes = length ? scoreOf(tonus, chant)?.prosody?.noteCount : null;
-  const meta = [label, kind, chant.modus, notes != null && `${notes} notes`]
+  // THE OFFICE LEAVES THE SUBLINE. It is a CATEGORY, not a property of the
+  // chant the way its genus and mode are, and at the head of the line it was
+  // the first thing read on every row while being the field that varies
+  // least. It rides the notation's tail end instead (see .chant-row-cat),
+  // where the staff has run out and there is white to sit in.
+  const meta = [kind, chant.modus, notes != null && `${notes} notes`]
     .filter(Boolean).join(" · ");
 
   // Name first, notation last. A list is scanned down its left edge, and what
@@ -153,7 +158,15 @@ export function chantRow(tonus, chant, { selected = false, aside, label, length 
         ),
         aside != null && el("span", { class: "chant-row-aside" }, aside),
       ),
-      incipit(tonus, chant),
+      // The notation, with the office boxed over its tail. The box is
+      // POSITIONED rather than given a column of its own: the comment above
+      // holds, and a third column would push the staff off the halfway mark
+      // by its own width. It is the notation's last inch that it covers,
+      // where a one-line incipit has already run out of notes.
+      el("span", { class: "chant-row-music" },
+        incipit(tonus, chant),
+        label && el("span", { class: "chant-row-cat" }, label),
+      ),
     ),
   );
 }

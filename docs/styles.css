@@ -691,6 +691,24 @@
     mask-image: linear-gradient(to right, #000 70%, transparent);
   }
   .chant-row .incipit svg { height: 50px; width: auto; max-width: none; display: block; }
+  /* THE OFFICE, BOXED OVER THE MUSIC'S TAIL. The incipit masks away to
+     transparent from 70%, so the row's last inch is already white — the box
+     sits in that white rather than over any notation. Positioned, never a
+     third grid column: the column widths above are load-bearing for where
+     the staff begins. */
+  .chant-row-music { position: relative; min-width: 0; }
+  .chant-row-cat {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    right: var(--sp-5);
+    /* The subline's dress, one step down — it is the same register of fact,
+       so it is not given a face of its own. */
+    font-family: var(--mono); font-size: var(--micro); font-style: italic;
+    letter-spacing: var(--track-meta); color: var(--label);
+    white-space: nowrap;
+    padding: 2px var(--sp-2);
+    border: 1px solid var(--rule);
+    background: var(--paper);
+  }
   /* Italic, as the panel subheadings are: this is the same kind of line — the
      quiet aside under a name. */
   .chant-row-meta {
