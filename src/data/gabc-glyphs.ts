@@ -59,13 +59,16 @@ export const GLYPH = {
   // beside a real barline it read as a doubled bar. Hence the bbox check in
   // the extractor, and hence these names carry their SMuFL ones.)
   //
-  // EA00 and EA02, NOT the EA04-EA09 block. Those are 60 units wide and are
-  // bare ledger STEMS, not custodes: mapping EA05 as the stem-down cut drew a
-  // 1.9px vertical stroke and nothing else. The real pair carries a notehead
-  // (285 and 613 units wide), and the bbox check in the extractor is what
-  // makes the difference visible.
-  custosUp: "EA00",     // chantCustosStemUpPosLowest
-  custosDown: "EA02",   // chantCustosStemUpPosMiddle — the stem-down cut
+  // EA00 IS THE WHOLE CUSTOS, both directions. Two neighbours were tried and
+  // neither is one:
+  //   EA04-EA09 (60 wide) are bare ledger STEMS. Mapping EA05 as the
+  //     stem-down cut drew a 1.9px vertical stroke and nothing else.
+  //   EA02 (613 wide) is a ZIGZAG — a liquescent cut, not the plain sign. It
+  //     drew a lightning bolt at the end of every line.
+  // A codepoint's SMuFL name is not enough to identify it; both were caught
+  // by rendering the outline and looking, which is the check to make before
+  // trusting any of this block.
+  custos: "EA00",       // chantCustosStemUpPosLowest — the hooked sign
   // note components
   podatusLower: "E9B0",
   podatusUpper: "E9B1",

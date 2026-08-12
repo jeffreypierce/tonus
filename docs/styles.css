@@ -1427,6 +1427,12 @@
      measures easier to see. The round figures are capped instead, since a
      circle gains nothing past a certain size. */
   .tabpanel svg.chorda-dual { width: 100%; }
+  /* The temper wheel is capped AT ITS OWN DRAWN SIZE: its viewBox is 440
+     wide, so 440px renders every stroke and letter at the exact rung the
+     ink system names. Uncapped it stretched to the column — ~18% over
+     scale — and read boosted beside the other figures (his catch,
+     2026-08-12: "it feels much more boosted big"). */
+  .tabpanel svg.temper-wheel { max-width: 440px; margin: 0 auto var(--sp-4); }
   /* The hand standing ALONE — no chant, so no ring around it. Capped, because
      past a certain size a picture only gets bigger. */
   .tabpanel svg.hand {

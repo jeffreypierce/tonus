@@ -45,6 +45,11 @@ const state = {
   chant: null,
   score: null,
   note: null,
+  // A chord of the temper wheel, held for inspection: [pcA, pcB] or null.
+  // Clicking a drawn chord sets it and the wheel's centre names the interval
+  // the pair makes — live under the slider, which is the point. Ephemeral:
+  // not in the URL, cleared by a note-click or a chant switch.
+  temperEdge: null,
   // which offices are shown — see OFFICES_SHOWN below, spelled out here
   // because `state` is built before that list exists
   offices: ["proprium", "ordinarium", "matutinum", "laudes", "vesperae"],
@@ -1547,12 +1552,19 @@ function temperamentumPanel() {
     mode, selected: selectionFor(scaleRows, sel), ...tune,
     // A degree chosen here is reported back as the CHANT's pitch where it has
     // one, so the score and the range staff can ring the note the reader
-    // actually clicked toward.
+    // actually clicked toward. Choosing a NOTE releases any chord held for
+    // inspection — the drawn chord set follows the note, and a held pair the
+    // figure no longer draws would leave the centre naming a ghost.
     onSelect: (key) => {
+      state.temperEdge = null;
       const row = scaleRows.find((r) => r.key === key);
       const inChant = state.score?.tabula.find((t) => t.pc === row?.pc);
       selectPitch(inChant?.spn ?? key);
     },
+    // A chord clicked for inspection: held in state so the centre's reading
+    // rides the slider live. Clicking the held chord again lets it go.
+    edge: state.temperEdge,
+    onEdge: (pair) => { state.temperEdge = pair; renderPanels(); },
   };
 
   return el("section", { class: "panel" },
@@ -1568,10 +1580,17 @@ function temperamentumPanel() {
         "the dot's area is how much of the chant is sung there"],
       [marks.hollow(), "in the scale, never sung"],
       [marks.chord(), "a fifth, drawn across the ring",
-        "a scale is built from these, and six of them chain seven degrees"],
+        "a scale is built from these, and six of them chain seven degrees; "
+        + "click any drawn chord and the interval its two notes make reads "
+        + "at the wheel's centre, live under the slider; click it again to "
+        + "let it go"],
+      [marks.dottedChord(), "the tritone",
+        "the fifth the chain of fifths cannot make: no chord closes B back "
+        + "to F. The scale's own interval, in every tuning; choose B or F "
+        + "and it speaks with its size"],
       [marks.brokenChord(), "the wolf",
-        "the fifth the chain cannot make; its ends are not degrees this mode "
-        + "sings, so they wear no letter"],
+        "the tempered chain's leftover fifth; its ends are not degrees any "
+        + "mode sings, so they wear no letter"],
       [marks.gauge(), "how far the degree has moved",
         "the tick is where pure fifths put it and the needle is where the "
         + "slider has; the travel is drawn four times life size, because at "
@@ -1683,6 +1702,7 @@ function manusPanel() {
 function openChant(chant) {
   state.chant = chant;
   state.note = null;
+  state.temperEdge = null;
   try { state.score = tonus.notatio(chant); }
   catch { state.score = null; }
   state.view = "canticum";

@@ -91,6 +91,10 @@ export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
   stepFor.set(finalisPc, M.finalis.step);
   stepFor.set(tenorPc, M.reciting.step);
 
+  // The just table the DEGREE spellings read against — resolved here, once,
+  // so every row of one call spells against one tuning.
+  const just = degreeJust(T);
+
   return g.map((row, i) => {
     // The interval the library names, from the finalis to this degree; it
     // carries the Latin (Diapente, Diapason) and the consonance class.
@@ -105,6 +109,7 @@ export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
     // A pitch at ratio r stops the string at 1/r of its length, so the string
     // fraction is the sounding ratio inverted.
     const fr = base / row.hz;
+    const cents = 1200 * Math.log2(row.hz / base);
     // The diapason is the finalis an octave up, not merely the last row of
     // the gamut — in a plagal mode those are different notes.
     const isOctave = row.midi === tonic.midi + 12;
@@ -120,7 +125,7 @@ export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
       hz: row.hz,
       // Cents of the TUNING, from the library's own table — the whole point of
       // the regula is that these are not the equal-tempered round numbers.
-      cents: 1200 * Math.log2(row.hz / base),
+      cents,
       aequalis: iv.cents,          // where equal temperament would put it
       fr,
       // A STRING FRACTION ONLY MEANS SOMETHING IN JUST INTONATION. Stopping a
@@ -144,7 +149,16 @@ export function chordaRows(tonus, { mode = 7, tuning, comma, weights } = {}) {
         // Not "is the ratio simple" but "is it EXACT". A just ratio round-
         // trips to the tuned value; a tempered one only ever approximates, so
         // any ratio offered for it would be a fit dressed as a measurement.
-        return Math.abs(n / d - fr) < 1e-9 ? `${d}:${n}` : null;
+        if (Math.abs(n / d - fr) < 1e-9) return `${d}:${n}`;
+        // RULED 2026-08-12: mid-slider a degree is SPELLED rather than
+        // silent — "5:4+1c", the comma notation — because where the
+        // temperament put each degree is the panel's whole subject, and a
+        // spelling that counts the comma is a reading, not a fit dressed as
+        // a measurement. Within the octave only: past the diapason a
+        // spelling would repeat the degree an octave below it, where the
+        // exact branch above genuinely distinguishes octaves (512:243).
+        const a = Math.abs(cents);
+        return a <= 1200 + 1e-6 ? commaForm(a, just) : null;
       })(),
       offset: row.offset,
       intervallum: iv.alias || iv.nomen,
@@ -374,9 +388,64 @@ export function chordaTabula(tonus, { mode = 7, selected, onSelect, tuning, comm
     // degree, and a reader watching the slider is comparing tempered against
     // JUST, not against a piano. The field rides chordaRows still (`offset`),
     // for anything that wants the number.
-    // Blank under a temperament: a just ratio is a claim about a
-    // RATIO, and a tempered degree does not have one.
+    // Under a temperament the exact ratio gives way to the COMMA SPELLING
+    // ("5:4+1c") — chordaRows spells it, this column just prints it. The
+    // dash survives only past the diapason, where a spelling would repeat
+    // the octave below.
     { key: "ratio", head: "ratio", mono: true, num: true,
       format: (v) => v ?? "—" },
   ], { selected: sel, onSelect });
+}
+
+// ── the comma spelling ────────────────────────────────────────────────────
+// THE ONE PIECE OF ARITHMETIC THAT IS THE FIGURES' OWN, and it is a NOTATION
+// rather than a fact about a tuning: a way of writing a tempered size the way
+// the meantone theorists wrote it. Every interval here sits an exact
+// comma-multiple from a just ratio — the Pythagorean third 81:64 IS 5:4 plus
+// one comma of 81:80 — so a size can be spelled "5:4+1c" instead of "408¢",
+// and the spelling says WHERE the temperament put it.
+//
+// It lives HERE, beside chordaRows, because the rows spell their own degrees
+// now (ruled 2026-08-12) and the wheel imports it for its arches — one copy,
+// downstream of the row data it annotates. The just ratios come from
+// T.ratio(), not a copy of them: the library holds the arithmetic and a
+// second table here would be a second opinion.
+const COMMA = 21.506;   // the syntonic comma, 81:80
+// The consonances the ARCH labels spell against — the intervals a reader of
+// the string actually meets.
+const JUST_KEYS = ["3/2", "4/3", "5/4", "6/5", "5/3", "8/5"];
+// The DEGREE spellings need the steps too: a mode has seconds and sevenths,
+// and a table without 9:8 could not say where the temperament put the tone
+// (at 1/4 comma it sits exactly half a comma flat of it).
+const DEGREE_KEYS = [...JUST_KEYS, "9/8", "16/9", "16/15", "15/8"];
+// The fractions a reader of the slider actually meets. Anything else prints a
+// decimal: a spelling is only worth having when it is nameable.
+const NICE = [[0, "0"], [1 / 9, "1/9"], [1 / 6, "1/6"], [2 / 9, "2/9"],
+  [1 / 4, "1/4"], [1 / 3, "1/3"], [4 / 9, "4/9"], [1 / 2, "1/2"],
+  [2 / 3, "2/3"], [3 / 4, "3/4"], [1, "1"], [4 / 3, "4/3"], [3 / 2, "3/2"],
+  [2, "2"]];
+
+const table = (T, keys) => keys.map((k) => {
+  const r = T.ratio(k);
+  return [r.cents, r.display];
+});
+/** The arch consonances, resolved once per render from the library. */
+export const justTable = (T) => table(T, JUST_KEYS);
+/** The degree table: the consonances and the steps. */
+export const degreeJust = (T) => table(T, DEGREE_KEYS);
+
+/** A tempered span as the theorists would write it, or null when it sits too
+ *  far from anything just — beyond about two commas the spelling stops being
+ *  a reading and becomes arithmetic, and the size speaks better in cents. */
+export function commaForm(span, just) {
+  let best = null;
+  for (const [c, display] of just) {
+    const k = (span - c) / COMMA;
+    if (!best || Math.abs(k) < Math.abs(best.k)) best = { k, display };
+  }
+  if (!best || Math.abs(best.k) > 2.05) return null;
+  if (Math.abs(best.k) < 0.02) return best.display;   // it IS the just ratio
+  const nice = NICE.find(([v]) => Math.abs(Math.abs(best.k) - v) <= 0.02);
+  const size = nice ? nice[1] : Math.abs(best.k).toFixed(1);
+  return `${best.display}${best.k > 0 ? "+" : "−"}${size}c`;
 }

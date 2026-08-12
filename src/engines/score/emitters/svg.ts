@@ -394,18 +394,16 @@ function custosX(x: number, prevLyricRight: number, r: Resolved): number {
   return edge - r.staffInterval * 1.35;
 }
 
-/** The custos glyph for a pitch: the tail rises AWAY from the staff.
+/** The custos: ONE SIGN, whichever way the next pitch lies.
  *
- *  A custos is a guide, not a note, and the tail is what says so — it points
- *  off the end of the line at the pitch the next system opens on. Which way it
- *  points follows the pitch: a degree in the staff's lower half takes the
- *  stem-up cut, one in the upper half the stem-down, so the tail always leans
- *  out of the staff rather than back through it.
- *
- *  `staffPosition` counts upward from the bottom line, so 4 is the middle of a
- *  four-line staff. */
-function custosGlyph(staffPosition: number): string {
-  return staffPosition <= 4 ? GLYPH.custosUp : GLYPH.custosDown;
+ *  Bravura's chant range has a stem-up and a stem-down family, and the
+ *  stem-down cuts turned out to be either bare ledger stems or a liquescent
+ *  zigzag — see gabc-glyphs.ts. The plain hooked sign at EA00 is what the
+ *  books print, and it reads the same at any height, so there is nothing to
+ *  choose between: the parameter is gone rather than left taking a value it
+ *  cannot act on. */
+function custosGlyph(): string {
+  return GLYPH.custos;
 }
 
 const esc = (s: string): string =>
@@ -953,7 +951,7 @@ export function toSvg(
       // It wins over the fit test. Where it is absent the layout still decides.
       if (r.width != null && figure[0]!.lineBreak && prevSyllable !== -1) {
         if (r.custos) {
-          const cp = placeGlyph(custosGlyph(figure[0]!.staffPosition),
+          const cp = placeGlyph(custosGlyph(),
             custosX(x, prevLyricRight, r),
             yFor(figure[0]!.staffPosition, L, r), r, "custos", "", r.noteScale * 0.85);
           if (cp) body.push(cp.svg);
@@ -990,7 +988,7 @@ export function toSvg(
     // route through here so the two cannot drift apart.
     const closeSystem = (nextPos: number | null): void => {
       if (r.custos && nextPos != null) {
-        const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
+        const p = placeGlyph(custosGlyph(), custosX(x, prevLyricRight, r),
                              yFor(nextPos, L, r), r,
                              "custos", "", r.noteScale * 0.85);
         if (p) body.push(p.svg);
@@ -1164,7 +1162,7 @@ export function toSvg(
           // The line-end guide naming the next system's first pitch, drawn as
           // the real custos now that the bake carries one (see gabc-glyphs.ts).
           const nextPos = rows[j]!.staffPosition;
-          const glyph = custosGlyph(nextPos);
+          const glyph = custosGlyph();
           const p = placeGlyph(glyph, custosX(x, prevLyricRight, r),
             yFor(nextPos, L, r), r, "custos", "", r.noteScale * 0.85);
           if (p) body.push(p.svg);
