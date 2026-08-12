@@ -1421,29 +1421,10 @@ let commaControl = null;
  *  what the fraction DOES, on one scale, everywhere on the axis — and it
  *  gives Pythagorean a real number (702.0¢, the pure fifth) rather than "0".
  */
-// The fractions the historical stops sit on. A reader dragging the slider
-// meets these by name in every treatise on the subject; between them the
-// fraction prints as a decimal, because a spelling is only worth having when
-// it is nameable.
-const COMMA_NICE = [[1 / 9, "1/9"], [1 / 6, "1/6"], [2 / 9, "2/9"],
-  [1 / 4, "1/4"], [1 / 3, "1/3"], [2 / 5, "2/5"], [1 / 2, "1/2"]];
-
-/** The fifth, NAMED and measured.
- *
- *  The cents alone said what the fifth is without saying what was done to it,
- *  and what was done is the whole subject of the control: a fifth narrowed by
- *  some fraction of the syntonic comma. So the line spells the operation —
- *  "3:2 − 1/4·(81:80)" — and then gives the size it lands on. At zero there is
- *  no operation to name and the pure ratio stands alone.
- */
 function commaReadout(v) {
   try {
     const T = tonus.temperamentum({ tuning: "meantone", comma: v });
-    const cents = 1200 * Math.log2(T.nota("G4").hz / T.nota("C4").hz);
-    if (!v) return `3:2 · ${cents.toFixed(1)}¢`;
-    const nice = COMMA_NICE.find(([f]) => Math.abs(v - f) <= 0.008);
-    const frac = nice ? nice[1] : v.toFixed(3).replace(/0+$/, "");
-    return `3:2 − ${frac}·(81:80) · ${cents.toFixed(1)}¢`;
+    return `${(1200 * Math.log2(T.nota("G4").hz / T.nota("C4").hz)).toFixed(1)}¢`;
   } catch { return ""; }
 }
 
