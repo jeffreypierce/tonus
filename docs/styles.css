@@ -753,9 +753,6 @@
   /* A block may need a second paragraph (the tonarium draws four things and
      one paragraph buries the last two). Space them, or they set as one. */
   .tracks-text + .tracks-text { margin-top: var(--sp-2); }
-  /* The prose states the track; the entries decode its marks. They are two
-     different things, and run together they read as one wall. */
-  .tracks-text + .key-entry { margin-top: var(--sp-3); }
   /* THE GAP BETWEEN BLOCKS. Up to three tracks stack in one card, each opening
      with its sample; the space before that sample is what separates one track
      from the last. A block can end in prose OR in a run of mark entries, so
@@ -815,23 +812,6 @@
      So: little links, in the page's existing link idiom — the dotted hairline
      `.doc` already uses to say "there is more here" — with a leading mark for
      the jump. The one you are standing on takes full ink and a solid rule. */
-  .dial-anchors { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: baseline; }
-  .dial-anchor {
-    font-family: var(--mono); font-size: var(--caption);
-    letter-spacing: var(--track-meta);
-    color: var(--label); background: none;
-    border: 0; border-bottom: 1px dotted var(--rule);
-    padding: 0 0 2px; cursor: pointer;
-  }
-  .dial-anchor::before { content: "\2192\00A0"; color: var(--ghost); }
-  .dial-anchor:hover { color: var(--ink); border-bottom-color: var(--label); }
-  .dial-anchor:hover::before { color: var(--label); }
-  .dial-anchor[aria-pressed="true"] {
-    color: var(--ink);
-    border-bottom: 1px solid var(--ink);
-  }
-  .dial-anchor[aria-pressed="true"]::before { color: var(--ink); }
-  .dial-anchor:focus-visible { outline: var(--focus); outline-offset: var(--focus-out); }
 
   /* ═══ RULE 3 · A SET IS ONE OBJECT MADE OF PARTS ═══
      The five offices are independently on or off, and together they decide one
@@ -1356,6 +1336,12 @@
     vertical-align: -0.14em;
   }
   .key-entry + .key-entry { margin-top: var(--sp-1); }
+  /* THE PROSE STANDS OFF ITS KEY. The paragraph states the track; the entries
+     decode its marks. Run together they read as one wall.
+     It lives HERE, after `.key-entry { margin: 0 }`, not up with the other
+     tracks rules: both are one class, so the later of the two wins and the
+     gap computed to 0 wherever it was written first. */
+  .tracks-text + .key-entry { margin-top: var(--sp-4); }
   /* The gloss: what the mark MEASURES, under the word that names it. Set a
      stratum down and on its own line, so the list still scans by its words
      and the explanation is there for the reader who stops. `text-indent`

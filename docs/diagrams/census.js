@@ -102,6 +102,20 @@ const COMB_DIES = [
   { key: "distance", label: "distance", words: ["unusual", "typical"] },
   { key: "scatter", label: "scatter", words: ["scattered", "clustered"] },
 ];
+// THE COMPARATIVES. The headline says "X than 60% of the corpus", and half
+// these words take -er rather than "more": "more wide" and "more long" are not
+// English. Only the irregulars are listed; anything absent takes "more X",
+// which is right for the compounds (more high-lying, more many-phrased).
+const COMPARATIVE = {
+  wide: "wider", narrow: "narrower",
+  long: "longer", short: "shorter",
+  heavy: "heavier", light: "lighter",
+  crowded: "more crowded", spare: "sparer",
+  unusual: "more unusual", typical: "more typical",
+  scattered: "more scattered", clustered: "more clustered",
+};
+const cmp = (w) => COMPARATIVE[w] ?? `more ${w}`;
+
 const GROUP_NAME = {
   modal: "its modal behaviour", degreeHist: "its degrees",
   melodic: "its melodic turns", trigram: "its three-note figures",
@@ -138,7 +152,7 @@ const GROUP_GLOSS = {
 
 // ── the sigla, shared by both subjects ──
 const combKey = (kind) => keySpur(
-  "Each measure runs 0 to 100; the marks place this chant in the corpus and among its own kind.",
+  "The marks place this chant in the corpus and among its own kind.",
   [marks.upright(), "the corpus"], [marks.ring(), kind], [marks.gap(), "the gap"]);
 // THE DIRECTION IS THE THING THE KEY NEVER SAID. Each spoke is that group's
 // cosine against the corpus mean (see census/types.ts: "low means the chant
@@ -149,8 +163,8 @@ const combKey = (kind) => keySpur(
 // job and not the key's. Spliced into a sentence about the axes it read as
 // a clause of the same thought and belonged to neither.
 const rowKey = () => keySpur(
-  "A wide shape is a typical chant. A pinched one is doing something of "
-  + "its own.",
+  "Each spoke is one measure of the chant against the corpus. A wide shape "
+  + "is a typical chant. A pinched one is doing something of its own.",
   ...AXES.map((a) => [marks.text(GROUP_LETTER[a]), GROUP_WORD[a], GROUP_GLOSS[a]]),
   [marks.stem(), "note weight", "where its time is spent, by pitch"],
   [marks.finial(), "the final", "the pitch it comes to rest on"]);
@@ -448,8 +462,14 @@ function candidates(rows, oneWord, poolWord) {
     }
     if (Math.abs(r.all - 50) > 30) {
       const w = r.all >= 50 ? r.words[0] : r.words[1];
+      // SAY HOW FAR OUT IT STANDS, not which percentile it occupies. "the 1st
+      // percentile of the corpus" is the same fact upside down: a chant at 1
+      // on the melisma axis is the MOST syllabic, and a reader has to invert
+      // the number to see it. The share it beats reads the way the word does,
+      // and the em dash goes with the restatement.
+      const beats = r.all >= 50 ? r.all : 100 - r.all;
       cands.push({ score: Math.abs(r.all - 50) * 1.4,
-        text: `${w} — the ${ord(r.all)} percentile of the ${poolWord}` });
+        text: `${cmp(w)} than ${beats}% of the ${poolWord}` });
     }
   }
   return cands;

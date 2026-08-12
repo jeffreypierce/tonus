@@ -9,13 +9,10 @@
 //   its two spurs, divided by hairlines. The spurs step the value and hold
 //   nothing, so they carry no edge of their own: rule 3.
 //
-//   THE ANCHORS hold nothing and set nothing. Nativitas, Pascha and Pentecoste
-//   are three days the year is reckoned from, and going to one is going
-//   somewhere — so they are little jump links, in the dotted-hairline idiom
-//   `.doc` uses elsewhere for "there is more here". Not a tab strip: a strip
-//   claims one of its names is showing, and these are three places you may go.
-//   Not boxes either — boxed, they were indistinguishable from the office
-//   filters directly below them.
+//   THE ANCHOR LINKS ARE GONE (2026-08-12). Nativitas, Pascha and Pentecoste
+//   sat here as three jump links, and they crowded the row for a reach the
+//   ring in Festum already gives: every turning of the year is selectable
+//   there, on the figure that shows where it falls.
 //
 // The whole page is a function of one date, so this input has two jobs that
 // pull against each other: land on a named day exactly, and wander from it a
@@ -34,15 +31,6 @@
 // chosen elsewhere has to be told to the field rather than rebuilt into it.
 
 import { el } from "./tabs.js";
-
-/** The three days the year is actually reckoned from. Every other turning —
- *  Advent, Epiphany, Quadragesima — is a walk from one of these, and the ring
- *  in Festum is the scenic route to all of them. */
-const ANCHORS = [
-  { key: "christmas", name: "Nativitas" },
-  { key: "easter", name: "Pascha" },
-  { key: "pentecost", name: "Pentecoste" },
-];
 
 const iso = (d) => `${String(d.getUTCFullYear()).padStart(4, "0")}`
   + `-${String(d.getUTCMonth() + 1).padStart(2, "0")}`
@@ -90,23 +78,15 @@ function build() {
     onclick: () => made.walk(n),
   }, glyph);
 
-  const anchorRow = el("div", { class: "dial-anchors", role: "group",
-    "aria-label": "tempora" });
-
-  // ONE FIELD, TWO SPURS, THREE JUMPS.
+  // ONE FIELD, TWO SPURS.
   //
   // The arrows and the date are one object: a value with two ways of nudging
   // it, inside a single edge, divided by hairlines. They were three detached
-  // boxes at three type sizes — 13.5px arrows around an 11px date — which read
+  // boxes at three type sizes (13.5px arrows around an 11px date), which read
   // as three unrelated controls for one reading of one value.
-  //
-  // The anchors are NOT in that box, and wear none of their own — see the
-  // header: three jump links, which is what finally tells them apart from the
-  // office filters below.
   made.node = el("div", { class: "dials" },
     el("div", { class: "field" },
       step(-1, "dies prior", "‹"), field, step(1, "dies posterior", "›")),
-    anchorRow,
   );
 
   /** A typed or picked date. Empty or unparseable input is left alone — the
@@ -143,15 +123,6 @@ function build() {
   made.sync = (date, anchors, current) => {
     made.date = date;
     if (document.activeElement !== field) field.value = iso(date);
-
-    // The anchors belong to the year on screen, so they move with it.
-    anchorRow.replaceChildren(...(anchors ? ANCHORS.filter((a) => anchors[a.key]).map((a) =>
-      el("button", {
-        type: "button",
-        class: "dial-anchor",
-        "aria-pressed": current === a.key ? "true" : "false",
-        onclick: () => made.set(new Date(anchors[a.key]), a.key),
-      }, a.name)) : []));
   };
 
   return made;

@@ -597,11 +597,10 @@ function harmoniaPanel() {
     // pitch) is nowhere in a table, and it is the whole reason the figure
     // is a wheel.
     el("h2", {}, "caelum", keySpur(
-      "The seven planets, each on its own ring, placed where it stood in the "
-      + "sky on this day. The rings run in the Chaldean order, slowest "
-      + "furthest out. That order is also a scale: each planet sounds one "
-      + "note, the lowest at the rim and the highest at the centre. "
-      + "Antiquity gave the ratios four ways; the doctrina picks which.",
+      "The seven planets, in the Chaldean order, slowest furthest out. That "
+      + "order is also a scale: each planet sounds one note, the lowest at "
+      + "the rim and the highest at the centre. Antiquity gave the ratios "
+      + "four ways; the doctrina picks which.",
       [marks.chord(), "an aspect: two planets standing at an angle",
         "the line is heavier the stronger the aspect, and it sounds an "
         + "interval: a trine is a third, a square a tritone"],
