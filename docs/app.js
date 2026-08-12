@@ -761,7 +761,10 @@ function canticumDetail(chant) {
 function affinityDissent(bookMode) {
   const top = state.score?.imprint?.modalAffinity?.[0];
   if (!top?.mode || top.mode === bookMode) return null;
-  return `its own weight ranks ${roman(top.mode)} first`;
+  // "its own weight ranks VIII first" said the mechanism (a weighting, a
+  // ranking) and left the reader to work out the point, which is simply that
+  // the notes do not agree with the book.
+  return `sounds in ${roman(top.mode)}`;
 }
 
 /** The right column's line: the mode's name under the theory reading, or the
@@ -770,7 +773,7 @@ function canticumRightDetail(M, row) {
   return el("p", { class: "sub" },
     state.right.canticum === "temperamentum"
       ? [M.nomen, affinityDissent(modeOf(state.score.chant))]
-          .filter(Boolean).join(" — ")
+          .filter(Boolean).join(", ")
       // Census's line is its HEADLINE — one computed conclusion about the
       // chant. The engine lives with the figures in diagrams/census.js.
       : state.right.canticum === "census"
