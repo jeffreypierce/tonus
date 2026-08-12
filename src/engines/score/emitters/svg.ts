@@ -521,7 +521,9 @@ export function toSvg(
     ? (rows.find((row) => row.lyric.trim())?.lyric.trim().charAt(0) ?? "")
     : "";
   // Sized to span staff + lyric (the book initial), sitting close to the staff.
-  const capSize = r.staffInterval * 10;
+  // 9.5, not 10: the initial spans staff + lyric, and a twentieth off it
+  // gives the margin mark above room without shrinking the letter's weight.
+  const capSize = r.staffInterval * 9.5;
   const capIndent = capInitial
     ? capSize * r.fonts.dropcap.scale * 0.72 + r.staffInterval * 0.45
     : 0;
@@ -1385,17 +1387,10 @@ export function toSvg(
     const capTop = capInitial
       ? headerY + L.lyricY - capSize * r.fonts.dropcap.scale * 0.72
       : headerY + L.topY;
-    // ABOVE THE CAP, as low as it will go. The two bounds cannot both be met:
-    // measured, the cap's ink begins only 8 units below the staff's top line
-    // while a two-line stack needs 26.4, so a mark level with the staff runs
-    // straight through the initial. It therefore sits above, and the only
-    // question is how far. 0.46 of the mark size puts about 4 units of air
-    // between the numeral's descenders and the cap's ink — solved from the
-    // measurement, not guessed: 0.55 floated it 18.6 units clear of the staff,
-    // and 0.1 dropped it 13.5 units INTO the cap, because the mark's ink runs
-    // ~3 units below its own baseline.
+    // Just above the staff's top line — where the books set it, and about 4px
+    // higher than flush so the numeral's descenders clear the initial below.
     const y0 = inMargin
-      ? capTop - markLineH * (rubricLines.length - 1) - markSize * 1.15
+      ? headerY + L.topY - markSize * 0.05
       : rubricTop;
     rubricLines.forEach((line, i) => {
       header.push(

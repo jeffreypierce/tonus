@@ -345,13 +345,13 @@ medieval tonaries describe them:
 Each mode also carries its traditional **ethos** (the character medieval theory
 ascribed to it) as both a Latin epithet (`gravis`, `tristis`, …) and an English
 gloss. The full set and its source are at the data, in
-[`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
+[`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
 The `modulations` fields (`regular`, `conceded`, and `initials`) are the
 mode's tonal centres and valid openings, each list **ordered by importance**
-(after Rockstro's Grove table [`rockstro-grove`](../../BIBLIOGRAPHY.md)). The
+(after Rockstro's Grove table [`rockstro-grove`](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md)). The
 modal-affinity scorer reads that order; the reasoning is documented at the
-data, in [`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
+data, in [`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
 `modus` resolves the mode's structural pitches through its own
 temperamentum: the **finalis** and **reciting** tone as tuned notes (pitch +
@@ -442,7 +442,7 @@ phrase's cadence ([score.md](score.md#cadences)).
 The catalogue is an editorial synthesis covering the final cadences; its step
 encoding, sources, and known gaps (medial cadences are not yet included) are
 documented at the data — see `CadenceFigure` in
-[`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
+[`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
 This is the **tradita** half — what the treatises say. Its counterpart is the
 corpus tally below, and they are not interchangeable: see [one spine, two
@@ -562,7 +562,7 @@ Ptolemy's three diatonic shades, and the modern equal division.
 Six ways to fill the table, five historical and one modern. Each has a
 character; the interval arithmetic, the commas that drive it, and the
 editorial choices behind it are documented at the builder, in
-[`temper/scale.ts`](../../src/engines/temper/scale.ts).
+[`temper/scale.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/scale.ts).
 
 - **`"pythagorean"`** — the medieval default. All intervals from the pure
   fifth and the octave: perfect melodic fifths and fourths, a narrow keen
@@ -613,7 +613,7 @@ tonus.temperamentum({ scale: sclFileString }); // name taken from the file
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
 `boethius-institutione`, `ptolemy-harmonics`, `schulter-harmony`,
 `rockstro-grove`, `niedermeyer-ortigue`, `bragers-treatise`,
 `sunol-textbook`, `saulnier-modes`, `liber-usualis`, `scala-format`.

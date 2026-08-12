@@ -26,7 +26,6 @@ import {
   computeAccidentals, type AccidentalMode, type AccidentalMark,
 } from "./accidentals.js";
 import type { NoteGeometry, SvgResult, SvgOpts } from "./svg.js";
-import { autoRubricLines } from "./svg.js";
 import type { ChantTabulaRow } from "../tabula.js";
 import type { Chant } from "../../chant/types.js";
 import { buildChironomia, buildProsodia, buildTonarium, trackBands, type TrackNote } from "./tracks.js";
@@ -355,27 +354,25 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   // the same way. No dropcap: tonus scores skip the illuminated capital (it
   // conflicts with the analysis-track layouts).
   const titleFace = options.fonts?.title;
-  const annFace = options.fonts?.annotation;
   const faceOf = (slot: typeof titleFace): string =>
     !slot ? lyricFace : typeof slot === "string" ? slot : slot.family;
   const weightOf = (slot: typeof titleFace): number | null =>
     typeof slot === "object" && slot.weight != null ? slot.weight : null;
-  const rubricLines: string[] = typeof options.rubric === "string"
-    ? [options.rubric]
-    : options.annotation === "auto" ? autoRubricLines(chant) : [];
-  const markSize = 14.5;
-  const markLineH = markSize * 0.98;
+  // NO MARGIN MARK, AND NO INITIAL. The genus/mode stack and the illuminated
+  // capital are quadrata's — they belong to the chant book, and moderna is a
+  // transcription onto a modern staff, which is read as an edition rather than
+  // as a page from the Liber. Moderna also carries the analysis tracks, and a
+  // left column reserved for a cap fights the bands they draw.
+  //
+  // `annotation` and `dropcap` are therefore IGNORED here, not refused: a
+  // species ignores options that do not apply to it (see inscriptio.ts), so
+  // one call can render either species without the caller stripping options.
   const titleSize = 22;
   let headerY = 0;
   let titleBaseline = 0;
-  let rubricTop = 0;
   if (options.title) {
     titleBaseline = titleSize;
     headerY += titleSize * 1.4;
-  }
-  if (rubricLines.length > 0) {
-    rubricTop = headerY + markSize * 1.1;
-    headerY = rubricTop + markLineH * (rubricLines.length - 1) + markSize * 0.5;
   }
 
   const body: string[] = [];
@@ -669,15 +666,6 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       `font-size="${titleSize}" fill="${INK}">${esc(options.title)}</text>`,
     );
   }
-  rubricLines.forEach((line, i) => {
-    header.push(
-      `<text class="rubric" x="${padding.toFixed(2)}" y="${(rubricTop + i * markLineH).toFixed(2)}" ` +
-      `font-family="${esc(faceOf(annFace))}"` +
-      `${weightOf(annFace) != null ? ` font-weight="${weightOf(annFace)}"` : ""} ` +
-      `font-size="${markSize}" style="font-feature-settings:'onum'" ` +
-      `fill="${rubricaColor}">${esc(line)}</text>`,
-    );
-  });
 
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${height}" ` +

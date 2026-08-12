@@ -275,5 +275,5 @@ as Tridentine Roman, continuous with medieval practice.
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
 `divinum-officium`, `computus`, `liber-usualis`.

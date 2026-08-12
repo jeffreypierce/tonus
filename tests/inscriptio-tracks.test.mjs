@@ -114,16 +114,27 @@ describe("inscriptio — duae species parity (ruled 2026-07-29)", () => {
     assert.ok(/class="lyric"[^>]*font-weight="518"/.test(mod), "moderna weight 518");
   });
 
-  test("both species honour the official front matter (title + auto mark, no dropcap)", () => {
-    const opts = { title: "Puer natus est", annotation: "auto" };
+  test("both species take the title; the book's opening is quadrata's alone", () => {
+    const opts = { title: "Puer natus est", annotation: "auto", dropcap: true };
     const quad = inscriptio(score, opts).svg;
     const mod = inscriptio(score, { ...opts, notation: "moderna" }).svg;
-    for (const svg of [quad, mod]) {
-      assert.ok(svg.includes('class="title"'), "the centered title");
-      assert.ok(/class="rubric"[^>]*>Intr\.</.test(svg), "the genus mark");
-      assert.ok(/class="rubric"[^>]*>7\.</.test(svg), "the mode mark");
-      assert.ok(!svg.includes('class="dropcap"'), "no dropcap in tonus scores");
-    }
+
+    // The centred title is the one piece of front matter both species set.
+    assert.ok(quad.includes('class="title"'), "quadrata: the centered title");
+    assert.ok(mod.includes('class="title"'), "moderna: the centered title");
+
+    // THE CHANT BOOK'S OPENING IS QUADRATA'S. The genus/mode mark and the
+    // illuminated initial belong to the page from the Liber; moderna is a
+    // transcription read as an edition, and it carries the analysis tracks
+    // that a reserved cap column would fight.
+    assert.ok(/class="rubric"[^>]*>Intr\.</.test(quad), "quadrata: the genus mark");
+    assert.ok(/class="rubric"[^>]*>7\.</.test(quad), "quadrata: the mode mark");
+    assert.ok(quad.includes('class="dropcap"'), "quadrata: the initial");
+
+    // Ignored, not refused — a species skips options that do not apply to it,
+    // so one call renders either without the caller stripping anything.
+    assert.ok(!mod.includes('class="rubric"'), "moderna: no margin mark");
+    assert.ok(!mod.includes('class="dropcap"'), "moderna: no initial");
   });
 });
 

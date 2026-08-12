@@ -253,6 +253,12 @@
     /* The page's outer air is its own decision, not a step: it is the margin
        of the leaf, and it changes with the width of the window. */
     --page-x: 48px;
+    /* THE MEASURE. Past about this width the two columns stop being a spread
+       and become two far-apart pages: the chant's staff runs so long the eye
+       loses the line it is on, and the reader's head turns to cross the gap.
+       The head's rule still spans the window — it is the edge of the leaf, not
+       of the text — so the cap goes on the CONTENT inside it. */
+    --measure: 1680px;
 
     /* ── controls ── */
     --control-h: 28px;
@@ -331,8 +337,22 @@
     align-items: baseline;
     gap: var(--sp-5);
     padding: var(--sp-5) var(--page-x) var(--sp-4);
-    border-bottom: 1px solid var(--rule);
     flex-wrap: wrap;
+    /* Capped with main, so the wordmark and the view switch stay over the
+       columns rather than drifting to the window's corners. */
+    max-width: var(--measure);
+    margin-inline: auto;
+    /* THE RULE IS THE LEAF'S EDGE, so it spans the WINDOW while the content
+       above it stops at the measure. A border on this box would stop with the
+       content; this draws past it on both sides. */
+    position: relative;
+  }
+  .head::after {
+    content: "";
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    bottom: 0; width: 100vw; height: 1px;
+    background: var(--rule);
   }
   .wordmark {
     font-family: var(--display);
@@ -355,7 +375,11 @@
   /* ── the page's outer air ──
      The header carries the same horizontal inset so its rule starts and stops
      with the content beneath it. */
-  main { padding: var(--sp-6) var(--page-x) var(--sp-9); }
+  main {
+    padding: var(--sp-6) var(--page-x) var(--sp-9);
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
 
   /* Five columns, three and two: the subject gets the wider half because a
      score and a chant list are wide things, and a wheel is not. */
@@ -1163,7 +1187,7 @@
     border: 1px solid var(--edge);
     padding: var(--sp-4);
     width: max-content;
-    max-width: 44ch;
+    max-width: 58ch;
     /* The card hangs INSIDE the h2, so the title's costume — caps, mono,
        tracking — would flow into it. A card is prose, not a heading. */
     font-family: var(--serif);
@@ -1190,6 +1214,9 @@
     color: var(--label);
     line-height: 1.6;
     margin: 0;
+    /* A wrapped line returns under the WORD, not under the swatch. */
+    padding-left: calc(16px + 0.4em);
+    text-indent: calc(-16px - 0.4em);
   }
   /* Inline BY SPECIFICITY: `.tabpanel svg { display: block }` outranks a
      bare class, and a block swatch put every mark on its own line above

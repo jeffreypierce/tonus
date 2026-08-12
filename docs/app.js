@@ -1179,6 +1179,12 @@ function tracksInfo() {
         + "gesture; its width is each note's velocity, so the line presses "
         + "where the voice does. A cadence re-inks at full strength, and "
         + "below confidence nothing is drawn at all."),
+      el("p", { class: "key-entry" }, marks.text("A"), " ",
+        "an arsis: the rising beat, the hand's lift; the wave crests"),
+      el("p", { class: "key-entry" }, marks.text("T"), " ",
+        "a thesis: the settling beat; the wave troughs"),
+      el("p", { class: "key-entry" }, marks.text("PT"), " ",
+        "a passing thesis: a one-note settling the hand moves through shallow"),
     ],
     tonarium: () => [
       sample((s) => {

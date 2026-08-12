@@ -14,7 +14,6 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
     - [inscriptio — the standalone renderer](#inscriptio--the-standalone-renderer)
     - [theme — faces and ink](#theme--faces-and-ink)
     - [The analysis tracks](#the-analysis-tracks)
-    - [The intonation channel](#the-intonation-channel)
   - [The imprint](#the-imprint)
   - [Prosody](#prosody)
   - [Cadences](#cadences)
@@ -408,11 +407,11 @@ Options, by group (all optional):
 - **front matter** — set as the Solesmes books open a piece: `title` centers
   over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
   mark, e.g. _Introitus. 8._) sits upright at the left margin; `dropcap` draws
-  the rubricated initial the printed books open with, taking the first letter
-  out of the lyric and indenting the first system to hold it. Both species
-  honour the front matter.
-- **intonation** — `accidentals: "standard" | "heji" | "cents"` and
-  `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
+  the initial the printed books open with, taking the first letter out of the
+  lyric and indenting the first system to hold it. Both species take the
+  title; the margin mark and the initial are **quadrata's alone** — moderna is
+  a transcription read as an edition, and carries the analysis tracks a
+  reserved cap column would fight. It ignores them rather than refusing.
 - **theme** — the dress: `fonts` and `colors`.
 
 ### theme — faces and ink
@@ -572,29 +571,6 @@ bands.
 Everywhere, confidence is opacity, and a claim below confidence 0.45 draws
 nothing — weak claims are not inked. Every mark sits under the notation that
 would falsify it.
-
-### The intonation channel
-
-`accidentals` chooses how a note's tuning shows on the staff. The `standard`
-accidentals are authentic to either species; the `heji` and `cents` modes are
-modern analytical overlays and render on **moderna** only — asking for them on
-`quadrata` (historical square notation) **throws**.
-
-- `"standard"` (default) — plain performance accidentals (♭ ♮ ♯) as GABC
-  expresses them, a mark stated once and suppressed on an immediate repeat of the
-  same pitch. Both species draw these.
-- `"heji"` — Extended Helmholtz–Ellis comma accidentals (moderna). HEJI's baseline
-  is the **Pythagorean chain of pure fifths** — which is also tonus's default
-  tuning — so a Pythagorean chant renders clean; comma arrows bloom only where the
-  tuning departs from the pure-fifth chain (a just preset shows syntonic commas,
-  ±21.5¢). Meantone tempers by fractional commas (not just), so `heji` **throws**
-  under it.
-- `"cents"` — signed cent deviations (moderna), for any tuning. Labels float in
-  a band above the staff, and a deviating pitch class is labelled once per
-  phrase (its repeats ride silently until the next phrase restates it).
-  `centsBaseline: "pythagorean"` (default) reads against the chant's home
-  intonation — so changing the tuning shows what each temperament _does_ to the
-  chant; `"et"` reads against equal temperament, the modern-reader instinct.
 
 ## The imprint
 
@@ -823,7 +799,7 @@ interface Modulation {
 The rhythm model is the Solesmes school's arsis/thesis synthesis, taken
 from Gajard's lectures and Carroll's chironomy manuals. The full
 treatise-level model lives at the classifier in
-[`score/ir.ts`](../../src/engines/score/ir.ts), which also derives Le Guennant's
+[`score/ir.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/score/ir.ts), which also derives Le Guennant's
 incise rhythmic types ([below](#rhythmic-types)).
 
 ### The model
@@ -880,7 +856,7 @@ contraction — two simple rhythms overlapping at a shared ictus, after Suñol).
 Types I–III use sub-beat cells that never surface in isolation and are not
 labeled; an incise that fits no type is `null`. The classification rules live at
 the data — see `classifyRhythmicType` in
-[`score/ir.ts`](../../src/engines/score/ir.ts).
+[`score/ir.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/score/ir.ts).
 
 ### Modeled and not
 
@@ -891,7 +867,7 @@ word-final → thetic) or accentual (spondaic vs. dactylic) cadences.
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
 `carroll-chironomy`, `carroll-applied`, `gajard-rhythm`, `mocquereau-nombre`,
 `cardine-semiology`, `desrocquettes-values`, `sunol-textbook`, `homan-cadence`,
 `pierik-spirit`, `apel-chant`, `liber-usualis`, `bravura-smufl`.
