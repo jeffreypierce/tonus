@@ -698,7 +698,12 @@
      the staff begins. */
   .chant-row-music { position: relative; min-width: 0; }
   .chant-row-cat {
-    position: absolute; top: 50%; transform: translateY(-50%);
+    /* ON THE SUBLINE, not on the row's centre. It reads as one more field of
+       the metadata — the office, beside the genus and the mode — so it lines
+       up with the line it belongs to rather than floating at the midpoint of
+       a 50px staff. `bottom` rather than `top`, because the subline sits
+       below centre and the box grows upward from its own baseline. */
+    position: absolute; bottom: 2px;
     right: var(--sp-5);
     /* The subline's dress, one step down — it is the same register of fact,
        so it is not given a face of its own. */
