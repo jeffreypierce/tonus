@@ -48,9 +48,10 @@ const state = {
   // which offices are shown — see OFFICES_SHOWN below, spelled out here
   // because `state` is built before that list exists
   offices: ["proprium", "ordinarium", "matutinum", "laudes", "vesperae"],
-  // Which modes the day is read in. All eight by default, and never empty:
-  // the strip's law is the offices' — see modusFilter.
-  modi: [1, 2, 3, 4, 5, 6, 7, 8],
+  // Which mode the day's list is narrowed to, or null for all eight. A day
+  // sings in several, and the question "what does this feast sound like in
+  // mode 4" is one the calendar can answer and could not before.
+  modus: null,
   right: { calendarium: "harmonia", canticum: "temperamentum" },
   // the few settings the toy carries
   notation: "quadrata",
@@ -488,49 +489,41 @@ function daysChants(feast) {
  *  to see what the day held. A day sings one repertory; the office a chant
  *  belongs to is a property of the chant, so it labels the row and gates it —
  *  the same toggle idiom the analysis tracks use in Canticum. */
-/** The mode filter: which of the eight the day is read in.
+/** The mode filter: which of the eight the day's list is narrowed to.
  *
  *  A day sings in several modes at once — a Matins responsory in II beside an
  *  Introit in VII — and "what does this feast sound like in mode 4" was a
  *  question the calendar held the answer to and could not be asked.
  *
- *  A SET, like the offices below it: eight parts, independently on, together
- *  deciding one thing. Same strip, same tick, same law — none chosen means all
- *  eight, because a filter that can be emptied into silence is a trap rather
- *  than a control.
+ *  THE NAMES ARE THE LIBRARY'S. `modus(m).nomen` gives the Latin the treatises
+ *  use (Protus Authenticus, Deuterus Plagalis), which is the same string the
+ *  Canticum subheader names a chant's mode with — so the filter and the
+ *  reading it filters toward speak one vocabulary. A list written out here
+ *  would be a second opinion about what the modes are called.
  *
- *  NUMERALS ONLY. The Latin (Protus Authenticus, Deuterus Plagalis) is what
- *  the subheader names a chant's mode with and it belongs there, on one mode
- *  at a time; eight of them in a row is a paragraph, not a control. The
- *  numeral is how a singer says which mode, and `title` carries the full name
- *  for anyone who wants it — from `modus(m).nomen`, so the strip and the
- *  reading it filters toward speak one vocabulary.
+ *  A mode nothing on the day is sung in is DISABLED rather than hidden: the
+ *  eight are a fixed set, and a menu that changes length day to day makes the
+ *  reader re-find the one they want.
  */
 function modusFilter(all) {
   const T = tonus.temperamentum({});
-  return el("div", { class: "segset", role: "group", "aria-label": "modi" },
+  const count = (m) => all.filter((r) => modeOf(r.chant) === m).length;
+  return el("select", {
+    "aria-label": "modus",
+    onchange: (e) => {
+      state.modus = e.target.value ? Number(e.target.value) : null;
+      renderPanels();
+    },
+  },
+    el("option", { value: "", selected: state.modus == null }, "omnes modi"),
     ...[1, 2, 3, 4, 5, 6, 7, 8].map((m) => {
-      const n = all.filter((r) => modeOf(r.chant) === m).length;
-      const nomen = T.modus(m).nomen;
-      return el("button", {
-        type: "button",
-        disabled: n === 0,
-        title: nomen,
-        "aria-label": nomen,
-        "aria-pressed": state.modi.includes(m) ? "true" : "false",
-        onclick: () => {
-          // The offices' own law, to the letter: a segment that is on turns
-          // off, one that is off turns on, and the set keeps its order. No
-          // narrow-to-one shortcut — the strip beneath behaves this way and
-          // two strips on one page must not answer a click differently.
-          state.modi = state.modi.includes(m)
-            ? state.modi.filter((k) => k !== m)
-            : [1, 2, 3, 4, 5, 6, 7, 8].filter(
-                (k) => k === m || state.modi.includes(k));
-          renderPanels();
-        },
-      }, roman(m), el("span", { class: "seg-n" }, n));
-    }));
+      const n = count(m);
+      return el("option", {
+        value: String(m), disabled: n === 0,
+        selected: state.modus === m,
+      }, `${roman(m)}. ${T.modus(m).nomen}`);
+    }),
+  );
 }
 
 function calendariumPanels() {
@@ -538,7 +531,7 @@ function calendariumPanels() {
   const all = daysChants(feast);
   const shown = all
     .filter((r) => state.offices.includes(r.office.key))
-    .filter((r) => state.modi.includes(modeOf(r.chant)));
+    .filter((r) => state.modus == null || modeOf(r.chant) === state.modus);
   const readings = calendariumReadings(feast);
 
   let left;
@@ -1735,7 +1728,7 @@ function writeUrl() {
     p.set("officia", state.offices.join(","));
   // Only when narrowed, for the same reason the offices are: a day read in one
   // mode is worth linking to, and "all eight" is what a bare URL already means.
-  if (state.modi.length !== 8) p.set("modi", state.modi.join(","));
+  if (state.modus != null) p.set("modus", String(state.modus));
   // Only when tempered — 0 is the default and saying so in every link
   // would put a parameter in the bar that changes nothing.
   if (state.comma) p.set("comma", state.comma.toFixed(4));
@@ -1768,12 +1761,11 @@ function readUrl() {
     // through no choice of the reader's, so it falls back to all three.
     if (want.length) state.offices = want;
   }
-  if (p.has("modi")) {
-    const want = p.get("modi").split(",").map(Number)
-      .filter((m) => Number.isInteger(m) && m >= 1 && m <= 8);
-    // An empty or unrecognised list would leave the day looking chantless
-    // through no choice of the reader's, so it falls back to all eight.
-    if (want.length) state.modi = want;
+  if (p.has("modus")) {
+    // 1-8 or nothing. A junk value leaves the day unfiltered rather than
+    // empty, on the same reasoning as the offices above.
+    const m = Number(p.get("modus"));
+    if (Number.isInteger(m) && m >= 1 && m <= 8) state.modus = m;
   }
   if (p.has("comma")) {
     const c = Number(p.get("comma"));
