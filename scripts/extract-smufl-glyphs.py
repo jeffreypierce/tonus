@@ -74,10 +74,12 @@ CODEPOINTS = [
     # notehead with a tail that RISES away from the staff, and that tail is
     # what tells a singer it points at the next line rather than sounding.
     # Stem-up for a note below the middle line, stem-down for one above.
-    0xEA00,          # chantCustos — the hooked sign the books print. EA02 was
-                     # baked beside it as "the stem-down cut" and is a
-                     # liquescent ZIGZAG; the EA04-EA09 block is bare ledger
-                     # stems. Render an outline before trusting a SMuFL name.
+    0xEA0A,          # chantCustos — the Vatican sign: a lozenge head with the
+                     # stroke rising off it. THREE of its neighbours were tried
+                     # first and none is this: EA05 is a bare 60-unit ledger
+                     # stem, EA02 a liquescent zigzag, EA00 the ornate Solesmes
+                     # curl-and-dots (authentic, but it reads as an "S" at
+                     # score size). Render the outline before trusting a name.
     0xEA20,          # medRenQuilismaCMN — the fused quilisma squiggle
 ]
 

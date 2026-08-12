@@ -59,16 +59,19 @@ export const GLYPH = {
   // beside a real barline it read as a doubled bar. Hence the bbox check in
   // the extractor, and hence these names carry their SMuFL ones.)
   //
-  // EA00 IS THE WHOLE CUSTOS, both directions. Two neighbours were tried and
-  // neither is one:
-  //   EA04-EA09 (60 wide) are bare ledger STEMS. Mapping EA05 as the
-  //     stem-down cut drew a 1.9px vertical stroke and nothing else.
-  //   EA02 (613 wide) is a ZIGZAG — a liquescent cut, not the plain sign. It
-  //     drew a lightning bolt at the end of every line.
-  // A codepoint's SMuFL name is not enough to identify it; both were caught
-  // by rendering the outline and looking, which is the check to make before
-  // trusting any of this block.
-  custos: "EA00",       // chantCustosStemUpPosLowest — the hooked sign
+  // EA0A IS THE CUSTOS THE BOOKS PRINT: a lozenge head with the stroke rising
+  // off it, the sign at the end of every line in the Liber. THREE neighbours
+  // were tried before it and none of them is one:
+  //   EA04-EA09 (60 wide) are bare ledger STEMS. EA05 drew a 1.9px vertical
+  //     stroke and nothing else.
+  //   EA02 (613 wide) is a liquescent ZIGZAG — a lightning bolt at the line's
+  //     end.
+  //   EA00 (285 wide) is the ornate Solesmes curl with two dots. Authentic,
+  //     and unreadable at score size: it renders as an "S".
+  // A codepoint's SMuFL name is not enough to identify it. Every one of those
+  // was caught by rendering the outline and LOOKING at it, which is the check
+  // to make before trusting anything in this block.
+  custos: "EA0A",
   // note components
   podatusLower: "E9B0",
   podatusUpper: "E9B1",
