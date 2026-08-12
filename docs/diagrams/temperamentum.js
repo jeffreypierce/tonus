@@ -30,7 +30,13 @@ const GRID = 2;
 // The paper halo every label wears where lines run: the text clears its own
 // ground, so a needle or a chord can never strike a word. One definition —
 // letters, ratios, plates and the centre reading all take it.
-const HALO = { stroke: "var(--paper, #FDFDFD)", "stroke-width": 3,
+// heavy on the grid IS 3 — the width the halo was written at, now on the
+// ladder so the lint can see it is a chosen rung and not a loose number.
+// How wide a pointer needs, not how wide a line looks.
+const HIT_W = 9;
+
+const HALO = { stroke: "var(--paper, #FDFDFD)",
+  "stroke-width": STROKE.heavy * GRID,
   "paint-order": "stroke", "stroke-linejoin": "round" };
 
 // The ring, and the radius the labels hang at. R+30 is the lab's; the ratio
@@ -517,7 +523,9 @@ function edgeHit(svg, { ax, ay, bx, by, a, b, edge, onEdge }) {
   if (!onEdge) return;
   const t = n("line", {
     x1: sc(ax), y1: sc(ay), x2: sc(bx), y2: sc(by),
-    stroke: "transparent", "stroke-width": 9, style: "cursor:pointer",
+    // A CLICK AREA, not a line: transparent, so its width is a pointer
+    // target rather than an ink weight and belongs to no stratum.
+    stroke: "transparent", "stroke-width": HIT_W, style: "cursor:pointer",
   });
   t.addEventListener("click", () =>
     onEdge(edgeIs(edge, a, b) ? null : [a.pc, b.pc]));
@@ -726,8 +734,7 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
       "font-family": HOUSE_SERIF, "font-size": STEP.label,
       fill: isFinal ? RUBRICA : INK,
       "fill-opacity": isFinal ? null : STRATUM.letters,
-      stroke: "var(--paper, #FDFDFD)", "stroke-width": 3,
-      "paint-order": "stroke", "stroke-linejoin": "round",
+      ...HALO,
     }, r.litera));
   }
 
@@ -756,8 +763,7 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
       x: sc(X1), y: sc(STRING_Y + 26), "text-anchor": "middle",
       "font-family": HOUSE_SERIF, "font-size": STEP.label,
       fill: INK, "fill-opacity": STRATUM.letters,
-      stroke: "var(--paper, #FDFDFD)", "stroke-width": 3,
-      "paint-order": "stroke", "stroke-linejoin": "round",
+      ...HALO,
     }, fin.litera));
   }
 
@@ -784,8 +790,7 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
       fill: RUBRICA,
       // The same halo as the letters: the tritone's arch crosses the fifth's
       // airspace, and a label is no more striking-through-able than a glyph.
-      stroke: "var(--paper, #FDFDFD)", "stroke-width": 3,
-      "paint-order": "stroke", "stroke-linejoin": "round",
+      ...HALO,
     }, pl.text));
   }
 }
