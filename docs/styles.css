@@ -732,6 +732,7 @@
      that opens a popover — so it takes the same dress. */
   .tracks-text {
     font-family: var(--mono);
+    font-style: italic;
     font-size: var(--micro); line-height: 1.65;
     letter-spacing: var(--track-meta);
     color: var(--label); margin: 0;
@@ -745,6 +746,9 @@
   /* A block may need a second paragraph (the tonarium draws four things and
      one paragraph buries the last two). Space them, or they set as one. */
   .tracks-text + .tracks-text { margin-top: var(--sp-2); }
+  /* The prose states the track; the entries decode its marks. They are two
+     different things, and run together they read as one wall. */
+  .tracks-text + .key-entry { margin-top: var(--sp-3); }
   /* THE GAP BETWEEN BLOCKS. Up to three tracks stack in one card, each opening
      with its sample; the space before that sample is what separates one track
      from the last. A block can end in prose OR in a run of mark entries, so
@@ -899,6 +903,14 @@
     font-size: var(--caption);
     color: var(--label);
     padding: 0;
+  }
+  /* A settings block that stacks: each row keeps the flex line the flat
+     `.settings` gives, and the rows sit one under the other. */
+  .settings-stack { display: flex; flex-direction: column; align-items: flex-start; }
+  .settings-row {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: var(--sp-2) var(--sp-5);
+    position: relative;
   }
   .settings label { display: inline-flex; align-items: center; gap: var(--sp-2); cursor: pointer; }
   /* A select HOLDS a value, so it keeps its box — rule 1. The chevron is drawn
@@ -1290,6 +1302,8 @@
      under it. */
   .key-desc {
     font-family: var(--mono);
+    /* Plex Mono's real italic cut, declared at the top of this sheet. */
+    font-style: italic;
     font-size: var(--micro);
     letter-spacing: var(--track-meta);
     color: var(--ink);

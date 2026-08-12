@@ -171,6 +171,15 @@ export function prosodiaExtra(k: number): number {
 
 // The lane's vertical constants, from the band top (k = 1).
 const P_WORD_BASE = 38;  // the word lane's baseline
+// The tent's swell, as two points on the nib. At the word's edges it is
+// thinner than the old flat 0.8; at the accent it is half again as thick,
+// so the hairpin is legible as pressure and not only as outline.
+const P_TENT_VN_MIN = 0.05;
+const P_TENT_VN_MAX = 0.55;
+// The accent dot. The word's claim is the loudest thing the prosodia says
+// and it was the smallest mark drawn — 1.9 read as a tick on the crest
+// rather than the peak's own mark.
+const P_ACC_R = 2.5;
 const P_TENT_ACC = 16;   // an accented word's crest — above the rule
 const P_TENT_PLAIN = 8;  // an unaccented word's crest — ON the rule
 const P_RAIL = 58;       // the fence's rail
@@ -405,12 +414,38 @@ export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
           `L${e.x1.toFixed(1)} ${yW.toFixed(1)}`;
         yPeak = yT;
       }
-      g.push(`<path d="${d}" fill="none" stroke="${INK}" ` +
-        `stroke-opacity="${STRATUM.margin}" stroke-width="${sc(0.8 * k)}"/>`);
+      // THE TENT TAKES THE NIB, like the chironomy ribbon and the tonarium
+      // sparkline — and it takes the nib the way they do, as a WIDTH THAT
+      // VARIES. The word is a swell, and the mark now swells with it: thin
+      // where the word begins, thickest at the accent, thin again at its
+      // end. That is the hairpin the shape was always drawing in outline
+      // only, said in pressure as well.
+      //
+      // A stroke cannot vary its own width, so the tent is a RIBBON: the
+      // same builder the chironomy uses, sampled along the path it used to
+      // stroke. `vat` is distance from the accent rather than a velocity —
+      // the nib is a pressure law, and what presses here is the accent.
+      const pts: [number, number][] = [];
+      const STEPS = 24;
+      for (let i = 0; i <= STEPS; i++) {
+        const t = i / STEPS;
+        // Walk the two slopes, left of the crest then right of it.
+        const x = e.x0 + (e.x1 - e.x0) * t;
+        const y = x <= xa
+          ? yW - hT * (lw > 0 ? (x - e.x0) / lw : 1)
+          : yW - hT * (rw > 0 ? (e.x1 - x) / rw : 1);
+        pts.push([x, y]);
+      }
+      const halfW = Math.max(lw, rw) || 1;
+      g.push(`<path d="${ribbonPath(pts,
+        (x) => P_TENT_VN_MIN
+          + (P_TENT_VN_MAX - P_TENT_VN_MIN)
+            * Math.max(0, 1 - Math.abs(x - xa) / halfW),
+        1, k)}" fill="${INK}" fill-opacity="${STRATUM.margin}"/>`);
       if (e.accX != null) {
         g.push(e.arsic
-          ? `<circle cx="${xa.toFixed(1)}" cy="${yPeak.toFixed(1)}" r="${sc(1.9 * k)}" fill="${cfg.rubricaColor}"/>`
-          : `<circle cx="${xa.toFixed(1)}" cy="${yPeak.toFixed(1)}" r="${sc(1.9 * k)}" fill="none" ` +
+          ? `<circle cx="${xa.toFixed(1)}" cy="${yPeak.toFixed(1)}" r="${sc(P_ACC_R * k)}" fill="${cfg.rubricaColor}"/>`
+          : `<circle cx="${xa.toFixed(1)}" cy="${yPeak.toFixed(1)}" r="${sc(P_ACC_R * k)}" fill="none" ` +
             `stroke="${cfg.rubricaColor}" stroke-width="${sc(0.9 * k)}"/>`);
       }
     }

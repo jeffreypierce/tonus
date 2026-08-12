@@ -868,25 +868,31 @@ function canticum() {
     }),
     detail: canticumDetail(chant),
     rightDetail: canticumRightDetail(M, row),
-    inputs: el("div", { class: "settings" },
-      el("span", { class: "set-name" }, "notatio"),
-      el("select", { onchange: (e) => { state.notation = e.target.value; render(); } },
-        ...["quadrata", "moderna"].map((v) =>
-          el("option", { value: v, selected: state.notation === v }, v))),
-      // The two analysis tracks are a SET over one score — independently on,
-      // together deciding what is drawn over the notation. Same object as the
-      // offices in Calendarium, so the same strip.
-      el("div", { class: "segset", role: "group", "aria-label": "vestigia" },
-        ...["prosodia", "chironomia", "tonarium"].map((name) => el("button", {
-          type: "button",
-          "aria-pressed": state.tracks.includes(name) ? "true" : "false",
-          onclick: () => {
-            state.tracks = state.tracks.includes(name)
-              ? state.tracks.filter((t) => t !== name) : [...state.tracks, name];
-            render();
-          },
-        }, name))),
-      tracksInfo(),
+    // TWO ROWS, as Calendarium reads: the value control on the first line and
+    // the set of toggles on its own beneath. They were one flex line, so the
+    // tracks sat inline with `notatio` and the strip had to compete with a
+    // select for the eye. The strip is the same object as Calendarium's
+    // offices, and it now sits where that one does.
+    inputs: el("div", { class: "settings settings-stack" },
+      el("div", { class: "settings-row" },
+        el("span", { class: "set-name" }, "notatio"),
+        el("select", { onchange: (e) => { state.notation = e.target.value; render(); } },
+          ...["quadrata", "moderna"].map((v) =>
+            el("option", { value: v, selected: state.notation === v }, v)))),
+      // The three analysis tracks are a SET over one score — independently on,
+      // together deciding what is drawn over the notation.
+      el("div", { class: "settings-row" },
+        el("div", { class: "segset", role: "group", "aria-label": "vestigia" },
+          ...["prosodia", "chironomia", "tonarium"].map((name) => el("button", {
+            type: "button",
+            "aria-pressed": state.tracks.includes(name) ? "true" : "false",
+            onclick: () => {
+              state.tracks = state.tracks.includes(name)
+                ? state.tracks.filter((t) => t !== name) : [...state.tracks, name];
+              render();
+            },
+          }, name))),
+        tracksInfo()),
     ),
     rightInputs: state.right.canticum === "temperamentum" ? commaSlider()
       : state.right.canticum === "manus" ? hexachordPicker() : null,
@@ -1644,11 +1650,17 @@ function readUrl() {
 }
 
 // ── render ──
+// CALENDARIUM FIRST, because it is where the app LANDS (state.view above) and
+// the tab strip should read in the order a reader meets it. The two disagreed:
+// Canticum sat first while Calendarium was the default, which is also why the
+// URL omits `via` for Calendarium and prints it for Canticum. It is the right
+// order on its own terms too — the calendar is how a chant is found, and the
+// chant is what is then read.
 const VIEWS = [
-  { key: "canticum", name: "Canticum", build: canticum, panels: canticumPanels,
-    heads: canticumHeads },
   { key: "calendarium", name: "Calendarium", build: calendarium, panels: calendariumPanels,
     heads: calendariumHeads },
+  { key: "canticum", name: "Canticum", build: canticum, panels: canticumPanels,
+    heads: canticumHeads },
 ];
 
 function render() {

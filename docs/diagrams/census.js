@@ -145,11 +145,12 @@ const combKey = (kind) => keySpur(
 // uses this dimension unlike the rest"), so a LONG spoke is typical and a
 // short one is not — without that, a big shape and a small one are equally
 // readable as "more" of something.
-const rowKey = (intro) => keySpur(
-  `One radar per chant, five axes of the census; beside this one, ${intro}. `
-  + "Each spoke runs from the centre: the further out it reaches, the more "
-  + "this chant behaves like the corpus in that dimension — so a wide shape "
-  + "is a typical chant, and a pinched one is doing something of its own.",
+// The `intro` names WHICH chants are shown, which is the panel subheader's
+// job and not the key's. Spliced into a sentence about the axes it read as
+// a clause of the same thought and belonged to neither.
+const rowKey = () => keySpur(
+  "A wide shape is a typical chant. A pinched one is doing something of "
+  + "its own.",
   ...AXES.map((a) => [marks.text(GROUP_LETTER[a]), GROUP_WORD[a], GROUP_GLOSS[a]]),
   [marks.stem(), "note weight", "where its time is spent, by pitch"],
   [marks.finial(), "the final", "the pitch it comes to rest on"]);
@@ -568,7 +569,7 @@ export function censusPanel(tonus, { chant, score, year, onSelect }) {
     // line says the pool, so the title need not.
     if (cells.length >= 3)
       wrap.append(section("the divergent set",
-        rowKey("its feast's three most unlike this chant"),
+        rowKey(),
         censusRow(cells, { ipse: true, onSelect })));
   }
 
@@ -663,7 +664,7 @@ export function censusDiesPanel(tonus, { feast, rows, onSelect }) {
     }).filter(Boolean);
   if (four.length >= 3)
     wrap.append(section("the mass, compared",
-      rowKey("the four of the mass most unlike the corpus"),
+      rowKey(),
       censusRow(four, { ipse: false, onSelect })));
 
   const far = m.ranked[0], near = m.ranked[m.ranked.length - 1];

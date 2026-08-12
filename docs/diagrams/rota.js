@@ -150,10 +150,19 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
   });
 
   // ── the spheres: one ring per planet ──
+  // THE SELECTED PLANET'S OWN RING COMES FORWARD when the chords are off.
+  // With aspectus on, the lit chords say which planet is chosen; turn them
+  // off and every ring drew alike, so the selection was marked nowhere on
+  // the wheel at all. The ring is rubrica then, at the claim's own weight —
+  // the same colour the chords use, spent on the same fact.
   for (const r of rows) {
+    const isSel = r.key === sel;
+    const lit = isSel && !aspects;
     root.appendChild(el("circle", {
-      r: r.radius, fill: "none", stroke: INK,
-      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
+      r: r.radius, fill: "none",
+      stroke: lit ? RUBRICA : INK,
+      "stroke-opacity": lit ? STRATUM.label : STRATUM.rail,
+      "stroke-width": lit ? STROKE.firm : STROKE.hair,
     }));
   }
 
