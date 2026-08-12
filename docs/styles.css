@@ -436,7 +436,14 @@
      BASELINE, so the two header bands align on one. */
   .row-title > .cell,
   .row-detail > .cell { align-self: baseline; }
-  .row-inputs > .cell { align-self: end; }
+  /* START, not end. Both inputs cells were one row tall, so aligning their
+     bottoms also aligned their controls. Canticum's left cell carries two
+     rows now (notatio, then the track strip beneath it), and an end
+     alignment set the RIGHT panel's control level with the second row: the
+     temperament slider sat beside the tracks rather than beside notatio.
+     Aligning the tops puts each column's first control on one line, which
+     is what the two columns are for. */
+  .row-inputs > .cell { align-self: start; }
   /* The body starts at the top of its band: applied to the body, an end
      alignment sank the short column to the foot of the tall one and left the
      readings a screen and a half below the score. */
@@ -451,7 +458,7 @@
   .row-title > .cell { min-height: 34px; }
   .row-detail > .cell { min-height: var(--sp-6); padding-top: var(--sp-4); }
   .row-inputs > .cell {
-    display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2);
+    display: flex; align-items: flex-start; flex-wrap: wrap; gap: var(--sp-2);
     min-height: var(--control-h);
     padding-top: var(--sp-4); padding-bottom: var(--sp-2);
     box-sizing: content-box;
@@ -911,6 +918,10 @@
     display: flex; flex-wrap: wrap; align-items: center;
     gap: var(--sp-2) var(--sp-5);
     position: relative;
+    /* The same floor a control has. The right column's slider sets its own
+       track to --control-h, so without this the left row took its height
+       from the select alone and the two columns' labels sat 5px apart. */
+    min-height: var(--control-h);
   }
   .settings label { display: inline-flex; align-items: center; gap: var(--sp-2); cursor: pointer; }
   /* A select HOLDS a value, so it keeps its box — rule 1. The chevron is drawn
