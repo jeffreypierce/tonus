@@ -697,7 +697,13 @@
     color: var(--label); margin: 0;
     width: 40ch; max-width: 70vw;
   }
-  .tracks-text + .tracks-sample { margin-top: var(--sp-3); }
+  /* THE GAP BETWEEN BLOCKS. Up to three tracks stack in one card, each opening
+     with its sample; the space before that sample is what separates one track
+     from the last. A block can end in prose OR in a run of mark entries, so
+     both hand off to the next — matching on `.tracks-sample` alone would set
+     the gap after prosodia's entries and nowhere else. */
+  .tracks-text + .tracks-sample,
+  .key-entry + .tracks-sample { margin-top: var(--sp-5); }
 
   .chant-row-aside {
     font-family: var(--mono); font-size: var(--caption);
