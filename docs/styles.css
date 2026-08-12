@@ -10,7 +10,13 @@
    ─── 1 · WHAT COLOUR IS THIS? ────────────────────────────────────────────
    Six values, and three of them name a JOB rather than a shade.
 
-   --ink --rubrica --label --ghost carry text.
+   --ink --rubrica --heading --label carry text. (--ghost does NOT: it is a
+   mark, and the note on the token says why.)
+
+   --heading sits between --ink and --label, and the gap it fills is a real
+   one: a chart title, a table caption and the label over a control NAME the
+   thing beneath them, where --label is the voice of metadata and glosses. A
+   heading set in the aside's colour reads as commentary on its own contents.
 
    --rule SEPARATES and --edge AFFORDS. A rule is a hairline in a book: it
    divides a row from the next, and 1.37:1 against paper is right for it,
@@ -170,6 +176,13 @@
     /* Secondary text — metadata, captions, glosses. 5.32:1, and the rung the
        page reaches for when text should be quiet. */
     --label: #726865;
+    /* A HEADING IS NOT AN ASIDE. Chart titles, table captions and the label
+       over a control name the thing beneath them, and at --label they read
+       as commentary on it — the same weight as the metadata they sit above.
+       7.49:1: a clear step darker, and still far nearer --label (5.32) than
+       --ink (18.60), because a heading orients and does not speak. Same hue
+       family, same low saturation (12.0°/5.9%, against label's 13.8°/6.0%). */
+    --heading: #5A5250;
     /* A MARK, NOT TEXT. 1.99:1 — a shade for a thing that is present and not
        claimed: an empty tick, the leading arrow of a jump link, the edge of a
        swatch. It is NOT a text colour, and four rules used to set text in it,
@@ -315,7 +328,7 @@
      out. Defined once, unscoped, because it is worn in several places. */
   .set-name {
     font-family: var(--mono);
-    color: var(--label);
+    color: var(--heading);
     letter-spacing: var(--track-micro);
     text-transform: uppercase;
     font-size: var(--micro);
@@ -974,7 +987,7 @@
     font-size: var(--micro);
     letter-spacing: var(--track-micro);
     text-transform: uppercase;
-    color: var(--label);
+    color: var(--heading);
     font-weight: 400;
     margin: 0 0 var(--sp-3);
     padding-bottom: var(--sp-2);
@@ -1047,14 +1060,26 @@
   /* The caption belongs to the table BENEATH it. At sp-3 it floated midway
      between its own rows and the table above, reading as either's; the air
      now sits above the caption (the inter-table margin), not under it. */
+  /* THE CAPTION IS A WORD, SO IT IS SERIF. "extent", "melisma", "range" name
+     the group beneath them; mono is the face for machine data, and these are
+     not that. Junicode draws real small caps (smcp), so this is a cut and not
+     scaled capitals — which is also why `text-transform` is gone: uppercasing
+     the text first leaves smcp nothing to act on.
+
+     `small-caps`, not `all-small-caps`, matching .tabstrip-large: the initial
+     keeps its cap height and the word keeps its own shape. A step up from
+     --micro because small caps read smaller than capitals at one size. */
   table.tabula caption {
-    font-family: var(--mono); font-size: var(--micro); letter-spacing: var(--track-micro);
-    text-transform: uppercase; color: var(--label); text-align: left;
+    font-family: var(--serif);
+    font-size: var(--caption);
+    font-variant-caps: small-caps;
+    letter-spacing: var(--track-caps);
+    color: var(--heading); text-align: left;
     padding-bottom: var(--sp-1);
   }
   table.tabula th {
     font-family: var(--mono); font-size: var(--micro); letter-spacing: var(--track-micro);
-    text-transform: uppercase; color: var(--label); text-align: left;
+    text-transform: uppercase; color: var(--heading); text-align: left;
     font-weight: 400; white-space: nowrap;
     padding: 0 var(--sp-3) var(--sp-2); border-bottom: 1px solid var(--rule);
   }
@@ -1158,6 +1183,11 @@
   /* Two tables stacked in one panel need air between them, or the second reads
      as more rows of the first. */
   table.tabula + table.tabula { margin-top: var(--sp-7); }
+  /* THE FIRST TABLE CLEARS THE TITLE'S RULE. A figure under a heading carries
+     its own margin of white, but a table opens on a caption — so its small
+     caps landed a few pixels under the rule and read as attached to it. Only
+     the first: the tables after it have --sp-7 between them already. */
+  .panel > h2 + table.tabula { margin-top: var(--sp-2); }
   /* A figure and the table under it are one thought; the gap is smaller. */
   svg + table.tabula { margin-top: var(--sp-4); }
 
