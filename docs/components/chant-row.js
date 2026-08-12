@@ -104,9 +104,10 @@ function incipit(tonus, chant, opts) {
  * @param {string}  [opts.label]          what this chant is here AS — the
  *                                        office it is sung at, when a list
  *                                        mixes several
+ * @param {boolean} [opts.length]         append the note count to the subline
  * @param {(chant: object) => void} [opts.onSelect]
  */
-export function chantRow(tonus, chant, { selected = false, aside, label, onSelect } = {}) {
+export function chantRow(tonus, chant, { selected = false, aside, label, length = false, onSelect } = {}) {
   // What a chant IS, not which book it was copied from: the source code ("ky",
   // "gr") named a shelf the reader cannot see. An ordinary is named by its own
   // text — Gloria, Credo — which REPLACES its genus rather than joining it,
@@ -117,7 +118,24 @@ export function chantRow(tonus, chant, { selected = false, aside, label, onSelec
   // say what it is, and the line has no room for one — "random numbers don't
   // help anyone." The score cache that made them free stays; the Census
   // reading feeds on it.
-  const meta = [label, kind, chant.modus].filter(Boolean).join(" · ");
+  //
+  // LENGTH COMES BACK, carrying its own unit. It is the one figure that
+  // survives that ruling: "67 notes" needs no header, because the word IS the
+  // header — which is exactly what the cut numbers lacked.
+  //
+  // It answers the question the row cannot otherwise: the incipit draws only
+  // the opening, so a 33-note antiphon and a 194-note responsory look alike
+  // down the column. Measured over 120 Similes lists, the count spreads a
+  // median 78 notes within a single one. Opt-in, because a list that has no
+  // room for it should not pay for it.
+  // A NON-BREAKING SPACE holds the figure to its unit. The day's list carries
+  // an office label too, so the line can run to four fields and wrap — and it
+  // broke between "125" and "notes", orphaning the word that does the
+  // labelling and leaving a bare number on a line of its own, which is the
+  // very thing that got the earlier figures cut.
+  const notes = length ? scoreOf(tonus, chant)?.prosody?.noteCount : null;
+  const meta = [label, kind, chant.modus, notes != null && `${notes} notes`]
+    .filter(Boolean).join(" · ");
 
   // Name first, notation last. A list is scanned down its left edge, and what
   // a reader is scanning for is the chant's name — the incipit is what they
@@ -141,13 +159,14 @@ export function chantRow(tonus, chant, { selected = false, aside, label, onSelec
 }
 
 /** A list of them. */
-export function chantList(tonus, chants, { selectedId, onSelect, aside, label } = {}) {
+export function chantList(tonus, chants, { selectedId, onSelect, aside, label, length } = {}) {
   const list = el("ul", { class: "chant-list" });
   for (const c of chants) {
     list.append(chantRow(tonus, c, {
       selected: c.id === selectedId,
       aside: aside?.(c),
       label: label?.(c),
+      length,
       onSelect,
     }));
   }

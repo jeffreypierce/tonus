@@ -517,6 +517,10 @@ function calendariumPanels() {
           // Which office a chant is sung at leads its line, now that the three
           // are mixed into one list — otherwise the row loses its context.
           label: (c) => all.find((r) => r.chant.id === c.id)?.office.name ?? null,
+          // And how long it is, which is the one thing the row cannot show:
+          // the incipit draws the opening, so a 33-note antiphon and a
+          // 194-note responsory look alike down the column.
+          length: true,
         })
       : el("p", { class: "ghost" }, "No office is shown."),
   );
@@ -710,6 +714,10 @@ function similarChants() {
     // census doc linked above says how it is reckoned.
     chantList(tonus, found.map((r) => r.chant), {
       selectedId: state.chant?.id,
+      // The one list that asks for it: these rows share the subject's mode
+      // and usually its genus, so without a figure that moves the subline
+      // repeats itself four times.
+      length: true,
       onSelect: openChant,
     }),
   );
