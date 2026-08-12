@@ -270,6 +270,72 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
     });
   }
 
+  // ── THE VERNIERS: the travel, magnified ──
+  // A degree moves under the slider, and the movement is REAL but small: from
+  // Pythagorean to 1/3-comma, A and B shift 2.15° on the ring and F shifts
+  // 10.75°. At the ring's radius the small ones are invisible, so the figure
+  // would be claiming nothing happens where something does.
+  //
+  // The gauge is a vernier in the instrument-maker's sense: it does not move
+  // the dot, which stays at its true place, but draws the same travel on a
+  // scale big enough to read. ×4 — enough that 2° becomes 8.6° and is plainly
+  // a movement, not so much that a degree's gauge runs into its neighbour's.
+  // The factor is declared in the popover, because a magnified reading that
+  // does not say it is magnified is a lie about the ring.
+  //
+  // The final has no gauge: it is the point everything else is measured from,
+  // so its travel is zero by construction and an empty gauge would imply the
+  // measurement had been taken and come out flat.
+  const MAG = 4;
+  const T0 = tonus.temperamentum({ mode, ...(tuning ? { tuning } : {}) });
+  const T3 = tonus.temperamentum({ mode, tuning: "meantone", comma: 1 / 3 });
+  const finPc = finalRow.pc;
+  const relIn = (Temp, pc) => norm(Temp.cents[pc] - Temp.cents[finPc]);
+  for (const r of rows) {
+    if (r.pc === finPc) continue;
+    const at0 = relIn(T0, r.pc);
+    let travel = relIn(T3, r.pc) - at0;
+    if (travel > 600) travel -= 1200;
+    if (travel < -600) travel += 1200;
+    if (Math.abs(travel) < 0.5) continue;
+    let live = norm(r.cents) - at0;
+    if (live > 600) live -= 1200;
+    if (live < -600) live += 1200;
+
+    const a0 = angleOf(at0);
+    const aEnd = angleOf(at0 + travel * MAG);
+    const aNow = angleOf(at0 + live * MAG);
+    const sweep = travel > 0 ? 1 : 0;
+    const [gx0, gy0] = pointAt(a0, R + 10);
+    const [gx1, gy1] = pointAt(aEnd, R + 10);
+    // The whole travel, as a faint arc: the road the degree can walk.
+    svg.append(n("path", {
+      d: `M ${sc(gx0)} ${sc(gy0)} A ${R + 10} ${R + 10} 0 0 ${sc(sweep)} `
+        + `${sc(gx1)} ${sc(gy1)}`,
+      fill: "none", stroke: INK, "stroke-opacity": STRATUM.rail,
+      "stroke-width": STROKE.hair,
+    }));
+    // The Pythagorean end, heavier: the tuning the road starts from.
+    const [tx0, ty0] = pointAt(a0, R + 5);
+    const [tx1, ty1] = pointAt(a0, R + 16);
+    svg.append(n("line", {
+      x1: sc(tx0), y1: sc(ty0), x2: sc(tx1), y2: sc(ty1),
+      stroke: INK, "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
+    }));
+    // The needle, at the live position. INK, NOT RUBRICA: the red on this
+    // figure belongs to the selection and to the final, and a needle on every
+    // moving degree would spend it on seven things at once — the eye would
+    // read the gauges as the claim and the chords as decoration. It is the
+    // darkest mark in its own gauge, which is all it needs to be.
+    const [nx0, ny0] = pointAt(aNow, R + 6);
+    const [nx1, ny1] = pointAt(aNow, R + 15);
+    svg.append(n("line", {
+      x1: sc(nx0), y1: sc(ny0), x2: sc(nx1), y2: sc(ny1),
+      stroke: INK, "stroke-opacity": STRATUM.cadence,
+      "stroke-width": STROKE.firm,
+    }));
+  }
+
   // ── the degrees ──
   // A dot's AREA carries how much the chant sings the degree, so the radius
   // goes as the root: doubling the area is doubling the time spent there.

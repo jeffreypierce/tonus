@@ -1539,6 +1539,10 @@ function temperamentumPanel() {
       [marks.brokenChord(), "the wolf",
         "the fifth the chain cannot make; its ends are not degrees this mode "
         + "sings, so they wear no letter"],
+      [marks.gauge(), "how far the degree has moved",
+        "the tick is where pure fifths put it and the needle is where the "
+        + "slider has; the travel is drawn four times life size, because at "
+        + "true scale the smallest of them is two degrees of arc"],
       [marks.arch(), "an interval, and its size",
         "written as the theorists wrote it: 3:2−1/4c is a fifth narrowed by a "
         + "quarter of the comma of 81:80"])),
