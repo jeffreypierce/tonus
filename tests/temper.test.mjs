@@ -626,3 +626,60 @@ describe("the ratio table contract (fold regression)", () => {
     assert.equal(t.nota("A4").ratio, 1.5);
   });
 });
+
+describe("lupus — the wolf the chain leaves over", () => {
+  // Twelve fifths do not close an octave. Stacked from E♭ the twelfth lands
+  // beside the first rather than on it, and the gap goes into the one interval
+  // nobody stacked: G♯ up to E♭. A fifth by position, not by size.
+  test("the wolf sits between the chain's two ends", () => {
+    const w = buildTemper().lupus();
+    assert.deepEqual([w.from, w.to], [8, 3], "G♯ → E♭");
+    assert.deepEqual(w.spn, ["G#", "Eb"]);
+  });
+
+  // Pinned to the decimal: these are the figures the panel prints, and a
+  // silent drift in the chain would move them without failing anything else.
+  test("its size, at the commas the slider stops on", () => {
+    const rows = [
+      [0, 678.5, -23.5],
+      [1 / 4, 737.6, 35.7],
+      [1 / 3, 757.4, 55.4],
+    ];
+    for (const [comma, cents, fromPure] of rows) {
+      const w = buildTemper(comma ? { tuning: "meantone", comma } : {}).lupus();
+      assert.ok(Math.abs(w.cents - cents) < 0.1, `comma ${comma}: ${w.cents}¢, expected ≈${cents}`);
+      assert.ok(Math.abs(w.fromPure - fromPure) < 0.1,
+        `comma ${comma}: fromPure ${w.fromPure}, expected ≈${fromPure}`);
+    }
+  });
+
+  // THE SIGN FLIPS, and that is the fact a reader of the slider is watching:
+  // pure fifths leave a NARROW remainder, and every cent tempered off the
+  // eleven is given back to this one until it passes a pure fifth and goes
+  // wide. A wolf that only ever read "wide" would be telling half the story.
+  test("narrow under pure fifths, wide under every meantone", () => {
+    assert.ok(buildTemper().lupus().fromPure < 0, "pythagorean: narrow");
+    for (const comma of [1 / 6, 1 / 4, 1 / 3])
+      assert.ok(buildTemper({ tuning: "meantone", comma }).lupus().fromPure > 0,
+        `comma ${comma}: wide`);
+  });
+
+  // It is never a tempered fifth — that is the whole point of the name.
+  test("it is not the fifth the chain was built from", () => {
+    for (const comma of [0, 1 / 4, 1 / 3]) {
+      const t = buildTemper(comma ? { tuning: "meantone", comma } : {});
+      const fifth = t.intervallum("C4", "G4").cents;
+      assert.ok(Math.abs(t.lupus().cents - fifth) > 20,
+        `comma ${comma}: the wolf must not pass for a fifth`);
+    }
+  });
+
+  // A supplied scale has no chain to leave a remainder, so there is no wolf to
+  // report. Returning a number here would be inventing one.
+  test("null when the scale was given rather than stacked", () => {
+    for (const tuning of ["ptolemy-intense", "ptolemy-soft", "ptolemy-equable", "equal"])
+      assert.equal(buildTemper({ tuning }).lupus(), null, tuning);
+    assert.equal(buildTemper({ scale: ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8"] }).lupus(),
+      null, "a custom degree list");
+  });
+});
