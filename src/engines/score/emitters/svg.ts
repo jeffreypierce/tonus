@@ -140,8 +140,14 @@ function fontAttrs(f: ResolvedFont): string {
   return `font-family="${esc(f.family)}"` + (f.weight != null ? ` font-weight="${f.weight}"` : "");
 }
 
+/** The emitter's options — INTERNAL. `inscriptio` is the public surface, and
+ *  it is the only caller: the measurements below are no longer settable from
+ *  outside, and a default named here is the emitter's own, not a promise to a
+ *  caller. `scale` is the public control, resolved to `staffHeight` before it
+ *  arrives (see inscriptio.ts). */
 export interface SvgOpts {
-  /** Height of the 4-line staff in px (line 1 to line 4). Default 40. */
+  /** Height of the 4-line staff in px (line 1 to line 4). Default 40.
+   *  Set from the public `scale`; not settable directly. */
   staffHeight?: number;
   /** Notehead/clef size relative to the SMuFL nominal (1 = fill the space). Default 0.7. */
   noteScale?: number;
@@ -156,9 +162,12 @@ export interface SvgOpts {
   fonts?: FontSpec;
   /** Wrap systems to this px width. Absent = a single system. */
   width?: number;
-  /** Vertical gap between systems, px. Default 24. */
+  /** Vertical gap between systems, px. Defaults to 0.6 × staffHeight, so it
+   *  follows the scale rather than staying a fixed 24px under a large chant. */
   systemGap?: number;
-  /** Draw a custos (line-end guide note) at each system break. Default true when wrapping. */
+  /** Draw a custos (line-end guide note) at each system break. Defaults to
+   *  true whenever `width` wraps — a chant book sets one at every line's end,
+   *  so wrapping is the condition, not a separate choice. */
   custos?: boolean;
   // ── front matter ──
   /** A headline above the score. */
