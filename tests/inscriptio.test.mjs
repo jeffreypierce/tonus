@@ -427,6 +427,29 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
     );
   });
 
+  // A `z` FOLLOWING NOTES is not a break. The tokenizer splits `ra(gz)ti` into
+  // ["g","z"], because `z` is not in a note's suffix class, and that stray
+  // token was read as the engraver's marker: 97 chants carried one, and three
+  // Nocturnale responsories cut their systems a third of the way across the
+  // page and left the rest of every line empty.
+  test("a `z` after notes in one group is not a break", () => {
+    const score = buildScore(makeChant("(c3) a(g) ra(gz) ti(h) c(i) d(j)"));
+    assert.equal(
+      score.tabula.filter((r) => r.lineBreak).length, 0,
+      "the z rides its neume; nothing is flagged",
+    );
+  });
+
+  // …but a break that CARRIES its bar and clef still breaks. `(z0::c3)` is
+  // common in the corpus, and guarding on "alone in its group" killed it.
+  test("`z0::c3` breaks, carrying the bar and the new clef", () => {
+    const score = buildScore(makeChant("(c3) a(g) b(h) (z0::c3) c(i) d(j)"));
+    assert.equal(
+      score.tabula.filter((r) => r.lineBreak).length, 1,
+      "the marker leads its group, so it is the engraver's break",
+    );
+  });
+
   test("`Z` and `z0` break the same way — tonus paginates nothing", () => {
     for (const marker of ["Z", "z0"]) {
       const score = buildScore(makeChant(`(c3) a(g) b(h) (${marker}) c(i)`));

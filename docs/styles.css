@@ -1131,16 +1131,15 @@
      `small-caps`, not `all-small-caps`, matching .tabstrip-large: the initial
      keeps its cap height and the word keeps its own shape. A step up from
      --micro because small caps read smaller than capitals at one size. */
+  /* THE PANEL SUBHEADER'S DRESS, which is what .sub already wears: the small
+     caps were the one place on the site using that cut, and a style used once
+     is a style that has to justify itself. This is the same kind of line as a
+     panel's aside, so it is set the same way. */
   table.tabula caption {
-    font-family: var(--serif);
-    font-size: var(--step-label);
-    font-variant-caps: small-caps;
-    /* The captions arrive lowercase ("extent"), and `small-caps` only lowers
-       the letters that are already minuscule — so without this the initial
-       has no cap height to keep and the word sets as small caps throughout.
-       Capitalizing first gives the E its full height and the rest the cut. */
-    text-transform: capitalize;
-    letter-spacing: var(--track-caps);
+    font-family: var(--mono);
+    font-style: italic;
+    font-size: var(--caption);
+    letter-spacing: var(--track-meta);
     color: var(--heading); text-align: left;
     /* THE CAPTION BELONGS TO THE TABLE BENEATH IT, so it sits on it. At sp-1
        it floated between its own first rule and the table above, reading as
