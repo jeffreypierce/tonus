@@ -1,18 +1,16 @@
 # tonus
 
 **tonus** is a JavaScript library for medieval music theory and chant
-analysis. It holds the Gregorian repertoire and the theory it was built on:
-the chant books, the calendar that assigns them, the eight modes and their
-psalm tones, the tunings of the treatises, and the harmony of the spheres.
-It resolves what any day calls for, tunes chant in the ratios it was sung
-in, parses and draws the notation, voices the planets as pitch, and
-measures each chant against the corpus that holds it.
+analysis. It carries the Gregorian repertoire and the theory it was built on:
+it resolves what any day calls for, tunes chant in the ratios it was sung in,
+parses and draws the notation, voices the planets as pitch, and measures each
+chant against the rest.
 
 Everything is computed locally and deterministically: the same question always
 returns the same answer, from data that ships inside the package, with no network
 calls and no runtime dependencies.
 
-## What it holds
+## What it covers
 
 - **Pitch and tuning.** The medieval pitch world: Pythagorean and meantone
   temperaments, just intonation and custom scales, the Guidonian gamut and hand,
@@ -22,7 +20,7 @@ calls and no runtime dependencies.
 - **The liturgical calendar.** The Tridentine calendar of any year, resolved
   against Easter (by the Julian or the Gregorian computus), with each feast's
   rank, grade, and season.
-- **The chant repertoire.** 2,187 chants across ten books (nine Solesmes
+- **The chant repertoire.** About 2,200 chants across ten books (nine Solesmes
   editions and the Nocturnale Romanum night office), in
   [GABC](https://gregorio-project.github.io/) notation: Mass propers, the Kyriale,
   the Office hours, the psalter, and the Matins nocturns, retrievable by feast,
@@ -116,7 +114,8 @@ one page per engine, in dependency order:
 ## Install and run
 
 ESM only. Node ≥ 20; works in the browser through a bundler. No runtime
-dependencies. 2,187 chants and the 650-entry calendar ship in the package.
+dependencies. About 2,200 chants and the 650-entry calendar ship in the
+package.
 
 ```sh
 npm test          # builds and runs the suite (node --test)

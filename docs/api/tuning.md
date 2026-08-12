@@ -345,13 +345,13 @@ medieval tonaries describe them:
 Each mode also carries its traditional **ethos** (the character medieval theory
 ascribed to it) as both a Latin epithet (`gravis`, `tristis`, …) and an English
 gloss. The full set and its source are at the data, in
-[`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
+[`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
 The `modulations` fields (`regular`, `conceded`, and `initials`) are the
 mode's tonal centres and valid openings, each list **ordered by importance**
-(after Rockstro's Grove table [`rockstro-grove`](../../BIBLIOGRAPHY.md)). The
+(after Rockstro's Grove table [`rockstro-grove`](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md)). The
 modal-affinity scorer reads that order; the reasoning is documented at the
-data, in [`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
+data, in [`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
 `modus` resolves the mode's structural pitches through its own
 temperamentum: the **finalis** and **reciting** tone as tuned notes (pitch +
@@ -442,7 +442,7 @@ phrase's cadence ([score.md](score.md#cadences)).
 The catalogue is an editorial synthesis covering the final cadences; its step
 encoding, sources, and known gaps (medial cadences are not yet included) are
 documented at the data — see `CadenceFigure` in
-[`temper/data/modes.ts`](../../src/engines/temper/data/modes.ts).
+[`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
 This is the **tradita** half — what the treatises say. Its counterpart is the
 corpus tally below, and they are not interchangeable: see [one spine, two
@@ -457,7 +457,7 @@ successive semitone intervals — and an **arrival**, where it landed relative
 to the chant's own closing note. Together they are the key, `"2,0,-2 @0"`, and
 the key is the family's whole name.
 
-110 families clear the floor of 50 occurrences, covering 56.8% of all
+About 110 families clear the floor of 50 occurrences, covering about 57% of all
 phrase-ends. The rest of the tail is real but too thin to characterise.
 
 ```ts
@@ -472,7 +472,7 @@ interface CadentiaFamilia {
 }
 ```
 
-`share` is taken against **every** phrase-end, not against the 56.8% that
+`share` is taken against **every** phrase-end, not against the ~57% that
 cleared the floor. The denominator ships beside the table:
 
 ```ts
@@ -493,24 +493,12 @@ const fam = CADENTIAE.find((f) => f.key === "2,0,-2 @0");
 const lift = (f, mode) =>
   (f.modes[String(mode)] / POP.byMode[String(mode)]) / f.share;
 
-lift(fam, 6); // 2.19
-lift(fam, 4); // 0.06
+lift(fam, 6); // 2.15
+lift(fam, 4); // 0.07
 ```
 
-The commonest family in the corpus (n = 1131, share 0.0397, finality 0.434),
-read mode by mode:
-
-| Mode | Occurrences | Lift  |
-| ---- | ----------- | ----- |
-| 1    | 157         | ×0.72 |
-| 2    | 206         | ×1.34 |
-| 3    | 34          | ×0.32 |
-| 4    | 8           | ×0.06 |
-| 5    | 146         | ×1.26 |
-| 6    | 146         | ×2.19 |
-| 7    | 109         | ×0.80 |
-| 8    | 323         | ×1.64 |
-
+The commonest family in the corpus — about 1,100 occurrences, about 4% of all
+phrase-ends, closing a little under half the time — is not reached for evenly.
 Mode 6 reaches for this close more than twice as often as the corpus does;
 mode 4 almost never. That is the figure the tonarium prints under a cadence
 ([score.md](score.md#the-analysis-tracks)).
@@ -574,7 +562,7 @@ Ptolemy's three diatonic shades, and the modern equal division.
 Six ways to fill the table, five historical and one modern. Each has a
 character; the interval arithmetic, the commas that drive it, and the
 editorial choices behind it are documented at the builder, in
-[`temper/scale.ts`](../../src/engines/temper/scale.ts).
+[`temper/scale.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/scale.ts).
 
 - **`"pythagorean"`** — the medieval default. All intervals from the pure
   fifth and the octave: perfect melodic fifths and fourths, a narrow keen
@@ -625,7 +613,7 @@ tonus.temperamentum({ scale: sclFileString }); // name taken from the file
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
 `boethius-institutione`, `ptolemy-harmonics`, `schulter-harmony`,
 `rockstro-grove`, `niedermeyer-ortigue`, `bragers-treatise`,
 `sunol-textbook`, `saulnier-modes`, `liber-usualis`, `scala-format`.

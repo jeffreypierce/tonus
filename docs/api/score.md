@@ -14,7 +14,6 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
     - [inscriptio — the standalone renderer](#inscriptio--the-standalone-renderer)
     - [theme — faces and ink](#theme--faces-and-ink)
     - [The analysis tracks](#the-analysis-tracks)
-    - [The intonation channel](#the-intonation-channel)
   - [The imprint](#the-imprint)
   - [Prosody](#prosody)
   - [Cadences](#cadences)
@@ -108,6 +107,14 @@ interface LyricRun {
   bold?: boolean;
   smallCaps?: boolean;
   rubric?: boolean;         // rendered in rubricaColor
+}
+
+interface Neume {
+  type: NeumeShape;    // "punctum", "pes", "clivis", "torculus" …
+  intervals: number[]; // semitones between successive notes
+  hasQuilisma: boolean;
+  hasLiquescent: boolean;
+  hasStrophicus: boolean;
 }
 
 interface RestEvent {
@@ -400,11 +407,11 @@ Options, by group (all optional):
 - **front matter** — set as the Solesmes books open a piece: `title` centers
   over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
   mark, e.g. _Introitus. 8._) sits upright at the left margin; `dropcap` draws
-  the rubricated initial the printed books open with, taking the first letter
-  out of the lyric and indenting the first system to hold it. Both species
-  honour the front matter.
-- **intonation** — `accidentals: "standard" | "heji" | "cents"` and
-  `centsBaseline: "pythagorean" | "et"`. See _the intonation channel_ below.
+  the initial the printed books open with, taking the first letter out of the
+  lyric and indenting the first system to hold it. Both species take the
+  title; the margin mark and the initial are **quadrata's alone** — moderna is
+  a transcription read as an edition, and carries the analysis tracks a
+  reserved cap column would fight. It ignores them rather than refusing.
 - **theme** — the dress: `fonts` and `colors`.
 
 ### theme — faces and ink
@@ -480,27 +487,47 @@ interface NoteGeometry {
 
 ### The analysis tracks
 
-`tracks` draws an analysis band beneath every system. Either track rides either
-species, and both may ride one score — the selection is independent of the
-notation, as `notation` itself is. One governing ink system runs through both:
+`tracks` draws an analysis band beneath every system. Any track rides either
+species, and all may ride one score — the selection is independent of the
+notation, as `notation` itself is. One governing ink system runs through them:
 every mark draws in the score's black, strata graded by opacity alone (the
-liturgical red belongs to the mode line and nothing else), and every
-pressure-bearing line shares one nib law — velocity as stroke width.
+liturgical red belongs to the claims — the tonarium's mode line and the
+prosodia's accent dots), and every pressure-bearing line shares one nib law —
+velocity as stroke width.
 
 ```js
+tonus.inscriptio(score, { width: 680, tracks: ["prosodia"] });
 tonus.inscriptio(score, { width: 680, tracks: ["chironomia"] });
 tonus.inscriptio(score, { notation: "moderna", width: 680, tracks: ["tonarium"] });
-tonus.inscriptio(score, { width: 680, tracks: ["tonarium"] });                    // either way
 tonus.inscriptio(score, { width: 680, tracks: ["chironomia", "tonarium"] });      // stacked
+tonus.inscriptio(score, { width: 680, tracks: ["prosodia", "chironomia", "tonarium"] });
 ```
 
 The conventional pairing is the chironomia under `quadrata` and the tonarium
-under `moderna`. The renderer does not enforce it.
+under `moderna`; the prosodia, reading the text rather than the notation,
+rides either as naturally. The renderer enforces none of it.
 
-Requesting both stacks them in a fixed order — the chironomia above, the
-tonarium below — whichever order they are asked for, and the page grows by the
-sum of the two bands.
+Requesting several stacks them in a fixed order — the prosodia first, directly
+under the lyric line it reads; the chironomia next; the tonarium below —
+whichever order they are asked for, and the page grows by the sum of the
+bands.
 
+- **`"prosodia"`** — how the melody treats the word, in two lanes. The upper
+  lane draws one **tent per word** — the hairpin pair's top edge, dynamics'
+  own mark for swell and release — its apex over the accented syllable, with
+  the accent's landing at the peak in the liturgical red: a **filled dot**
+  when the accent lands arsic (struck), an **open ring** when it lands thetic
+  (deferred). Accented words rise past the lane's single rule; unaccented
+  words crest on it. The lower lane is a fence on a rail, one mark per
+  syllable by how the melody treats it: a spoken syllable stands as a stem
+  (height, its notes), a syllable **recited on the tenor lies flat** — a
+  short dash floating above the rail — and a **melisma of four notes or more
+  becomes a block** as wide as its real extent and as tall as its count
+  (counts of eight or more print inside). Connected melismas join into one
+  ridge, each block's top sloping toward its neighbours, the line between
+  them crossing the gaps. A divisio drops a hairline through both lanes.
+  Accents are the book's written accents (the GABC accented vowels) — the
+  track derives none.
 - **`"chironomia"`** — the conducting hand as one continuous line:
   arsic beats crest, thetic beats trough, single-note theses pass through
   shallow, and the hand picks up between close arses in a small backward loop
@@ -530,8 +557,8 @@ sum of the two bands.
   **Every inked cadence carries a label.** A close that does not join
   [`CADENTIAE`](index.md#the-appendix) at all reads `"rara"` — not a gap but a
   measurement: the catalogue holds the 110 families above fifty corpus
-  occurrences, so failing to join means rarer than anything it records. 43.2%
-  of cadences land there.
+  occurrences, so failing to join means rarer than anything it records. About
+  44% of cadences land there.
 
   `rara` is a word rather than a number, so it is not read on the percentage
   scale beside it.
@@ -544,29 +571,6 @@ sum of the two bands.
 Everywhere, confidence is opacity, and a claim below confidence 0.45 draws
 nothing — weak claims are not inked. Every mark sits under the notation that
 would falsify it.
-
-### The intonation channel
-
-`accidentals` chooses how a note's tuning shows on the staff. The `standard`
-accidentals are authentic to either species; the `heji` and `cents` modes are
-modern analytical overlays and render on **moderna** only — asking for them on
-`quadrata` (historical square notation) **throws**.
-
-- `"standard"` (default) — plain performance accidentals (♭ ♮ ♯) as GABC
-  expresses them, a mark stated once and suppressed on an immediate repeat of the
-  same pitch. Both species draw these.
-- `"heji"` — Extended Helmholtz–Ellis comma accidentals (moderna). HEJI's baseline
-  is the **Pythagorean chain of pure fifths** — which is also tonus's default
-  tuning — so a Pythagorean chant renders clean; comma arrows bloom only where the
-  tuning departs from the pure-fifth chain (a just preset shows syntonic commas,
-  ±21.5¢). Meantone tempers by fractional commas (not just), so `heji` **throws**
-  under it.
-- `"cents"` — signed cent deviations (moderna), for any tuning. Labels float in
-  a band above the staff, and a deviating pitch class is labelled once per
-  phrase (its repeats ride silently until the next phrase restates it).
-  `centsBaseline: "pythagorean"` (default) reads against the chant's home
-  intonation — so changing the tuning shows what each temperament _does_ to the
-  chant; `"et"` reads against equal temperament, the modern-reader instinct.
 
 ## The imprint
 
@@ -718,17 +722,18 @@ this before deciding which field to use:
   keyed as `"2,0,-2 @0"` and mined from the corpus. It fires on **any** target,
   so it is the one of the two that speaks about **medial** cadences.
 
-Measured over 26,787 cadences in the shipped corpus: 25.8% carry a formula,
-56.8% join the catalogue, 19.3% carry both, and 43.2% are keyed but fall below
-the catalogue's floor. Neither is derivable from the other, because the
+Measured over the cadences `notatio` reports across the shipped corpus — about
+20,500 of them — roughly 43% carry a formula, 56% join the catalogue, 31% carry
+both, and 44% fall outside it. Neither is derivable from the other, because the
 signature is mode-blind and the formula is mode-relative.
 
 ### `finality` — how often this family closes
 
 `finality` is the share of **this family's** corpus occurrences that fall at a
 final close. It is a measurement, not a property of this particular cadence,
-and it cannot be read off the signature: of the 55 families that land **on**
-the final, 31 do not close, and their finality spans 0.054 to 1.000. So
+and it cannot be read off the signature: of the 50 families that land **on**
+the final, 31 do not close, and finality across the catalogue runs the whole
+range from 0 to 1. So
 `arrival === 0` implies nothing about whether a close is final.
 
 It is `null` when the signature falls below the catalogue's floor — an
@@ -794,7 +799,7 @@ interface Modulation {
 The rhythm model is the Solesmes school's arsis/thesis synthesis, taken
 from Gajard's lectures and Carroll's chironomy manuals. The full
 treatise-level model lives at the classifier in
-[`score/ir.ts`](../../src/engines/score/ir.ts), which also derives Le Guennant's
+[`score/ir.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/score/ir.ts), which also derives Le Guennant's
 incise rhythmic types ([below](#rhythmic-types)).
 
 ### The model
@@ -831,8 +836,8 @@ A salicus here is Cardine's: an ascent of at least three notes whose
 oriscus is what makes one. An ascending group carrying only the editorial
 Solesmes ictus is a **scandicus** that was marked for rhythm — a distinction
 worth stating because conflating the two is, in Bevenot's word, a trap: over
-the sung corpus tonus finds 302 salici against 2,960 scandici, and only 9.4%
-of that wider set carries an oriscus at all.
+the sung corpus tonus finds about 260 salici against about 1,900 scandici, so
+only about an eighth of that wider set carries an oriscus at all.
 
 Cardine's correction also decides WHICH note is principal. The printed
 editions lengthen the oriscus itself; the manuscripts show the principal note
@@ -851,7 +856,7 @@ contraction — two simple rhythms overlapping at a shared ictus, after Suñol).
 Types I–III use sub-beat cells that never surface in isolation and are not
 labeled; an incise that fits no type is `null`. The classification rules live at
 the data — see `classifyRhythmicType` in
-[`score/ir.ts`](../../src/engines/score/ir.ts).
+[`score/ir.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/score/ir.ts).
 
 ### Modeled and not
 
@@ -862,7 +867,7 @@ word-final → thetic) or accentual (spondaic vs. dactylic) cadences.
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
 `carroll-chironomy`, `carroll-applied`, `gajard-rhythm`, `mocquereau-nombre`,
 `cardine-semiology`, `desrocquettes-values`, `sunol-textbook`, `homan-cadence`,
 `pierik-spirit`, `apel-chant`, `liber-usualis`, `bravura-smufl`.

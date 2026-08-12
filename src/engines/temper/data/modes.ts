@@ -174,8 +174,8 @@ export const MODES = new Map<number, ModeData>([
       final: 4,
       tenor: 0,
       // No Degree Summary Table exists for mode III (prose only, see
-      // BIBLIOGRAPHY.md [biblio: saulnier-modes]): "the primitive psalmodic
-      // tenor is b, but in numerous medieval manuscripts from northern Europe
+      // ../../../../BIBLIOGRAPHY.md [biblio: saulnier-modes]): "the primitive
+      // psalmodic tenor is b, but in numerous medieval manuscripts from northern Europe
       // and in the modern editions, this tenor is raised to c." tonus already
       // stored the raised/practical value; this just cites the confirmation.
       recitingNotes: [{ pc: 0, rank: "principal", label: "historically raised from the primitive tenor b" }],

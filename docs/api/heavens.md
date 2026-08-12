@@ -315,7 +315,7 @@ Joscelyn Godwin's syntheses, mapping each body to a Greek tone-name and
 deriving its ratio by Pythagorean interval arithmetic normalized to the
 mese (Sun = 1/1). The full method, the taxonomy, and the decisions taken
 along the way are documented at the data — see `DOCTRINAE` in
-[`harmonia/data/doctrines.ts`](../../src/engines/harmonia/data/doctrines.ts).
+[`harmonia/data/doctrines.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/harmonia/data/doctrines.ts).
 The same arithmetic is laid out from the tuning side in
 [tuning.md](tuning.md#theory--context).
 
@@ -340,7 +340,7 @@ distinction that runs through all of medieval music theory.
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
 `godwin-harmonies`, `godwin-spheres`, `godwin-vowels`, `boethius-institutione`,
 `doctrina-primaries` (Nicomachus, Plato, Pliny, Ptolemy, and the vowel
 attestations), `standish-jpl`, `schlyter-positions`.

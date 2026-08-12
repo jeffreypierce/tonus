@@ -246,11 +246,19 @@ describe("inscriptio — front matter", () => {
     assert.ok(/class="rubric"[^>]*onum/.test(svg), "oldstyle figures");
   });
 
-  test("with a dropcap the mark centers on the cap column beside the staff", () => {
+  // The mark used to CENTRE on the cap's column. That held while the initial
+  // was a plain roman capital whose ink stopped well below the stack; a
+  // blackletter's flourishes climb into the same band and the numeral landed
+  // on one. Both cases start at the margin now, so there is one x and one
+  // anchor, and the mark clears the letter whatever face draws it.
+  test("with a dropcap the mark sits at the margin, above the cap", () => {
     const { svg } = inscriptio(score, { annotation: "auto", dropcap: true });
     const marks = [...svg.matchAll(/class="rubric"[^>]*/g)].map((m) => m[0]);
     assert.equal(marks.length, 2);
-    for (const m of marks) assert.match(m, /text-anchor="middle"/);
+    for (const m of marks) assert.doesNotMatch(m, /text-anchor="middle"/);
+    // At the same x as the initial: one margin column, two things in it.
+    const capX = /class="dropcap" x="([\d.]+)"/.exec(svg)[1];
+    for (const m of marks) assert.match(m, new RegExp(`x="${capX}"`));
   });
 
   test("an explicit rubric overrides the auto one", () => {
@@ -258,18 +266,24 @@ describe("inscriptio — front matter", () => {
     assert.ok(svg.includes(">In Nativitate Domini<"));
   });
 
-  test("dropcap draws a rubricated initial from the first lyric", () => {
+  test("dropcap draws the initial from the first lyric, in the note ink", () => {
     const { svg } = inscriptio(score, { dropcap: true });
-    assert.ok(/class="dropcap"[^>]*fill="var\(--tonus-rubrica, #9E2B25\)"[^>]*>P</.test(svg));
+    // BLACK, not rubricated. The books set the initial in black and spend
+    // their red on the genus/mode mark beside it.
+    assert.ok(/class="dropcap"[^>]*fill="var\(--tonus-note, #111\)"[^>]*>P</.test(svg));
   });
 
   test("theme.colors.rubrica sets the liturgical red, and CSS can still win", () => {
-    const { svg } = inscriptio(score, { dropcap: true, theme: { colors: { rubrica: "#c00" } } });
+    // Probed on a LYRIC RUBRIC RUN — GABC's `<c>` — which is what the reserved
+    // colour now marks. (It probed the dropcap, then the genus/mode mark; both
+    // have since gone black, following the printed books.)
+    const rubricated = buildScore(makeChant("(c4) <c>Ky</c>(g)ri(h)e(g.) (::)"));
+    const { svg } = inscriptio(rubricated, { theme: { colors: { rubrica: "#c00" } } });
     // The theme value becomes the custom property's FALLBACK, so the file
     // carries the ink it was drawn with while a host stylesheet setting
     // --tonus-rubrica still overrides it. An inline literal could not be
     // overridden at all — an inline fill beats any stylesheet rule.
-    assert.ok(/class="dropcap"[^>]*fill="var\(--tonus-rubrica, #c00\)"/.test(svg));
+    assert.ok(/fill="var\(--tonus-rubrica, #c00\)"/.test(svg));
   });
 
   test("no front-matter options → no header band (bare score)", () => {
@@ -410,6 +424,29 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
       geometry[flagged].systemY,
       geometry[flagged - 1].systemY,
       "the flagged note opens a new system even though the line had room",
+    );
+  });
+
+  // A `z` FOLLOWING NOTES is not a break. The tokenizer splits `ra(gz)ti` into
+  // ["g","z"], because `z` is not in a note's suffix class, and that stray
+  // token was read as the engraver's marker: 97 chants carried one, and three
+  // Nocturnale responsories cut their systems a third of the way across the
+  // page and left the rest of every line empty.
+  test("a `z` after notes in one group is not a break", () => {
+    const score = buildScore(makeChant("(c3) a(g) ra(gz) ti(h) c(i) d(j)"));
+    assert.equal(
+      score.tabula.filter((r) => r.lineBreak).length, 0,
+      "the z rides its neume; nothing is flagged",
+    );
+  });
+
+  // …but a break that CARRIES its bar and clef still breaks. `(z0::c3)` is
+  // common in the corpus, and guarding on "alone in its group" killed it.
+  test("`z0::c3` breaks, carrying the bar and the new clef", () => {
+    const score = buildScore(makeChant("(c3) a(g) b(h) (z0::c3) c(i) d(j)"));
+    assert.equal(
+      score.tabula.filter((r) => r.lineBreak).length, 1,
+      "the marker leads its group, so it is the engraver's break",
     );
   });
 

@@ -4,7 +4,7 @@
 // Seven planets on seven rings, each at its true longitude for a moment, and
 // each sounding one string of the Greater Perfect System: Saturn the lowest
 // (hypate meson) out at the slowest sphere, the Sun the mese at the middle,
-// the Moon the highest and nearest. The Ptolemaic order IS the scale order,
+// the Moon the highest and nearest. The Chaldean order IS the scale order,
 // which is the whole claim of the musica mundana — the spheres are a tuning.
 //
 // The chords are the ASPECTS. Two planets at a trine stand a third apart; at a
@@ -19,7 +19,7 @@
 // matches the transcription, and the aspects arrive already named.
 //
 // Nothing here is a fact about the sky. The radii are evenly spaced in
-// Ptolemaic order and the glyph sizes follow presence; those are drawing
+// Chaldean order and the glyph sizes follow presence; those are drawing
 // decisions. Everything else is asked.
 
 import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SERIF, HOUSE_MONO, nib, sc } from "./ink.js";
@@ -150,10 +150,19 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
   });
 
   // ── the spheres: one ring per planet ──
+  // THE SELECTED PLANET'S OWN RING COMES FORWARD when the chords are off.
+  // With aspectus on, the lit chords say which planet is chosen; turn them
+  // off and every ring drew alike, so the selection was marked nowhere on
+  // the wheel at all. The ring is rubrica then, at the claim's own weight —
+  // the same colour the chords use, spent on the same fact.
   for (const r of rows) {
+    const isSel = r.key === sel;
+    const lit = isSel && !aspects;
     root.appendChild(el("circle", {
-      r: r.radius, fill: "none", stroke: INK,
-      "stroke-opacity": STRATUM.rail, "stroke-width": STROKE.hair,
+      r: r.radius, fill: "none",
+      stroke: lit ? RUBRICA : INK,
+      "stroke-opacity": lit ? STRATUM.label : STRATUM.rail,
+      "stroke-width": lit ? STROKE.firm : STROKE.hair,
     }));
   }
 
@@ -247,6 +256,7 @@ export function rota(tonus, { date, selected, aspects = true, onSelect, doctrina
     "font-family": HOUSE_SERIF, "font-size": STEP.micro,
     "letter-spacing": "0.09em", fill: INK, "fill-opacity": STRATUM.margin,
   }, "TERRA"));
+
 
   return svg;
 }

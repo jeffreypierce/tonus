@@ -16,8 +16,8 @@
 // So the reader should not expect the same constants or solver across bodies.
 //
 // A few time-scale models here are standard astronomy but not yet catalogued in
-// BIBLIOGRAPHY.md (marked "source TBD" at each): the ΔT (TT−UT) polynomial and
-// the mean-obliquity expansion.
+// ../../../BIBLIOGRAPHY.md (marked "source TBD" at each): the ΔT (TT−UT)
+// polynomial and the mean-obliquity expansion.
 import { sinDeg, cosDeg, atan2Deg, kepler, wrapAngle, toAu, toCartesian, toSpherical, toEquatorial } from "./math.js";
 import { ORBITAL_ELEMENTS } from "./orbital.js";
 

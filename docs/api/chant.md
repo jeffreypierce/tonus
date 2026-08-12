@@ -651,7 +651,7 @@ finalis per mode, are on the tuning page
 
 ## Sources
 
-Sources for this page are in the central [bibliography](../../BIBLIOGRAPHY.md):
+Sources for this page are in the central [bibliography](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
 `gregobase` (the ten Solesmes books), `nocturnale-romanum`, `divinum-officium`,
 `graduale-toni-communes`, `bloomfield-compline`, `gregorio-gabc`, `apel-chant`,
 `hiley-plainchant`, `saulnier-guide`.

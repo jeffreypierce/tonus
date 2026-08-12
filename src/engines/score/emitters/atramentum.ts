@@ -8,7 +8,8 @@
 //
 // - ONE INK. Every mark draws in the score's black; strata differ by OPACITY
 //   alone (STRATUM), never by hue. Rubrica is the only colour, and it is
-//   reserved — on a score it belongs to the mode line and nothing else.
+//   reserved for the claims: the mode line's in the tonarium, the accent's
+//   in the prosodia (ruled 2026-08-11, amending 07-29 — see RUBRICA below).
 // - ONE NIB. Every pressure-bearing line shares one width law (`nib`): a
 //   normalized velocity becomes stroke width. Two marks at different opacities
 //   are the same stroke, not two different pens.
@@ -24,7 +25,8 @@
 //
 // ─── HOW THIS MEETS THE PAGE ───────────────────────────────────────────────
 // The documentation site keeps a system of its own, stated at the top of
-// docs/styles.css. The two are separate and they AGREE BY SHARING NUMBERS,
+// ../../../../docs/styles.css. The two are separate and they AGREE BY SHARING
+// NUMBERS,
 // not by one importing the other:
 //
 //   STEP        mirrors the six CSS type steps  (--micro … --display-size)
@@ -58,7 +60,11 @@
 /** The one ink. Everything black is this black. */
 export const INK = "#111";
 
-/** The liturgical red. Reserved: on a score it is the mode line's alone. */
+/** The liturgical red. Reserved for the CLAIM lines: the mode's in the
+ * tonarium, and — ruled 2026-08-11, amending the 07-29 reservation — the
+ * word's accent in the prosodia. The precedent is the score's own text
+ * apparatus: the dropcap and annotations have always been rubricated, and
+ * in the books red is the word's colour. Nothing else wears it. */
 export const RUBRICA = "#9E2B25";
 
 /** Stratum opacities: one ink, graded. The melody strata (wave, spark) sit
@@ -72,6 +78,8 @@ export const STRATUM = {
   bracket: 0.3,   // the label's end-ticked tie
   rail: 0.24,     // the maneriae rails
   margin: 0.38,   // the "cad" margin word
+  block: 0.18,    // the prosodia's melisma blocks — a soft fill, not a line
+  rule: 0.15,     // the prosodia's single rule — quieter than a rail
 } as const;
 
 /** Below this confidence nothing is drawn. Not faint — absent. */
@@ -91,14 +99,14 @@ export const STROKE = {
 
 /** The type scale, and it is THE PAGE'S: a modular scale on 15px stepped by
  *  the Pythagorean minor third, 32:27 — the same six `--micro` … `--display-size`
- *  that docs/styles.css declares. So a wheel's label and a table's label at the
- *  same step are the same size.
+ *  that ../../../../docs/styles.css declares. So a wheel's label and a table's
+ *  label at the same step are the same size.
  *
  *  It was 9/11/13.5/17/21/26, derived from what the diagrams happened to use.
  *  That was honest when the page had no scale of its own; once the page took
  *  one, the two agreed on `title` alone and every drawn label sat 1.5–2px under
- *  the prose around it. scripts/vendor-ink.mjs asserts the pairing now, so this
- *  cannot drift again silently.
+ *  the prose around it. ../../../../scripts/vendor-ink.mjs asserts the pairing
+ *  now, so this cannot drift again silently.
  *
  *  Nothing inside tonus reads STEP — the site's diagrams are its only consumer
  *  — so moving it changes no emitted SVG for a package consumer. */
@@ -129,8 +137,8 @@ export const HOUSE_MONO = "'IBM Plex Mono', ui-monospace, Menlo, monospace";
 
 /** The fourth stack, and NOT a fourth face: neither text face carries the
  *  planetary or musical signs (see fonts/README.md), so a figure that draws one
- *  falls back to the system. Mirrors `--symbol` in docs/styles.css — the same
- *  sharing-by-numbers seam as HOUSE_SERIF and HOUSE_MONO, and it was duplicated
+ *  falls back to the system. Mirrors `--symbol` in ../../../../docs/styles.css
+ *  — the same sharing-by-numbers seam as HOUSE_SERIF and HOUSE_MONO, and it was duplicated
  *  inline in mutatio.js as a local SIGN_FACE before this existed. */
 export const HOUSE_SYMBOL = "'Apple Symbols', 'Segoe UI Symbol', "
   + "'Noto Sans Symbols2', " + HOUSE_SERIF;
@@ -148,8 +156,8 @@ export const HOUSE_SYMBOL = "'Apple Symbols', 'Segoe UI Symbol', "
  *
  *  Nothing in the library's own emitters uses this yet. It lives here because
  *  this file is the ONE definition of the ink system and the site vendors it
- *  (scripts/vendor-ink.mjs) — a second copy in the site would be the drift
- *  this module exists to prevent. */
+ *  (../../../../scripts/vendor-ink.mjs) — a second copy in the site would be
+ *  the drift this module exists to prevent. */
 export const FIGURES = {
   family: HOUSE_SERIF,
   features: "",

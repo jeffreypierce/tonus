@@ -594,7 +594,21 @@ export function parseGABC(
           if (!divisioToken) divisioToken = token as RestEvent["divisio"];
           continue;
         }
-        if (isLineBreak(token)) { pendingLineBreak = true; continue; }
+        // A BREAK IS ITS OWN GROUP. GABC writes one as `(z)`, alone; a `z`
+        // that FOLLOWS notes inside a group is not one. The tokenizer splits
+        // `ra(gz)ti` into ["g","z"] because `z` is not in a note's suffix
+        // class, and that stray token was read as the engraver's break — so
+        // three responsories in the Nocturnale cut their systems a third of
+        // the way across the page and left the rest of the line empty.
+        //
+        // The rule is NOTES BEFORE IT, not "alone in its group": `(z0::c3)` is
+        // a real break carrying the double bar and the new clef after it, and
+        // those are common. What is never a break is a `z` that FOLLOWS
+        // notes, which is what `(gz)` and `(hjHG__z)` are.
+        if (isLineBreak(token)) {
+          if (noteTokens.length === 0) pendingLineBreak = true;
+          continue;
+        }
         if (isSkippable(token)) continue;
         noteTokens.push(token);
       }

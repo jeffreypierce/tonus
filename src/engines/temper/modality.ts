@@ -26,8 +26,8 @@ const CONCEDED_MOD_WEIGHT = 0.5;
 // reciting notes, sourced from the Gregorian Modes Degree Summary Tables.
 // A first attempt at wiring this in weighted every rank into degreeWeight
 // unconditionally (via the same max-of-roles `set` used below) and broke
-// tests/modality.test.mjs's authentic/plagal initials-bonus case for modes
-// 7/8: that test relies on an exact baseline tie between the pair, broken
+// ../../../tests/modality.test.mjs's authentic/plagal initials-bonus case for
+// modes 7/8: that test relies on an exact baseline tie between the pair, broken
 // only by the initials bonus. Mode 7's new auxiliary pc 0 partly overlapped
 // a pc it already carried as a conceded modulation degree (weight 0.5),
 // and "same rank, same weight" silently PROMOTED that existing pc to the

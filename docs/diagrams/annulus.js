@@ -302,13 +302,24 @@ export function annulus(tonus, { year, day = null, selected = "easter", onSelect
   outerRing(root, { names: MONTHS, bounds, period: 365, ticks: 7 });
 
   // ── the centre ──
+  // The figure's NAME moved up to the panel's h2 (one title style, ruled
+  // 2026-08-11), so the hub carries DATA in its place: the SEASON the
+  // standing day is in — the one fact of the ring's own geography that the
+  // ring itself cannot label (a season is an arc, and an arc has no one
+  // place for a name) — over the year and the day.
+  if (day) {
+    try {
+      const [feast] = tonus.festum({ date: day });
+      const tempus = feast?.tempus ?? feast?.season;
+      if (tempus) root.appendChild(el("text", {
+        y: -28, "text-anchor": "middle", "font-family": HOUSE_SERIF,
+        "font-size": STEP.body, "font-style": "italic",
+        fill: INK, "fill-opacity": STRATUM.label,
+      }, tempus));
+    } catch { /* a year the calendar cannot reach shows no season */ }
+  }
   root.appendChild(el("text", {
-    y: -6, "text-anchor": "middle", "font-family": HOUSE_SERIF,
-    "font-size": STEP.body, "font-style": "italic",
-    fill: INK, "fill-opacity": STRATUM.label,
-  }, "Annus Domini"));
-  root.appendChild(el("text", {
-    y: 22, "text-anchor": "middle", "font-family": HOUSE_MONO,
+    y: 2, "text-anchor": "middle", "font-family": HOUSE_MONO,
     "font-size": STEP.label, "letter-spacing": "0.08em",
     fill: INK, "fill-opacity": STRATUM.margin,
   }, roman(year)));

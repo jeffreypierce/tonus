@@ -114,16 +114,58 @@ describe("inscriptio — duae species parity (ruled 2026-07-29)", () => {
     assert.ok(/class="lyric"[^>]*font-weight="518"/.test(mod), "moderna weight 518");
   });
 
-  test("both species honour the official front matter (title + auto mark, no dropcap)", () => {
-    const opts = { title: "Puer natus est", annotation: "auto" };
+  test("both species take the title; the book's opening is quadrata's alone", () => {
+    const opts = { title: "Puer natus est", annotation: "auto", dropcap: true };
     const quad = inscriptio(score, opts).svg;
     const mod = inscriptio(score, { ...opts, notation: "moderna" }).svg;
-    for (const svg of [quad, mod]) {
-      assert.ok(svg.includes('class="title"'), "the centered title");
-      assert.ok(/class="rubric"[^>]*>Intr\.</.test(svg), "the genus mark");
-      assert.ok(/class="rubric"[^>]*>7\.</.test(svg), "the mode mark");
-      assert.ok(!svg.includes('class="dropcap"'), "no dropcap in tonus scores");
-    }
+
+    // The centred title is the one piece of front matter both species set.
+    assert.ok(quad.includes('class="title"'), "quadrata: the centered title");
+    assert.ok(mod.includes('class="title"'), "moderna: the centered title");
+
+    // THE CHANT BOOK'S OPENING IS QUADRATA'S. The genus/mode mark and the
+    // illuminated initial belong to the page from the Liber; moderna is a
+    // transcription read as an edition, and it carries the analysis tracks
+    // that a reserved cap column would fight.
+    assert.ok(/class="rubric"[^>]*>Intr\.</.test(quad), "quadrata: the genus mark");
+    assert.ok(/class="rubric"[^>]*>7\.</.test(quad), "quadrata: the mode mark");
+    assert.ok(quad.includes('class="dropcap"'), "quadrata: the initial");
+
+    // Ignored, not refused — a species skips options that do not apply to it,
+    // so one call renders either without the caller stripping anything.
+    assert.ok(!mod.includes('class="rubric"'), "moderna: no margin mark");
+    assert.ok(!mod.includes('class="dropcap"'), "moderna: no initial");
+  });
+
+  // A mode standing alone (an ordinary chant, whose genus line is dropped —
+  // "Ordinarium" over every Kyrie tells a reader nothing) kept the TOP row,
+  // which floated it clear off the staff. The stack is bottom-aligned, so the
+  // mode holds the mode's row whether or not a genus stands above it.
+  test("a lone mode keeps the mode's row, not the genus's", () => {
+    const opts = { annotation: "auto", dropcap: true };
+    const mk = (extra) => buildScore({
+      id: "test:2", incipit: "Test", gabc: "(c4) Ky(g)ri(h)e(g.) (::)",
+      pages: [], source: { book: "Test", year: null, editor: null }, ...extra,
+    });
+    const rows = (svg) =>
+      [...svg.matchAll(/<text[^>]*class="rubric"[^>]*y="([\d.]+)"[^>]*>([^<]*)</g)]
+        .map((m) => ({ text: m[2], y: Number(m[1]) }));
+
+    const stacked = rows(inscriptio(
+      mk({ office: "ma", genus: "Introitus", mode: "4", modus: "Modus IV" }), opts,
+    ).svg);
+    const alone = rows(inscriptio(
+      mk({ office: "or", genus: "Ordinarium", ordinarium: true, mode: "8",
+        modus: "Modus VIII" }), opts,
+    ).svg);
+
+    assert.equal(stacked.length, 2, "a proper chant stacks genus over mode");
+    assert.equal(alone.length, 1, "an ordinary chant shows its mode alone");
+    assert.equal(
+      alone[0].y, stacked[1].y,
+      `the lone mode sits at ${alone[0].y}, the stacked mode at ${stacked[1].y} `
+      + "— a mode alone must not rise into the genus's row",
+    );
   });
 });
 
@@ -138,7 +180,7 @@ describe("inscriptio — the tracks are selectable, not species-paired", () => {
 
   test("either track rides either species", () => {
     for (const notation of ["quadrata", "moderna"]) {
-      for (const track of ["chironomia", "tonarium"]) {
+      for (const track of ["prosodia", "chironomia", "tonarium"]) {
         const { svg } = inscriptio(score, { notation, width: 900, tracks: [track] });
         assert.ok(svg.includes(`class="${track}"`), `${track} on ${notation}`);
       }
@@ -159,16 +201,34 @@ describe("inscriptio — the tracks are selectable, not species-paired", () => {
 
   test("the stack order is the renderer's, not the caller's", () => {
     for (const notation of ["quadrata", "moderna"]) {
-      const a = inscriptio(score, { notation, width: 900, tracks: ["chironomia", "tonarium"] });
-      const b = inscriptio(score, { notation, width: 900, tracks: ["tonarium", "chironomia"] });
-      assert.equal(a.svg, b.svg, `${notation}: either order draws the same page`);
+      const a = inscriptio(score, { notation, width: 900, tracks: ["prosodia", "chironomia", "tonarium"] });
+      const b = inscriptio(score, { notation, width: 900, tracks: ["tonarium", "chironomia", "prosodia"] });
+      assert.equal(a.svg, b.svg, `${notation}: any order draws the same page`);
     }
+  });
+
+  test("all three tracks stack on one score", () => {
+    const all = inscriptio(score, { width: 900, tracks: ["prosodia", "chironomia", "tonarium"] });
+    for (const track of ["prosodia", "chironomia", "tonarium"]) {
+      assert.ok(all.svg.includes(`class="${track}"`), `${track} present in the stack`);
+    }
+    const two = inscriptio(score, { width: 900, tracks: ["chironomia", "tonarium"] });
+    assert.ok(height(all.svg) > height(two.svg), "the band pays for the third track");
+  });
+
+  test("the prosodia draws its marks: tents, blocks, and the rubrica claim", () => {
+    const { svg } = inscriptio(score, { width: 900, tracks: ["prosodia"] });
+    const band = /<g class="prosodia">.*?<\/g>/s.exec(svg);
+    assert.ok(band, "the prosodia group");
+    assert.ok(/fill-opacity="0\.18"/.test(band[0]), "a melisma block at the block stratum");
+    assert.ok(/<circle[^>]*(fill|stroke)="[^"]*#9E2B25/.test(band[0]),
+      "an accent claim in the liturgical red");
   });
 
   test("a track disturbs neither the notation nor the geometry contract", () => {
     for (const notation of ["quadrata", "moderna"]) {
       const bare = inscriptio(score, { notation, width: 900 });
-      const tracked = inscriptio(score, { notation, width: 900, tracks: ["chironomia", "tonarium"] });
+      const tracked = inscriptio(score, { notation, width: 900, tracks: ["prosodia", "chironomia", "tonarium"] });
       assert.equal(tracked.geometry.length, bare.geometry.length, `${notation}: same notes`);
       for (let i = 0; i < bare.geometry.length; i++) {
         assert.equal(tracked.geometry[i].x, bare.geometry[i].x, `${notation}: note ${i} x`);

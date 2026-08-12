@@ -1,20 +1,24 @@
 // ---------------------------------------------------------------------------
-// engines/score/emitters/tracks — the analysis tracks (chironomia, tonarium)
+// engines/score/emitters/tracks — the analysis tracks
+//                                  (prosodia, chironomia, tonarium)
 // ---------------------------------------------------------------------------
-// The two analysis tracks the plate series locked, ported onto the emitters'
-// own placements. Either rides either species and both may ride one score; the
-// two-register principle is the house pairing, not a rule enforced here —
+// The analysis tracks, ported onto the emitters' own placements. Any rides
+// either species and all may ride one score; the two-register principle is
+// the house pairing, not a rule enforced here —
 // quadrata as the body (rhythm as gesture, the chironomy wave; plate-chiron-14
 // is the spec, its typus lane cut 2026-07-29 since the wave's own A/T letters
 // already carry the incise's shape), moderna as the mind (pitch and mode, the
 // tonarium lane; plate-tonarium-08, trued to the 2026-07-28 rulings: the
 // SIGNATURE is a cadence's name — no familia binomials, no adventus case
-// ladder; `arrival` already carries the number).
+// ladder; `arrival` already carries the number). The third register arrived
+// 2026-08-11: the PROSODIA reads the WORD — how the melody treats the text,
+// at the syllable and word grain (labbed as diagram-word-track rounds 01-08).
 //
 // THE GOVERNING INK SYSTEM (ruled 2026-07-29). One ink, one nib:
 // - Every track mark draws in the score's black; strata differ by OPACITY
 //   alone (the STRATUM table below), never by hue. Rubrica is the only color,
-//   and it belongs to the mode line.
+//   and it belongs to the claims: the tonarium's mode line, and (ruled
+//   2026-08-11, amending 07-29) the prosodia's accent dots.
 // - Every pressure-bearing line shares ONE width law (`nib`): each note's
 //   velocity as stroke width. The wave and the sparkline are the same stroke
 //   at different opacities.
@@ -35,7 +39,7 @@ import {
   sampleCubic, crSamples, velocityAt, velocityCeiling, ribbonPath, type Pt,
 } from "./atramentum.js";
 
-export type TrackName = "chironomia" | "tonarium";
+export type TrackName = "prosodia" | "chironomia" | "tonarium";
 
 /** Analysis fields inscriptio hands the emitters when tracks are requested —
  * the score-level data the flat tabula does not carry. */
@@ -81,23 +85,31 @@ export interface TrackBand {
   height: number;
 }
 
-/** THE STACK. Both tracks ride either species and may ride one score
+/** THE STACK. Every track rides either species and all may ride one score
  * together, so the band room is the sum of what each asks for. The order is
- * fixed here, not by the caller's array: the chironomia rides above, its wave
- * an extension of the lyric line's rhythm; the tonarium rides below, a panel
- * whose label row is its bottom edge and wants nothing under it. Requesting
- * ["tonarium", "chironomia"] therefore draws exactly what ["chironomia",
- * "tonarium"] draws. */
+ * fixed here, not by the caller's array: the prosodia rides FIRST, directly
+ * under the lyric line — it reads the text itself, so it stays closest to
+ * it; the chironomia next, its wave an extension of the lyric line's
+ * rhythm; the tonarium below, a panel whose label row is its bottom edge
+ * and wants nothing under it. Requesting ["tonarium", "chironomia"]
+ * therefore draws exactly what ["chironomia", "tonarium"] draws. */
 export function trackBands(tracks: readonly TrackName[] | undefined, k: number): {
+  prosodia: TrackBand | null;
   chironomia: TrackBand | null;
   tonarium: TrackBand | null;
   extra: number;
 } {
+  const wantsPros = tracks?.includes("prosodia") ?? false;
   const wantsChiron = tracks?.includes("chironomia") ?? false;
   const wantsTon = tracks?.includes("tonarium") ?? false;
   let top = 0;
+  let prosodia: TrackBand | null = null;
   let chironomia: TrackBand | null = null;
   let tonarium: TrackBand | null = null;
+  if (wantsPros) {
+    prosodia = { top, height: prosodiaExtra(k) };
+    top += prosodia.height;
+  }
   if (wantsChiron) {
     chironomia = { top, height: chironomiaExtra(k) };
     top += chironomia.height;
@@ -106,7 +118,341 @@ export function trackBands(tracks: readonly TrackName[] | undefined, k: number):
     tonarium = { top, height: tonariumExtra(k) };
     top += tonarium.height;
   }
-  return { chironomia, tonarium, extra: top };
+  return { prosodia, chironomia, tonarium, extra: top };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROSODIA — the word's band below the lyric line (diagram-word-track-08)
+// ═══════════════════════════════════════════════════════════════════════════
+// How the melody treats the text, read at two grains in two lanes:
+//
+//   THE WORD LANE (upper). One tent per word — the hairpin pair's top edge,
+//   dynamics' own mark for swell and release: straight sides cresting through
+//   a small rounded cap, the apex over the accented syllable. Accented words
+//   rise past the lane's single rule; unaccented crest on it. At the peak,
+//   rubrica — the word's claim: a FILLED dot when the accent lands arsic
+//   (struck), an OPEN ring when it lands thetic (deferred).
+//
+//   THE FENCE (lower, on a rail). One mark per syllable, by how the melody
+//   treats it: a spoken syllable (< 4 notes) stands as a stem, height = its
+//   notes; a syllable recited on the tenor LIES FLAT — a short dash floating
+//   above the rail (form, not stratum: two opacities of one stem never
+//   separated at a glance); a melisma (4+ notes, the capsule threshold) is a
+//   BLOCK whose width is its real ink extent and whose height is its count.
+//   Connected melismas join into ONE RIDGE — a piecewise terrain through
+//   their peaks; each block is the area under it, the thread between blocks
+//   is the same line crossing the gaps. Counts of 8+ print inside their
+//   blocks. A divisio drops one hairline through both lanes: the text's
+//   breath phrases the band.
+//
+// Accents are the BOOK'S written accents (GABC accented vowels) — no penult
+// derivation, deliberately. All constants are the round-08 lab values at
+// staffHeight 40; `k` scales them with the staff.
+
+export interface ProsodiaConfig {
+  /** Scale factor: staffInterval / (40/6) — 1 at the default staffHeight. */
+  k: number;
+  /** Band top within a system (system-local): the lyric baseline plus the
+   *  band's offset in the stack. */
+  laneTop: number;
+  /** Right edge available to the band, per system (page x). */
+  rightFor: (system: number) => number;
+  /** The liturgical red for the accent dots (the 2026-08-11 amendment). */
+  rubricaColor: string;
+}
+
+/** Band room the prosodia reserves below each system's lyric line. The 8
+ *  beyond the band's own ink is AIR: without it the chironomia's crest
+ *  letters sat visibly tighter to this band than the tonarium sits to the
+ *  wave's troughs, and the stack read as unevenly spaced. */
+export function prosodiaExtra(k: number): number {
+  return 72 * k;
+}
+
+// The lane's vertical constants, from the band top (k = 1).
+const P_WORD_BASE = 38;  // the word lane's baseline
+// The tent's swell, as two points on the nib. At the word's edges it is
+// thinner than the old flat 0.8; at the accent it is half again as thick,
+// so the hairpin is legible as pressure and not only as outline.
+const P_TENT_VN_MIN = 0.05;
+const P_TENT_VN_MAX = 0.55;
+// The accent dot. The word's claim is the loudest thing the prosodia says
+// and it was the smallest mark drawn — 1.9 read as a tick on the crest
+// rather than the peak's own mark.
+const P_ACC_R = 2.5;
+const P_TENT_ACC = 16;   // an accented word's crest — above the rule
+const P_TENT_PLAIN = 8;  // an unaccented word's crest — ON the rule
+const P_RAIL = 58;       // the fence's rail
+const P_STEM_W = 1.4;    // the one mark width (not a nib — nothing varies)
+/** The fence's height law, shared by stems and blocks: notes → px. */
+const prosH = (n: number, k: number): number =>
+  Math.min(14, 5 + (n - 1) * 0.9) * k;
+
+/** One syllable as the prosodia reads it, with its per-system extents. */
+interface ProsSyl {
+  notes: TrackNote[];
+  n: number;
+  /** The system the syllable BEGINS in (a wrapped melisma keeps its marks
+   *  where it starts; the tail extends the word's tent in the next system). */
+  system: number;
+  x0: number;
+  x1: number;
+  tail: { system: number; x0: number; x1: number } | null;
+  accent: boolean;
+  arsic: boolean;
+  onTenor: boolean;
+  divisio: boolean;
+  wordStart: boolean;
+}
+
+/** Group placed notes into syllables, in singing order. */
+function prosSyllables(notes: TrackNote[]): ProsSyl[] {
+  const order: string[] = [];
+  const by = new Map<string, TrackNote[]>();
+  for (const n of notes) {
+    const key = `${n.row.phraseIndex}.${n.row.syllableIndex}`;
+    if (!by.has(key)) { by.set(key, []); order.push(key); }
+    by.get(key)!.push(n);
+  }
+  const out: ProsSyl[] = [];
+  for (const key of order) {
+    const ns = by.get(key)!;
+    // The system the syllable begins in — NOT the min-x note's system: a
+    // wrapped melisma's continuation starts at the next system's left margin,
+    // which is the smaller x (the lab shipped that bug once).
+    const system = Math.min(...ns.map((n) => n.system));
+    const own = ns.filter((n) => n.system === system);
+    const tailSystem = Math.max(...ns.map((n) => n.system));
+    let tail: ProsSyl["tail"] = null;
+    if (tailSystem !== system) {
+      const tn = ns.filter((n) => n.system === tailSystem);
+      tail = {
+        system: tailSystem,
+        x0: Math.min(...tn.map((n) => n.inkLeft)),
+        x1: Math.max(...tn.map((n) => n.inkRight)),
+      };
+    }
+    const tenorN = ns.filter((n) => n.row.role === "tenor").length;
+    out.push({
+      notes: ns,
+      n: ns.length,
+      system,
+      x0: Math.min(...own.map((n) => n.inkLeft)),
+      x1: Math.max(...own.map((n) => n.inkRight)),
+      tail,
+      accent: ns.some((n) => n.row.accent),
+      arsic: ns[0]!.row.rhythmicShape === "arsic",
+      onTenor: tenorN > ns.length / 2,
+      divisio: ns[ns.length - 1]!.row.divisio != null,
+      wordStart: ns[0]!.row.wordStart,
+    });
+  }
+  return out;
+}
+
+/** The prosodia track, every system. */
+export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
+  if (notes.length === 0) return "";
+  const k = cfg.k;
+  const sylls = prosSyllables(notes);
+  const systemYs = new Map<number, number>();
+  for (const n of notes) if (!systemYs.has(n.system)) systemYs.set(n.system, n.systemY);
+  const railYOf = (s: number): number => (systemYs.get(s) ?? 0) + cfg.laneTop + P_RAIL * k;
+  const wordBaseOf = (s: number): number => (systemYs.get(s) ?? 0) + cfg.laneTop + P_WORD_BASE * k;
+
+  // Per-system extents — tails included, so a system whose only prosodia ink
+  // is a wrapped melisma's continuation still gets its rule and rail.
+  const extent = new Map<number, { min: number; max: number }>();
+  const grow = (s: number, x0: number, x1: number): void => {
+    const e = extent.get(s) ?? { min: Infinity, max: -Infinity };
+    e.min = Math.min(e.min, x0);
+    e.max = Math.max(e.max, x1);
+    extent.set(s, e);
+  };
+  for (const s of sylls) {
+    grow(s.system, s.x0, s.x1);
+    if (s.tail) grow(s.tail.system, s.tail.x0, s.tail.x1);
+  }
+
+  const g: string[] = ['<g class="prosodia">'];
+
+  // ── the rule and the rail, per system ──
+  for (const [s, e] of extent) {
+    const xL = e.min - 2 * k;
+    const xR = Math.min(e.max + 2 * k, cfg.rightFor(s));
+    const yRule = wordBaseOf(s) - P_TENT_PLAIN * k;
+    g.push(`<line x1="${xL.toFixed(1)}" y1="${yRule.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${yRule.toFixed(1)}" ` +
+      `stroke="${INK}" stroke-opacity="${STRATUM.rule}" stroke-width="${sc(0.5 * k)}"/>`);
+    const yRail = railYOf(s);
+    g.push(`<line x1="${xL.toFixed(1)}" y1="${yRail.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${yRail.toFixed(1)}" ` +
+      `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
+  }
+
+  // ── the fence: stems, tenor dashes, the melisma ridge, divisio ──
+  const mel = sylls.filter((s) => s.n >= 4);
+  const melBySys = new Map<number, ProsSyl[]>();
+  for (const m of mel) {
+    const a = melBySys.get(m.system) ?? [];
+    a.push(m);
+    melBySys.set(m.system, a);
+  }
+  for (const [s, arr] of melBySys) {
+    arr.sort((a, b) => a.x0 - b.x0);
+    const yB = railYOf(s);
+    const pts = arr.map((p) => [(p.x0 + p.x1) / 2, prosH(p.n, k)] as const);
+    // The ridge: piecewise-linear through the peaks, flat beyond the ends.
+    const ridge = (x: number): number => {
+      if (x <= pts[0]![0]) return pts[0]![1];
+      if (x >= pts[pts.length - 1]![0]) return pts[pts.length - 1]![1];
+      for (let i = 1; i < pts.length; i++) {
+        if (x <= pts[i]![0]) {
+          const [xa, ha] = pts[i - 1]!;
+          const [xb, hb] = pts[i]!;
+          return ha + (hb - ha) * ((x - xa) / (xb - xa));
+        }
+      }
+      return pts[pts.length - 1]![1];
+    };
+    arr.forEach((p, i) => {
+      const xc = (p.x0 + p.x1) / 2;
+      const h = prosH(p.n, k);
+      // The block: the area under the ridge across its real extent.
+      g.push(`<path d="M${p.x0.toFixed(1)} ${yB.toFixed(1)} ` +
+        `L${p.x0.toFixed(1)} ${(yB - ridge(p.x0)).toFixed(1)} ` +
+        `L${xc.toFixed(1)} ${(yB - h).toFixed(1)} ` +
+        `L${p.x1.toFixed(1)} ${(yB - ridge(p.x1)).toFixed(1)} ` +
+        `L${p.x1.toFixed(1)} ${yB.toFixed(1)} Z" fill="${INK}" fill-opacity="${STRATUM.block}"/>`);
+      if (p.n >= 8) {
+        g.push(`<text x="${xc.toFixed(1)}" y="${(yB - h / 2 + 2.6 * k).toFixed(1)}" ` +
+          `font-size="${sc(7 * k)}" text-anchor="middle" fill="${INK}" ` +
+          `opacity="${STRATUM.letters}" font-family="${esc(HOUSE_MONO)}">${p.n}</text>`);
+      }
+      // The thread: the same ridge, crossing the gap to the next block.
+      if (i + 1 < arr.length) {
+        const q = arr[i + 1]!;
+        g.push(`<line x1="${p.x1.toFixed(1)}" y1="${(yB - ridge(p.x1)).toFixed(1)}" ` +
+          `x2="${q.x0.toFixed(1)}" y2="${(yB - ridge(q.x0)).toFixed(1)}" ` +
+          `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
+      }
+    });
+  }
+  for (const p of sylls) {
+    const yB = railYOf(p.system);
+    if (p.n < 4) {
+      if (p.onTenor) {
+        // Recitation is flatness: the syllable lies down.
+        g.push(`<line x1="${p.x0.toFixed(1)}" y1="${(yB - 3 * k).toFixed(1)}" ` +
+          `x2="${Math.min(p.x1, p.x0 + 9 * k).toFixed(1)}" y2="${(yB - 3 * k).toFixed(1)}" ` +
+          `stroke="${INK}" stroke-opacity="${STRATUM.letters}" stroke-width="${sc(P_STEM_W * k)}"/>`);
+      } else {
+        g.push(`<line x1="${p.x0.toFixed(1)}" y1="${yB.toFixed(1)}" ` +
+          `x2="${p.x0.toFixed(1)}" y2="${(yB - prosH(p.n, k)).toFixed(1)}" ` +
+          `stroke="${INK}" stroke-opacity="${STRATUM.letters}" stroke-width="${sc(P_STEM_W * k)}"/>`);
+      }
+    }
+    if (p.divisio) {
+      // One hairline through both lanes, ending exactly at the rail.
+      const yTop = wordBaseOf(p.system) - P_TENT_ACC * k;
+      g.push(`<line x1="${(p.x1 + 4 * k).toFixed(1)}" y1="${yTop.toFixed(1)}" ` +
+        `x2="${(p.x1 + 4 * k).toFixed(1)}" y2="${yB.toFixed(1)}" ` +
+        `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
+    }
+  }
+
+  // ── the word lane: one tent per word, rubrica at the accent's peak ──
+  interface Seg { x0: number; x1: number; accX: number | null; arsic: boolean }
+  const words: ProsSyl[][] = [];
+  for (const s of sylls) {
+    if (s.wordStart || words.length === 0) words.push([]);
+    words[words.length - 1]!.push(s);
+  }
+  for (const word of words) {
+    const segs = new Map<number, Seg>();
+    const seg = (s: number): Seg => {
+      const e = segs.get(s) ?? { x0: Infinity, x1: -Infinity, accX: null, arsic: false };
+      segs.set(s, e);
+      return e;
+    };
+    for (const s of word) {
+      const e = seg(s.system);
+      e.x0 = Math.min(e.x0, s.x0);
+      e.x1 = Math.max(e.x1, s.x1);
+      if (s.accent) { e.accX = s.x0; e.arsic = s.arsic; }
+      if (s.tail) {
+        const te = seg(s.tail.system);
+        te.x0 = Math.min(te.x0, s.tail.x0);
+        te.x1 = Math.max(te.x1, s.tail.x1);
+      }
+    }
+    for (const [s, e] of segs) {
+      const yW = wordBaseOf(s);
+      // The crest: an accented word rises past the rule; a plain one touches
+      // it. Narrow words tent gently rather than spiking.
+      const target = (e.accX != null ? P_TENT_ACC : P_TENT_PLAIN) * k;
+      const hT = Math.max(4 * k, Math.min(target, (e.x1 - e.x0) * 0.55));
+      const yT = yW - hT;
+      const xa = e.accX != null
+        ? Math.min(Math.max(e.accX, e.x0 + 3 * k), e.x1 - 3 * k)
+        : (e.x0 + e.x1) / 2;
+      // Straight sides, a slight roundness at the crest: a small quadratic
+      // cap tangent to both slopes. The rubrica dot sits on the curve's own
+      // peak (the quadratic midpoint), not the sharp corner it replaced.
+      const lw = xa - e.x0;
+      const rw = e.x1 - xa;
+      const r = Math.min(3.5 * k, lw * 0.4, rw * 0.4);
+      let d: string;
+      let yPeak: number;
+      if (r > 0.8 * k) {
+        const yL = yW - hT * (1 - r / lw);
+        const yR = yW - hT * (1 - r / rw);
+        d = `M${e.x0.toFixed(1)} ${yW.toFixed(1)} L${(xa - r).toFixed(1)} ${yL.toFixed(1)} ` +
+          `Q${xa.toFixed(1)} ${yT.toFixed(1)} ${(xa + r).toFixed(1)} ${yR.toFixed(1)} ` +
+          `L${e.x1.toFixed(1)} ${yW.toFixed(1)}`;
+        yPeak = (yL + 2 * yT + yR) / 4;
+      } else {
+        d = `M${e.x0.toFixed(1)} ${yW.toFixed(1)} L${xa.toFixed(1)} ${yT.toFixed(1)} ` +
+          `L${e.x1.toFixed(1)} ${yW.toFixed(1)}`;
+        yPeak = yT;
+      }
+      // THE TENT TAKES THE NIB, like the chironomy ribbon and the tonarium
+      // sparkline — and it takes the nib the way they do, as a WIDTH THAT
+      // VARIES. The word is a swell, and the mark now swells with it: thin
+      // where the word begins, thickest at the accent, thin again at its
+      // end. That is the hairpin the shape was always drawing in outline
+      // only, said in pressure as well.
+      //
+      // A stroke cannot vary its own width, so the tent is a RIBBON: the
+      // same builder the chironomy uses, sampled along the path it used to
+      // stroke. `vat` is distance from the accent rather than a velocity —
+      // the nib is a pressure law, and what presses here is the accent.
+      const pts: [number, number][] = [];
+      const STEPS = 24;
+      for (let i = 0; i <= STEPS; i++) {
+        const t = i / STEPS;
+        // Walk the two slopes, left of the crest then right of it.
+        const x = e.x0 + (e.x1 - e.x0) * t;
+        const y = x <= xa
+          ? yW - hT * (lw > 0 ? (x - e.x0) / lw : 1)
+          : yW - hT * (rw > 0 ? (e.x1 - x) / rw : 1);
+        pts.push([x, y]);
+      }
+      const halfW = Math.max(lw, rw) || 1;
+      g.push(`<path d="${ribbonPath(pts,
+        (x) => P_TENT_VN_MIN
+          + (P_TENT_VN_MAX - P_TENT_VN_MIN)
+            * Math.max(0, 1 - Math.abs(x - xa) / halfW),
+        1, k)}" fill="${INK}" fill-opacity="${STRATUM.margin}"/>`);
+      if (e.accX != null) {
+        g.push(e.arsic
+          ? `<circle cx="${xa.toFixed(1)}" cy="${yPeak.toFixed(1)}" r="${sc(P_ACC_R * k)}" fill="${cfg.rubricaColor}"/>`
+          : `<circle cx="${xa.toFixed(1)}" cy="${yPeak.toFixed(1)}" r="${sc(P_ACC_R * k)}" fill="none" ` +
+            `stroke="${cfg.rubricaColor}" stroke-width="${sc(0.9 * k)}"/>`);
+      }
+    }
+  }
+
+  g.push("</g>");
+  return g.join("");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

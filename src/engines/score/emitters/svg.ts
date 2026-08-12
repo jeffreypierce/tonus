@@ -34,7 +34,7 @@ import {
   ligaturaDesc,
 } from "../../../data/gabc-glyphs.js";
 import {
-  buildChironomia, buildTonarium, trackBands,
+  buildChironomia, buildProsodia, buildTonarium, trackBands,
   type TrackData, type TrackName, type TrackNote,
 } from "./tracks.js";
 
@@ -298,10 +298,80 @@ const GENUS_ABBREV: Record<string, string> = {
  * books set it ("Intr." over "8.") — shared by both species. */
 export function autoRubricLines(chant: Chant): string[] {
   const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+  // AN ORDINARY CHANT SHOWS ITS MODE ALONE. `genus` for these is "Ordinarium",
+  // which reads identically over every Kyrie, Gloria, Sanctus and Agnus — a
+  // mark that never changes tells a reader nothing. Naming the piece instead
+  // ("Agnus", "Kyrie") only repeats the title set directly above the score,
+  // and this slot is the CATEGORY's, not the piece's. So the line is dropped
+  // and the mode stands on its own.
+  const genus = chant.ordinarium
+    ? null
+    : chant.genus && capitalize(GENUS_ABBREV[chant.genus] ?? `${chant.genus}.`);
   return [
-    chant.genus && capitalize(GENUS_ABBREV[chant.genus] ?? `${chant.genus}.`),
+    genus,
     chant.mode && `${chant.mode}.`,
   ].filter(Boolean) as string[];
+}
+
+// ── the initial's own width ────────────────────────────────────────────────
+// A DROPCAP IS INDENTED BY WHAT IT ACTUALLY OCCUPIES. The indent used one
+// factor (0.72) for every letter, which is not a measurement of anything: in
+// Junicode the capitals run from I at 0.344 to W at 0.971, so a narrow letter
+// reserved a column of white it never filled and a wide one ran out under the
+// staff. Measured in a browser at 100px, both faces, every capital.
+//
+// Keyed by FACE, because the caller chooses the dropcap's family and a
+// blackletter is a different set of widths: Jacquard's capitals sit between
+// 0.535 and 0.698, near enough uniform, where Junicode's spread is threefold.
+// An unknown family falls back to the widest plausible letter rather than an
+// average — reserving too much leaves white, reserving too little collides
+// with the music, and only one of those is a defect.
+const CAP_ADVANCE: Record<string, Record<string, number>> = {
+  junicode: {
+    A: 0.684, B: 0.613, C: 0.656, D: 0.748, E: 0.606, F: 0.563, G: 0.688,
+    H: 0.803, I: 0.344, J: 0.350, K: 0.655, L: 0.659, M: 0.902, N: 0.731,
+    O: 0.711, P: 0.571, Q: 0.716, R: 0.689, S: 0.509, T: 0.645, U: 0.731,
+    V: 0.628, W: 0.971, X: 0.649, Y: 0.621, Z: 0.606,
+  },
+  // Crimson / Garamond / Georgia and the generic serif, which is what the
+  // library defaults to. Measured on Georgia, the widest of them.
+  serif: {
+    A: 0.671, B: 0.639, C: 0.66, D: 0.751, E: 0.613, F: 0.573, G: 0.71,
+    H: 0.828, I: 0.39, J: 0.418, K: 0.71, L: 0.611, M: 0.927, N: 0.775,
+    O: 0.759, P: 0.596, Q: 0.759, R: 0.679, S: 0.561, T: 0.618, U: 0.777,
+    V: 0.671, W: 0.976, X: 0.66, Y: 0.62, Z: 0.591,
+  },
+  jacquard: {
+    A: 0.651, B: 0.651, C: 0.558, D: 0.558, E: 0.558, F: 0.651, G: 0.605,
+    H: 0.651, I: 0.535, J: 0.535, K: 0.698, L: 0.581, M: 0.698, N: 0.605,
+    O: 0.628, P: 0.581, Q: 0.674, R: 0.628, S: 0.535, T: 0.651, U: 0.605,
+    V: 0.581, W: 0.698, X: 0.651, Y: 0.605, Z: 0.581,
+  },
+};
+const CAP_ADVANCE_FALLBACK = 0.9;
+
+/** How far a capital rises above its baseline, as a fraction of font size.
+ *  A cap height, near enough, and near enough equal across the faces this
+ *  draws in — it decides where the margin stack clears, not where ink lands. */
+const CAP_RISE = 0.72;
+
+/** The initial's advance, as a fraction of its font size.
+ *
+ *  The DEFAULT row is the one that matters most: the library's own dropcap
+ *  face is the Crimson stack, not the site's Junicode, so a table that knew
+ *  only the two named faces sent every default render to the fallback. Old
+ *  serifs vary little at the capitals (Georgia, Garamond and the generic
+ *  serif agree to about a hundredth on M and W), so one row serves the
+ *  stack. */
+function capAdvance(letter: string, family: string): number {
+  const face = family.toLowerCase();
+  const ch = letter.toUpperCase();
+  for (const key of Object.keys(CAP_ADVANCE)) {
+    if (key !== "serif" && face.includes(key)) {
+      return CAP_ADVANCE[key]![ch] ?? CAP_ADVANCE_FALLBACK;
+    }
+  }
+  return CAP_ADVANCE.serif![ch] ?? CAP_ADVANCE_FALLBACK;
 }
 
 const esc = (s: string): string =>
@@ -472,6 +542,10 @@ export function toSvg(
   const rubricLines: string[] = r.rubric ? [r.rubric] : autoLines;
   const markSize = r.lyricSize * 1.05;
   const markLineH = markSize * 0.98;   // tight, as the books stack Intr. over 8.
+  // The stack's full height in rows — genus over mode. In the margin it is
+  // bottom-aligned to this, so a lone mode keeps the mode's row rather than
+  // rising into the genus's.
+  const MARK_ROWS = 2;
   let headerY = 0;
   let titleBaseline = 0;
   let rubricTop = 0;
@@ -512,9 +586,14 @@ export function toSvg(
     ? (rows.find((row) => row.lyric.trim())?.lyric.trim().charAt(0) ?? "")
     : "";
   // Sized to span staff + lyric (the book initial), sitting close to the staff.
-  const capSize = r.staffInterval * 10;
+  // 9.5, not 10: the initial spans staff + lyric, and a twentieth off it
+  // gives the margin mark above room without shrinking the letter's weight.
+  const capSize = r.staffInterval * 9.5;
+  // The letter's OWN advance, plus a hair of air before the staff begins.
   const capIndent = capInitial
-    ? capSize * r.fonts.dropcap.scale * 0.72 + r.staffInterval * 0.45
+    ? capSize * r.fonts.dropcap.scale
+        * capAdvance(capInitial, r.fonts.dropcap.family)
+      + r.staffInterval * 0.45
     : 0;
 
   let x = r.padding + capIndent;
@@ -1230,11 +1309,19 @@ export function toSvg(
   // the geometry contract exports), never the score's own ink. Drawn after the
   // page width is known — the tonarium's lane measures itself against each
   // system's right edge.
-  if (bands.chironomia || bands.tonarium) {
+  if (bands.prosodia || bands.chironomia || bands.tonarium) {
     const trackNotes: TrackNote[] = placements.map((pl) => ({
       row: pl.row, x: pl.x, y: pl.y, system: pl.system, systemY: pl.systemY,
       inkLeft: pl.inkLeft, inkRight: pl.inkRight,
     }));
+    if (bands.prosodia) {
+      body.push(buildProsodia(trackNotes, {
+        k: trackScale,
+        laneTop: L.lyricY + bands.prosodia.top,
+        rightFor: (s) => (systemMaxX[s] ?? width) - r.padding,
+        rubricaColor: r.rubricaColor,
+      }));
+    }
     if (bands.chironomia) {
       body.push(buildChironomia(trackNotes, {
         k: trackScale,
@@ -1317,16 +1404,23 @@ export function toSvg(
     }
   }
 
-  // Dropcap — the large rubricated initial in its own left column beside the
-  // first system. The initial IS the lyric's first letter, so the lyric line
-  // carries the remainder only (the book prints "K yrie" as cap + "yrie").
+  // Dropcap — the large initial in its own left column beside the first
+  // system. The initial IS the lyric's first letter, so the lyric line carries
+  // the remainder only (the book prints "K yrie" as cap + "yrie").
+  //
+  // IT TAKES THE NOTE INK, NOT THE RUBRICA. The printed books set the initial
+  // in black and spend their red on the genus/mode mark beside it — see the
+  // Liber's "Intr. 1." over a black R. It was rubricated here, which put the
+  // reserved colour on the largest mark on the page and left the rubric it is
+  // reserved for competing with it. A caller wanting a red initial themes
+  // `--tonus-note` on the cap, or passes its own colour.
   const dropcapSvgs: string[] = [];
   if (capInitial && lyrics.length > 0) {
     const y = headerY + L.lyricY; // bottom-aligned with the first lyric baseline
     dropcapSvgs.push(
       `<text class="dropcap" x="${r.padding.toFixed(2)}" y="${y.toFixed(2)}" ` +
       `${fontAttrs(r.fonts.dropcap)} font-size="${(capSize * r.fonts.dropcap.scale).toFixed(1)}" ` +
-      `fill="${r.rubricaColor}">${esc(capInitial.toUpperCase())}</text>`,
+      `fill="${r.noteColor}">${esc(capInitial.toUpperCase())}</text>`,
     );
   }
 
@@ -1348,12 +1442,41 @@ export function toSvg(
     // (the "Offert." / "2." of the books). Otherwise it sits left-aligned in
     // its own header band. Oldstyle figures for the mode numeral.
     const inMargin = r.dropcap && capIndent > 0;
-    const cx = inMargin ? r.padding + capIndent * 0.42 : r.padding;
-    const anchor = inMargin ? 'text-anchor="middle" ' : "";
-    // The stack STARTS at the top of the staff — first baseline roughly level
-    // with the top line, the mode numeral tucked beneath.
+    // LEFT-ALIGNED OVER THE CAP, not centred on it. Centring worked while the
+    // initial was a plain roman capital whose ink stopped well below the
+    // stack; a blackletter's flourishes climb into that band, and the numeral
+    // landed on top of one. Sitting at the margin the mark clears the letter's
+    // reach whatever face draws it, and the books set it there anyway.
+    // Both cases now start at the margin, so there is one x and one anchor.
+    const cx = r.padding;
+    const anchor = "";
+    // The stack sits ABOVE the cap, not beside it. Its last line lands a clear
+    // markSize over the cap's own ink, which is what the books do — "Grad."
+    // over "5." over a large Q, each clear of the next.
+    //
+    // It used to start at the staff's top line (topY + 0.2 × markSize) on the
+    // reasoning that the mark rides the staff. But the CAP rises far above the
+    // staff — its ink began at y 41.3 while the numeral ran to 54.5, measured,
+    // a 13-unit overlap — so the two collided in the one column they share.
+    // CAP_RISE, not capAdvance: this is how far the initial climbs ABOVE its
+    // baseline, and the advance is how wide it is. The two shared the 0.72
+    // literal that used to stand for both, so replacing that literal with a
+    // width table quietly made a vertical position depend on a horizontal
+    // measurement — an I would have hung far lower than an M.
+    const capTop = capInitial
+      ? headerY + L.lyricY - capSize * r.fonts.dropcap.scale * CAP_RISE
+      : headerY + L.topY;
+    // Sitting ON the staff's top line — where the books set it. The stack was
+    // floating well above the staff, reading as a header rather than as a mark
+    // in the margin beside the music.
+    //
+    // BOTTOM-ALIGNED, so the stack grows upward from a fixed last row. A mode
+    // standing alone (no genus above it) belongs on the SECOND row, level with
+    // where it sits when "Intr." is over it — anchoring the top row instead
+    // would float a lone numeral high and off the staff.
     const y0 = inMargin
-      ? headerY + L.topY + markSize * 0.2
+      ? headerY + L.topY + markSize * 0.18
+        + markLineH * (MARK_ROWS - rubricLines.length)
       : rubricTop;
     rubricLines.forEach((line, i) => {
       header.push(
@@ -1361,7 +1484,7 @@ export function toSvg(
         `${anchor}${fontAttrs(r.fonts.annotation)} ` +
         `font-size="${(markSize * r.fonts.annotation.scale).toFixed(1)}" ` +
         `style="font-feature-settings:'onum'" ` +
-        `fill="${r.rubricaColor}">${esc(line)}</text>`,
+        `fill="${r.noteColor}">${esc(line)}</text>`,
       );
     });
   }

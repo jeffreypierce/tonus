@@ -75,6 +75,39 @@ describe("comments — the reference pages moved to docs/api/", () => {
   });
 });
 
+describe("comments — a path resolves from the file that names it", () => {
+  // The docs/api move was only half the defect. Every path was ALSO written as
+  // if from the repo root, from files three and four levels down, so none of
+  // them resolved where it was written — an editor following `BIBLIOGRAPHY.md`
+  // out of src/engines/chant/data/ looks for it in that directory. Checking
+  // that a file exists somewhere is not the same as checking the link works.
+  test("every repo path in a comment resolves relative to its own file", () => {
+    const PATHISH =
+      /(?:\.\.\/)*(?:docs|tests|scripts)\/[\w./-]*\.\w+|(?:\.\.\/)*BIBLIOGRAPHY\.md/g;
+    const broken = [];
+    for (const { path, rel, text } of FILES) {
+      const here = dirname(path);
+      for (const [i, line] of text.split("\n").entries()) {
+        const trimmed = line.trim();
+        const isComment = trimmed.startsWith("//") || trimmed.startsWith("*")
+          || trimmed.startsWith("/*");
+        if (!isComment) continue;
+        for (const m of line.matchAll(PATHISH)) {
+          // Trailing sentence punctuation is not part of the path.
+          const target = m[0].replace(/[.,;:]+$/, "");
+          try {
+            statSync(resolve(here, target));
+          } catch {
+            broken.push(`${rel}:${i + 1}  ${target}`);
+          }
+        }
+      }
+    }
+    assert.deepEqual(broken, [], `paths that do not resolve from their own file:`
+      + `\n  ${broken.join("\n  ")}`);
+  });
+});
+
 describe("comments — a constant restated in prose", () => {
   // census.ts's header gave the block width twice, and both said 225 against a
   // constant of 221. The number is load-bearing prose: it is how a reader
@@ -106,12 +139,14 @@ describe("comments — every [biblio: key] resolves", () => {
   // project cares most about.
   test("no citation names a key BIBLIOGRAPHY.md does not carry", () => {
     const biblio = readFileSync(join(ROOT, "BIBLIOGRAPHY.md"), "utf8");
-    const keys = new Set([...biblio.matchAll(/^###\s+`([^`]+)`/gm)].map((m) => m[1]));
-    // The heading form is the authority; fall back to any inline `key` anchor
-    // so a reformat of the bibliography does not fail every citation at once.
-    if (keys.size === 0) {
-      for (const m of biblio.matchAll(/`([a-z0-9-]+)`/g)) keys.add(m[1]);
-    }
+    // Entries are list items — `- \`key\` — **Title.**` — not headings. Match
+    // that form directly: a fallback to "any text in backticks" would accept
+    // almost anything and quietly stop testing.
+    const keys = new Set(
+      [...biblio.matchAll(/^\s*-\s+`([a-z0-9-]+)`\s+—/gm)].map((m) => m[1]),
+    );
+    assert.ok(keys.size > 20, `parsed only ${keys.size} keys from BIBLIOGRAPHY.md `
+      + "— has the entry format changed?");
 
     const dangling = [];
     for (const { rel, text } of FILES) {

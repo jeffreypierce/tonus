@@ -170,7 +170,6 @@ the list resolve their pitches through the ones before.
 - [The note](score.md#the-note)
 - [The tabula](score.md#the-tabula)
 - [Rendering — `inscriptio`](score.md#rendering) · [theme](score.md#theme--faces-and-ink) · [The analysis tracks](score.md#the-analysis-tracks)
-- [The intonation channel](score.md#the-intonation-channel)
 - [The imprint](score.md#the-imprint)
 - [Prosody](score.md#prosody)
 - [Cadences](score.md#cadences) · [One spine, two annotations](score.md#one-spine-two-annotations)
@@ -256,7 +255,7 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 - `census` throws on an id with no block (the census covers only the chants
   tonus ships) and on an unknown query key or field group.
 
-### The bibliography — [`BIBLIOGRAPHY.md`](../../BIBLIOGRAPHY.md)
+### The bibliography — [`BIBLIOGRAPHY.md`](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md)
 
 The single source of truth for citations, each with a stable key. Code
 cites by bracketed key (`[biblio: key]`); each page keeps a short `## Sources`

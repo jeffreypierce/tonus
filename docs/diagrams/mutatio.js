@@ -25,7 +25,7 @@
 // score and the tables carry — so pointing at the ring is not a second
 // selection, it is the one the whole page already shares.
 
-import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SYMBOL } from "./ink.js";
+import { INK, RUBRICA, STRATUM, STROKE, STEP, HOUSE_SYMBOL, HOUSE_MONO } from "./ink.js";
 import { FRAME } from "./frame.js";
 import { BOX, CROWN } from "./hand-figure.js";
 import { pointAt } from "./polar.js";
@@ -70,7 +70,7 @@ const HAND_BOX = BOX.w;                  // 476 — the square the hand is fitte
 // wrist drops — so hanging it from the lane left its middle 72 units above the
 // ring's. Dropping it puts the two centres nearer together, which is what a
 // figure standing INSIDE a ring should look like.
-const HAND_LIFT = -4;
+const HAND_LIFT = -8;   // his eye, 2026-08-11: ~3px lower at rendered size
 // How much paper a lane sign punches out from under itself, so the lane it
 // stands on does not strike through it. A halo, not a line — hence a stated
 // width rather than a STROKE rung.
