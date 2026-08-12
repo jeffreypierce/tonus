@@ -246,19 +246,25 @@ describe("inscriptio — front matter", () => {
     assert.ok(/class="rubric"[^>]*onum/.test(svg), "oldstyle figures");
   });
 
-  // The mark used to CENTRE on the cap's column. That held while the initial
-  // was a plain roman capital whose ink stopped well below the stack; a
-  // blackletter's flourishes climb into the same band and the numeral landed
-  // on one. Both cases start at the margin now, so there is one x and one
-  // anchor, and the mark clears the letter whatever face draws it.
-  test("with a dropcap the mark sits at the margin, above the cap", () => {
+  // CENTRED OVER THE INITIAL, on that letter's own width — so the stack names
+  // the chant the cap opens rather than sitting at the margin beside it. It
+  // was briefly left-aligned while the initial was Jacquard, whose flourishes
+  // climb into the numeral's band; Junicode's capitals do not.
+  test("with a dropcap the mark centres over the initial", () => {
     const { svg } = inscriptio(score, { annotation: "auto", dropcap: true });
     const marks = [...svg.matchAll(/class="rubric"[^>]*/g)].map((m) => m[0]);
     assert.equal(marks.length, 2);
-    for (const m of marks) assert.doesNotMatch(m, /text-anchor="middle"/);
-    // At the same x as the initial: one margin column, two things in it.
-    const capX = /class="dropcap" x="([\d.]+)"/.exec(svg)[1];
-    for (const m of marks) assert.match(m, new RegExp(`x="${capX}"`));
+    for (const m of marks) assert.match(m, /text-anchor="middle"/);
+
+    // PAST the initial's left edge, and inside its width: centred on the
+    // letter, not parked at the margin the letter starts from.
+    const capX = Number(/class="dropcap" x="([\d.]+)"/.exec(svg)[1]);
+    const capSize = Number(/class="dropcap"[^>]*font-size="([\d.]+)"/.exec(svg)[1]);
+    for (const m of marks) {
+      const x = Number(/x="([\d.]+)"/.exec(m)[1]);
+      assert.ok(x > capX, `mark at ${x} should sit past the cap's left edge ${capX}`);
+      assert.ok(x < capX + capSize, `mark at ${x} should sit within the cap's width`);
+    }
   });
 
   test("an explicit rubric overrides the auto one", () => {

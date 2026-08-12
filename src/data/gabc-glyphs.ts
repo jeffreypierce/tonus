@@ -46,13 +46,26 @@ export const GLYPH = {
   oriscusDesc: "E99D",
   strophicus: "E99F",
   punctumDeminutum: "E9A1",
-  // NO CUSTOS GLYPH. Bravura's chant range as baked here (E8F0-E9D9, 132
-  // glyphs) carries the divisiones at E8F3-E8F7 and no custos at all. Codes
-  // E8F4/E8F5 were briefly mapped as custosUp/custosDown on 2026-08-04, read
-  // off a SMuFL name list without checking them against the divisio map ten
-  // lines above — so every custos drew a `;` or a `:`, and beside a real
-  // barline it read as a doubled bar. If a custos is ever wanted as a glyph,
-  // it has to be added to the bake first.
+  // THE CUSTOS, added to the bake 2026-08-12. Bravura carries it at EA00-EA09
+  // and the subset did not, so the emitter drew a plain punctum at a line's
+  // end — a note where a guide belongs, with none of the tail that tells a
+  // singer it points at the next line rather than sounding.
+  //
+  // The tail RISES AWAY FROM THE STAFF, so the direction follows the note:
+  // stem-up for a degree in the staff's lower half, stem-down for the upper.
+  // (An earlier attempt mapped E8F4/E8F5 as custosUp/custosDown on
+  // 2026-08-04, read off a SMuFL name list without checking them against the
+  // divisio map ten lines above — so every custos drew a `;` or a `:`, and
+  // beside a real barline it read as a doubled bar. Hence the bbox check in
+  // the extractor, and hence these names carry their SMuFL ones.)
+  //
+  // EA00 and EA02, NOT the EA04-EA09 block. Those are 60 units wide and are
+  // bare ledger STEMS, not custodes: mapping EA05 as the stem-down cut drew a
+  // 1.9px vertical stroke and nothing else. The real pair carries a notehead
+  // (285 and 613 units wide), and the bbox check in the extractor is what
+  // makes the difference visible.
+  custosUp: "EA00",     // chantCustosStemUpPosLowest
+  custosDown: "EA02",   // chantCustosStemUpPosMiddle — the stem-down cut
   // note components
   podatusLower: "E9B0",
   podatusUpper: "E9B1",

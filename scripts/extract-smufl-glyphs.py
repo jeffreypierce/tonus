@@ -69,6 +69,12 @@ CODEPOINTS = [
     0xE052,          # gClef8vb — treble clef with 8 below (male chant range)
     0xE0A3, 0xE0A4,  # noteheadHalf (hollow, = double mora), noteheadBlack
     0xE1E7,          # augmentationDot (mora / dotted note)
+    # THE CUSTOS, properly. The emitter drew a plain punctum at the line's
+    # end, which is a note and not a guide: the books' custos is a small
+    # notehead with a tail that RISES away from the staff, and that tail is
+    # what tells a singer it points at the next line rather than sounding.
+    # Stem-up for a note below the middle line, stem-down for one above.
+    0xEA00, 0xEA02,  # chantCustos: stem-up, and the stem-down cut
     0xEA20,          # medRenQuilismaCMN — the fused quilisma squiggle
 ]
 

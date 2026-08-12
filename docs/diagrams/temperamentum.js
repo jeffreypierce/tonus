@@ -190,7 +190,7 @@ export function wheel(tonus, { mode = 7, tuning, comma, weights, selected,
     // slot stays empty rather than printing an approximation.
     if (r.ratio) {
       svg.append(n("text", {
-        x: sc(lx), y: sc(letterY + (top ? -15 : 13)),
+        x: sc(lx), y: sc(letterY + (top ? -23 : 13)),
         "text-anchor": "middle", "font-family": HOUSE_SERIF,
         // A STEP UP FROM micro. Measured on the page: the letter renders at
         // 22px and the ratio at 12.9, which reads as a footnote to the letter
@@ -292,12 +292,12 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
         fill: "none",
         stroke: touchesSel ? RUBRICA : INK,
         "stroke-opacity": touchesSel ? STRATUM.label : STRATUM.rail,
-        // THINNER THAN THE LAB'S. These are long spans, and a long line at a
-        // short line's weight reads far heavier: at firm×GRID (2.1) the
-        // arches were the darkest thing in the figure and the ring, at 1.1,
-        // disappeared under them. The selection keeps the claim's rung; the
-        // neighbours drop to the hairline they are.
-        "stroke-width": touchesSel ? STROKE.fine * GRID : STROKE.hair * GRID,
+        // THINNER THAN THE LAB'S, and OFF THE GRID. These are long spans, and
+        // a long line at a short line's weight reads far heavier than it
+        // measures. Doubling them onto the figure's grid is what made them the
+        // darkest thing in it; at the rungs' own values the ring holds its own
+        // and the arches read as the light tracery they should be.
+        "stroke-width": touchesSel ? STROKE.firm : STROKE.hair,
       }));
       if (touchesSel) {
         plates.push({ x: (xa + xb) / 2, y: STRING_Y - hgt - 5, text: iv.nomen });
@@ -360,16 +360,37 @@ function drawString(svg, tonus, { rows, mode, tuning, comma, weights, wmax, sel,
   }
 
   // ── the labels, last, each on its own paper plate ──
+  // THE PLATE IS CUT TO ITS OWN WORD. A per-character estimate overshoots a
+  // short label and pinches a long one — measured, "Quinta" wore 12.5 units of
+  // padding a side against "Tertia minor"'s 6.6 — but getBBox() cannot be read
+  // at build time either: the text has no layout until the SVG is in the
+  // document, and it returns zero width. So the plate is drawn first at a
+  // placeholder and RESIZED on the next frame, when the browser has laid the
+  // text out and can be asked how wide it really is.
+  const PLATE_PAD = 3.5;
+  const pending = [];
   for (const pl of plates) {
-    const wPlate = pl.text.length * 5.8 + 7;
-    svg.append(n("rect", {
-      x: sc(pl.x - wPlate / 2), y: sc(pl.y - 9), width: sc(wPlate), height: 13,
-      rx: 2, fill: "var(--paper, #FDFDFC)",
-    }));
-    svg.append(n("text", {
+    const plate = n("rect", {
+      y: sc(pl.y - 9), height: 13, rx: 2, fill: "var(--paper, #FDFDFC)",
+    });
+    const t = n("text", {
       x: sc(pl.x), y: sc(pl.y), "text-anchor": "middle",
       "font-family": HOUSE_SERIF, "font-size": STEP.micro,
       fill: RUBRICA,
-    }, pl.text));
+    }, pl.text);
+    svg.append(plate, t);
+    pending.push([plate, t]);
+  }
+  if (pending.length && typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(() => {
+      for (const [plate, t] of pending) {
+        const bb = t.getBBox();
+        if (!bb.width) continue;
+        plate.setAttribute("x", sc(bb.x - PLATE_PAD));
+        plate.setAttribute("width", sc(bb.width + PLATE_PAD * 2));
+        plate.setAttribute("y", sc(bb.y - 1));
+        plate.setAttribute("height", sc(bb.height + 2));
+      }
+    });
   }
 }
