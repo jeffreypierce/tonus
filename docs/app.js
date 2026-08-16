@@ -1734,9 +1734,18 @@ function temperamentumPanel() {
 function manusPanel() {
   const mode = modeOf(state.chant);
   const spn = selectedPitch();
-  // The hand keys on midi, the monochord on spn — both name the same degree,
-  // so the selection is translated rather than stored twice.
-  const row = spn ? state.score?.tabula.find((r) => r.spn === spn) : null;
+  // THE CHOSEN NOTE IS AN INDEX, so it is read as one. Finding it by spn
+  // instead returned the FIRST note of the chant at that pitch, which is the
+  // note itself only when the pitch has not been sung before: click the second
+  // E of a porrectus flexus and the line described an E in a torculus eleven
+  // notes earlier, with that note's neume, joint and hexachord.
+  //
+  // A pitch chosen in the theory column has no index — it is a degree of the
+  // scale, not a note of the piece — so that path still looks one up, and any
+  // note at that pitch is the right answer to "where does this degree sit".
+  const row = state.note != null
+    ? state.score?.tabula[state.note]
+    : spn ? state.score?.tabula.find((r) => r.spn === spn) : null;
   const tune = { tuning: "meantone", comma: state.comma };
   const gamutRows = handRows(tonus, { mode, ...tune });
   // THE OCTAVE IS A TRANSPOSITION OF THE READING, NOT OF THE CHANT. The score,
