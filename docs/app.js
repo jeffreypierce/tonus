@@ -76,12 +76,6 @@ const state = {
   // the five digits, and the knuckle line runs the whole way across to make
   // up for it.
   route: true,
-  // The hand read an OCTAVE UP. Most of the corpus is written low against the
-  // gamut — Agnus Dei I runs midi 43-52, the bottom fifth of a hand that
-  // reaches to 90 — so a chant read straight lands on the thumb and stays
-  // there. Raising it is what a cantor does anyway: the gamut names degrees,
-  // and a choir sings them where its voices lie.
-  octave: 0,
   // The temperament is one number: how much of the syntonic comma comes off
   // each fifth. 0 is Pythagorean, 1/11 is (audibly) equal, 1/4 buys the pure
   // major third. A named list of six could not say that they are one family.
@@ -1642,15 +1636,7 @@ function hexachordPicker() {
       el("button", {
         type: "button", "aria-pressed": state.route ? "true" : "false",
         onclick: () => { state.route = !state.route; renderPanels(); },
-      }, "ordo"),
-      // Read the chant an octave up. It moves where the piece SITS on the
-      // hand, not what it is: the same degrees, the same solmization, one
-      // octave higher up the gamut, which is where most of the corpus lands
-      // when a choir actually sings it.
-      el("button", {
-        type: "button", "aria-pressed": state.octave ? "true" : "false",
-        onclick: () => { state.octave = state.octave ? 0 : 1; renderPanels(); },
-      }, "octava")),
+      }, "ordo")),
   );
 }
 
@@ -1733,6 +1719,24 @@ function temperamentumPanel() {
   );
 }
 
+/** How far to lift a chant to sit inside the hand's gamut, in semitones.
+ *
+ *  WHOLE OCTAVES, always: a degree is the degree the book prints, and a lift
+ *  by anything else would rename it. The chant moves as a body, by however
+ *  many octaves it takes to bring its LOWEST note to or above the gamut's
+ *  floor — measured over 400 chants, that is one octave for 345 of them and
+ *  two for one.
+ *
+ *  Returns 0 when the chant already fits, or when there is nothing to measure:
+ *  the reading is then exactly what the book prints. */
+function handShift(score, gamutRows) {
+  const lowest = score?.tabula?.reduce(
+    (m, r) => (r.midi < m ? r.midi : m), Infinity);
+  const floor = gamutRows.reduce((m, r) => (r.midi < m ? r.midi : m), Infinity);
+  if (!Number.isFinite(lowest) || !Number.isFinite(floor) || lowest >= floor) return 0;
+  return Math.ceil((floor - lowest) / 12) * 12;
+}
+
 function manusPanel() {
   const mode = modeOf(state.chant);
   const spn = selectedPitch();
@@ -1755,18 +1759,30 @@ function manusPanel() {
   // which JOINT a note is read at moves. So the shift is applied here, at the
   // two points where a chant pitch and a gamut row are matched, and nowhere
   // else — `state.score` is never rewritten.
-  const shift = state.octave * 12;
+  // THE CHANT IS LIFTED ONTO THE HAND, by whole octaves, automatically.
+  //
+  // Almost nothing fits as printed: measured over 400 chants, 32 sit inside
+  // their mode's gamut and 346 sit BELOW it — the books write the plainchant
+  // range around G2 while the gamut runs from G2 up two octaves, so a piece
+  // read straight lands on the bottom joint and stays there. Laetabitur justus
+  // is 26 of its 146 notes on Γ alone, with three more below the hand
+  // entirely, which reads as a diagram that has stopped responding.
+  //
+  // This used to be the `octava` button: a manual fix the reader had to find,
+  // for a condition the code can measure. The lift is now computed from the
+  // chant's own lowest note — WHOLE OCTAVES ONLY, so every degree and every
+  // solmization is the one the book prints, moved as a body.
+  //
+  // It is still a transposition of the READING, not of the chant: the score,
+  // the tables and every other panel keep the printed pitches, and only which
+  // JOINT a note is read at moves. `state.score` is never rewritten.
+  const shift = handShift(state.score, gamutRows);
   const raise = (spn_) => (!spn_ || !shift ? spn_ : spnAt(spn_, shift));
   // THE HAND CLAIMS NO JOINT IT CANNOT NAME. selectionFor's pitch-class
   // fallback is the monochord's law — one octave, where a class IS a degree —
   // and on the hand it silently promoted any note OUTSIDE the gamut to a
-  // joint in another octave. Measured: 9,238 of the corpus's 21,817 distinct
-  // sung pitches sit below their mode's gamut, so with octava off nearly half
-  // the repertory lit a joint an octave above where it was sung — and the
-  // octava button then moved the in-gamut notes and not these, which read as
-  // "sometimes up, sometimes down". A note the gamut cannot place lights
-  // NOTHING — absent, not a guess — and the octava button is the honest way
-  // to bring a low chant onto the hand.
+  // joint in another octave. A note the gamut cannot place after the lift
+  // lights NOTHING — absent, not a guess.
   const exactJoint = (spn_) => gamutRows.find((r) => r.spn === spn_)?.key;
   // Two absences, kept apart: NOTHING CHOSEN lets the hand rest on its own
   // default (the finalis), but a note CHOSEN AND UNPLACEABLE must light
