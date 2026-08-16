@@ -4,6 +4,72 @@ All notable changes to tonus. Newest first.
 
 ## Unreleased
 
+## 0.6.0 — 2026-08-16
+
+The zodiac learns what it means, and the hand stops sitting on its own floor.
+
+### Added
+
+- **`ZODIACA` — the doctrine of the twelve signs.** `caelum` answers WHERE a
+  body is; this answers what a medieval reader brought to that position: the
+  element and its Galenic humor, the quality, the ruling and exalted planets,
+  and the member of the zodiac man the sign governs. `ZODIACA[body.zodiac]` is
+  the join, so a sky and its meaning are one lookup apart.
+
+  Deliberately no dates. When the Sun enters a sign is the ephemeris's business
+  and moves with precession — a table carrying "March 21" would be wrong for
+  most of the period this library models, and wrong differently every century.
+
+  The exaltation degrees are omitted (the sign is the resolution anything here
+  reads) and so are the lunar nodes, which are not tonus bodies. Five signs
+  exalt nobody, and that silence is the tradition's.
+
+### Changed — breaking
+
+- **`SIGNS` and `SIGNA` are no longer exported.** `ZODIACA` carries each sign's
+  own `sign` and `signum` beside its doctrine, so it answers both what a sign
+  is called and what it means. The bare name arrays go back to being internal
+  to the engine that computes a longitude, which is the only place they were a
+  lookup rather than a listing.
+
+  ```js
+  // before
+  import tonus, { SIGNS, SIGNA } from "tonus";
+  SIGNS[body.zodiac];              // "Capricorn"
+  SIGNA[body.zodiac];              // "Capricornus"
+
+  // after
+  import tonus, { ZODIACA } from "tonus";
+  ZODIACA[body.zodiac].sign;       // "Capricorn"
+  ZODIACA[body.zodiac].signum;     // "Capricornus"
+  ```
+
+### Fixed
+
+- **The Manus line reads the note that was clicked.** The subheader found its
+  row by pitch, and `find(r => r.spn === spn)` returns the FIRST note of the
+  chant at that pitch — so clicking the second E of a porrectus flexus
+  described an E in a torculus eleven notes earlier, with that note's neume,
+  joint and Guidonian name.
+
+### Site
+
+- **The chant is lifted onto the hand automatically, by whole octaves.** Almost
+  nothing fits the gamut as printed: measured over 400 chants, 32 sit inside
+  their mode's gamut and 346 sit below it, so a piece read straight lands on
+  the bottom joint and stays there. The lift is computed from the chant's own
+  lowest note, which takes notes landing on a joint from 68.8% to 99.9%. The
+  `octava` button was the manual version of this and is gone.
+- **The three sung hours become one Officium segment**, with all eight hours in
+  its popover — Matins and Vespers on, the little hours and Compline there to
+  be asked for.
+- **The address bar keeps `cantus` and nothing else.** Eleven parameters were
+  mirrored there, each written the moment it moved off its default, which made
+  the bar a running transcript of a session.
+- All three analysis tracks open together; the Similes subheader reports the
+  company a melody keeps rather than describing the list; the temperament
+  slider steps a tenth of a cent, the precision its readout prints.
+
 ## 0.5.0 — 2026-08-12
 
 Rendering, mostly — a day of looking at real chant on a real page and fixing
