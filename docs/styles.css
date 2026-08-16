@@ -832,6 +832,25 @@
      spur's 18 and the ? sits 6px low — half the margin, exactly. */
   .settings .segset,
   .track-strip .segset { margin-bottom: 0; }
+  /* The officia strip and the hours' spur ride one line: the spur belongs to
+     the Officium segment, so it sits with it rather than under the set. */
+  .officia-row { display: flex; align-items: center; gap: var(--sp-2); }
+  .officia-row .segset { margin-bottom: 0; }
+  .officia-row .key-info { float: none; }
+  /* One hour per line in the card: the box, the name, and what it would add.
+     The count is right-aligned on its own column so eight numbers of different
+     widths still make a column rather than a ragged edge. */
+  .hora-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 2px 0;
+    cursor: pointer;
+  }
+  .hora-row input[disabled] ~ .hora-name { color: var(--ghost); }
+  .hora-name { font-size: var(--caption); }
+  .hora-n { font-family: var(--mono); font-size: var(--micro); }
   .segset button {
     font-family: var(--mono); font-size: var(--caption);
     letter-spacing: var(--track-meta);
@@ -1127,13 +1146,15 @@
     font-size: var(--caption);
     letter-spacing: var(--track-meta);
     color: var(--heading); text-align: left;
-    /* THE CAPTION BELONGS TO THE TABLE BENEATH IT, so it sits on it. At sp-1
-       it floated between its own first rule and the table above, reading as
-       either's; the air goes above the caption (the inter-table margin), not
-       under it. Negative, because the line box carries descender space the
-       small caps never use — closing to 0 still leaves a visible gap. */
+    /* THE CAPTION BELONGS TO THE TABLE BENEATH IT, so the air above it (the
+       inter-table margin) stays larger than the air below: that difference is
+       what assigns it downward rather than leaving it floating between two
+       tables. Still negative, because the line box carries descender space
+       the caption's letters never reach into — -9px closed the gap entirely
+       and set the first row hard against the word, which read as a heading
+       row of the table rather than a name for it. */
     padding-bottom: 0;
-    margin-bottom: -9px;
+    margin-bottom: -3px;
   }
   table.tabula th {
     font-family: var(--mono); font-size: var(--micro); letter-spacing: var(--track-micro);

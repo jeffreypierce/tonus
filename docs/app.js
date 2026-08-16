@@ -50,17 +50,22 @@ const state = {
   // the pair makes — live under the slider, which is the point. Ephemeral:
   // not in the URL, cleared by a note-click or a chant switch.
   temperEdge: null,
-  // which offices are shown — see OFFICES_SHOWN below, spelled out here
-  // because `state` is built before that list exists
-  offices: ["proprium", "ordinarium", "matutinum", "laudes", "vesperae"],
+  // Matins and Vespers of the eight hours: the two great hours, and the two
+  // that carry a feast's own music. Prime and Compline are the same psalter
+  // every day — fifty-odd antiphons apiece — and would drown the day.
+  offices: ["proprium", "ordinarium", "matutinum", "vesperae"],
   // Which mode the day's list is narrowed to, or null for all eight. A day
   // sings in several, and the question "what does this feast sound like in
   // mode 4" is one the calendar can answer and could not before.
   modus: null,
+  // Which reading each view opens on, remembered per view so switching back
+  // returns to the panel that was left open.
   right: { calendarium: "harmonia", canticum: "temperamentum" },
   // the few settings the toy carries
   notation: "quadrata",
-  tracks: ["chironomia"],
+  // All three: the stack is what the score has to say about itself, and a
+  // reader who has not met them cannot ask for what they have not seen.
+  tracks: ["prosodia", "chironomia", "tonarium"],
   // Which hexachord the hand is read by. It FOLLOWS the selection — opening a
   // chant or picking a note on the ring sets it — and the picker can override
   // it. One value, two ways in, so the control always reads what is drawn.
@@ -110,21 +115,24 @@ const HEXACHORDA = ["molle", "naturale", "durum"];
 // Christmas returns about a hundred and seventy chants, of which thirty-five
 // are Prime's psalm antiphons — one list, and the day's Mass disappears into
 // it. A reader wants Lauds OR Compline, so each hour is its own toggle.
+// THE EIGHT HOURS, in the order the day is sung — Matins before dawn through
+// Compline at night. The engine takes all eight; the strip shows a single
+// Officium segment and the choice of hours lives in its popover, because eight
+// segments beside Proprium and Ordinarium is a strip that no longer reads as
+// one object.
+const HORAE = [
+  ["matutinum", "Matutinum"], ["laudes", "Laudes"], ["prima", "Prima"],
+  ["tertia", "Tertia"], ["sexta", "Sexta"], ["nona", "Nona"],
+  ["vesperae", "Vesperae"], ["completorium", "Completorium"],
+];
+
 const OFFICES = [
   { key: "proprium", name: "Proprium", of: (f) => tonus.proprium({ feast: f }) },
   { key: "ordinarium", name: "Ordinarium", of: (f) => tonus.ordinarium({ feast: f }) },
-  ...[
-    ["matutinum", "Matutinum"], ["laudes", "Laudes"], ["vesperae", "Vesperae"],
-  ].map(([hora, name]) => ({
-    key: hora, name, of: (f) => tonus.officium({ feast: f, hora }),
+  ...HORAE.map(([hora, name]) => ({
+    key: hora, name, hora: true, of: (f) => tonus.officium({ feast: f, hora }),
   })),
 ];
-
-// The whole surface is shown at once — the three sung hours are small enough
-// together that a day opens complete. The little hours are omitted rather
-// than defaulted off: Prime and Compline are thirty-five psalm antiphons
-// apiece, the same psalter every day, and they drown the day's own music.
-const OFFICES_SHOWN = OFFICES.map((o) => o.key);
 
 // The temperaments as ONE axis: the fraction of the syntonic comma taken off
 // each fifth. They are not six unrelated tunings but points on a continuum,
@@ -148,14 +156,24 @@ const COMMAS = [
   { value: 1 / 3, name: "1/3", gloss: "meantone" },
 ];
 const COMMA_MAX = 1 / 3;
-// The slider's resolution — a division OF the range rather than a round
-// decimal, so the far end lands on 1/3 exactly. (0.0005 stopped at 0.333, a
-// third of a step short, and the last detent could never be reached.)
+// The slider's resolution — ONE TENTH OF A CENT at the readout, which is the
+// precision the readout prints. A finer step moved the thumb without moving
+// the number, and a coarser one printed a value the thumb could not land on.
+//
+// It is a division OF the range rather than a round decimal, so the far end
+// still lands on 1/3 exactly: the range is ~7.17¢ wide, which is not a whole
+// number of tenths, and stepping by a rounded 0.00465 overshot COMMA_MAX and
+// put the last detent out of reach. Dividing the range by its own length in
+// tenths of a cent keeps both ends exact.
 //
 // It is also the tolerance for "is it ON a detent": a stepped input cannot
-// land exactly on 1/11 or 1/6, so a value within half a step IS that one. At
-// 1e-6 the readout showed cents for four of the seven named stops.
-const COMMA_STEP = COMMA_MAX / 666;
+// land exactly on 1/11 or 1/6, so a value within half a step IS that one.
+// How wide the axis is in cents: the pure fifth (701.955¢) down to the 1/3-comma
+// fifth (694.786¢). Measured against the engine, not derived here — the slider
+// only needs the number, and computing it at load would run a temperament to
+// learn something that does not change.
+const COMMA_CENTS_SPAN = 7.169;
+const COMMA_STEP = COMMA_MAX / Math.round(COMMA_CENTS_SPAN * 10);
 const atDetent = (v) => COMMAS.find((c) => Math.abs(c.value - v) <= COMMA_STEP / 2);
 
 // The FIRST digit, not every digit run together. Three chants in the corpus
@@ -550,22 +568,46 @@ function calendariumPanels() {
     // from the three date anchors sitting directly above them. The tick each
     // segment carries is a second channel, so membership is not in colour
     // alone.
-    el("div", { class: "segset", role: "group", "aria-label": "officia" },
-      ...OFFICES.map((o) => {
-        const n = all.filter((r) => r.office.key === o.key).length;
-        return el("button", {
-          type: "button",
-          disabled: n === 0,
-          "aria-pressed": state.offices.includes(o.key) ? "true" : "false",
-          onclick: () => {
-            state.offices = state.offices.includes(o.key)
-              ? state.offices.filter((k) => k !== o.key)
-              : OFFICES.map((x) => x.key).filter(
-                  (k) => k === o.key || state.offices.includes(k));
-            renderPanels();
-          },
-        }, o.name, el("span", { class: "seg-n" }, n));
-      })),
+    el("div", { class: "officia-row" },
+      el("div", { class: "segset", role: "group", "aria-label": "officia" },
+        ...OFFICES.filter((o) => !o.hora).map((o) => {
+          const n = all.filter((r) => r.office.key === o.key).length;
+          return el("button", {
+            type: "button",
+            disabled: n === 0,
+            "aria-pressed": state.offices.includes(o.key) ? "true" : "false",
+            onclick: () => { toggleOffice(o.key); },
+          }, o.name, el("span", { class: "seg-n" }, n));
+        }),
+        // THE HOURS AS ONE SEGMENT. It is pressed when any hour is on, and its
+        // count is their sum — so the strip still says how much is in the list
+        // without naming eight things. Clicking it opens the choice rather
+        // than toggling: with eight members there is no single sensible thing
+        // for a press to mean.
+        (() => {
+          const hours = OFFICES.filter((o) => o.hora);
+          const on = hours.some((h) => state.offices.includes(h.key));
+          // The count is what the CHOSEN hours contribute, not what all eight
+          // would: the number beside a segment says how much of the list below
+          // is its doing, and every other segment on the strip means that.
+          const chosen = hours.filter((h) => state.offices.includes(h.key));
+          const n = all.filter((r) => chosen.some((h) => h.key === r.office.key)).length;
+          // Disabled only when the DAY has no Office at all — never because
+          // the reader has turned every hour off, which is the one state that
+          // must stay clickable to be undone.
+          const anyAvailable = all.some((r) => hours.some((h) => h.key === r.office.key));
+          return el("button", {
+            type: "button",
+            disabled: !anyAvailable,
+            "aria-pressed": on ? "true" : "false",
+            onclick: (e) => {
+              // Open the popover beside it — the spur is the sibling below.
+              e.currentTarget.parentElement?.parentElement
+                ?.querySelector(".key-spur")?.click();
+            },
+          }, "Officium", el("span", { class: "seg-n" }, n));
+        })()),
+      horaePicker(all)),
     shown.length
       ? chantList(tonus, shown.map((r) => r.chant), {
           selectedId: state.chant?.id,
@@ -764,11 +806,14 @@ function similarChants() {
     // Titled like the readings opposite — it is the same kind of thing, a
     // named section of a column — with its own reference beneath.
     el("h2", { class: "similar-title" }, "Similes"),
-    // A subheader with CONTENT, not an orphaned link: it says what the list
-    // is and the order it comes in. The old neighbour-fact ("four of 2,187,
-    // all above 97%") was cut for never changing; a section's descriptor is
-    // allowed to be constant — it is a name, not a finding.
-    el("p", { class: "sub" }, "the nearest in the census, most alike first",
+    // A subheader with a FINDING, not a descriptor. "the nearest in the
+    // census, most alike first" was true of every chant that has ever been
+    // opened, which makes it a label for the section rather than anything
+    // about the chant in it. What varies is the COMPANY a melody keeps:
+    // measured over 200 chants, 76 draw all five neighbours from their own
+    // genus and mode and 124 cross out of one or both. That split is the
+    // interesting thing, so the line reports which side this chant is on.
+    el("p", { class: "sub" }, similesLine(found, state.chant),
       docLink("census")),
     // No similarity figure on the rows — CUT 2026-08-11 with the sublabel
     // numbers: a percentage with no header is a random number, and the line
@@ -853,12 +898,79 @@ function canticumRightDetail(M, row) {
  *  is read at. The scientific pitch is dropped here — spn is the tuning
  *  panel's currency, and this reading is the medieval one, where a pitch IS a
  *  place on the hand. The joint is what the figure beside it is pointing at. */
+/** Turn one office on or off, keeping `state.offices` in OFFICES order.
+ *
+ *  The order matters: the list below is grouped by office, and a set that
+ *  remembered the order things were CLICKED would reorder the day's music by
+ *  the reader's fidgeting rather than by the hours of the day. */
+function toggleOffice(key) {
+  state.offices = state.offices.includes(key)
+    ? state.offices.filter((k) => k !== key)
+    : OFFICES.map((x) => x.key).filter(
+        (k) => k === key || state.offices.includes(k));
+  renderPanels();
+}
+
+/** The eight hours, in a popover on the Officium segment.
+ *
+ *  A checkbox each, in the order the day is sung, with the count each would
+ *  add. Matins and Vespers are on by default; the little hours and Compline
+ *  are here to be asked for, which is the difference between a thing that is
+ *  missing and a thing that is off. */
+function horaePicker(all) {
+  return popover("which hours", () => {
+    const hours = OFFICES.filter((o) => o.hora);
+    return [
+      el("p", { class: "tracks-text ghost" },
+        "The hours of the Office. Prime and Compline repeat the same psalter "
+        + "every day; Matins and Vespers carry the feast's own music."),
+      ...hours.map((o) => {
+        const n = all.filter((r) => r.office.key === o.key).length;
+        const id = `hora-${o.key}`;
+        return el("label", { class: "hora-row", for: id },
+          el("input", {
+            id, type: "checkbox", disabled: n === 0,
+            checked: state.offices.includes(o.key) ? "" : null,
+            onchange: () => { toggleOffice(o.key); },
+          }),
+          el("span", { class: "hora-name" }, o.name),
+          el("span", { class: "hora-n ghost" }, n ? String(n) : "—"));
+      }),
+    ];
+  });
+}
+
+/** What the nearest five have in common with the chant — and where they don't.
+ *
+ *  A melody's neighbours usually come from its own genus and mode: an Introit
+ *  in mode 7 is measured most like other Introits in mode 7, which is the
+ *  expected answer and worth saying plainly. The finding is when they DO NOT —
+ *  when a Graduale's nearest kin include an Alleluia and a Tractus, the shape
+ *  is doing something its genus does not account for. */
+function similesLine(found, chant) {
+  const genera = new Set(found.map((r) => r.chant.genus).filter(Boolean));
+  const modes = new Set(found.map((r) => r.chant.mode).filter(Boolean));
+  const ownGenus = genera.size === 1 && genera.has(chant?.genus);
+  const ownMode = modes.size === 1 && modes.has(chant?.mode);
+
+  if (ownGenus && ownMode) return "all five its own genus and mode";
+  if (ownMode) return `across ${genera.size} genera, all in its mode`;
+  if (ownGenus) return `all its own genus, across ${modes.size} modes`;
+  return `across ${genera.size} genera and ${modes.size} modes`;
+}
+
 function manusLine(row) {
   // The joint is ONE place — a finger, then where on it — so the pair is
   // joined by the arrow the arch already uses, not the mid-dot that would
   // read it as two separate facts beside the name.
   const joint = row.hand ? `${row.hand.finger} → ${row.hand.region}` : null;
-  return [row.nomen, joint].filter(Boolean).join(" · ") || row.spn;
+  // The neume the note is written in — the shape the scribe drew, which is a
+  // different fact from the place the hand names. "compound" is withheld: it
+  // is the parser's word for a group with no single name, and printing a
+  // category where every other note prints a name reads as one.
+  const neume = row.neume?.type && row.neume.type !== "compound"
+    ? row.neume.type : null;
+  return [row.nomen, neume, joint].filter(Boolean).join(" · ") || row.spn;
 }
 
 /** Canticum's heading rows. Both this and `canticum()` build the page's
@@ -1713,28 +1825,31 @@ function openChant(chant) {
 }
 
 // ── the address bar is the state ──
+// ── the address bar says almost nothing ──
+// THE STATE LIVES IN `state`, NOT IN THE URL. Eleven parameters used to be
+// mirrored here — the day, the notation, the tracks, the hexachord, the
+// offices, the mode filter, the comma, the open reading — and each was written
+// the moment it moved off its default. That made the bar a running transcript
+// of a session: it grew as a reader explored, it was unreadable by the time it
+// was worth sharing, and nobody had asked for a link.
+//
+// Sharing is a DELIBERATE act, and it will get a button in the docs that
+// builds a full link on demand. Until then the bar carries only what a bare
+// visit genuinely cannot reconstruct:
+//
+//   cantus — which piece is open. The whole Canticum view is a function of a
+//     chant, so without this a reload lands on someone else's music.
+//   schola — the maker's bench. Nothing on the page turns it on, so the URL is
+//     the only door; a secret the bar forgets on the first click is a bug.
+//
+// Everything else is a preference, and a preference that survives a reload is
+// a cookie's job, not a link's.
 function writeUrl() {
   const p = new URLSearchParams();
-  if (state.view !== "calendarium") p.set("via", state.view);
-  const dies = state.day.toISOString().slice(0, 10);
-  if (dies !== "0991-06-01") p.set("dies", dies);
-  if (state.chant) p.set("cantus", state.chant.id);
-  if (state.notation !== "quadrata") p.set("notatio", state.notation);
-  if (state.tracks.length) p.set("tracks", state.tracks.join(","));
-  p.set("hexachordum", state.hexachord);
-  if (!state.route) p.set("ordo", "0");
-  // Only when narrowed — all three showing is the default, and saying so in
-  // every link would put a parameter in the bar that changes nothing.
-  if (state.offices.join(",") !== OFFICES_SHOWN.join(","))
-    p.set("officia", state.offices.join(","));
-  // Only when narrowed, for the same reason the offices are: a day read in one
-  // mode is worth linking to, and "all eight" is what a bare URL already means.
-  if (state.modus != null) p.set("modus", String(state.modus));
-  // Only when tempered — 0 is the default and saying so in every link
-  // would put a parameter in the bar that changes nothing.
-  if (state.comma) p.set("comma", state.comma.toFixed(4));
-  const lectio = state.right[state.view];
-  if (lectio) p.set("lectio", lectio);
+  // Not the STANDING chant: every visit loads one so Canticum is never empty,
+  // and writing it would put a piece nobody chose into the bar of a reader who
+  // has only just arrived. It goes in once a chant has actually been opened.
+  if (state.chant && state.chant.id !== DEFAULT_CANTUS) p.set("cantus", state.chant.id);
   const q = p.toString();
   history.replaceState(null, "", q ? `?${q}` : location.pathname);
 }
@@ -1742,38 +1857,10 @@ function writeUrl() {
 function readUrl() {
   const p = new URLSearchParams(location.search);
   if (p.get("via") === "canticum") state.view = "canticum";
-  if (p.has("dies")) {
-    const d = new Date(`${p.get("dies")}T00:00:00Z`);
-    if (!Number.isNaN(d.getTime())) state.day = d;
-  }
-  const n = p.get("notatio");
-  if (n === "moderna" || n === "quadrata") state.notation = n;
-  if (p.get("ordo") === "0") state.route = false;
-  const hx = p.get("hexachordum");
-  if (HEXACHORDA.includes(hx)) state.hexachord = hx;
-  if (p.has("tracks")) {
-    state.tracks = p.get("tracks").split(",")
-      .filter((t) => t === "prosodia" || t === "chironomia" || t === "tonarium");
-  }
-  if (p.has("officia")) {
-    const keys = OFFICES.map((o) => o.key);
-    const want = p.get("officia").split(",").filter((k) => keys.includes(k));
-    // An empty or unrecognised list would leave the day looking chantless
-    // through no choice of the reader's, so it falls back to all three.
-    if (want.length) state.offices = want;
-  }
-  if (p.has("modus")) {
-    // 1-8 or nothing. A junk value leaves the day unfiltered rather than
-    // empty, on the same reasoning as the offices above.
-    const m = Number(p.get("modus"));
-    if (Number.isInteger(m) && m >= 1 && m <= 8) state.modus = m;
-  }
-  if (p.has("comma")) {
-    const c = Number(p.get("comma"));
-    // Anything outside the axis is not a temperament this page can draw.
-    if (Number.isFinite(c) && c >= 0 && c <= COMMA_MAX) state.comma = c;
-  }
-  if (p.has("lectio")) state.right[state.view] = p.get("lectio");
+  // Nothing else is read, because nothing else is written. An old link that
+  // still carries `dies` or `comma` opens on the defaults rather than half a
+  // remembered session — a URL is honoured whole or not at all.
+  //
   // A chant from the URL, or the standing one. Canticum with nothing loaded is
   // a column of empty panels — the whole view is a function of a chant — so it
   // opens on a piece rather than on the invitation to find one.
@@ -1782,7 +1869,15 @@ function readUrl() {
   if (chant) {
     state.chant = chant;
     try { state.score = tonus.notatio(chant); } catch { state.score = null; }
+    // A chant opens on the hexachord it opens in — the same rule `openChant`
+    // follows, so a restored chant and a clicked one read alike.
+    const opened = state.score?.tabula.find((r) => r.hexachord)?.hexachord;
+    if (opened) state.hexachord = opened;
   }
+  // An EXPLICIT chant in the URL is a link to that piece, so it opens on the
+  // piece. The standing default is not — every visit loads one so Canticum is
+  // never empty — and that must still land on the calendar.
+  if (p.has("cantus") && state.chant) state.view = "canticum";
 }
 
 // ── render ──

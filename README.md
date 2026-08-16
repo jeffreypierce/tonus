@@ -1,78 +1,18 @@
 # tonus
 
 **tonus** is a JavaScript library for medieval music theory and chant
-analysis. It carries the Gregorian repertoire and the theory it was built on:
-it resolves what any day calls for, tunes chant in the ratios it was sung in,
-parses and draws the notation, voices the planets as pitch, and measures each
-chant in comparison.
+analysis. It carries the Gregorian repertoire and the concepts it was built on.
+
+It tunes to scales medieval singers would have used, tells you which chants
+belong to which day and returns analysis and notation, and calculates the
+_music of the spheres_ proposed by Pythagoras, Boethius, and more as real
+intervals.
+
+**[Interactive demo →](https://jeffreypierce.github.io/tonus/)**
 
 Everything is computed locally and deterministically: the same question always
 returns the same answer, from data that ships inside the package, with no network
 calls and no runtime dependencies.
-
-## What it covers
-
-- **Pitch and tuning.** The medieval pitch world: Pythagorean and meantone
-  temperaments, just intonation and custom scales, the Guidonian gamut and hand,
-  hexachords and their mutations, and interval analysis by name.
-- **The eight modes.** Each church mode with its final, dominant, ambitus, and
-  ethos, and the psalm tones that go with them.
-- **The liturgical calendar.** The Tridentine calendar of any year, resolved
-  against Easter (by the Julian or the Gregorian computus), with each feast's
-  rank, grade, and season.
-- **The chant repertoire.** About 2,200 chants across ten books (nine Solesmes
-  editions and the Nocturnale Romanum night office), in
-  [GABC](https://gregorio-project.github.io/) notation: Mass propers, the Kyriale,
-  the Office hours, the psalter, and the Matins nocturns, retrievable by feast,
-  season, mode, or office.
-- **Rhythm and notation.** GABC parsed into phrases, syllables, and tuned notes,
-  shaped by the Solesmes arsis/thesis rhythm, with an analytic fingerprint of a
-  chant's melodic character, and drawn to a square-note or modern staff.
-- **The harmony of the spheres.** An ephemeris of the classical planets, voiced
-  as tuned pitch after Boethius, Nicomachus, Pliny, and Ptolemy.
-- **The census.** Every shipped chant measured against the corpus that holds
-  it: how typical it is, where it is unusual, and its nearest neighbours by
-  melodic shape.
-
-## The ideas behind it
-
-Boethius's _De institutione musica_ carried Greek theory into the Latin
-Middle Ages, and it treats music as a branch of number, beside arithmetic,
-geometry, and astronomy. Its music runs from the audible to the inaudible:
-voices and instruments (_musica instrumentalis_), body and soul (_musica
-humana_), the turning cosmos (_musica mundana_). Chant was composed and
-copied inside that frame: pitch was ratio, the modes a received order, the
-heavens harmonic proportion.
-
-tonus takes those claims literally enough to compute them. It tunes pitch in
-the Pythagorean ratios of the treatises. It reads the calendar as the
-retrieval index it was for a millennium. It follows the Solesmes rhythm of
-arsis and thesis. And it computes _musica mundana_ as sounding pitch. Where
-the sources run out or contradict one another, tonus makes an editorial call
-and records it in the code.
-
-tonus is an instrument for study. It treats this repertoire as musical and
-historical material to be measured, queried, and understood; what it models is
-the sound and its structure.
-
-## Sources
-
-tonus is built on primary and scholarly sources, and it names them wherever it
-makes a choice. The chant and calendar data are the Solesmes editions, by way of
-[GregoBase](https://gregobase.selapa.net/),
-[Divinum Officium](https://divinumofficium.com/), and the community _Nocturnale
-Romanum_. The rhythm follows Mocquereau, Gajard, Suñol, and Daniel Saulnier; the
-modes and cadences follow Rockstro's _Grove_ article, Niedermeyer & d'Ortigue,
-and Apel; the tuning follows Boethius's _De institutione musica_ and Ptolemy's
-_Harmonics_; the notation is engraved in Daniel Spreadbury's
-[Bravura](https://github.com/steinbergmedia/bravura), the reference font for the
-SMuFL standard; the planetary doctrines follow Godwin's sourcebooks of the
-Pythagorean tradition.
-
-Every figure is cited in the code beside what it explains. The complete list is
-[BIBLIOGRAPHY.md](BIBLIOGRAPHY.md).
-
-## Example
 
 ```sh
 npm install tonus
@@ -92,8 +32,9 @@ const [feast] = tonus.festum({ date: new Date("2026-12-25") });
 const [introit] = tonus.proprium({ feast, office: "in" });
 // → "Puer natus est", mode 7, from the Liber Usualis
 
-// Turn the chant into tuned, rhythmicized notes.
+// Turn the chant into tuned, rhythmicized notes, then draw it.
 const score = tonus.notatio(introit, { temperamentum: t });
+const { svg, geometry } = tonus.inscriptio(score, { width: 680 });
 
 // And voice the Christmas sky as pitch, after Boethius.
 const harmony = tonus.harmonia(tonus.caelum({ date: feast.date }));
@@ -101,6 +42,56 @@ const harmony = tonus.harmonia(tonus.caelum({ date: feast.date }));
 
 The objects each call returns (`feast`, `t`) pass straight back into the next as
 filters.
+
+## The API
+
+Fourteen methods, each named for what it returns.
+
+| Method                        | Returns                                                           |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `festum({ date })`            | the feasts of a day, with rank, grade, and season                 |
+| `pascha(year)`                | Easter and the movable feasts reckoned from it                    |
+| `cantus({ … })`               | chants by id, incipit, mode, office, or source                    |
+| `proprium({ feast, office })` | the Mass propers for a feast                                      |
+| `ordinarium({ … })`           | the Kyriale — the Mass ordinary settings                          |
+| `officium({ feast, hora })`   | an Office hour, psalms and antiphons in order                     |
+| `psalmus({ psalm })`          | a psalm, pointed for its tone                                     |
+| `corpus()`                    | what ships: counts by book, genus, and mode                       |
+| `census({ id })`              | one chant measured against the corpus                             |
+| `temperamentum({ … })`        | a tuning — `nota`, `gradus`, `modus`, `intervallum`               |
+| `notatio(chant)`              | GABC parsed to phrases, syllables, and tuned notes                |
+| `inscriptio(score)`           | `{ svg, geometry }` — the score drawn, and where each note landed |
+| `caelum({ date })`            | the classical planets at a moment                                 |
+| `harmonia(caelum)`            | those positions voiced as pitch                                   |
+
+**Tuning** covers Pythagorean and meantone temperaments, just intonation and
+custom scales, the Guidonian gamut and hand, hexachords and their mutations,
+and intervals named as the treatises name them. Each of the eight modes carries
+its final, dominant, ambitus, and ethos, with its psalm tones.
+
+**The calendar** is Tridentine, resolved against Easter by
+the Julian or the Gregorian computus.
+
+**The repertoire** is 2,187 chants across ten books — nine Solesmes editions and
+the _Nocturnale Romanum_ night office — in
+[GABC](https://gregorio-project.github.io/) notation: Mass propers, the Kyriale,
+the Office hours, the psalter, and the Matins nocturns.
+
+**Scores** are shaped by the Solesmes arsis/thesis rhythm, fingerprinted for
+melodic character, and drawn to a square-note or modern staff.
+
+## Concepts
+
+Boethius treated music as a branch of number theory, and divided it into the
+audible and the inaudible: instruments and voices, body and soul, the turning
+cosmos. Chant
+was composed inside that frame: pitch was ratio, the modes a received order,
+the heavens harmonic proportion. tonus takes those claims literally enough to
+compute them, which is why tuning is ratio arithmetic, why the calendar is a
+retrieval index, and why there is an ephemeris in a chant library at all.
+
+Where the sources run out or contradict one another, tonus makes an editorial
+call and records it in the code.
 
 ## Documentation
 
@@ -114,8 +105,7 @@ one page per engine, in dependency order:
 ## Install and run
 
 ESM only. Node ≥ 20; works in the browser through a bundler. No runtime
-dependencies. About 2,200 chants and the 650-entry calendar ship in the
-package.
+dependencies. The chants and the 650-entry calendar ship in the package.
 
 ```sh
 npm test          # builds and runs the suite (node --test)
@@ -123,6 +113,20 @@ npm test          # builds and runs the suite (node --test)
 
 The data files in `src/data/` are generated by a separate extraction pipeline
 (tonus-corpus). Edits happen there, not here.
+
+## Sources
+
+The chant and calendar data are the Solesmes editions, by way of
+[GregoBase](https://gregobase.selapa.net/),
+[Divinum Officium](https://divinumofficium.com/), and the community _Nocturnale
+Romanum_. The notation is engraved in Daniel Spreadbury's
+[Bravura](https://github.com/steinbergmedia/bravura), the reference font for the
+SMuFL standard. Behind the rest stand Mocquereau and Suñol on rhythm, Rockstro
+and Apel on the modes, Boethius and Ptolemy on tuning, and Godwin on the
+Pythagorean planets.
+
+Every figure is cited in the code beside what it explains, and
+[BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) is the complete list.
 
 ## License
 

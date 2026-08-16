@@ -4,6 +4,8 @@ The technical center of tonus: the full public API, the conventions every method
 obeys, and the error contract. The API is **fourteen methods on the `tonus`
 namespace**, no sub-namespaces.
 
+**[Interactive demo →](https://jeffreypierce.github.io/tonus/)**
+
 ```js
 import tonus from "tonus";
 ```
@@ -15,22 +17,22 @@ import tonus from "tonus";
 
 ## The methods
 
-| Method                             | Page                    | Returns                                                 |
-| ---------------------------------- | ----------------------- | ------------------------------------------------------- |
-| `tonus.festum(query?)`             | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
-| `tonus.pascha(year)`               | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
-| `tonus.cantus(query?)`             | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
-| `tonus.corpus(code?)`              | [chant](chant.md)       | `Corpus` — a book's ledger; no arg → the whole shelf     |
-| `tonus.proprium(query?)`           | [chant](chant.md)       | `Chant[]` — Mass propers                                |
-| `tonus.ordinarium(query?)`         | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
-| `tonus.officium(query?)`           | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |
-| `tonus.psalmus(query?)`            | [chant](chant.md)       | `Chant[]` — intoned psalm verses                        |
-| `tonus.temperamentum(input?)`      | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
-| `tonus.notatio(chant, opts?)`      | [score](score.md)       | `Score` — GABC → musical score                          |
-| `tonus.inscriptio(score, opts?)`   | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
-| `tonus.caelum(query?)`             | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
-| `tonus.harmonia(cosmos, opts?)`    | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
-| `tonus.census(query)`              | [census](census.md)     | `Census` — a chant against the corpus                   |
+| Method                           | Page                    | Returns                                                 |
+| -------------------------------- | ----------------------- | ------------------------------------------------------- |
+| `tonus.festum(query?)`           | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
+| `tonus.pascha(year)`             | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
+| `tonus.cantus(query?)`           | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
+| `tonus.corpus(code?)`            | [chant](chant.md)       | `Corpus` — a book's ledger; no arg → the whole shelf    |
+| `tonus.proprium(query?)`         | [chant](chant.md)       | `Chant[]` — Mass propers                                |
+| `tonus.ordinarium(query?)`       | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
+| `tonus.officium(query?)`         | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |
+| `tonus.psalmus(query?)`          | [chant](chant.md)       | `Chant[]` — intoned psalm verses                        |
+| `tonus.temperamentum(input?)`    | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
+| `tonus.notatio(chant, opts?)`    | [score](score.md)       | `Score` — GABC → musical score                          |
+| `tonus.inscriptio(score, opts?)` | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
+| `tonus.caelum(query?)`           | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
+| `tonus.harmonia(cosmos, opts?)`  | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
+| `tonus.census(query)`            | [census](census.md)     | `Census` — a chant against the corpus                   |
 
 ### Query and builder functions
 
