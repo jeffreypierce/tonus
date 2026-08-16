@@ -106,8 +106,11 @@ export type { PsalmTone, Differentia } from "./engines/temper/data/tones.js";
 export { CADENTIAE, CADENTIAE_POPULATION } from "./data/cadentiae.js";
 export type { CadentiaFamilia } from "./data/cadentiae.js";
 
-// planet — the zodiac
-export { SIGNS, SIGNA } from "./engines/planet/planet.js";
+// planet — the zodiac. ZODIACA is the whole table: it carries each sign's own
+// `sign` and `signum` beside its doctrine, so `ZODIACA[body.zodiac]` answers
+// both what the sign is CALLED and what it MEANS. The bare name arrays stay
+// inside the engine that computes a longitude, where they are the lookup.
+export { ZODIACA } from "./engines/harmonia/data/zodiac.js";
 
 // census — the field groups and the block index. CENSUS_GROUPS keys are the
 // valid `by:` values AND the `profile` keys; CENSUS_ORDER holds every censused

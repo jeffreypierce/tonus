@@ -1,6 +1,10 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import tonus, { SIGNS, SIGNA } from "../dist/index.js";
+import tonus, { ZODIACA } from "../dist/index.js";
+
+// The names now ride ON the doctrine table rather than beside it.
+const SIGNS = ZODIACA.map((z) => z.sign);
+const SIGNA = ZODIACA.map((z) => z.signum);
 
 const CHRISTMAS_2026 = new Date(2026, 11, 25, 12, 0, 0);
 
@@ -155,3 +159,64 @@ describe("caelum — the sign is geocentric", () => {
   });
 });
 
+
+describe("zodiaca — what the signs mean", () => {
+  test("the table is the zodiac, index for index", () => {
+    // ZODIACA[body.zodiac] is the join the whole table exists for. If the order
+    // ever drifts, every doctrine is attributed to the wrong sign — silently,
+    // because each entry is well-formed on its own.
+    assert.equal(ZODIACA.length, 12);
+    ZODIACA.forEach((z, i) => assert.equal(z.index, i, `entry ${i} knows itself`));
+    assert.equal(ZODIACA[0].signum, "Aries");
+    assert.equal(ZODIACA[11].signum, "Pisces");
+    // The four the English clipped.
+    const differ = ZODIACA.filter((z) => z.sign !== z.signum)
+      .map((z) => [z.sign, z.signum]);
+    assert.deepEqual(differ, [["Scorpio", "Scorpius"], ["Capricorn", "Capricornus"]]);
+  });
+
+  test("the triplicities and quadruplicities are whole", () => {
+    // Three signs per element, four per quality — not decoration, but the
+    // structure Ptolemy's classification IS.
+    const count = (key) => ZODIACA.reduce(
+      (m, z) => ({ ...m, [z[key]]: (m[z[key]] ?? 0) + 1 }), {});
+    assert.deepEqual(count("element"), { fire: 3, earth: 3, air: 3, water: 3 });
+    assert.deepEqual(count("quality"), { cardinal: 4, fixed: 4, mutable: 4 });
+  });
+
+  test("the Galenic square holds: an element fixes its humor", () => {
+    const HUMOR = {
+      fire: "cholera", earth: "melancholia", air: "sanguis", water: "phlegma",
+    };
+    for (const z of ZODIACA) {
+      assert.equal(z.humor, HUMOR[z.element],
+        `${z.sign} is ${z.element}, so its humor is ${HUMOR[z.element]}`);
+    }
+  });
+
+  test("the luminaries rule one sign each, the five planets two", () => {
+    // The classical scheme: the Sun in Leo and the Moon in Cancer alone, every
+    // other planet given a pair. A table that fails this has lost a sign.
+    const ruled = {};
+    for (const z of ZODIACA) ruled[z.domicile] = (ruled[z.domicile] ?? 0) + 1;
+    assert.deepEqual(ruled, {
+      Sun: 1, Moon: 1, Mercury: 2, Venus: 2, Mars: 2, Jupiter: 2, Saturn: 2,
+    });
+  });
+
+  test("five signs have no exaltation, and that is the tradition's silence", () => {
+    // Seven planets, seven exaltations: the remaining five signs exalt nobody.
+    // An absence worth asserting, so it is never quietly filled in.
+    const exalted = ZODIACA.filter((z) => z.exaltation !== null);
+    assert.equal(exalted.length, 7);
+    assert.equal(new Set(exalted.map((z) => z.exaltation)).size, 7);
+  });
+
+  test("every body in a real sky joins its doctrine", () => {
+    for (const b of tonus.caelum({ date: CHRISTMAS_2026 }).bodies) {
+      const z = ZODIACA[b.zodiac];
+      assert.equal(z.signum, b.signum, `${b.name} joins ${z.signum}`);
+      assert.ok(z.melothesia.latin, `${z.signum} governs a member`);
+    }
+  });
+});

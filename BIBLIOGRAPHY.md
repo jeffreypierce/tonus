@@ -126,6 +126,12 @@ doctrine tables, and the references behind them. Code cites by bracketed key
   shades) and III with the Canobic Inscription (c. 150).** The tetrachord
   genera for the tuning presets; the Greater Perfect System tone assignments
   and aspect–consonance mapping for the doctrina.
+- `ptolemy-tetrabiblos` — **Ptolemy. _Tetrabiblos_ I.17 (the domiciles) and
+  I.19 (the exaltations) (c. 150).** The rulerships and the triplicity and
+  quadruplicity classifications, transmitted whole through the medieval Latin
+  tradition and uncontested across sources; the ground of the zodiac doctrine
+  table. The exaltation degrees it gives (the Sun at 19° Arietis and the rest)
+  are not carried — the sign is the resolution anything here reads.
 - `schulter-harmony` — **Schulter, Margo. Medieval Music & Arts Foundation
   harmony FAQs:** "Pythagorean Tuning and Medieval Polyphony"
   (<https://www.medieval.org/emfaq/harmony/pyth.html>) and "Hexachords,
