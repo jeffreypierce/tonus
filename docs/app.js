@@ -921,21 +921,23 @@ function horaePicker(all) {
   return popover("which hours", () => {
     const hours = OFFICES.filter((o) => o.hora);
     return [
-      el("p", { class: "tracks-text ghost" },
-        "The hours of the Office. Prime and Compline repeat the same psalter "
-        + "every day; Matins and Vespers carry the feast's own music."),
-      ...hours.map((o) => {
-        const n = all.filter((r) => r.office.key === o.key).length;
-        const id = `hora-${o.key}`;
-        return el("label", { class: "hora-row", for: id },
-          el("input", {
-            id, type: "checkbox", disabled: n === 0,
-            checked: state.offices.includes(o.key) ? "" : null,
-            onchange: () => { toggleOffice(o.key); },
-          }),
-          el("span", { class: "hora-name" }, o.name),
-          el("span", { class: "hora-n ghost" }, n ? String(n) : "—"));
-      }),
+      // One short line, because the card's width is set by its longest one and
+      // this is a list of eight words. The reason Prime and Compline are off
+      // is worth knowing but is not worth a paragraph across the page.
+      el("p", { class: "tracks-text ghost hora-note" }, "the hours of the Office"),
+      // THE SAME TOGGLE THE STRIP WEARS, stacked. A checkbox would have been a
+      // second way of saying the one thing this page already says with a
+      // punctum, and the card is the strip continued — not a form.
+      el("div", { class: "segset segset-stack", role: "group", "aria-label": "horae" },
+        ...hours.map((o) => {
+          const n = all.filter((r) => r.office.key === o.key).length;
+          return el("button", {
+            type: "button",
+            disabled: n === 0,
+            "aria-pressed": state.offices.includes(o.key) ? "true" : "false",
+            onclick: () => { toggleOffice(o.key); },
+          }, o.name, el("span", { class: "seg-n" }, n));
+        })),
     ];
   });
 }

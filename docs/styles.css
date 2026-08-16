@@ -837,20 +837,31 @@
   .officia-row { display: flex; align-items: center; gap: var(--sp-2); }
   .officia-row .segset { margin-bottom: 0; }
   .officia-row .key-info { float: none; }
-  /* One hour per line in the card: the box, the name, and what it would add.
-     The count is right-aligned on its own column so eight numbers of different
-     widths still make a column rather than a ragged edge. */
-  .hora-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: var(--sp-2);
-    padding: 2px 0;
-    cursor: pointer;
+  /* THE HOURS, STACKED. A set of parts is still one object when it runs down
+     instead of across, so this is the segset turned on its side: the hairline
+     that separates two segments becomes the rule between two rows, and the
+     punctum each carries says the same thing it says on the strip.
+
+     The count is pushed to the right edge by the name growing, so eight
+     numbers of different widths still line up without a grid. */
+  .segset-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border: none;
+    min-width: 15ch;
   }
-  .hora-row input[disabled] ~ .hora-name { color: var(--ghost); }
-  .hora-name { font-size: var(--caption); }
-  .hora-n { font-family: var(--mono); font-size: var(--micro); }
+  .segset-stack button {
+    justify-content: flex-start;
+    gap: var(--sp-2);
+    border-left: none;
+    border-top: 1px solid var(--rule);
+    padding: var(--sp-1) 0;
+    height: auto;
+  }
+  .segset-stack button:first-child { border-top: none; }
+  /* The count sits at the line's end rather than beside the word. */
+  .segset-stack .seg-n { margin-left: auto; }
   .segset button {
     font-family: var(--mono); font-size: var(--caption);
     letter-spacing: var(--track-meta);
@@ -1321,9 +1332,11 @@
      in a flex row it drops the spur out of the line: the strip centred at 254
      and the spur at 261. */
   .settings .key-info,
-  .track-strip .key-info { float: none; margin: 0; display: flex; align-items: center; }
+  .track-strip .key-info,
+  .officia-row .key-info { float: none; margin: 0; display: flex; align-items: center; }
   .settings .key-card,
-  .track-strip .key-card { left: 0; right: auto; }
+  .track-strip .key-card,
+  .officia-row .key-card { left: 0; right: auto; }
   /* MONO, UPRIGHT. This is the card's opening statement and the longest prose
      on it, and small italic Junicode is the hardest setting to read at length:
      the slant plus the serif's fine strokes at --caption cost more than the
