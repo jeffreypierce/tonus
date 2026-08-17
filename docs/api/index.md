@@ -30,7 +30,7 @@ import tonus from "tonus";
 | `tonus.temperamentum(input?)`    | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
 | `tonus.notatio(chant, opts?)`    | [score](score.md)       | `Score` — GABC → musical score                          |
 | `tonus.inscriptio(score, opts?)` | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
-| `tonus.caelum(query?)`           | [heavens](heavens.md)   | `Cosmos \                                               |
+| `tonus.caelum(query?)`           | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
 | `tonus.harmonia(cosmos, opts?)`  | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
 | `tonus.census(query)`            | [census](census.md)     | `Census` — a chant against the corpus                   |
 
@@ -111,19 +111,10 @@ is for.
 
 **Heavens**
 
-| Export    | What it holds                                                           |
-| --------- | ----------------------------------------------------------------------- |
-| `ZODIACA` | the twelve signs in ecliptic order — each one's names and what it means |
-
-`ZODIACA[body.zodiac]` is the join: a body's `zodiac` index addresses its sign
-directly, so a sky and its doctrine are one lookup apart. Each entry carries
-`sign` and `signum` (the English code and the Latin, `Scorpio`/`Scorpius`)
-beside the element and its Galenic humor, the quality, the ruling and exalted
-planets, and the member of the zodiac man the sign governs.
-
-There are no dates. When the Sun enters a sign is the ephemeris's business and
-moves with precession — a table that carried one would be wrong for most of the
-period this library models, and wrong differently every century.
+| Export  | What it holds                                        |
+| ------- | ---------------------------------------------------- |
+| `SIGNS` | the twelve zodiac signs, English, ecliptic order     |
+| `SIGNA` | the same twelve in Latin (`Scorpius`, `Capricornus`) |
 
 **Census**
 
