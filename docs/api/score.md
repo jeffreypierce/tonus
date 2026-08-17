@@ -446,6 +446,58 @@ files: with `embed` it is a conduit for data the consumer supplies, so the
 consumer carries the face's license terms. Unset roles keep the house serif.
 `moderna` honours the `lyric`, `title`, and `annotation` slots.
 
+#### The recommended face — Junicode
+
+tonus ships no font bytes, so a chant renders in whatever the host page
+provides; the default is a Garamond-ish serif stack, which is legible and is
+not what the books look like. The face the plates are drawn with is
+**[Junicode](https://github.com/psb1558/Junicode-font)** (SIL OFL 1.1) — a
+medievalist's text face, with the ligatures and the variable weight axis the
+dress below depends on.
+
+Add it once to the page, and every chant on that page follows:
+
+```css
+@font-face {
+  font-family: "Junicode";
+  src: url("JunicodeVF-Roman.woff2") format("woff2-variations");
+  font-weight: 300 700; /* the variable axis — the weights below need it */
+}
+```
+
+```js
+// The house dress: the same four roles the plates use, and the weights are
+// ear-tuned rather than round — the lyric sits a notch bolder than the text
+// around it, and a notch larger, because Junicode's x-height reads small
+// against the staff.
+const JUNICODE = {
+  dropcap:    { family: "Junicode", weight: 700 },
+  title:      { family: "Junicode", weight: 620 },
+  annotation: { family: "Junicode", weight: 640 },
+  lyric:      { family: "Junicode", weight: 560, scale: 1.06 },
+};
+
+tonus.inscriptio(score, {
+  width: 900,
+  theme: { fonts: JUNICODE },
+  // A role dresses a thing that is drawn, so three of the four only show once
+  // their feature is on: without these the lyric is the only Junicode on the
+  // page, and the other weights never appear.
+  dropcap: true,
+  annotation: "auto",
+  title: "Puer natus est",
+});
+```
+
+**Reference it; do not embed it unless one file must stand alone.** The subset
+is 147 KB, which is 196 KB once base64'd into an SVG — so an embedded face
+makes a typical chant 3.1× larger (97 KB → 298 KB) and outweighs the music two
+to one. Worse, it repeats: a referenced face is fetched and cached once for a
+whole page, while an embedded one rides inside every file. Twenty chants cost
+about 2 MB referenced and 5.7 MB embedded. `embed` earns its size for a single
+SVG that must travel on its own — an email attachment, an offline archive —
+and costs at every other scale.
+
 **`colors`** reach the SVG as CSS custom properties with the theme's own value
 as the fallback — `fill="var(--tonus-note, #111)"`. A rendered chant therefore
 carries the ink it was drawn with *and* stays themable: a host stylesheet that

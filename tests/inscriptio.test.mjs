@@ -344,7 +344,11 @@ describe("inscriptio — the fonts option (references only, never bundled)", () 
     assert.match(svg, /class="dropcap" [^>]*font-family="Pfeffer Simpelgotisch" font-weight="700"/);
     assert.match(svg, /class="title" [^>]*font-family="Pfeffer Mediaeval"/);
     assert.match(svg, /class="lyric" [^>]*font-family="Pfeffer Mediaeval"/);
-    assert.match(svg, /class="rubric" [^>]*font-family="'Crimson Pro'/); // annotation unset → serif
+    // Annotation is unset, so it keeps the house serif. Asserted on the STACK
+    // rather than its first name: which face leads is a recommendation that
+    // may change (Junicode leads it now), while "an unset role falls back to
+    // the house stack" is the contract this line is here to hold.
+    assert.match(svg, /class="rubric" [^>]*font-family="[^"]*Garamond[^"]*serif"/);
   });
 
   test("the lyric scale factor resizes the lyric text", () => {

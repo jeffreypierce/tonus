@@ -291,8 +291,15 @@ function resolveOpts(o: SvgOpts): Resolved {
   };
 }
 
+// JUNICODE FIRST, then the Garamonds. tonus ships no font bytes, so this stack
+// is a request and not a guarantee — but naming the recommended face at its
+// head costs nothing and means a page that already loads Junicode (the labs,
+// the site, a medievalist's own stylesheet) gets the dress the plates are drawn
+// with without passing a `fonts` option at all. Every name after it is the
+// fallback that was here before, so a page without Junicode renders exactly as
+// it did. See score.md → "The recommended face".
 const HOUSE_SERIF =
-  "'Crimson Pro', 'Crimson Text', 'EB Garamond', Garamond, Georgia, serif";
+  "Junicode, 'Crimson Pro', 'Crimson Text', 'EB Garamond', Garamond, Georgia, serif";
 
 // The books abbreviate the genus in the margin mark (Intr., Grad., Offert.);
 // a genus not in the table prints as-is with its period.
