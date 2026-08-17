@@ -18,9 +18,9 @@ import tonus from "tonus";
 ## The methods
 
 | Method                           | Page                    | Returns                                                 |
-| -------------------------------- | ----------------------- | ------------------------------------------------------- |
+| -------------------------------- | ----------------------- | ------------------------------------------------------- | --- |
 | `tonus.festum(query?)`           | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
-| `tonus.pascha(year)`             | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
+| `tonus.pascha(year)`             | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     | th  |
 | `tonus.cantus(query?)`           | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
 | `tonus.corpus(code?)`            | [chant](chant.md)       | `Corpus` — a book's ledger; no arg → the whole shelf    |
 | `tonus.proprium(query?)`         | [chant](chant.md)       | `Chant[]` — Mass propers                                |
@@ -111,10 +111,19 @@ is for.
 
 **Heavens**
 
-| Export  | What it holds                                        |
-| ------- | ---------------------------------------------------- |
-| `SIGNS` | the twelve zodiac signs, English, ecliptic order     |
-| `SIGNA` | the same twelve in Latin (`Scorpius`, `Capricornus`) |
+| Export    | What it holds                                                             |
+| --------- | ------------------------------------------------------------------------- |
+| `ZODIACA` | the twelve signs in ecliptic order — each one's names and what it means   |
+
+`ZODIACA[body.zodiac]` is the join: a body's `zodiac` index addresses its sign
+directly, so a sky and its doctrine are one lookup apart. Each entry carries
+`sign` and `signum` (the English code and the Latin, `Scorpio`/`Scorpius`)
+beside the element and its Galenic humor, the quality, the ruling and exalted
+planets, and the member of the zodiac man the sign governs.
+
+There are no dates. When the Sun enters a sign is the ephemeris's business and
+moves with precession — a table that carried one would be wrong for most of the
+period this library models, and wrong differently every century.
 
 **Census**
 

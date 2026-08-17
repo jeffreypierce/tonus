@@ -9,6 +9,7 @@ summarized in [Theory & Context](#theory--context).
 - [Heavens](#heavens)
   - [The heavens — `caelum`](#the-heavens--caelum)
   - [Aspects](#aspects)
+  - [The signs — `ZODIACA`](#the-signs--zodiaca)
   - [The voiced heavens — `harmonia`](#the-voiced-heavens--harmonia)
   - [The planetary vowels](#the-planetary-vowels)
   - [The tabula](#the-tabula)
@@ -128,6 +129,55 @@ interface Aspect {
   strength: number; // 0–1
 }
 ```
+
+## The signs — `ZODIACA`
+
+`caelum` answers WHERE a body is. `ZODIACA` answers what that position MEANT:
+the doctrine a medieval reader brought to a planet standing in a sign.
+
+```js
+import tonus, { ZODIACA } from "tonus";
+
+const [sun] = tonus.caelum({ date: new Date("2026-12-25") }).bodies;
+const sign = ZODIACA[sun.zodiac];
+// → { sign: "Capricorn", signum: "Capricornus", symbol: "♑",
+//     element: "earth", elementum: "terra", humor: "melancholia",
+//     quality: "cardinal", domicile: "Saturn", exaltation: "Mars",
+//     melothesia: { latin: "genua", english: "the knees" }, … }
+```
+
+`ZODIACA[body.zodiac]` is the join. The array is in ecliptic order and each
+entry knows its own `index`, so a body's sign is addressed directly rather than
+searched for.
+
+| Field                   | What it holds                                                        |
+| ----------------------- | -------------------------------------------------------------------- |
+| `sign` / `signum`       | the code and the Latin — identical to `Body.sign` / `Body.signum`    |
+| `symbol`                | the astronomical sign, U+2648–U+2653                                 |
+| `element` / `elementum` | one of the four, and its Latin                                       |
+| `quality` / `qualitas`  | cardinal, fixed, mutable — Ptolemy's tropic/solid/bicorporeal        |
+| `nature`                | the two Aristotelian pairs: `calidum`/`frigidum`, `siccum`/`humidum` |
+| `humor` / `temperament` | the Galenic humor the element carries, and its temperament           |
+| `domicile`              | the planet that rules the sign, as a `BodyName`                      |
+| `exaltation`            | the planet exalted in it — `null` for the five that have none        |
+| `melothesia`            | the member of the zodiac man the sign governs                        |
+| `variant`               | present only where the sources disagree                              |
+
+**There are no dates.** When the Sun enters a sign is the ephemeris's business
+and moves with precession; a table carrying "March 21" would be wrong for most
+of the period this library models, and wrong differently every century.
+
+**What is omitted, and why.** The exaltation degrees Ptolemy gives (the Sun at
+19° Arietis and the rest) are not carried — the sign is the resolution anything
+here reads. Nor are the lunar nodes' exaltations, because the nodes are not
+tonus bodies. Five signs exalt nobody: that silence is the tradition's, not a
+gap in the table.
+
+The `melothesia` is the *homo signorum* of medieval calendars — Aries at the
+head down to Pisces at the feet. It was practice, not decoration: phlebotomy
+was timed against it, and while the Moon stood in a sign its member was not to
+be touched. Sourced from Ptolemy's *Tetrabiblos* I.17 and I.19
+[biblio: ptolemy-tetrabiblos].
 
 ## The voiced heavens — `harmonia`
 
