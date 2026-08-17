@@ -18,9 +18,9 @@ import tonus from "tonus";
 ## The methods
 
 | Method                           | Page                    | Returns                                                 |
-| -------------------------------- | ----------------------- | ------------------------------------------------------- | --- |
+| -------------------------------- | ----------------------- | ------------------------------------------------------- |
 | `tonus.festum(query?)`           | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
-| `tonus.pascha(year)`             | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     | th  |
+| `tonus.pascha(year)`             | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
 | `tonus.cantus(query?)`           | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
 | `tonus.corpus(code?)`            | [chant](chant.md)       | `Corpus` — a book's ledger; no arg → the whole shelf    |
 | `tonus.proprium(query?)`         | [chant](chant.md)       | `Chant[]` — Mass propers                                |
@@ -30,7 +30,7 @@ import tonus from "tonus";
 | `tonus.temperamentum(input?)`    | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
 | `tonus.notatio(chant, opts?)`    | [score](score.md)       | `Score` — GABC → musical score                          |
 | `tonus.inscriptio(score, opts?)` | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
-| `tonus.caelum(query?)`           | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
+| `tonus.caelum(query?)`           | [heavens](heavens.md)   | `Cosmos \                                               |
 | `tonus.harmonia(cosmos, opts?)`  | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
 | `tonus.census(query)`            | [census](census.md)     | `Census` — a chant against the corpus                   |
 
@@ -111,9 +111,9 @@ is for.
 
 **Heavens**
 
-| Export    | What it holds                                                             |
-| --------- | ------------------------------------------------------------------------- |
-| `ZODIACA` | the twelve signs in ecliptic order — each one's names and what it means   |
+| Export    | What it holds                                                           |
+| --------- | ----------------------------------------------------------------------- |
+| `ZODIACA` | the twelve signs in ecliptic order — each one's names and what it means |
 
 `ZODIACA[body.zodiac]` is the join: a body's `zodiac` index addresses its sign
 directly, so a sky and its doctrine are one lookup apart. Each entry carries
