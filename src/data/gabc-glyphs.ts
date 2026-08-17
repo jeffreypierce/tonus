@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 // Codepoints and pitch positions mirror the gabc-smufl project's
 // data/gabc-map.json (SMuFL 1.5 / Bravura 1.392). Outlines for these codepoints
-// are baked into smufl-glyphs.json by scripts/extract-smufl-glyphs.py.
+// are baked into smufl-glyphs.json by scripts/extract-smufl-glyphs.mjs.
 //
 // pitch_positions: the raw GABC pitch letter a–m IS the staff slot, in
 // half-staff-spaces from the bottom line, independent of clef. (a=-2 … c=0

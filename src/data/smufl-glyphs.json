@@ -1,10 +1,10 @@
 {
  "meta": {
   "source": "Bravura.otf (Steinberg Media, SIL OFL 1.1)",
-  "smufl": "plainchant PUA (U+E8F0\u2013U+E9D9)",
+  "smufl": "plainchant PUA (U+E8F0–U+E9D9)",
   "upm": 1000,
   "coordinates": "font units, y-up (baseline at 0); emitter applies scale(s, -s)",
-  "regenerate": "python3 scripts/extract-smufl-glyphs.py",
+  "regenerate": "npm run glyphs",
   "count": 138
  },
  "glyphs": {
@@ -1268,7 +1268,7 @@
    "advance": 215,
    "bbox": [
     0,
-    -173.08333333333334,
+    -173.08333333333331,
     215,
     435
    ]

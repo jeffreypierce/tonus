@@ -55,10 +55,12 @@
     "serve": "npm run site && node scripts/serve.mjs",
     "diagrams": "npm run site && node scripts/diagram-lab.mjs",
     "lab": "npm run build && node scripts/render-lab.mjs",
-    "stress": "npm run build && node scripts/render-stress.mjs"
+    "stress": "npm run build && node scripts/render-stress.mjs",
+    "glyphs": "node scripts/extract-smufl-glyphs.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "fontkit": "^2.0.0",
     "typescript": "^5.6.3"
   },
   "engines": {
