@@ -1,6 +1,5 @@
 node_modules/
 dist/
-docs/dist/
 *.js.map
 *.tsbuildinfo
 .DS_Store

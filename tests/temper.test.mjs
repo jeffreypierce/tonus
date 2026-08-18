@@ -413,12 +413,24 @@ describe("gradus", () => {
     assert.deepEqual(at("F3"), { finger: "pinky", region: "base" }); // F Fefaut
     assert.deepEqual(at("G4"), { finger: "index", region: "mid" });  // g (the finalis)
     assert.deepEqual(at("E5"), { finger: "middle", region: "super" }); // ee, floats above
+    // The inward turn, which had no anchor and so drifted out of step with the
+    // figure: out to bb on the ring, UP that finger to cc, then across to the
+    // middle for dd. cc on the middle and dd on the ring is the bug.
+    assert.deepEqual(at("A4"), { finger: "middle", region: "mid" });  // aa
+    assert.deepEqual(at("C5"), { finger: "ring",   region: "top" });  // cc
+    assert.deepEqual(at("D5"), { finger: "middle", region: "top" });  // dd
     // wrist/palm no longer exist anywhere in the gamut.
     for (const spn of ["G2","A2","B2","C3","D3","E3","F3","G3","A3","C4","D4","E4","F4","G4"]) {
       const f = t.gradus(spn).hand?.finger;
       assert.ok(f !== "wrist" && f !== "palm", `${spn} still on ${f}`);
     }
   });
+
+  // The figure that DRAWS these joints lives in the site (orreliquum-next),
+  // and the test that holds the two tables together lives there with it —
+  // tests/site-hand.test.mjs, read against the vendored engine the browser
+  // actually loads. What stays here is the gamut's own account of the spiral,
+  // above: this table is the fact, and the figure is what must agree with it.
 
   test("chromatic pitch returns null degree", () => {
     const step = t.gradus("F#4"); // not in mode 1 diatonic scale

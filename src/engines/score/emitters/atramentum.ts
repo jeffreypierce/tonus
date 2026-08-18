@@ -24,9 +24,8 @@
 // draw.
 //
 // ─── HOW THIS MEETS THE PAGE ───────────────────────────────────────────────
-// The documentation site keeps a system of its own, stated at the top of
-// ../../../../docs/styles.css. The two are separate and they AGREE BY SHARING
-// NUMBERS,
+// The site (orreliquum-next) keeps a system of its own, stated at the top of
+// its stylesheet. The two are separate and they AGREE BY SHARING NUMBERS,
 // not by one importing the other:
 //
 //   STEP        mirrors the six CSS type steps  (--micro … --display-size)
@@ -99,14 +98,14 @@ export const STROKE = {
 
 /** The type scale, and it is THE PAGE'S: a modular scale on 15px stepped by
  *  the Pythagorean minor third, 32:27 — the same six `--micro` … `--display-size`
- *  that ../../../../docs/styles.css declares. So a wheel's label and a table's
+ *  that the site's stylesheet declares. So a wheel's label and a table's
  *  label at the same step are the same size.
  *
  *  It was 9/11/13.5/17/21/26, derived from what the diagrams happened to use.
  *  That was honest when the page had no scale of its own; once the page took
  *  one, the two agreed on `title` alone and every drawn label sat 1.5–2px under
- *  the prose around it. ../../../../scripts/vendor-ink.mjs asserts the pairing
- *  now, so this cannot drift again silently.
+ *  the prose around it. The site's vendor step asserts the pairing now, so this
+ *  cannot drift again silently.
  *
  *  Nothing inside tonus reads STEP — the site's diagrams are its only consumer
  *  — so moving it changes no emitted SVG for a package consumer. */
@@ -137,7 +136,7 @@ export const HOUSE_MONO = "'IBM Plex Mono', ui-monospace, Menlo, monospace";
 
 /** The fourth stack, and NOT a fourth face: neither text face carries the
  *  planetary or musical signs (see fonts/README.md), so a figure that draws one
- *  falls back to the system. Mirrors `--symbol` in ../../../../docs/styles.css
+ *  falls back to the system. Mirrors `--symbol` in the site's stylesheet
  *  — the same sharing-by-numbers seam as HOUSE_SERIF and HOUSE_MONO, and it was duplicated
  *  inline in mutatio.js as a local SIGN_FACE before this existed. */
 export const HOUSE_SYMBOL = "'Apple Symbols', 'Segoe UI Symbol', "
@@ -155,9 +154,9 @@ export const HOUSE_SYMBOL = "'Apple Symbols', 'Segoe UI Symbol', "
  *  of digits must line up; that is the setting that does work.
  *
  *  Nothing in the library's own emitters uses this yet. It lives here because
- *  this file is the ONE definition of the ink system and the site vendors it
- *  (../../../../scripts/vendor-ink.mjs) — a second copy in the site would be
- *  the drift this module exists to prevent. */
+ *  this file is the ONE definition of the ink system and the site vendors it —
+ *  a second copy in the site would be the drift this module exists to
+ *  prevent. */
 export const FIGURES = {
   family: HOUSE_SERIF,
   features: "",

@@ -18,7 +18,13 @@ export interface GuidonianEntry {
 // begin at the thumb tip, come down the thumb, cross the finger BASES
 // index→little, climb the little finger, return across the finger TIPS
 // little→index, descend the index, then spiral inward; ee (76) floats above the
-// middle fingertip (region "super"). The two b/♮ pairs (58/59, 70/71) share a
+// middle fingertip (region "super"). THE INWARD TURN IS ONE TURN: after g on
+// the index the line runs in to aa, out to bb/♮♮ on the ring, then UP that
+// finger to cc before crossing to the middle for dd and ee. Reading it with
+// cc on the middle and dd on the ring makes the line cross three times where
+// the hand turns once. The figure that DRAWS the turn lives in the site
+// (orreliquum-next), and its LOCUS table must agree with the fingers named
+// here; the test that holds the two together lives there beside it. The two b/♮ pairs (58/59, 70/71) share a
 // locus by design — one joint, two readings (fa in molle, mi in durum), the
 // tradition, not a duplication to fix. They are one distinction, named for the
 // two shapes of the letter: b rotundum (the round b) against b quadratum (the
@@ -47,7 +53,7 @@ export const GUIDONIAN_DATA = new Map<number, GuidonianEntry>([
   [69, { hand: { finger: "middle", region: "mid"   }, name: ["aa", "Alamire"   ], variants: [{ hexachord: "durum",    solmization: "RE"  }, { hexachord: "naturale", solmization: "LA"  }, { hexachord: "molle", solmization: "MI" }] }],
   [70, { hand: { finger: "ring",   region: "mid"   }, name: ["bb", "Befa"      ], variants: [{ hexachord: "molle",    solmization: "FA"  }] }],
   [71, { hand: { finger: "ring",   region: "mid"   }, name: ["♮♮", "Bemi"      ], variants: [{ hexachord: "durum",    solmization: "MI"  }] }],
-  [72, { hand: { finger: "middle", region: "top"   }, name: ["cc", "Cesolfa"   ], variants: [{ hexachord: "durum",    solmization: "FA"  }, { hexachord: "naturale", solmization: "UT"  }, { hexachord: "molle", solmization: "SOL" }] }],
-  [74, { hand: { finger: "ring",   region: "top"   }, name: ["dd", "Delasol"   ], variants: [{ hexachord: "durum",    solmization: "SOL" }, { hexachord: "naturale", solmization: "RE"  }, { hexachord: "molle", solmization: "LA" }] }],
+  [72, { hand: { finger: "ring",   region: "top"   }, name: ["cc", "Cesolfa"   ], variants: [{ hexachord: "durum",    solmization: "FA"  }, { hexachord: "naturale", solmization: "UT"  }, { hexachord: "molle", solmization: "SOL" }] }],
+  [74, { hand: { finger: "middle", region: "top"   }, name: ["dd", "Delasol"   ], variants: [{ hexachord: "durum",    solmization: "SOL" }, { hexachord: "naturale", solmization: "RE"  }, { hexachord: "molle", solmization: "LA" }] }],
   [76, { hand: { finger: "middle", region: "super" }, name: ["ee", "Ela"       ], variants: [{ hexachord: "durum",    solmization: "LA"  }, { hexachord: "naturale", solmization: "MI"  }] }],
 ]);
