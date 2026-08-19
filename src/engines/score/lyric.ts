@@ -6,7 +6,7 @@
 // TeX (<v>\greheightstar</v> → the raised star), above-lines text (<alt>),
 // and layout hints (<clear>, <nlba>, {} vowel-centering braces). The parser
 // decodes it ONCE, here, so `lyric` is clean display text everywhere — the
-// emitters, prosody, accent detection, and width estimation all read honest
+// emitters, metrics, accent detection, and width estimation all read honest
 // characters — and the styling survives as `runs` for the emitters to draw.
 //
 // The decoder is STATEFUL across syllables: a style opened in one syllable

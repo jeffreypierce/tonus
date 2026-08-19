@@ -6,7 +6,7 @@ import { buildIR } from "./ir.js";
 import { buildRatios } from "../temper/scale.js";
 import { computeMeta } from "./meta.js";
 import { computeImprint, type Imprint } from "../imprint.js";
-import { computeProsody, type Prosody } from "./prosody.js";
+import { computeMetrics, type Metrics } from "./metrics.js";
 import { detectCadences, type Cadence } from "./cadence.js";
 import { detectModulations, type Modulation } from "./modulation.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
@@ -50,7 +50,7 @@ export interface Score {
   phrases: IRPhrase[];
   errors: ParseError[];
   tabula: ChantTabulaRow[];
-  prosody: Prosody;
+  metrics: Metrics;
   /** Mode-specific cadence at each phrase-ending divisio. */
   cadences: Cadence[];
   /** Passages where the tonal centre leans away from the home mode. */
@@ -83,7 +83,7 @@ function resolveAccentus(input?: AccentusInput): AccentusOpts {
 /**
  * Score builder (`tonus.notatio`). Parses a chant's GABC into a musical
  * IR — phrases, syllables, notes with tuned pitches, arsis/thesis
- * rhythm, prosody, imprint, and a tabula. Options: a temperamentum
+ * rhythm, metrics, imprint, and a tabula. Options: a temperamentum
  * (tuning), a pondus (articulation weight, style name or opts), and an
  * accentus (phrasing, style name or opts).
  * @throws Error on invalid Chant input or unparseable GABC.
@@ -158,7 +158,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     phrases: ir.phrases,
     errors: ir.errors,
     tabula,
-    prosody: computeProsody(ir.phrases),
+    metrics: computeMetrics(ir.phrases),
     cadences,
     modulations,
     imprint: computeImprint(ir.phrases, scale, {

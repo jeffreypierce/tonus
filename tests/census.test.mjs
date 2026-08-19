@@ -91,7 +91,7 @@ describe("census — the blocks address the right chants", () => {
       const modal = census({ id, k: 0 }).profile.modal.values;
       const finalPc = (((rows[rows.length - 1].midi % 12) + 12) % 12);
       assert.equal(modal[FINAL_PC], finalPc, `${id}: block final pc ≠ its own melody's`);
-      assert.equal(modal[AMBITUS], score.prosody.ambitus ?? 0, `${id}: block ambitus ≠ parsed`);
+      assert.equal(modal[AMBITUS], score.metrics.ambitus ?? 0, `${id}: block ambitus ≠ parsed`);
       checked++;
     }
     assert.ok(checked >= 15, `only ${checked} chants checked — the sample is too thin`);

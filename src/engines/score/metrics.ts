@@ -1,8 +1,14 @@
 // ---------------------------------------------------------------------------
-// engines/score/prosody — chant-specific measurements
+// engines/score/metrics — chant-specific measurements
 // ---------------------------------------------------------------------------
 // Counts, ranges, melisma density, cadence weight, and compound-beat profile.
 // Shape-only: no modal or harmonic analysis — that lives in the shared Imprint.
+//
+// It was called `prosody`, which named two of these fields and misnamed the
+// rest: prosody is the metric of SPEECH, and ambitus, tessitura, maxLeap and
+// the arch are melody, which a prosodic reading has nothing to say about. The
+// header already said "measurements"; the field now says it too. English, like
+// every other machine-facing name on a Score.
 import type { Phrase } from "./types.js";
 
 export interface NoteRange {
@@ -55,7 +61,7 @@ export interface Arcus {
   archIndex: number;
 }
 
-export interface Prosody {
+export interface Metrics {
   noteCount: number;
   syllableCount: number;
   phraseCount: number;
@@ -77,7 +83,7 @@ export interface Prosody {
   cadenceDistribution: CadenceDistribution;
 }
 
-export function computeProsody(phrases: Phrase[]): Prosody {
+export function computeMetrics(phrases: Phrase[]): Metrics {
   let phraseCount = 0;
   let noteCount = 0;
   let syllableCount = 0;

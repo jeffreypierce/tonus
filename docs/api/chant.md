@@ -601,7 +601,7 @@ phrase punctuation ([score.md](score.md#the-tabula)).
 
 Because the encoding is textual, lyrics and neumes stay aligned syllable
 by syllable, which is what lets `tonus.notatio` reconstruct syllables,
-neumes, and prosody without images.
+neumes, and metrics without images.
 
 ### The Mass: proper and ordinary
 

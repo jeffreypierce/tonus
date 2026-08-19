@@ -35,8 +35,8 @@ import type {
   Imprint, Attractor, VowelAttractor, ModalAffinity,
 } from "./engines/imprint.js";
 import type {
-  Prosody, RhythmicProfile, NoteRange, CadenceDistribution,
-} from "./engines/score/prosody.js";
+  Metrics, RhythmicProfile, NoteRange, CadenceDistribution,
+} from "./engines/score/metrics.js";
 import type {
   Harmony, HarmoniaOpts, VoicedBody, VoicedAspect,
   Frame, Author,
@@ -136,7 +136,7 @@ export type {
   VoicedPitch,
   Cosmos, CosmosQuery, Body, BodyName, Aspect,
   Imprint, Attractor, VowelAttractor, ModalAffinity,
-  Prosody, RhythmicProfile, NoteRange, CadenceDistribution,
+  Metrics, RhythmicProfile, NoteRange, CadenceDistribution,
   Harmony, HarmoniaOpts, VoicedBody, VoicedAspect,
   Frame, Author, HarmonyTabulaRow, PlanetVowel,
 };

@@ -250,7 +250,7 @@ describe("score.tabula property", () => {
 
   test("tabula is an array with one row per note", () => {
     assert.ok(Array.isArray(score.tabula));
-    assert.equal(score.tabula.length, score.prosody.noteCount);
+    assert.equal(score.tabula.length, score.metrics.noteCount);
   });
 
   test("tabula rows carry pitch + rhythm + lyric data", () => {

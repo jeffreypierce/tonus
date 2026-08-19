@@ -8,17 +8,17 @@ function chant(gabc, mode = "1") {
   return tonus.cantus({ gabc, mode, incipit: "Test" })[0];
 }
 
-describe("score.prosody", () => {
+describe("score.metrics", () => {
   test("counts phrases, notes, syllables", () => {
     const score = tonus.notatio(chant(KYRIE_GABC));
-    assert.ok(score.prosody.phraseCount > 0);
-    assert.ok(score.prosody.noteCount > 0);
-    assert.ok(score.prosody.syllableCount > 0);
+    assert.ok(score.metrics.phraseCount > 0);
+    assert.ok(score.metrics.noteCount > 0);
+    assert.ok(score.metrics.syllableCount > 0);
   });
 
   test("includes noteRange and ambitus", () => {
     const score = tonus.notatio(chant(KYRIE_GABC));
-    const { noteRange, ambitus } = score.prosody;
+    const { noteRange, ambitus } = score.metrics;
     assert.ok(noteRange);
     assert.ok(noteRange.min < noteRange.max);
     assert.equal(ambitus, noteRange.span);
@@ -26,7 +26,7 @@ describe("score.prosody", () => {
 
   test("rhythmicProfile arsic + thetic equals noteCount", () => {
     const score = tonus.notatio(chant(KYRIE_GABC));
-    const { rhythmicProfile, noteCount } = score.prosody;
+    const { rhythmicProfile, noteCount } = score.metrics;
     assert.equal(rhythmicProfile.arsic + rhythmicProfile.thetic, noteCount);
     assert.ok(rhythmicProfile.maxGroupSize >= 1);
     assert.ok(rhythmicProfile.avgGroupSize > 0);
@@ -35,9 +35,9 @@ describe("score.prosody", () => {
 
   test("cadence distribution and weight reflect divisios", () => {
     const score = tonus.notatio(chant(KYRIE_GABC));
-    assert.equal(score.prosody.cadenceDistribution.comma, 1);
-    assert.equal(score.prosody.cadenceDistribution.doubleBar, 1);
-    assert.ok(score.prosody.cadenceWeight > 0);
+    assert.equal(score.metrics.cadenceDistribution.comma, 1);
+    assert.equal(score.metrics.cadenceDistribution.doubleBar, 1);
+    assert.ok(score.metrics.cadenceWeight > 0);
   });
 });
 

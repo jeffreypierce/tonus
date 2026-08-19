@@ -12,8 +12,8 @@ function makeChant(gabc, mode = "1") {
 // A small ascending-then-descending line with a melismatic final syllable.
 const ARCH = "(c4) A(f)scen(g)dit(a) et(g) des(f)cen(dc)dit.(cd..) (::)";
 
-describe("prosody — melodic-interval statistics", () => {
-  const p = buildScore(makeChant(ARCH)).prosody;
+describe("metrics — melodic-interval statistics", () => {
+  const p = buildScore(makeChant(ARCH)).metrics;
 
   test("motus classifies each adjacent motion as step / skip / leap", () => {
     const { step, skip, leap } = p.intervals.motus;
@@ -37,14 +37,14 @@ describe("prosody — melodic-interval statistics", () => {
 
   test("intervals never cross a divisio (a breath is not a leap)", () => {
     // Two phrases whose junction would be a huge interval if counted across it.
-    const twoPhrase = buildScore(makeChant("(c4) a(c) (::) b(m) (::)")).prosody;
+    const twoPhrase = buildScore(makeChant("(c4) a(c) (::) b(m) (::)")).metrics;
     // c→m across the divisio is ~19 semitones; it must not appear as a leap.
     assert.ok(twoPhrase.intervals.maxLeap < 12, "no interval spans the divisio");
   });
 });
 
-describe("prosody — arch, tessitura, cadential melisma", () => {
-  const p = buildScore(makeChant(ARCH)).prosody;
+describe("metrics — arch, tessitura, cadential melisma", () => {
+  const p = buildScore(makeChant(ARCH)).metrics;
 
   test("arcus reports initial, peak, final, and a signed arch index", () => {
     assert.ok(p.arcus);
@@ -66,14 +66,14 @@ describe("prosody — arch, tessitura, cadential melisma", () => {
   });
 
   test("empty score yields null arch / tessitura, not a throw", () => {
-    const empty = buildScore(makeChant("")).prosody;
+    const empty = buildScore(makeChant("")).metrics;
     assert.equal(empty.arcus, null);
     assert.equal(empty.tessitura, null);
     assert.equal(empty.intervals.maxLeap, 0);
   });
 });
 
-describe("prosody — phrase and syllable conveniences", () => {
+describe("metrics — phrase and syllable conveniences", () => {
   const score = buildScore(makeChant(ARCH));
 
   test("each syllable reports its melisma (note count)", () => {

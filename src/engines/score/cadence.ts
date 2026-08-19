@@ -6,7 +6,7 @@
 // divisio, and classify the cadence as data. Detection only — no interpretation.
 //
 // "Cadence" here is the melodic close of a phrase (Solesmes incise), distinct
-// from prosody's cadenceWeight/cadenceDistribution, which merely count the
+// from the metrics' cadenceWeight/cadenceDistribution, which merely count the
 // divisio bars. Cadence figures are mode-specific, so this consumes the
 // per-mode ModeData.cadences catalog.
 //

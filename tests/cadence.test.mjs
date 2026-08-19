@@ -165,10 +165,10 @@ describe("detectCadences", () => {
     assert.equal(score.tabula[0].cadenceRef, null);
   });
 
-  test("does not perturb the existing prosody cadence counting", () => {
+  test("does not perturb the existing metrics cadence counting", () => {
     const score = buildScore(makeChant(MODE1_FINAL, "1"));
-    // Prosody still counts divisio bars independently of the new detector.
-    assert.equal(score.prosody.cadenceDistribution.doubleBar, 1);
-    assert.ok(score.prosody.cadenceWeight >= 1.5);
+    // Metrics still counts divisio bars independently of the new detector.
+    assert.equal(score.metrics.cadenceDistribution.doubleBar, 1);
+    assert.ok(score.metrics.cadenceWeight >= 1.5);
   });
 });

@@ -173,7 +173,7 @@ the list resolve their pitches through the ones before.
 - [The tabula](score.md#the-tabula)
 - [Rendering — `inscriptio`](score.md#rendering) · [theme](score.md#theme--faces-and-ink) · [The analysis tracks](score.md#the-analysis-tracks)
 - [The imprint](score.md#the-imprint)
-- [Prosody](score.md#prosody)
+- [Metrics](score.md#metrics)
 - [Cadences](score.md#cadences) · [One spine, two annotations](score.md#one-spine-two-annotations)
 - [Modulations](score.md#modulations)
 - [Theory & Context](score.md#theory--context) · [Sources](score.md#sources)

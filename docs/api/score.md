@@ -2,7 +2,7 @@
 
 `tonus.notatio` renders a chant into a score: the analyzed, tuned, and
 rhythm-classified reading of one GABC melody. The score is data: `phrases`,
-`tabula`, `prosody`, `cadences`, `modulations`, and `imprint`. The
+`tabula`, `metrics`, `cadences`, `modulations`, and `imprint`. The
 standalone `tonus.inscriptio(score)` draws it to SVG.
 
 - [Score](#score)
@@ -15,7 +15,7 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
     - [theme — faces and ink](#theme--faces-and-ink)
     - [The analysis tracks](#the-analysis-tracks)
   - [The imprint](#the-imprint)
-  - [Prosody](#prosody)
+  - [Metrics](#metrics)
   - [Cadences](#cadences)
     - [One spine, two annotations](#one-spine-two-annotations)
     - [`finality` — how often this family closes](#finality--how-often-this-family-closes)
@@ -54,7 +54,7 @@ notation, signs of punctuation rather than measure:
 | `::`    | divisio finalis (double bar) |
 
 This hierarchy is read three ways in the engine, each weighting the bars for its
-own end: an analytic cadence weight (prosody), a phrasing strength (which zeroes
+own end: an analytic cadence weight (metrics), a phrasing strength (which zeroes
 the virgula), and a rest duration (the divisio's pause length). Each weighting
 is documented at its table in the code.
 
@@ -64,7 +64,7 @@ interface Score {
   phrases: Phrase[];
   errors: ParseError[];
   tabula: ChantTabulaRow[];
-  prosody: Prosody;
+  metrics: Metrics;
   cadences: Cadence[];
   modulations: Modulation[];
   imprint: Imprint;
@@ -665,16 +665,16 @@ interface ModalAffinity {
 }
 ```
 
-## Prosody
+## Metrics
 
-`score.prosody` measures the chant's shape — counts, range, melisma,
+`score.metrics` measures the chant's shape — counts, range, melisma,
 melodic motion, contour, tessitura, rhythm, cadence. It is chant-specific;
-`Harmony` has no prosody. For _Puer natus est_: ambitus 10 semitones, melisma
+`Harmony` has no metrics. For _Puer natus est_: ambitus 10 semitones, melisma
 ratio 2.04 notes per syllable, tessitura ~5 semitones above the final, a near-
 perfect melodic arch, mostly stepwise motion (leap rate ~5%).
 
 ```ts
-interface Prosody {
+interface Metrics {
   noteCount: number;
   syllableCount: number;
   phraseCount: number;
@@ -730,7 +730,7 @@ interface CadenceDistribution {
 
 ## Cadences
 
-`score.cadences` names the melodic close of each phrase — where prosody
+`score.cadences` names the melodic close of each phrase — where metrics
 only counts the divisio bars, this identifies the figure. One `Cadence` per
 phrase-ending divisio: its resolution `target`, the melodic `approach`, and the
 `divisio` that tells medial from final (the double bar `::` is the final

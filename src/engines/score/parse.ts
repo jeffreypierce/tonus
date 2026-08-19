@@ -5,12 +5,12 @@
 // lyric syllables, each followed by a parenthesized note group: `Pu(g)er(gh)`.
 // The parser is built around that pairing because it is what makes the encoding
 // tractable — text and neumes stay aligned syllable by syllable, so syllables,
-// neumes, and prosody reconstruct without images. Pitch letters (a–m) have no
+// neumes, and metrics reconstruct without images. Pitch letters (a–m) have no
 // absolute value; they are read against the clef declaration (c1–c4, f1–f4),
 // which fixes where `do`/`fa` sit on the staff — hence CLEF_OFFSETS below. The
 // note group is where every performance mark lives (episema, quilisma,
-// liquescent, dot) and the syllable boundary is where lyric-driven prosody is
-// recovered; the parser walks group by group and reads each into IR events.
+// liquescent, dot) and the syllable boundary is where lyric-driven accent
+// is recovered; the parser walks group by group and reads each into IR events.
 //
 // The rhythm/ictus model was designed from the Liber Usualis "Rules for
 // Interpretation" [biblio: liber-usualis]; the rules below are its.
