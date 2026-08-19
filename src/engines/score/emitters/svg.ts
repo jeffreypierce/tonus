@@ -758,7 +758,9 @@ export function toSvg(
       );
       return 0;
     }
-    const p = placeGlyph(mark.glyph!, atX, yFor(row.staffPosition, L, r), r,
+    // The sign sits on the line of the pitch it alters, which is not this
+    // row's own line where the sign was written before the figure it governs.
+    const p = placeGlyph(mark.glyph!, atX, yFor(mark.degree ?? row.staffPosition, L, r), r,
       "accidental", "", r.noteScale * 0.62);
     if (!p) return 0;
     body.push(p.svg);

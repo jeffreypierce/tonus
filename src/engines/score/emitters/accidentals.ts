@@ -35,6 +35,15 @@ export interface AccidentalMark {
   glyph?: string;
   /** Text label (kind "cents") — e.g. "−3.9". */
   label?: string;
+  /** The DEGREE THE SIGN ALTERS (kind "glyph", standard mode), as the two
+   *  emitters address a line: `degree` is quadrata's staffPosition, `degreeSpn`
+   *  is moderna's written pitch. A flat is printed on the line of the pitch it
+   *  inflects — a B-flat sign sits on the B line — while its horizontal place
+   *  is before the figure where it takes effect. Those are two facts, and the
+   *  carrying row supplies only the second. Both absent when the sign alters
+   *  nothing found ahead. */
+  degree?: number;
+  degreeSpn?: string;
 }
 
 // The Pythagorean chain's ET-cents deviation per pitch class, derived from the
@@ -53,6 +62,13 @@ const GLYPHS_BY_SET: Record<AccidentalGlyphSet, Record<number, string>> = {
   modern: { [-1]: "E260", 0: "E261", 1: "E262" },
   medieval: { [-1]: "E9E0", 0: "E9E1", 1: "E9E3" },
 };
+
+// How far ahead a written sign is read for the degree it alters. A flat is
+// written before the figure it governs, not always before the note: on
+// gregobase:1180 one sign precedes its B-flat by four notes within the
+// syllable. Bounded so a sign whose alteration never arrives does not reach
+// across the chant and borrow an unrelated note's line.
+const SCOPE = 12;
 
 // HEJI comma glyphs (Extended Helmholtz–Ellis, U+E2C0–). The syntonic-comma
 // arrows: one comma down / up. Higher-order commas are out of scope for 0.2.
@@ -77,20 +93,57 @@ export function computeAccidentals(
   glyphSet: AccidentalGlyphSet = "modern",
 ): (AccidentalMark | null)[] {
   if (mode === "standard") {
-    // A glyph before any note whose pitch is explicitly inflected — but not on
-    // an immediately-repeated same pitch (restate only after another pitch).
-    let prevPc: number | null = null;
-    return rows.map((row) => {
-      const repeat = row.pc === prevPc;
-      prevPc = row.pc;
-      if (row.accidentalSource !== "explicit" || repeat) return null;
-      // Draw the SIGN the source wrote, not this note's own alteration. In
-      // `fe(jx)cit(ih)` the flat is printed before the I while it governs J —
-      // where a sign is printed and which degree it alters are different facts.
-      // Reading `row.accidental` here drew nothing in that case, because the I
-      // is unaltered.
+    // WHERE a sign is printed and WHICH DEGREE it alters are different facts,
+    // and the row carrying the sign supplies only the first. In
+    // `fe(jx)cit(ih)` the flat is written before the I while it governs the J:
+    // horizontally it precedes the figure (so the singer reads it in time),
+    // vertically it belongs to the pitch it inflects. Solesmes prints a flat
+    // on the LINE OF THE PITCH IT ALTERS — a B-flat sign sits on the B line
+    // [biblio: liber-usualis, Rules for Interpretation; the plate for
+    // gregobase:1180 at p. 1637 shows both of that chant's flats on the B
+    // line, over an A and a G]. Reading `row.accidental` here drew nothing at
+    // all in the `fe(jx)` case (the I is unaltered); reading the carrying
+    // row's staffPosition drew the flat on whatever line happened to precede
+    // — corpus-wide, 80% of signs sat on a degree they do not alter.
+    const alteredOf = (from: number): ChantTabulaRow | undefined => {
+      // The sign governs the next note in its scope that CARRIES THE STATE it
+      // sets. A flat looks for the note it lowers; a natural looks for the note
+      // it restores, which is unaltered by definition (`accidental === 0`) and
+      // is marked "state" because the sign, not the clef, put it there.
+      // Reading only `accidental !== 0` found the flats and missed every
+      // natural's B.
+      const sign = rows[from]!.accidentalSign ?? rows[from]!.accidental;
+      for (let j = from; j < rows.length && j < from + SCOPE; j++) {
+        const r = rows[j]!;
+        if (sign === 0 ? r.accidentalSource === "state" : r.accidental === sign) return r;
+      }
+      return undefined;
+    };
+    // Restate a sign once another pitch has intervened since that DEGREE was
+    // last marked. Comparing the carrying row against the row before it was
+    // wrong twice over: it measured the wrong pitch (the sign's neighbour,
+    // not the degree it alters), and "the immediately-preceding row" is a
+    // weaker rule than the books', which restate after an intervening pitch.
+    // On gregobase:1180 the third flat was dropped because the note before it
+    // was another A — though it opens a new phrase and governs a new B-flat.
+    const lastMarked = new Map<number, number>();
+    return rows.map((row, i) => {
+      if (row.accidentalSource !== "explicit") return null;
       const sign = row.accidentalSign ?? row.accidental;
-      return { kind: "glyph", glyph: GLYPHS_BY_SET[glyphSet][sign] };
+      const altered = alteredOf(i);
+      const degree = altered?.staffPosition;
+      const key = degree ?? row.staffPosition;
+      const since = lastMarked.get(key);
+      lastMarked.set(key, i);
+      // Suppress only a restatement with nothing between it and the last mark
+      // of the same degree.
+      if (since !== undefined && !rows.slice(since + 1, i).some((r) => r.staffPosition !== key)) {
+        return null;
+      }
+      return {
+        kind: "glyph", glyph: GLYPHS_BY_SET[glyphSet][sign],
+        degree, degreeSpn: altered?.spn,
+      };
     });
   }
 

@@ -71,6 +71,79 @@ describe("accidentals — standard channel", () => {
   });
 });
 
+// Solesmes prints a flat on the LINE OF THE PITCH IT ALTERS: a B-flat sign
+// sits on the B line, whatever note it happens to be written before. Its
+// horizontal place is a separate fact — before the figure it governs, so the
+// singer reads it in time. The emitters took BOTH from the row carrying the
+// sign, so a flat written before a G was drawn on the G line.
+//
+// gregobase:1180 ("Felices sensus", Communio, mode I) is the fixture because
+// its signs and its altered notes differ: three flats are written before a G
+// and two A's, and every one of them governs a B-flat. The Liber Usualis
+// plate (p. 1637) shows all of them on the B line.
+describe("a flat sits on the line of the pitch it alters", () => {
+  const subject = () => tonus.cantus({ id: "gregobase:1180" })[0];
+
+  // The third sign was dropped: repeat-suppression compared the SIGN-CARRYING
+  // row against the row before it, and both were A. It governs a different
+  // B-flat, in a later phrase, with an intervening pitch — the books restate.
+  for (const notation of ["quadrata", "moderna"]) {
+    test(`${notation}: every explicit sign in the source is drawn`, () => {
+      const score = tonus.notatio(subject());
+      const signs = score.tabula.filter((r) => r.accidentalSource === "explicit").length;
+      const { svg } = tonus.inscriptio(score, { width: 900, notation });
+      const glyphs = (svg.match(/class="accidental"/g) ?? []).length;
+      assert.equal(signs, 3, "the fixture carries three explicit signs");
+      assert.equal(glyphs, signs, `${notation}: ${signs} signs written, ${glyphs} drawn`);
+    });
+
+    test(`${notation}: each flat is drawn on its B-flat's line`, () => {
+      const score = tonus.notatio(subject());
+      const { svg, geometry } = tonus.inscriptio(score, { width: 900, notation });
+      // Every line a B-flat is written on, as the emitter drew it.
+      const flatLines = new Set(
+        geometry.filter((_, i) => score.tabula[i].accidental !== 0).map((g) => g.y),
+      );
+      const drawn = [...svg.matchAll(
+        /<g class="accidental" transform="translate\(([-\d.]+) ([-\d.]+)\)/g,
+      )].map((mm) => Number(mm[2]));
+      assert.equal(drawn.length, 3, `${notation}: three glyphs`);
+      for (const y of drawn) {
+        assert.ok(flatLines.has(y),
+          `${notation}: a sign at y=${y} sits on no B-flat's line (${[...flatLines].join(", ")})`);
+      }
+    });
+  }
+
+  // The sign is read in time where the source wrote it: before the note it
+  // governs, never after. Moving it vertically must not move it horizontally.
+  test("the sign stays horizontally before the note it governs", () => {
+    const score = tonus.notatio(subject());
+    const { svg, geometry } = tonus.inscriptio(score, { width: 900 });
+    const drawnX = [...svg.matchAll(
+      /<g class="accidental" transform="translate\(([-\d.]+) ([-\d.]+)\)/g,
+    )].map((mm) => Number(mm[1]));
+    const alteredX = geometry
+      .filter((_, i) => score.tabula[i].accidental !== 0)
+      .map((g) => g.x);
+    for (const x of drawnX) {
+      assert.ok(alteredX.some((ax) => ax > x),
+        `a sign at x=${x} precedes no altered note`);
+    }
+  });
+
+  // The site joins geometry[i] to tabula[i] by index for playback sync, and an
+  // accidental is not a note: drawing one must not add or shift an entry.
+  test("the geometry contract is unchanged by where a sign is drawn", () => {
+    const score = tonus.notatio(subject());
+    for (const notation of ["quadrata", "moderna"]) {
+      const { geometry } = tonus.inscriptio(score, { width: 900, notation });
+      assert.equal(geometry.length, score.tabula.length,
+        `${notation}: one geometry entry per tabula row`);
+    }
+  });
+});
+
 describe("accidentals — rendered through inscriptio (moderna carries the channel)", () => {
   // HEJI and cents are modern analytical overlays; they render on the modern
   // (moderna) staff, not on historical square notation.

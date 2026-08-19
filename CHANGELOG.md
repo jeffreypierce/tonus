@@ -44,6 +44,31 @@ where the ink is.
   refuses.** It gated modulations at confidence 0.4 where the documented floor,
   the cadence path, and the ink doctrine all say nothing below 0.45 draws.
 
+- **A flat was drawn on the line of the note it was written before, not the
+  line of the note it alters.** Solesmes prints an accidental on the line of
+  the pitch it inflects, so a B-flat sign sits on the B line; where the sign is
+  printed and which degree it alters are separate facts, and both emitters took
+  both from the row carrying the sign. On *Felices sensus* (gregobase:1180) two
+  flats governing B-flats were drawn on the G and A lines, where the Liber
+  Usualis plate (p. 1637) has them on the B line. Corpus-wide, 3,505 of 4,358
+  explicit signs sat on a degree they do not alter. The mark now carries the
+  altered degree, and horizontal placement is untouched: the sign still reads
+  before the figure it governs.
+
+- **A written sign could be dropped.** Repeat-suppression compared the
+  sign-carrying row's pitch class against the row immediately before it, which
+  measured the wrong pitch (the sign's neighbour, not the degree it alters) and
+  applied a weaker rule than the books', which restate once another pitch has
+  intervened. *Felices sensus* wrote three flats and printed two: the third
+  followed another A, though it opens a new phrase and governs a new B-flat.
+  Suppression is now per altered degree: 4,323 of the corpus's 4,358 written
+  signs print, and the 35 still held back are true immediate restatements.
+
+- **A natural's line was found by the wrong test.** The lookahead for the
+  governed degree read `accidental !== 0`, which a natural never satisfies: it
+  restores a pitch rather than altering one. Naturals are now read against the
+  state they set, so a B-natural sign sits on the B line.
+
 ### Changed
 
 - **The docs no longer offer a downstream track contract.** `score.md` framed

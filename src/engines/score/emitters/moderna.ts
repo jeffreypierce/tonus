@@ -494,7 +494,12 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       const onLine = steps % 2 === 0;
       if (r.quilisma) body.push(quilismaMark(mx, my, gm));
       const mk = markByRow.get(r);
-      if (mk?.kind === "glyph") body.push(accidentalMark(mx, my, mk.glyph!, gm));
+      if (mk?.kind === "glyph") {
+        // Vertically the sign belongs to the pitch it alters, not to the note
+        // it was written before; horizontally it stays at this note's column.
+        const ay = mk.degreeSpn ? writtenY(mk.degreeSpn, systemY, gm).y : my;
+        body.push(accidentalMark(mx, ay, mk.glyph!, gm));
+      }
       else if (mk?.kind === "cents") {
         // Cents labels float in a band above the staff (not glued to the
         // head) — an analytic overlay, not an engraving mark.
