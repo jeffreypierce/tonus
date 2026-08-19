@@ -9,7 +9,7 @@ there are session fuel, not standing instructions; don't migrate them here.
 
 **`docs/` is the API reference, and nothing else.** It holds `docs/api/*.md`,
 which `package.json`'s `files` ships to npm. **The playground moved out** — the
-site, its diagrams and the hand figure live in **orreliquum-next** (`site/`),
+site, its diagrams and the hand figure live in **orreliquum** (`site/`),
 which consumes tonus as a dependency and vendors the engine subgraph it needs.
 Do not resurrect a playground here: a diagram that draws what tonus computes
 belongs to the site, and the site is its own repo now.
@@ -78,7 +78,7 @@ is English. Option keys are addresses (may be Latin); their values are codes.
   corpus piece per genus, full dress. Runs headlessly in
   `tests/render-stress.test.mjs`.
 - No `serve`/`site`/`diagrams` script: the site left. Run it from
-  orreliquum-next (`npm run serve` there), which vendors this library first.
+  orreliquum (`npm run serve` there), which vendors this library first.
 - Green tests **and** clean `tsc` at every commit. (Current floor: 668 tests.)
 
 ## Fonts (license discipline)

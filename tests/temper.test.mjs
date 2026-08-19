@@ -426,7 +426,7 @@ describe("gradus", () => {
     }
   });
 
-  // The figure that DRAWS these joints lives in the site (orreliquum-next),
+  // The figure that DRAWS these joints lives in the site (orreliquum),
   // and the test that holds the two tables together lives there with it —
   // tests/site-hand.test.mjs, read against the vendored engine the browser
   // actually loads. What stays here is the gamut's own account of the spiral,

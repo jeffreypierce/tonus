@@ -23,8 +23,10 @@ export interface GuidonianEntry {
 // finger to cc before crossing to the middle for dd and ee. Reading it with
 // cc on the middle and dd on the ring makes the line cross three times where
 // the hand turns once. The figure that DRAWS the turn lives in the site
-// (orreliquum-next), and its LOCUS table must agree with the fingers named
-// here; the test that holds the two together lives there beside it. The two b/♮ pairs (58/59, 70/71) share a
+// (orreliquum), and its LOCUS table must agree with the fingers named here;
+// the test that holds the two together lives there beside it.
+//
+// The two b/♮ pairs (58/59, 70/71) share a
 // locus by design — one joint, two readings (fa in molle, mi in durum), the
 // tradition, not a duplication to fix. They are one distinction, named for the
 // two shapes of the letter: b rotundum (the round b) against b quadratum (the

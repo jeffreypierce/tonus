@@ -24,7 +24,7 @@
 // draw.
 //
 // ─── HOW THIS MEETS THE PAGE ───────────────────────────────────────────────
-// The site (orreliquum-next) keeps a system of its own, stated at the top of
+// The site (orreliquum) keeps a system of its own, stated at the top of
 // its stylesheet. The two are separate and they AGREE BY SHARING NUMBERS,
 // not by one importing the other:
 //
