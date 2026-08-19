@@ -62,3 +62,39 @@ export function classifyNeume(notes: Note[]): Neume {
   }
   return { type, intervals, hasQuilisma, hasLiquescent, hasStrophicus };
 }
+
+/**
+ * The syllable's figures, each classified in its own right.
+ *
+ * GABC marks figure boundaries (`!`, `/`, `//`) and the parser records them as
+ * `context.neumeGroup`, but classification read the whole syllable, so a
+ * three-figure melisma was named once and the name was almost always
+ * "compound" — 18,718 of the 27,643 compounds measured before this, 67.7% of
+ * them. A syllable is not a neume; it carries neumes.
+ *
+ * THE SALICUS IS CLASSIFIED AT SYLLABLE SCOPE, DELIBERATELY, and the exception
+ * is the point rather than an oversight. Its rule reads the oriscus on the
+ * next-to-last note of an ascent (see `classifyNeume` above), and 41 of the
+ * corpus's 255 salici are written across a figure boundary — the oriscus in
+ * one figure, the summit in the next. Splitting first severed them and the
+ * count fell to 251, which would have narrowed Cardine's definition by
+ * refactoring rather than by ruling. The ascent is the neume; where the
+ * scribe broke the figure is a separate fact.
+ */
+export function classifyFigures(notes: Note[]): Neume[] {
+  if (notes.length === 0) return [];
+
+  const whole = classifyNeume(notes);
+  if (whole.type === "salicus") return [whole];
+
+  const figures: Note[][] = [];
+  let group = -1;
+  for (const note of notes) {
+    if (note.context.neumeGroup !== group) {
+      figures.push([]);
+      group = note.context.neumeGroup;
+    }
+    figures[figures.length - 1]!.push(note);
+  }
+  return figures.map(classifyNeume);
+}

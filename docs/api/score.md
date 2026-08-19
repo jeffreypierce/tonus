@@ -83,10 +83,19 @@ interface Syllable {
   lyric: string;
   runs?: LyricRun[];        // styled spans, present only when GABC markup styled this syllable
   notes: Note[];
-  neume: Neume;
+  neume: Neume;             // the syllable read as ONE figure
+  neumes: Neume[];          // its figures, as GABC groups them, each classified
   melisma: number;          // notes on this syllable (1 = syllabic, >1 melismatic)
 }
 ```
+
+A syllable carries neumes rather than being one. GABC marks the figures with
+`!`, `/` and `//`, and `neumes` names each; `neume` reads the whole syllable as
+a single figure, which for a melisma of several is usually `compound`. A
+syllable of one figure reports the same shape both ways. The salicus is the
+exception and reports at syllable scope: its rule reads the oriscus on the
+next-to-last note of an ascent, and the scribe may break the figure between
+that oriscus and the summit.
 
 GABC's lyric markup is decoded at parse, so `lyric` is always clean display
 text: the `<sp>` shortcuts arrive as real characters (`<sp>V/</sp>` → ℣,

@@ -285,7 +285,13 @@ export interface Syllable {
   /** Styled lyric spans; present only when GABC markup styled this syllable. */
   runs?: LyricRun[];
   notes: Note[];
+  /** The syllable read as ONE figure. A syllable carrying several neumes
+   *  classifies as "compound" here; `neumes` names them individually. */
   neume: Neume;
+  /** The syllable's figures, as GABC groups them (`!`, `/`, `//`), each
+   *  classified in its own right. One entry for a syllable of one figure —
+   *  then `neumes[0]` and `neume` agree. */
+  neumes: Neume[];
   /** Notes sung on this syllable — its melisma. 1 = syllabic, >1 = melismatic. */
   melisma: number;
 }

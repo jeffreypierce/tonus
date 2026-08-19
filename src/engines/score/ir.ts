@@ -39,7 +39,7 @@ import type { Scale } from "../temper/scale.js";
 import { toPitch } from "../temper/pitch.js";
 import { toStep } from "../temper/step.js";
 import { selectVowel } from "../chant/syllabify.js";
-import { classifyNeume } from "./neume.js";
+import { classifyNeume, classifyFigures } from "./neume.js";
 
 function rawToNote(raw: ParsedNote, scale: Scale): Note {
   const midi = raw.step;
@@ -107,14 +107,15 @@ const SALICUS_PROLONGATION = 1.3;
 
 function makeSyllable(lyric: string, notes: Note[]): Syllable {
   const neume = classifyNeume(notes);
+  const neumes = classifyFigures(notes);
   if (neume.type === "salicus" && notes.length >= 2) {
     const summit = notes[notes.length - 1]!;
     summit.performance.duration *= SALICUS_PROLONGATION;
   }
   const runs = notes[0]?.context.runs;
   return runs
-    ? { lyric, runs, notes, neume, melisma: notes.length }
-    : { lyric, notes, neume, melisma: notes.length };
+    ? { lyric, runs, notes, neume, neumes, melisma: notes.length }
+    : { lyric, notes, neume, neumes, melisma: notes.length };
 }
 
 // ── Arsis/thesis classification ── (the model is in the module header above)
@@ -283,8 +284,27 @@ function applyCompoundBeats(phrases: Phrase[]): void {
   for (const phrase of phrases) {
     const annotated: AnnotatedNote[] = [];
     for (const syl of phrase.syllables) {
+      // A note is named by ITS OWN figure. Annotating every note of a melisma
+      // with the whole syllable's name told the two conventional overrides
+      // below (salicus → arsic, doubly-dotted clivis → thetic) that a
+      // three-figure syllable was one "compound" neume, so a clivis inside it
+      // was invisible to the rule that names it. The salicus is classified at
+      // syllable scope and so survives the split — see `classifyFigures`.
+      const byGroup = new Map<number, string>();
+      let figure = -1;
+      let cursor = -1;
       for (const note of syl.notes) {
-        annotated.push({ note, neumeType: syl.neume.type });
+        if (note.context.neumeGroup !== figure) {
+          figure = note.context.neumeGroup;
+          cursor++;
+        }
+        byGroup.set(note.context.neumeGroup, syl.neumes[cursor]?.type ?? syl.neume.type);
+      }
+      for (const note of syl.notes) {
+        annotated.push({
+          note,
+          neumeType: byGroup.get(note.context.neumeGroup) ?? syl.neume.type,
+        });
       }
     }
     phrase.beats = classifyCompoundBeats(annotated);

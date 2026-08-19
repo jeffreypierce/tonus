@@ -9,6 +9,33 @@ where the ink is.
 
 ### Added
 
+- **`Syllable.neumes` — the syllable's figures, each classified.** A syllable
+  is not a neume; it carries neumes. GABC marks the figures with `!`, `/` and
+  `//`, and the parser has always recorded them, but classification read the
+  whole syllable, so a melisma of three ordinary figures was named once and
+  that name was `compound`: 18,718 of the 27,643 compounds, 67.7% of them.
+  `neume` still reads the syllable as one figure and is unchanged; `neumes`
+  names them individually. Compound falls from 17.8% to **8.3%**, and the
+  torculus count more than doubles (4,521 → 10,607).
+
+  The salicus reports at syllable scope, and the exception is the point. Its
+  rule reads the oriscus on the next-to-last note of an ascent, and 41 of the
+  corpus's 255 salici are written across a figure boundary with the oriscus in
+  one figure and the summit in the next. Splitting first severed them and the
+  count fell to 251, narrowing Cardine's definition by refactoring rather than
+  by ruling. Held at 255, with 35 more recovered: figures that are a salicus in
+  their own right inside a syllable that is not one.
+
+### Changed
+
+- **The rhythm model names a note by its own figure.** `applyCompoundBeats`
+  annotated every note of a melisma with the whole syllable's name, so the two
+  conventional overrides (salicus → arsic, doubly-dotted clivis → thetic) could
+  not see a clivis inside a syllable that read `compound`. Measured over the
+  corpus: 5 phrases of 26,803 change `rhythmicType`, and 75 notes of 400,948
+  change arsis/thesis (0.019%). Small because most newly-visible clivises carry
+  no double mora, so the thetic rule still does not fire on them.
+
 - **Six neume names for figures that restate a pitch.** `classifyShape` had no
   case for the unison beyond a two-note group, so every repercussive figure
   fell to `compound`: 12,675 of them, 6.6% of the corpus. `NeumeShape` gains
