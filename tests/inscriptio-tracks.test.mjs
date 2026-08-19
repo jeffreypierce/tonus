@@ -271,6 +271,60 @@ describe("the geometry contract addresses the tabula's own note", () => {
   }
 });
 
+// `x` is the ANCHOR, not the middle: quadrata's square glyphs start there and
+// run right, so a mark spanning notes drawn anchor-to-anchor sits left of what
+// it names. The ink edges are the figure's real extent — the numbers the
+// in-house tracks have always consumed, now reported. The site measured the
+// drawn glyph out of the DOM for want of them.
+describe("the geometry reports the figure's ink, not just its anchor", () => {
+  for (const notation of ["quadrata", "moderna"]) {
+    test(`${notation}: ink edges straddle the anchor and enclose it`, () => {
+      for (const subject of [puer(), tonus.cantus({ office: "an", limit: 1 })[0]]) {
+        const score = tonus.notatio(subject);
+        const { geometry } = inscriptio(score, { width: 900, notation });
+        for (let i = 0; i < geometry.length; i++) {
+          const g = geometry[i];
+          assert.ok(Number.isFinite(g.inkLeft) && Number.isFinite(g.inkRight),
+            `${subject.id} note ${i}: both edges reported`);
+          assert.ok(g.inkLeft < g.inkRight,
+            `${subject.id} note ${i}: ink runs left to right`);
+          assert.ok(g.inkLeft <= g.x,
+            `${subject.id} note ${i}: the anchor is not left of the ink`);
+        }
+      }
+    });
+  }
+
+  // Moderna centres its heads on the anchor, so the edges are derived rather
+  // than measured and the straddle is even.
+  test("moderna's derived edges sit evenly about the anchor", () => {
+    const { geometry } = inscriptio(tonus.notatio(puer()), { width: 900, notation: "moderna" });
+    for (const g of geometry) {
+      assert.ok(Math.abs((g.x - g.inkLeft) - (g.inkRight - g.x)) < 0.02,
+        `note at ${g.x}: even straddle`);
+    }
+  });
+
+  // The point of reporting them: the public numbers ARE the private ones the
+  // tracks consume, not a parallel derivation that could drift. A track band
+  // reserves room, so the systems below it sit lower — `y`/`systemY` move by
+  // design, and the page grows by the sum of the bands. The note's horizontal
+  // placement and its ink are what a track reads, and those do not move.
+  for (const notation of ["quadrata", "moderna"]) {
+    test(`${notation}: a track reserves room without moving the ink it reads`, () => {
+      const score = tonus.notatio(puer());
+      const bare = inscriptio(score, { width: 900, notation }).geometry;
+      const tracked = inscriptio(score, { width: 900, notation, tracks: ["prosodia"] }).geometry;
+      assert.equal(tracked.length, bare.length, `${notation}: one entry per note either way`);
+      for (let i = 0; i < bare.length; i++) {
+        for (const key of ["x", "inkLeft", "inkRight", "system", "noteIndex", "neumeIndex"]) {
+          assert.equal(tracked[i][key], bare[i][key], `${notation} note ${i}: ${key}`);
+        }
+      }
+    });
+  }
+});
+
 // A cadence figure that wraps is re-inked in every system it crosses — the
 // claim spans them — but it CLOSES once. Drawn per-system, the closing dot
 // landed on the earlier fragment's last sample (a landing mid-figure) and the

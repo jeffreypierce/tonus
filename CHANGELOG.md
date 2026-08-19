@@ -4,6 +4,62 @@ All notable changes to tonus. Newest first.
 
 ## Unreleased
 
+The tracks stop promising a contract they never kept, and the geometry says
+where the ink is.
+
+### Added
+
+- **`NoteGeometry` reports the figure's ink extent**, as `inkLeft` and
+  `inkRight` beside the anchor. `x` is the note's LEFT edge, not its middle:
+  quadrata's square glyphs start there and run right, so a mark drawn
+  anchor-to-anchor sits left of the notes it names and stops short of the last
+  one. These are the numbers the in-house tracks have always consumed, now
+  reported rather than measured privately. A caller placing a playhead or an
+  overlay no longer has to read the drawn glyph back out of the SVG to find
+  the middle of a notehead.
+
+  Quadrata measures them from the glyph's bounding box as it places; moderna
+  centres its heads on the anchor, so its edges are derived and straddle it
+  evenly.
+
+### Fixed
+
+- **`NoteGeometry.noteIndex` addressed the wrong note.** Both emitters filled
+  it from the row's `neumeIndex` (position within the neume FIGURE) where
+  `ChantTabulaRow.noteIndex` and `Cadence.notes[*][2]` mean position within the
+  SYLLABLE. The documented tuple join therefore misaddressed every syllable
+  carrying a second figure: 17 of 159 notes on *Puer natus est*. `noteIndex`
+  now carries the syllable position the tabula means, and `neumeIndex` is
+  reported alongside it, so the three address one note. A consumer joining by
+  array index (the safe join) is unaffected.
+
+- **A wrapped cadence closed twice.** A cadence figure crossing a system break
+  is re-inked in both, because the claim spans them, but it CLOSES once. Drawn
+  per system, the terminal node landed on the earlier fragment's last sample (a
+  landing mid-figure) and the label repeated: at width 680 that subject drew 7
+  nodes under quadrata and 8 under moderna for 6 confident cadences. The node
+  and label now draw only in the system holding the figure's last note.
+
+- **The tonarium's mode line admitted claims the rest of the renderer
+  refuses.** It gated modulations at confidence 0.4 where the documented floor,
+  the cadence path, and the ink doctrine all say nothing below 0.45 draws.
+
+### Changed
+
+- **The docs no longer offer a downstream track contract.** `score.md` framed
+  the geometry as the interface analysis tracks build on, and said a custom
+  track downstream does the same. It could not: the tracks consume a private
+  surface (the tabula row, the lyric baseline, per-system right edges, the
+  scale factor, and band room only an emitter can reserve). The geometry is
+  documented for what it is and is used for: locating a note on the drawn page.
+  The three tracks stay in the library, and the tracks section is rewritten as
+  reference rather than prose.
+
+- **Corrected counts in the tracks documentation.** The cadence catalogue holds
+  110 families, not 122; the corpus carries about 26,800 cadences, not 20,500.
+  The `rara` share is stated both ways it can be read: about 43% of the
+  corpus's cadences, but about a third of the labels a page prints.
+
 ## 0.6.0 — 2026-08-16
 
 The zodiac learns what it means, and the hand stops sitting on its own floor.

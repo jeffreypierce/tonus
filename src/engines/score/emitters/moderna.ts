@@ -684,6 +684,11 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     system: pl.system,
     x: Number(pl.x.toFixed(2)),
     y: Number(pl.y.toFixed(2)),
+    // Derived, not measured: moderna centres its noteheads on the anchor, so
+    // the ink straddles it evenly. The track mapping above derives them the
+    // same way, from the same number.
+    inkLeft: Number((pl.x - gm.NH_W / 2).toFixed(2)),
+    inkRight: Number((pl.x + gm.NH_W / 2).toFixed(2)),
     systemY: Number(pl.systemY.toFixed(2)),
   }));
 
