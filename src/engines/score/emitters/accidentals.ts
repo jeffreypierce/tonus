@@ -112,6 +112,10 @@ export function computeAccidentals(
       // is marked "state" because the sign, not the clef, put it there.
       // Reading only `accidental !== 0` found the flats and missed every
       // natural's B.
+      //
+      // The scan opens AT the carrying row, which is the common case: a sign
+      // written directly before the note it alters is carried by that note.
+      // The two facts coincide there; where they part, the scan walks on.
       const sign = rows[from]!.accidentalSign ?? rows[from]!.accidental;
       for (let j = from; j < rows.length && j < from + SCOPE; j++) {
         const r = rows[j]!;
@@ -126,24 +130,38 @@ export function computeAccidentals(
     // weaker rule than the books', which restate after an intervening pitch.
     // On gregobase:1180 the third flat was dropped because the note before it
     // was another A — though it opens a new phrase and governs a new B-flat.
+    //
+    // SUPPRESSION IS KEYED ON THE ALTERED DEGREE, AND ON NOTHING ELSE. A sign
+    // whose alteration is never found has no degree to key on, and it is not
+    // keyed on the line it happens to be written on: that line is a different
+    // coordinate, and the two sharing one map made a found degree and an
+    // unfound sign's carrying line collide. Such a sign always prints —
+    // rare, and an unexplained sign on the page is the safer failure.
     const lastMarked = new Map<number, number>();
     return rows.map((row, i) => {
       if (row.accidentalSource !== "explicit") return null;
       const sign = row.accidentalSign ?? row.accidental;
       const altered = alteredOf(i);
       const degree = altered?.staffPosition;
-      const key = degree ?? row.staffPosition;
-      const since = lastMarked.get(key);
-      lastMarked.set(key, i);
-      // Suppress only a restatement with nothing between it and the last mark
-      // of the same degree.
-      if (since !== undefined && !rows.slice(since + 1, i).some((r) => r.staffPosition !== key)) {
-        return null;
-      }
-      return {
-        kind: "glyph", glyph: GLYPHS_BY_SET[glyphSet][sign],
+      const mark = {
+        kind: "glyph" as const, glyph: GLYPHS_BY_SET[glyphSet][sign],
         degree, degreeSpn: altered?.spn,
       };
+      if (degree === undefined) return mark;
+      const since = lastMarked.get(degree);
+      lastMarked.set(degree, i);
+      // What the books restate after is INTERVENING MUSIC, and the sign that
+      // says nothing new is the one with none: the two signs adjacent, the
+      // second merely re-marking a degree the first has just marked. Asking
+      // instead whether an intervening row LEFT the degree suppressed a real
+      // restatement whenever the music between the signs stayed on the altered
+      // degree — the commonest case there is, since that degree is what the
+      // signs are both about.
+      if (since !== undefined &&
+        rows.slice(since + 1, i).every((r) => r.accidentalSource === "explicit")) {
+        return null;
+      }
+      return mark;
     });
   }
 
