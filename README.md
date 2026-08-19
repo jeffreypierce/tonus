@@ -8,7 +8,7 @@ belong to which day and returns analysis and notation, and calculates the
 _music of the spheres_ proposed by Pythagoras, Boethius, and more as real
 intervals.
 
-**[Interactive demo →](https://jeffreypierce.github.io/tonus/)**
+**[Orreliquum — the library at work →](https://jeffreypierce.github.io/orreliquum/)**
 
 Everything is computed locally and deterministically: the same question always
 returns the same answer, from data that ships inside the package, with no network

@@ -4,7 +4,7 @@ The technical center of tonus: the full public API, the conventions every method
 obeys, and the error contract. The API is **fourteen methods on the `tonus`
 namespace**, no sub-namespaces.
 
-**[Interactive demo →](https://jeffreypierce.github.io/tonus/)**
+**[Orreliquum — the library at work →](https://jeffreypierce.github.io/orreliquum/)**
 
 ```js
 import tonus from "tonus";
