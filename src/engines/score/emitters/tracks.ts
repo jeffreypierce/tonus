@@ -742,7 +742,7 @@ const SHARE_FLOOR = 10;
  */
 function cadenceLabel(fam: CadentiaFamilia | undefined, mode?: number): string {
   // NO CATALOGUE FAMILY IS ITSELF A MEASUREMENT. CADENTIAE holds the families
-  // above a floor of fifty corpus occurrences — 122 of them — so a close that
+  // above a floor of fifty corpus occurrences — 110 of them — so a close that
   // fails to join is not unknown, it is RARER than anything the catalogue
   // records. A third of inked cadences land here, and leaving them bare made
   // the rarest closes look like the ones the analysis had nothing to say
@@ -801,7 +801,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
   const governing = (p: number): { mode: number; conf: number; kind: string } | null => {
     let best: Modulation | null = null;
     for (const m of data.modulations) {
-      if (m.confidence >= 0.4 && m.startPhrase <= p && p <= m.endPhrase &&
+      if (m.confidence >= CONF_FLOOR && m.startPhrase <= p && p <= m.endPhrase &&
         (!best || m.confidence > best.confidence)) best = m;
     }
     if (best) return { mode: best.toMode, conf: best.confidence, kind: best.kind };
@@ -809,6 +809,19 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
   };
 
   const systems = [...new Set(notes.map((n) => n.system))].sort((a, b) => a - b);
+
+  // WHERE EACH CADENCE LANDS. `notes` is in tabula order, so the last note
+  // carrying a cadenceRef is that cadence's closing note, and the system it
+  // sits in is the only one that may draw the closing dot and the label. A
+  // figure that wraps is re-inked in every system it crosses — the claim spans
+  // them — but it CLOSES once. Drawn per-system, a wrapped cadence printed its
+  // landing dot on the earlier fragment's last sample (a landing mid-figure)
+  // and repeated its label, so one close read as two.
+  const landingSystem = new Map<number, number>();
+  for (const n of notes) {
+    if (n.row.cadenceRef != null) landingSystem.set(n.row.cadenceRef, n.system);
+  }
+
   for (const s of systems) {
     const sysNotes = notes.filter((n) => n.system === s);
     const sysY = sysNotes[0]!.systemY;
@@ -907,17 +920,22 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       const samples = (samplesByPhrase.get(fig[0]!.row.phraseIndex) ?? [])
         .filter(([px]) => px >= x0 && px <= x1 + 2 * k);
       // Where the cadence LANDS — the closing dot, which the label centres on.
+      // Only the landing system draws it; an earlier fragment re-inks the
+      // ribbon and stops there.
+      const lands = landingSystem.get(ci) === s;
       let dot: number | undefined;
       if (samples.length >= 2) {
         const d = ribbonPath(samples, vat, vmax, 1);
         g.push(`<path d="${d}" fill="${INK}" fill-opacity="${(STRATUM.cadence * op).toFixed(2)}"/>`);
-        const [nx, ny] = samples[samples.length - 1]!;
-        dot = nx;
-        const r = sc(1.8 * k);
-        g.push(closes
-          ? `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="${INK}" opacity="${op.toFixed(2)}"/>`
-          : `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="none" stroke="${INK}" ` +
-            `stroke-width="${sc(0.9 * k)}" opacity="${op.toFixed(2)}"/>`);
+        if (lands) {
+          const [nx, ny] = samples[samples.length - 1]!;
+          dot = nx;
+          const r = sc(1.8 * k);
+          g.push(closes
+            ? `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="${INK}" opacity="${op.toFixed(2)}"/>`
+            : `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="none" stroke="${INK}" ` +
+              `stroke-width="${sc(0.9 * k)}" opacity="${op.toFixed(2)}"/>`);
+        }
       }
 
       // The label: how characteristic this close is OF THIS CHANT'S MODE —
@@ -928,7 +946,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       // system's edge it clamps to the margin rather than jumping to the
       // figure's other side. A light end-ticked bracket ties it to the span.
       const lab = cadenceLabel(fam, data.mode);
-      if (lab) {
+      if (lab && lands) {
         // The label sits UNDER THE CLOSING DOT, centred on it. The dot is
         // where the cadence lands — the one point the measure is about — so
         // the number belongs beneath it rather than trailing the figure at
@@ -936,6 +954,8 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
         // figure's span, which the re-inked sparkline above already draws,
         // and two marks for one extent read as two claims.
         const estW = lab.length * 5.6 * k; // 9px mono advance, measured
+        // With fewer than two samples in the landing slice no dot was drawn;
+        // the label centres on the figure's closing ink instead of orphaning.
         const dotX = dot ?? x1;
         const left = xL;
         const right = cfg.rightFor(s) - 2 * k;

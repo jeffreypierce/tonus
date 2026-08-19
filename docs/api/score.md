@@ -511,7 +511,9 @@ by index and coordinate instead of scraping the SVG. The library's own tracks
 
 ```ts
 interface NoteGeometry {
-  phraseIndex: number; syllableIndex: number; neumeGroup: number; noteIndex: number;
+  phraseIndex: number; syllableIndex: number; neumeGroup: number;
+  noteIndex: number;   // position within the SYLLABLE — the tabula's own index
+  neumeIndex: number;  // position within the neume FIGURE
   system: number;      // which wrapped system the note landed in
   x: number; y: number; // notehead anchor, svg user units
   systemY: number;      // the system's top offset within the svg
@@ -591,7 +593,8 @@ bands.
   [`CADENTIAE`](index.md#the-appendix) at all reads `"rara"` — not a gap but a
   measurement: the catalogue holds the 110 families above fifty corpus
   occurrences, so failing to join means rarer than anything it records. About
-  44% of cadences land there.
+  43% of the corpus's cadences land there; of the labels a page actually
+  prints, about a third read `rara`.
 
   `rara` is a word rather than a number, so it is not read on the percentage
   scale beside it.
@@ -756,7 +759,7 @@ this before deciding which field to use:
   so it is the one of the two that speaks about **medial** cadences.
 
 Measured over the cadences `notatio` reports across the shipped corpus — about
-20,500 of them — roughly 43% carry a formula, 56% join the catalogue, 31% carry
+26,800 of them — roughly 43% carry a formula, 56% join the catalogue, 31% carry
 both, and 44% fall outside it. Neither is derivable from the other, because the
 signature is mode-blind and the formula is mode-relative.
 

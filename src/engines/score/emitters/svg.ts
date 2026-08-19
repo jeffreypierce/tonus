@@ -575,8 +575,16 @@ interface NotePlacement {
 export interface NoteGeometry {
   phraseIndex: number;
   syllableIndex: number;
+  /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
+  /** 0-based position of this note within its SYLLABLE — the same index
+   *  `ChantTabulaRow.noteIndex` and `Cadence.notes[*][2]` carry, so the three
+   *  address one note. Both emitters used to fill this from `neumeIndex`, which
+   *  agrees only on syllables of a single figure: on *Puer natus est* the
+   *  documented tuple join misaddressed 17 of 159 notes. */
   noteIndex: number;
+  /** 0-based position of this note within its NEUME FIGURE. */
+  neumeIndex: number;
   /** Which system (staff line) the note landed in — 0 when nothing wraps. */
   system: number;
   /** Notehead anchor in svg user units. */
@@ -1596,7 +1604,8 @@ export function toSvg(
     phraseIndex: pl.row.phraseIndex,
     syllableIndex: pl.row.syllableIndex,
     neumeGroup: pl.row.neumeGroup,
-    noteIndex: pl.row.neumeIndex,
+    noteIndex: pl.row.noteIndex,
+    neumeIndex: pl.row.neumeIndex,
     system: pl.system,
     x: Number(pl.x.toFixed(2)),
     y: Number(pl.y.toFixed(2)),

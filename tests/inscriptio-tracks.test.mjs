@@ -59,7 +59,7 @@ describe("inscriptio — the tonarium track (moderna)", () => {
     assert.ok(/font-style="italic">VII</.test(tracked.svg), "the governing numeral");
   });
 
-  test("labels each confident cadence by its lift, and keys it in the margin", () => {
+  test("labels each confident cadence by its in-mode share, and keys it in the margin", () => {
     const confident = score.cadences.filter((c) => c.confidence >= 0.45 && c.signature);
     assert.ok(confident.length > 0, "the subject has confident cadences");
 
@@ -243,4 +243,50 @@ describe("inscriptio — the tracks are selectable, not species-paired", () => {
     assert.throws(() => inscriptio(plain, { tracks: ["bogus"] }), /unknown track/);
     assert.throws(() => inscriptio(plain, { notation: "moderna", tracks: ["bogus"] }), /unknown track/);
   });
+});
+
+// The geometry contract addresses a note three ways — geometry[i], tabula[i],
+// and the emitter's drawn-order noteheads are the same note. Both emitters
+// filled `noteIndex` from the row's `neumeIndex` (position within the neume
+// FIGURE) where the tabula and Cadence.notes mean position within the
+// SYLLABLE, so the documented tuple join misaddressed every syllable carrying
+// a second figure — 17 of 159 notes on this subject. The site never noticed
+// because it joins by array index; the documented join was the broken one.
+describe("the geometry contract addresses the tabula's own note", () => {
+  for (const notation of ["quadrata", "moderna"]) {
+    test(`${notation}: every geometry entry matches its tabula row`, () => {
+      for (const subject of [puer(), tonus.cantus({ office: "an", limit: 1 })[0]]) {
+        const score = tonus.notatio(subject);
+        const { geometry } = inscriptio(score, { width: 900, notation });
+        assert.equal(geometry.length, score.tabula.length,
+          `${subject.id}: one geometry entry per tabula row`);
+        for (let i = 0; i < geometry.length; i++) {
+          const g = geometry[i], t = score.tabula[i];
+          for (const key of ["phraseIndex", "syllableIndex", "neumeGroup", "noteIndex", "neumeIndex"]) {
+            assert.equal(g[key], t[key], `${subject.id} note ${i}: ${key}`);
+          }
+        }
+      }
+    });
+  }
+});
+
+// A cadence figure that wraps is re-inked in every system it crosses — the
+// claim spans them — but it CLOSES once. Drawn per-system, the closing dot
+// landed on the earlier fragment's last sample (a landing mid-figure) and the
+// label repeated, so one close read as two: at width 680 this subject drew 7
+// circles under quadrata and 8 under moderna for 6 confident cadences.
+describe("a wrapped cadence closes once", () => {
+  const score = tonus.notatio(puer());
+  const confident = score.cadences.filter((c) => c.confidence >= 0.45);
+
+  for (const notation of ["quadrata", "moderna"]) {
+    test(`${notation}: one landing dot per confident cadence`, () => {
+      // 680 forces a cadence figure across a system break on this subject.
+      const { svg } = inscriptio(score, { width: 680, notation, tracks: ["tonarium"] });
+      const circles = (svg.match(/<circle /g) ?? []).length;
+      assert.equal(circles, confident.length,
+        `${notation}: ${confident.length} confident cadences, ${circles} landing dots`);
+    });
+  }
 });
