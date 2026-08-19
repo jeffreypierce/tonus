@@ -1,0 +1,32 @@
+# The suite and the typecheck, on every push and pull request.
+#
+# This replaces the Pages workflow. The site moved to orreliquum-next, which
+# builds and deploys it from its own repo; what is left here is a library, and
+# what a library owes is a green suite and a clean tsc.
+#
+# Unlike the site's CI, this needs no artifacts and no sibling checkouts: the
+# corpus is baked into src/data/ and committed, and the only dependencies are
+# devDependencies from the registry. So a clean clone can run everything, and
+# both gates below are honest on a fresh runner.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # `test` builds first and the suite imports from dist/, so this covers
+      # the build too — a broken emit fails here before a test can.
+      - run: npm test
+      - run: npx tsc --noEmit
