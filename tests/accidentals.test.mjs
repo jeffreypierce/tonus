@@ -71,6 +71,137 @@ describe("accidentals — standard channel", () => {
   });
 });
 
+// Solesmes prints a flat on the LINE OF THE PITCH IT ALTERS: a B-flat sign
+// sits on the B line, whatever note it happens to be written before. Its
+// horizontal place is a separate fact — before the figure it governs, so the
+// singer reads it in time. The emitters took BOTH from the row carrying the
+// sign, so a flat written before a G was drawn on the G line.
+//
+// gregobase:1180 ("Felices sensus", Communio, mode I) is the fixture because
+// its signs and its altered notes differ: three flats are written before a G
+// and two A's, and every one of them governs a B-flat. The Liber Usualis
+// plate (p. 1637) shows all of them on the B line.
+describe("a flat sits on the line of the pitch it alters", () => {
+  const subject = () => tonus.cantus({ id: "gregobase:1180" })[0];
+
+  // The third sign was dropped: repeat-suppression compared the SIGN-CARRYING
+  // row against the row before it, and both were A. It governs a different
+  // B-flat, in a later phrase, with an intervening pitch — the books restate.
+  for (const notation of ["quadrata", "moderna"]) {
+    test(`${notation}: every explicit sign in the source is drawn`, () => {
+      const score = tonus.notatio(subject());
+      const signs = score.tabula.filter((r) => r.accidentalSource === "explicit").length;
+      const { svg } = tonus.inscriptio(score, { width: 900, notation });
+      const glyphs = (svg.match(/class="accidental"/g) ?? []).length;
+      assert.equal(signs, 3, "the fixture carries three explicit signs");
+      assert.equal(glyphs, signs, `${notation}: ${signs} signs written, ${glyphs} drawn`);
+    });
+
+    test(`${notation}: each flat is drawn on its B-flat's line`, () => {
+      const score = tonus.notatio(subject());
+      const { svg, geometry } = tonus.inscriptio(score, { width: 900, notation });
+      // Every line a B-flat is written on, as the emitter drew it.
+      const flatLines = new Set(
+        geometry.filter((_, i) => score.tabula[i].accidental !== 0).map((g) => g.y),
+      );
+      const drawn = [...svg.matchAll(
+        /<g class="accidental" transform="translate\(([-\d.]+) ([-\d.]+)\)/g,
+      )].map((mm) => Number(mm[2]));
+      assert.equal(drawn.length, 3, `${notation}: three glyphs`);
+      for (const y of drawn) {
+        assert.ok(flatLines.has(y),
+          `${notation}: a sign at y=${y} sits on no B-flat's line (${[...flatLines].join(", ")})`);
+      }
+    });
+  }
+
+  // The sign is read in time where the source wrote it: before the note it
+  // governs, never after. Moving it vertically must not move it horizontally.
+  test("the sign stays horizontally before the note it governs", () => {
+    const score = tonus.notatio(subject());
+    const { svg, geometry } = tonus.inscriptio(score, { width: 900 });
+    const drawnX = [...svg.matchAll(
+      /<g class="accidental" transform="translate\(([-\d.]+) ([-\d.]+)\)/g,
+    )].map((mm) => Number(mm[1]));
+    const alteredX = geometry
+      .filter((_, i) => score.tabula[i].accidental !== 0)
+      .map((g) => g.x);
+    for (const x of drawnX) {
+      assert.ok(alteredX.some((ax) => ax > x),
+        `a sign at x=${x} precedes no altered note`);
+    }
+  });
+
+  // The site joins geometry[i] to tabula[i] by index for playback sync, and an
+  // accidental is not a note: drawing one must not add or shift an entry.
+  test("the geometry contract is unchanged by where a sign is drawn", () => {
+    const score = tonus.notatio(subject());
+    for (const notation of ["quadrata", "moderna"]) {
+      const { geometry } = tonus.inscriptio(score, { width: 900, notation });
+      assert.equal(geometry.length, score.tabula.length,
+        `${notation}: one geometry entry per tabula row`);
+    }
+  });
+});
+
+// Repeat-suppression asks one question — has another pitch sounded since this
+// DEGREE was last marked — and the degree is the only coordinate it may ask it
+// on. A sign's carrying line is a different fact, and mixing the two into one
+// key dropped signs the source wrote: a found degree collided with an unfound
+// sign's carrying line, and music sitting on the altered degree read as no
+// music at all. These rows are built by hand because the fault needs a sign
+// whose altered degree and carrying line differ by a chosen amount.
+describe("suppression is keyed on the altered degree", () => {
+  // The B the flat lowers sits on staff position 7; the sign rides elsewhere.
+  const ALTERED = 7;
+  const row = (o) => ({
+    pc: 0, offset: 0, phraseIndex: 0, staffPosition: 0, spn: "B3",
+    accidental: 0, accidentalSource: "clef", accidentalSign: undefined, ...o,
+  });
+  const flat = (staffPosition) =>
+    row({ staffPosition, accidentalSource: "explicit", accidentalSign: -1 });
+  const altered = () => row({ staffPosition: ALTERED, accidental: -1 });
+  const drawn = (rows) => computeAccidentals(rows, "standard").filter(Boolean);
+
+  test("a sign whose alteration never arrives does not borrow another's degree", () => {
+    // The first sign alters the B; the second is written ON the B's line and
+    // governs nothing ahead. Keyed by `degree ?? staffPosition` the two shared
+    // an entry, and the second — a different sign entirely — was suppressed.
+    const marks = drawn([flat(3), altered(), flat(ALTERED)]);
+    assert.equal(marks.length, 2, "both written signs are drawn");
+    assert.equal(marks[0].degree, ALTERED, "the first names the degree it alters");
+    assert.equal(marks[1].degree, undefined, "the second alters nothing found");
+  });
+
+  test("a sign restates when another pitch has sounded, even on the altered degree", () => {
+    // Three B's separate the two flats. Asking whether an intervening row
+    // differed from the key said no pitch had sounded, because the key WAS
+    // that pitch, so the second flat — a new statement — was dropped.
+    const marks = drawn([
+      flat(3), altered(), altered(), altered(), flat(3), altered(),
+    ]);
+    assert.equal(marks.length, 2, "the restatement is drawn");
+    for (const m of marks) assert.equal(m.degree, ALTERED);
+  });
+
+  test("an immediate restatement of the same degree is still suppressed", () => {
+    // The rule the books do keep: nothing between the two signs, so the second
+    // says nothing the first has not. Widening the gap must not widen this.
+    const marks = drawn([flat(3), flat(3), altered()]);
+    assert.equal(marks.length, 1, "the second sign adds nothing");
+  });
+
+  test("the lookahead stops at its scope rather than borrowing a distant note", () => {
+    // A sign reaches ahead a bounded distance for the degree it alters. Past
+    // that bound the alteration is not this sign's to claim, and the mark
+    // carries no degree rather than an unrelated note's line.
+    const near = drawn([flat(3), ...Array.from({ length: 8 }, () => row({ staffPosition: 2 })), altered()]);
+    assert.equal(near[0].degree, ALTERED, "within scope, the altered degree is found");
+    const far = drawn([flat(3), ...Array.from({ length: 20 }, () => row({ staffPosition: 2 })), altered()]);
+    assert.equal(far[0].degree, undefined, "beyond scope, no degree is claimed");
+  });
+});
+
 describe("accidentals — rendered through inscriptio (moderna carries the channel)", () => {
   // HEJI and cents are modern analytical overlays; they render on the modern
   // (moderna) staff, not on historical square notation.

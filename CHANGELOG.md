@@ -2,7 +2,174 @@
 
 All notable changes to tonus. Newest first.
 
-## Unreleased
+## 0.9.0 — 2026-08-19
+
+The tracks stop promising a contract they never kept, and the geometry says
+where the ink is.
+
+### Added
+
+- **`Syllable.neumes` — the syllable's figures, each classified.** A syllable
+  is not a neume; it carries neumes. GABC marks the figures with `!`, `/` and
+  `//`, and the parser has always recorded them, but classification read the
+  whole syllable, so a melisma of three ordinary figures was named once and
+  that name was `compound`: 18,718 of the 27,643 compounds, 67.7% of them.
+  `neume` still reads the syllable as one figure and is unchanged; `neumes`
+  names them individually. Compound falls from 17.8% to **8.3%**, and the
+  torculus count more than doubles (4,521 → 10,607).
+
+  The salicus reports at syllable scope, and the exception is the point. Its
+  rule reads the oriscus on the next-to-last note of an ascent, and 41 of the
+  corpus's 255 salici are written across a figure boundary with the oriscus in
+  one figure and the summit in the next. Splitting first severed them and the
+  count fell to 251, narrowing Cardine's definition by refactoring rather than
+  by ruling. Held at 255, with 35 more recovered: figures that are a salicus in
+  their own right inside a syllable that is not one.
+
+- **Six neume names for figures that restate a pitch.** `classifyShape` had no
+  case for the unison beyond a two-note group, so every repercussive figure
+  fell to `compound`: 12,675 of them, 6.6% of the corpus. `NeumeShape` gains
+  `distropha`, `tristropha`, `tristropha flexa`, `pressus`, `pressus maior`,
+  and `scandicus subpunctis` (the mirror of `pes subpunctis`, which was the
+  only form named past three intervals). 4,154 groups that read `compound` now
+  carry a name, and `compound` falls from 17.8% to 15.9%.
+
+  The names rest on contour, which is what both emitters already read: quadrata
+  breathes strophae apart on the staff position alone, and moderna merges a
+  strophic run into one slur. `hasStrophicus` is untouched and still reports
+  the GABC marker, which is the narrower fact.
+
+  This does not reopen the salicus ruling. That one turns on an ornament the
+  printed edition may have resolved away, so reading it from the ictus would
+  invent what the source withheld; a restated pitch is a contour the source
+  states outright.
+
+  The praepunctis family is absent by choice. Measured over the corpus, the
+  long figures are genuine compound melismas (`[up,down,down,up]` 643,
+  `[up,down,down,down]` 524) rather than textbook praepunctis forms, and a name
+  matching nothing is worse than the gap.
+
+- **`NoteGeometry` reports the figure's ink extent**, as `inkLeft` and
+  `inkRight` beside the anchor. `x` is an ANCHOR, and what it anchors differs by
+  notation: quadrata's square glyphs start at it and run right, so `x` is the
+  figure's left edge and a mark drawn anchor-to-anchor sits left of the notes it
+  names and stops short of the last one; moderna centres its noteheads on it.
+  These are the numbers the in-house tracks have always consumed, now reported
+  rather than measured privately. A caller placing a playhead or an overlay no
+  longer has to read the drawn glyph back out of the SVG to find the middle of a
+  notehead.
+
+  Quadrata measures the edges from the glyph's bounding box as it places;
+  moderna derives them from the anchor, so they straddle it evenly.
+
+### Changed
+
+- **The rhythm model names a note by its own figure.** `applyCompoundBeats`
+  annotated every note of a melisma with the whole syllable's name, so the two
+  conventional overrides (salicus → arsic, doubly-dotted clivis → thetic) could
+  not see a clivis inside a syllable that read `compound`. Measured over the
+  corpus: 5 phrases of 26,803 change `rhythmicType`, and 75 notes of 400,948
+  change arsis/thesis (0.019%). Small because most newly-visible clivises carry
+  no double mora, so the thetic rule still does not fire on them.
+
+- **The docs no longer offer a downstream track contract.** `score.md` framed
+  the geometry as the interface analysis tracks build on, and said a custom
+  track downstream does the same. It could not: the tracks consume a private
+  surface (the tabula row, the lyric baseline, per-system right edges, the
+  scale factor, and band room only an emitter can reserve). The geometry is
+  documented for what it is and is used for: locating a note on the drawn page.
+  The three tracks stay in the library, and the tracks section is rewritten as
+  reference rather than prose.
+
+- **Corrected counts in the tracks documentation.** The cadence catalogue holds
+  110 families, not 122; the corpus carries about 26,800 cadences, not 20,500.
+  The `rara` share is stated both ways it can be read: about 43% of the
+  corpus's cadences, but about a third of the labels a page prints.
+
+### Fixed
+
+- **`NoteGeometry.noteIndex` addressed the wrong note.** Both emitters filled
+  it from the row's `neumeIndex` (position within the neume FIGURE) where
+  `ChantTabulaRow.noteIndex` and `Cadence.notes[*][2]` mean position within the
+  SYLLABLE. The documented tuple join therefore misaddressed every syllable
+  carrying a second figure: 17 of 159 notes on *Puer natus est*. `noteIndex`
+  now carries the syllable position the tabula means, and `neumeIndex` is
+  reported alongside it, so the three address one note. A consumer joining by
+  array index (the safe join) is unaffected.
+
+- **A wrapped cadence closed twice.** A cadence figure crossing a system break
+  is re-inked in both, because the claim spans them, but it CLOSES once. Drawn
+  per system, the terminal node landed on the earlier fragment's last sample (a
+  landing mid-figure) and the label repeated: at width 680 that subject drew 7
+  nodes under quadrata and 8 under moderna for 6 confident cadences. The node
+  and label now draw only in the system holding the figure's last note.
+
+- **The tonarium's mode line admitted claims the rest of the renderer
+  refuses.** It gated modulations at confidence 0.4 where the documented floor,
+  the cadence path, and the ink doctrine all say nothing below 0.45 draws.
+
+- **A flat was drawn on the line of the note it was written before, not the
+  line of the note it alters.** Solesmes prints an accidental on the line of
+  the pitch it inflects, so a B-flat sign sits on the B line; where the sign is
+  printed and which degree it alters are separate facts, and both emitters took
+  both from the row carrying the sign. On *Felices sensus* (gregobase:1180) two
+  flats governing B-flats were drawn on the G and A lines, where the Liber
+  Usualis plate (p. 1637) has them on the B line. Corpus-wide, 3,505 of 4,358
+  explicit signs sat on a degree they do not alter. The mark now carries the
+  altered degree, and horizontal placement is untouched: the sign still reads
+  before the figure it governs.
+
+- **A written sign could be dropped.** Repeat-suppression compared the
+  sign-carrying row's pitch class against the row immediately before it, which
+  measured the wrong pitch (the sign's neighbour, not the degree it alters) and
+  applied a weaker rule than the books', which restate once another pitch has
+  intervened. *Felices sensus* wrote three flats and printed two: the third
+  followed another A, though it opens a new phrase and governs a new B-flat.
+  Suppression is now keyed on the altered degree and on nothing else, and it
+  holds back only a sign with no music between it and the last mark of that
+  degree. A sign whose alteration is never found within its lookahead prints
+  rather than borrowing the coordinate of the line it was written on: that line
+  is a different fact, and keying both into one map let a found degree and an
+  unfound sign's carrying line collide. All three of the fixture's flats print.
+
+- **A natural's line was found by the wrong test.** The lookahead for the
+  governed degree read `accidental !== 0`, which a natural never satisfies: it
+  restores a pitch rather than altering one. Naturals are now read against the
+  state they set, so a B-natural sign sits on the B line.
+
+## 0.8.0 — 2026-08-18
+
+### Changed
+
+- **`prosody` is renamed `metrics`, because that is what it measures.**
+
+- **CI runs the test suite** in place of the retired site deploy.
+
+## 0.7.0 — 2026-08-17
+
+The site leaves for its own repo, and the fonts are named rather than bundled.
+
+### Changed
+
+- **The site migrated to orreliquum.** The playground, its diagrams and the hand
+  figure now live in the site's own repo, which consumes tonus as a dependency;
+  this repo keeps the library and `docs/api`.
+
+- **Junicode is named, not bundled**, and the font note is stated as a recipe.
+  tonus ships no font files: the `fonts` option emits family references, and a
+  slot's `embed` carries the caller's own bytes.
+
+- **The glyph extractor is JavaScript**, and Bravura lives in the repo.
+
+- **The signs get their own documentation page**, and the removed exports leave
+  the table.
+
+### Fixed
+
+- **A correction to the Guidonian hand data.**
+
+- **0.6.1 — the tagged 0.6.0 never reached the registry.** A republish under a
+  new patch version, the registry having lagged the git tag.
 
 ## 0.6.0 — 2026-08-16
 

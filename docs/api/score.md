@@ -83,10 +83,19 @@ interface Syllable {
   lyric: string;
   runs?: LyricRun[];        // styled spans, present only when GABC markup styled this syllable
   notes: Note[];
-  neume: Neume;
+  neume: Neume;             // the syllable read as ONE figure
+  neumes: Neume[];          // its figures, as GABC groups them, each classified
   melisma: number;          // notes on this syllable (1 = syllabic, >1 melismatic)
 }
 ```
+
+A syllable carries neumes rather than being one. GABC marks the figures with
+`!`, `/` and `//`, and `neumes` names each; `neume` reads the whole syllable as
+a single figure, which for a melisma of several is usually `compound`. A
+syllable of one figure reports the same shape both ways. The salicus is the
+exception and reports at syllable scope: its rule reads the oriscus on the
+next-to-last note of an ascent, and the scribe may break the figure between
+that oriscus and the summit.
 
 GABC's lyric markup is decoded at parse, so `lyric` is always clean display
 text: the `<sp>` shortcuts arrive as real characters (`<sp>V/</sp>` → ℣,
@@ -504,10 +513,10 @@ between systems, the notehead calibration against the staff, and the line-end
 custos are constants. The custos appears whenever a system wraps, as it does in
 a chant book.
 
-**The geometry contract (public API).** `geometry` is one `NoteGeometry` per note,
-in tabula order — the interface analysis _tracks_ build on, so they place marks
-by index and coordinate instead of scraping the SVG. The library's own tracks
-(below) consume exactly these anchors; a custom track downstream does the same:
+**The geometry contract (public API).** `geometry` is one `NoteGeometry` per
+note, in tabula order, so `geometry[i]` and `tabula[i]` are the same note two
+ways. It says where each note landed on the drawn page, so a caller can put a
+playhead, a selection, or an overlay against a note without scraping the SVG.
 
 ```ts
 interface NoteGeometry {
@@ -516,9 +525,14 @@ interface NoteGeometry {
   neumeIndex: number;  // position within the neume FIGURE
   system: number;      // which wrapped system the note landed in
   x: number; y: number; // notehead anchor, svg user units
+  inkLeft: number;      // the figure's measured ink extent. `x` is its LEFT
+  inkRight: number;     //   edge, so a mark that spans notes reaches for these
   systemY: number;      // the system's top offset within the svg
 }
 ```
+
+`y` is already absolute on the canvas; `systemY` reports which system a note
+is in, not an offset to add.
 
 ### The analysis tracks
 
@@ -538,75 +552,70 @@ tonus.inscriptio(score, { width: 680, tracks: ["chironomia", "tonarium"] });    
 tonus.inscriptio(score, { width: 680, tracks: ["prosodia", "chironomia", "tonarium"] });
 ```
 
-The conventional pairing is the chironomia under `quadrata` and the tonarium
-under `moderna`; the prosodia, reading the text rather than the notation,
-rides either as naturally. The renderer enforces none of it.
+Several stack in a fixed order whatever order they are asked for: prosodia
+first, directly under the lyric line it reads; chironomia next; tonarium
+below. The page grows by the sum of the bands. The conventional pairing is the
+chironomia under `quadrata` and the tonarium under `moderna`; the renderer
+enforces none of it.
 
-Requesting several stacks them in a fixed order — the prosodia first, directly
-under the lyric line it reads; the chironomia next; the tonarium below —
-whichever order they are asked for, and the page grows by the sum of the
-bands.
+**`"prosodia"`** draws how the melody treats the word, in two lanes.
 
-- **`"prosodia"`** — how the melody treats the word, in two lanes. The upper
-  lane draws one **tent per word** — the hairpin pair's top edge, dynamics'
-  own mark for swell and release — its apex over the accented syllable, with
-  the accent's landing at the peak in the liturgical red: a **filled dot**
-  when the accent lands arsic (struck), an **open ring** when it lands thetic
-  (deferred). Accented words rise past the lane's single rule; unaccented
-  words crest on it. The lower lane is a fence on a rail, one mark per
-  syllable by how the melody treats it: a spoken syllable stands as a stem
-  (height, its notes), a syllable **recited on the tenor lies flat** — a
-  short dash floating above the rail — and a **melisma of four notes or more
-  becomes a block** as wide as its real extent and as tall as its count
-  (counts of eight or more print inside). Connected melismas join into one
-  ridge, each block's top sloping toward its neighbours, the line between
-  them crossing the gaps. A divisio drops a hairline through both lanes.
-  Accents are the book's written accents (the GABC accented vowels) — the
-  track derives none.
-- **`"chironomia"`** — the conducting hand as one continuous line:
-  arsic beats crest, thetic beats trough, single-note theses pass through
-  shallow, and the hand picks up between close arses in a small backward loop
-  [biblio: carroll-chironomy]. Pressure is the stroke's _weight_: each note's
-  `velocity` (the `accentus` shaping) becomes nib width over solid ink, so the
-  line presses where the voice does. Pierik letters (A · T · PT) name the
-  beats — the incise's rhythmic shape is read straight off them.
-- **`"tonarium"`** — the melodic-analysis lane, named for the book
-  that catalogued chants by mode. Four rails — the maneriae finals ladder, D on
-  the bottom (categories, not pitches) — carry the **mode line** in the
-  liturgical red: the governing mode of each phrase, its numeral above
-  (authentic-vs-plagal lives in the numeral). A modulation of kind
-  `"inflection"` steps the line solid; a `"transposition"` (the affinal frame
-  read as displacement) draws dashed. Through the rails runs the melody itself,
-  compressed to the chant's ambitus and wearing the same pressure grammar, a
-  lighter stratum — context, not message.
-  A **cadence is the melody's own ending re-inked black**: the same curve at
-  the same width turns pure black across the cadential figure and lands on a
-  terminal node — filled when the family's measured `finality` closes, open
-  when it suspends. Beneath the node, centred on it, sits the family's
-  **in-mode share**: `"3.9%"`, how often this close ends a chant in this
-  chant's mode — the frequency a singer actually meets it at. Where the chant
-  has no mode, or the family has too few occurrences in it to divide honestly,
-  the label falls back to the plain corpus share, which is the same kind of
-  number.
+| mark | means |
+| --- | --- |
+| tent, one per word | apex over the accented syllable; accented words rise past the lane's rule, unaccented crest on it |
+| filled dot at the peak | the accent lands **arsic** (struck) |
+| open ring at the peak | the accent lands **thetic** (deferred) |
+| stem on the rail | a spoken syllable; height is its note count |
+| flat dash above the rail | the syllable is **recited on the tenor** |
+| block | a **melisma of 4+ notes**, as wide as its extent, as tall as its count (8+ prints the count inside) |
+| hairline through both lanes | a divisio |
 
-  **Every inked cadence carries a label.** A close that does not join
-  [`CADENTIAE`](index.md#the-appendix) at all reads `"rara"` — not a gap but a
-  measurement: the catalogue holds the 110 families above fifty corpus
-  occurrences, so failing to join means rarer than anything it records. About
-  43% of the corpus's cadences land there; of the labels a page actually
-  prints, about a third read `rara`.
+Connected melismas join into one ridge, blocks sloping toward their
+neighbours. Accents are the book's written accents (the GABC accented
+vowels); the track derives none.
 
-  `rara` is a word rather than a number, so it is not read on the percentage
-  scale beside it.
+**`"chironomia"`** draws the conducting hand as one continuous line. Arsic
+beats crest, thetic beats trough, single-note theses pass through shallow, and
+the hand picks up between close arses in a small backward loop
+[biblio: carroll-chironomy]. Each note's `velocity` (the `accentus` shaping)
+becomes nib width, so the line presses where the voice does. Pierik letters
+(A · T · PT) name the beats.
 
-  The lift rides the group as `data-lift` for a caller who wants distinctiveness
-  rather than frequency, beside `data-cadentia` — the family key, which is the
-  join back to [`CADENTIAE`](index.md#the-appendix) and the provenance a margin
-  gloss can print. Crowded labels dodge to a second row.
+**`"tonarium"`** is the melodic-analysis lane, named for the book that
+catalogued chants by mode. Four rails carry the maneriae finals ladder, D on
+the bottom (categories, not pitches). Through them runs the melody itself,
+compressed to the chant's ambitus at a lighter stratum: context, not message.
+
+| mark | means |
+| --- | --- |
+| red line + numeral | the governing **mode** of each phrase (authentic vs plagal lives in the numeral) |
+| line steps solid | a modulation of kind `"inflection"` |
+| line dashed | a `"transposition"` (the affinal frame read as displacement) |
+| melody re-inked black | a **cadence**: the same curve at the same width, turned pure black across the figure |
+| filled terminal node | the family's measured `finality` **closes** |
+| open terminal node | it **suspends** |
+
+A wrapped cadence draws its node and label once, in the system holding the
+figure's last note.
+
+Every inked cadence carries a label beneath its node: the family's **in-mode
+share** (`"3.9%"`), how often this close ends a chant in this chant's mode.
+Where the chant has no mode, or the family has too few occurrences in it to
+divide, it falls back to the plain corpus share. A close that joins
+no [`CADENTIAE`](index.md#the-appendix) family reads **`rara`**. That is a
+measurement rather than a gap: the catalogue holds the 110 families above
+fifty corpus occurrences, so failing to join means rarer than anything it
+records. About 43% of the corpus's cadences land there, though of the labels a
+page prints, about a third read `rara`. It is a word, not a number, so it is
+not read on the percentage scale beside it.
+
+Each cadence group carries `data-cadentia` (the family key, which joins back
+to [`CADENTIAE`](index.md#the-appendix) and carries the provenance a margin
+gloss can print) and `data-lift` (distinctiveness, for a caller who wants it
+rather than frequency). Crowded labels dodge to a second row.
 
 Everywhere, confidence is opacity, and a claim below confidence 0.45 draws
-nothing — weak claims are not inked. Every mark sits under the notation that
-would falsify it.
+nothing. Every mark sits under the notation that would falsify it.
 
 ## The imprint
 

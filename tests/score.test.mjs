@@ -156,6 +156,55 @@ describe("buildScore", () => {
     }
   });
 
+  // A syllable is not a neume; it CARRIES neumes. GABC marks the figures
+  // (`!`, `/`, `//`) and the parser records them, but classification read the
+  // whole syllable, so a melisma of three ordinary figures was named once and
+  // that name was "compound" — 67.7% of all compounds were this.
+  test("a syllable's figures are classified in their own right", () => {
+    const score = buildScore(makeChant(KYRIE_GABC));
+    for (const phrase of score.phrases) {
+      for (const syl of phrase.syllables) {
+        if (!syl.notes.length) continue;
+        const figures = new Set(syl.notes.map((n) => n.context.neumeGroup)).size;
+        assert.equal(syl.neumes.length, figures,
+          `${JSON.stringify(syl.lyric)}: one neume per gabc figure`);
+      }
+    }
+  });
+
+  test("a one-figure syllable reads the same either way", () => {
+    const score = buildScore(makeChant("(c4) a(g)b(hi)c(g) (::)"));
+    for (const phrase of score.phrases) {
+      for (const syl of phrase.syllables) {
+        if (!syl.notes.length) continue;
+        if (new Set(syl.notes.map((n) => n.context.neumeGroup)).size !== 1) continue;
+        assert.equal(syl.neumes.length, 1);
+        assert.equal(syl.neumes[0].type, syl.neume.type,
+          `${JSON.stringify(syl.lyric)}: neumes[0] agrees with neume`);
+      }
+    }
+  });
+
+  // The salicus is classified at SYLLABLE scope, and the exception is the
+  // point. Its rule reads the oriscus on the next-to-last note of an ascent;
+  // 41 of the corpus's 255 salici are written across a figure boundary, the
+  // oriscus in one figure and the summit in the next. Splitting first severed
+  // them and the count fell to 251 — narrowing Cardine's definition by
+  // refactoring rather than by ruling.
+  test("a salicus split across figures keeps its name", () => {
+    // The oriscus (o) on the second note of a three-note ascent, with the
+    // figure broken before the summit.
+    const score = buildScore(makeChant("(c4) a(fgo!h) (::)"));
+    const syl = score.phrases[0].syllables.find((s) => s.notes.length === 3);
+    assert.ok(syl, "the three-note ascent parsed");
+    assert.ok(syl.notes.some((n) => n.context.oriscus), "the oriscus survived parsing");
+    assert.ok(new Set(syl.notes.map((n) => n.context.neumeGroup)).size > 1,
+      "the figure is split, which is the case under test");
+    assert.equal(syl.neume.type, "salicus", "the syllable is a salicus");
+    assert.deepEqual(syl.neumes.map((n) => n.type), ["salicus"],
+      "and it is reported once, not severed into its figures");
+  });
+
   test("note.context.vowel is populated from lyric", () => {
     const score = buildScore(makeChant(KYRIE_GABC));
     const notes = score.phrases[0].syllables.flatMap((s) => s.notes);

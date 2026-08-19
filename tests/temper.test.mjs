@@ -488,6 +488,65 @@ describe("neuma", () => {
     const neume = t.neuma([60, 64, 62, 65, 63]);
     assert.equal(neume.shape, "compound");
   });
+
+  // The five compound forms the suite never asserted. Each is one contour, and
+  // a name that no test pins can drift from the union it belongs to.
+  test("torculus resupinus: up, down, up", () => {
+    assert.equal(t.neuma([60, 64, 62, 65]).shape, "torculus resupinus");
+  });
+
+  test("porrectus flexus: down, up, down", () => {
+    assert.equal(t.neuma([64, 60, 62, 59]).shape, "porrectus flexus");
+  });
+
+  test("scandicus flexus: up, up, down", () => {
+    assert.equal(t.neuma([60, 62, 65, 63]).shape, "scandicus flexus");
+  });
+
+  test("climacus resupinus: down, down, up", () => {
+    assert.equal(t.neuma([65, 63, 60, 62]).shape, "climacus resupinus");
+  });
+
+  test("pes subpunctis: up, then an unbroken descent", () => {
+    assert.equal(t.neuma([60, 65, 63, 62]).shape, "pes subpunctis");
+    assert.equal(t.neuma([60, 65, 64, 62, 60]).shape, "pes subpunctis");
+  });
+
+  // The repercussive figures. A restated pitch is a contour the source states
+  // outright, and both emitters already draw it as a stropha; before this the
+  // classifier answered "punctum" for a two-note distropha and "compound" for
+  // the rest.
+  test("distropha: two on one pitch, not a punctum", () => {
+    const neume = t.neuma([60, 60]);
+    assert.equal(neume.shape, "distropha");
+    assert.equal(neume.pitches.length, 2, "two notes, whatever the name");
+  });
+
+  test("tristropha: three on one pitch", () => {
+    assert.equal(t.neuma([60, 60, 60]).shape, "tristropha");
+  });
+
+  test("tristropha flexa: the repeated pitch, then falling", () => {
+    assert.equal(t.neuma([60, 60, 60, 58]).shape, "tristropha flexa");
+  });
+
+  test("pressus: a restated pitch, then falling", () => {
+    assert.equal(t.neuma([60, 60, 58]).shape, "pressus");
+  });
+
+  test("pressus maior: falling in, restated, falling out", () => {
+    assert.equal(t.neuma([62, 60, 60, 58]).shape, "pressus maior");
+  });
+
+  test("scandicus subpunctis: two rising, then an unbroken descent", () => {
+    assert.equal(t.neuma([60, 62, 65, 63, 61]).shape, "scandicus subpunctis");
+  });
+
+  // A figure that turns again after its descent is a compound melisma — the
+  // long forms are named only when the descent is total.
+  test("a descent that turns back is compound, not a subpunctis", () => {
+    assert.equal(t.neuma([60, 65, 63, 62, 64]).shape, "compound");
+  });
 });
 
 describe("gamut", () => {

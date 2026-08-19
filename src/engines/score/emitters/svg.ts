@@ -590,6 +590,14 @@ export interface NoteGeometry {
   /** Notehead anchor in svg user units. */
   x: number;
   y: number;
+  /** The figure's measured ink extent. `x` is the ANCHOR — quadrata's square
+   *  glyphs start there and run right, so a span drawn anchor-to-anchor sits
+   *  left of the notes it names and stops short of the last one. A mark that
+   *  spans notes reaches for these instead. Quadrata measures them from the
+   *  glyph's bbox as it places; moderna centres its heads on the anchor, so
+   *  they are derived and straddle it evenly. */
+  inkLeft: number;
+  inkRight: number;
   /** The system's top offset within the svg — 0 in the first system. */
   systemY: number;
 }
@@ -750,7 +758,9 @@ export function toSvg(
       );
       return 0;
     }
-    const p = placeGlyph(mark.glyph!, atX, yFor(row.staffPosition, L, r), r,
+    // The sign sits on the line of the pitch it alters, which is not this
+    // row's own line where the sign was written before the figure it governs.
+    const p = placeGlyph(mark.glyph!, atX, yFor(mark.degree ?? row.staffPosition, L, r), r,
       "accidental", "", r.noteScale * 0.62);
     if (!p) return 0;
     body.push(p.svg);
@@ -1609,6 +1619,8 @@ export function toSvg(
     system: pl.system,
     x: Number(pl.x.toFixed(2)),
     y: Number(pl.y.toFixed(2)),
+    inkLeft: Number(pl.inkLeft.toFixed(2)),
+    inkRight: Number(pl.inkRight.toFixed(2)),
     systemY: Number(pl.systemY.toFixed(2)),
   }));
 
