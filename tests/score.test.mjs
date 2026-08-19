@@ -1,6 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { buildScore } from "../dist/engines/score/api.js";
+import { getPsalm } from "../dist/engines/chant/psalm.js";
 
 const KYRIE_GABC = "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (::)";
 
@@ -340,5 +341,23 @@ describe("pitch spelling follows the source", () => {
     // Chant writes one accidental, the bmolle. Every altered note in the
     // corpus spells Bb, and did before this change too.
     assert.equal(first("(c4) A(ixi)").spn.replace(/\d/, ""), "Bb");
+  });
+});
+
+// Intoned psalmody once emitted `(note)syllable`, so every whitespace-separated
+// word opened with an empty-text syllable that took syllableIndex 0. The word's
+// real first syllable never scored wordStart, and a whole verse parsed as ONE
+// word: the renderer hyphenated between every pair and the word-aware metrics
+// measured it. This asserts the STRUCTURE the emitters read, not the GABC text.
+describe("intoned psalmody is words", () => {
+  test("wordStart resets at each word of a verse", () => {
+    const [verse] = getPsalm({ psalm: 1, mode: 1 });
+    const rows = buildScore(verse).tabula;
+    const starts = rows.filter((r) => r.wordStart).length;
+    assert.ok(starts > 5,
+      `a psalm verse is many words, got ${starts} wordStart of ${rows.length} syllables`);
+    // Not every syllable is a word either — "Be-á-tus" is one word, three
+    // syllables, so the flag must be false somewhere too.
+    assert.ok(starts < rows.length, "wordStart is not true for every syllable");
   });
 });

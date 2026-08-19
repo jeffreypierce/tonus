@@ -54,7 +54,13 @@ function buildHalf(
       tokens.push(" ");
     } else {
       const note = noteAssignment[noteIdx++] ?? tenor;
-      tokens.push(`(${note})${syl}`);
+      // TEXT FIRST, then its notes — `syl(note)`, which is what GABC means and
+      // what every corpus chant encodes. Emitted the other way round, each
+      // whitespace-separated word opened with an empty-text syllable that took
+      // syllableIndex 0, so the word's real first syllable never scored
+      // wordStart and the renderer hyphenated between every pair: a whole verse
+      // set as one 43-syllable word. The word-aware metrics read the same lie.
+      tokens.push(`${syl}(${note})`);
     }
   }
 

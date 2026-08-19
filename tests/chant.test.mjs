@@ -614,6 +614,20 @@ describe("getPsalm", () => {
     assert.ok(chants[0].gabc.startsWith("(c4)"));
   });
 
+  // Intoned GABC once read `(note)syllable`, the reverse of what GABC means and
+  // of what every corpus chant encodes. The parser counts syllables within each
+  // whitespace-separated word, so a leading note group took syllableIndex 0 and
+  // the word's real first syllable never scored wordStart: a whole verse parsed
+  // as ONE word, the renderer hyphenated between every pair, and the word-aware
+  // metrics measured the same lie. Ps 1 v.1 went from 1 "word" to 12.
+  test("a verse is words, not one hyphenated word", () => {
+    const [v] = getPsalm({ psalm: 1, mode: 1 });
+    // Text first, then its notes.
+    assert.match(v.gabc, /Be\(f\)á\(h\)tus\(j\)/,
+      "syllable precedes its note group");
+    assert.ok(!/\(\w+\)Be/.test(v.gabc), "no note group leads a syllable");
+  });
+
   test("in directum recites straight through, with no mediant bar", () => {
     const [normal] = getPsalm({ psalm: 109, mode: 1 });
     const [direct] = getPsalm({ psalm: 109, mode: 1, inDirectum: true });
