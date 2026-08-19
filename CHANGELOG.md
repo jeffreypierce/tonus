@@ -9,6 +9,29 @@ where the ink is.
 
 ### Added
 
+- **Six neume names for figures that restate a pitch.** `classifyShape` had no
+  case for the unison beyond a two-note group, so every repercussive figure
+  fell to `compound`: 12,675 of them, 6.6% of the corpus. `NeumeShape` gains
+  `distropha`, `tristropha`, `tristropha flexa`, `pressus`, `pressus maior`,
+  and `scandicus subpunctis` (the mirror of `pes subpunctis`, which was the
+  only form named past three intervals). 4,154 groups that read `compound` now
+  carry a name, and `compound` falls from 17.8% to 15.9%.
+
+  The names rest on contour, which is what both emitters already read: quadrata
+  breathes strophae apart on the staff position alone, and moderna merges a
+  strophic run into one slur. `hasStrophicus` is untouched and still reports
+  the GABC marker, which is the narrower fact.
+
+  This does not reopen the salicus ruling. That one turns on an ornament the
+  printed edition may have resolved away, so reading it from the ictus would
+  invent what the source withheld; a restated pitch is a contour the source
+  states outright.
+
+  The praepunctis family is absent by choice. Measured over the corpus, the
+  long figures are genuine compound melismas (`[up,down,down,up]` 643,
+  `[up,down,down,down]` 524) rather than textbook praepunctis forms, and a name
+  matching nothing is worse than the gap.
+
 - **`NoteGeometry` reports the figure's ink extent**, as `inkLeft` and
   `inkRight` beside the anchor. `x` is the note's LEFT edge, not its middle:
   quadrata's square glyphs start there and run right, so a mark drawn

@@ -267,15 +267,23 @@ t.neuma(["D4", "F4", "E4"]);
 
 Shapes that match no simple figure classify as `"compound"`.
 
-| `shape`     | figure             | `shape`              | figure                      |
-| ----------- | ------------------ | -------------------- | --------------------------- |
-| `punctum`   | a single note      | `torculus resupinus` | torculus, then rising       |
-| `pes`       | two notes, rising  | `porrectus flexus`   | porrectus, then falling     |
-| `clivis`    | two notes, falling | `scandicus flexus`   | scandicus, then falling     |
-| `torculus`  | three: up, down    | `climacus resupinus` | climacus, then rising       |
-| `porrectus` | three: down, up    | `pes subpunctis`     | pes, then descending points |
-| `scandicus` | three, rising      | `compound`           | any figure not above        |
-| `climacus`  | three, falling     |                      |                             |
+| `shape`     | figure             | `shape`                | figure                          |
+| ----------- | ------------------ | ---------------------- | ------------------------------- |
+| `punctum`   | a single note      | `torculus resupinus`   | torculus, then rising           |
+| `pes`       | two notes, rising  | `porrectus flexus`     | porrectus, then falling         |
+| `clivis`    | two notes, falling | `scandicus flexus`     | scandicus, then falling         |
+| `torculus`  | three: up, down    | `climacus resupinus`   | climacus, then rising           |
+| `porrectus` | three: down, up    | `pes subpunctis`       | pes, then descending points     |
+| `scandicus` | three, rising      | `scandicus subpunctis` | two rising, then descending     |
+| `climacus`  | three, falling     | `salicus`              | rising, next-to-last an oriscus |
+
+The repercussive figures restate a pitch rather than leave it.
+
+| `shape`            | figure              | `shape`         | figure                 |
+| ------------------ | ------------------- | --------------- | ---------------------- |
+| `distropha`        | two on one pitch    | `pressus`       | restated, then falling |
+| `tristropha`       | three on one pitch  | `pressus maior` | falling in, then out   |
+| `tristropha flexa` | three, then falling | `compound`      | any figure not above   |
 
 ```ts
 interface Neume {
