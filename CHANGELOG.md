@@ -2,7 +2,7 @@
 
 All notable changes to tonus. Newest first.
 
-## Unreleased
+## 0.9.0 — 2026-08-19
 
 The tracks stop promising a contract they never kept, and the geometry says
 where the ink is.
@@ -25,16 +25,6 @@ where the ink is.
   count fell to 251, narrowing Cardine's definition by refactoring rather than
   by ruling. Held at 255, with 35 more recovered: figures that are a salicus in
   their own right inside a syllable that is not one.
-
-### Changed
-
-- **The rhythm model names a note by its own figure.** `applyCompoundBeats`
-  annotated every note of a melisma with the whole syllable's name, so the two
-  conventional overrides (salicus → arsic, doubly-dotted clivis → thetic) could
-  not see a clivis inside a syllable that read `compound`. Measured over the
-  corpus: 5 phrases of 26,803 change `rhythmicType`, and 75 notes of 400,948
-  change arsis/thesis (0.019%). Small because most newly-visible clivises carry
-  no double mora, so the thetic rule still does not fire on them.
 
 - **Six neume names for figures that restate a pitch.** `classifyShape` had no
   case for the unison beyond a two-note group, so every repercussive figure
@@ -60,17 +50,41 @@ where the ink is.
   matching nothing is worse than the gap.
 
 - **`NoteGeometry` reports the figure's ink extent**, as `inkLeft` and
-  `inkRight` beside the anchor. `x` is the note's LEFT edge, not its middle:
-  quadrata's square glyphs start there and run right, so a mark drawn
-  anchor-to-anchor sits left of the notes it names and stops short of the last
-  one. These are the numbers the in-house tracks have always consumed, now
-  reported rather than measured privately. A caller placing a playhead or an
-  overlay no longer has to read the drawn glyph back out of the SVG to find
-  the middle of a notehead.
+  `inkRight` beside the anchor. `x` is an ANCHOR, and what it anchors differs by
+  notation: quadrata's square glyphs start at it and run right, so `x` is the
+  figure's left edge and a mark drawn anchor-to-anchor sits left of the notes it
+  names and stops short of the last one; moderna centres its noteheads on it.
+  These are the numbers the in-house tracks have always consumed, now reported
+  rather than measured privately. A caller placing a playhead or an overlay no
+  longer has to read the drawn glyph back out of the SVG to find the middle of a
+  notehead.
 
-  Quadrata measures them from the glyph's bounding box as it places; moderna
-  centres its heads on the anchor, so its edges are derived and straddle it
-  evenly.
+  Quadrata measures the edges from the glyph's bounding box as it places;
+  moderna derives them from the anchor, so they straddle it evenly.
+
+### Changed
+
+- **The rhythm model names a note by its own figure.** `applyCompoundBeats`
+  annotated every note of a melisma with the whole syllable's name, so the two
+  conventional overrides (salicus → arsic, doubly-dotted clivis → thetic) could
+  not see a clivis inside a syllable that read `compound`. Measured over the
+  corpus: 5 phrases of 26,803 change `rhythmicType`, and 75 notes of 400,948
+  change arsis/thesis (0.019%). Small because most newly-visible clivises carry
+  no double mora, so the thetic rule still does not fire on them.
+
+- **The docs no longer offer a downstream track contract.** `score.md` framed
+  the geometry as the interface analysis tracks build on, and said a custom
+  track downstream does the same. It could not: the tracks consume a private
+  surface (the tabula row, the lyric baseline, per-system right edges, the
+  scale factor, and band room only an emitter can reserve). The geometry is
+  documented for what it is and is used for: locating a note on the drawn page.
+  The three tracks stay in the library, and the tracks section is rewritten as
+  reference rather than prose.
+
+- **Corrected counts in the tracks documentation.** The cadence catalogue holds
+  110 families, not 122; the corpus carries about 26,800 cadences, not 20,500.
+  The `rara` share is stated both ways it can be read: about 43% of the
+  corpus's cadences, but about a third of the labels a page prints.
 
 ### Fixed
 
@@ -111,29 +125,51 @@ where the ink is.
   applied a weaker rule than the books', which restate once another pitch has
   intervened. *Felices sensus* wrote three flats and printed two: the third
   followed another A, though it opens a new phrase and governs a new B-flat.
-  Suppression is now per altered degree: 4,323 of the corpus's 4,358 written
-  signs print, and the 35 still held back are true immediate restatements.
+  Suppression is now keyed on the altered degree and on nothing else, and it
+  holds back only a sign with no music between it and the last mark of that
+  degree. A sign whose alteration is never found within its lookahead prints
+  rather than borrowing the coordinate of the line it was written on: that line
+  is a different fact, and keying both into one map let a found degree and an
+  unfound sign's carrying line collide. All three of the fixture's flats print.
 
 - **A natural's line was found by the wrong test.** The lookahead for the
   governed degree read `accidental !== 0`, which a natural never satisfies: it
   restores a pitch rather than altering one. Naturals are now read against the
   state they set, so a B-natural sign sits on the B line.
 
+## 0.8.0 — 2026-08-18
+
 ### Changed
 
-- **The docs no longer offer a downstream track contract.** `score.md` framed
-  the geometry as the interface analysis tracks build on, and said a custom
-  track downstream does the same. It could not: the tracks consume a private
-  surface (the tabula row, the lyric baseline, per-system right edges, the
-  scale factor, and band room only an emitter can reserve). The geometry is
-  documented for what it is and is used for: locating a note on the drawn page.
-  The three tracks stay in the library, and the tracks section is rewritten as
-  reference rather than prose.
+- **`prosody` is renamed `metrics`, because that is what it measures.**
 
-- **Corrected counts in the tracks documentation.** The cadence catalogue holds
-  110 families, not 122; the corpus carries about 26,800 cadences, not 20,500.
-  The `rara` share is stated both ways it can be read: about 43% of the
-  corpus's cadences, but about a third of the labels a page prints.
+- **CI runs the test suite** in place of the retired site deploy.
+
+## 0.7.0 — 2026-08-17
+
+The site leaves for its own repo, and the fonts are named rather than bundled.
+
+### Changed
+
+- **The site migrated to orreliquum.** The playground, its diagrams and the hand
+  figure now live in the site's own repo, which consumes tonus as a dependency;
+  this repo keeps the library and `docs/api`.
+
+- **Junicode is named, not bundled**, and the font note is stated as a recipe.
+  tonus ships no font files: the `fonts` option emits family references, and a
+  slot's `embed` carries the caller's own bytes.
+
+- **The glyph extractor is JavaScript**, and Bravura lives in the repo.
+
+- **The signs get their own documentation page**, and the removed exports leave
+  the table.
+
+### Fixed
+
+- **A correction to the Guidonian hand data.**
+
+- **0.6.1 — the tagged 0.6.0 never reached the registry.** A republish under a
+  new patch version, the registry having lagged the git tag.
 
 ## 0.6.0 — 2026-08-16
 
