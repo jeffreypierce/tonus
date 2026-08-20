@@ -679,11 +679,18 @@ interface ModalAffinity {
 
 ## Metrics
 
-`score.metrics` measures the chant's shape — counts, range, melisma,
-melodic motion, contour, tessitura, rhythm, cadence. It is chant-specific;
-`Harmony` has no metrics. For _Puer natus est_: ambitus 10 semitones, melisma
-ratio 2.04 notes per syllable, tessitura ~5 semitones above the final, a near-
-perfect melodic arch, mostly stepwise motion (leap rate ~5%).
+`score.metrics` measures the chant's shape — counts, range, melisma, melodic
+motion, contour, tessitura, rhythm, cadence. It is chant-specific; `Harmony`
+has no metrics.
+
+```js
+tonus.notatio(puerNatusEst).metrics;
+// { noteCount: 159, syllableCount: 78, phraseCount: 10,
+//   ambitus: 10, melismaRatio: 2.04, tessitura: 5.2, … }
+```
+
+_Puer natus est_ spans ten semitones, sings a little over two notes to the
+syllable, and sits about five semitones above its final.
 
 ```ts
 interface Metrics {
@@ -703,12 +710,19 @@ interface Metrics {
   cadenceWeight: number;
   cadenceDistribution: CadenceDistribution;
 }
+```
 
-interface IntervalStats {
-  histogram: Record<number, number>; // signed semitone interval → count
-  maxLeap: number;                   // largest absolute interval (semitones)
-  leapRate: number;                  // fraction of motions that are leaps (a 4th+)
-  motus: { step: number; skip: number; leap: number }; // 1–2 st / 3–4 / 5+
+The five composite fields each answer one question about the chant.
+
+**Where the melody sits, and the shape it traces.** `noteRange` is the plain
+compass; `arcus` reads the classic chant arch — rise to a peak, return to the
+final.
+
+```ts
+interface NoteRange {
+  min: number;   // lowest note MIDI
+  max: number;   // highest note MIDI
+  span: number;  // max − min, in semitones (this is `ambitus`)
 }
 
 interface Arcus {
@@ -717,28 +731,55 @@ interface Arcus {
   final: number;     // last note MIDI
   archIndex: number; // signed: +1 rises and returns, 0 flat/monotonic
 }
+```
 
-interface NoteRange {
-  min: number;
-  max: number;
-  span: number;
+**How the melody moves.** Chant is overwhelmingly stepwise, so `motus` sorts
+every adjacent within-phrase motion by size — the three names are the tradition's
+own, and a chant whose skips and leaps outnumber its steps is unusual enough to
+question.
+
+```ts
+interface IntervalStats {
+  histogram: Record<number, number>; // signed semitone interval → count
+  maxLeap: number;                   // largest absolute interval (semitones)
+  leapRate: number;                  // fraction of motions that are leaps
+  motus: { step: number; skip: number; leap: number };
 }
+```
 
+| motion | semitones | interval          |
+| ------ | --------- | ----------------- |
+| `step` | 1–2       | a second          |
+| `skip` | 3–4       | a third           |
+| `leap` | 5+        | a fourth or wider |
+
+**How it is rhythmed.** Arsis and thesis across the score, and the size of the
+compound beats they group into.
+
+```ts
 interface RhythmicProfile {
-  arsic: number; // count of arsic notes across the score
-  thetic: number; // count of thetic notes across the score
+  arsic: number;        // arsic notes across the score
+  thetic: number;       // thetic notes across the score
   avgGroupSize: number; // mean notes per compound beat
   maxGroupSize: number; // largest compound beat observed
 }
-
-interface CadenceDistribution {
-  comma: number; // divisio minima
-  tick: number; // virgula
-  semicolon: number; // divisio minor
-  colon: number; // divisio maior
-  doubleBar: number; // divisio finalis
-}
 ```
+
+**How it comes to rest.** `cadenceDistribution` counts the divisiones the chant
+writes, one field per rung of the bar-line hierarchy. `cadenceWeight` sums the
+same bars by that rank, so a chant closing on full bars weighs more than one
+broken by breaths.
+
+| field       | GABC    | divisio         | weight |
+| ----------- | ------- | --------------- | -----: |
+| `tick`      | `` ` `` | virgula         |   0.25 |
+| `comma`     | `,`     | divisio minima  |    0.5 |
+| `semicolon` | `;`     | divisio minor   |   0.75 |
+| `colon`     | `:`     | divisio maior   |    1.0 |
+| `doubleBar` | `::`    | divisio finalis |    1.5 |
+
+This table is canonical — `metrics.ts` cites it rather than restating the
+weights.
 
 ## Cadences
 
