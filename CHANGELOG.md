@@ -81,6 +81,14 @@ where the ink is.
   The three tracks stay in the library, and the tracks section is rewritten as
   reference rather than prose.
 
+- **The metrics documentation stops dumping six interfaces in a row.** The
+  section ended in fifty-odd unbroken lines of TypeScript, its meaning carried
+  in trailing comments. The five composite fields are now grouped by the
+  question each answers, and the two that were enumerations wearing interfaces
+  are tables: `motus` with the semitone ranges its three names mean, and
+  `cadenceDistribution` with each divisio's GABC mark and analytic weight —
+  the bar-line hierarchy stated once, where `metrics.ts` already cites it.
+
 - **Corrected counts in the tracks documentation.** The cadence catalogue holds
   110 families, not 122; the corpus carries about 26,800 cadences, not 20,500.
   The `rara` share is stated both ways it can be read: about 43% of the
