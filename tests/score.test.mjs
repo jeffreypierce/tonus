@@ -410,3 +410,47 @@ describe("intoned psalmody is words", () => {
     assert.ok(starts < rows.length, "wordStart is not true for every syllable");
   });
 });
+
+// The gamut is an ABSOLUTE frame — `temper/data/guido.ts` fixes Γ (gamma ut) at
+// midi 43 — and a parsed chant is placed in the same midi space. The two must
+// agree, and for a whole octave they did not: the staff anchored one octave
+// below Γ, so a chant read at or under the floor of the medieval system. The
+// tabula was self-consistent (spn, hz and octave all derive from midi), which
+// is why nothing here caught it; it showed on the Guidonian hand, where a joint
+// is a fixed place and the site had grown a per-chant octave lift to compensate.
+describe("a parsed chant sits on the gamut, not below it", () => {
+  const GAMMA_UT = 43;
+
+  test("the corpus reads at or above gamma ut", async () => {
+    const tonus = (await import("../dist/index.js")).default;
+    const { CENSUS_ORDER } = await import("../dist/index.js");
+    const below = [];
+    for (const id of CENSUS_ORDER.slice(0, 200)) {
+      const [chant] = tonus.cantus({ id });
+      if (!chant) continue;
+      let score;
+      try { score = tonus.notatio(chant); } catch { continue; }
+      if (!score.tabula.length) continue;
+      const lowest = Math.min(...score.tabula.map((r) => r.midi));
+      if (lowest < GAMMA_UT) below.push(`${id} (lowest ${lowest})`);
+    }
+    assert.deepEqual(below.slice(0, 5), [],
+      `${below.length} chants read below Γ (midi ${GAMMA_UT}) — the staff has `
+      + "come unanchored from the gamut; see parse.ts's `oct`");
+  });
+
+  test("a c4 chant's letters name the gamut degrees they are", async () => {
+    // The clef is the anchor, so pinning one letter pins the frame: on c4 the
+    // letter `f` is F3, which the gamut calls Fefaut. Reading it by its gamut
+    // NAME ties the two frames together at a known point, so a drift of a whole
+    // octave cannot pass — Fefaut has no twin an octave down.
+    const tonus = (await import("../dist/index.js")).default;
+    const temper = tonus.temperamentum({ tuning: "pythagorean" });
+    const { tabula } = buildScore(makeChant("(c4) A(f)b(g)c(h) (::)"));
+    assert.deepEqual(tabula.map((r) => r.spn), ["F3", "G3", "A3"]);
+    assert.deepEqual(
+      tabula.map((r) => temper.gradus(r.midi)?.nomen),
+      ["Fefaut", "Gesolreut", "Alamire"],
+    );
+  });
+});

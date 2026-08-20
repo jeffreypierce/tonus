@@ -43,9 +43,12 @@ import { createLyricDecoder } from "./lyric.js";
 import { detectVowelAccent } from "../chant/syllabify.js";
 
 // Constants
+// `oct` anchors the staff onto the gamut, which is an absolute frame: guido.ts
+// fixes Γ at midi 43. At oct 3 a chant read an octave below that anchor, so
+// most of the corpus sat at or under the gamut's floor.
 const DEFAULT_OPTIONS: Required<Pick<ParseOptions, "oct" | "useVowelAccent">> =
   {
-    oct: 3,
+    oct: 4,
     useVowelAccent: true,
   };
 
