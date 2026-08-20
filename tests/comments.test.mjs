@@ -2,13 +2,22 @@
 // tests/comments — the claims comments make about the repo, checked
 // ---------------------------------------------------------------------------
 // A comment cannot be wrong at runtime, so nothing catches it when it goes
-// stale — it just quietly misdirects the next reader. These are the three
+// stale — it just quietly misdirects the next reader. These are the four
 // classes that have actually broken here, each one a check a machine can make:
-// a path that no longer exists, a constant restated in prose, and a citation
-// key with no entry.
+// a path that no longer exists, a constant restated in prose, a citation key
+// with no entry, and a CORPUS MEASUREMENT the library can still answer for
+// itself.
 //
-// They read the SOURCE tree, not `dist/`: comments are stripped from the build,
-// so there is nothing left to check by the time the rest of the suite runs.
+// That last class is the docs, not the comments, and it is the one that costs
+// real upkeep: every count in docs/api is a fact the corpus knows, copied by
+// hand, and it goes stale on the next re-bake with nothing to catch it. The
+// catalogue held 122 families for as long as it took someone to notice it held
+// 110. A number the library can derive is checked here against the library.
+//
+// The source checks read the SOURCE tree, not `dist/`: comments are stripped
+// from the build, so there is nothing left to check by the time the rest of
+// the suite runs. The docs checks read `dist/`, because they compare prose
+// against what the shipped library actually reports.
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -157,5 +166,75 @@ describe("comments — every [biblio: key] resolves", () => {
       }
     }
     assert.deepEqual(dangling, [], `unresolved citations:\n  ${dangling.join("\n  ")}`);
+  });
+});
+
+describe("docs — a corpus measurement the library can answer for itself", () => {
+  // Every figure below is a fact the shipped library reports. Written into
+  // prose it is a copy, and a copy of a corpus measurement goes stale on the
+  // next re-bake — silently, because prose cannot fail. The rule is not that
+  // docs may hold no numbers: it is that a number the library KNOWS is checked
+  // against the library, so the suite names the drift instead of a reader
+  // meeting it. A figure with no anchor (an external corpus's size, a hedged
+  // approximation) is prose and is not listed here.
+  const page = (name) => readFileSync(join(ROOT, "docs", "api", name), "utf8");
+
+  // `2,187` and `2187` are the same claim; the docs use both.
+  const states = (text, n) =>
+    new RegExp(`\\b${n.toLocaleString("en-US")}\\b|\\b${n}\\b`).test(text);
+
+  test("chant.md's corpora table quotes each book's own count", async () => {
+    const tonus = (await import("../dist/index.js")).default;
+    const text = page("chant.md");
+    const wrong = [];
+    for (const book of tonus.corpus({}).books) {
+      // The row is `| \`gr\` | Graduale Romanum | Solesmes, 1961 | 780 |` —
+      // find the row by its code, then read the count cell off the end.
+      const row = text.split("\n").find((l) => l.startsWith(`| \`${book.code}\``));
+      if (!row) { wrong.push(`${book.code}: no table row`); continue; }
+      const cells = row.split("|").map((c) => c.trim()).filter(Boolean);
+      const stated = Number(cells[cells.length - 1].replace(/,/g, ""));
+      if (stated !== book.count) {
+        wrong.push(`${book.code}: table says ${stated}, corpus reports ${book.count}`);
+      }
+    }
+    assert.deepEqual(wrong, [], `chant.md's corpora table has drifted:\n  ${wrong.join("\n  ")}`);
+  });
+
+  test("chant.md quotes the corpus ledger's own totals", async () => {
+    const tonus = (await import("../dist/index.js")).default;
+    const { count, listings, total } = tonus.corpus({});
+    const text = page("chant.md");
+    for (const [label, n] of [["count", count], ["listings", listings], ["total", total]]) {
+      assert.ok(states(text, n),
+        `chant.md states no ${n} — corpus({}).${label} reports it. If the corpus `
+        + "re-baked, the prose and the worked `corpus()` output both need it.");
+    }
+  });
+
+  test("the cadence catalogue's size and population are quoted as they stand", async () => {
+    const { CADENTIAE, CADENTIAE_POPULATION } = await import("../dist/index.js");
+    // 110 families over 26,787 ends. Both are stated in tuning.md, and the
+    // family count again in score.md where `rara` is explained — the number
+    // that was 122 in three places at once.
+    for (const name of ["tuning.md", "score.md"]) {
+      assert.ok(states(page(name), CADENTIAE.length),
+        `${name} does not state the catalogue's ${CADENTIAE.length} families`);
+    }
+    assert.ok(states(page("tuning.md"), CADENTIAE_POPULATION.ends),
+      `tuning.md does not state the population's ${CADENTIAE_POPULATION.ends} ends`);
+  });
+
+  test("census.md quotes the censused population", async () => {
+    const { CENSUS_ORDER } = await import("../dist/index.js");
+    assert.ok(states(page("census.md"), CENSUS_ORDER.length),
+      `census.md does not state the ${CENSUS_ORDER.length} chants the census covers`);
+  });
+
+  test("calendar.md quotes the calendar's own size", async () => {
+    const { CAL } = await import("../dist/engines/cal/data/cal.js")
+      .catch(() => import("../dist/data/cal.js"));
+    assert.ok(states(page("calendar.md"), CAL.length),
+      `calendar.md does not state the calendar's ${CAL.length} entries`);
   });
 });

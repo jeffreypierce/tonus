@@ -8,14 +8,14 @@
 // ReferenceError whenever ordinary.js loaded first).
 //
 // ── A FILTER THAT LEFT AND CAME BACK ───────────────────────────────────────
-// This filter was once retired because its data had a genre-shaped hole: 31%
-// of the corpus undated, 93% of RESPONSORIES among them, so `before: 1098`
-// deleted the Hartker repertory from Epiphany Matins — wrong about the
-// liturgy on the exact question the library exists to answer. The rule was
-// never the problem; the coverage was. The corpus side closed it (crosswalk
-// gap-fill + matcher v2: composite respond+verse, the incipit-entry rule,
-// containment, genre disambiguation — all gold-gated): 85% of shipped records
-// now carry a dated witness and responsories are 92% DATED. What remains
+// This filter was once retired because its data had a genre-shaped hole: a
+// third of the corpus undated, and RESPONSORIES almost all of it, so
+// `before: 1098` deleted the Hartker repertory from Epiphany Matins — wrong
+// about the liturgy on the exact question the library exists to answer. The
+// rule was never the problem; the coverage was. The corpus side closed it
+// (crosswalk gap-fill + matcher v2: composite respond+verse, the incipit-entry
+// rule, containment, genre disambiguation — all gold-gated): the great majority
+// of shipped records now carry a dated witness, responsories included. What remains
 // undated is deliberate (psalter, formulas) or editorial territory (hymns,
 // modern propers) — not a genre bias. So the evidence law stands: an undated
 // chant is EXCLUDED under any cutoff. Silence is not evidence.

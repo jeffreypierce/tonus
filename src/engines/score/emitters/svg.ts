@@ -1011,9 +1011,9 @@ export function toSvg(
       // GABC's `z` says "start a new line here", and it is not a hint: an
       // editor who set a chant chose where its lines end, and that choice
       // carries a reading of the piece a width cannot infer. tonus SKIPPED the
-      // token at parse — 41 Graduale chants carry one and every break was
-      // being thrown away, which is why the automatic breaks looked arbitrary
-      // against a printed copy.
+      // token at parse, so every break the Graduale chants that carry one had
+      // set was being thrown away, which is why the automatic breaks looked
+      // arbitrary against a printed copy.
       //
       // It wins over the fit test. Where it is absent the layout still decides.
       if (r.width != null && figure[0]!.lineBreak && prevSyllable !== -1) {
@@ -1109,8 +1109,9 @@ export function toSvg(
       // Break when the NEXT phrase will not fit, rather than once this one has
       // already overrun. The check was `x > width - padding`, which only fires
       // AFTER the boundary is crossed — and since a system may break only at a
-      // divisio, the overrun was a whole phrase wide. Measured over thirty
-      // graduals, every one of them overran a 900px request, by up to 289px.
+      // divisio, the overrun was a whole phrase wide. Measured over a sweep of
+      // graduals, every one of them overran the requested width, some by a
+      // wide margin.
       // That is what made a render wider than the column it was drawn for, and
       // why "sometimes bigger, sometimes smaller" varied by chant: the overrun
       // depends on where the phrases happen to fall.
@@ -1261,9 +1262,9 @@ export function toSvg(
     // above. But it cannot be the only one: quadrata's break test used to live
     // entirely inside `if (div && phraseEnds)`, so a system could end nowhere
     // else, and a phrase wider than the line simply ran until its next barline.
-    // Measured over 120 graduals, a QUARTER of quadrata's lines came out under
-    // 75% full against 6% in moderna — which breaks between syllables. That gap
-    // was the asymmetry, not a spacing difference.
+    // Measured over a sweep of graduals, a QUARTER of quadrata's lines came out
+    // barely more than half full, against a handful in moderna — which breaks
+    // between syllables. That gap was the asymmetry, not a spacing difference.
     //
     // The books break mid-phrase freely; the unit is the word, never a syllable
     // mid-word (which would split a lyric) and never mid-neume. So: at a word
@@ -1496,8 +1497,9 @@ export function toSvg(
       // ...and a word carried to the NEXT system takes a hyphen at the line's
       // end, which is what the books set. The gap-centred rule above cannot
       // reach this case — the two syllables have no gap between them, they have
-      // a line break — so the hyphen was simply dropped: measured, 351 splits
-      // across 165 of 200 graduals rendered with nothing joining the halves.
+      // a line break — so the hyphen was simply dropped: measured, the great
+      // majority of a sweep of graduals rendered a split word with nothing
+      // joining the halves.
       // "Sanc" ended a line and "tus" opened the next, reading as two words.
       const thisRight = ly.cx + estLyricW(ly.text) / 2;
       lyricSvgs.push(lyricText(thisRight + r.lyricSize * 0.42, ly.systemY, "-"));

@@ -95,9 +95,9 @@ tonus.corpus();
 ```
 
 **`count` is the number of chants** — the one to quote. `listings` is how long
-the shelf is, and `listings - count` is 580 extra rows, over the 683 chants
-printed in more than one book. The breakdowns describe the same population
-`count` does, so `genera` and `modes` sum to it.
+the shelf is: a melody printed in several books is stored once and listed under
+each, so the shelf runs longer than the repertory. The breakdowns describe the
+same population `count` does, so `genera` and `modes` sum to it.
 
 ```js
 tonus.corpus("am");
@@ -313,9 +313,9 @@ for that chant. The two prefixes in the shipped corpus are `gregobase:` (1,717)
 and `nocturnale:` (470), the latter carrying the Nocturnale's own alphanumeric
 keys rather than numbers.
 
-Within tonus an id is exactly one chant. A melody printed in several books —
-683 of them are — is stored once, under the record `cantus({ id })` returns, so
-`id` is a stable key to a chant rather than to a printing.
+Within tonus an id is exactly one chant. A melody printed in several books is
+stored once, under the record `cantus({ id })` returns, so `id` is a stable key
+to a chant rather than to a printing.
 
 ## The repertoire as of a date — the era view
 

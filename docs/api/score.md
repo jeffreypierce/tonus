@@ -605,9 +605,9 @@ divide, it falls back to the plain corpus share. A close that joins
 no [`CADENTIAE`](index.md#the-appendix) family reads **`rara`**. That is a
 measurement rather than a gap: the catalogue holds the 110 families above
 fifty corpus occurrences, so failing to join means rarer than anything it
-records. About 43% of the corpus's cadences land there, though of the labels a
-page prints, about a third read `rara`. It is a word, not a number, so it is
-not read on the percentage scale beside it.
+records. About 43% of the corpus's cadences join no family, though of the
+labels a page prints, about a third read `rara`. It is a word, not a number, so
+it is not read on the percentage scale beside it.
 
 Each cadence group carries `data-cadentia` (the family key, which joins back
 to [`CADENTIAE`](index.md#the-appendix) and carries the provenance a margin
@@ -768,9 +768,9 @@ this before deciding which field to use:
   so it is the one of the two that speaks about **medial** cadences.
 
 Measured over the cadences `notatio` reports across the shipped corpus — about
-26,800 of them — roughly 43% carry a formula, 56% join the catalogue, 31% carry
-both, and 44% fall outside it. Neither is derivable from the other, because the
-signature is mode-blind and the formula is mode-relative.
+26,800 of them — roughly 43% carry a formula, 57% join the catalogue, and 31%
+carry both, so about a third carry neither. Neither is derivable from the
+other, because the signature is mode-blind and the formula is mode-relative.
 
 ### `finality` — how often this family closes
 

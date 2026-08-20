@@ -24,14 +24,14 @@ export type NeumeShape =
   | "climacus resupinus"
   | "pes subpunctis"
   // The repercussive figures — a pitch restated rather than left. The
-  // classifier had no case for the unison beyond a two-note group, so every
-  // one of these fell to "compound": 12,675 figures, 6.6% of the corpus.
+  // classifier had no case for the unison beyond a two-note group, so every one
+  // of these fell to "compound".
   //
-  // RULED 2026-08-19 (Jeffrey): name them by CONTOUR, the strophic family
-  // included. Both emitters already read a repeated pitch as a stropha —
-  // quadrata breathes them apart on the staff position alone (svg.ts, "strophae
-  // breathe"), moderna merges the run into one slur — so the notation and the
-  // drawing already commit to the reading. Only the classifier withheld it.
+  // They are named by CONTOUR, the strophic family included. Both emitters
+  // already read a repeated pitch as a stropha — quadrata breathes them apart
+  // on the staff position alone (svg.ts, "strophae breathe"), moderna merges
+  // the run into one slur — so the notation and the drawing already commit to
+  // the reading. Only the classifier withheld it.
   //
   // This does not reopen the salicus ruling below. That one turns on an
   // ORNAMENT the printed edition may have resolved away, so reading it from
@@ -44,10 +44,10 @@ export type NeumeShape =
   | "pressus"            // a restated pitch, then falling
   | "pressus maior"      // falling into the restatement, then falling again
   // Only "pes subpunctis" (up, then all down) was named past three intervals.
-  // Its mirror belongs beside it. The praepunctis family is NOT
-  // here: measured over the corpus, the long figures are genuine compound
-  // melismas ([up,down,down,up] 643, [up,down,down,down] 524, …), not textbook
-  // praepunctis forms, and a name that matches nothing is worse than the gap.
+  // Its mirror belongs beside it. The praepunctis family is NOT here: measured
+  // over the corpus, the long figures turning that way are genuine compound
+  // melismas rather than textbook praepunctis forms, and a name that matches
+  // nothing is worse than the gap.
   | "scandicus subpunctis"  // two rising, then all falling
   | "compound";
 

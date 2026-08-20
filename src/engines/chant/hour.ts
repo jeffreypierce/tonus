@@ -113,10 +113,10 @@ function primeForFeast(feast: Feast): Chant[] {
  *
  * A monastic weekday in the temporale mostly has no proper antiphons — the
  * office-monastic table has the day but leaves antLaudes/antVespera/antMatutinum
- * empty (292 of its 409 entries), because those antiphons live in the psalter,
+ * empty in most of its entries, because those antiphons live in the psalter,
  * not in the propers. Without a fallback the hour silently returns a partial
- * ordo, which is why Lauds resolved on 106 of 360 days and essentially never in
- * the temporale.
+ * ordo, which is why Lauds resolved on well under a third of the year's days
+ * and essentially never in the temporale.
  *
  * ── WHY THE COMMUNE COMES BEFORE THE FERIAL CYCLE ───────────────────────────
  * A saint's day is not a feria. When the rubrics give a saint no proper

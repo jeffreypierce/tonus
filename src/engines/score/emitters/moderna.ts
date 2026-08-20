@@ -210,9 +210,9 @@ const HEAD_K = 0.825;
  *
  * This briefly mapped inclinatum to a half note, on the reasoning that the
  * ambitus figure uses that shape to mark a mode's tenor. That confused a
- * DIAGRAM's private vocabulary with the notation's: an inclinatum is 10.4% of
- * every note in the corpus, so a tenth of every transcribed chant came out
- * hollow, each one implying a length it does not have.
+ * DIAGRAM's private vocabulary with the notation's: an inclinatum is about a
+ * tenth of every note in the corpus, so that share of every transcribed chant
+ * came out hollow, each one implying a length it does not have.
  */
 function notehead(
   x: number, y: number, small: boolean, half: boolean,

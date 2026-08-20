@@ -309,8 +309,8 @@ export interface OrdinariumQuery extends CantusQuery {
 // A `Rite` type and a `rite` option are deliberately absent. tonus assembles
 // one cursus, the Benedictine: the Roman office table was largely hollow and
 // its psalmody had no consumer but that office, so `rite: "romanum"` returned a
-// chimera — Tridentine psalms under monastic hymns and versicles, agreeing on 3
-// chant ids out of 48. An option that cannot produce a cursus anyone sang is
+// chimera — Tridentine psalms under monastic hymns and versicles, agreeing on
+// barely a handful of chant ids. An option that cannot produce a cursus anyone sang is
 // worse than no option, because callers read it as a supported choice.
 export interface OfficiumQuery extends CantusQuery {
   feast?: Feast | Feast[];
