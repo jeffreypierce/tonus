@@ -230,10 +230,10 @@ const TAIL = 4;
  *
  * NOT part of the family key — kept because the folded value is still worth
  * reporting (it is the scale DEGREE, mode-theoretically real). As a key the
- * fold made a fifth ABOVE the final share a family with a fourth BELOW:
- * measured over 27,985 phrase ends, 3,499 landed on @-5, of which 2,427 were
- * really +7 and 1,072 really -5. Two opposite gestures, one key. Arrival in
- * the key is therefore the SIGNED offset; see cadenceKeys().
+ * fold made a fifth ABOVE the final share a family with a fourth BELOW — two
+ * opposite gestures under one key. The measurement behind that ruling is
+ * stated once, in `data/cadentiae.ts`'s header, beside the table it governs.
+ * Arrival in the key is therefore the SIGNED offset; see cadenceKeys().
  */
 export function reduceArrival(semitones: number): number {
   let a = semitones % 12;
@@ -268,6 +268,12 @@ export interface CadenceKeyEvent {
  * phrase ends with ZERO key disagreements — but agreement by luck across three
  * copies is what "no second parser, no drift" forbids; hence this one shared
  * function.
+ *
+ * That 27,985 is the population of the run that PROVED the agreement, and it
+ * does not match `CADENTIAE_POPULATION.ends`: the table was rebaked afterwards
+ * against the sung corpus. Two measurements of different populations, not a
+ * contradiction — the figure here is fixed to its proof and does not track the
+ * table.
  *
  * Takes the FLAT shape, because that is what the census and the miner have; the
  * engine's own detection flattens into it. A phrase end is a `phraseIndex`

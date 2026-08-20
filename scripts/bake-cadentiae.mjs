@@ -18,13 +18,18 @@ const OUT = resolve(__dir, "../src/data/cadentiae.ts");
 
 // Families below this corpus count stay in the qa artifact, out of the table.
 //
-// An earlier floor of 150 was chosen against 77,275 phrase-ends from the
-// pre-cut books. The shipped corpus is the sung 2,860-odd chants — 28,481
-// ends, roughly a third — so carrying 150 over would have silently shrunk the
-// table to ~29 families. The floor is scaled to the population it describes,
-// not to its own former number: at 50 the table carries 58.8% of phrase-ends
-// in 122 families, against the old shelf's 61.1% in 117. Same granularity,
-// honestly rescaled.
+// An earlier floor of 150 was chosen against the pre-cut books, whose phrase-end
+// population was some three times the shipped corpus's — so carrying 150 over
+// would have silently shrunk the table to a couple of dozen families. The floor
+// is scaled to the population it describes, not to its own former number: at 50
+// the table keeps the old shelf's granularity against a third of the ends.
+//
+// NO COUNT IS WRITTEN DOWN HERE. The header this script emits interpolates the
+// live figures (`${entries.length}` families, the population, the tabled share),
+// so the generated file cannot go stale. This comment is the part a human
+// maintains, and it once said "122 families" long after the bake made it 110 —
+// which is where that number leaked into tracks.ts and score.md. State the
+// reasoning; let the emitted header state the numbers.
 const FLOOR = 50;
 
 

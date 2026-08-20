@@ -59,7 +59,7 @@ function buildHalf(
       // whitespace-separated word opened with an empty-text syllable that took
       // syllableIndex 0, so the word's real first syllable never scored
       // wordStart and the renderer hyphenated between every pair: a whole verse
-      // set as one 43-syllable word. The word-aware metrics read the same lie.
+      // set as a single word. The word-aware metrics read the same lie.
       tokens.push(`${syl}(${note})`);
     }
   }

@@ -69,8 +69,8 @@ export function classifyNeume(notes: Note[]): Neume {
  * GABC marks figure boundaries (`!`, `/`, `//`) and the parser records them as
  * `context.neumeGroup`, but classification read the whole syllable, so a
  * three-figure melisma was named once and the name was almost always
- * "compound" — 18,718 of the 27,643 compounds measured before this, 67.7% of
- * them. A syllable is not a neume; it carries neumes.
+ * "compound" — two of every three compounds the corpus reported. A syllable is
+ * not a neume; it carries neumes.
  *
  * THE SALICUS IS CLASSIFIED AT SYLLABLE SCOPE, DELIBERATELY, and the exception
  * is the point rather than an oversight. Its rule reads the oriscus on the

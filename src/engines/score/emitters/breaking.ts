@@ -51,8 +51,8 @@ export interface BreakQuery {
    * Set when the caller has ALREADY consumed `next.lineBreak` itself. Quadrata
    * honours `z` in its own block (it must repeat the clef and place a custos
    * before the staff advances), so asking here too would break the same system
-   * twice — measured, one Graduale chant drew 9 custos for 9 systems where 8 is
-   * correct, the last system needing none.
+   * twice — measured, a Graduale chant drew one custos per system where the
+   * last system needs none.
    */
   forcedHandled?: boolean;
 }
@@ -96,8 +96,8 @@ export function decideBreak(q: BreakQuery): BreakVerdict {
   // be tested on its own: a single figure wider than a whole line (a 36-note
   // melisma at 420px) can never be rescued by breaking, but the line before it
   // should still end rather than run on. Folding this into the `need` test
-  // below let such a syllable extend a line that was already full — measured,
-  // one Graduale render overran by 56px.
+  // below let such a syllable extend a line that was already full, and a
+  // Graduale render overran its width.
   if (q.x > q.boundary) return { break: true, reason: "width" };
 
   return q.x + q.need > q.boundary
