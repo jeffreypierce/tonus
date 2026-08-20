@@ -108,7 +108,7 @@ The feast returned **carries the view** (`feast.before`), and every chant
 verb reads it back: `proprium`, `ordinarium`, and `officium`
 serve only chants attested by the same year, without being told the year
 twice. One `before` at the calendar door views the whole day. The chant side
-— what "attested" means, and what a slot the view excludes does — is in
+(what "attested" means, and what a slot the view excludes does) is in
 [chant.md](chant.md#the-repertoire-as-of-a-date--the-era-view).
 
 ```ts
@@ -142,12 +142,12 @@ interface Feast {
 }
 ```
 
-The `masses` list is derived from the Kyriale's own printed rubric — one
+The `masses` list is derived from the Kyriale's own printed rubric, one
 category per mass, by RANK: "In Paschal Time", "For feasts of the I class",
 "For Sundays throughout the Year", "For ferias". A day resolves to exactly
 one rubric (a BVM feast is "of the Blessed Virgin" even in Paschaltide),
 and the masses carrying that rubric are the masses it may sing, in the
-book's own numbering — where a rubric names several (II class 1–5), that
+book's own numbering. Where a rubric names several (II class 1–5), that
 numbering is the book's invitation to choose, and `ordinarium` rotates
 among them by year. The book's per-mass nicknames (_Orbis factor_ for
 Sundays, and so on) record customary use, which disagrees with the rubric for 9
@@ -211,7 +211,7 @@ derived from the date; overflow entries, such as the Epiphany weeks
 resumed before Septuagesima, take the season of the day they fall on.
 
 Season drives real liturgy in the ordinary: in the penitential seasons
-(`adv`, `quadp`, `quad`) the Gloria is omitted, and the Ite with it — the
+(`adv`, `quadp`, `quad`) the Gloria is omitted, and the Ite with it. The
 Benedicamus dismissal appears only where the selected mass carries a
 setting ([chant.md](chant.md#the-ordinary--ordinarium)).
 

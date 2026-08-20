@@ -69,7 +69,7 @@ those marks too.
 The corpus is **assignment-driven**: a chant ships when some day of the
 liturgical year calls for it. The calendar is walked year by year until it stops
 finding new assignments (39 years, in the event), and what it never reaches is
-not shipped — 10,156 book chants become 2,187.
+not shipped: 10,156 book chants become 2,187.
 
 Everything here answers "what was sung on this day". A query for a chant the
 calendar never calls for returns nothing.
@@ -77,11 +77,11 @@ calendar never calls for returns nothing.
 ## The books — `corpus`
 
 `corpus(code)` returns one book's bibliographic identity and a breakdown of what
-it holds — how many chants, in what genres, in what modes. `corpus({ book })` is
+it holds: how many chants, in what genres, in what modes. `corpus({ book })` is
 the same question in the query form every other verb uses; both spellings return
 one answer.
 
-`corpus()` with no argument returns **the whole shelf** — the rollup plus every
+`corpus()` with no argument returns **the whole shelf**, the rollup plus every
 book's ledger:
 
 ```js
@@ -94,7 +94,7 @@ tonus.corpus();
 //   books:  [ …10 Corpus entries, in registry order ] }
 ```
 
-**`count` is the number of chants** — the one to quote. `listings` is how long
+**`count` is the number of chants**, the one to quote. `listings` is how long
 the shelf is: a melody printed in several books is stored once and listed under
 each, so the shelf runs longer than the repertory. The breakdowns describe the
 same population `count` does, so `genera` and `modes` sum to it.
@@ -141,7 +141,7 @@ am.genera[0];         // { office: "an", genus: "Antiphona", count: 458 }
 am.full.genera[0];    // { office: "an", genus: "Antiphona", count: 1049 }
 ```
 
-Reading the two tallies side by side names what was left out — 1,049 antiphons
+Reading the two tallies side by side names what was left out: 1,049 antiphons
 in the book, 458 sung.
 
 Only the extractor can measure this. By the time tonus loads, the keep set has
@@ -163,7 +163,7 @@ is largely the Graduale and the Antiphonarius bound together (it shares hundreds
 of chants with each), while the Antiphonale Monasticum is almost entirely its own.
 
 The Nocturnale (`nr`) is compared differently, because it has no GregoBase
-catalogue: its counts come from its own extract, and it shares **nothing** —
+catalogue: its counts come from its own extract, and it shares **nothing**, so
 `unique` is all 1,564 chants it holds. That is a measurement, not a gap. The
 nocturnale–GregoBase crosswalk is a route to metadata, not a claim that the two
 books print the same chant, so it does not count as sharing.
@@ -295,18 +295,18 @@ A plain search does not sweep it in: `{ mode: 5 }` returns the shelf. Ask for a
 Kyrie and you get Kyries.
 
 For the setting a given DAY calls for, [`ordinarium`](#the-ordinary--ordinarium)
-is the verb — it applies the Kyriale's own rubrics. This is flat retrieval.
+is the verb, and it applies the Kyriale's own rubrics. This is flat retrieval.
 
 ### On chant ids
 
-An id's prefix names **the catalogue the identifier came from** — not the book
+An id's prefix names **the catalogue the identifier came from**, not the book
 the chant is printed in, and not a claim about who the melody belongs to. A
 chant carrying `gregobase:1210` is a Solesmes book chant that GregoBase happens
 to have catalogued; the corpus is assembled from ten books, and GregoBase is
 one source among several.
 
 The prefix is therefore **not a namespace you can query against**. GregoBase
-holds 18,148 chants; tonus ships 1,717 of them — 9.5% — because the corpus is
+holds 18,148 chants; tonus ships 1,717 of them (9.5%), because the corpus is
 assignment-driven, so an id copied from the GregoBase site will usually return
 `[]` here. That is not a lookup failure; it means no day of the calendar calls
 for that chant. The two prefixes in the shipped corpus are `gregobase:` (1,717)
@@ -322,7 +322,7 @@ to a chant rather than to a printing.
 `before: 1098` keeps only chants a manuscript of the 10th century or earlier
 already holds. This is **evidence, not existence**: the dates come from
 CANTUS's manuscript index, a terminus ante quem, so the filter answers "what
-is attested by then," never "what existed then" — and a chant with no dated
+is attested by then," never "what existed then." A chant with no dated
 witness is excluded rather than assumed old. CANTUS dates only to the century,
 so a year admits the centuries that have CLOSED before it (`before: 1098` →
 through the 900s).
@@ -339,7 +339,7 @@ tonus.ordinarium({ feast: easter }); // the ordinary the view attests
 ```
 
 What happens to a slot the view excludes differs by verb, on the rubric's
-own logic: `ordinarium` **re-picks** — the Kyriale offers ranked
+own logic: `ordinarium` **re-picks**, because the Kyriale offers ranked
 alternatives by design, so the rotation runs over the admissible pool and
 the day still sings. `proprium` and `officium` have no pool
 of alternatives, so an excluded chant **falls silent**. A `before` given to a
@@ -371,15 +371,15 @@ interface PropriumQuery extends CantusQuery {
 ## The ordinary — `ordinarium`
 
 `ordinarium(query?)` retrieves the fixed chants of the Mass from the
-Kyriale. A feast drives mass selection through its `masses` list — the
+Kyriale. A feast drives mass selection through its `masses` list, the
 masses the day's Kyriale RUBRIC appoints, derived as described in
 [calendar.md](calendar.md#the-days-feasts--festum); `mass` pins a kyriale
 number directly. Where the rubric names several masses, the year rotates
 through them (same feast, same year → same answer, every time), and sibling
 printings under one number (Mass I prints two dismissals; Mass XVII prints
 Kyrie A/B/C) rotate with it. Slots resolve independently, which the book
-licenses outright — "chants from one Mass may be used together with those
-from others" — with one exception, the book's own: **"the Ferial Masses
+licenses outright ("chants from one Mass may be used together with those
+from others") with one exception, the book's own: **"the Ferial Masses
 excepted."** Under a ferial rubric the sung ordinary is not gathered from
 several masses; only the dismissal travels.
 
@@ -397,10 +397,10 @@ tonus.ordinarium({ feast: easter });
 
 The **Gloria follows the day's rank rubric, not its season**: the ferial
 masses print none (XVI, XVIII) and the penitential-Sunday mass none (XVII),
-while a I-class feast inside Advent or Lent — the Immaculate Conception —
+while a I-class feast inside Advent or Lent (the Immaculate Conception)
 keeps its Gloria. At a Gloria-less Mass the dismissal is the Benedicamus
 Domino, and a mass with no dismissal of its own borrows one exactly as the
-book directs: "Benedicamus Domino **as in Mass II**" — so a green feria
+book directs: "Benedicamus Domino **as in Mass II**," so a green feria
 sings Mass XVI whole with the Mass II Benedicamus. The ad libitum appendix
 is a **solemnity boost**, reachable only under the festal rubrics (it takes
 its turn in the rotation once every _n + 1_ years); it never reaches a
@@ -475,7 +475,7 @@ seasonal ordo and returned in liturgical order. With no feast, each resolves
 for the [default epoch](index.md#dates).
 
 **Matins is returned flat.** The night office answers like any other hour,
-its responsories drawn from the Nocturnale Romanum (`nr`) — but the
+its responsories drawn from the Nocturnale Romanum (`nr`). But the
 three-nocturn, twelve-psalm division is not modelled: the chants are right,
 their grouping into nocturns is not expressed.
 
@@ -492,7 +492,7 @@ interface OfficiumQuery extends CantusQuery {
 }
 ```
 
-The eight hours ship as [`HORAE`](index.md#the-appendix), Matins first — read
+The eight hours ship as [`HORAE`](index.md#the-appendix), Matins first. Read
 them from there rather than transcribing them, and an unrecognised `hora`
 throws rather than matching nothing, so a misspelling cannot read as an empty
 hour.
@@ -507,9 +507,9 @@ tonus.officium({ hora: "vespers" });  // throws: unknown hora "vespers"
 
 ### One cursus, the Benedictine
 
-tonus assembles a single office — the monastic cursus — with no option to
+tonus assembles a single office (the monastic cursus) with no option to
 choose another. The chants come from the Antiphonale Monasticum (`am`) and its
-companions; the psalmody follows the Benedictine distribution — the little
+companions; the psalmody follows the Benedictine distribution, the little
 hours take the gradual psalms (Terce 119–121, Sext 122–124, None 125–127),
 with Sunday and Monday walking their portions of Ps 118 instead; Prime walks
 Pss 1–19 across the week (Sunday opens Ps 118); and Compline is the fixed
@@ -530,7 +530,7 @@ the opening formula is included, as it is for a psalm's first verse.
 mediant, as a psalm sung without an antiphon; `solemn` uses a tone's
 ornamented mediant where it has one. Canticles are addressed by name:
 `benedictus`, `magnificat`, `nunc dimittis`, `benedicite`. (The Te Deum
-is not psalmody — it carries its own melody and is not addressable here.)
+is not psalmody: it carries its own melody and is not addressable here.)
 
 ```js
 tonus.psalmus({ psalm: 109, verse: "1a", mode: 1 });

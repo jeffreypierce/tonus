@@ -20,7 +20,7 @@ is, where it is unusual, and what it is near.
 tonus.census({ id: "gregobase:1210" });
 ```
 
-Everything comes back in one call — profile, balance, neighbors:
+Everything comes back in one call: profile, balance, neighbors.
 
 ```js
 {
@@ -56,7 +56,7 @@ interface CensusQuery {
 }
 ```
 
-The census covers the **2,187 chants tonus ships** — the same population
+The census covers the **2,187 chants tonus ships**, the same population
 `cantus({ id })` addresses, one block per chant. An id with no block throws
 rather than returning an empty answer, because a silent nothing reads as "this
 chant is unlike everything," which is a different claim.
@@ -78,24 +78,24 @@ what they describe:
 | `textual`       |      7 | vowel distribution by sung duration, accent rate, melisma mean                    |
 
 Four more fields ride in the block and are **not** similarity dimensions:
-`flags` (a bitfield), `attest` (dating — that is what `before` reads),
+`flags` (a bitfield), `attest` (dating, which is what `before` reads),
 `extras`, and `reserve`. `by` will not accept them.
 
 ## How the measurement works
 
-Every number in a block reads off a single `notatio()` parse — the same parse
-`score` gives you — so the census can never disagree with the library about
+Every number in a block reads off a single `notatio()` parse (the same parse
+`score` gives you), so the census can never disagree with the library about
 what a chant is.
 
 Each float is a named measurement, not a learned one: time spent on the
 subfinal, how often a rising second follows a falling third. When the census
 calls two chants near, the profile says in what respect.
 
-Most groups are normalized to sum to one, so a group holds a distribution —
-where the melody's time goes, not how much of it there is; length is not a
+Most groups are normalized to sum to one, so a group holds a distribution:
+where the melody's time goes, not how much of it there is. Length is not a
 similarity. The trigram and cadence groups count against dictionaries mined
-from the corpus itself — its commonest motifs, its commonest closing gestures,
-one bucket for the rest — so the corpus supplies the vocabulary and the chant
+from the corpus itself (its commonest motifs, its commonest closing gestures,
+one bucket for the rest), so the corpus supplies the vocabulary and the chant
 supplies the usage.
 
 The reference is the mean block over all 2,187 chants, group by group. Because
@@ -105,15 +105,15 @@ divided by their count, are the season's mean profile in the same 221 slots.
 ## Distance is cosine per field group
 
 **This is a contract, not an implementation note.** The census answers about
-one chant at a time; grouping — "all Communions," "this season," "this
-manuscript" — is yours to do. The moment you pool blocks yourself you are
+one chant at a time. Grouping ("all Communions," "this season," "this
+manuscript") is yours to do. The moment you pool blocks yourself you are
 computing a distance, and if you compute it differently from the rule below
 your numbers will not agree with `census()`'s. Nothing will error.
 
 The rule, in three lines:
 
 1. Cosine **per field group**, never over the flat 221.
-2. `by: "all"` is the **equal-weight mean** of the per-group cosines — every
+2. `by: "all"` is the **equal-weight mean** of the per-group cosines: every
    dimension one vote, no tunable weights.
 3. Ties break to the lower id, so the same question always has the same answer.
 
@@ -122,7 +122,7 @@ sheer magnitude, so a long Tract would neighbor other long chants for being
 long. Per-group cosine asks about **shape within each dimension**.
 
 [`CENSUS_GROUPS`](index.md#the-appendix) gives you the group names and their
-field counts, and [`CENSUS_ORDER`](index.md#the-appendix) every censused id —
+field counts, and [`CENSUS_ORDER`](index.md#the-appendix) every censused id,
 so you can pool a set without guessing at either.
 
 ### Reading the numbers
@@ -140,7 +140,7 @@ per-group version spreads from about 0.85 down to 0.65. That compression comes
 from one wide block outvoting the other eight.
 
 **`before` filters before ranking.** It restricts the candidate pool, then
-ranks — so `k` stays satisfiable, and a filtered list is *not* a subset of the
+ranks, so `k` stays satisfiable, and a filtered list is *not* a subset of the
 unfiltered one. Chants that were ranked out by later material rise into it.
 Typicality is unaffected: it is always measured against the whole shipped
 corpus (see [Profile and typicality](#profile-and-typicality)).
@@ -201,7 +201,7 @@ const ranked = ids
 
 The per-group breakdown is where the answer becomes legible. _Quinque
 prudentes_ leads on `textual`, `cadenceMedial` and `trigram`, at about 0.99 on
-each — it sets its text and turns its phrases the way Communions do — while its
+each (it sets its text and turns its phrases the way Communions do), while its
 `cadenceFinal` is only about 0.82, so the one thing it does unlike a typical
 Communion is end. A chant is typical of its genus in some dimensions and not
 others.
@@ -213,8 +213,8 @@ Each group's `typicality` is its cosine against the corpus mean for that group:
 "unlike the rest."
 
 The two numbers above are a fair illustration. _Ab occultis meis_ is a mode-2
-Gradual whose `modal` typicality is about 0.99 — modally it is a typical
-mode-2 chant — while its `melodic` typicality is about 0.70, because its
+Gradual whose `modal` typicality is about 0.99, so modally it is a typical
+mode-2 chant. Its `melodic` typicality is about 0.70, because its
 interval
 vocabulary is its own. One chant can be conventional in one dimension and
 distinctive in another, which is the reason the groups are kept apart.
@@ -233,7 +233,7 @@ balance: { distance: 0.091, deviantGroups: ["degreeHist", "melodic"] }
 the corpus mean, 1 has nothing in common with it.
 
 `deviantGroups` names where a chant is unusual **relative to its own mean**,
-most deviant first — not against an absolute threshold. The question it answers
+most deviant first, not against an absolute threshold. The question it answers
 is "given how typical this chant is overall, where does it depart from
 itself?", which is what makes the answer legible for a chant that is unusual
 everywhere or nowhere.
@@ -273,12 +273,12 @@ tonus.census({ id: "gregobase:1210", before: 1100 });
 ```
 
 Restricts neighbors to chants a manuscript of the 11th century or earlier
-already holds — 1,790 of the 2,186 candidates. This is the same rule as
+already holds, 1,790 of the 2,186 candidates. This is the same rule as
 [`cantus({ before })`](chant.md#the-repertoire-as-of-a-date--the-era-view),
 through the same admissibility door: **evidence, not existence**, so a chant
 with no dated witness is excluded rather than assumed old.
 
-The seed chant itself is never filtered — you asked about it by name.
+The seed chant itself is never filtered, because you asked about it by name.
 
 ## What the census is not
 

@@ -42,8 +42,8 @@ const score = tonus.notatio(introit, { temperamentum: t });
 ```
 
 The structured view is `score.phrases`; the flat view, one row per note,
-is `score.tabula`. Phrases split at every divisio — the bars of chant
-notation, signs of punctuation rather than measure:
+is `score.tabula`. Phrases split at every divisio, the bars of chant
+notation, which are signs of punctuation rather than measure:
 
 | divisio | name                         |
 | ------- | ---------------------------- |
@@ -103,7 +103,7 @@ text: the `<sp>` shortcuts arrive as real characters (`<sp>V/</sp>` → ℣,
 `\greheightstar` verbatim → the raised *), centering braces and layout tags
 (`<clear>`, `<nlba>`) vanish, above-lines text (`<alt>`) is not lyric text,
 and page cross-references (`\pageref`) to the paper books are dropped. Style
-tags — `<i>`, `<b>`, `<sc>`, `<c>` (rubric color), `<e>` (elision) — survive
+tags (`<i>`, `<b>`, `<sc>`, `<c>` for rubric color, `<e>` for elision) survive
 as `runs`, styled spans that concatenate to `lyric`; a style opened in one
 syllable and closed several later (the common `<i>ij.</i>` and euouae
 patterns) styles every syllable it crosses. Both notation species draw the
@@ -289,7 +289,7 @@ analysis, visualization, or emission.
 
 `Harmony` exposes the same surface for voiced bodies
 ([heavens.md](heavens.md#the-tabula)). The tabula is also the rendering
-surface — the SVG renderer ([below](#rendering)) consumes it directly, which is
+surface. The SVG renderer ([below](#rendering)) consumes it directly, which is
 why `hz`, `velocity`, `bend`, and the ornament flags live on each row.
 
 ```js
@@ -364,7 +364,7 @@ interface ChantTabulaRow {
 
 ## Rendering
 
-The score is drawn as **SVG** — a self-contained, square-note chant staff with
+The score is drawn as **SVG**: a self-contained, square-note chant staff with
 SMuFL glyphs baked as inline paths (no external font). It consumes `score.tabula`,
 so the interpretation applied through `pondus` and `accentus` is already in the
 geometry. Microtuning lives on each tabula row's `bend`, `hz`, and `offset` for
@@ -373,7 +373,7 @@ a Web-Audio player to read directly.
 ### inscriptio — the standalone renderer
 
 `tonus.inscriptio(score, opts?)` draws a `Score` and returns `{ svg, geometry }`.
-Rendering is a standalone function that _takes_ a score, not a method on one — the
+Rendering is a standalone function that _takes_ a score, not a method on one. The
 score analyzes, `inscriptio` inks. It throws on a non-Score or an unknown
 notation species (the builder-function contract).
 
@@ -391,14 +391,14 @@ Two notation species, each with its own spacing pass:
 
 **Layout is deterministic, and lyric widths are computed rather than measured.**
 The same score and options give byte-identical SVG on every machine, with no
-DOM, no canvas, and no font file — `inscriptio` runs anywhere Node does. Note
+DOM, no canvas, and no font file, so `inscriptio` runs anywhere Node does. Note
 glyphs carry exact SMuFL advance widths; lyric text is computed from character
 classes, since measuring it would require the font's own metrics. Line breaks,
 system fill, and the width of the returned canvas all rest on that figure. It is
 close, not exact: a lyric set in a face far from the assumed proportions will
 break slightly early or late.
 
-Two consequences worth planning around. `width` is a **request, not a promise** —
+Two consequences worth planning around. `width` is a **request, not a promise**:
 the canvas returned is `max(width, content)`, so a chant whose content cannot fit
 comes back wider rather than clipped. And a caller who needs typographic
 precision should render at a generous `width` and scale the result, rather than
@@ -406,22 +406,22 @@ relying on the estimate to land a tight column exactly.
 
 Options, by group (all optional):
 
-- **layout** — `width` wraps systems to fit (absent = a single line); `scale`
+- **layout**: `width` wraps systems to fit (absent = a single line); `scale`
   sets how big the chant is drawn: `"small"`, `"normal"` (default), `"large"`,
   or a staff height in px for fitting a known column. Everything scales from it
-  — notes, lyrics, the air between systems — and it reflows the music, so a
+  (notes, lyrics, the air between systems), and it reflows the music, so a
   larger scale means fewer notes per line. The page margin does not scale: it
   belongs to the page rather than the notation, and scaling it gave a large
   chant *less* usable width than a small one.
-- **front matter** — set as the Solesmes books open a piece: `title` centers
+- **front matter**: set as the Solesmes books open a piece: `title` centers
   over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
   mark, e.g. _Introitus. 8._) sits upright at the left margin; `dropcap` draws
   the initial the printed books open with, taking the first letter out of the
   lyric and indenting the first system to hold it. Both species take the
-  title; the margin mark and the initial are **quadrata's alone** — moderna is
+  title; the margin mark and the initial are **quadrata's alone**, because moderna is
   a transcription read as an edition, and carries the analysis tracks a
   reserved cap column would fight. It ignores them rather than refusing.
-- **theme** — the dress: `fonts` and `colors`.
+- **theme**: the dress, `fonts` and `colors`.
 
 ### theme — faces and ink
 
@@ -441,14 +441,14 @@ tonus.inscriptio(score, {
 ```
 
 **`fonts`** carries four roles. A book's dropcap is very often *not* its lyric
-face — a Lombardic or uncial initial against a text hand, which is the pairing
+face, but a Lombardic or uncial initial against a text hand, which is the pairing
 the printed books use. Each role takes a font-family string or
 `{ family, weight?, scale? }` (`scale` adjusts that role's size, for a face
 whose apparent size differs from the house serif).
 
 The SVG carries font-family *references* by default, and the page hosting it
 supplies the face (`@font-face`). A slot may instead carry
-`embed: { base64, format? }` — the caller's own bytes — and the face then rides
+`embed: { base64, format? }` (the caller's own bytes), and the face then rides
 inside the SVG's `<style>`, making the file self-contained (at the cost of its
 size; one `@font-face` per family + weight, deduped). tonus bundles no font
 files: with `embed` it is a conduit for data the consumer supplies, so the
@@ -489,7 +489,7 @@ is 196 KB base64'd, which triples a typical chant and repeats in every file,
 where a reference is cached once.
 
 **`colors`** reach the SVG as CSS custom properties with the theme's own value
-as the fallback — `fill="var(--tonus-note, #111)"`. A rendered chant therefore
+as the fallback, `fill="var(--tonus-note, #111)"`. A rendered chant therefore
 carries the ink it was drawn with *and* stays themable: a host stylesheet that
 sets the property rethemes the score without re-rendering it.
 
@@ -502,8 +502,8 @@ sets the property rethemes the score without re-rendering it.
 }
 ```
 
-The emitter's semantic classes — `note`, `lyric`, `dropcap`, `custos`,
-`episema`, `divisio`, `clef`, `mora`, `ictus` — are stylable from the host page.
+The emitter's semantic classes (`note`, `lyric`, `dropcap`, `custos`,
+`episema`, `divisio`, `clef`, `mora`, `ictus`) are stylable from the host page.
 
 **`scale` is not part of the theme**: line breaking consumes it, so a scale
 change re-renders while a colour change does not.
@@ -537,11 +537,11 @@ is in, not an offset to add.
 ### The analysis tracks
 
 `tracks` draws an analysis band beneath every system. Any track rides either
-species, and all may ride one score — the selection is independent of the
+species, and all may ride one score: the selection is independent of the
 notation, as `notation` itself is. One governing ink system runs through them:
 every mark draws in the score's black, strata graded by opacity alone (the
-liturgical red belongs to the claims — the tonarium's mode line and the
-prosodia's accent dots), and every pressure-bearing line shares one nib law —
+liturgical red belongs to the claims, the tonarium's mode line and the
+prosodia's accent dots), and every pressure-bearing line shares one nib law:
 velocity as stroke width.
 
 ```js
@@ -679,7 +679,7 @@ interface ModalAffinity {
 
 ## Metrics
 
-`score.metrics` measures the chant's shape — counts, range, melisma, melodic
+`score.metrics` measures the chant's shape: counts, range, melisma, melodic
 motion, contour, tessitura, rhythm, cadence. It is chant-specific; `Harmony`
 has no metrics.
 
@@ -715,7 +715,7 @@ interface Metrics {
 The five composite fields each answer one question about the chant.
 
 **Where the melody sits, and the shape it traces.** `noteRange` is the plain
-compass; `arcus` reads the classic chant arch — rise to a peak, return to the
+compass; `arcus` reads the classic chant arch, a rise to a peak and a return to the
 final.
 
 ```ts
@@ -734,7 +734,7 @@ interface Arcus {
 ```
 
 **How the melody moves.** Chant is overwhelmingly stepwise, so `motus` sorts
-every adjacent within-phrase motion by size — the three names are the tradition's
+every adjacent within-phrase motion by size. The three names are the tradition's
 own, and a chant whose skips and leaps outnumber its steps is unusual enough to
 question.
 
@@ -778,12 +778,12 @@ broken by breaths.
 | `colon`     | `:`     | divisio maior   |    1.0 |
 | `doubleBar` | `::`    | divisio finalis |    1.5 |
 
-This table is canonical — `metrics.ts` cites it rather than restating the
+This table is canonical: `metrics.ts` cites it rather than restating the
 weights.
 
 ## Cadences
 
-`score.cadences` names the melodic close of each phrase — where metrics
+`score.cadences` names the melodic close of each phrase. Where metrics
 only counts the divisio bars, this identifies the figure. One `Cadence` per
 phrase-ending divisio: its resolution `target`, the melodic `approach`, and the
 `divisio` that tells medial from final (the double bar `::` is the final
@@ -795,21 +795,21 @@ the tabula.
 Two catalogues describe a cadence, and they answer different questions. Read
 this before deciding which field to use:
 
-> Every cadence carries a **`signature`** — always. Some are **catalogued** by
+> Every cadence carries a **`signature`**, always. Some are **catalogued** by
 > the corpus (`finality`, and everything in
 > [`CADENTIAE`](index.md#the-appendix)). Some, on the final, are **named** by
 > received theory (`formula`).
 
 - **`formula`** is _tradita_: the mode's cadence figures as the treatises give
   them ([tuning.md](tuning.md#cadence-figures)), matched in solmization
-  relative to the final — `"la-sol"`, `"mi-re"`. It fires **only on the
+  relative to the final (`"la-sol"`, `"mi-re"`). It fires **only on the
   finalis**, because the received catalogue holds only final figures.
 - **`signature`** is _inventa_: the tail's interval shape and where it lands,
   keyed as `"2,0,-2 @0"` and mined from the corpus. It fires on **any** target,
   so it is the one of the two that speaks about **medial** cadences.
 
-Measured over the cadences `notatio` reports across the shipped corpus — about
-26,800 of them — roughly 43% carry a formula, 57% join the catalogue, and 31%
+Measured over the cadences `notatio` reports across the shipped corpus (about
+26,800 of them), roughly 43% carry a formula, 57% join the catalogue, and 31%
 carry both, so about a third carry neither. Neither is derivable from the
 other, because the signature is mode-blind and the formula is mode-relative.
 
@@ -822,7 +822,7 @@ the final, 31 do not close, and finality across the catalogue runs the whole
 range from 0 to 1. So
 `arrival === 0` implies nothing about whether a close is final.
 
-It is `null` when the signature falls below the catalogue's floor — an
+It is `null` when the signature falls below the catalogue's floor: an
 uncatalogued close, not a close that never closes.
 
 ```ts
@@ -843,7 +843,7 @@ interface Cadence {
 }
 ```
 
-A one-note phrase is a cadence — a landing with no gesture — and keys with an
+A one-note phrase is a cadence (a landing with no gesture) and keys with an
 empty shape (`" @0"`), which is why `signature` is that key rather than null.
 
 `arrival` is signed and not octave-reduced: `@-5`, a fourth below the final,
@@ -852,7 +852,7 @@ and `@+7`, a fifth above, are distinct families.
 ## Modulations
 
 `score.modulations` marks where the tonal centre leans away from the home
-mode — the local, temporal counterpart to the imprint's global modal
+mode, the local counterpart to the imprint's global modal
 affinity. Each phrase is scored against all eight modes (the imprint's
 affinity math); a run of phrases that favours a foreign mode, by a margin,
 becomes one `Modulation` span. The margin is calibrated against Suñol's
@@ -861,13 +861,13 @@ distribution-based: it finds where a passage leans, not a functional analysis.
 
 `kind` says what the span is evidence OF, which matters because the three are
 not the same phenomenon. **`inflection`** is a single phrase leaning away and
-back — passing colour, not a shift. **`modulation`** is a sustained internal
+back: passing colour, not a shift. **`modulation`** is a sustained internal
 excursion, two phrases or more, that returns. **`transposition`** is the whole
 chant sitting in a foreign mode's frame: it does not close on its labelled
 final and one foreign mode dominates most of its phrases, meaning the melody is
 notated at a transposed position (the affinal) or the label disagrees with the
-notation. A transposed chant is not modulating — the displacement is global —
-so a caller displaying "modulations" should treat those spans as a re-reading of
+notation. A transposed chant is not modulating, because the displacement is
+global, so a caller displaying "modulations" should treat those spans as a re-reading of
 the whole chant rather than an event inside it.
 
 ```ts
@@ -913,35 +913,35 @@ The classifier applies Carroll's three melodic rules in priority order
 
 The first compound beat of an incise is always arsic. When every rule is inconclusive, the
 shape alternates from the previous group. Two conventional overrides
-precede the rules: the **salicus** is always arsic — the tension toward its
-summit is the arsic gesture — and the **doubly-dotted clivis** is always
+precede the rules. The **salicus** is always arsic, because the tension toward
+its summit is the arsic gesture, and the **doubly-dotted clivis** is always
 thetic, as a cadential figure.
 
 A salicus here is Cardine's: an ascent of at least three notes whose
 **next-to-last note is an oriscus** [biblio: cardine-semiology, ch. 16]. The
 oriscus is what makes one. An ascending group carrying only the editorial
-Solesmes ictus is a **scandicus** that was marked for rhythm — a distinction
-worth stating because conflating the two is, in Bevenot's word, a trap: over
+Solesmes ictus is a **scandicus** that was marked for rhythm. The distinction
+is worth stating because conflating the two is, in Bevenot's word, a trap: over
 the sung corpus tonus finds about 260 salici against about 1,900 scandici, so
 only about an eighth of that wider set carries an oriscus at all.
 
 Cardine's correction also decides WHICH note is principal. The printed
 editions lengthen the oriscus itself; the manuscripts show the principal note
-is the one **immediately following** it — the summit — so tonus prolongs that
+is the one **immediately following** it (the summit), so tonus prolongs that
 note and takes the oriscus lightly. This is the one point where the rhythmic
 layer departs from Mocquereau and Suñol, and it does so deliberately.
 
 ### Rhythmic types
 
-Above the per-beat arsis/thesis, each phrase carries a `rhythmicType` — Le
+Above the per-beat arsis/thesis, each phrase carries a `rhythmicType`, Le
 Guennant's taxonomy (via Carroll) of how the incise's compound beats chain, and
 the `beats` sequence it reads. The observable types are modeled: **IV** (a single
 arsis to a single thesis), **V** (several arses to one thesis), **VI** (one arsis
 to several theses), **VII** (regular A–T alternation), and **VIII** (a
-contraction — two simple rhythms overlapping at a shared ictus, after Suñol).
+contraction of two simple rhythms overlapping at a shared ictus, after Suñol).
 Types I–III use sub-beat cells that never surface in isolation and are not
 labeled; an incise that fits no type is `null`. The classification rules live at
-the data — see `classifyRhythmicType` in
+the data. See `classifyRhythmicType` in
 [`score/ir.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/score/ir.ts).
 
 ### Modeled and not

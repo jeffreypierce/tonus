@@ -343,11 +343,11 @@ interface GamutOptions {
 `modus` returns the full profile of one of the eight modes, as the
 medieval tonaries describe them:
 
-- its identity — Latin name, modern alias, _maneria_ (the family: Protus,
+- its identity: Latin name, modern alias, _maneria_ (the family: Protus,
   Deuterus, Tritus, Tetrardus), and authentic or plagal type;
-- its structure — finalis, tenor, scale degrees, ambitus, and the species
+- its structure: finalis, tenor, scale degrees, ambitus, and the species
   of fifth and fourth that build it;
-- its practice — hexachords in rank order, melodic profile, its cadence
+- its practice: hexachords in rank order, melodic profile, its cadence
   figures, and permitted modulations.
 
 Each mode also carries its traditional **ethos** (the character medieval theory
@@ -365,7 +365,7 @@ data, in [`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/ma
 temperamentum: the **finalis** and **reciting** tone as tuned notes (pitch +
 Guidonian step), and **ambitusNotes**, the mode's diatonic range walked out
 note by note. The raw `ModeData` fields (`final`, `tenor`, `cadences`, …)
-remain alongside — `Modus` extends `ModeData`.
+remain alongside, because `Modus` extends `ModeData`.
 
 ```js
 t.modus(1);
@@ -436,7 +436,7 @@ interface Modus extends ModeData {
 ### Cadence figures
 
 Each mode carries the melodic figures its phrases characteristically close
-on, in `modus(n).cadences` — the shapes by which a chant comes to rest, stored
+on, in `modus(n).cadences`, the shapes by which a chant comes to rest, stored
 as diatonic steps relative to the final. The score engine reads them to name a
 phrase's cadence ([score.md](score.md#cadences)).
 
@@ -449,10 +449,10 @@ phrase's cadence ([score.md](score.md#cadences)).
 
 The catalogue is an editorial synthesis covering the final cadences; its step
 encoding, sources, and known gaps (medial cadences are not yet included) are
-documented at the data — see `CadenceFigure` in
+documented at the data. See `CadenceFigure` in
 [`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
-This is the **tradita** half — what the treatises say. Its counterpart is the
+This is the **tradita** half, what the treatises say. Its counterpart is the
 corpus tally below, and they are not interchangeable: see [one spine, two
 annotations](score.md#one-spine-two-annotations).
 
@@ -460,8 +460,8 @@ annotations](score.md#one-spine-two-annotations).
 
 Where the figures above are received, [`CADENTIAE`](index.md#the-appendix) is
 **mined**: every phrase-end in the sung corpus, grouped into families by what
-the melody actually did. A family is a **shape** — the closing tail's
-successive semitone intervals — and an **arrival**, where it landed relative
+the melody actually did. A family is a **shape** (the closing tail's
+successive semitone intervals) and an **arrival**, where it landed relative
 to the chant's own closing note. Together they are the key, `"2,0,-2 @0"`, and
 the key is the family's whole name.
 
@@ -505,14 +505,14 @@ lift(fam, 6); // 2.15
 lift(fam, 4); // 0.07
 ```
 
-The commonest family in the corpus — about 1,100 occurrences, about 4% of all
-phrase-ends, closing a little under half the time — is not reached for evenly.
+The commonest family in the corpus (about 1,100 occurrences, about 4% of all
+phrase-ends, closing a little under half the time) is not reached for evenly.
 Mode 6 reaches for this close more than twice as often as the corpus does;
 mode 4 almost never. That is the figure the tonarium prints under a cadence
 ([score.md](score.md#the-analysis-tracks)).
 
-**The ratio is not baked.** The table exports the vocabulary — counts and
-their denominators — and leaves the arithmetic to the caller. Two cautions when
+**The ratio is not baked.** The table exports the vocabulary (counts and
+their denominators) and leaves the arithmetic to the caller. Two cautions when
 you take it: below roughly ten in-mode occurrences the ratio is one or two
 chants deciding a number that reads like a measurement, and a mode-less chant
 (`"?"`) has no denominator at all. In both cases fall back to `share`.
@@ -524,7 +524,7 @@ pitches: the **intonatio** (the opening rise), the **mediatio** (the
 cadence at the verse's colon), and the **terminatio** (the closing
 cadence). The termination varies by **differentia**, the cadential variant
 chosen to lead back into the antiphon; the mode's default differentia is
-used when none is given. The mode must be set explicitly — with mode
+used when none is given. The mode must be set explicitly, because with mode
 `"auto"`, `tonus()` throws.
 
 ```js

@@ -123,7 +123,7 @@ is for.
 | `CENSUS_GROUPS` | the field groups → `{ offset, count }`; the keys are the valid `by:` values **and** the `profile` keys |
 | `CENSUS_ORDER`  | every censused chant id, in block order — so membership is a lookup, not a `try/catch`                 |
 
-Use these to pool blocks without reproducing the distance rule — see [the census
+Use these to pool blocks without reproducing the distance rule. See [the census
 contract](census.md#distance-is-cosine-per-field-group).
 
 ## Full contents
@@ -218,7 +218,7 @@ Other fields carry only one register. Latin-only, _e.g._ `genus`, `ordinarium`,
 `incipit`, `differentia`, `accentus`. English-only, _e.g._ `date`, `velocity`, `hz`.
 
 Display strings live in exported maps (_e.g._ `SEASON_LABEL`),
-never as label fields on objects — the maps are [the appendix](#the-appendix).
+never as label fields on objects. The maps are [the appendix](#the-appendix).
 
 ### Dates
 
@@ -238,14 +238,14 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 
 ### Error contract
 
-- Query functions return `[]` on no match, never throw — but an **empty or
+- Query functions return `[]` on no match, never throw. But an **empty or
   unknown-key query** throws (a mistyped filter is a bug, not an empty result):
   `festum({ month: 12 })` and `cantus({})` throw rather than silently resolving a
   plausible-looking answer.
 - Builder functions throw `Error` with a descriptive message on invalid input.
 - `notatio` throws on invalid `Chant` input.
 - `inscriptio` throws on a non-`Score` argument or an unknown notation species.
-- `temperamentum.tonus()` throws if `mode` is `"auto"` — mode must be set
+- `temperamentum.tonus()` throws if `mode` is `"auto"`. Mode must be set
   explicitly.
 - Malformed `comma`, ratio, or Scala input throws `RangeError`; custom scales
   must supply 7 or 12 steps, beginning at `1/1` (a degree list) or ending at

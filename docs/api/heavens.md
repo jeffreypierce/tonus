@@ -168,12 +168,12 @@ and moves with precession; a table carrying "March 21" would be wrong for most
 of the period this library models, and wrong differently every century.
 
 **What is omitted, and why.** The exaltation degrees Ptolemy gives (the Sun at
-19° Arietis and the rest) are not carried — the sign is the resolution anything
-here reads. Nor are the lunar nodes' exaltations, because the nodes are not
+19° Arietis and the rest) are not carried, because the sign is the resolution
+anything here reads. Nor are the lunar nodes' exaltations, because the nodes are not
 tonus bodies. Five signs exalt nobody: that silence is the tradition's, not a
 gap in the table.
 
-The `melothesia` is the *homo signorum* of medieval calendars — Aries at the
+The `melothesia` is the *homo signorum* of medieval calendars, Aries at the
 head down to Pisces at the feet. It was practice, not decoration: phlebotomy
 was timed against it, and while the Moon stood in a sign its member was not to
 be touched. Sourced from Ptolemy's *Tetrabiblos* I.17 and I.19
@@ -216,7 +216,7 @@ The doctrinae:
 Sphere pitches are computed directly from the doctrina's pure ratios,
 anchored at the temperamentum's A4, so historical coherence holds:
 `temperamentum("ptolemy-intense")` with `harmonia({ doctrina: "ptolemy" })`
-gives pure Ptolemaic intervals throughout — Sun→Jupiter a pure 3/2,
+gives pure Ptolemaic intervals throughout: Sun→Jupiter a pure 3/2,
 Sun→Saturn a pure 2/1. The temperamentum's scale governs pitch naming and
 the imprint.
 
@@ -322,7 +322,7 @@ h.tabula.find((r) => r.name === "Jupiter");
 ```
 
 `ratio` is the doctrina's own fraction against the mese, the primary datum of
-the whole scheme — `spn` and `hz` are that ratio sounded against A4, not
+the whole scheme. `spn` and `hz` are that ratio sounded against A4, not
 independent claims. Comparing doctrinae means comparing these: the table
 under [Theory & Context](#theory--context) is what the field returns.
 
@@ -364,7 +364,7 @@ The doctrina ratios are reconstructed from the primary texts through
 Joscelyn Godwin's syntheses, mapping each body to a Greek tone-name and
 deriving its ratio by Pythagorean interval arithmetic normalized to the
 mese (Sun = 1/1). The full method, the taxonomy, and the decisions taken
-along the way are documented at the data — see `DOCTRINAE` in
+along the way are documented at the data. See `DOCTRINAE` in
 [`harmonia/data/doctrines.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/harmonia/data/doctrines.ts).
 The same arithmetic is laid out from the tuning side in
 [tuning.md](tuning.md#theory--context).
@@ -385,7 +385,7 @@ The resulting ratios, by sphere from the outermost:
 
 The single pitch separating Pythagoras from Boethius is Venus: a whole
 tone above the Sun in the disjunct system (9/8, B durum), a semitone in
-the conjunct (256/243, B molle) — the origin of the durum/molle
+the conjunct (256/243, B molle). This is the origin of the durum/molle
 distinction that runs through all of medieval music theory.
 
 ## Sources
