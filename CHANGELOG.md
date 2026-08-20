@@ -86,7 +86,44 @@ where the ink is.
   The `rara` share is stated both ways it can be read: about 43% of the
   corpus's cadences, but about a third of the labels a page prints.
 
+- **A corpus measurement the library can answer for itself is checked against
+  the library.** A count written into prose is a copy, and a copy goes stale on
+  the next re-bake with nothing to catch it: the catalogue held 122 families for
+  as long as it took someone to notice it held 110, in three places at once.
+  `tests/comments.test.mjs` gains the class — the book table, the ledger totals,
+  the catalogue's size and population, the censused count, the calendar's size —
+  each failure naming the file, the stale figure and the live value. Illustrative
+  counts come out of the comments that carried them; calibration provenance
+  stays, because a figure recording what a constant was fitted against is the
+  evidence for that constant, not decoration.
+
+  Three figures were already wrong. `chant.md` gave `listings - count` as 580
+  extra rows "over the 683 chants printed in more than one book", but 683
+  multi-book chants produce 696 extra rows — two measures of different things in
+  one sentence, now stated as the rule they illustrate. `score.md` had a cadence
+  breakdown failing inclusion–exclusion, and read its 43% as the share that
+  joins the catalogue where it is the share that does not.
+
 ### Fixed
+
+- **The staff was anchored an octave below the gamut.** `guido.ts` fixes Γ
+  (gamma ut) at midi 43 and runs two octaves up from it, so within tonus the
+  gamut is an absolute frame. The GABC parser anchored the staff an octave under
+  it: a c4 chant opened on E2 at 82.5 Hz, and most of the corpus read at or
+  below the floor of the medieval system. Measured over 400 chants, 346 sat
+  below Γ; none do now. *Ab occultis meis* spans midi 52–65, opening on E3 and
+  landing on Elami, Fefaut, Gesolreut.
+
+  Nothing caught it because the tabula was self-consistent — `spn`, `hz` and
+  `octave` all derive from `midi`, so they reported a wrong number faithfully.
+  It showed on the Guidonian hand, where a joint is a fixed place: orreliquum
+  had grown a per-chant octave lift to haul chants back onto the figure, itself
+  replacing an earlier manual control. Two compensations for one constant. A
+  downstream consumer carrying such a lift should now remove it.
+
+  **This moves output data**: every `midi`, `hz`, `spn` and `octave` in the
+  tabula shifts by twelve semitones. The census is unaffected — its pitch fields
+  are final-relative, and `blocks.bin` rebuilds bit-identical.
 
 - **`NoteGeometry.noteIndex` addressed the wrong note.** Both emitters filled
   it from the row's `neumeIndex` (position within the neume FIGURE) where
