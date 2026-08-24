@@ -18,27 +18,55 @@ const LETTERS = "abcdefghijklm";
 // A higher c-clef (c4 vs c1) moves "do" up the staff, so the same letter reads a
 // lower pitch — hence doIdx climbs 3→5→7→9 across c1→c4. The f-clefs anchor on
 // fa (MIDI 53) and are used for lower-tessitura chant.
-const CLEFS: Record<string, { doMidi: number; doIdx: number }> = {
-  c1: { doMidi: 60, doIdx: 3 },
-  c2: { doMidi: 60, doIdx: 5 },
-  c3: { doMidi: 60, doIdx: 7 },
-  c4: { doMidi: 60, doIdx: 9 },
-  // f-clefs anchor fa on the named line. Staff lines (bottom→top) sit at
-  // letters d/f/h/j (per the Gregorio spec: 2-line staff = a–i, 3-line = a–k,
-  // 4-line = a–m, pinning the lines at slots 3/5/7/9), so f3 puts fa at 'h'
-  // (7) and f4 at 'j' (9). Previous values (5 and 3) were off by a third and
-  // read every f-clef chant at the wrong staff position.
-  f3: { doMidi: 53, doIdx: 7 },
-  f4: { doMidi: 53, doIdx: 9 },
-};
+// The staff-line slots the clefs anchor to, low to high: letters d/f/h/j per
+// the Gregorio spec (2-line staff = a–i, 3-line = a–k, 4-line = a–m).
+const LINE_SLOTS = [3, 5, 7, 9];
 
+// Every clef GABC can declare, built from the same two rules rather than listed
+// by hand: a c-clef puts "do" (MIDI 60) on its named line, an f-clef puts "fa"
+// (MIDI 53) there. cN/fN for N in 1–4, plus the `b` variants (cbN/fbN) that
+// additionally declare a B-flat key signature.
+//
+// This table used to hold six entries — c1–c4, f3, f4 — while `parse.ts`'s
+// CLEF_OFFSETS held all sixteen. Two tables disagreeing about what a clef is,
+// with the smaller one throwing "Unknown clef" on inputs the parser accepts
+// happily. Deriving them removes the chance of a third disagreement.
+const CLEFS: Record<string, { doMidi: number; doIdx: number }> = {};
+for (let n = 1; n <= 4; n++) {
+  const doIdx = LINE_SLOTS[n - 1]!;
+  // An f-clef names fa's line, and fa is the 4th diatonic step (index 3), so
+  // "do" sits three slots below the named line — which is what doMidi 53
+  // (the F below middle C) is measured from.
+  CLEFS[`c${n}`] = { doMidi: 60, doIdx };
+  CLEFS[`cb${n}`] = { doMidi: 60, doIdx };
+  CLEFS[`f${n}`] = { doMidi: 53, doIdx };
+  CLEFS[`fb${n}`] = { doMidi: 53, doIdx };
+}
+
+/**
+ * The GABC letter for a MIDI pitch under `clef` — with `x` appended when the
+ * pitch is a B-flat (`jx`, the flat sign then the note).
+ *
+ * B-flat is the ONE accidental chant sings — the b molle of the medieval gamut,
+ * the whole reason `parse.ts` carries a flat state machine and the `b` clefs
+ * exist. This function used to throw "is not diatonic" on it, which made the
+ * apparent inverse of `gabcToMidi` unable to spell a pitch the parser reads on
+ * every other page. Every other chromatic pitch class still throws: those are
+ * outside the gamut, and inventing a spelling for them would be a worse answer
+ * than refusing.
+ */
 export function midiToGabc(midi: number, clef = "c4"): string {
   const def = CLEFS[clef];
   if (!def) throw new Error(`Unknown clef: ${clef}`);
 
-  const octave = Math.floor(midi / 12) - 1;
   const pc = midi % 12;
-  const diatIdx = DIATONIC.indexOf(pc);
+  // A flat is spelled on the staff slot of the natural ABOVE it: B-flat takes
+  // B's line with an `x`. Resolve to that natural, then mark the result.
+  const flat = pc === 10;
+  const natural = flat ? midi + 1 : midi;
+
+  const octave = Math.floor(natural / 12) - 1;
+  const diatIdx = DIATONIC.indexOf(natural % 12);
   if (diatIdx === -1) throw new Error(`MIDI note ${midi} (pc ${pc}) is not diatonic`);
 
   const doOctave = Math.floor(def.doMidi / 12) - 1;
@@ -46,14 +74,21 @@ export function midiToGabc(midi: number, clef = "c4"): string {
 
   const letter = LETTERS[staffPos];
   if (!letter) throw new Error(`MIDI ${midi} out of GABC range for clef ${clef}`);
-  return letter;
+  return flat ? `${letter}x` : letter;
 }
 
 export function gabcToMidi(letter: string, clef = "c4"): number {
   const def = CLEFS[clef];
   if (!def) throw new Error(`Unknown clef: ${clef}`);
 
-  const staffPos = LETTERS.indexOf(letter.toLowerCase());
+  // Accept the `x` that `midiToGabc` emits, so the two stay inverses. A flat
+  // lowers the natural it marks by a semitone; only B carries one in the gamut,
+  // but the arithmetic is written once for whatever letter arrives.
+  const raw = letter.toLowerCase();
+  const flat = raw.endsWith("x");
+  const bare = flat ? raw.slice(0, -1) : raw;
+
+  const staffPos = LETTERS.indexOf(bare);
   if (staffPos === -1) throw new Error(`Unknown GABC letter: ${letter}`);
 
   // Diatonic steps from "do", split into whole octaves (÷7) and the step within
@@ -64,7 +99,8 @@ export function gabcToMidi(letter: string, clef = "c4"): number {
   const diatStep = ((stepsFromDo % 7) + 7) % 7;
 
   const doOctave = Math.floor(def.doMidi / 12) - 1;
-  return (doOctave + octOffset + 1) * 12 + DIATONIC[diatStep];
+  const natural = (doOctave + octOffset + 1) * 12 + DIATONIC[diatStep]!;
+  return flat ? natural - 1 : natural;
 }
 
 export function pcToGabc(pc: number, clef = "c4", oct = 0): string {

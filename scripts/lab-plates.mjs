@@ -109,6 +109,41 @@ export function buildPlates(tonus, fonts = {}) {
       render: () => tonus.inscriptio(tonus.notatio(kyrie()), { notation: "moderna", theme: JF }),
     },
     {
+      title: "Moderna — transposed up a tone",
+      note: "chromatics carry their sign; without it Ab and A share a slot unmarked",
+      render: () => tonus.inscriptio(
+        tonus.notatio(kyrie(), { temperamentum: { transpose: 2 } }),
+        { notation: "moderna", theme: JF },
+      ),
+    },
+    {
+      title: "Moderna — transposed down a minor third",
+      note: "the written octave floats so a low chant stays off the ledger lines",
+      render: () => tonus.inscriptio(
+        tonus.notatio(kyrie(), { temperamentum: { transpose: -3 } }),
+        { notation: "moderna", theme: JF },
+      ),
+    },
+    {
+      title: "Moderna — transposed a full octave",
+      note: "the lift absorbs it: same slots as the baseline, one clef throughout",
+      render: () => tonus.inscriptio(
+        tonus.notatio(kyrie(), { temperamentum: { transpose: 12 } }),
+        { notation: "moderna", theme: JF },
+      ),
+    },
+    {
+      title: "Moderna — ledger lines",
+      note: "a chant wider than the staff: one line per line passed, behind the head",
+      render: () => {
+        const [c] = tonus.cantus({
+          gabc: "(c4) Am(a)bi(c)tus(e) lar(g)gus(i) est(k) hic.(m) (::)",
+          incipit: "Ambitus largus", mode: 1,
+        });
+        return tonus.inscriptio(tonus.notatio(c), { notation: "moderna", theme: JF });
+      },
+    },
+    {
       title: "Moderna — heji on a flatted chant",
       note: "b molle under Pythagorean: no arrows, no throw (chain regression)",
       render: () => {
