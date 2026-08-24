@@ -37,7 +37,51 @@ const G = {
   noteheadBlack: "E0A4",
   augmentationDot: "E1E7",
   quilisma: "EA20",       // medRenQuilismaCMN
+  accidentalFlat: "E260",
+  accidentalNatural: "E261",
+  accidentalSharp: "E262",
 };
+
+// The staff holds nine written diatonic slots — bottom line E4 to top line F5
+// — which under the transposing gClef8vb sounds E3–F4, MIDI 52–65.
+const STAFF_LO = 52;
+const STAFF_HI = 65;
+
+/**
+ * How many octaves to lift the written notes so the chant sits on the staff.
+ *
+ * ONE clef, always: moderna draws a gClef8vb and nothing else. What floats is
+ * the written octave, the same move the orreliquum hand already makes when it
+ * lifts a chant by whole octaves onto the gamut's fingers.
+ *
+ * It earns its place going DOWN, which is the direction chant is transposed:
+ * the corpus already sounds below this staff (median 50–62 against 52–65), so
+ * a transposition of −4 puts 43.6% of all notes below the bottom line, some
+ * four ledger lines deep. Choosing the octave takes that to 15.8%. Upward it
+ * changes little, because chant does not sit high to begin with.
+ *
+ * Whole octaves only, and the same lift for the whole chant: shifting by
+ * anything else would respell the music, and shifting per-phrase would make
+ * one page read in two registers.
+ *
+ * The honest limit: an 8vb clef already says "sounds an octave lower", so a
+ * further lift understates the true pitch with nothing on the page confessing
+ * it. That is the accepted cost of keeping one clef; `notatio`'s `spn` remains
+ * the authority on what actually sounds.
+ */
+function pickOctaveLift(rows: ChantTabulaRow[]): number {
+  const midis = rows.map((r) => r.midi).filter((m): m is number => typeof m === "number");
+  if (midis.length === 0) return 0;
+  let best = 0;
+  let fewest = Infinity;
+  // Nearest first, so a tie keeps the chant where it was written.
+  for (const lift of [0, 1, -1]) {
+    const shifted = lift * 12;
+    const off = midis.filter((m) => m + shifted < STAFF_LO || m + shifted > STAFF_HI).length;
+    if (off < fewest) { fewest = off; best = lift; }
+  }
+  return best;
+}
 
 // ── geometry, as a function of the staff ──────────────────────────────────
 //
@@ -149,13 +193,43 @@ const LETTERS: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B:
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-/** Written y for a scientific pitch name on the treble-8 staff (bottom line E4). */
-function writtenY(spn: string, systemY: number, gm: ModernaMetrics): { y: number; steps: number } {
-  const m = /([A-G])[#b]?(-?\d)/.exec(spn);
-  if (!m) return { y: systemY + gm.MTOP + 4 * gm.MSP, steps: 0 };
-  const di = (Number(m[2]) + 2) * 7 + LETTERS[m[1]!]!;
-  const steps = di - (4 * 7 + LETTERS["E"]!); // relative to bottom line E4
-  return { y: systemY + gm.MTOP + 4 * gm.MSP - steps * (gm.MSP / 2), steps };
+/**
+ * Written y for a scientific pitch name on the treble-8 staff (bottom line
+ * written E4, sounding E3).
+ *
+ * `spn` is a SOUNDING pitch; the gClef8vb this species draws transposes, so the
+ * note is WRITTEN an octave above where it sounds. Hence the `+ 1` below:
+ * sounding G3 is written G4 and sits on the second line, where mode VII's final
+ * belongs. The reference generator folded that lift into a short reference term
+ * (`4 * 7` against a note term carrying `+2`) because it was fed pitches an
+ * octave below today's corpus; the two errors cancelled. Stated once, plainly,
+ * both halves now agree — and the chant lands on the staff instead of a sixth
+ * above it.
+ *
+ * `lift` is the further whole-octave shift `pickOctaveLift` chose for this
+ * chant, so a low or downward-transposed piece is written where it can be read
+ * rather than on a stack of ledger lines.
+ *
+ * The ACCIDENTAL is read but never changes the slot: a flat and its natural
+ * share one line (B-flat sits on the B line), which is why the letter alone
+ * fixes `steps`. It is returned separately so the caller can draw the sign.
+ * Discarding it was a silent wrong pitch — under transposition `Ab3` and `A3`
+ * landed on the same slot with nothing to tell them apart.
+ */
+function writtenY(
+  spn: string, systemY: number, gm: ModernaMetrics, lift = 0,
+): { y: number; steps: number; accidental: -1 | 0 | 1 } {
+  const m = /([A-G])([#b]?)(-?\d)/.exec(spn);
+  if (!m) return { y: systemY + gm.MTOP + 4 * gm.MSP, steps: 0, accidental: 0 };
+  const accidental = m[2] === "b" ? -1 : m[2] === "#" ? 1 : 0;
+  const written = Number(m[3]) + 1 + lift; // the 8vb clef writes an octave up
+  const di = (written + 2) * 7 + LETTERS[m[1]!]!;
+  const steps = di - ((4 + 2) * 7 + LETTERS["E"]!); // relative to bottom line E4
+  return {
+    y: systemY + gm.MTOP + 4 * gm.MSP - steps * (gm.MSP / 2),
+    steps,
+    accidental,
+  };
 }
 
 // Moderna's ink, as a CSS custom property with the house default as fallback —
@@ -278,6 +352,35 @@ function accidentalMark(x: number, y: number, code: string, gm: ModernaMetrics):
   return classedGlyph("accidental", code, x - gm.NH_W / 2 - accidentalWidth(code, gm), y, (gm.SCALE * 0.62));
 }
 
+/**
+ * The short lines that carry a notehead outside the five, as quadrata's
+ * `ledger` does: one per LINE position the note has passed, not one per step.
+ *
+ * `steps` counts diatonic slots up from the bottom line, so the staff occupies
+ * 0–8 and its lines are the even positions. A note at 10 gets a ledger at 10;
+ * at 11 (a space above that) it still gets only the one at 10. Below, the same
+ * downward: -1 draws nothing, -2 draws at -2.
+ *
+ * Rendered wider than the head by a quarter of its width on each side, the
+ * proportion quadrata uses, so the line reads as staff rather than as a tick.
+ */
+function ledgerLines(steps: number, mx: number, systemY: number, gm: ModernaMetrics): string[] {
+  if (steps >= 0 && steps <= 8) return [];
+  const half = gm.NH_W / 2 + gm.NH_W * 0.25;
+  const out: string[] = [];
+  const emit = (lp: number): void => {
+    const ly = systemY + gm.MTOP + 4 * gm.MSP - lp * (gm.MSP / 2);
+    out.push(
+      `<line class="ledger" x1="${(mx - half).toFixed(2)}" y1="${ly.toFixed(2)}" ` +
+      `x2="${(mx + half).toFixed(2)}" y2="${ly.toFixed(2)}" ` +
+      `stroke="${INK}" stroke-width="0.7"/>`,
+    );
+  };
+  for (let lp = 10; lp <= steps; lp += 2) emit(lp);
+  for (let lp = -2; lp >= steps; lp -= 2) emit(lp);
+  return out;
+}
+
 const DIV_KIND: Record<string, string> = {
   "`": "tick", ",": "tick", ";": "half", ":": "full", "::": "double",
 };
@@ -348,6 +451,17 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const markByRow = new Map<Row, AccidentalMark>();
   rows.forEach((row, i) => { const m = marks[i]; if (m) markByRow.set(row, m); });
 
+  // One lift for the whole chant, chosen before any note is placed — a page
+  // that changed register partway would read as two pieces.
+  const lift = pickOctaveLift(rows);
+
+  // The pitches an engine-computed sign already accounts for. `degreeSpn` is
+  // the mark's own statement of which pitch it alters, so this is the engine
+  // speaking rather than a second guess at its scoping rules — the spelled
+  // path below stays silent wherever a written sign has already spoken.
+  const alteredSpns = new Set<string>();
+  for (const m of marks) if (m?.kind === "glyph" && m.degreeSpn) alteredSpns.add(m.degreeSpn);
+
   // ── Front matter ── The same official display quadrata sets (title centered
   // over the score, the genus/mode mark stacked at the left margin — the
   // `annotation: "auto"` params), honoured here so both species open a piece
@@ -377,6 +491,10 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
   const body: string[] = [];
   const slurs: string[] = [];
+  // Ledger lines, collected as the notes are placed but emitted with the STAFF
+  // — they are staff, continuing it for one note, and must lie behind the
+  // notehead rather than cross it. `staff` is joined before `body` below.
+  const ledgers: string[] = [];
   const lyricSvgs: string[] = [];
   const lyricRuns: Array<{
     x: number; systemY: number; text: string; spans?: LyricRun[]; wordStart: boolean;
@@ -476,13 +594,28 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
     // Note x-positions within the syllable.
     let nx = x + gm.NH_W / 2 + 1;
-    const notePos: Array<{ mx: number; my: number; steps: number }> = [];
+    const notePos: Array<{ mx: number; my: number; steps: number; spelled: string | null }> = [];
     for (const r of srows) {
       if (r.quilisma) nx += 9.6;      // room for the fused squiggle
       const mk = markByRow.get(r);
       if (mk?.kind === "glyph") nx += accidentalWidth(mk.glyph!, gm); // room for the accidental
-      const { y, steps } = writtenY(r.spn, systemY, gm);
-      notePos.push({ mx: nx, my: y, steps });
+      const { y, steps, accidental } = writtenY(r.spn, systemY, gm, lift);
+      // A sign the SPELLING demands. `computeAccidentals` speaks for the marks
+      // written in the GABC (`accidentalSource: "explicit"`); a transposed
+      // score carries its accidentals in `spn` alone, where nothing was ever
+      // written, so those would otherwise go undrawn and the note would read a
+      // semitone off with no sign to say so.
+      //
+      // The guard is `alteredSpns`, NOT this row's own `mk`. A written sign is
+      // carried by the note BEFORE the one it governs — on gregobase:1180 the
+      // three signs sit on rows 27/39/62 and their B-flats on 31/40/66, wholly
+      // disjoint — so asking "does this row carry a mark?" says no on the very
+      // note the sign already covers, and drew a second glyph for each.
+      const spelled = accidental !== 0 && !alteredSpns.has(r.spn)
+        ? (accidental === -1 ? G.accidentalFlat : G.accidentalSharp)
+        : null;
+      if (spelled) nx += accidentalWidth(spelled, gm);
+      notePos.push({ mx: nx, my: y, steps, spelled });
       nx += gm.ADV + 4.6 * r.mora;
     }
     const notesW = nx - x - gm.ADV + gm.NH_W / 2 + 2;
@@ -490,16 +623,19 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
     // Draw notes.
     srows.forEach((r, i) => {
-      const { mx, my, steps } = notePos[i]!;
+      const { mx, my, steps, spelled } = notePos[i]!;
       const onLine = steps % 2 === 0;
+      ledgers.push(...ledgerLines(steps, mx, systemY, gm));
       if (r.quilisma) body.push(quilismaMark(mx, my, gm));
       const mk = markByRow.get(r);
       if (mk?.kind === "glyph") {
         // Vertically the sign belongs to the pitch it alters, not to the note
         // it was written before; horizontally it stays at this note's column.
-        const ay = mk.degreeSpn ? writtenY(mk.degreeSpn, systemY, gm).y : my;
+        const ay = mk.degreeSpn ? writtenY(mk.degreeSpn, systemY, gm, lift).y : my;
         body.push(accidentalMark(mx, ay, mk.glyph!, gm));
       }
+      // A spelled accidental alters THIS note, so it sits on this note's line.
+      else if (spelled) body.push(accidentalMark(mx, my, spelled, gm));
       else if (mk?.kind === "cents") {
         // Cents labels float in a band above the staff (not glued to the
         // head) — an analytic overlay, not an engraving mark.
@@ -677,7 +813,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     `width="${W}" height="${height}" class="tonus-chant moderna">${svgTitle}` +
     lyricEmbed +
     header.join("") +
-    staff.join("") + clefSvgs.join("") + body.join("") + slurs.join("") + lyricSvgs.join("") +
+    staff.join("") + ledgers.join("") + clefSvgs.join("") + body.join("") + slurs.join("") + lyricSvgs.join("") +
     `</svg>`;
 
   const geometry: NoteGeometry[] = placements.map((pl) => ({

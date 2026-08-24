@@ -1,6 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { buildTemper } from "../dist/engines/temper/api.js";
+import { midiToGabc, gabcToMidi } from "../dist/engines/temper/gabc.js";
 
 describe("buildTemper", () => {
   test("defaults to pythagorean tuning with A4=440", () => {
@@ -752,5 +753,78 @@ describe("lupus — the wolf the chain leaves over", () => {
       assert.equal(buildTemper({ tuning }).lupus(), null, tuning);
     assert.equal(buildTemper({ scale: ["1/1", "9/8", "5/4", "4/3", "3/2", "5/3", "15/8"] }).lupus(),
       null, "a custom degree list");
+  });
+});
+
+// The GABC letter converters had NO direct coverage, which is how two defects
+// sat in them: `midiToGabc` threw on B-flat — the one accidental chant sings —
+// and CLEFS held six clefs against parse.ts's sixteen, so a `cb2` the parser
+// reads happily raised "Unknown clef" here.
+describe("gabc — letters, clefs, and the one accidental chant sings", () => {
+  const CLEFS = [
+    "c1", "c2", "c3", "c4", "cb1", "cb2", "cb3", "cb4",
+    "f1", "f2", "f3", "f4", "fb1", "fb2", "fb3", "fb4",
+  ];
+
+  test("every clef parse.ts accepts is a clef gabc.ts accepts", () => {
+    for (const clef of CLEFS) {
+      assert.doesNotThrow(() => gabcToMidi("g", clef), `${clef} should be known`);
+    }
+  });
+
+  test("B-flat spells with the flat mark rather than throwing", () => {
+    // 58 = B♭3. Under c4 the B natural sits on slot 'i', so the flat reads `ix`
+    // — the same line, marked. (B♭4 is off the thirteen-slot staff under c4.)
+    assert.equal(midiToGabc(58, "c4"), "ix");
+    assert.equal(midiToGabc(59, "c4"), "i");
+  });
+
+  test("the flat round-trips back to the pitch it came from", () => {
+    for (const clef of CLEFS) {
+      for (const midi of [58, 70]) {
+        let letter;
+        try { letter = midiToGabc(midi, clef); } catch { continue; } // off-staff
+        assert.equal(gabcToMidi(letter, clef), midi, `${midi} under ${clef}`);
+      }
+    }
+  });
+
+  test("letter → midi → letter is identity across the gamut", () => {
+    let checked = 0;
+    for (const clef of CLEFS) {
+      for (let midi = 40; midi <= 90; midi++) {
+        if (![0, 2, 4, 5, 7, 9, 10, 11].includes(midi % 12)) continue;
+        let letter;
+        try { letter = midiToGabc(midi, clef); } catch { continue; }
+        assert.equal(gabcToMidi(letter, clef), midi);
+        checked++;
+      }
+    }
+    assert.ok(checked > 200, `expected a real sweep, checked ${checked}`);
+  });
+
+  test("still refuses the chromatic pitches outside the gamut", () => {
+    // B-flat is the gamut's one accidental; F-sharp and friends are not chant.
+    for (const midi of [61, 63, 66, 68]) {
+      assert.throws(() => midiToGabc(midi, "c4"), /not diatonic/);
+    }
+  });
+
+  test("the derived clefs keep the anchors the hand table had", () => {
+    // Deriving CLEFS must reproduce the six hand-written entries exactly —
+    // f3/f4 especially, which were corrected once before for being off by a
+    // third. "do" (MIDI 60) sits on each c-clef's named line: slots 3/5/7/9.
+    assert.equal(gabcToMidi("d", "c1"), 60);
+    assert.equal(gabcToMidi("f", "c2"), 60);
+    assert.equal(gabcToMidi("h", "c3"), 60);
+    assert.equal(gabcToMidi("j", "c4"), 60);
+    // The f-clefs treat doIdx as the slot carrying DO (not fa), so under f3
+    // "do" is at slot 7 and fa lands on 'k'. NOTE: parse.ts disagrees — it
+    // reads fa(53) on 'h' under f3, a fifth away. That divergence predates the
+    // CLEFS derivation (verified against the committed table) and is recorded
+    // in backlog.md; these assertions pin gabc.ts's CURRENT behaviour so the
+    // derivation is provably faithful, not the resolution of that conflict.
+    assert.equal(gabcToMidi("k", "f3"), 53);
+    assert.equal(gabcToMidi("m", "f4"), 53);
   });
 });

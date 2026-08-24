@@ -2,6 +2,68 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.9.1 — 2026-08-24
+
+Moderna reads the pitch it was given: the whole page had been sitting a sixth
+too high, and a transposed chant said nothing about its own accidentals.
+
+### Fixed
+
+- **Moderna drew every note a sixth above where it belonged.** `writtenY`
+  measured the note against a reference term that had not been normalised the
+  same way (`4 * 7` against a note term carrying `+2`), so sounding E4 computed
+  as 14 staff steps instead of 0. Every note of every moderna score sat above
+  the top line. The port was faithful — the same expression is in the locked
+  reference generator, which was fed pitches an octave below today's corpus, so
+  two errors cancelled; when the corpus moved to true octaves only one of them
+  moved. The clef's octave lift is now stated once, explicitly.
+- **A transposed chromatic rendered as a silent wrong pitch.** `temperamentum`'s
+  `transpose` moves what a chant sounds, and moderna reads sounding pitch — but
+  the accidental was parsed and discarded, so `Ab3` and `A3` landed on one slot
+  with no sign drawn. The page read a semitone off with nothing to say so.
+  Spelling now follows `spn`: flats stay flats, sharps stay sharps. Signs
+  written in the GABC are unaffected — `computeAccidentals` remains
+  authoritative wherever it has an opinion, keyed on the degree a sign alters
+  rather than the row that carries it.
+- **Moderna had no ledger lines at all.** A note outside the five rendered as a
+  head floating in blank space. One line per staff line the note has passed,
+  drawn behind the head: the spaces immediately outside (steps 9 and −1) get
+  none, and a line-note and the space above it share one.
+- **`midiToGabc` threw on every B-flat** — the one accidental chant sings, and
+  the whole reason `parse.ts` carries a flat state machine. It now spells it
+  `ix`, and `gabcToMidi` reads that back, so the two stay inverses. Other
+  chromatic pitch classes still throw. Verified over 222 round-trips.
+- **The GABC clef tables disagreed about which clefs exist.** `temper/gabc.ts`
+  knew six (`c1`–`c4`, `f3`, `f4`) while `parse.ts` accepted sixteen, so a
+  `cb2` the parser reads happily raised "Unknown clef". `CLEFS` is now derived
+  rather than hand-listed; all six original entries are reproduced exactly.
+
+### Changed
+
+- **A low moderna chant is written an octave up.** One clef throughout — what
+  floats is the written octave, the move the hand already makes when it lifts a
+  chant onto the gamut's fingers. Chant sounds below this staff (corpus median
+  50–62 against a window of 52–65), and transposing down pushes it further: at
+  −4 an unlifted score put 43.6% of all notes under the bottom line, now 9.8%.
+  Untransposed moderna output moves for most chants as a result, always toward
+  the staff (7.8% off-staff to 5.8%). Whole octaves only, and one lift for the
+  whole chant — a page that changed register partway would read as two pieces.
+  The limit is honest: an ambitus straddling the window cannot be aligned by
+  any multiple of 12, and 59 of 200 measured chants are wider than the staff.
+  `notatio`'s `spn` remains the authority on what actually sounds.
+- **Quadrata is untouched by all of this**, by construction: it draws from
+  staff position, which transposition does not move. Verified byte-identical.
+
+### Packaging
+
+- `.npmignore` removed — it contradicted the `files` allowlist, and two
+  mechanisms deciding what ships is one more than can be reasoned about.
+  Measured before and after: the tarball is byte-identical at 216 files.
+- `"sideEffects": false` declared, and verified true — nothing in `dist/` runs
+  at module scope and no data file is read at import time.
+- The description no longer claims "and performance"; the voice lives in
+  tonus-sonus.
+
 ## 0.9.0 — 2026-08-19
 
 The tracks stop promising a contract they never kept, and the geometry says

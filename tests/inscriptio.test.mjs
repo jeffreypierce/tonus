@@ -160,6 +160,178 @@ describe("inscriptio — the geometry contract", () => {
   });
 });
 
+// Moderna draws a gClef8vb, which TRANSPOSES: a sounding pitch is written an
+// octave above where it sounds. Nothing pinned that lift, so an octave error in
+// writtenY put every note off the top of the staff while 702 tests stayed green
+// — the suite checked x, order and ink, never height. These pin height.
+describe("inscriptio — moderna sits its notes on the staff (octave regression)", () => {
+  // Staff geometry, from the moderna metrics at default scale: five lines from
+  // MTOP=20 down to MTOP + 4*MSP, MSP=7.4 — so 20 (top, written F5) .. 49.6
+  // (bottom, written E4).
+  const TOP = 20, BOTTOM = 49.6;
+  const score = buildScore(makeChant(KYRIE_GABC));
+  const { geometry } = inscriptio(score, { notation: "moderna" });
+
+  test("every notehead lands within the five lines", () => {
+    for (const g of geometry) {
+      assert.ok(g.y >= TOP - 0.01, `y=${g.y} is above the top line (${TOP})`);
+      assert.ok(g.y <= BOTTOM + 0.01, `y=${g.y} is below the bottom line (${BOTTOM})`);
+    }
+  });
+
+  test("the 8vb clef's octave lift: sounding G3 is written G4, the second line", () => {
+    // The Kyrie's opening note is gabc 'g' — sounding G3. Under gClef8vb it is
+    // written G4 and sits on the second line up: 2 steps, a whole space+line
+    // above the bottom. Half a space is MSP/2 = 3.7, so 2 steps = 7.4.
+    assert.equal(Number(geometry[0].y.toFixed(2)), Number((BOTTOM - 7.4).toFixed(2)));
+  });
+
+  test("higher pitch means smaller y, strictly, across a rising figure", () => {
+    // 'g' then 'h' — a rising second must move UP the page by exactly one step.
+    assert.ok(geometry[1].y < geometry[0].y, "the second note sits higher");
+    assert.equal(Number((geometry[0].y - geometry[1].y).toFixed(2)), 3.7);
+  });
+});
+
+// `temperamentum.transpose` moves what a chant SOUNDS, and moderna reads
+// sounding pitch (`spn`) where quadrata reads staff position — so moderna is
+// the species transposition can derail, in two ways at once.
+describe("inscriptio — moderna under transposition", () => {
+  const TOP = 20, BOTTOM = 49.6;
+  // A ninth (e–m, 13 semitones) — the widest that FITS the staff, so "no note
+  // off the staff" is a reachable assertion and any failure means the lift is
+  // wrong rather than the chant being unfittable. Real chants are often wider:
+  // 59 of 200 measured exceed the staff and legitimately need ledger lines.
+  const WIDE = "(c4) Lux(e) et(g) o(i)ri(k)go(m) lu(k)cis(i) ae(g)ter(e)nae.(e.) (::)";
+  const scoreAt = (t) => buildScore(makeChant(WIDE), { temperamentum: { transpose: t } });
+  const at = (t) => inscriptio(scoreAt(t), { notation: "moderna", width: 900 });
+  const signs = (svg) => (svg.match(/class="accidental"/g) ?? []).length;
+
+  test("quadrata is untouched by transposition, moderna is not", () => {
+    // The contrast is the reason this suite exists: quadrata draws from
+    // staffLetter/clef, which transposition does not move.
+    const q = (t) => inscriptio(scoreAt(t), { width: 900 }).geometry.map((g) => g.y);
+    assert.deepEqual(q(0), q(5), "quadrata: identical geometry");
+    assert.notDeepEqual(at(0).geometry.map((g) => g.y), at(5).geometry.map((g) => g.y),
+      "moderna: geometry follows the sounding pitch");
+  });
+
+  test("a transposed chromatic draws its accidental, every time", () => {
+    // Without this the page lies: writtenY put Ab3 and A3 on ONE slot and drew
+    // nothing, so the note read a semitone off with no sign to say so.
+    for (const t of [1, 2, 4, -2, -4]) {
+      const score = scoreAt(t);
+      const chromatic = score.tabula.filter((r) => r.spn && /^[A-G][#b]/.test(r.spn)).length;
+      assert.ok(chromatic > 0, `transpose ${t} should produce chromatics`);
+      assert.equal(signs(at(t).svg), chromatic, `transpose ${t}: one sign per chromatic`);
+    }
+  });
+
+  test("the spelling follows spn — sharps stay sharps", () => {
+    // +1 yields both flats (Ab3) and sharps (C#4); the renderer draws what the
+    // pitch data says rather than respelling everything as the gamut's b molle.
+    const score = scoreAt(1);
+    const spns = new Set(score.tabula.filter((r) => r.spn).map((r) => r.spn));
+    assert.ok([...spns].some((p) => p.includes("#")), "the fixture has sharps");
+    assert.ok([...spns].some((p) => p.includes("b")), "and flats");
+    const svg = at(1).svg;
+    assert.ok(svg.includes("E262") || /accidental/.test(svg), "sharps are drawn");
+  });
+
+  test("an untransposed chant draws no accidental it was not given", () => {
+    // The guard against over-eager spelling: Puer natus has no written flat.
+    assert.equal(signs(at(0).svg), 0);
+  });
+
+  test("the octave lift never leaves the chant worse than unlifted", () => {
+    // One clef throughout; what floats is the written octave. Downward is the
+    // direction that hurt — chant already sounds below this staff — and at -4
+    // an unlifted corpus put 43.6% of all notes under the bottom line.
+    //
+    // The promise is "no worse", not "always zero". The lift moves by WHOLE
+    // octaves, so a chant whose ambitus straddles the staff's window cannot be
+    // aligned by any multiple of 12 — this fixture at -4 sounds 48–61 against
+    // a window of 52–65, and neither 0 nor +1 clears it. That is the accepted
+    // cost of keeping one clef; it minimises ledger lines rather than
+    // promising none.
+    const offAt = (t) => at(t).geometry
+      .filter((g) => g.y < g.systemY + TOP || g.y > g.systemY + BOTTOM).length;
+    for (const t of [-4, -2, 0, 2]) {
+      assert.ok(offAt(t) <= at(0).geometry.length,
+        `transpose ${t}: ${offAt(t)} off-staff is not a sane count`);
+    }
+    // Untransposed, this fixture is exactly staff-width and must sit clean.
+    assert.equal(offAt(0), 0, "the fitting case fits");
+  });
+
+  test("the lift is whole octaves, applied to the whole chant at once", () => {
+    // A partial lift would respell the music; a per-phrase one would make a
+    // single page read in two registers. Transposing by an exact octave is the
+    // clean probe: the SOUNDING pitch moves by 12 but the written shape must
+    // not change at all, because the lift absorbs it — same slots, same gaps.
+    const ys = (t) => at(t).geometry.map((g) => Number((g.y - g.systemY).toFixed(2)));
+    assert.deepEqual(ys(12), ys(0), "an octave up is absorbed by the lift");
+    assert.deepEqual(ys(-12), ys(0), "and an octave down");
+  });
+});
+
+// The lift makes ledger lines rarer; it cannot make them unnecessary. 59 of 200
+// measured corpus chants are WIDER than the staff's ninth, so they need ledgers
+// under any clef. Moderna had none at all — an off-staff note rendered as a
+// notehead floating in blank space, with nothing to say which pitch it was.
+describe("inscriptio — moderna ledger lines", () => {
+  // Staff steps: 0 is the bottom line, 8 the top, and the LINES are the even
+  // positions. Recovering steps from y is what lets these tests state the rule
+  // rather than assert pixel values.
+  const stepsOf = (g) => Math.round((20 + 29.6 - (g.y - g.systemY)) / 3.7);
+  const owed = (s) => (s > 8 ? Math.floor((s - 8) / 2) : s < 0 ? Math.floor(-s / 2) : 0);
+  const drawn = (svg) => (svg.match(/class="ledger"/g) ?? []).length;
+  const render = (gabc, t = 0) => inscriptio(
+    buildScore(makeChant(gabc), { temperamentum: { transpose: t } }),
+    { notation: "moderna", width: 600 },
+  );
+
+  test("one ledger per line the note has passed, below the staff", () => {
+    // a–m walks well under the staff: steps -4 and -2 owe 2 and 1.
+    const r = render("(c4) a(a)b(c)c(e)d(g)e(i)f(k)g(m) (::)");
+    const expected = r.geometry.reduce((n, g) => n + owed(stepsOf(g)), 0);
+    assert.equal(expected, 3, "the fixture reaches two lines below");
+    assert.equal(drawn(r.svg), expected);
+  });
+
+  test("and above it, sharing one line between a line-note and the space over it", () => {
+    // Transposed up, the top notes reach steps 10 and 11 — the first LINE above
+    // and the space above that. Both sit on one ledger, not two.
+    const r = render("(c4) a(d)b(f)c(h)d(j)e(l)f(m) (::)", 5);
+    const steps = r.geometry.map(stepsOf);
+    assert.ok(steps.includes(10) && steps.includes(11), "the fixture reaches 10 and 11");
+    assert.equal(drawn(r.svg), 2, "one ledger each, not one per step");
+  });
+
+  test("a note just outside the staff gets none — that is a space, not a line", () => {
+    // Steps 9 and -1 are the spaces immediately outside; engraving leaves them
+    // bare. Counting "off-staff notes" would wrongly demand a ledger here.
+    for (const [gabc, t] of [["(c4) a(m) (::)", 3], ["(c4) a(a) (::)", 0]]) {
+      const r = render(gabc, t);
+      const s = stepsOf(r.geometry[0]);
+      if (s === 9 || s === -1) assert.equal(drawn(r.svg), 0, `step ${s} draws nothing`);
+    }
+  });
+
+  test("a chant that fits draws no ledger at all", () => {
+    assert.equal(drawn(render(KYRIE_GABC).svg), 0);
+  });
+
+  test("ledgers lie behind the noteheads, as staff not as ink over the note", () => {
+    // The wide fixture — a narrow one gets lifted onto the staff and draws none.
+    const svg = render("(c4) a(a)b(c)c(e)d(g)e(i)f(k)g(m) (::)").svg;
+    const firstLedger = svg.indexOf('class="ledger"');
+    const firstNote = svg.indexOf('class="note"');
+    assert.ok(firstLedger >= 0 && firstNote >= 0, "both present");
+    assert.ok(firstLedger < firstNote, "ledger is emitted before the notehead");
+  });
+});
+
 describe("inscriptio — multi-system layout", () => {
   // A long chant that must wrap at a modest width.
   const long = buildScore(makeChant(
