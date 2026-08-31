@@ -2,8 +2,9 @@
 // Extracted from GregoBase (chant-id sets) by scripts/extract-gregobase.mjs
 // Generated: 2026-08-31T18:07:52.806Z
 //
-// tonus stores one copy of each chant (LU primary; LA/LH gap-fill), so a book's
-// stored count is less than what it holds. This records, per book: its full
+// tonus stores one record per chant, owned by the first book in PRIMARY_ORDER
+// that prints it, so a book's STORED count is less than what it LISTS. This
+// measures the printing rather than the storage, and records per book: its full
 // pre-dedup `total`, how many chants it alone has (`unique`), and how many it
 // shares with each other book (`shared`, by GregoBase chant id).
 
