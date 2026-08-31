@@ -258,7 +258,9 @@ interface Chant {
   genus: string; // Latin genre name, "Antiphona", "Introitus" …
   mode: string | null; // raw from source: "1"–"8", differentia forms ("2d", "8g"), "p"/"d"/"e" …
   modus: string | null; // Latin mode name, "Modus I"–"Modus VIII"
-  pages: { page: string; sequence: number; extent: number }[];
+  books: (ChantSource | "user" | "ky")[]; // every book that prints it
+  pages: { page: string; sequence: number; extent: number }[]; // the presented book's
+
   source: {
     book: string;
     year: number | null;

@@ -2,6 +2,44 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.10.0 — 2026-08-31
+
+The corpus stores a melody once instead of once per book, and the root index
+stops carrying the anatomy of its own return values.
+
+### Changed
+
+- **BREAKING: type-only names moved off the root entry.** Four subpath entries
+  now hold the grain the index was carrying — `tonus/corpus` (the shelf and its
+  vocabulary), `tonus/score` (what a `Score` is made of), `tonus/inscriptio`
+  (the drawing surface), `tonus/census` (one chant against the corpus). Verbs
+  stay on the root namespace, and the types a root signature names stay on the
+  root too. **Every value export the root carried is unchanged** — only types
+  moved, so a JavaScript consumer sees nothing.
+- **A melody printed in several books is stored once.** It was stored once per
+  book. `books` now lists every printing and `pages` is keyed by book code, so
+  `cantus({ source })` presents a shared chant as the book asked for: that
+  book's source record and page numbers, not those of the file the record
+  happens to live in. 7840 chants, 9758 listings.
+
+### Added
+
+- **Four subpath entries surface types that were reachable but unnameable.**
+  `ChantSource`, `OfficeCode`, `OrdinaryCode`, `CanonicalHour`, `Theme`,
+  `ThemeColors`, `TrackName`, `TrackData`, and `CENSUS_BLOCK_FLOATS` — each a
+  value callers had to spell by hand against a query or an option bag.
+- **The two boundaries are gated instead of described.** `npm run gate` holds
+  the rendering boundary (only `inscriptio.ts` and the emitters may import from
+  `emitters/`) and the entry map (every `exports` subpath has a source module,
+  and every entry module is exported). Prose had already failed to hold the
+  rendering boundary once. It runs as part of `npm test`.
+
+### Removed
+
+- **`ams`, `cot`, and `cse` are no longer separate data files.** Their contents
+  were listings on records the other books already own, and are now reachable
+  through `books`/`pages` on those records.
+
 ## 0.9.1 — 2026-08-24
 
 Moderna reads the pitch it was given: the whole page had been sitting a sixth

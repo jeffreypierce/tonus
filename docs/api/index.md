@@ -12,6 +12,7 @@ import tonus from "tonus";
 
 - [The methods](#the-methods) — by engine
 - [The appendix](#the-appendix) — the canonical constant tables
+- [The entries](#the-entries) — the four subpaths, and what each holds
 - [Full contents](#full-contents) — every method and section
 - [Conventions](#conventions) — Latin/English, dates, determinism, error contracts, bibliography
 
@@ -125,6 +126,39 @@ is for.
 
 Use these to pool blocks without reproducing the distance rule. See [the census
 contract](census.md#distance-is-cosine-per-field-group).
+
+## The entries
+
+The fourteen methods and every table above are on the root, and stay there. Four
+subpath entries hold what the root index was carrying without being asked to:
+the **anatomy** of a return value, and the types whose values a caller had to
+spell by hand against a query or an option bag.
+
+```js
+import { cantus, corpus } from "tonus/corpus";
+import { inscriptio } from "tonus/inscriptio";
+import type { Note, Phrase } from "tonus/score";
+```
+
+| Entry              | Holds                                                                     |
+| ------------------ | ------------------------------------------------------------------------- |
+| `tonus/corpus`     | the shelf and its vocabulary — `cantus`, `corpus`, `SOURCES`, `HORAE` …   |
+| `tonus/score`      | what a `Score` is made of — `Note`, `Phrase`, `Syllable`, `Metrics` …     |
+| `tonus/inscriptio` | the drawing surface — `inscriptio`, `Theme`, `TrackName`, `NoteGeometry`  |
+| `tonus/census`     | one chant against the corpus — `census`, `CENSUS_BLOCK_FLOATS`            |
+
+Nothing is hidden by the split. The verbs stay on the namespace — the export law
+puts them there — and the types a root signature names (`Score`, `Chant`,
+`Cadence`, `Metrics`, `Imprint`) stay on the root as well, because the root's own
+signatures name them. What moved off is what only a caller already **holding** a
+`Score` could reach.
+
+Each entry also surfaces types that were reachable through a signature but
+nameable nowhere: `ChantSource` and `OfficeCode` (the codes `cantus({ source })`
+and `office` take), `Theme` and `TrackName` (what an `opts` bag accepts), and
+`CENSUS_BLOCK_FLOATS` (the stride a caller decoding a block had to get by
+counting `CENSUS_GROUPS`). That drift — a value you must pass but cannot name —
+is what the entries exist to stop.
 
 ## Full contents
 

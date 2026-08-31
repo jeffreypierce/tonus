@@ -61,10 +61,12 @@ chant. The hundred and seven without one are the *Toni Communes* — office `or`
 the recitation formulas — and they are left out on purpose: eleven *Benedicamus
 Domino* settings are one gesture, not eleven chants, and censusing them would
 invent a distribution out of a tone. They stay on the shelf; `cantus` finds
-them. They are simply not what typicality is measured against. That is the books themselves:
-until 2026-08-31 it was the 2,187 the calendar reached, which meant every
-typicality figure below was quietly measured against one rite's selection rather
-than against the repertory. An id with no block throws
+them. They are simply not what typicality is measured against.
+
+That population is now the books themselves. Until 2026-08-31 it was the 2,187
+the calendar reached, which meant every typicality figure below was quietly
+measured against one rite's selection rather than against the repertory. An id
+with no block throws
 rather than returning an empty answer, because a silent nothing reads as "this
 chant is unlike everything," which is a different claim.
 
