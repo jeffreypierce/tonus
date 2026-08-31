@@ -2,6 +2,31 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.10.1 — 2026-08-31
+
+A capital ligature is a vowel like any other.
+
+### Fixed
+
+- **`Æ` and `Œ` reached the nucleus unexpanded.** `selectVowel` expanded the
+  ligatures case-sensitively, and neither has an NFD decomposition (unlike
+  `á` → `a`), so a capital survived the scan and was reported AS the vowel:
+  `vowel: "æ"`, a two-letter answer to a one-letter promise. Consumers that
+  hold tonus to that contract throw on it. 136 chants carry one, every case
+  opening a word — 94 at the start of the lyric, the other 42 inside an
+  all-capital opening word (`SÆpe`, `PRÆ`, `HÆC`), which is exactly where a
+  capital lives. The gated shelf held almost none of them, so 0.10.0's re-cut
+  is what surfaced it; the defect is older.
+- **An accented ligature accented the off-glide.** `œ́` is `œ` + combining
+  acute, with no precomposed form, so expanding it to `oe` + accent marked the
+  `e`: `selectVowel("œ́")` returned nucleus `"e"` where it should return `"o"`.
+  The pair is now rebuilt as `o` + accent + `e`. `ǽ`, which IS precomposed,
+  was always correct — the two agree now.
+
+Note for consumers baking off `vowel`: 136 chants change nucleus, and `Æ`/`Œ`
+now report `diphthong: "ae"`/`"oe"` where they reported `null`. Anything
+derived from the vowel plane wants a re-bake.
+
 ## 0.10.0 — 2026-08-31
 
 The corpus stores a melody once instead of once per book, the genus labels say

@@ -65,6 +65,32 @@ describe("selectVowel", () => {
     assert.equal(accent, true);
   });
 
+  test("the ligature expands in EITHER case — a capital is still one vowel", () => {
+    // ⟨2026-08-31⟩ The expansion was case-sensitive, so every capital ligature
+    // reached the nucleus intact: `vowel` came back "æ", a two-letter answer to
+    // a one-letter promise, and the reading throws on it. 135 chants carried
+    // one — all word-initial, which is exactly where a capital lives, and
+    // invisible while the shelf was gated because it held almost none of them.
+    for (const [text, vowel] of [["Æ", "a"], ["æ", "a"], ["Œ", "o"], ["œ", "o"],
+      ["Ægýptum", "i"], ["Cæli", "a"]]) {
+      const got = selectVowel(text).vowel;
+      assert.equal(got, vowel, `${text}: nucleus ${JSON.stringify(got)}`);
+      assert.match(got, /^[aeiou]$/, `${text}: the nucleus must be ONE vowel`);
+    }
+  });
+
+  test("an accented ligature accents the NUCLEUS, not the off-glide", () => {
+    // œ́ is œ + combining acute (there is no precomposed form), so expanding it
+    // to "oe" + accent would mark the glide and invert what `accent` reports.
+    // The pair is rebuilt as o + accent + e instead. ǽ, which IS precomposed,
+    // has always taken the same shape — this keeps the two agreeing.
+    for (const text of ["ǽ", "Ǽ", "œ́", "Œ́", "cœ́li"]) {
+      const { vowel, accent } = selectVowel(text);
+      assert.match(vowel, /^[ao]$/, `${text}: nucleus ${JSON.stringify(vowel)}`);
+      assert.equal(accent, true, `${text}: the accent rides the nucleus`);
+    }
+  });
+
   test("reports the diphthong the sung vowel belongs to: ae, oe, au", () => {
     assert.equal(selectVowel("cae").diphthong, "ae");
     assert.equal(selectVowel("caelum").diphthong, "ae");

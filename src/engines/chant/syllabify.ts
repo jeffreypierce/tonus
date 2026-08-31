@@ -18,7 +18,8 @@
 //      cl, gl, fl) and the Greek digraphs th, ph, ch stay with the following
 //      vowel; all other clusters split after the first consonant
 //
-// Diacritics (áéíóúàèìòùâêîôû etc.) are treated as their base vowel throughout.
+// Diacritics (áéíóúàèìòùâêîôû etc.) are treated as their base vowel throughout,
+// and the ligatures æ/œ expand to their pairs in either case (see selectVowel).
 
 // ── Character classes ──
 
@@ -223,7 +224,25 @@ export function selectVowel(text: string): {
   accent: boolean;
   diphthong: string | null;
 } {
-  const expanded = text.replace(/ǽ/g, "áe").replace(/æ/g, "ae").replace(/œ/g, "oe");
+  // THE LIGATURES EXPAND BEFORE THE SCAN, IN EITHER CASE. æ and œ have no
+  // NFD decomposition (unlike á → a), so a ligature that survives to the loop
+  // below is reported AS the nucleus — a two-letter vowel, which breaks the
+  // one-letter contract `vowel` promises and throws downstream. This was
+  // case-sensitive until 2026-08-31 and so missed every capital: 135 chants,
+  // all of them word-initial (`Ægýptum`, the Nocturnale's Æ responsories),
+  // invisible while the shelf was gated because it carried almost none.
+  //
+  // The accent rides the NUCLEUS, not the glide. ǽ is precomposed, but œ́ is
+  // not — it is œ + combining acute — so the pair is rebuilt as o + accent + e
+  // rather than oe + accent, which would accent the off-glide and invert what
+  // `accent` reports. NFC first, so a decomposed source still matches here.
+  const expanded = text
+    .normalize("NFC")
+    .replace(/ǽ/gi, "áe")
+    .replace(/([æœ])(́?)/gi, (_m, lig: string, acc: string) => {
+      const pair = lig.toLowerCase() === "æ" ? "ae" : "oe";
+      return acc ? pair[0]! + acc + pair[1]! : pair;
+    });
   const nfd = expanded.normalize("NFD");
   let firstVowel = "";
   let accentedVowel = "";
