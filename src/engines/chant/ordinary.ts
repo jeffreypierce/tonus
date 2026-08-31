@@ -16,6 +16,7 @@ import {
   KY_SOURCE,
   MODI,
   ORDINARIA,
+  OFFICIA,
   type OrdinaryChant,
   type OrdinariumQuery,
   type OrdinaryCode,
@@ -335,13 +336,17 @@ function selectCredoCode(feast: Feast, allowed: string[], year: number): string 
 export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
   const ordinary = ORDINARY_OFFICES.has(entry.office as OrdinaryCode)
     ? (entry.office as OrdinaryCode)
-    : ("ky" as OrdinaryCode);
+    : ("ke" as OrdinaryCode);
   return {
     id: entry.id,
     incipit: entry.incipit,
     gabc: entry.gabc,
-    office: "or",
-    genus: "Ordinarium",
+    books: ["ky"],
+    office: "ky",
+    // The genus follows the office code, as everywhere else — OFFICIA.ky.
+    // It read "Ordinarium" while the office read "or", which was tonus's own
+    // pairing; GregoBase files these under ky = Kyriale.
+    genus: OFFICIA.ky,
     mode: entry.mode ? String(entry.mode) : null,
     modus: entry.mode ? (MODI[String(entry.mode)] ?? null) : null,
     pages: [],
@@ -434,7 +439,7 @@ function ordinaryForFeast(
 
   const results: OrdinaryChant[] = [];
 
-  const ky = pick("ky");
+  const ky = pick("ke");
   if (ky) results.push(ky);
 
   // Gloria is omitted under the gloria-less rubrics — penitential Sundays and

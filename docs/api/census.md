@@ -56,8 +56,15 @@ interface CensusQuery {
 }
 ```
 
-The census covers the **2,187 chants tonus ships**, the same population
-`cantus({ id })` addresses, one block per chant. An id with no block throws
+The census covers **7,733 of the 7,840 chants tonus ships**, one block per
+chant. The hundred and seven without one are the *Toni Communes* — office `or`,
+the recitation formulas — and they are left out on purpose: eleven *Benedicamus
+Domino* settings are one gesture, not eleven chants, and censusing them would
+invent a distribution out of a tone. They stay on the shelf; `cantus` finds
+them. They are simply not what typicality is measured against. That is the books themselves:
+until 2026-08-31 it was the 2,187 the calendar reached, which meant every
+typicality figure below was quietly measured against one rite's selection rather
+than against the repertory. An id with no block throws
 rather than returning an empty answer, because a silent nothing reads as "this
 chant is unlike everything," which is a different claim.
 
@@ -98,7 +105,7 @@ from the corpus itself (its commonest motifs, its commonest closing gestures,
 one bucket for the rest), so the corpus supplies the vocabulary and the chant
 supplies the usage.
 
-The reference is the mean block over all 2,187 chants, group by group. Because
+The reference is the mean block over all 7,733 chants, group by group. Because
 blocks are sums of durations and counts, they add: a season's blocks, summed and
 divided by their count, are the season's mean profile in the same 221 slots.
 

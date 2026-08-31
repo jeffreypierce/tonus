@@ -1,6 +1,6 @@
 // kyriale.ts — Mass ordinary (kyriale) chants
 // Extracted from GregoBase (GR source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-07-28T17:55:27.238Z
+// Generated: 2026-08-31T18:07:52.806Z
 // Entries: 120
 //
 // Mass numbers are derived from GR page references (e.g. page "18*" = Mass XVIII).
@@ -8,7 +8,7 @@
 // Sanctus, Agnus Dei, Ite missa est, Benedicamus); office code is inferred from incipit.
 
 export type KyrialeOffice =
-  | "ky"
+  | "ke"
   | "gl"
   | "cr"
   | "sa"
@@ -86,7 +86,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:825",
-    office: "ky",
+    office: "ke",
     mass: 3,
     mode: "4",
     incipit: "Kyrie III",
@@ -126,7 +126,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:1061",
-    office: "ky",
+    office: "ke",
     mass: 4,
     mode: "1",
     incipit: "Kyrie IV",
@@ -174,7 +174,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:474",
-    office: "ky",
+    office: "ke",
     mass: 5,
     mode: "8",
     incipit: "Kyrie V",
@@ -214,7 +214,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2903",
-    office: "ky",
+    office: "ke",
     mass: 6,
     mode: "7",
     incipit: "Kyrie VI",
@@ -270,7 +270,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:1262",
-    office: "ky",
+    office: "ke",
     mass: 7,
     mode: "8",
     incipit: "Kyrie VII",
@@ -302,7 +302,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:1184",
-    office: "ky",
+    office: "ke",
     mass: 8,
     mode: "5",
     incipit: "Kyrie VIII",
@@ -358,7 +358,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2976",
-    office: "ky",
+    office: "ke",
     mass: 9,
     mode: "1",
     incipit: "Kyrie IX",
@@ -382,7 +382,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:795",
-    office: "ky",
+    office: "ke",
     mass: 10,
     mode: "1",
     incipit: "Kyrie X",
@@ -422,7 +422,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2982",
-    office: "ky",
+    office: "ke",
     mass: 11,
     mode: "1",
     incipit: "Kyrie XI",
@@ -446,7 +446,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:1143",
-    office: "ky",
+    office: "ke",
     mass: 1,
     mode: "8",
     incipit: "Kyrie I",
@@ -478,7 +478,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2068",
-    office: "ky",
+    office: "ke",
     mass: 12,
     mode: "8",
     incipit: "Kyrie XII",
@@ -510,7 +510,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:137",
-    office: "ky",
+    office: "ke",
     mass: 13,
     mode: "1",
     incipit: "Kyrie XIII",
@@ -542,7 +542,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:441",
-    office: "ky",
+    office: "ke",
     mass: 14,
     mode: "8",
     incipit: "Kyrie XIV",
@@ -606,7 +606,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:393",
-    office: "ky",
+    office: "ke",
     mass: 15,
     mode: "4",
     incipit: "Kyrie XV",
@@ -646,7 +646,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:545",
-    office: "ky",
+    office: "ke",
     mass: 16,
     mode: "3",
     incipit: "Kyrie XVI",
@@ -670,7 +670,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:272",
-    office: "ky",
+    office: "ke",
     mass: 17,
     mode: "1",
     incipit: "Kyrie XVII",
@@ -678,7 +678,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:168",
-    office: "ky",
+    office: "ke",
     mass: 17,
     mode: "6",
     incipit: "Kyrie XVII C",
@@ -702,7 +702,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2522",
-    office: "ky",
+    office: "ke",
     mass: 18,
     mode: "4",
     incipit: "Kyrie XVIII",
@@ -719,7 +719,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:344",
     office: "cr",
-    mass: 1,
+    mass: null,
     mode: "4",
     incipit: "Credo I",
     gabc: "(c4) CRe(g)do(e') in(f) u(d)num(e') De(g)um,(h.) (::) Pa(ixhi)trem(h') o(h)mni(g)pot(f')én(g)tem,(g.) (;) fa(ef)ctó(g)rem(g') cae(g)li(f') et(h) ter(g.)rae,(g.) (,) vi(e')si(f)bí(g')li(g)um(h') ó(g)mni(f)um,(ed..) (,) et(ixhi) in(h')vi(g)si(f')bí(h)li(gf)um.(g.) (::)\r\n\r\nEt(e') in(f) u(g)num(g') Dó(g)mi(f)num(efee) (,) Je(d)sum(e') Chri(g)stum,(h.) (;) Fí(ixhi)li(h)um(h') De(h)i(h') u(g)ni(f')gé(h)ni(gf)tum.(g.) (::) Et(e') ex(f) Pa(g)tre(e') na(g)tum(h.) (,) an(ixhi)te(h') ó(h)mni(g)a(f') saé(h)cu(gf)la.(g.) (::) De(g)um(f') de(h) De(g.)o,(g.) (,) lu(g)men(f') de(h) lú(g')mi(f)ne,(efee) (,) De(d)um(e') ve(g)rum(h.) de(h') De(g)o(f') ve(g)ro.(g.) (::) Gé(e')ni(f)tum,(g.) non(h') fa(g)ctum,(e.) (,) con(f')sub(d)stan(e')ti(f)á(g)lem(e') Pa(g)tri :(h.) (;) per(ixhi) quem(h') ó(h)mni(g)a(f') fa(h)cta(gf) sunt.(g.) (::) Qui(e') pro(f)pter(g) nos(h') hó(g)mi(f)nes,(e.) (,) et(d) pro(e')pter(f) no(g)stram(e') sa(f)lú(g)tem(g.) (,) de(g')scén(g)dit(f') de(h) cae(g.)lis.(g.) (::) Et(d) in(e')car(f)ná(g')tus(f) est(e.) de(e) Spí(f')ri(d)tu(e') San(g)cto(h.) (;) ex(ixhi) Ma(h')rí(g)a(f') Vír(h)gi(gf)ne :(g.) (;) Et(ixhi) ho(h)mo(f') fa(h)ctus(gf) est.(g.) (::) Cru(e')ci(f)fí(g)xus(e') ét(f)i(e)am(d') pro(e) no(g)bis :(h.) (;) sub(ixhi) Pón(h')ti(h)o(g) Pi(f')lá(g)to(g.) (;) pas(ixhi)sus,(h') et(g) se(f')púl(h)tus(gf) est.(g.) (::) Et(d) re(e')sur(f)ré(g)xit(e') tér(f)ti(d)a(e') di(g)e,(h.) (;) se(ixhi)cún(h')dum(g) Scri(f')ptú(g)ras.(g.) (::) Et(e') a(f)scén(g)dit(f') in(e) cae(g)lum :(h.) (;) se(ixhi)det(h') ad(h) déx(h')te(g)ram(f') Pa(g)tris.(g.) (::) Et(ef) í(g')te(g)rum(g') ven(g)tú(g')rus(g) est(g') cum(h) gló(g')ri(f)a,(efee) (,) ju(d)di(e')cá(g)re(h.) vi(ixhi)vos(h) et(f') mór(h)tu(gf)os :(g.) (;) cu(e')jus(f) re(g)gni(g') non(g) e(f')rit(h) fi(g.)nis.(g.) (::)\r\n\r\nEt(e') in(f) Spí(g')ri(g)tum(g') San(g)ctum,(h.) Dó(g')mi(f)num,(ed..) (,) et(ixhi) vi(h')vi(g)fi(f')cán(g)tem :(g.) (;) qui(e') ex(f) Pa(g)tre(g') Fi(g)li(g)ó(g)que(f') pro(h)cé(g.)dit.(g.) (::) Qui(e') cum(f) Pa(g)tre(g') et(h) Fí(g')li(f)o(e.) (,) si(f)mul(e') ad(d)o(e')rá(g)tur,(h.) (,) et(ixhi) con(h)glo(h')ri(g)fi(f')cá(g)tur :(g.) (;) qui(e') lo(f)cú(g')tus(g) est(g) per(f') Pro(h)phé(g.)tas.(g.) (::)\r\n\r\nEt(ef) u(g)nam(g.) san(g)ctam(f.) ca(h)thó(g')li(f)cam(ed..) (,) et(ixhi) a(h')po(h)stó(h')li(h)cam(g) Ec(f')clé(h)si(gf)am.(g.) (::)\r\n\r\nCon(ef)fí(g')te(g)or(g') u(g)num(f') ba(h)ptí(g)sma(e.) (,) in(f) re(e')mis(d)si(e')ó(g)nem(h) pec(f')ca(h)tó(g.)rum.(g.) (::) Et(e') ex(f)spé(g)cto(e.) re(f)sur(e')re(d)cti(e')ó(g)nem(h) mor(f')tu(h)ó(g.)rum.(g.) (::) Et(ef) vi(g)tam(g') ven(g)tú(gf)ri(e') saé(ixdh'!iv)cu(h)li.(h.) (::) A(hvGFghG'FE)men.(de..) (::)",
@@ -751,7 +751,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2983",
     office: "cr",
-    mass: 2,
+    mass: null,
     mode: "4",
     incipit: "Credo II",
     gabc: "(c4) CRe(g)do(e') in(f) u(d)num(e') De(g)um,(h.) (::) Pa(h')trem(h) o(h')mni(g)pot(f')én(g)tem,(f.) (,) fa(e')ctó(f)rem(g') cæ(g)li(f') et(h) ter(g.)ræ,(g.) (,) vi(e')si(f)bí(g')li(g)um(g') ó(g)mni(f)um,(e.) et(h) in(h')vi(g)si(f)bí(gh)li(g)um.(e.) (::)\r\n\r\nEt(e') in(f) u(g)num(g') Dó(g)mi(f)num(e.) Je(d)sum(e') Chri(g)stum,(h.) (,) Fí(h')li(h)um(h') De(h)i(h') u(g)ni(f)gé(gh)ni(g)tum.(e.) (::) Et(e') ex(f) Pa(g)tre(e') na(g)tum(h.) an(h')te(h) ó(h')mni(g)a(f) sǽ(gh)cu(g)la.(e.) (::) De(e')um(f) de(g') De(g)o,(g.) (,) lu(g)men(f') de(h) lú(g')mi(f)ne,(e.) (,) De(d)um(e') ve(g)rum(h.) de(h') De(g)o(f') ve(g)ro.(f.) (::) Gé(e')ni(f)tum,(g.) non(g) fa(g)ctum,(e.) (,) con(f')sub(e)stan(d')ti(e)á(g)lem(e') Pa(g)tri :(h.) (;) per(h') quem(h) ó(h')mni(g)a(f) fa(gh)cta(g) sunt.(e.) (::) Qui(e') pro(f)pter(g) nos(g') hó(g)mi(f)nes,(e.) (,) et(d) pro(e')pter(f) no(g)stram(e') sa(f)lú(g)tem(g.) (,) de(g')scén(g)dit(f') de(h) cæ(g.)lis.(g.) (::) Et(d) in(e')car(f)ná(g')tus(f) est(e.) de(f) Spí(e')ri(d)tu(e') San(g)cto(h.) (,) ex(h) Ma(h')rí(g)a(f) Vír(gh)gi(g)ne :(e.) (;) Et(h') ho(g)mo(f) fa(gh)ctus(g) est.(e.) (::) Cru(e')ci(f)fí(g)xus(e') ét(f)i(e)am(d') pro(e) no(g)bis :(h.) (,) sub(h) Pón(h')ti(h)o(g) Pi(f')lá(g)to(f.) (,) pas(h)sus,(h') et(g) se(f)púl(gh)tus(g) est.(e.) (::) Et(d) re(e')sur(f)ré(g)xit(e') tér(f)ti(d)a(e') di(g)e,(h.) (,) se(h)cún(h')dum(g) Scri(f')ptú(g)ras.(f.) (::) Et(e') a(f)scén(g)dit(f') in(e) cæ(g)lum :(h.) (;) se(h)det(h') ad(h) déx(h')te(g)ram(f') Pa(g)tris.(f.) (::) Et(e') í(f)te(g)rum(g') ven(g)tú(g')rus(g) est(g') cum(g) gló(g')ri(f)a,(e.) (,) ju(d)di(e')cá(g)re(h.) vi(h')vos(g) et(f) mór(gh)tu(g)os :(e.) (;) cu(e')jus(f) re(g)gni(g') non(h) e(g)rit(f') fi(g)nis.(f.) (::)\r\n\r\nEt(e') in(f) Spí(g')ri(g)tum(g') San(g)ctum,(g.) Dó(g')mi(f)num,(e.) (,) et(h) vi(h')vi(g)fi(f')cán(g)tem :(f.) (:) qui(e') ex(f) Pa(g)tre(g') Fi(g)li(g)ó(g)que(f') pro(h)cé(g.)dit.(g.) (::) Qui(e') cum(f) Pa(g)tre(g') et(g) Fí(g')li(f)o(e.) (,) si(f)mul(e') ad(d)o(e')rá(g)tur,(h.) (,) et(h) con(h)glo(h')ri(g)fi(f')cá(g)tur :(f.) (:) qui(e') lo(f)cú(g')tus(g) est(g) per(f') Pro(h)phé(g.)tas.(g.) (::)\r\n\r\nEt(e') u(f)nam(g.) san(g)ctam(g.) ca(g)thó(g')li(f)cam(e.) (,) et(h) a(h')po(h)stó(h')li(h)cam(g) Ec(f)clé(gh)si(g)am.(e.) (::)\r\n\r\nCon(e')fí(f)te(g)or(g') u(g)num(g') ba(g)ptí(g)sma(e.) (,) in(f) re(e')mis(d)si(e')ó(g)nem(h') pec(g)ca(f')tó(g)rum.(f.) (::) Et(e') ex(f)spé(g)cto(e.) re(f)sur(e')re(d)cti(e')ó(g)nem(h') mor(g)tu(f')ó(g)rum.(f.) (::) Et(ef) vi(g)tam(e') ven(f)tú(e')ri(d) sǽ(ixhi)cu(h)li.(h.) (::) A(hvGFghG'FE)men.(de..) (::)",
@@ -759,7 +759,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:749",
     office: "cr",
-    mass: 3,
+    mass: null,
     mode: "5",
     incipit: "Credo III",
     gabc: "(c3) CRe(h)do(f) in(d) u(gxg)num(f) De(fvED)um,(d.) (::) Pa(gxfg)trem(f') o(h)mni(f')pot(d)én(e)tem,(d.) (;) fa(d)ctó(f')rem(gxg) cae(h')li(h) et(h') ter(i)rae,(h.) (;) vi(h')si(h)bí(i')li(i)um(k) ó(jhi)mni(i)um,(h.) (;) et(h') in(f)vi(d')si(gxg)bí(fde)li(e)um.(d.) (::)\r\n\r\nEt(h') in(h) u(f')num(f) Dó(d')mi(d)num(e.) Je(f)sum(gxg') Chri(e)stum,(d.) (,) Fí(f')li(f)um(f') De(gxg)i(e') u(h)ni(h)gé(i')ni(i)tum.(h.) (::) Et(f') ex(e) Pa(gxg')tre(g) na(fde)tum(d.) (,) an(f')te(f) ó(h')mni(i)a(h) saé(fde)cu(e)la.(d.) (::) De(h')um(h) de(h') De(f)o,(d.) (,) lu(d)men(e') de(e) lú(f')mi(e)ne,(d.) (,) De(h)um(h') ve(i)rum(h.) de(k') De(j)o(h') ve(i)ro.(h.) (::) Gé(f')ni(f)tum,(e.) non(gxg) fa(fde)ctum,(d.) (,) con(f)sub(f')stan(h)ti(h')á(i)lem(h') Pa(gxg)tri :(h.) (;) per(i) quem(k') ó(j)mni(h')a(h) fa(i')cta(gxg) sunt.(h.) (::) Qui(h) pro(h)pter(f') nos(f) hó(h')mi(i)nes,(h.) (,) et(d) pro(d')pter(d) no(d)stram(e') sa(f)lú(gxg)tem(h.) (,) de(i)scén(j')dit(k) de(jh) cae(i)lis.(h.) (::) Et(h) in(f')car(f)ná(d')tus(e) est(d.) de(f) Spí(f')ri(e)tu(f) San(hi)cto(h.) (,) ex(i') Ma(k)rí(j')a(h) Vír(i')gi(i)ne :(h.) (;) Et(d) ho(f')mo(f) fa(gxg')ctus(g) est.(h.) (::) Cru(f)ci(gxeg)fí(fde)xus(d') ét(d)i(e)am(f') pro(gxg) no(hi)bis :(h.) (,) sub(h) Pón(h')ti(h)o(i') Pi(gxg)lá(h)to(f.) (,) pas(h')sus,(f) et(d') se(gxg)púl(fde)tus(e) est.(d.) (::) Et(h) re(h)sur(h')ré(i)xit(h') tér(h)ti(f')a(gxg) di(h)e,(h.) (,) se(d')cún(e)dum(f') Scri(gxg)ptú(e.)ras.(d.) (::) Et(d') a(f)scén(hi)dit(j') in(k) cae(jhi)lum :(h.) (;) se(h)det(h') ad(h) déx(f')te(f)ram(gxg) Pa(fde)tris.(d.) (::) Et(h) í(h')te(h)rum(f') ven(f)tú(d')rus(d) est(e') cum(e) gló(f')ri(e)a,(d.) (,) ju(h)di(h')cá(i)re(h') vi(k)vos(j') et(h) mór(i')tu(i)os :(h.) (;) cu(h)jus(h') re(f)gni(d') non(gxg) e(f')rit(f) fi(e.)nis.(d.) (::)\r\n\r\nEt(k') in(k) Spí(i')ri(i)tum(k') San(h)ctum,(h.) Dó(i')mi(i)num,(h.) (,) et(d) vi(f')vi(h)fi(h')cán(i)tem :(h.) (;) qui(h') ex(gxg) Pa(h')tre(f) Fi(gxg')li(e)ó(f')que(g) pro(fd)cé(e)dit.(d.) (::) Qui(d') cum(f) Pa(h)tre(h') et(f) Fí(gxg')li(f)o(h.) (,) si(i)mul(h') ad(k)o(j')rá(i)tur,(h.) (,) et(d) con(f')glo(f)ri(h')fi(h)cá(i)tur :(h.) (;) qui(h') lo(h)cú(f')tus(f) est(d') per(gxg) Pro(fd)phé(e)tas.(d.) (::)\r\n\r\nEt(h') u(h)nam(h.) san(f)ctam(f.) ca(d)thó(e')li(e)cam(d.) (,) et(h) a(h')po(h)stó(h')li(h)cam(i') Ec(gxg)clé(h')si(h)am.(f.) (::)\r\n\r\nCon(h)fí(i')te(j)or(k') u(i)num(k) ba(jh)ptí(i)sma(h.) (,) in(f') re(e)mis(f')si(h)ó(gxg')nem(f) pec(e')ca(f)tó(e.)rum.(d.) (::) Et(h) ex(h')spé(f)cto(d.) re(h)sur(h')re(h)cti(h')ó(i)nem(h') mor(gxg)tu(f')ó(g)rum.(f.) (::) Et(k) vi(ji)tam(h') ven(f)tú(i')ri(h) saé(f')cu(gxg)li.(h.) (::) A(hvFDeed.0gxkvJHiih//fg/hd/eed)men.(d.) (::)",
@@ -767,7 +767,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:678",
     office: "cr",
-    mass: 4,
+    mass: null,
     mode: "1",
     incipit: "Credo IV",
     gabc: "(c4) CR{e}(g)do(e') in(f) u(d)num(e') De(g)um,(h.) (::) Pa(h')trem(d) o(h')mni(g)pot(f)én(evDC)tem,(d.) (;) fa(e')ctó(g)rem(h') cae(i)li(j') et(i) ter(ivHG)rae,(h.) (,) vi(i')si(j)bí(k')li(j)um(i) ó(i')mni(h)um,(g.) et(i') in(j)vi(i')si(h)bí(ih)li(g)um.(h.) (::)\r\n\r\nEt(h') in(d) u(h')num(h) Dó(g')mi(f)num(e.) Je(d')sum(c) Chri(def)stum,(e.) (;) Fí(e')li(g)um(h') De(i)i(j') u(i)ni(h)gé(ih)ni(g)tum.(h.) (::) Et(i') ex(j) Pa(k)tre(j') na(i)tum(h.) (,) an(h')te(d) ó(h')mni(g)a(h) saé(g')cu(f)la.(e.) (::) De(d')um(c) de(e') De(g)o,(h.) (,) lu(i)men(j') de(i) lú(h')mi(g)ne,(h.) (,) De(g)um(f') ve(e)rum(d.) de(e) De(f')o(e) ve(dc)ro.(d.) (::) Gé(h')ni(g)tum,(h.) non(i) fa(ji)ctum,(h.) (,) con(g')sub(h)stan(g')ti(f)á(e')lem(d) Pa(cde)tri :(e.) (;) per(e') quem(g) ó(h')mni(d)a(g) fa(fe)cta(e) sunt.(d.) (::) Qui(h') pro(g)pter(h') nos(i) hó(j')mi(i)nes,(h.) (,) et(h') pro(h)pter(g') no(h)stram(d') sa(e)lú(f)tem(g.) (,) de(g')scén(h)dit(g') de(f) cae(evDC)lis.(d.) (::) Et(k) in(j')car(k)ná(j')tus(i) est(h.) de(g) Spí(j')ri(i)tu(h') San(g)cto(h.) (;) ex(h') Ma(h)rí(g')a(h) Vír(g')gi(f)ne :(e.) (;) Et(e) ho(g')mo(e) fa(fe)ctus(e) est.(d.) (::) Cru(d')ci(c)fí(dfe)xus(d') ét(f)i(g)am(h') pro(j) no(ivHG)bis :(h.) (;) sub(h) Pón(d')ti(e)o(f') Pi(g)lá(fvED)to(c.) (,) pas(f')sus,(e) et(f) se(d)púl(ed)tus(c) est.(d.) (::) Et(k) re(j')sur(h)ré(j')xit(k) tér(j')ti(i)a(h') di(g)e,(h.) (,) se(g')cún(h)dum(g') Scri(f)ptú(evDC)ras.(d.) (::) Et(d') a(e)scén(f)dit(g') in(f) cae(gh)lum :(h.) (;) se(h)det(i') ad(j) déx(i')te(h)ram(i) Pa(gh)tris.(h.) (::) Et(k) í(j')te(i)rum(h') ven(g)tú(f')rus(g) est(h') cum(g) gló(j')ri(i)a,(h.) (,) ju(g')di(h)cá(gvFE)re(d.) vi(c)vos(d') et(e) mór(f')tu(d)os :(e.) (;) cu(h)jus(g') re(h)gni(i') non(j) e(i')rit(h) fi(g.)nis.(h.) (::)\r\n\r\nEt(h') in(d) Spí(e')ri(f)tum(g') San(g)ctum,(h.) Dó(g')mi(f)num,(e.) et(d) vi(e')vi(f)fi(g')cán(e)tem :(d.) (;) qui(d') ex(e) Pa(f)tre(e') Fi(f)li(d)ó(e)que(f') pro(e)cé(dc)dit.(d.) (::) Qui(h) cum(f') Pa(g)tre(h') et(i) Fí(j')li(i)o(h.) (,) si(h)mul(g') ad(h)o(j')rá(i)tur,(h.) (,) et(k) con(j')glo(i)ri(h')fi(g)cá(fg)tur :(e.) (;) qui(d') lo(c)cú(d')tus(e) est(f') per(g) Pro(e)phé(fe)tas.(d.) (::)\r\n\r\nEt(k') u(k)nam(j.) san(i)ctam(h.) ca(h)thó(i')li(j)cam(k.) (,) et(k) a(j')po(i)stó(h')li(g)cam(h') Ec(g)clé(f)si(g)am.(e.) (::)\r\n\r\nCon(d)fí(h')te(g)or(h') u(j)num(i') ba(h)ptí(g)sma(f.) (,) in(d') re(c)mis(d')si(f)ó(g')nem(f) pec(e')ca(f)tó(evDC)rum.(d.) (::) Et(h) ex(i')spé(j)cto(k.) re(k')sur(l)re(k')cti(j)ó(i')nem(h) mor(j')tu(i)ó(ivHG)rum.(h.) (::) Et(h) vi(gf)tam(e') ven(f)tú(e')ri(d) saé(ed)cu(c)li.(d.) (::) A(fg/hd./fg!hvGFE.//gvFE'DevDC)men.(d.) (::)",
@@ -775,7 +775,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:955",
     office: "cr",
-    mass: 5,
+    mass: null,
     mode: "4",
     incipit: "Credo V",
     gabc: "(c4) CRe(gf)do(e) in(efg) u(gf)num(ed) De(efED)um,(d.) *(::) <i>vel</i>() Cre(g)do(e') in(f) u(d)num(e') De(g)um,(h.) *(,) Pa(ixhi)trem(h') o(h)mni(g)pot(f')én(g)tem,(e.) (;) fa(f)ctó(g)rem(g') cae(g)li(g) et(gh) ter(g.)rae,(e.) (,) vi(e')si(f)bí(g')li(g)um(g) ó(ixhi)mni(h)um,(h.) (,) et(h) in(h')vi(g)si(f')bí(g)li(gf)um.(ed..) (::)\r\n\r\nEt(e') in(f) u(g)num(gh) Dó(g')mi(f)num(e.) (,) Je(e')sum(f) Chri(g)stum,(h.) (,) Fí(ixhi)li(h)um(h') De(h)i(h') u(g)ni(f)gé(g')ni(f)tum.(e.) (::) Et(e') ex(f) Pa(g)tre(ef) na(g)tum(h.) (,) an(ixhi)te(h') ó(h)mni(g)a(f') saé(g)cu(gf)la.(ed..) (::) De(f)um(e') de(f) De(g)o,(g.) (,) lu(g)men(g) de(gh) lú(g')mi(f)ne,(e.) (,) De(e')um(f) ve(g)rum(h.) de(h') De(g)o(f) ve(gf)ro.(ed..) (::) Gé(e')ni(f)tum,(g.) non(gh) fa(g.)ctum,(e.) (,) con(f)sub(f)stan(e')ti(f)á(g)lem(ef) Pa(g)tri :(h.) (,) per(ixhi) quem(h) ó(h)mni(g)a(f') fa(g)cta(gf) sunt.(ed..) (::) Qui(f) pro(e')pter(f) nos(gh) hó(g')mi(f)nes,(e.) (,) et(f) pro(e')pter(f) no(g')stram(g) sa(gh)lú(g.)tem(e.) (,) de(f')scén(g)dit(g') de(h) cae(gf)lis.(ed..) (::) Et(f) in(e')car(f)ná(g')tus(g) est(g'_[oh:h]) de(g) Spí(g)ri(e')tu(f) San(g)cto(h.) (,) ex(ixhi) Ma(h')rí(g)a(f') Vír(g)gi(gf)ne :(ed..) (;) Et(ixhi) ho(hg)mo(f') fa(g)ctus(gf) est.(ed..) (::) Cru(e')ci(f)fí(g)xus(g') ét(g)i(g)am(e') pro(f) no(g)bis :(h.) (,) sub(ixhi) Pón(h')ti(h)o(g) Pi(f')lá(g)to(e.) (,) pas(ixhi)sus,(h') et(g) se(f')púl(g)tus(gf) est.(ed..) (::) Et(f) re(e')sur(f)ré(g)xit(g') tér(g)ti(e')a(f) di(g)e,(h.) (,) se(ixhi)cún(h')dum(g) Scri(f)ptú(gf)ras.(ed..) (::) Et(d) a(d')scén(f)dit(e') in(f) cae(g)lum :(h.) (;) se(ixhi)det(h') ad(h) déx(h')te(g)ram(f') Pa(g)tris.(e.) (::) Et(f) í(g')te(g)rum(g') ven(g)tú(g')rus(g) est(g) cum(gh) gló(g')ri(f)a,(e.) (,) ju(e')di(f)cá(g)re(h.) vi(h')vos(g) et(f') mór(g)tu(gf)os :(ed..) (;) cu(e')jus(f) re(g)gni(h.) non(h') e(g)rit(f) fi(gf)nis.(ed..) (::)\r\n\r\nEt(e') in(f) Spí(g')ri(g)tum(g') San(g)ctum,(g.) Dó(ixhi)mi(h)num,(h.) et(h) vi(h')vi(g)fi(f)cán(gf~)tem :(ed..) (;) qui(e') ex(f) Pa(g)tre(g') Fi(g)li(g)ó(g)que(g') pro(h)cé(gf)dit.(ed..) (::) Qui(e') cum(f) Pa(g')tre(g) et(gh) Fí(g')li(f)o(e.) (,) si(f)mul(f) ad(e')o(f)rá(g)tur,(h.) (,) et(ixhi) con(h)glo(h')ri(g)fi(f)cá(gf)tur :(ed..) (;) qui(e') lo(f)cú(g')tus(g) est(g') per(g) Pro(h)phé(gf)tas.(ed..) (::)\r\n\r\nEt(f) u(e')nam(f) san(g)ctam(g.) ca(gh)thó(g')li(f)cam(e.) (,) et(ixhi) a(h)po(h)stó(h')li(h)cam(g) Ec(f')clé(g)si(gf)am.(ed..) (::)\r\n\r\nCon(f)fí(f)te(e')or(f) u(g')num(g) ba(gh)ptí(g.)sma(e.) (,) in(f) re(f)mis(e')si(f)ó(g)nem(h') pec(g)ca(f)tó(gf)rum.(ed..) (::) Et(e') ex(f)spé(g)cto(g') re(g)sur(g)re(g)cti(g)ó(g)nem(h') mor(g)tu(f')ó(g)rum.(e.) (::) Et(f) vi(g)tam(e') ven(f)tú(g)ri(h.) saé(ixhi)cu(h)li.(h.) (::) A(hvGFg.f!gw!hvG'FE)men.(de..) (::)",
@@ -799,14 +799,14 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2934",
     office: "cr",
-    mass: 6,
+    mass: null,
     mode: "4",
     incipit: "Credo VI",
     gabc: "(c4) CRe(gf)do(e) in(fg) u(gf)num(ed) De(ixdh!iv)um,(h.) *(::) <i>ve{l}</i>() Cre(g)do(e') in(f) u(d)num(e') <nlba>De(g)um(h.)</nlba>*(,) Pa(ixhi)trem(h') o(h)mni(h')pot(h)én(ghGF)tem,(efED.) (;) fa(ef)ctó(gf)rem(ef) cæ(gf)li(e_[oh:h]d_[oh:h]) et(dh) ter(ghGF)ræ,(efED.) (,) vi(d)si(ef)bí(g')li(f)um(ef) ó(g')mni(f)um,(e_[uh:l]f) (,) et(dh) in(h')vi(h)si(h)bí(gh)li(gf)um.(efED.) (::) \r\nEt(d) in(ef) u(gf)num(ef) Dó(g')mi(f)num(e_[uh:l]f) Je(d)sum(ef) Chri(gf)stum,(e_[oh:h]d_[oh:h]) (,) Fí(dh)li(h)um(h') De(h)i(h') u(h)ni(h)gé(gh)ni(gf)tum.(efED.) (::) Et(d) ex(ef) Pa(gf)tre(ef) na(gf)tum(e_[oh:h]d_[oh:h]) (,) an(dh)te(h') ó(h)mni(h)a(h) sǽ(gh)cu(gf)la.(efED.) (::) De(fvED)um(e') de(f) De(gf)o,(ef) lu(gf)men(e') de(f) lú(g')mi(f)ne,(e_[uh:l]f) (,) De(d)um(ef) ve(gf)rum(e_[oh:h]d_[oh:h]) de(dh) De(h)o(h) ve(ghGF)ro.(efED.) (::) Gé(f')ni(d)tum,(e') non(f) fa(gf)ctum,(e.) con(f)sub(d)stan(e')ti(f)á(gf)lem(ef) Pa(gf)tri :(e_[oh:h]d) (,) per(dh) quem(h') ó(h)mni(h)a(h) fa(gh)cta(gf) sunt.(efED.) (::) Qui(fvED) pro(e')pter(f) nos(g') hó(g)mi(f)nes,(e.) (,) et(d) pro(e')pter(f) no(gf)stram(e') sa(f)lú(gf)tem(e_[oh:h]d_[oh:h]) (,) de(dh)scén(h)dit(h') de(h) cæ(ghGF)lis.(efED.) (::) Et(fvED) in(e')car(f)ná(g')tus(f) est(e') de(f) Spí(g')ri(f)tu(ef) San(gf)cto(e_[oh:h]d_[oh:h]) (,) ex(dh) Ma(h)rí(h')a(h) Vír(gh)gi(gf)ne :(efED.) (;) Et([oh:+2.87mm{]dh_) ho(h'_)mo(h_) fa(gh_)ctus(gf__) est.(efE__D._3[oh}]) (::) Cru(d)ci(ef)fí(gf)xus(ef) ét(g')i(f)am(e') pro(f) no(gf)bis :(e.) (,) sub(f) Pón(g')ti(f)o(e') Pi(f)lá(gf)to(e_[oh:h]d_[oh:h]) (,) pas(dh)sus,(h') et(h) se(h)púl(gh)tus(gf) est.(efED.) (::) Et(fvED) re(e')sur(f)ré(gf)xit(e_[oh:h]d_[oh:h]) tér(dh)ti(h)a(h') di(h)e,(h.) (,) se(h')cún(h)dum(h') Scri(h)ptú(ghGF)ras.(efED.) (::) Et(d) a(ef)scén(gf)dit(e') in(f) cæ(gf)lum :(e_[oh:h]d_[oh:h]) (,) se(dh)det(h') ad(h) déx(h')te(h)ram(h) Pa(ghGF)tris.(efED.) (::) Et(ef) í(g')te(f)rum(e') ven(f)tú(g')rus(f) est(e') cum(f) gló(g')ri(f)a(e_[uh:l]f) (,) ju(d)di(ef)cá(gf)re(e_[uh:l]f) vi(dh)vos(h') et(h) mór(gh)tu(gf)os :(efED.) (;) cu(d)jus(ef) re(gf)gni(e_[oh:h]d_[oh:h]) non(dh) e(h)rit(h) fi(ghGF)nis.(efED.) (::) \r\nEt(d) in(ef) Spí(g')ri(f)tum(ef) San(gf~)ctum,(ef) Dó(g')mi(f)num,(e_[uh:l]f) (,) et(dh) vi(h)vi(h')fi(h)cán(ghGF)tem :(efED.) (;) qui(d) ex(ef) Pa(gf)tre(e_[uh:l]f) Fi(d)li(ef)ó(gf)que(e_[uh:l]f) pro(dh)cé(ghGF)dit.(efED.) (::) Qui(d) cum(ef) Pa(gf)tre(e') et(f) Fí(g')li(f)o(e.) si(f)mul(d) ad(e')o(f)rá(gf)tur,(e_[oh:h]d_[oh:h]) (,) et(dh) con(h)glo(h')ri(h)fi(h)cá(ghGF)tur :(efED.) (;) qui(d) lo(ef)cú(g')tus(f) est(e_[uh:l]f) per(dh) Pro(h)phé(ghGF)tas.(efED.) (::) \r\nEt(ef) u(gf)nam(ef) san(gf)ctam(e') ca(f)thó(g')li(f)cam(e_[oh:h]d_[oh:h]) (,) et(dh) a(h)po(h)stó(h')li(h)cam(h') Ec(h)clé(gh)si(gf)am.(efED.) (::) \r\nCon(ef)fí(g')te(f)or(ef) u(gf)num(e') ba(f)ptí(gf)sma(e.) in(f) re(d)mis(e')si(f)ó(gf)nem(e_[oh:h]d_[oh:h]) pec(dh)ca(h)tó(ghGF)rum.(efED.) (::) Et(d) ex(ef)spé(gf)cto(e.) re(f)sur(d)re(e')cti(f)ó(gf)nem(e_[oh:h]d_[oh:h]) mor(dh)tu(h)ó(ghGF)rum.(efED.) (::) Et(ef) vi(gf)tam(e') ven(f)tú(g)ri(e') sǽ(f)cu(e)li.(d.) \r\n(::) A(dh)men.(hggf!gwhggvFE.) (::)",
   },
   {
     id: "gregobase:2993",
-    office: "ky",
+    office: "ke",
     mass: 75,
     mode: "1",
     incipit: "Kyrie (ad lib.) I. - Clemens Rector",
@@ -814,7 +814,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2021",
-    office: "ky",
+    office: "ke",
     mass: 76,
     mode: "1",
     incipit: "Kyrie (ad lib.) II. - Summe Deus",
@@ -822,7 +822,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2237",
-    office: "ky",
+    office: "ke",
     mass: 77,
     mode: "2",
     incipit: "Kyrie (ad lib.) III / III A",
@@ -830,7 +830,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2254",
-    office: "ky",
+    office: "ke",
     mass: 78,
     mode: "5",
     incipit: "Kyrie (ad lib.) IV. - Kyrie altissime",
@@ -838,7 +838,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2261",
-    office: "ky",
+    office: "ke",
     mass: 79,
     mode: "7",
     incipit: "Kyrie (ad lib.) V / I B",
@@ -846,7 +846,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:309",
-    office: "ky",
+    office: "ke",
     mass: 2,
     mode: "3",
     incipit: "Kyrie II",
@@ -862,7 +862,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2269",
-    office: "ky",
+    office: "ke",
     mass: 6,
     mode: "8",
     incipit: "Kyrie (ad lib.) VI",
@@ -870,7 +870,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2363",
-    office: "ky",
+    office: "ke",
     mass: 81,
     mode: "1",
     incipit: "Kyrie (ad lib.) VII. - Splendor aeterne",
@@ -878,7 +878,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2468",
-    office: "ky",
+    office: "ke",
     mass: 81,
     mode: "6",
     incipit: "Kyrie (ad lib.) VIII. - Firmator sancte",
@@ -886,7 +886,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2599",
-    office: "ky",
+    office: "ke",
     mass: 82,
     mode: "8",
     incipit: "Kyrie (ad lib.) IX. - O Pater excelse",
@@ -894,7 +894,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2604",
-    office: "ky",
+    office: "ke",
     mass: 10,
     mode: "1",
     incipit: "Kyrie (ad lib.) X",
@@ -902,7 +902,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:2614",
-    office: "ky",
+    office: "ke",
     mass: 83,
     mode: "1",
     incipit: "Kyrie (ad lib.) XI. - Kyrie Salve",
@@ -982,7 +982,7 @@ export const KYRIALE: KyrialeEntry[] = [
   },
   {
     id: "gregobase:541",
-    office: "ky",
+    office: "ke",
     mass: 94,
     mode: "6",
     incipit: "Kyrie eleison (in Miss. def.)",

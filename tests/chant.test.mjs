@@ -10,7 +10,7 @@ import { OFFICIA } from "../dist/engines/chant/types.js";
 
 // Every part of the Mass ordinary — the doors to the Kyriale, which is
 // addressable but not shelved.
-const ORDINARY_CODES = ["ky", "gl", "cr", "sa", "ag", "be", "it", "as", "va"];
+const ORDINARY_CODES = ["ke", "gl", "cr", "sa", "ag", "be", "it", "as", "va"];
 
 describe("getChants", () => {
   test("returns chants filtered by mode", () => {
@@ -59,15 +59,17 @@ describe("getChants", () => {
       // The bibliographic record survives — a chant still says which book it is
       // printed in, and a singer would be holding the Kyriale.
       assert.equal(c.source.code, "ky");
-      assert.equal(c.office, "or"); // office register: all ordinaries are "or"
-      assert.equal(c.genus, "Ordinarium");
+      // The roll-up genus is `ky` — GregoBase's own code for the Kyriale, and
+      // what it files every ordinary chant under. The PART rides `ordinary`.
+      assert.equal(c.office, "ky");
+      assert.equal(c.genus, "Kyriale");
       assert.ok(c.ordinary, `${c.id}: the per-ordinary code rides \`ordinary\``);
       assert.ok(c.ordinarium, `${c.id}: the Latin name rides \`ordinarium\``);
       assert.ok(c.gabc.length > 0);
     }
     // The per-ordinary identity survives into the book: every part is present.
     const parts = new Set(ky.map((c) => c.ordinary));
-    for (const code of ["ky", "gl", "cr", "sa", "ag", "it", "as", "va"]) {
+    for (const code of ["ke", "gl", "cr", "sa", "ag", "it", "as", "va"]) {
       assert.ok(parts.has(code), `kyriale carries ordinary "${code}"`);
     }
   });
@@ -79,7 +81,7 @@ describe("getChants", () => {
   // the Kyriale's printing order instead of the day's own ranking.
   test("a kyriale chant is one identity whether reached by book or by ordinarium", () => {
     const feast = getFeast({ date: new Date(Date.UTC(2026, 3, 5)) }); // Easter
-    const viaOrdo = getOrdinary({ feast }).find((c) => c.ordinary === "ky");
+    const viaOrdo = getOrdinary({ feast }).find((c) => c.ordinary === "ke");
     assert.ok(viaOrdo, "Easter's ordinarium serves a Kyrie");
     const viaBook = getChants({ id: viaOrdo.id })[0];
     assert.ok(viaBook, `${viaOrdo.id} is reachable by id too`);
@@ -151,7 +153,11 @@ describe("getCorpus", () => {
     // This used to throw `Unknown corpus code: "undefined"` — the commonest
     // question about a corpus was the one thing the verb could not answer.
     const L = getCorpus();
-    assert.equal(L.books.length, 10, "every registered book is in the ledger");
+    // Seven since 2026-08-31: ams, cse and cot were cut after measurement showed
+    // each was the SOLE source of nothing — every chant they listed was already
+    // on the shelf under gr, lu or am — so removing all three emptied no slot on
+    // any day of the year. ky rides inside rather than as its own row.
+    assert.equal(L.books.length, 7, "every registered book is in the ledger");
     assert.ok(L.count > 0 && L.listings > 0 && L.total > 0);
     // `count` leads and means chants — each one once, the ordinary included.
     // `listings` is the shelf's length, where a melody printed in two books
@@ -293,7 +299,11 @@ describe("getCorpus", () => {
     assert.equal(nr.total, 1564);
     assert.equal(nr.unique, 1564, "every chant it holds is its own");
     assert.deepEqual(nr.shared, [], "measured as sharing nothing, not unmeasured");
-    assert.ok(nr.count > 0 && nr.count < nr.total, "it ships a cut of what it holds");
+    // It used to ship a CUT of what it holds — 470 of 1,564 — because the corpus
+    // was assignment-driven and the calendar never reached the rest. Since the
+    // ungating the shelf carries the books whole, so the Nocturnale ships all of
+    // itself. That the two numbers now agree is the change, not a coincidence.
+    assert.equal(nr.count, nr.total, "the book ships whole");
   });
 
   test("unknown code throws (message lists the known codes)", () => {
@@ -324,9 +334,9 @@ describe("getOrdinary", () => {
   });
 
   test("returns kyriale chants filtered by ordinary code", () => {
-    const chants = getOrdinary({ ordinary: "ky" });
+    const chants = getOrdinary({ ordinary: "ke" });
     assert.ok(chants.length > 0);
-    for (const c of chants) assert.equal(c.ordinary, "ky");
+    for (const c of chants) assert.equal(c.ordinary, "ke");
   });
 });
 
@@ -710,11 +720,11 @@ describe("user GABC office-part header (contract regression)", () => {
     assert.equal(c.office, "in");
     assert.equal(c.genus, "Introitus");
   });
-  test("any casing normalizes; an unknown value falls to or", () => {
+  test("any casing normalizes; an unknown value falls to va", () => {
     const [a] = getChants({ gabc: "office-part: antiphona;\n%%\n(c4) A(g)" });
     assert.equal(a.office, "an");
     const [u] = getChants({ gabc: "office-part: Varia;\n%%\n(c4) A(g)" });
-    assert.equal(u.office, "or");
+    assert.equal(u.office, "va");
   });
 });
 

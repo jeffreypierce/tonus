@@ -48,6 +48,10 @@ function verseToChant(
     id: `psalm:${v.psalm}:${v.verse}`,
     incipit: v.half1.slice(0, 40),
     gabc,
+    // Empty, and meaningfully so: a verse pointed to a tone at request time is
+    // not a printing of any book on the shelf, which is exactly why no
+    // `cantus({ source })` can ever return one.
+    books: [],
     office: "ps",
     genus: "Psalmus",
     mode: String(mode),

@@ -8,7 +8,7 @@ export type { Season, Grade, Feast };
 // ── Primitive codes ──
 export type OfficeCode =
   | "an" | "al" | "ca" | "co" | "gr" | "hy" | "in"
-  | "of" | "ps" | "re" | "rb" | "se" | "tr" | "tp" | "or"
+  | "of" | "ps" | "re" | "rb" | "se" | "tr" | "tp" | "or" | "ky" | "va"
   // Genera tonus does not SHIP but does REPORT: they appear in a book's
   // pre-cut `full` tally, so they need names there. The cut keeps them out of
   // the shipped corpus (extract-gregobase.mjs OFFICE_MAP is the admission
@@ -17,7 +17,7 @@ export type OfficeCode =
   | "im" | "pa" | "su";
 
 export type OrdinaryCode =
-  | "ky" | "gl" | "cr" | "sa" | "ag" | "be" | "it"
+  | "ke" | "gl" | "cr" | "sa" | "ag" | "be" | "it"
   | "as"   // Asperges me (sprinkle rite, outside Paschaltide)
   | "va";  // Vidi aquam (sprinkle rite, Paschaltide)
 
@@ -45,13 +45,14 @@ export type OrdinaryCode =
  */
 export type ChantSource =
   | "gr" | "lu" | "la" | "lh" | "am" | "nr"
-  // office books, monastic
-  | "ams" | "psm"
-  // further MARKED Solesmes books. The rule for admission is stated in
-  // extract-gregobase.mjs OFFICE_BOOKS: Solesmes AND rhythmically marked
-  // (>50% episema or mora), because tonus reads those marks and a bare
-  // transcription is a worse copy of a chant already held.
-  | "cse" | "cot";
+  // the office book, monastic. ams, cse and cot were admitted by the marks rule
+  // (Solesmes AND >50% episema or mora) and cut again on 2026-08-31: measured
+  // over a full year, none of the three was the SOLE source of a single chant,
+  // so removing all three emptied no slot on any day. psm stays because its
+  // eleven listings are all sole — the ferial weekday antiphons, "Per singulos
+  // dies" among them. The admission rule is stated at extract-gregobase.mjs
+  // OFFICE_BOOKS, and the cut beside it.
+  | "psm";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"
@@ -95,15 +96,37 @@ export const OFFICIA: Readonly<Record<OfficeCode, string>> = Object.freeze({
   se: "Sequentia",
   // Reported in the pre-cut tallies, not shipped — see OfficeCode above.
   im: "Improperia",       // the Good Friday Reproaches (Popule meus)
-  pa: "Antiphona Mariana", // Marian antiphons outside the office cycle
+  pa: "Prosa",
   su: "Supplicatio",      // litanies and supplications (the Easter Vigil litany)
   tr: "Tractus",
-  tp: "Tonus Peregrinus",
-  or: "Ordinarium",
+  // ── Corrected 2026-08-31 against GregoBase's own vocabulary ──────────────
+  // These three were read off the two-letter codes rather than off the source,
+  // and two of them named the wrong thing entirely. GregoBase's include/txt.php
+  // carries $txt['usage']: or = Toni Communes, tp = Tropa, pa = Prosa. `or` was
+  // the costly one — tonus stamped "Ordinarium" on it and used the code for the
+  // Mass ordinary, which meant a genus tonus invented was sitting on a genus the
+  // database already had, and 132 real Toni Communes chants were dropped at the
+  // extractor for want of a mapping.
+  tp: "Tropa",
+  or: "Toni Communes",
+  // The Mass ordinary's roll-up, and GregoBase's word for it: the database files
+  // every ordinary chant under office-part `ky`. The part itself rides
+  // `ordinary` (ke · gl · cr · sa · ag · …), which is the identity every query
+  // and the census bin on; this is the genus above them.
+  ky: "Kyriale",
+  // The catch-all, and GregoBase's own name for it. A chant whose office-part
+  // tonus does not recognise used to fall to `or`, which was harmless while `or`
+  // was a label tonus had invented and is not now that it means Toni Communes —
+  // an unknown chant would have been filed as a recitation formula, and the
+  // census excludes those. NOTE for review: `va` is also an ORDINARY code (Vidi
+  // aquam). Office codes and ordinary codes are separate vocabularies — `ky`
+  // lived in both until today — but if that overlap is unwanted, this is the
+  // one to rename, not the ordinary.
+  va: "Varia",
 });
 
 export const ORDINARIA: Readonly<Record<string, string>> = Object.freeze({
-  ky: "Kyrie eleison",
+  ke: "Kyrie eleison",
   gl: "Gloria",
   cr: "Credo",
   sa: "Sanctus",
@@ -154,6 +177,22 @@ export interface Chant {
     // Graduale, so it names a printing rather than a shelf entry.
     code?: ChantSource | "user" | "ky";
   };
+  /**
+   * Every book that PRINTS this chant, the one storing the record first.
+   *
+   * A melody printed in several books is stored once and listed under each, so
+   * `books` — not `source.code` — is what `cantus({ source })` and `corpus(code)`
+   * read. `source` names the book the record is filed under; `books` names the
+   * shelf. Until 2026-08-31 the two were conflated, which stored the 928 chants
+   * the Graduale and the Liber Usualis share twice over while hiding the 1,079
+   * the Usualis shares with the Antiphonarius from `corpus("la")` entirely.
+   *
+   * `books[0]` is the owner. A chant that IS a printing carries its own code
+   * even when no book on the shelf holds it — "user" for raw GABC, "ky" for a
+   * Kyriale printing. It is empty only for a chant that is not a printing at
+   * all: a psalm verse pointed to a tone at request time.
+   */
+  books: (ChantSource | "user" | "ky")[];
   ordinary?: OrdinaryCode;   // machine code; present for kyriale chants
   ordinarium?: string;       // Latin ordinary name, e.g. "Kyrie eleison"
   mass?: number;
@@ -261,7 +300,7 @@ export interface CantusQuery {
   office?: OfficeCode | OfficeCode[];
   source?: ChantSource | ChantSource[];
   /**
-   * A part of the Mass ordinary — `"ky"` for the Kyries, `"gl"` the Glorias,
+   * A part of the Mass ordinary — `"ke"` for the Kyries, `"gl"` the Glorias,
    * and so on. This is the door to the Kyriale, which is addressable but not
    * shelved (it is a partition of the Graduale, not a book), so it is absent
    * from `source` and from an unfiltered search. Asking for an ordinary can

@@ -26,7 +26,7 @@ const VIEW = 1100; // the high end of the ~700–1100 target
 // alone covers the SHELF, and the Kyriale is addressable but not shelved — so
 // asking only that way would call every ordinary chant unattested and make this
 // test fail on chants the corpus has dated to the 10th century.
-const ORDINARY_CODES = ["ky", "gl", "cr", "sa", "ag", "be", "it", "as", "va"];
+const ORDINARY_CODES = ["ke", "gl", "cr", "sa", "ag", "be", "it", "as", "va"];
 const attested = new Set([
   ...getChants({ before: VIEW }),
   ...ORDINARY_CODES.flatMap((code) => getChants({ ordinary: code, before: VIEW })),
@@ -87,7 +87,7 @@ describe("era view — re-pick vs silence", () => {
     // Gloria, Credo, Sanctus, Agnus, and the sprinkle — all survive an 1100
     // view. A slot with no attested candidate falls silent honestly instead.
     const viewed = parts(viewedOrd);
-    for (const slot of ["ky", "gl", "cr", "sa", "ag", "va"]) {
+    for (const slot of ["ke", "gl", "cr", "sa", "ag", "va"]) {
       assert.ok(viewed.has(slot), `the ${slot} slot survives the view`);
     }
     for (const slot of viewed) {

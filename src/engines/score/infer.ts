@@ -10,7 +10,7 @@ import { MODES } from "../temper/modes.js";
 // phrase: the Gloria's "Et in terra pax" (the celebrant sings "Gloria in
 // excelsis") and the Credo's "Patrem omnipotentem" ("Credo in unum Deum").
 const ORDINARY_INCIPITS: Array<[RegExp, OrdinaryCode]> = [
-  [/^kyrie/i, "ky"],
+  [/^kyrie/i, "ke"],
   [/^gloria/i, "gl"],
   [/^etinterra/i, "gl"],
   [/^credo/i, "cr"],

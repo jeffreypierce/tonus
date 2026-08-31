@@ -19,7 +19,7 @@ describe("the Kyriale era rule (latest 1324)", () => {
     // Mass XI "Orbis factor" is a 10th-c Kyrie/Gloria/Sanctus with a 14th-c
     // Agnus bolted on — the Kyriale is a 19th-c grouping of chants from
     // different centuries, which is why its ascriptions are per-part.
-    assert.equal(partWithinEra(11, "ky"), true, "Orbis factor's Kyrie is 10th c");
+    assert.equal(partWithinEra(11, "ke"), true, "Orbis factor's Kyrie is 10th c");
     assert.equal(partWithinEra(11, "gl"), true);
     assert.equal(partWithinEra(11, "sa"), true);
     assert.equal(partWithinEra(11, "ag"), false, "its Agnus is XIV. s.");
@@ -29,12 +29,12 @@ describe("the Kyriale era rule (latest 1324)", () => {
     // Mass XI's Kyrie prints "(X) XIV-XVI. s." — the parenthetical is the
     // melody, the late reading is whichever manuscript was transcribed.
     // Corpus Monodicum (Brill, 2024) dates Orbis factor to the 10th–12th c.
-    assert.equal(MASS_CENTURY[11].ky.alt, 10);
-    assert.equal(partWithinEra(11, "ky"), true);
+    assert.equal(MASS_CENTURY[11].ke.alt, 10);
+    assert.equal(partWithinEra(11, "ke"), true);
     // Mass VIII's Sanctus likewise: "(XI) XII. s." keeps it, while the famous
     // late Kyrie and Gloria go.
     assert.equal(partWithinEra(8, "sa"), true);
-    assert.equal(partWithinEra(8, "ky"), false, "de Angelis' Kyrie is XV–XVI");
+    assert.equal(partWithinEra(8, "ke"), false, "de Angelis' Kyrie is XV–XVI");
     assert.equal(partWithinEra(8, "gl"), false);
   });
 
@@ -43,7 +43,7 @@ describe("the Kyriale era rule (latest 1324)", () => {
     // unenforceable: nothing checked it and no data could. A 9th-c setting is
     // admitted for the same reason a 13th-c one is — the rule can only remove
     // what the Kyriale itself dates late.
-    assert.equal(partWithinEra(1, "ky"), true, "Lux et origo, X. s.");
+    assert.equal(partWithinEra(1, "ke"), true, "Lux et origo, X. s.");
   });
 
   test("1324 admits only centuries that CLOSED before it", () => {
@@ -67,7 +67,7 @@ describe("the Kyriale era rule (latest 1324)", () => {
     const sunday = getFeast({ date: new Date(Date.UTC(2024, 5, 2)) })[0];
     const served = getOrdinary({ feast: [sunday] });
     const have = new Set(served.map((c) => c.ordinary));
-    for (const slot of ["ky", "sa", "ag"]) {
+    for (const slot of ["ke", "sa", "ag"]) {
       assert.ok(have.has(slot), `Sunday must sing ${slot}`);
     }
     // The borrowed Agnus comes from another mass, not Mass XI.

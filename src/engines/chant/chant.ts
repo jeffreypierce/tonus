@@ -16,11 +16,8 @@ import { AM_DATA, AM_SOURCE } from "../../data/am.js";
 import { NR_DATA, NR_SOURCE } from "../../data/nocturnale-romanum.js";
 // Office books — the antiphons and short responsories that fill weekday
 // office slots; see ChantSource in types.ts for why.
-import { AMS_DATA, AMS_SOURCE } from "../../data/ams.js";
 import { PSM_DATA, PSM_SOURCE } from "../../data/psm.js";
 // Further marked Solesmes books — see ChantSource in types.ts.
-import { CSE_DATA, CSE_SOURCE } from "../../data/cse.js";
-import { COT_DATA, COT_SOURCE } from "../../data/cot.js";
 import { KYRIALE } from "../../data/kyriale.js";
 import { entryToOrdinaryChant } from "./ordinary.js";
 
@@ -73,13 +70,14 @@ function chantFromGABC(query: CantusQuery): Chant[] {
   const office = (
     query.office
       ? (Array.isArray(query.office) ? query.office[0] : query.office)
-      : officeFromHeader ?? "or"
+      : officeFromHeader ?? "va"
   ) as OfficeCode;
 
   return [{
     id: `gabc:${incipit.toLowerCase().replace(/\s+/g, "_") || "untitled"}`,
     incipit,
     gabc: body,
+    books: ["user"],
     office,
     genus: OFFICIA[office] ?? office,
     mode: mode ?? null,
@@ -89,10 +87,53 @@ function chantFromGABC(query: CantusQuery): Chant[] {
   }];
 }
 
+// Every printing's pages, by chant id then book code. Kept beside the corpus
+// rather than on the Chant: a caller gets the pages for the book they ASKED
+// about (see presentAs), and carrying all of them on every record would invite
+// reading the wrong volume's citation.
+const PAGES_BY_BOOK = new Map<string, Record<string, Chant["pages"]>>();
+
+/**
+ * The same chant, presented as the book the caller asked for.
+ *
+ * A melody printed in several books is stored once, under one owner, so its
+ * `source` and `pages` are the owner's. Ask `cantus({ source: "gr" })` and you
+ * mean the Graduale: you want the Graduale's bibliographic record and the
+ * Graduale's page numbers, not the Liber Usualis's because that is where the
+ * record happens to be filed. `books` is unchanged — the shelf is the shelf.
+ */
+// The owner's pages, and the whole map remembered for presentAs. A generated
+// record always carries the map (one key when one book prints it); a hand-built
+// Chant may carry a bare array, which is taken as it stands.
+function pagesFor(c: ChantData, code: string | undefined): Chant["pages"] {
+  const byBook = c.pages as unknown;
+  if (Array.isArray(byBook)) return byBook as Chant["pages"];
+  const map = byBook as Record<string, Chant["pages"]>;
+  PAGES_BY_BOOK.set(c.id, map);
+  return (code && map[code]) || Object.values(map)[0] || [];
+}
+
+function presentAs(chant: Chant, code: ChantSource): Chant {
+  if (chant.source.code === code) return chant;
+  const src = SOURCES[code];
+  if (!src) return chant;
+  const pages = PAGES_BY_BOOK.get(chant.id)?.[code];
+  return { ...chant, source: src, pages: pages ?? chant.pages };
+}
+
 function withLabels(c: ChantData, source: Chant["source"]): Chant {
+  // `books` rides the generated data. The `??` is not defensive padding: the
+  // Kyriale is emitted by a different builder that never carried the field, and
+  // a chant printed by exactly one book is fully described by its own code. A
+  // record arriving without a listing is therefore listed under itself, which is
+  // true, rather than under nothing, which would make it unfindable by source.
   return {
     ...c,
     source,
+    // The one narrowing point: ChantData carries string[] so the generated
+    // literals do not hand tsc a 9-member union ~7,700 times over (TS2590).
+    books: (c.books?.length ? c.books : [source.code ?? "user"]) as Chant["books"],
+    pages: pagesFor(c, source.code),
     genus: OFFICIA[c.office as OfficeCode] ?? c.office,
     modus: modusOf(c.mode),
   };
@@ -105,10 +146,7 @@ const CORPUS: Chant[] = [
   ...LH_DATA.map((c) => withLabels(c, LH_SOURCE)),
   ...AM_DATA.map((c) => withLabels(c, AM_SOURCE)),
   ...NR_DATA.map((c) => withLabels(c, NR_SOURCE)),
-  ...AMS_DATA.map((c) => withLabels(c, AMS_SOURCE)),
   ...PSM_DATA.map((c) => withLabels(c, PSM_SOURCE)),
-  ...CSE_DATA.map((c) => withLabels(c, CSE_SOURCE)),
-  ...COT_DATA.map((c) => withLabels(c, COT_SOURCE)),
 ];
 
 // The Kyriale, addressable but not shelved — ruled 2026-08-04.
@@ -144,8 +182,7 @@ function byId(): Map<string, Chant> {
 export const SOURCES: Record<ChantSource, Chant["source"]> = {
   gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
   // office books — provenance, not acquisition
-  ams: AMS_SOURCE, psm: PSM_SOURCE,
-  cse: CSE_SOURCE, cot: COT_SOURCE,
+  psm: PSM_SOURCE,
 };
 
 // Tally a book's genre and mode distribution — computed once per code, cached.
@@ -248,7 +285,10 @@ function corpusLedger(): CorpusLedger {
 
   _ledger = {
     count: byId().size,
-    listings: CORPUS.length,
+    listings: CORPUS.reduce(
+      (n, c) => n + c.books.filter((b) => b in SOURCES).length,
+      0,
+    ),
     // Sum only what was measured: a book outside GregoBase reports null rather
     // than a false zero, and adding null in as 0 would understate the shelf
     // while looking like a total.
@@ -267,7 +307,10 @@ function oneCorpus(code: ChantSource): Corpus {
   const src = SOURCES[code];
   if (!src) throw new Error(`Unknown corpus code: "${code}" (expected ${Object.keys(SOURCES).join(", ")})`);
 
-  const chants = CORPUS.filter((c) => c.source.code === code);
+  // What the book PRINTS. Reading `source.code` here would count only the
+  // records this book happens to store, which is why the Antiphonarius used to
+  // report 1,422 of a book it holds 2,501 of.
+  const chants = CORPUS.filter((c) => c.books.includes(code));
 
   // Genre distribution — count by office code, descending by count.
   const officeCounts = new Map<OfficeCode, number>();
@@ -397,7 +440,12 @@ export function getChants(query?: CantusQuery): Chant[] {
   const sources = toArray(query.source);
   if (sources) {
     const set = new Set<string>(sources);
-    out = out.filter((c) => c.source.code != null && set.has(c.source.code));
+    out = out
+      .filter((c) => c.books.some((b) => set.has(b)))
+      .map((c) => {
+        const asked = c.books.find((b) => set.has(b)) as ChantSource | undefined;
+        return asked ? presentAs(c, asked) : c;
+      });
   }
 
   const offices = toArray(query.office);

@@ -9,9 +9,9 @@ carries page-level provenance back to its book.
 
 - [Chant](#chant)
   - [The corpora](#the-corpora)
-    - [The cut](#the-cut)
+    - [The shelf is the books](#the-shelf-is-the-books)
   - [The books — `corpus`](#the-books--corpus)
-    - [The ledger of the cut — `full`](#the-ledger-of-the-cut--full)
+    - [What the book holds — `full`](#what-the-book-holds--full)
   - [Retrieval — `cantus`](#retrieval--cantus)
     - [Reaching the ordinary — `ordinary`](#reaching-the-ordinary--ordinary)
     - [On chant ids](#on-chant-ids)
@@ -30,33 +30,29 @@ carries page-level provenance back to its book.
 
 ## The corpora
 
-Nine Solesmes books, extracted from
+Six Solesmes books, extracted from
 [GregoBase](https://gregobase.selapa.net/), joined by the Divinum Officium
 propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 
-| Source | Book                              | Edition            | Chants |
-| ------ | --------------------------------- | ------------------ | ------ |
-| `gr`   | Graduale Romanum                  | Solesmes, 1961     | 780    |
-| `lu`   | The Liber Usualis                 | Solesmes, 1961     | 707    |
-| `la`   | Liber antiphonarius               | Solesmes, 1960     | 160    |
-| `lh`   | Liber Hymnarius                   | Solesmes, 1983     | 25     |
-| `am`   | Antiphonale Monasticum            | Solesmes, 1934     | 576    |
-| `ams`  | Antiphonale Monasticum Solesmense | Solesmes, 1935     | 11     |
-| `psm`  | Psalterium Monasticum             | Solesmes, 1981     | 11     |
-| `cse`  | Cantus selecti                    | Solesmes, 1957     | 11     |
-| `cot`  | Chants of the Church              | Solesmes, 1956     | 16     |
-| `nr`   | Nocturnale Romanum                | Sandhofe, 2002     | 470    |
+| Source | Book                    | Edition        | Chants |
+| ------ | ----------------------- | -------------- | ------ |
+| `gr`   | Graduale Romanum        | Solesmes, 1961 | 1,373  |
+| `lu`   | The Liber Usualis       | Solesmes, 1961 | 2,446  |
+| `la`   | Liber antiphonarius     | Solesmes, 1960 | 2,506  |
+| `lh`   | Liber Hymnarius         | Solesmes, 1983 | 361    |
+| `am`   | Antiphonale Monasticum  | Solesmes, 1934 | 1,448  |
+| `psm`  | Psalterium Monasticum   | Solesmes, 1981 | 60     |
+| `nr`   | Nocturnale Romanum      | Sandhofe, 2002 | 1,564  |
 
-**2,187 chants in all**, plus the Mass ordinary (120 settings, reached by
-[`ordinary`](#reaching-the-ordinary--ordinary) rather than by book). The books
-hold 10,156 between them; tonus ships only what the calendar calls for on some
-day of the year, so a chant with no day to be sung on is not here. See
-[The cut](#the-cut) below.
+**7,840 chants in all**, the Mass ordinary among them (120 settings, reached by
+[`ordinary`](#reaching-the-ordinary--ordinary) rather than by book). That is the
+books themselves: tonus carries what they print, whether or not the calendar
+reaches it.
 
-The ten books list 2,767 rows for those 2,187 chants: a melody printed in two
-books is stored once and listed under both.
+The seven books list 9,758 rows for those 7,840 chants: a melody printed in two
+books is stored once and listed under each, with each book's own page citation.
 
-`am`, `ams`, and `psm` are the monastic (Benedictine) books; the rest are
+`am` and `psm` are the monastic (Benedictine) books; the rest are
 Roman. Every book here bears the rhythmic markings the score engine reads; that
 is the admission rule. `nr` is the night-office repertoire (responsories,
 antiphons) from the
@@ -64,15 +60,26 @@ antiphons) from the
 community restitution, the one non-Solesmes source, admitted because it carries
 those marks too.
 
-### The cut
+### The shelf is the books
 
-The corpus is **assignment-driven**: a chant ships when some day of the
-liturgical year calls for it. The calendar is walked year by year until it stops
-finding new assignments (39 years, in the event), and what it never reaches is
-not shipped: 10,156 book chants become 2,187.
+The corpus was **assignment-driven** until 2026-08-31: a chant shipped only when
+some day of the liturgical year called for it, and 10,156 book chants became
+2,187. That gate is gone. The shelf now carries the books whole.
 
-Everything here answers "what was sung on this day". A query for a chant the
-calendar never calls for returns nothing.
+The reason is that the gate answered four questions with one silence. A chant
+absent from the shelf might be genuinely superseded repertoire, or printed in an
+edition the calendar does not address, or proper to a sanctorale the calendar
+does not enumerate, or simply missed by the matcher that places texts on days —
+and nothing downstream could tell those apart, because the chant was not there
+to ask about. Worse, the population every `census` measurement was taken against
+was itself the product of that gate, so "how typical is this chant" quietly meant
+"how typical among the chants one rite happened to call for".
+
+Whether a day calls for a chant is now a question for the day verbs — `festum`,
+`proprium`, `officium` — which answer it directly and say what their tables
+hold. It is not a filter on the shelf. `cantus` and `corpus` ask what the books
+print; that a chant has no day to be sung on is a fact about the calendar, not a
+reason it should be unfindable.
 
 ## The books — `corpus`
 
@@ -86,12 +93,12 @@ book's ledger:
 
 ```js
 tonus.corpus();
-// { count: 2187,      // chants tonus holds, each counted once
-//   listings: 2767,   // rows on the shelf — a chant in two books appears twice
-//   total: 10156,     // what the books hold, before the cut
-//   genera: [ { office: "an", genus: "Antiphona", count: 693 }, … ],
-//   modes:  [ { mode: "1", modus: "Modus I", count: 392 }, … ],
-//   books:  [ …10 Corpus entries, in registry order ] }
+// { count: 7840,      // chants tonus holds, each counted once
+//   listings: 9758,   // rows on the shelf — a chant in two books appears twice
+//   total: 9811,     // what the books hold, before dedup
+//   genera: [ { office: "an", genus: "Antiphona", count: 3959 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 1520 }, … ],
+//   books:  [ …7 Corpus entries, in registry order ] }
 ```
 
 **`count` is the number of chants**, the one to quote. `listings` is how long
@@ -128,35 +135,37 @@ interface Corpus {
 }
 ```
 
-### The ledger of the cut — `full`
+### What the book holds — `full`
 
-Every `Corpus` carries `full`: what the book HELD, before the keep set ran, in
+Every `Corpus` carries `full`: what the book holds in GregoBase's catalogue, in
 the same genera/modes shape as the shipped counts.
 
 ```js
 const am = tonus.corpus("am");
-am.count;             // 576  — antiphons and the rest tonus kept
-am.full.total;        // 1456 — what the Antiphonale Monasticum holds
-am.genera[0];         // { office: "an", genus: "Antiphona", count: 458 }
+am.count;             // 1448 — chants tonus lists under the Antiphonale
+am.full.total;        // 1456 — what GregoBase catalogues for the book
+am.genera[0];         // { office: "an", genus: "Antiphona", count: 1045 }
 am.full.genera[0];    // { office: "an", genus: "Antiphona", count: 1049 }
 ```
 
-Reading the two tallies side by side names what was left out: 1,049 antiphons
-in the book, 458 sung.
+The two now sit close, because the shelf carries the book rather than a
+selection from it. What remains between them is what the extractor drops for
+reasons of its own — a chant GregoBase marks as a duplicate of another, or one
+whose GABC will not parse — not a liturgical judgement.
 
-Only the extractor can measure this. By the time tonus loads, the keep set has
-already run, so the pre-cut tally is read from an artifact rather than derived.
-Every shelved book reports one, including the Nocturnale, whose tally comes
-from its own extract rather than from GregoBase.
+Only the extractor can measure `full`. By the time tonus loads, its record is
+one per chant, so the catalogue tally is read from an artifact rather than
+derived. Every shelved book reports one, including the Nocturnale, whose tally
+comes from its own extract rather than from GregoBase.
 
 The metadata is drawn from GregoBase's own catalogue. The `genera` list is the
 office distribution (descending by count); `modes` counts modes I–VIII, with a
 final `mode: null` bucket for chants outside the eight modes (psalm tones and the
 like) so the counts reconcile with `count`.
 
-**Overlap.** tonus keeps one copy of each chant (the Liber Usualis is the primary
-source; the Antiphonarius and Hymnarius fill gaps), so a book's stored `count`
-undercounts what it holds. `total` is the full pre-dedup count, `unique` the
+**Overlap.** tonus stores one copy of each chant — the Liber Usualis owns the
+record where several books print it — but LISTS it under every book that does,
+so `count` is what a book prints rather than what it happens to store. `total` is the full pre-dedup count, `unique` the
 chants a book alone has, and `shared` how many it holds in common with each other
 book (by GregoBase chant id). These reveal, for instance, that the Liber Usualis
 is largely the Graduale and the Antiphonarius bound together (it shares hundreds
@@ -302,7 +311,7 @@ is the verb, and it applies the Kyriale's own rubrics. This is flat retrieval.
 An id's prefix names **the catalogue the identifier came from**, not the book
 the chant is printed in, and not a claim about who the melody belongs to. A
 chant carrying `gregobase:1210` is a Solesmes book chant that GregoBase happens
-to have catalogued; the corpus is assembled from ten books, and GregoBase is
+to have catalogued; the corpus is assembled from seven books, and GregoBase is
 one source among several.
 
 The prefix is therefore **not a namespace you can query against**. GregoBase

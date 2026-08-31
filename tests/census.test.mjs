@@ -46,7 +46,7 @@ describe("census — the shape of the answer", () => {
 });
 
 describe("census — the blocks address the right chants", () => {
-  test("every shipped chant has a block, and every block a chant", () => {
+  test("every censused chant has a block, and the gap is the Toni Communes", () => {
     // The bijection is the whole reason blocks are deduped by id. If it breaks,
     // census({ id }) starts answering about a chant the caller did not name.
     // The population is DERIVED, never listed here: a hardcoded book list is
@@ -54,17 +54,34 @@ describe("census — the blocks address the right chants", () => {
     // "ky" after the Kyriale stopped being a shelf entry. The shelf comes from
     // corpus(), and the ordinary is addressable-but-not-shelved, so it is
     // asked for by the door that reaches it.
-    const ids = new Set();
+    //
+    // ⟨2026-08-31⟩ The bijection is no longer against the whole SHELF, and the
+    // difference is the point rather than a tolerance. Recitation formulas —
+    // office `or`, which is GregoBase's Toni Communes — are shipped but not
+    // censused: eleven Benedicamus Domino settings are one gesture, not eleven
+    // chants, and censusing them would invent a distribution out of a tone.
+    // So this pins BOTH halves: every censused chant has a block, and the
+    // chants without one are exactly the formulas. A block for a formula, or a
+    // censused chant missing one, both fail here.
+    const shelf = new Set();
     for (const book of corpus().books) {
-      for (const c of cantus({ source: book.code })) ids.add(c.id);
+      for (const c of cantus({ source: book.code })) shelf.add(c.id);
     }
-    for (const code of ["ky", "gl", "cr", "sa", "ag", "be", "it", "as", "va"]) {
-      for (const c of cantus({ ordinary: code })) ids.add(c.id);
+    for (const code of ["ke", "gl", "cr", "sa", "ag", "be", "it", "as", "va"]) {
+      for (const c of cantus({ ordinary: code })) shelf.add(c.id);
     }
+    const formulas = new Set(cantus({ office: "or" }).map((c) => c.id));
+    assert.ok(formulas.size > 0, "the shelf still carries the formulas it excludes");
+
     const blocks = new Set(CENSUS_ORDER);
     assert.equal(blocks.size, CENSUS_ORDER.length, "no duplicate ids in the order");
-    assert.equal(ids.size, blocks.size, "same population");
-    for (const id of ids) assert.ok(blocks.has(id), `${id} has no block`);
+
+    const censused = [...shelf].filter((id) => !formulas.has(id));
+    assert.equal(censused.length, blocks.size, "same population, formulas aside");
+    for (const id of censused) assert.ok(blocks.has(id), `${id} has no block`);
+    for (const id of formulas) {
+      assert.ok(!blocks.has(id), `${id} is a recitation formula and should have no block`);
+    }
   });
 
   test("a block's own numbers survive a live re-parse — the anti-shift anchor", () => {

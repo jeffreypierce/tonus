@@ -1,6 +1,6 @@
 // corpus-overlap.ts — pre-dedup chant-count relationships between the books
 // Extracted from GregoBase (chant-id sets) by scripts/extract-gregobase.mjs
-// Generated: 2026-08-04T17:25:33.176Z
+// Generated: 2026-08-31T18:07:52.806Z
 //
 // tonus stores one copy of each chant (LU primary; LA/LH gap-fill), so a book's
 // stored count is less than what it holds. This records, per book: its full
@@ -19,30 +19,24 @@ export const CORPUS_OVERLAP: Record<string, CorpusOverlap> = {
     "unique": 430,
     "shared": {
       "lu": 948,
-      "cot": 21,
-      "la": 6,
-      "cse": 3
+      "la": 6
     }
   },
   "lu": {
     "total": 2457,
-    "unique": 418,
+    "unique": 434,
     "shared": {
       "gr": 948,
-      "cot": 43,
       "la": 1079,
-      "cse": 15,
       "am": 5
     }
   },
   "la": {
     "total": 2534,
-    "unique": 1452,
+    "unique": 1453,
     "shared": {
       "lu": 1079,
       "gr": 6,
-      "cot": 11,
-      "cse": 6,
       "am": 5
     }
   },
@@ -55,51 +49,17 @@ export const CORPUS_OVERLAP: Record<string, CorpusOverlap> = {
   },
   "am": {
     "total": 1456,
-    "unique": 1401,
+    "unique": 1447,
     "shared": {
       "lu": 5,
-      "cot": 3,
       "la": 5,
-      "cse": 19,
-      "ams": 27,
       "lh": 2
-    }
-  },
-  "ams": {
-    "total": 99,
-    "unique": 70,
-    "shared": {
-      "cse": 2,
-      "am": 27
     }
   },
   "psm": {
     "total": 60,
     "unique": 60,
     "shared": {}
-  },
-  "cse": {
-    "total": 188,
-    "unique": 149,
-    "shared": {
-      "lu": 15,
-      "cot": 6,
-      "la": 6,
-      "gr": 3,
-      "am": 19,
-      "ams": 2
-    }
-  },
-  "cot": {
-    "total": 58,
-    "unique": 13,
-    "shared": {
-      "gr": 21,
-      "lu": 43,
-      "la": 11,
-      "cse": 6,
-      "am": 3
-    }
   },
   "nr": {
     "total": 1564,
@@ -255,25 +215,6 @@ export const CORPUS_FULL: Record<string, CorpusFull> = {
       "other": 63
     }
   },
-  "ams": {
-    "total": 99,
-    "genera": {
-      "hy": 27,
-      "an": 64,
-      "rb": 7,
-      "ca": 1
-    },
-    "modes": {
-      "1": 18,
-      "2": 13,
-      "3": 17,
-      "4": 11,
-      "5": 2,
-      "6": 11,
-      "7": 5,
-      "8": 22
-    }
-  },
   "psm": {
     "total": 60,
     "genera": {
@@ -290,60 +231,6 @@ export const CORPUS_FULL: Record<string, CorpusFull> = {
       "7": 4,
       "8": 14,
       "other": 12
-    }
-  },
-  "cse": {
-    "total": 188,
-    "genera": {
-      "an": 54,
-      "hy": 65,
-      "re": 30,
-      "rb": 19,
-      "se": 11,
-      "tr": 1,
-      "ca": 3,
-      "tp": 2,
-      "co": 1,
-      "pa": 1,
-      "su": 1
-    },
-    "modes": {
-      "1": 55,
-      "2": 31,
-      "3": 9,
-      "4": 27,
-      "5": 10,
-      "6": 25,
-      "7": 16,
-      "8": 13,
-      "other": 2
-    }
-  },
-  "cot": {
-    "total": 58,
-    "genera": {
-      "se": 7,
-      "co": 1,
-      "tr": 1,
-      "re": 3,
-      "su": 1,
-      "an": 18,
-      "in": 1,
-      "of": 1,
-      "gr": 1,
-      "hy": 23,
-      "or": 1
-    },
-    "modes": {
-      "1": 18,
-      "2": 7,
-      "3": 2,
-      "4": 2,
-      "5": 7,
-      "6": 8,
-      "7": 5,
-      "8": 7,
-      "other": 2
     }
   },
   "nr": {

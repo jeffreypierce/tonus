@@ -404,123 +404,123 @@ export interface MassCentury {
 export const MASS_CENTURY: Record<number, Partial<Record<string, MassCentury>>> = {
   // Mass I — Lux et Origo
   1: {
-    ky: { from: 10, to: 10, printed: "X. s." },
+    ke: { from: 10, to: 10, printed: "X. s." },
     gl: { from: 10, to: 10, printed: "X. s." },
     sa: { from: 10, to: 10, printed: "X. s." },
     ag: { from: 10, to: 10, printed: "X. s." },
   },
   // Mass II — Kyrie fons bonitatis
   2: {
-    ky: { from: 10, to: 10, printed: "X. s." },
+    ke: { from: 10, to: 10, printed: "X. s." },
     gl: { from: 13, to: 13, printed: "XIII. s." },
     ag: { from: 10, to: 10, printed: "X. s." },
   },
   // Mass III — Kyrie Deus sempiterne
   3: {
-    ky: { from: 11, to: 11, inferred: true, printed: "XI. s." },
+    ke: { from: 11, to: 11, inferred: true, printed: "XI. s." },
     gl: { from: 11, to: 11, printed: "XI. s." },
     sa: { from: 12, to: 12, alt: 11, printed: "(XI) XII. s." },
     ag: { from: 11, to: 12, printed: "XI-XII. s." },
   },
   // Mass IV — Cunctipotens Genitor Deus
   4: {
-    ky: { from: 10, to: 10, printed: "X. s." },
+    ke: { from: 10, to: 10, printed: "X. s." },
     gl: { from: 10, to: 10, printed: "X. s." },
     sa: { from: 11, to: 11, printed: "XI. s." },
     ag: { from: 13, to: 13, alt: 12, printed: "(XII) XIII. s." },
   },
   // Mass V — Kyrie magnæ Deus potentiæ
   5: {
-    ky: { from: 13, to: 13, printed: "XIII. s." },
+    ke: { from: 13, to: 13, printed: "XIII. s." },
     gl: { from: 12, to: 12, printed: "XII. s." },
     sa: { from: 12, to: 12, printed: "XII. s." },
     ag: { from: 12, to: 12, printed: "XII. s." },
   },
   // Mass VI — Kyrie Rex Genitor
   6: {
-    ky: { from: 10, to: 10, printed: "X. s." },
+    ke: { from: 10, to: 10, printed: "X. s." },
     gl: { from: 10, to: 10, printed: "X. s." },
     sa: { from: 11, to: 11, printed: "XI. s." },
     ag: { from: 11, to: 11, printed: "XI. s." },
   },
   // Mass VII — Kyrie Rex splendes
   7: {
-    ky: { from: 10, to: 10, printed: "X. s." },
+    ke: { from: 10, to: 10, printed: "X. s." },
     gl: { from: 12, to: 12, printed: "XII. s." },
     sa: { from: 11, to: 11, printed: "XI. s." },
     ag: { from: 15, to: 15, printed: "XV. s." },
   },
   // Mass VIII — de Angelis
   8: {
-    ky: { from: 15, to: 16, printed: "XV-XVI. s." },
+    ke: { from: 15, to: 16, printed: "XV-XVI. s." },
     gl: { from: 16, to: 16, printed: "XVI. s." },
     sa: { from: 12, to: 12, alt: 11, printed: "(XI) XII. s." },
     ag: { from: 15, to: 15, printed: "XV. s." },
   },
   // Mass IX — Cum Jubilo
   9: {
-    ky: { from: 12, to: 12, printed: "XII. s." },
+    ke: { from: 12, to: 12, printed: "XII. s." },
     gl: { from: 11, to: 11, printed: "XI. s." },
     sa: { from: 14, to: 14, printed: "XIV. s." },
     ag: { from: 13, to: 13, alt: 10, printed: "(X) XIII. s." },
   },
   // Mass X — Alme Pater
   10: {
-    ky: { from: 11, to: 11, printed: "XI. s." },
+    ke: { from: 11, to: 11, printed: "XI. s." },
     gl: { from: 15, to: 15, printed: "XV. s." },
     sa: { from: null, to: null, printed: "?. s." },
     ag: { from: 12, to: 12, printed: "XII. s." },
   },
   // Mass XI — Orbis factor
   11: {
-    ky: { from: 14, to: 16, alt: 10, printed: "(X) XIV-XVI. s." },
+    ke: { from: 14, to: 16, alt: 10, printed: "(X) XIV-XVI. s." },
     gl: { from: 10, to: 10, printed: "X. s." },
     sa: { from: 10, to: 10, printed: "X. s." },
     ag: { from: 14, to: 14, printed: "XIV. s." },
   },
   // Mass XII — Pater cuncta
   12: {
-    ky: { from: 12, to: 12, printed: "XII. s." },
+    ke: { from: 12, to: 12, printed: "XII. s." },
     gl: { from: 12, to: 12, inferred: true, printed: "XII. s." },
     sa: { from: 13, to: 13, printed: "XIII. s." },
     ag: { from: 11, to: 11, printed: "XI. s." },
   },
   // Mass XIII — Stelliferi Conditor orbis
   13: {
-    ky: { from: 11, to: 11, printed: "XI. s." },
+    ke: { from: 11, to: 11, printed: "XI. s." },
     gl: { from: 12, to: 12, printed: "XII. s." },
     sa: { from: 13, to: 13, printed: "XIII. s." },
     ag: { from: null, to: null, printed: "? s." },
   },
   // Mass XIV — Jesu Redemptor
   14: {
-    ky: { from: 10, to: 10, inferred: true, printed: "X. s." },
+    ke: { from: 10, to: 10, inferred: true, printed: "X. s." },
     gl: { from: 10, to: 10, printed: "X. s." },
     sa: { from: 12, to: 12, inferred: true, printed: "XII. s." },
     ag: { from: 13, to: 13, printed: "XIII. s." },
   },
   // Mass XV — Dominator Deus
   15: {
-    ky: { from: 11, to: 13, printed: "XI-XIII. s." },
+    ke: { from: 11, to: 13, printed: "XI-XIII. s." },
     gl: { from: 10, to: 10, printed: "X. s." },
     sa: { from: 10, to: 10, printed: "X. s." },
     ag: { from: 14, to: 14, alt: 12, printed: "(XII) XIV. s." },
   },
   // Mass XVI
   16: {
-    ky: { from: 11, to: 13, printed: "XI-XIII. s." },
+    ke: { from: 11, to: 13, printed: "XI-XIII. s." },
     sa: { from: 13, to: 13, printed: "XIII. s." },
     ag: { from: 10, to: 11, printed: "X-XI. s." },
   },
   // Mass XVII
   17: {
-    ky: { from: 15, to: 17, alt: 10, printed: "(X) XV-XVII. s." },
+    ke: { from: 15, to: 17, alt: 10, printed: "(X) XV-XVII. s." },
     sa: { from: 11, to: 11, printed: "XI. s." },
     ag: { from: 13, to: 13, printed: "XIII. s." },
   },
   // Mass XVIII — Deus Genitor alme
   18: {
-    ky: { from: 11, to: 11, printed: "XI. s." },
+    ke: { from: 11, to: 11, printed: "XI. s." },
     sa: { from: 13, to: 13, printed: "XIII. s." },
     ag: { from: 12, to: 12, printed: "XII. s." },
   },

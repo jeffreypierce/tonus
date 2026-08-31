@@ -25,7 +25,7 @@ describe("ordinarium — ferias and the appendix gate", () => {
     const ord = getOrdinary({ feast: feria });
 
     assert.ok(!part(ord, "gl"), "the ferial mass prints no Gloria");
-    for (const code of ["ky", "sa", "ag"]) {
+    for (const code of ["ke", "sa", "ag"]) {
       assert.equal(part(ord, code)?.mass, 16, `${code} from Mass XVI, sung whole`);
     }
     const be = part(ord, "be");
@@ -71,7 +71,7 @@ describe("ordinarium — penitential days and the Gloria rubric", () => {
     assert.equal(advent1.season, "adv", "fixture: the first Sunday of Advent");
     const ord = getOrdinary({ feast: advent1 });
     assert.ok(!part(ord, "gl"), "no Gloria on a penitential Sunday");
-    assert.equal(part(ord, "ky")?.mass, 17, "Kyrie from Mass XVII");
+    assert.equal(part(ord, "ke")?.mass, 17, "Kyrie from Mass XVII");
     assert.equal(
       part(ord, "be")?.mass, 2,
       '"Benedicamus Domino as in Mass II" — the book\'s primary direction, not its ad libitum "or"',
@@ -106,7 +106,7 @@ describe("ordinarium — Paschaltide is a time, not a rank", () => {
             `${y} Pasc3-2: "${c.incipit}" (mass ${c.mass})`,
           );
         }
-        assert.equal(part(ord, "ky")?.mass, 1, `${y}: Mass I in Paschal time`);
+        assert.equal(part(ord, "ke")?.mass, 1, `${y}: Mass I in Paschal time`);
         break;
       }
     }
@@ -118,7 +118,7 @@ describe("ordinarium — Paschaltide is a time, not a rank", () => {
       [2028, 4, 16], [2029, 4, 1], [2030, 4, 21],
     ];
     for (const [y, m, d] of easters) {
-      const ky = part(getOrdinary({ feast: dayAt(y, m, d) }), "ky");
+      const ky = part(getOrdinary({ feast: dayAt(y, m, d) }), "ke");
       assert.equal(ky?.mass, 1, `${y}: Easter's Kyrie is Mass I (got mass ${ky?.mass})`);
     }
   });

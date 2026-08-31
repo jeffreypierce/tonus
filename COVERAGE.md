@@ -1,21 +1,22 @@
 # Coverage — calendar → chants
 
-What the tonus calendar resolves to: for each day, whether tonus carries its
-Mass propers and its Divine Office. Measured against the shipped build,
-2026-08-10.
+What the tonus calendar actually resolves to: for each day, whether tonus
+carries its Mass propers and its Divine Office. Measured against the shipped
+build, 2026-08-31.
 
 ## The day, end to end
 
-The question is not how many table rows are populated but whether a **date**
-produces a sung day. Walking every day of 2026, taking each day's primary feast:
+The question that matters is not how many table rows are populated but whether
+a **date** produces a sung day. Walking every day of 2026:
 
 | Days | Propers | Office | Matins | No data |
 | ---: | ---: | ---: | ---: | ---: |
 | 365 | 365 (100%) | 365 (100%) | 365 (100%) | 0 |
 
-Every day resolves all three. Most days have no proper chants of their own; the
-fallback chain carries the rest — proper → commune → ferial/seasonal — so a day
-with no proper Matins still sings, from its commune or the ferial cycle.
+Every day resolves all three — not because every day has proper chants of its
+own (most do not), but because the fallback chain is complete: proper →
+commune → ferial/seasonal. A day with no proper Matins still sings, from its
+commune or the ferial cycle.
 
 The calendar is **650 entries**: 285 sanctorale (fixed) and 365 temporale
 (moveable).
@@ -35,13 +36,14 @@ gap: the missing slot comes from the commune or the season.
 | Communio | 382 / 689 | 55.4% |
 | Sequentia | 18 / 689 | 2.6% |
 
-Core six slots: **2,022 / 4,134** (48.9%). The Sequentia is low by rubric — the
-Tridentine reform leaves only a handful standing.
+Core six slots: **2022 / 4134** (48.9%). The Sequentia is low by rubric, not by
+omission — the Tridentine reform leaves only a handful standing.
 
 ## Divine Office — slot fill
 
 The office table is **464 rows**, the Benedictine cursus. tonus serves one
-cursus; see [chant.md](docs/api/chant.md#one-cursus-the-benedictine).
+cursus; see [chant.md](docs/chant.md#one-cursus-the-benedictine) for why the
+Roman office was cut rather than kept as an option.
 
 | Slot | Filled | Rate |
 | --- | ---: | ---: |
@@ -59,49 +61,44 @@ cursus; see [chant.md](docs/api/chant.md#one-cursus-the-benedictine).
 | Ant Magnificat | 148 / 464 | 31.9% |
 | Hymn Vespera | 97 / 464 | 20.9% |
 
-Read these against the day figures above: a 34.9% Matins antiphon rate coexists
-with 100% of days singing Matins, because the commune and ferial fallbacks carry
-the rest.
+Read these against the day figures above, not on their own: a 34.9% Matins
+antiphon rate coexists with 100% of days singing Matins, because the commune
+and ferial fallbacks carry the rest.
 
 ## Matins — chants yes, nocturns no
 
-Matins resolves on every day and returns its chants **flat**. The three-nocturn,
-twelve-psalm Benedictine division is not modelled: the chants are right, their
-grouping into nocturns is not expressed. They come from the Nocturnale Romanum
-(`nr`, 470 shipped chants), and a feast without proper Matins draws them from
-its commune by the same rule as every other hour.
+Matins resolves on every day but returns its chants **flat**. The three-nocturn,
+twelve-psalm Benedictine division is not modelled — the ordo shape is what is
+missing, not the repertoire. The chants come from the Nocturnale Romanum (`nr`,
+1564 shipped chants), and a feast without proper Matins draws them from its
+commune by the same rule as every other hour.
 
 ## Chant source usage
 
-Sources drawn on across a full year of days (2026), taking each day's primary
-feast and counting every chant returned by `proprium` and by all eight hours of
-`officium`:
+Sources drawn on across a full year of days (2026), counting every chant
+returned by `proprium` and all eight hours of `officium`:
 
 | Source | Chants returned |
 | --- | ---: |
-| psalm verses | 49,204 |
-| `am` Antiphonale Monasticum | 4,730 |
-| `lu` The Liber Usualis | 3,166 |
-| `nr` Nocturnale Romanum | 2,950 |
-| `la` Liber antiphonarius | 2,316 |
-| `cot` Chants of the Church | 398 |
-| `psm` Psalterium Monasticum | 156 |
-| `gr` Graduale Romanum | 155 |
-| `lh` Liber Hymnarius | 103 |
-| `cse` Cantus selecti | 76 |
-| `ams` Antiphonale Mon. Solesmense | 19 |
+| psalm verses | 68,602 |
+| `am` Antiphonale Monasticum | 7,839 |
+| `lu` The Liber Usualis | 5,065 |
+| `nr` Nocturnale Romanum | 4,357 |
+| `la` Liber antiphonarius | 2,858 |
+| `psm` Psalterium Monasticum | 482 |
+| `gr` Graduale Romanum | 218 |
+| `lh` Liber Hymnarius | 115 |
 
 These are **returns, not distinct chants** — a psalm sung daily counts daily.
 That is why the office books dominate and the Graduale, sung once a day at
 Mass, sits low despite being among the largest books.
 
-The shipped corpus is 2,767 listings over 2,187 distinct chants, across ten
-books. It is assignment-driven — a chant ships only if some day calls for it —
-so there is no large unreferenced remainder to report. See
-[The cut](docs/api/chant.md#the-cut).
+The shipped corpus is 9,758 rows over 7,840 distinct chants, across seven
+books — the books themselves. The corpus was assignment-driven until
+2026-08-31, shipping only what some day called for; that gate is gone, so a
+chant with no day to be sung on is still on the shelf and still findable.
 
-`corpus()` reports the whole shelf, 2,187 chants against the **10,156 held**,
-and every book carries a `full` tally in the same genera/modes shape as its
-shipped one, so the Antiphonale's 1,049 antiphons and the 458 tonus sings sit
-side by side. See
-[the ledger of the cut](docs/api/chant.md#the-ledger-of-the-cut--full).
+`corpus()` reports the whole shelf (7,840 listed of **9,811 catalogued**), and every
+book carries a `full` tally in the same genera/modes shape as its shipped one —
+so the Antiphonale's 1,049 catalogued antiphons and the 1,045 tonus lists sit side by side.
+See [what the book holds](docs/api/chant.md#what-the-book-holds--full).
