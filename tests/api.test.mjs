@@ -68,7 +68,7 @@ describe("tonus namespace", () => {
   });
 
   test("ordinarium returns kyriale chants", () => {
-    const chants = tonus.ordinarium({ mass: 8, ordinary: "ky" });
+    const chants = tonus.ordinarium({ mass: 8, ordinary: "ke" });
     assert.ok(chants.length > 0);
   });
 
@@ -77,7 +77,7 @@ describe("tonus namespace", () => {
     assert.equal(goodFriday[0].grade, "triduum");
     assert.deepEqual(tonus.ordinarium({ feast: goodFriday[0] }), []);
     // A pinned mass still works (e.g. the Vigil borrowing Lux et origo):
-    const pinned = tonus.ordinarium({ feast: goodFriday[0], mass: 1, ordinary: "ky" });
+    const pinned = tonus.ordinarium({ feast: goodFriday[0], mass: 1, ordinary: "ke" });
     assert.ok(pinned.length > 0);
   });
 
@@ -90,7 +90,7 @@ describe("tonus namespace", () => {
     const ord = tonus.ordinarium({ feast: maundy });
     const codes = ord.map((o) => o.ordinary);
     // In Cena Domini keeps its Mass with the Gloria — no Credo, no sprinkle.
-    assert.deepEqual(codes, ["ky", "gl", "sa", "ag", "it"]);
+    assert.deepEqual(codes, ["ke", "gl", "sa", "ag", "it"]);
     const gloria = ord.find((o) => o.ordinary === "gl");
     assert.ok(gloria && gloria.gabc.length > 0, "Gloria must be present and sung");
     assert.equal(ord.filter((o) => o.ordinary === "cr").length, 0, "no Credo");
@@ -326,7 +326,7 @@ describe("the appendix (the export law)", () => {
     // The register rule read back off the values: a Latin name means Latin
     // content. If one of these ever holds "Antiphon", the name is now a lie.
     assert.equal(OFFICIA.an, "Antiphona");
-    assert.equal(ORDINARIA.ky, "Kyrie eleison");
+    assert.equal(ORDINARIA.ke, "Kyrie eleison");
     assert.equal(MODI["1"], "Modus I");
     assert.equal(Object.keys(MODI).length, 8);
   });

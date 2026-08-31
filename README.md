@@ -72,7 +72,7 @@ its final, dominant, ambitus, and ethos, with its psalm tones.
 **The calendar** is Tridentine, resolved against Easter by
 the Julian or the Gregorian computus.
 
-**The repertoire** is 2,187 chants across ten books, nine Solesmes editions and
+**The repertoire** is 7,840 chants across seven books, six Solesmes editions and
 the _Nocturnale Romanum_ night office in
 [GABC](https://gregorio-project.github.io/) notation: Mass propers, the Kyriale,
 the Office hours, the psalter, and the Matins nocturns.

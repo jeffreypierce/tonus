@@ -13,44 +13,35 @@ import { getCensus } from "./engines/census/census.js";
 
 import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/types.js";
 import type {
-  CantusQuery, Chant, OrdinaryChant, PropriumQuery,
-  OrdinariumQuery, OfficiumQuery, PsalmusQuery,
-  Corpus, GenusCount, ModeCount, SharedCount,
-  CorpusLedger, CorpusFullCount, CorpusQuery,
+  CantusQuery, Chant, OrdinaryChant, PropriumQuery, OrdinariumQuery,
+  OfficiumQuery, PsalmusQuery, Corpus, CorpusLedger, CorpusQuery
 } from "./engines/chant/types.js";
 import type {
-  TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts,
-  Pitch, PitchInput, Step, Neume, NeumeShape,
-  Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
+  TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts, Pitch,
+  PitchInput, Step, Neume, NeumeShape, Interval, ModeData, CadenceFigure,
+  Modus, TunedNote, GamutOptions, Tonus, TonusOpts
 } from "./engines/temper/api.js";
 import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
-  Cadence, CadenceTarget, CadenceApproach, Modulation,
+  Cadence, Modulation
 } from "./engines/score/api.js";
+
 import type {
-  InscriptioOpts, Inscriptio, NoteGeometry, FontSpec, FontSlot, FontEmbed,
-} from "./engines/score/inscriptio.js";
-import type { ChantTabulaRow } from "./engines/score/tabula.js";
-import type {
-  Imprint, Attractor, VowelAttractor, ModalAffinity,
+  Imprint
 } from "./engines/imprint.js";
 import type {
-  Metrics, RhythmicProfile, NoteRange, CadenceDistribution,
+  Metrics
 } from "./engines/score/metrics.js";
 import type {
-  Harmony, HarmoniaOpts, VoicedBody, VoicedAspect,
-  Frame, Author,
+  Harmony, HarmoniaOpts, VoicedBody, VoicedAspect, Frame, Author
 } from "./engines/harmonia/api.js";
 import type { HarmonyTabulaRow } from "./engines/harmonia/tabula.js";
 import type { PlanetVowel } from "./engines/harmonia/data/vowels.js";
-import type { Note, Performance, Phrase, Syllable, LyricRun, RestEvent, ParseError, ArsisThesis, RhythmicType, CompoundBeat } from "./engines/score/types.js";
+
 import type { VoicedPitch } from "./engines/harmonia/voice.js";
 import type {
-  Cosmos, CosmosQuery, Body, BodyName, Aspect,
+  Cosmos, CosmosQuery, Body, BodyName, Aspect
 } from "./engines/planet/types.js";
-import type {
-  Census, CensusQuery, CensusBy, CensusGroup, CensusGroupProfile, CensusNeighbor,
-} from "./engines/census/types.js";
 
 const tonus = {
   festum: getFeast,
@@ -118,25 +109,13 @@ export { ZODIACA } from "./engines/harmonia/data/zodiac.js";
 export { CENSUS_GROUPS, CENSUS_ORDER } from "./data/census.js";
 
 export type {
-  Feast, FeastQuery, Pascha, Season, Grade,
-  Chant, CantusQuery, OrdinaryChant,
-  PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
-  Corpus, GenusCount, ModeCount, SharedCount,
-  CorpusLedger, CorpusFullCount, CorpusQuery,
-  Census, CensusQuery, CensusBy, CensusGroup, CensusGroupProfile, CensusNeighbor,
-  Temperamentum, TemperamentumInput, TemperamentumOpts, Tuning,
-  Pitch, PitchInput, Step, Neume, NeumeShape,
-  Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus, TonusOpts,
-  Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
-  Cadence, CadenceTarget, CadenceApproach, Modulation,
-  InscriptioOpts, Inscriptio, NoteGeometry, FontSpec, FontSlot, FontEmbed,
-  ChantTabulaRow,
-  Note, Performance, Phrase, Syllable, LyricRun, RestEvent, ParseError, ArsisThesis,
-  RhythmicType, CompoundBeat,
-  VoicedPitch,
-  Cosmos, CosmosQuery, Body, BodyName, Aspect,
-  Imprint, Attractor, VowelAttractor, ModalAffinity,
-  Metrics, RhythmicProfile, NoteRange, CadenceDistribution,
-  Harmony, HarmoniaOpts, VoicedBody, VoicedAspect,
-  Frame, Author, HarmonyTabulaRow, PlanetVowel,
+  Feast, FeastQuery, Pascha, Season, Grade, Chant, CantusQuery,
+  OrdinaryChant, PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
+  Corpus, CorpusLedger, CorpusQuery, Temperamentum, TemperamentumInput,
+  TemperamentumOpts, Tuning, Pitch, PitchInput, Step, Neume, NeumeShape,
+  Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus,
+  TonusOpts, Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput,
+  AccentusOpts, Cadence, Modulation, VoicedPitch, Cosmos, CosmosQuery, Body,
+  BodyName, Aspect, Imprint, Metrics, Harmony, HarmoniaOpts, VoicedBody,
+  VoicedAspect, Frame, Author, HarmonyTabulaRow, PlanetVowel
 };
