@@ -17,6 +17,7 @@ import {
   MODI,
   ORDINARIA,
   OFFICIA,
+  assertOrdinaryCodes,
   type OrdinaryChant,
   type OrdinariumQuery,
   type OrdinaryCode,
@@ -548,6 +549,13 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
     throw new Error(
       `ordinarium: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
       `(expected ${[...ORDINARIUM_QUERY_KEYS].join(", ")}).`,
+    );
+  }
+
+  if (query.ordinary) {
+    assertOrdinaryCodes(
+      Array.isArray(query.ordinary) ? query.ordinary : [query.ordinary],
+      "ordinarium",
     );
   }
 

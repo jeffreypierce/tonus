@@ -89,7 +89,7 @@ table of codes or English keeps English.
 | ----------- | -------------------------------------------------------------------------- |
 | `HORAE`     | the eight canonical hours, Matins first — the order is the content         |
 | `OFFICIA`   | office code → the Latin genus (`an` → "Antiphona")                         |
-| `ORDINARIA` | ordinary code → the Latin name (`ky` → "Kyrie eleison")                    |
+| `ORDINARIA` | ordinary code → the Latin name (`ke` → "Kyrie eleison")                    |
 | `MODI`      | mode number → the Latin name (`"1"` → "Modus I")                           |
 | `SOURCES`   | book code → its bibliographic record; the codes `cantus({ source })` takes |
 

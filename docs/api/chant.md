@@ -243,11 +243,20 @@ name:
 
 | `office` | `genus`   | `office` | `genus`      | `office` | `genus`            |
 | -------- | --------- | -------- | ------------ | -------- | ------------------ |
-| `an`     | Antiphona | `hy`     | Hymnus       | `rb`     | Responsorium Breve |
-| `al`     | Alleluia  | `in`     | Introitus    | `se`     | Sequentia          |
-| `ca`     | Canticum  | `of`     | Offertorium  | `tr`     | Tractus            |
-| `co`     | Communio  | `ps`     | Psalmus      | `tp`     | Tonus Peregrinus   |
-| `gr`     | Graduale  | `re`     | Responsorium | `or`     | Ordinarium         |
+| `an`     | Antiphona | `hy`     | Hymnus       | `se`     | Sequentia          |
+| `al`     | Alleluia  | `in`     | Introitus    | `tr`     | Tractus            |
+| `ca`     | Canticum  | `of`     | Offertorium  | `tp`     | Tropa              |
+| `co`     | Communio  | `ps`     | Psalmus      | `or`     | Toni Communes      |
+| `gr`     | Graduale  | `re`     | Responsorium | `ky`     | Kyriale            |
+| `im`     | Improperia| `rb`     | Resp. Breve  | `va`     | Varia              |
+| `pa`     | Prosa     | `su`     | Supplicatio  |          |                    |
+
+The labels are GregoBase's own vocabulary (`$txt['usage']`), not tonus's
+gloss. Three were corrected in 0.10.0: `tp` reads **Tropa** (it had said
+"Tonus Peregrinus"), `or` reads **Toni Communes** (it had said "Ordinarium"),
+and `pa` reads **Prosa**. `ky` is the Mass ordinary's roll-up genus — the
+part itself rides `ordinary` (`ke`, `gl`, `cr`, …), and `va` is the
+catch-all for a chant whose office-part tonus does not recognise.
 
 ```ts
 interface Chant {
@@ -293,7 +302,7 @@ interface CantusQuery {
 The Mass ordinary is addressable but not shelved. `ordinary` is the door:
 
 ```js
-tonus.cantus({ ordinary: "ky" });            // all 31 Kyries
+tonus.cantus({ ordinary: "ke" });            // all 31 Kyries
 tonus.cantus({ ordinary: "gl", mode: 4 });   // mode-4 Glorias
 tonus.cantus({ ordinary: ["as", "va"] });    // the sprinkle antiphons
 ```
@@ -429,13 +438,13 @@ and selected by season: **Vidi aquam** (`va`) in Paschaltide, **Asperges
 me** (`as`) otherwise.
 
 ```js
-tonus.ordinarium({ ordinary: "ky" }); // every Kyrie
+tonus.ordinarium({ ordinary: "ke" }); // every Kyrie
 tonus.ordinarium({ mass: 9, ordinary: "gl" }); // Gloria of Cum jubilo
 ```
 
 | `ordinary` | `ordinarium`                                  |
 | ---------- | --------------------------------------------- |
-| `ky`       | Kyrie eleison                                 |
+| `ke`       | Kyrie eleison                                 |
 | `gl`       | Gloria                                        |
 | `cr`       | Credo                                         |
 | `sa`       | Sanctus                                       |

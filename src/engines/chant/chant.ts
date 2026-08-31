@@ -5,7 +5,7 @@ import type {
   Chant, CantusQuery, OfficeCode, ChantSource, Corpus, GenusCount, ModeCount, SharedCount,
   CorpusFullCount, CorpusLedger, CorpusQuery,
 } from "./types.js";
-import { OFFICIA, MODI, CANTUS_QUERY_KEYS } from "./types.js";
+import { OFFICIA, MODI, CANTUS_QUERY_KEYS, assertOrdinaryCodes } from "./types.js";
 import { CORPUS_OVERLAP, CORPUS_FULL } from "../../data/corpus-overlap.js";
 import { attestationCutoff, chantAdmissible } from "./attest.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
@@ -421,6 +421,7 @@ export function getChants(query?: CantusQuery): Chant[] {
   // source and report an id from any book as belonging to that one.
   const ids = toArray(query.id);
   const ordinaries = toArray(query.ordinary);
+  if (ordinaries) assertOrdinaryCodes(ordinaries, "cantus");
   // The default pool is the SHELF. The Kyriale is not on it (see KYRIALE_CHANTS
   // above), so it is reached deliberately: by `id`, which must resolve any
   // chant tonus holds, or by `ordinary`, which asks for a part of the Mass and

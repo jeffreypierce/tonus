@@ -120,6 +120,20 @@ describe("getChants", () => {
     assert.throws(() => getChants({ mdoe: 1 }), /unknown query key/);
   });
 
+  test("an unknown ordinary code throws — including the renamed `ky`", () => {
+    // A code outside ORDINARIA names no part of the Mass, so it is a malformed
+    // query, not a search that found nothing. `ky` is the case worth naming:
+    // it WAS the Kyrie through 0.9.1 and is the Kyriale genus now, so a stale
+    // caller would otherwise get [] and read it as an answer.
+    assert.throws(() => getChants({ ordinary: "ky" }), /unknown ordinary code/);
+    assert.throws(() => getChants({ ordinary: "ky" }), /The Kyrie is "ke" from 0\.10\.0/);
+    assert.throws(() => getChants({ ordinary: "zz" }), /unknown ordinary code/);
+    // One bad code in a list still throws — a partial answer would hide it.
+    assert.throws(() => getChants({ ordinary: ["ke", "ky"] }), /"ky"/);
+    // And the door still opens for the real code.
+    assert.equal(getChants({ ordinary: "ke" }).length, 31);
+  });
+
   test("respects limit and offset for pagination", () => {
     const page1 = getChants({ mode: 1, limit: 3, offset: 0 });
     const page2 = getChants({ mode: 1, limit: 3, offset: 3 });

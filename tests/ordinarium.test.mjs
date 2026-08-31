@@ -175,3 +175,14 @@ describe("ordinarium — green Sundays are untouched", () => {
     assert.ok(!part(ord, "be"), "no Benedicamus when the Gloria is sung");
   });
 });
+
+describe("ordinarium — the door validates the code it is given", () => {
+  test("an unknown ordinary code throws, and `ky` says where the Kyrie went", () => {
+    // The same guard cantus carries, at the other door: the two must not
+    // disagree about what a valid ordinary code is.
+    assert.throws(() => getOrdinary({ ordinary: "ky" }), /unknown ordinary code/);
+    assert.throws(() => getOrdinary({ ordinary: "ky" }), /The Kyrie is "ke" from 0\.10\.0/);
+    assert.throws(() => getOrdinary({ ordinary: "zz" }), /unknown ordinary code/);
+    assert.equal(getOrdinary({ ordinary: "ke" }).length, 31);
+  });
+});

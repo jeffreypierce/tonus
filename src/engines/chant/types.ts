@@ -137,6 +137,30 @@ export const ORDINARIA: Readonly<Record<string, string>> = Object.freeze({
   va: "Vidi aquam",
 });
 
+/**
+ * An ordinary code the vocabulary above does not carry is a MALFORMED query,
+ * not a no-match, and both doors that take one say so here.
+ *
+ * The query contract makes a no-match `[]` and a malformation a throw, and an
+ * unknown code cannot be a no-match: there is no chant it failed to find,
+ * because it never named a part of the Mass. The 0.10.0 rename is why this is
+ * a guard rather than a comment — `ky` was the Kyrie through 0.9.1 and is the
+ * Kyriale roll-up now, so the one code most likely to arrive stale is the one
+ * that would otherwise return an empty list and look like an answer.
+ */
+export function assertOrdinaryCodes(codes: readonly string[], method: string): void {
+  const unknown = codes.filter((c) => !(c in ORDINARIA));
+  if (unknown.length) {
+    throw new Error(
+      `${method}: unknown ordinary code(s) ${unknown.map((c) => `"${c}"`).join(", ")} ` +
+      `(expected ${Object.keys(ORDINARIA).join(", ")}).` +
+      (unknown.includes("ky")
+        ? ` The Kyrie is "ke" from 0.10.0 — "ky" is now the Kyriale genus (OFFICIA.ky).`
+        : ""),
+    );
+  }
+}
+
 // The Kyriale's bibliographic identity. NOT a ChantSource: `ky` is a partition
 // of the Graduale, not a book of its own (chant.ts, CORPUS), so it is not a
 // value `cantus({ source })` takes and not a row in the shelf. This record

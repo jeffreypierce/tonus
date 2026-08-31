@@ -4,18 +4,42 @@ All notable changes to tonus. Newest first.
 
 ## 0.10.0 — 2026-08-31
 
-The corpus stores a melody once instead of once per book, and the root index
-stops carrying the anatomy of its own return values.
+The corpus stores a melody once instead of once per book, the genus labels say
+what GregoBase says, and the root index stops carrying the anatomy of its own
+return values.
 
 ### Changed
 
+- **BREAKING: the Kyrie's ordinary code is `ke`, not `ky`.** GregoBase files
+  every ordinary chant under office-part `ky` = Kyriale, which is the roll-up
+  genus, so the Kyrie itself needed a code of its own. `cantus({ ordinary })`
+  and `ordinarium({ ordinary })` both take `ke` now, and `ORDINARIA` is keyed
+  by it. **A stale `"ky"` throws** rather than returning `[]` — an unknown
+  ordinary code is a malformed query, and this is the one most likely to
+  arrive stale, so the error names the replacement.
+- **BREAKING: three office genus labels were wrong and are corrected.** They
+  were read off the two-letter codes rather than off the source; GregoBase's
+  own vocabulary (`include/txt.php`, `$txt['usage']`) is now followed. `or` is
+  **Toni Communes** (it read "Ordinarium"), `tp` is **Tropa** (it read "Tonus
+  Peregrinus"), and `pa` is **Prosa**. `or` was the costly one: tonus stamped
+  an invented genus on a code the database already used for something else,
+  and 132 real Toni Communes chants were dropped at the extractor for want of
+  a mapping. Anything reading `chant.genus`, or filtering `office: "or"`
+  expecting the Mass ordinary, is affected — the ordinary is `ky` (genus) or
+  `ordinary` (part).
+- **Two office codes are new: `ky` and `va`.** `ky` is the Mass ordinary's
+  roll-up genus; `va` ("Varia") is the catch-all a chant falls to when its
+  office-part is unrecognised. It used to fall to `or`, which was harmless
+  while `or` was an invented label and is not now that it means a recitation
+  formula the census excludes.
 - **BREAKING: type-only names moved off the root entry.** Four subpath entries
   now hold the grain the index was carrying — `tonus/corpus` (the shelf and its
   vocabulary), `tonus/score` (what a `Score` is made of), `tonus/inscriptio`
   (the drawing surface), `tonus/census` (one chant against the corpus). Verbs
   stay on the root namespace, and the types a root signature names stay on the
-  root too. **Every value export the root carried is unchanged** — only types
-  moved, so a JavaScript consumer sees nothing.
+  root too. **Every value export the root carried is still exported from it**,
+  so nothing moved out of a JavaScript consumer's reach — though the code
+  renames above do reach one.
 - **A melody printed in several books is stored once.** It was stored once per
   book. `books` now lists every printing and `pages` is keyed by book code, so
   `cantus({ source })` presents a shared chant as the book asked for: that
