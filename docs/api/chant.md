@@ -42,14 +42,14 @@ propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 | `lh`   | Liber Hymnarius         | Solesmes, 1983 | 361    |
 | `am`   | Antiphonale Monasticum  | Solesmes, 1934 | 1,448  |
 | `psm`  | Psalterium Monasticum   | Solesmes, 1981 | 60     |
-| `nr`   | Nocturnale Romanum      | Sandhofe, 2002 | 1,564  |
+| `nr`   | Nocturnale Romanum      | Sandhofe, 2002 | 1,549  |
 
-**7,840 chants in all**, the Mass ordinary among them (120 settings, reached by
+**7,825 chants in all**, the Mass ordinary among them (120 settings, reached by
 [`ordinary`](#reaching-the-ordinary--ordinary) rather than by book). That is the
 books themselves: tonus carries what they print, whether or not the calendar
 reaches it.
 
-The seven books list 9,758 rows for those 7,840 chants: a melody printed in two
+The seven books list 9,743 rows for those 7,825 chants: a melody printed in two
 books is stored once and listed under each, with each book's own page citation.
 
 `am` and `psm` are the monastic (Benedictine) books; the rest are
@@ -93,11 +93,11 @@ book's ledger:
 
 ```js
 tonus.corpus();
-// { count: 7840,      // chants tonus holds, each counted once
-//   listings: 9758,   // rows on the shelf — a chant in two books appears twice
-//   total: 9811,     // what the books hold, before dedup
+// { count: 7825,      // chants tonus holds, each counted once
+//   listings: 9743,   // rows on the shelf — a chant in two books appears twice
+//   total: 9796,     // what the books hold, before dedup
 //   genera: [ { office: "an", genus: "Antiphona", count: 3959 }, … ],
-//   modes:  [ { mode: "1", modus: "Modus I", count: 1520 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 1505 }, … ],
 //   books:  [ …7 Corpus entries, in registry order ] }
 ```
 
@@ -173,7 +173,7 @@ of chants with each), while the Antiphonale Monasticum is almost entirely its ow
 
 The Nocturnale (`nr`) is compared differently, because it has no GregoBase
 catalogue: its counts come from its own extract, and it shares **nothing**, so
-`unique` is all 1,564 chants it holds. That is a measurement, not a gap. The
+`unique` is all 1,549 chants it holds. That is a measurement, not a gap. The
 nocturnale–GregoBase crosswalk is a route to metadata, not a claim that the two
 books print the same chant, so it does not count as sharing.
 

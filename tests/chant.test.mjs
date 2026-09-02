@@ -249,8 +249,13 @@ describe("getCorpus", () => {
       assert.ok(book.full.total >= book.count,
         `${book.code}: holds ${book.full.total} but ships ${book.count}`);
     }
+    // 1,549 and not the restitution's 1,564 gabc files: fifteen of those are
+    // placeholders for responsories not yet restored — a clef and the lyric
+    // "res pon so ry place hol der" over empty note groups — and the extractor
+    // drops them at the door (tonus-corpus, extract-nocturnale.mjs `isStub`).
+    // "Full" is the full BOOK, and a stub is not in the book.
     const nr = getCorpus("nr");
-    assert.equal(nr.full.total, 1564, "the full Nocturnale, before the cut");
+    assert.equal(nr.full.total, 1549, "the full Nocturnale, before the cut");
   });
 
   test("an unknown query key throws instead of being ignored", () => {
@@ -310,8 +315,8 @@ describe("getCorpus", () => {
     // is ENRICHMENT — a twin for metadata — not a claim that two books print
     // the same chant, so counting those as shared would invent a relationship.
     const nr = getCorpus("nr");
-    assert.equal(nr.total, 1564);
-    assert.equal(nr.unique, 1564, "every chant it holds is its own");
+    assert.equal(nr.total, 1549);
+    assert.equal(nr.unique, 1549, "every chant it holds is its own");
     assert.deepEqual(nr.shared, [], "measured as sharing nothing, not unmeasured");
     // It used to ship a CUT of what it holds — 470 of 1,564 — because the corpus
     // was assignment-driven and the calendar never reached the rest. Since the

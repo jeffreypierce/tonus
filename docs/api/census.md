@@ -56,7 +56,7 @@ interface CensusQuery {
 }
 ```
 
-The census covers **7,733 of the 7,840 chants tonus ships**, one block per
+The census covers **7,718 of the 7,825 chants tonus ships**, one block per
 chant. The hundred and seven without one are the *Toni Communes* — office `or`,
 the recitation formulas — and they are left out on purpose: eleven *Benedicamus
 Domino* settings are one gesture, not eleven chants, and censusing them would
@@ -107,7 +107,7 @@ from the corpus itself (its commonest motifs, its commonest closing gestures,
 one bucket for the rest), so the corpus supplies the vocabulary and the chant
 supplies the usage.
 
-The reference is the mean block over all 7,733 chants, group by group. Because
+The reference is the mean block over all 7,718 chants, group by group. Because
 blocks are sums of durations and counts, they add: a season's blocks, summed and
 divided by their count, are the season's mean profile in the same 221 slots.
 

@@ -1281,14 +1281,6 @@ const NR_0: ChantData[] = [
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
-    id: "nocturnale:0324N2R3",
-    incipit: "0324N2R3",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
     id: "nocturnale:0324N3A1",
     incipit: "Missus est Gabriel",
     gabc: "(c4) Mis(f)sus(fg) est(ggo) <sp>*</sp> Gá(f)bri(g)el(ixh_i) An(h>)ge(g)lus(f.) (;) ad(h) Ma(j)rí(i)am(j) Vír(h)gi(j)nem(i_j) (,) des(h)pon(gf~)sá(g_h)tam(i>) <sp>+</sp> Jo(h)seph.(g.) (::) <c><i>T.P.</i></c> Jo(h)seph,(g_h) al(i)le(hi)lú(g.){ia}.(g.) (::) <eu>E(j) U(j) O(i) U(j) A(h) E.(ghg) </eu>(::)",
@@ -1729,22 +1721,6 @@ const NR_0: ChantData[] = [
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
-    id: "nocturnale:0531N1R2",
-    incipit: "0531N1R2",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:0531N1R3",
-    incipit: "0531N1R3",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
     id: "nocturnale:0531N2R1",
     incipit: "Suscipe verbum Virgo Maria",
     gabc: "(c4) Sús(f)ci(de)pe(e) ver(eg~)bum,(gv_/fsfs_ded.) <sp>*</sp>(,) Vir(fd~)go(e_f) Ma(g)rí(ixhgh_//iv)a,(h.) (;) quod(h) ti(jhjsjsjs)bi(ghg) a(f) Dó(ghgh_)mi(fe__/fv_EDe)no(ed__) (,) tran(ixfg!hv_//ig/hg>)smís(e)sum(egffs) est:(fe..) (:) <sp>+</sp> Ec(h)ce(h) con(ixhi~)cí(h)pi(h)es(hggof) et(g) pá(g)ri(gffg)es(eeof) (,) De(d)um(d) pá(fgf)ri(fe)ter(g) et(h) hó(hg/hvGF)mi(ef/gffs)nem.(ed..) (;) Al(fh~)le(hvGFEC_____d_fEDf_h_/ghf___foe)lú(egffs)ia.(fe..) (::) <sp>V/</sp> Et(h) Re(h)gí(gh)na(g_f!gwhg/hv_GEfe__) vo(g)cá(gh)be(g)ris(g) su(g)per(gf) om(gh)nes(gf) gen(e!fwgf__)tes.(fe..) (::) <sp>+</sp> Ec(h)ce.(h) (::)",
@@ -1753,27 +1729,11 @@ const NR_0: ChantData[] = [
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
-    id: "nocturnale:0531N2R2",
-    incipit: "0531N2R2",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
     id: "nocturnale:0531N2R3",
     incipit: "0531N2R3",
     gabc: "(c3) Si(i)gnum(h>) ma(HIjvhhO1g)gnum(EFgwhe/f/eeO1d) (;) <sp>*</sp> ap(f)pá(h)ru(g)it(h) in(i>) cœ(hg/ig!hwihi)lo:(i) (:) mú(ei)li(i)er(i!jwkijIHih) a(i)mí(i!jwkjk!lv)cta(lm) so(ikJHi!jwkjk)le,(ji) (;) et(ij~) lu(jhiHGFEig!hwihi)na(i) sub(i) pé(ij)di(i)bus(hiHF) e(FsHssihg~)jus:(hg) (:) <sp>+</sp> Et(e) in(f>) cá(ef)pi(e)te(d) e(fhGFivGHij>)jus(i) (;) co(iki)ró(ijIH0G1HihiGHivHGFhvGFhvGFHIjwkJIjvIHi;IJkwlKJIjwkJIjvIHg!ho1!iv,HIjwkJIj)na(ji) (;) stel(ij~)lá(hfhvghFE)rum(fe) du(de)ó(EFhvGFgwh)de(e)cim,(e/ffO1e) (,) al(DFgwh!iv)le(hvGFg/egf/ge)lú(efe)ja.(e) (::) <sp>V/</sp> Cu(i!jwkJI)jus(hi/hhO1g) Fí(hi)li(h)us(h) re(h)gnat(ig) in(hi~) æ(hi)tér(i!jwkj)num.(ih) (::) <sp>+</sp> Et.(e) (::) <sp>V/</sp> Gló(i!jwkJI)ri(hg)a(hi/hhO1g) Pa(ig)tri,(hi) et(hi) Fí(i)li(i!jwkj)o,(ji) (;) et(i) Spi(i)rí(ijijIH)tu(hh)i(h!iwji/jkj) San(ih!iwjij)cto.(ivHGhg) (::) <sp>+</sp> Et.(e) (::)",
     office: "re",
     mode: "7",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:0531N3R2",
-    incipit: "0531N3R2",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
@@ -2009,22 +1969,6 @@ const NR_0: ChantData[] = [
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
-    id: "nocturnale:0701N1R1",
-    incipit: "0701N1R1",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:0701N1R2",
-    incipit: "0701N1R2",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
     id: "nocturnale:0701N1R3",
     incipit: "0701N1R3",
     gabc: "(c4) Vos<sp>*</sp>(gi) qui(i) a(i)li(i)quán(ji~)do(h) e(g)rá(ij)tis(h) lon(hg~)ge,(GHiwjIHijggo~efe) (;) fa(e!fwggo~)cti(e) e(h)stis(gf) pro(fg)pe(h) in(h>) sán(hi~)gui(gf)ne(ghg) Chri(egfFs)sti:(fe) (:) <sp>+</sp> I(e)pse(fg) e(g)nim(gf) est(gh~) pax(hvjvIH) no(gf!gwhgh)stra,(hg) (;) qui(gh) fe(ij)cit(hghvIJG2hvEFgwhigFssded) (,) ú(fhGF)tra(ghhg)que(gd!ewf) u(egfFs)num.(fe) (::) <sp>V/</sp> Com(i)plá(ikjJs)cu(h!iwji)it(hhO1g) per(i) e(i!jo1)um(i) re(i)con(i)ci(i)li(i)á(i!jo1)re(h) ó(h)mni(hg)a(h) in(j>) i(ikjJs)psum,(ji) (;) pa(hg)cí(hi)fi(i)cans(i) per(i>) sán(ij~)gui(i)nem(i) cru(i)cis(i) e(ij~)jus,(i) (,) si(i)ve(i) quæ(i) in(i) ter(ij~)ris,(i) si(i)ve(i) quæ(ikjIHiwji) in(hg~) cœ(GHiwj)lis(jiiO1hivHGh) sunt.(hg) (::) <sp>+</sp> I(e)pse.(fg) (::) <sp>V/</sp> Gló(ikjjs)ri(h!iwji)a(hhO1!g) Pa(hg)tri,(h) et(j) Fí(i)li(ikjjs)o,(ji) (;) et(i) Spi(i)rí(ikjjvIHiwji)tu(hg)i(GHiwj) San(jiiO1hivHGh>)cto.(hg) (::) <sp>+</sp> I(e)pse.(fg) (::)",
@@ -2110,14 +2054,6 @@ const NR_0: ChantData[] = [
     gabc: "(c3) Hic(hhhvGF) est,(fhe/feeO1d) (,) qui(fvED) ve(gxefe/fg)nit(f) per(f>) a(fih)quam(Hsss<) et(h) sán(h!iwj!k>)gui(ih)nem(hhf/hih) (;) Je(f)sus(hi) Chri(jh/ihhvGE/f!gwhGFg)stus:(gf) (:) <sp>+</sp> Non(f) in(i>) a(h)qua(gh) so(fhhf)lum,(fHsshvGFhe/f/eed) (;) sed(gxg) in(d>) a(gxDEfwg)qua(fe) et(fV@ef~) sán(gxhhf/hihhegvFEDewfefDEfwgFEgvgd)gui(ded)ne.(d) (::) <sp>V/</sp> In(h) di(h)e(h) il(h)la(hiHssfgf) e(h)rit(h) fons(h) pa(hi)tens(h) dó(hf)mu(hi)i(gh) Da(hg!hwihi)vid,(ih) (;) et(d) ha(f)bi(h)tán(h)ti(h)bus(h) Je(h)rú(hi)sa(h)lem(h) in(h>) ab(h)lu(h)ti(h)ó(h)nem(hg/hg) pec(gf)ca(hi)tó(hg/hwihGFg)ris.(gf) (::) <sp>+</sp> Non(f) in(i>) a(h)qua.(gh) (::)",
     office: "re",
     mode: "5",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:0701N3R2",
-    incipit: "0701N3R2",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
@@ -3505,14 +3441,6 @@ const NR_0: ChantData[] = [
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
-    id: "nocturnale:1007N1R1",
-    incipit: "1007N1R1",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
     id: "nocturnale:1007N1R2",
     incipit: "Vidi speciosam sicut",
     gabc: "(c4) Vi(e)di(eg_) <sp>*</sp> spe(e_f)ci(g)ó(ixhg/h_i)sam(h) (,) si(h)cut(h) co(hg)lúm(ixh_0//igh)bam,(hg) (,) as(f)cen(ghg~)dén(h)tem(g) dé(g_h)su(g)per(g) ri(gh_)vos(gf) a(de)quá(e_0//fgef)rum,(ed..) (;) cu(e)jus(eg_) i(dc)næs(gh)ti(g)má(hi/jo)bi(i)lis(i) o(i)dor(ik) e(h)rat(j) ni(ikjjs)mis(ji..) (;) in(i>_) ves(g)ti(h!iwj)mén(jijg~)tis(h!iwj) e(jv_IH_)jus.(hg..) (:) <sp>+</sp> Et(e) si(ixg_0//hi)cut(h) di(h)es(hg~) ver(ixh_0//igh)ni(hg) (,) cir(f)cum(ghg~)dá(h)bant(g) e(gh)am(g) flo(gh_)res(gf) ro(de)sá(e_0/fgffs)rum(ed..) (;) et(g) lí(gsjss)li(ih)a(hoi_) con(g>_)vál(eeof)li(fv_//df!gv_FEf)um.(fe..) (::) <sp>V/</sp> A(ikjjs)sti(h!iwji)tit(hhog) Re(i)gí(ij)na(i) a(i) dex(i)tris(i) tu(ij)is(h) in(h) ve(h)stí(h)tu(hg) de(h)au(j)rá(ikjjs)to,(ji..) (;) cir(ig~)cúm(hi~)da(i)ta(i) va(ikjjvI_____H)ri(hg)e(g_h!iwj)tá(jiioh)te.(hg..) (::) <sp>+</sp> Et.(e) (::)",
@@ -3542,22 +3470,6 @@ const NR_0: ChantData[] = [
     gabc: "(c4)Cœ(df)pit(dc) con(f<)tri(g)stá(ixh_i)ri,(h.) <sp>*</sp>(,) et(h) fa(f)ctus(g) est(h) su(f)dor(g) e(fe~)jus(d) in(e) hor(ddo)to(c.) (;) si(e)cut(f) gut(g)tæ(fe) sán(d)gui(cd)nis.(d.) (::) <eu>E(h) U(h) O(g) U(f) A(gh) E.(g) </eu>(::)",
     office: "an",
     mode: "1g",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:1007N2R1",
-    incipit: "1007N2R1",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:1007N2R2",
-    incipit: "1007N2R2",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
@@ -3646,22 +3558,6 @@ const NR_0: ChantData[] = [
     gabc: "(c3) Glo(ehg)ri(h)ó(ihi/jv)sæ(i) <sp>*</sp>() Vír(i)gi(i)nis(jkJI__io) Ma(h_i)rí(iv_HG/hwi)æ(i_j_IHG__hvG__FEfe__) (,) Ma(e)ter(e)ni(e)tá(e!fwgfg_/h>)tem(g) dig(i>)nís(hg)si(fg)mam(g_0//hif/fe__) (`) re(ih__)co(h@ioj)lén(i_jIgh~)tes,(g.) (:) <sp>+</sp> Cu(g!hwi/j>)jus(i) Dó(ij)mi(i)nus(i) hu(i)mi(i)li(i)tá(i)tem(jkJI__io) vi(h_i)dén(iv_HG/hwi)te,(i_j_IHG__hv_GFgf__) (;) An(g!hwi/j>)ge(i)lo(i) nun(i)ti(i)án(i>)te,(g) con(i>)cé(h_0/ijg/hg__)pit(e_f!gwhe__/fv/eeod) (,) Sal(f)va(h)tó(hg__/hv_GFg@ho)rem(g!hwiHG__F/gwh_GF<) mun(e_f!gv_FEf)di.(fe..) (::) <sp>V/</sp> Chri(i!jwk_JI)sto(h_i/hhog) ca(ig)ná(hi)mus(hi) gló(i)ri(i!jwkj__)am(ji..) (;) in(h_i/hhog) hac(hih) sa(i)cra(i) so(i)lem(i)ni(i)tá(ij)te(i) mi(i)rá(ij)bi(i)lis(i) Ge(i)ne(iji/jv_IH)trí(ih)cis(h!iwji/jkj) De(i_h!iwjij)i.(iv_HGhg..) (::) <sp>+</sp> Cu(g!hwi/j>)jus.(i) (::)",
     office: "re",
     mode: "7",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:1011N2R2",
-    incipit: "1011N2R2",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:1011N2R3",
-    incipit: "1011N2R3",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {
@@ -4815,10 +4711,7 @@ const NR_0: ChantData[] = [
     office: "re",
     mode: "1",
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  }
-];
-
-const NR_1: ChantData[] = [
+  },
   {
     id: "nocturnale:1208N2R2",
     incipit: "1208N2R2",
@@ -4922,7 +4815,10 @@ const NR_1: ChantData[] = [
     office: "re",
     mode: "8",
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
+  }
+];
+
+const NR_1: ChantData[] = [
   {
     id: "nocturnale:1224R3",
     incipit: "Sanctificamini filii",
@@ -9618,10 +9514,7 @@ const NR_1: ChantData[] = [
     office: "re",
     mode: null,
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  }
-];
-
-const NR_2: ChantData[] = [
+  },
   {
     id: "nocturnale:ORAL1",
     incipit: "Toni Communes Ad Alleluia in Fine Antiphonarum",
@@ -9725,7 +9618,10 @@ const NR_2: ChantData[] = [
     office: "or",
     mode: "8",
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
+  }
+];
+
+const NR_2: ChantData[] = [
   {
     id: "nocturnale:ORBDm",
     incipit: "Benedicamus Domino (In Dominicis Adventus et Quadragesimae)",
@@ -10436,22 +10332,6 @@ const NR_2: ChantData[] = [
     gabc: "(c4) An(d!ewfe)ge(f!goh)lus(ixg!!hwih) Dó(gh)mi(fvED)ni(d.) <sp>*</sp>(,) ap(f)pá(ghg)ru(h)it(g) in(f) som(hg~)nis(f) Jo(g_h)seph,(g) di(f!gwh)cens:(h.) (;) Sur(dh~)ge,(h) (`) et(h) ác(gf)ci(gh)pe(h) pú(f)e(e)rum(d) (,) et(g) ma(f_)trem(e) e(f_g)jus,(h.) (,) et(h) va(ghg)de(fgf) in(g) ter(e)ram(f>) Is(d)ra(cd)ël:(d.) (;) de(h)fún(j>)cti(i) sunt(ji) e(h)nim(g) (,) qui(g) quæ(hvGF)ré(g_h)bant(h) á(h)ni(g)mam(f) pú(gh)e(fvED)ri,(d.) (,) al(cd~)le(d!ewfe/fgf)lú(ed~)ja.(d.) (::) <eu>E(h) U(h) O(g) U(f) A(gh) E.(gf) </eu>(::)",
     office: "an",
     mode: "1f",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:P2F4N2R1",
-    incipit: "P2F4N2R1",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
-    pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
-  },
-  {
-    id: "nocturnale:P2F4N2R2",
-    incipit: "P2F4N2R2",
-    gabc: "(c4) res( ) (Z) pon( ) (Z) so( ) (Z) ry( ) (Z) place( ) (Z) hol( ) (Z) der( ) (::)",
-    office: "re",
-    mode: "1",
     pages: {},  // keyed by book like every other corpus file; the Nocturnale cites no pages
   },
   {

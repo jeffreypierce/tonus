@@ -1,6 +1,6 @@
 // lh.ts — Liber Hymnarius 1983 corpus
 // Extracted from GregoBase (source ID 15) by scripts/extract-gregobase.mjs
-// Generated: 2026-08-31T18:07:52.806Z
+// Generated: 2026-09-02T05:09:24.171Z
 // Chants: 359
 import type { Chant } from "./types.js";
 import type { ChantData } from "./gr.js";
