@@ -2,6 +2,59 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.10.2 — 2026-09-02
+
+A stub is not a chant.
+
+### Fixed
+
+- **Fifteen Nocturnale placeholders shipped as chants.** The restitution is
+  unfinished, and a responsory not yet restored is committed as a clef and the
+  lyric *res pon so ry place hol der* over empty note groups, with no `name`
+  header. The extractor took each as a chant: incipit falling back to the file
+  id, `mode: 1`, a `(c4)` and nothing after it. A consumer listing the book
+  drew fifteen rows of "Res pon so · Modus I" with a bare clef for notation.
+  The extractor now drops a record with no pitch in any note group after the
+  clef — a chant sounds — and the whole ledger follows: `nr` is **1,549**
+  (was 1,564), the shelf **7,825** chants and 9,743 listings (were 7,840 and
+  9,758), and the census covers **7,718** (was 7,733; every dropped record
+  was a `re` in mode 1). The census re-mined against this data; blocks and
+  order shift by the fifteen. Anything holding the old totals wants a re-bake.
+- **A sign in a long run was hoisted to the run's head.** Solesmes prints an
+  accidental inflecting any note of a ligature BEFORE the whole figure, and
+  the emitter applied that to every neume group. For the compact figures it
+  draws connected (pes, clivis, torculus, porrectus, scandicus — three rows
+  or fewer) that is right; for a longer run of separate glyphs it moved
+  gregobase:1001's mid-melisma natural eight notes left, beside the opening
+  flat — ♭♮ side by side, the very thing the rule exists to prevent. A run
+  now prints each sign immediately before the note that carries it.
+- **Moderna's heads had a class and no address.** Quadrata's heads carry
+  `data-note-index="phrase.syllable.group.neumeIndex"`; moderna's were
+  classed `note` and nothing more, so a caller could find heads but not say
+  which tabula row each was — drawing order and tabula order part at every
+  ligature. Moderna heads now wear the same address.
+- **A scaled title fell into the staff.** The header band was reserved from
+  the nominal title size while the letter was drawn at `fonts.title.scale`,
+  so a display hand at any scale above 1 descended into the notation. One
+  derivation serves both sites now.
+- **The margin mark ran into the clef.** The genus/mode stack over the
+  dropcap was centred on the cap's advance alone, and a long genus
+  ("Offert.", "Communio.") overran the column into the staff. The mark now
+  shrinks to fit the column, down to a floor of 0.62, then centres clamped
+  inside it; a mark that already fits is untouched.
+- **Every genus abbreviates in the auto mark.** Toni Communes, Supplicatio,
+  Improperia, Tropa, Prosa, Varia and Kyriale had no row in the table and
+  printed whole — "Toni Communes." over the cap. They read Ton. comm. ·
+  Suppl. · Improp. · Trop. · Pros. · Var. · Kyr. now, and the suite holds the
+  table complete against `OFFICIA`.
+
+### Changed
+
+- **The staff→lyric gap is 34px in both species** (was 28px since 08-04, 21px
+  before that). Notes hanging below the staff share that room, as they do in
+  the books, and the lyric was crowding them. Layout output moves by 6px at
+  the default scale; nothing else in the geometry contract changes.
+
 ## 0.10.1 — 2026-08-31
 
 A capital ligature is a vowel like any other.
