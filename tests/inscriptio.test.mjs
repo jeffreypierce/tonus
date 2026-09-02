@@ -601,6 +601,14 @@ describe("inscriptio — the fonts option (references only, never bundled)", () 
     };
     // The abbreviations GENUS_ABBREV actually produces — the widths that reach
     // the margin in practice. The full names are that table's business.
+    //
+    // What the centring PROMISES is the left edge and the pull, not a fit:
+    // the column at the default is 46px and "Offert." wants 54, so no centre
+    // puts it inside — the type would have to shrink, which was tried and
+    // ruled against (it breaks the stack's one size and fires on marks that
+    // are already correct). A mark too wide is pinned at the margin, running
+    // right as the books let a long rubric run, never off the page's left.
+    const measured = [];
     for (const mark of ["Ant.", "Hymn.", "Offert.", "Ton. comm."]) {
       const svg = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
         rubric: mark, dropcap: true, width: 640,
@@ -611,9 +619,21 @@ describe("inscriptio — the fonts option (references only, never bundled)", () 
       const size = parseFloat(m[2]);
       const half = runW(m[3], size) / 2;
       const staffX = parseFloat(svg.match(/<line x1="([\d.]+)"/)[1]);
-      assert.ok(cx + half <= staffX,
-        `${mark}: runs to ${cx + half}, staff starts at ${staffX}`);
       assert.ok(cx - half >= 0, `${mark}: starts at ${cx - half}, off the left edge`);
+      measured.push({ mark, left: cx - half, right: cx + half, half, staffX });
+    }
+    // A mark that FITS the column clears the staff — the ordinary case, and
+    // the one the centring is for.
+    for (const r of measured.filter((r) => r.half * 2 <= r.staffX - 14)) {
+      assert.ok(r.right <= r.staffX,
+        `${r.mark}: fits the column but runs to ${r.right}, staff at ${r.staffX}`);
+    }
+    // A mark too wide is pulled hard left instead of staying centred on the
+    // cap — the overhang is minimised, which is the whole of what the clamp
+    // can do for it.
+    for (const r of measured.filter((r) => r.half * 2 > r.staffX - 14)) {
+      assert.ok(r.left < 15,
+        `${r.mark}: overhangs but was not pulled to the margin (left ${r.left})`);
     }
   });
 

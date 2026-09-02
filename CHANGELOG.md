@@ -38,10 +38,12 @@ A stub is not a chant.
   so a display hand at any scale above 1 descended into the notation. One
   derivation serves both sites now.
 - **The margin mark ran into the clef.** The genus/mode stack over the
-  dropcap was centred on the cap's advance alone, and a long genus
-  ("Offert.", "Communio.") overran the column into the staff. The mark now
-  shrinks to fit the column, down to a floor of 0.62, then centres clamped
-  inside it; a mark that already fits is untouched.
+  dropcap was centred on the cap's advance alone, with no regard for its own
+  width, so a wide mark ran past the staff's left edge. It is now centred
+  clamped inside the column: pulled left when it overhangs, never past the
+  margin, and untouched when it already fits. Keeping the name short stays
+  `GENUS_ABBREV`'s job — shrinking the type here would set the genus smaller
+  than the numeral beneath it and break the stack's one size.
 - **Every genus abbreviates in the auto mark.** Toni Communes, Supplicatio,
   Improperia, Tropa, Prosa, Varia and Kyriale had no row in the table and
   printed whole — "Toni Communes." over the cap. They read Ton. comm. ·
