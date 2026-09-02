@@ -268,3 +268,45 @@ describe("accidentals — b molle under the default tuning (chain regression)", 
     for (const m of marks) assert.ok(Math.abs(parseFloat(m.label)) < 0.5, `label ${m.label}`);
   });
 });
+
+// gregobase:1001 ("Dominus regnavit exsultet", Alleluia, mode VIII) is the
+// fixture because its final melisma opens with a flat and restores with a
+// natural eight notes later, INSIDE one twelve-note neume group.
+describe("a sign in a long run prints where it is written", () => {
+  // The ligature rule — every sign hoisted before the whole figure — is
+  // Solesmes practice for the COMPACT figures the emitter draws connected
+  // (pes, clivis, torculus, porrectus, scandicus). Applied to a long run of
+  // separate glyphs it moved this natural eight notes left, printing ♭♮
+  // adjacent: two contradicting signs side by side, which is what the
+  // no-interleaving rule exists to prevent, not produce. In a run each sign
+  // sits immediately before the note that carries it, as the books print it.
+  const render = () => {
+    const chant = tonus.cantus({ id: "gregobase:1001" })[0];
+    const score = tonus.notatio(chant);
+    return { score, ...tonus.inscriptio(score, { width: 900 }) };
+  };
+
+  test("the natural prints mid-run, immediately before its carrying note", () => {
+    const { score, svg, geometry } = render();
+    const accs = [...svg.matchAll(/<g class="accidental" transform="translate\(([\d.-]+)[ ,]([\d.-]+)\)/g)]
+      .map((m) => ({ x: +m[1], y: +m[2] }));
+    assert.equal(accs.length, 5, "the chant's five signs all print");
+    const iNat = score.tabula.findIndex((r) =>
+      r.accidentalSource === "explicit" && (r.accidentalSign ?? r.accidental) === 0);
+    assert.ok(iNat > 0, "the chant has its explicit natural");
+    const nat = accs[accs.length - 1];
+    // Before its carrying note, and no further: written position, not the
+    // run's head.
+    assert.ok(nat.x < geometry[iNat].x, `natural (${nat.x}) precedes its note (${geometry[iNat].x})`);
+    assert.ok(geometry[iNat].x - nat.x < 15, "…immediately before it, not hoisted up the run");
+  });
+
+  test("the flat and the natural do not print adjacent", () => {
+    const { svg } = render();
+    const accs = [...svg.matchAll(/<g class="accidental" transform="translate\(([\d.-]+)[ ,]([\d.-]+)\)/g)]
+      .map((m) => ({ x: +m[1], y: +m[2] }));
+    const [flat, nat] = accs.slice(-2);
+    assert.equal(flat.y, nat.y, "both sit on the degree they alter — the B space");
+    assert.ok(nat.x - flat.x > 40, `♭ at ${flat.x} and ♮ at ${nat.x} are not side by side`);
+  });
+});

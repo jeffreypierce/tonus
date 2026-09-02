@@ -128,7 +128,7 @@ const SYL_GAP_1 = 9.5;                   // gap after each syllable
 // share one lyric setting (ruled 2026-07-29), and that ruling is about type,
 // which sits at its own size. Scaling it with the staff broke the parity the
 // moment moderna's staff started moving.
-const LYRIC_GAP = 28;
+const LYRIC_GAP = 34;
 const SYSTEM_GAP_DEFAULT = 24;
 
 /** The staff height both species answer to when the caller names none. */
@@ -257,11 +257,15 @@ function glyph(name: string, x: number, y: number, scale: number): string {
     `<path d="${g.path}" fill="${INK}"/></g>`;
 }
 
-/** A glyph carrying an SVG class (so downstream tracks / tests can select it). */
-function classedGlyph(cls: string, name: string, x: number, y: number, scale: number): string {
+/** A glyph carrying an SVG class (so downstream tracks / tests can select it).
+ *  `attrs` rides along pre-serialized (leading space included), for the head's
+ *  data-note-index. */
+function classedGlyph(
+  cls: string, name: string, x: number, y: number, scale: number, attrs = "",
+): string {
   const g = GLYPHS[name];
   if (!g) return "";
-  return `<g class="${cls}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})">` +
+  return `<g class="${cls}"${attrs} transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(5)} ${(-scale).toFixed(5)})">` +
     `<path d="${g.path}" fill="${INK}"/></g>`;
 }
 
@@ -290,7 +294,7 @@ const HEAD_K = 0.825;
  */
 function notehead(
   x: number, y: number, small: boolean, half: boolean,
-  gm: ModernaMetrics,
+  gm: ModernaMetrics, attrs = "",
 ): string {
   const s = gm.SCALE * (small ? 0.68 : 1.0) * HEAD_K;
   // Centred on the ADVANCE, not on the shrunken glyph: the note has to sit
@@ -303,8 +307,12 @@ function notehead(
   // Classed `note`, as quadrata's heads are. The class is the contract a
   // caller selects on — the site rings and reddens the chosen note through it
   // — and moderna emitted its heads bare, so nothing downstream could find
-  // them and selection did nothing in the modern transcription.
-  return classedGlyph("note", code, x - own / 2, y, s);
+  // them and selection did nothing in the modern transcription. `attrs`
+  // carries the same data-note-index quadrata's heads wear, the OTHER half of
+  // that contract: the class finds heads, the address says which row each one
+  // is — by the emitter's own index, since drawing order and tabula order
+  // part ways at every ligature.
+  return classedGlyph("note", code, x - own / 2, y, s, attrs);
 }
 
 function clef(x: number, systemY: number, gm: ModernaMetrics): string {
@@ -647,7 +655,8 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
           `font-family="'Crimson Pro', Georgia, serif">${esc(mk.label ?? "")}</text>`,
         );
       }
-      body.push(notehead(mx, my, r.liquescent, r.mora === 2, gm));
+      body.push(notehead(mx, my, r.liquescent, r.mora === 2, gm,
+        ` data-note-index="${r.phraseIndex}.${r.syllableIndex}.${r.neumeGroup}.${r.neumeIndex}"`));
       if (r.mora === 1) body.push(moraDots(mx, my, onLine, gm));
       placements.push({ row: r, x: mx, y: my, system, systemY });
     });

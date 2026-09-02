@@ -97,7 +97,7 @@ describe("inscriptio — duae species parity (ruled 2026-07-29)", () => {
 
   test("one staff→lyric gap and one lyric weight across both species", () => {
     // The gap from the bottom staff line to the lyric baseline is the same
-    // 21px (default scale) in quadrata and moderna.
+    // 34px (default scale) in quadrata and moderna.
     const gapOf = (svg, lines) => {
       const lineYs = [...svg.matchAll(/<line x1[^>]*y1="([\d.]+)"/g)]
         .slice(0, lines).map((m) => Number(m[1]));

@@ -145,3 +145,24 @@ test("moderna joins same-word syllables with centred hyphens (Vendôme, as quadr
   assert.ok(joined.includes("Ky-ri-e"), `hyphens inside Kyrie: ${joined}`);
   assert.ok(!joined.includes("e-e"), "no hyphen across the word boundary");
 });
+
+describe("moderna heads carry the tabula address", () => {
+  // The class finds heads; data-note-index says WHICH ROW each one is. It is
+  // the same contract quadrata's heads carry, and the half a caller selecting
+  // a note actually needs: drawing order and tabula order part ways at every
+  // ligature, so an untagged head cannot be matched back to its row. Moderna
+  // shipped its heads classed but unaddressed, and downstream selection could
+  // find heads without knowing which was which.
+  test("every tabula row's address appears on exactly one head", () => {
+    const score = buildScore(makeChant("(c4) Pu(g)er(h) na(ghg)tus(f.) (::)"));
+    const { svg } = inscriptio(score, { notation: "moderna" });
+    const tagged = [...svg.matchAll(/class="note" data-note-index="([^"]+)"/g)].map((m) => m[1]);
+    assert.equal(tagged.length, score.tabula.length, "one tagged head per row");
+    const keys = new Set(tagged);
+    for (const r of score.tabula) {
+      const key = `${r.phraseIndex}.${r.syllableIndex}.${r.neumeGroup}.${r.neumeIndex}`;
+      assert.ok(keys.has(key), `row ${key} has a tagged head`);
+    }
+    assert.equal(keys.size, tagged.length, "no address is reused");
+  });
+});

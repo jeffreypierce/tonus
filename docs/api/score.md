@@ -415,7 +415,8 @@ Options, by group (all optional):
   chant *less* usable width than a small one.
 - **front matter**: set as the Solesmes books open a piece: `title` centers
   over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
-  mark, e.g. _Introitus. 8._) sits upright at the left margin; `dropcap` draws
+  mark, abbreviated as the books set it — _Intr. 8._, _Ton. comm. 1._; an
+  ordinary chant shows its mode alone) sits upright at the left margin; `dropcap` draws
   the initial the printed books open with, taking the first letter out of the
   lyric and indenting the first system to hold it. Both species take the
   title; the margin mark and the initial are **quadrata's alone**, because moderna is

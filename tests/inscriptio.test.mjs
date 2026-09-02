@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { buildScore } from "../dist/engines/score/api.js";
 import { inscriptio } from "../dist/engines/score/inscriptio.js";
 import { decideBreak } from "../dist/engines/score/emitters/breaking.js";
+import { autoRubricLines } from "../dist/engines/score/emitters/svg.js";
+import { OFFICIA } from "../dist/engines/chant/types.js";
 
 const KYRIE_GABC = "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (::)";
 
@@ -528,6 +530,91 @@ describe("inscriptio — the fonts option (references only, never bundled)", () 
     const scaled = inscriptio(buildScore(makeChant(KYRIE_GABC)), opts).svg;
     const size = (svg) => parseFloat(svg.match(/class="lyric" [^>]*font-size="([\d.]+)"/)[1]);
     assert.ok(Math.abs(size(scaled) / size(plain) - 1.15) < 0.01);
+  });
+
+  // EVERY GENUS ABBREVIATES. The margin mark is a few letters wide, and a
+  // genus the table did not know printed whole — "Toni Communes." over the
+  // cap, running into the staff (ruled 2026-09-02: "all need an abbrev.").
+  // Held against OFFICIA, so a genus added to the vocabulary cannot reach the
+  // mark unabbreviated.
+  test("every OFFICIA genus has an abbreviation in the auto mark", () => {
+    for (const genus of new Set(Object.values(OFFICIA))) {
+      const [mark] = autoRubricLines({ genus, mode: "1" });
+      assert.notEqual(mark, `${genus}.`, `${genus} prints unabbreviated`);
+      // No wider than the name (a five-letter genus — Tropa, Prosa — cannot
+      // lose a letter without losing its reading), and marked as a cut.
+      assert.ok(mark.length <= genus.length && mark.endsWith("."),
+        `${genus} → ${mark} is not a book abbreviation`);
+    }
+  });
+
+  test("Toni Communes marks as Ton. comm.", () => {
+    const svg = inscriptio(buildScore({ ...makeChant(KYRIE_GABC), genus: "Toni Communes" }), {
+      annotation: "auto", dropcap: true, width: 640,
+    }).svg;
+    assert.ok(svg.includes(">Ton. comm.<"), "the mark is abbreviated");
+    assert.ok(!svg.includes("Toni Communes."), "the full name does not print");
+  });
+
+  // A SCALED TITLE KEEPS ITS ROOM. The header band was reserved from the
+  // NOMINAL title size while assembly drew the SCALED one, so a display hand
+  // (any scale > 1) descended into the staff with its baseline still pinned
+  // where the small letter's had been — the collision a Toni Communes plate
+  // showed. Both sites now derive from one scaled size; this holds them
+  // together at the sizes a title face actually asks for.
+  test("a scaled title grows its header band instead of falling into the staff", () => {
+    const titled = (scale) => inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+      title: "Toni Communes.", annotation: "auto", dropcap: true, width: 640,
+      theme: { fonts: { title: { family: "Junicode", scale } } },
+    }).svg;
+    for (const scale of [1, 1.3, 1.6, 2]) {
+      const svg = titled(scale);
+      const m = svg.match(/class="title"[^>]*y="([\d.]+)"[^>]*font-size="([\d.]+)"/);
+      const baseline = parseFloat(m[1]);
+      const drawn = parseFloat(m[2]);
+      // The band tracks the drawn letter: baseline and size move together.
+      assert.ok(Math.abs(drawn / (baseline || 1) - 1) < 0.01,
+        `scale ${scale}: baseline (${baseline}) tracks the drawn size (${drawn})`);
+      // And the letter clears the staff it sits above. 0.22em is a serif's
+      // descender: enough of one to catch a title sitting in the notation.
+      const staffTop = Math.min(...[...svg.matchAll(/<line x1[^>]*y1="([\d.]+)"/g)]
+        .slice(0, 4).map((l) => Number(l[1])));
+      assert.ok(baseline + drawn * 0.22 < staffTop,
+        `scale ${scale}: title descends to ${baseline + drawn * 0.22}, staff top ${staffTop}`);
+    }
+  });
+
+  // THE MARGIN MARK STAYS IN ITS COLUMN. The genus/mode stack was centred on
+  // the dropcap's advance without regard for its OWN width, so a wide mark ran
+  // past the staff's left edge into the clef — "Offert." reached x 68 against a
+  // staff starting at 60.3. Keeping the NAME short is GENUS_ABBREV's job; this
+  // holds the centring that places whatever that table hands over.
+  test("a wide genus mark stays inside the dropcap column", () => {
+    // A serif's per-character width, case-aware: capitals run wider, and the
+    // marks are capitalised, so a flat average would under-read exactly here.
+    const runW = (text, size) => {
+      let w = 0;
+      for (const ch of text) {
+        w += /[A-ZÀ-ÞŒÆ]/.test(ch) ? 0.70 : /[.,;:'’\- ]/.test(ch) ? 0.28 : 0.50;
+      }
+      return w * size;
+    };
+    // The abbreviations GENUS_ABBREV actually produces — the widths that reach
+    // the margin in practice. The full names are that table's business.
+    for (const mark of ["Ant.", "Hymn.", "Offert.", "Ton. comm."]) {
+      const svg = inscriptio(buildScore(makeChant(KYRIE_GABC)), {
+        rubric: mark, dropcap: true, width: 640,
+      }).svg;
+      const m = svg.match(
+        /class="rubric"[^>]*?x="([\d.-]+)"[^>]*?y="[\d.-]+"[^>]*?font-size="([\d.]+)"[^>]*>([^<]*)</);
+      const cx = parseFloat(m[1]);
+      const size = parseFloat(m[2]);
+      const half = runW(m[3], size) / 2;
+      const staffX = parseFloat(svg.match(/<line x1="([\d.]+)"/)[1]);
+      assert.ok(cx + half <= staffX,
+        `${mark}: runs to ${cx + half}, staff starts at ${staffX}`);
+      assert.ok(cx - half >= 0, `${mark}: starts at ${cx - half}, off the left edge`);
+    }
   });
 
   test("moderna honours the lyric slot", () => {

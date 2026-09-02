@@ -301,13 +301,23 @@ function resolveOpts(o: SvgOpts): Resolved {
 const HOUSE_SERIF =
   "Junicode, 'Crimson Pro', 'Crimson Text', 'EB Garamond', Garamond, Georgia, serif";
 
-// The books abbreviate the genus in the margin mark (Intr., Grad., Offert.);
-// a genus not in the table prints as-is with its period.
+// The books abbreviate the genus in the margin mark (Intr., Grad., Offert.).
+// EVERY genus OFFICIA can name has a row (ruled 2026-09-02: "all need an
+// abbrev." — a Toni Communes plate printed the full name over the cap, and
+// the margin column is a few letters wide). The fallback below is for a genus
+// arriving from a parsed gabc header that OFFICIA never saw, and the suite
+// holds this table complete against OFFICIA so the fallback stays unused
+// for the corpus.
 const GENUS_ABBREV: Record<string, string> = {
   Introitus: "Intr.", Graduale: "Grad.", Offertorium: "Offert.",
   Communio: "Comm.", Tractus: "Tract.", Alleluia: "All.",
   Antiphona: "Ant.", Responsorium: "Resp.", "Responsorium Breve": "Resp. br.",
   Hymnus: "Hymn.", Sequentia: "Seq.", Canticum: "Cant.", Psalmus: "Ps.",
+  "Toni Communes": "Ton. comm.", Supplicatio: "Suppl.", Improperia: "Improp.",
+  Tropa: "Trop.", Prosa: "Pros.", Varia: "Var.",
+  // Never printed — an ordinary chant shows its mode alone (below) — but the
+  // table is complete, not merely sufficient.
+  Kyriale: "Kyr.",
 };
 
 /** The `annotation: "auto"` mark, derived from chant meta and stacked as the
@@ -492,13 +502,14 @@ interface Layout {
 
 function makeLayout(r: Resolved, trackExtra = 0): Layout {
   const topY = r.staffInterval * 5; // room for high notes + episema above
-  // Lyric baseline sits 28px below the bottom line at the default staffHeight
+  // Lyric baseline sits 34px below the bottom line at the default staffHeight
   // — MATCHED to moderna's staff→lyric gap (ruled 2026-07-29: one gap across
   // the duae species), scaling with the staff. The staff spans SIX intervals,
-  // so the gap is (10.2 − 6) of them; it was 9.15 (a 21px gap) until
+  // so the gap is (11.1 − 6) of them; it was 9.15 (a 21px gap) until
   // 2026-08-04, which crowded the lyrics against notes hanging below the
-  // staff. Those notes share this room, as they do in the books.
-  const lyricY = topY + r.staffInterval * 10.2;
+  // staff, then 10.2 (28px) until 2026-09-01. Those notes share this room,
+  // as they do in the books.
+  const lyricY = topY + r.staffInterval * 11.1;
   return {
     topY,
     bottomY: topY + r.staffInterval * 6,
@@ -638,7 +649,13 @@ export function toSvg(
   let titleBaseline = 0;
   let rubricTop = 0;
   if (r.title) {
-    const size = r.lyricSize * 1.5;
+    // The DRAWN size, not the nominal one: a title slot carries a `scale`
+    // (the tweak a display hand needs), and the band has to reserve what the
+    // letter actually occupies. Reserving the unscaled size while assembly
+    // drew the scaled one put a scale > 1 title's descenders into the staff,
+    // its baseline pinned where the small letter's had been. At scale 1 the
+    // arithmetic is unchanged, so an unscaled title renders as before.
+    const size = r.lyricSize * 1.5 * r.fonts.title.scale;
     titleBaseline = size;
     headerY += size * 1.4;
   }
@@ -804,11 +821,16 @@ export function toSvg(
   const renderFallback = (figure: ChantTabulaRow[], atX: number): number => {
     let cx = atX;
     let prev: { pos: number; inkRight: number } | null = null;
+    // A short figure's marks were hoisted before the figure by renderFigure
+    // (a ligature draws connected); a longer run interleaves each sign before
+    // the note that carries it, as the books print them.
+    const inline = figure.length > 3;
     const inclinata = figure.every((f, i) => i === 0 || f.shape === "inclinatum");
     for (let i = 0; i < figure.length; i++) {
       const row = figure[i]!;
       if (prev && prev.pos === row.staffPosition)
         cx += r.staffInterval * 0.55;          /* strophae breathe (Solesmes) */
+      if (inline) cx += placeAccidental(row, cx);
       const p = placeNote(row, cx);
       if (!p) continue;
       if (prev && !inclinata && Math.abs(prev.pos - row.staffPosition) > 1) {
@@ -862,12 +884,21 @@ export function toSvg(
 
 
   const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
-    // Solesmes practice: an accidental inflecting ANY note of a ligature is
+    // Solesmes practice: an accidental inflecting ANY note of a LIGATURE is
     // printed BEFORE the whole figure, at the inflected note's staff position —
     // never interleaved mid-ligature. (Placing only the first note's mark
-    // silently dropped a flat on the upper note of a pes.)
+    // silently dropped a flat on the upper note of a pes.) That holds for the
+    // compact figures this renderer draws CONNECTED — pes, clivis, torculus,
+    // porrectus, scandicus, all ≤ 3 rows. A longer group is a RUN of separate
+    // glyphs, and there the books print each sign where it is written — before
+    // the note that carries it. Hoisting those too pushed gregobase:1001's
+    // mid-melisma natural eight notes left, beside the opening flat, and two
+    // adjacent contradicting signs is what the interleaving rule exists to
+    // prevent, not produce. The run's signs are placed by renderFallback.
     let atX = atXIn;
-    for (const row of figure) atX += placeAccidental(row, atX);
+    if (figure.length <= 3) {
+      for (const row of figure) atX += placeAccidental(row, atX);
+    }
     if (figure.length === 1) {
       const cx = atX;
       const p = placeNote(figure[0]!, cx);
@@ -972,6 +1003,11 @@ export function toSvg(
     }
     return w * r.lyricSize;
   };
+  // The same estimate at the MARGIN MARK's size — its own size, and its own
+  // `scale`, which the lyric's does not carry. Used to keep the genus/mode
+  // stack inside the cap column.
+  const estMarkW = (text: string): number =>
+    estLyricW(text) / r.lyricSize * markSize * r.fonts.annotation.scale;
   // Clear air between one syllable's right edge and the next one's left.
   // 0.25 em until 2026-08-04, which let syllables touch even when the width
   // estimate was right — a space between words has to read as a space.
@@ -1530,11 +1566,13 @@ export function toSvg(
   // final width (the books center the piece's title over the whole score).
   const header: string[] = [];
   if (r.title) {
-    const size = r.lyricSize * 1.5;
+    // One derivation with the reservation above (which folds `scale` in), so
+    // the room booked and the letter drawn can never disagree.
+    const size = r.lyricSize * 1.5 * r.fonts.title.scale;
     header.push(
       `<text class="title" x="${(width / 2).toFixed(2)}" y="${titleBaseline.toFixed(2)}" ` +
       `text-anchor="middle" ${fontAttrs(r.fonts.title)} ` +
-      `font-size="${(size * r.fonts.title.scale).toFixed(1)}" ` +
+      `font-size="${size.toFixed(1)}" ` +
       `fill="${r.noteColor}">${esc(r.title)}</text>`,
     );
   }
@@ -1556,9 +1594,25 @@ export function toSvg(
     // I. (It was briefly left-aligned for Jacquard, whose flourishes climb
     // into the numeral's band; Junicode's capitals do not, and the initial is
     // Junicode again.)
+    // CENTRED, BUT INSIDE ITS COLUMN. Centring on the cap's advance alone
+    // ignored the MARK's own width, and the column is only as wide as the
+    // indent, so a wide mark ran past the staff's left edge into the clef.
+    //
+    // The WIDTH is GENUS_ABBREV's job, not this one's: the books abbreviate in
+    // the margin, and that table is what keeps "Toni Communes" down to
+    // "Ton. comm." Shrinking the type here instead would set the genus smaller
+    // than the numeral beneath it and break the stack's one size — and it
+    // would fire on abbreviations that are already correct. So this only
+    // CENTRES, pulling the run left when it overhangs and never past the
+    // margin. A mark that fits is centred exactly as before.
+    const markRight = r.padding + capIndent - r.staffInterval * 0.3;
+    const capMid = r.padding + capSize * r.fonts.dropcap.scale
+      * capAdvance(capInitial, r.fonts.dropcap.family) / 2;
+    // The widest row governs: the stack is one block, so both rows shift
+    // together and stay centred on each other.
+    const halfRun = Math.max(...rubricLines.map((line) => estMarkW(line))) / 2;
     const cx = inMargin
-      ? r.padding + capSize * r.fonts.dropcap.scale
-        * capAdvance(capInitial, r.fonts.dropcap.family) / 2
+      ? Math.max(r.padding + halfRun, Math.min(capMid, markRight - halfRun))
       : r.padding;
     const anchor = inMargin ? 'text-anchor="middle" ' : "";
     // The stack sits ABOVE the cap, not beside it. Its last line lands a clear
