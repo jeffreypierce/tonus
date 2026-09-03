@@ -2,6 +2,24 @@
 
 All notable changes to tonus. Newest first.
 
+## Unreleased
+
+### Changed
+
+- **The close now ritards.** Two faults in the phrasing made every phrase
+  hurry into its cadence. The duration arch was a symmetric window, 0 at both
+  ends, so the second half of a phrase ran quicker than its middle; and the
+  cadence lengthened only the one note before the bar, by a term small enough
+  that the arch's fall ate it. A full close was held no longer than a comma,
+  and an ictus two notes earlier often outlasted the final note. The duration
+  arch now rises and holds — the subsiding is a lightening, not a hurrying —
+  and the `accentus` profile gains a rallentando: `ritard` (its depth),
+  `ritardNotes` (its width), `ritardCurve` (how late it gathers), graded by
+  the divisio ladder so a comma leans, a double bar broadens, a breath moves
+  nothing, with `finisBoost` on the piece's own last `::`. `shapedDuration`
+  changes on the second half of every phrase; `duration` and `velocity` do
+  not. Override `ritard: 0` to remove the window.
+
 ## 0.10.2 — 2026-09-02
 
 A stub is not a chant.

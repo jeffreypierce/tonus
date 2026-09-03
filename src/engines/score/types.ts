@@ -185,6 +185,14 @@ export interface PhrasingProfile {
   curve: number;
   accent: number;
   cadence: number;
+  /** The rallentando into a close: how far its last notes broaden, graded by the bar. */
+  ritard: number;
+  /** How many closing notes the rallentando covers. */
+  ritardNotes: number;
+  /** The ramp's power: 1 is linear, above 1 gathers the broadening late, like a singer. */
+  ritardCurve: number;
+  /** A multiplier on the piece's own last `::` — the end of the chant over any other double bar. */
+  finisBoost: number;
   tenor: number;
   baseVelocity: number;
   contourVel: number;

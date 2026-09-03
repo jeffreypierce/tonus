@@ -286,6 +286,68 @@ describe("pondus and accentus options", () => {
   });
 });
 
+describe("the ritard into a close", () => {
+  const ratios = (s) => s.tabula.map((r) => r.shapedDuration / r.duration);
+
+  test("the final note of a full close is held longest of its phrase", () => {
+    const rows = buildScore(makeChant(KYRIE_GABC), { accentus: "lyrical" }).tabula;
+    const r = ratios({ tabula: rows });
+    const last = rows.length - 1;
+    const closing = rows.map((row, i) => i).filter((i) => rows[i].phraseIndex === rows[last].phraseIndex);
+    for (const i of closing) if (i !== last) assert.ok(r[last] > r[i], `row ${i} outlasts the close`);
+  });
+
+  test("a full close broadens more than a comma", () => {
+    const rows = buildScore(makeChant(KYRIE_GABC), { accentus: "lyrical" }).tabula;
+    const r = ratios({ tabula: rows });
+    const commaClose = rows.findLastIndex((row) => row.phraseIndex === 0);
+    assert.ok(r[rows.length - 1] > r[commaClose] * 1.2);
+  });
+
+  test("ritard: 0 removes the window and touches nothing outside it", () => {
+    const withRamp = buildScore(makeChant(KYRIE_GABC), { accentus: "lyrical" }).tabula;
+    const without = buildScore(makeChant(KYRIE_GABC), {
+      accentus: { style: "lyrical", overrides: { ritard: 0 } },
+    }).tabula;
+    // Eight rows: a three-note phrase to a comma (all three in lyrical's
+    // three-note window), then a five-note close whose first two stand outside.
+    assert.equal(withRamp.length, 8);
+    for (let i = 0; i < withRamp.length; i++) {
+      if (i === 3 || i === 4) assert.equal(withRamp[i].shapedDuration, without[i].shapedDuration);
+      else assert.ok(withRamp[i].shapedDuration > without[i].shapedDuration, `row ${i}`);
+    }
+  });
+
+  test("the window rises monotonically toward the bar", () => {
+    // A ten-note phrase to a double bar, all plain puncta so only position shapes.
+    const gabc = "(c4) A(g)b(g)c(g)d(g)e(g)f(g)g(g)h(g)i(g)j(g) (::)";
+    const rows = buildScore(makeChant(gabc), { accentus: "solemn" }).tabula;
+    const r = ratios({ tabula: rows });
+    for (let i = rows.length - 4; i < rows.length; i++) assert.ok(r[i] > r[i - 1], `row ${i}`);
+  });
+
+  test("a breath (virgula) moves nothing", () => {
+    const gabc = "(c4) Ky(g)ri(h)e(g) (`) e(h)le(ih)i(g)son.(f.) (::)";
+    const withRamp = buildScore(makeChant(gabc), { accentus: "lyrical" }).tabula;
+    const without = buildScore(makeChant(gabc), {
+      accentus: { style: "lyrical", overrides: { ritard: 0 } },
+    }).tabula;
+    for (let i = 0; i < 3; i++) assert.equal(withRamp[i].shapedDuration, without[i].shapedDuration);
+  });
+
+  test("the piece's own last bar broadens more than an inner double bar", () => {
+    const gabc = "(c4) Ky(g)ri(h)e(g.) (::) e(h)le(ih)i(g)son.(f.) (::)";
+    const rows = buildScore(makeChant(gabc), { accentus: "lyrical" }).tabula;
+    const plain = buildScore(makeChant(gabc), {
+      accentus: { style: "lyrical", overrides: { finisBoost: 1 } },
+    }).tabula;
+    const last = rows.length - 1;
+    assert.ok(rows[last].shapedDuration > plain[last].shapedDuration);
+    const inner = rows.findLastIndex((row) => row.phraseIndex === 0);
+    assert.equal(rows[inner].shapedDuration, plain[inner].shapedDuration);
+  });
+});
+
 describe("tabula figure grouping", () => {
   test("tabula exposes neumeGroup and per-figure neumeIndex", () => {
     const rows = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).tabula;
