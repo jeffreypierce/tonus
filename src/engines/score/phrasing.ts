@@ -25,6 +25,10 @@ const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     curve: 0.1,
     accent: 0.5,
     cadence: 0.1,
+    ritard: 0.25,
+    ritardNotes: 2,
+    ritardCurve: 1.6,
+    finisBoost: 1.5,
     tenor: 2.3,
     baseVelocity: 0.65,
     contourVel: 0.08,
@@ -38,6 +42,10 @@ const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     curve: 0.35,
     accent: 0.8,
     cadence: 0.15,
+    ritard: 0.4,
+    ritardNotes: 3,
+    ritardCurve: 1.6,
+    finisBoost: 1.5,
     tenor: 1.2,
     baseVelocity: 0.68,
     contourVel: 0.18,
@@ -51,6 +59,10 @@ const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     curve: 0.25,
     accent: 0.6,
     cadence: 0.12,
+    ritard: 0.35,
+    ritardNotes: 3,
+    ritardCurve: 1.6,
+    finisBoost: 1.5,
     tenor: 0.9,
     baseVelocity: 0.69,
     contourVel: 0.14,
@@ -64,6 +76,10 @@ const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     curve: 0.5,
     accent: 1,
     cadence: 0.2,
+    ritard: 0.5,
+    ritardNotes: 4,
+    ritardCurve: 1.6,
+    finisBoost: 1.5,
     tenor: 1.7,
     baseVelocity: 0.71,
     contourVel: 0.22,
@@ -291,8 +307,8 @@ export function applyPhrasing(
   }
   if (currentPhrase.length > 0) phrases.push(currentPhrase);
 
-  for (const phrase of phrases) {
-    const noteEntries = phrase;
+  for (let p = 0; p < phrases.length; p++) {
+    const noteEntries = phrases[p];
     if (noteEntries.length === 0) continue;
 
     let minArsis = Infinity,
@@ -354,14 +370,41 @@ export function applyPhrasing(
         Math.min(VELOCITY_MAX, velocity * profile.baseVelocity),
       );
 
+      // The duration arch is one-sided: it rises with the velocity arch over
+      // the first half and then HOLDS. The grand rythme's subsiding is a
+      // lightening, not a hurrying — a symmetric window here made every phrase
+      // accelerate into its cadence.
+      const durArch = t < 0.5 ? arch : 1;
       const baseDur = note.performance.duration;
       let durFactor =
         DURATION_BASE_FACTOR +
         arsisRelative * DURATION_ARSIS_FACTOR +
-        arch * DURATION_ARCH_FACTOR;
+        durArch * DURATION_ARCH_FACTOR;
       durFactor += (contourRelative - VELOCITY_CENTER) * profile.contourDur;
       if (note.context.ictus) durFactor *= profile.ictusBoost;
       durFactor += profile.cadence * divisioStrength * CADENCE_DURATION_FACTOR;
+
+      // The rallentando into the close. The cadence term above lengthens only
+      // the one note before the bar, so without a window a full close was held
+      // no longer than a comma, and an ictus two notes earlier often outlasted
+      // the final note. The window covers the phrase's last `ritardNotes` (or
+      // all of a shorter phrase), rising 0 → 1 toward the bar along a power
+      // curve; the divisio ladder grades it, so a comma leans, a double bar
+      // broadens, a breath moves nothing. The piece's own last bar is not just
+      // another double bar. A ritard is a tempo scaling, so it multiplies.
+      const closing = noteEntries[noteEntries.length - 1].nextDivisio;
+      const span = Math.min(
+        Math.max(1, Math.round(profile.ritardNotes)),
+        noteEntries.length,
+      );
+      const tail = order - (noteEntries.length - span);
+      if (tail >= 0) {
+        const ramp = ((tail + 1) / span) ** profile.ritardCurve;
+        const finis =
+          p === phrases.length - 1 && closing === "::" ? profile.finisBoost : 1;
+        durFactor *=
+          1 + profile.ritard * getDivisioStrength(closing) * finis * ramp;
+      }
 
       const shapedDuration = Math.max(
         DURATION_MIN,

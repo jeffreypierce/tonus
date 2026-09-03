@@ -208,6 +208,8 @@ The `accentus` profile (`PhrasingProfile`):
 | `curve`                     | depth of the phrase-level velocity arch            |
 | `accent`                    | accent emphasis within the phrase                  |
 | `cadence`                   | weight given to phrase-final cadences              |
+| `ritard`, `ritardNotes`     | depth and width, in notes, of the rallentando      |
+| `ritardCurve`, `finisBoost` | how late it gathers; the piece's own last `::`     |
 | `tenor`                     | pull toward the reciting tone                      |
 | `baseVelocity`, `velSpread` | the velocity floor and the dynamic range above it  |
 | `contourVel`, `contourDur`  | melodic-contour influence on velocity and duration |
