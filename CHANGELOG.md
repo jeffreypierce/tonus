@@ -2,7 +2,9 @@
 
 All notable changes to tonus. Newest first.
 
-## Unreleased
+## 0.10.3 — 2026-09-04
+
+The close ritards.
 
 ### Changed
 

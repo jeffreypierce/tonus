@@ -1,6 +1,6 @@
 {
   "name": "tonus",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "type": "module",
   "description": "Medieval music analysis: GABC plainchant exports, liturgical calendar, tuning systems, ephemeris, and the harmony of the spheres",
   "author": "Jeffrey Pierce <jeffrey@jeffreypierce.net>",
