@@ -18,8 +18,8 @@ import type {
 } from "./engines/chant/types.js";
 import type {
   TemperamentumInput, Temperamentum, Tuning, TemperamentumOpts, Pitch,
-  PitchInput, Step, Neume, NeumeShape, Interval, ModeData, CadenceFigure,
-  Modus, TunedNote, GamutOptions, Tonus, TonusOpts
+  PitchInput, Step, Neume, NeumeShape, Interval, ModeData, ModusCadentiae,
+  ModusGenus, Modus, TunedNote, GamutOptions, Tonus, TonusOpts
 } from "./engines/temper/api.js";
 import type {
   Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
@@ -95,7 +95,7 @@ export { MODES } from "./engines/temper/data/modes.js";
 export { TONES } from "./engines/temper/data/tones.js";
 export type { PsalmTone, Differentia } from "./engines/temper/data/tones.js";
 export { CADENTIAE, CADENTIAE_POPULATION } from "./data/cadentiae.js";
-export type { CadentiaFamilia } from "./data/cadentiae.js";
+export type { CadentiaGenus, CadentiaSpecies } from "./data/cadentiae.js";
 
 // planet — the zodiac. ZODIACA is the whole table: it carries each sign's own
 // `sign` and `signum` beside its doctrine, so `ZODIACA[body.zodiac]` answers
@@ -113,7 +113,7 @@ export type {
   OrdinaryChant, PropriumQuery, OrdinariumQuery, OfficiumQuery, PsalmusQuery,
   Corpus, CorpusLedger, CorpusQuery, Temperamentum, TemperamentumInput,
   TemperamentumOpts, Tuning, Pitch, PitchInput, Step, Neume, NeumeShape,
-  Interval, ModeData, CadenceFigure, Modus, TunedNote, GamutOptions, Tonus,
+  Interval, ModeData, ModusCadentiae, ModusGenus, Modus, TunedNote, GamutOptions, Tonus,
   TonusOpts, Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput,
   AccentusOpts, Cadence, Modulation, VoicedPitch, Cosmos, CosmosQuery, Body,
   BodyName, Aspect, Imprint, Metrics, Harmony, HarmoniaOpts, VoicedBody,

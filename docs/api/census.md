@@ -81,7 +81,7 @@ what they describe:
 | `degreeHist`    |     15 | how long the melody dwells on each scale degree, final-relative                   |
 | `melodic`       |    121 | the interval bigram table — which step follows which                              |
 | `trigram`       |     16 | three-note motifs, against the corpus's commonest                                 |
-| `cadenceFinal`  |     16 | how the chant closes, keyed by cadence signature                                  |
+| `cadenceFinal`  |     16 | how the chant closes, keyed by cadence genus                                      |
 | `cadenceMedial` |     16 | how its interior phrases land                                                     |
 | `chironomy`     |      6 | the melodic arc in quarters, phrase length, melisma density                       |
 | `textual`       |      7 | vowel distribution by sung duration, accent rate, melisma mean                    |

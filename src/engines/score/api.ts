@@ -11,7 +11,7 @@ import { detectCadences, type Cadence } from "./cadence.js";
 import { detectModulations, type Modulation } from "./modulation.js";
 import { computeTabula, type ChantTabulaRow } from "./tabula.js";
 import { MODES } from "../temper/modes.js";
-import { cadentiaFamilia } from "../../data/cadentiae.js";
+import { cadentiaGenus, cadentiaSpecies } from "../../data/cadentiae.js";
 import type { Chant } from "../chant/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import type {
@@ -113,22 +113,27 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   const ir = buildIR(parsed, chant, scale);
   const meta = computeMeta(ir, { mode: modeNum });
 
-  // Cadence detection runs here, where the resolved mode (and its cadence
-  // figures) is in hand. Pure data — mirrors the arsis/thesis pass in ir.ts.
+  // Cadence detection runs here, where the resolved mode is in hand. Pure
+  // data — mirrors the arsis/thesis pass in ir.ts.
   const cadences = detectCadences(
     ir.phrases,
     meta.mode != null ? MODES.get(meta.mode) : undefined,
   );
 
   // The corpus join, on the same footing as MODES above: a resolved table
-  // meeting detected data. The detector computes the signature and stops, so
-  // this is the one place a cadence learns how often its family closes.
-  // Below the catalogue's floor there is no family, and finality stays null —
-  // an uncatalogued close, not a close that never closes.
+  // meeting detected data. The detector computes the key and stops, so this
+  // is the one place a cadence learns how often its close closes, and how
+  // much the corpus vouches for it. The species' finality where the species
+  // is tabled, the genus' where only the genus is; below both floors null —
+  // an uncatalogued close, not a close that never closes. Confidence rises
+  // with the same evidence: a tabled species is a close the corpus knows by
+  // name, a tabled genus one it knows by its landing.
   for (const cadence of cadences) {
-    cadence.finality = cadence.signature
-      ? (cadentiaFamilia(cadence.signature)?.finality ?? null)
-      : null;
+    const species = cadentiaSpecies(cadence.species);
+    const genus = cadentiaGenus(cadence.genus);
+    cadence.finality = species?.finality ?? genus?.finality ?? null;
+    const evidence = species ? 0.4 : genus ? 0.2 : 0;
+    cadence.confidence = Math.round(Math.min(1, cadence.confidence + evidence) * 100) / 100;
   }
 
   // Modulation: where the tonal centre leans away from the home mode.
@@ -174,7 +179,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
 }
 
 export type { ParseError };
-export type { Cadence, CadenceTarget, CadenceApproach, CadenceKeyEvent } from "./cadence.js";
+export type { Cadence, CadenceTarget, CadenceApproach, CadenceMotion, CadenceKeyEvent } from "./cadence.js";
 // THE cadence family key, exported as a FUNCTION and not only a type: the
 // census and the CADENTIAE miner need to key a flat tabula, and re-deriving
 // the algorithm is exactly the fork this shared export forbids.

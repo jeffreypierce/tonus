@@ -17,8 +17,8 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
   - [The imprint](#the-imprint)
   - [Metrics](#metrics)
   - [Cadences](#cadences)
-    - [One spine, two annotations](#one-spine-two-annotations)
-    - [`finality` — how often this family closes](#finality--how-often-this-family-closes)
+    - [One key, two levels](#one-key-two-levels)
+    - [`finality` — how often this close closes](#finality--how-often-this-close-closes)
   - [Modulations](#modulations)
   - [Theory \& Context](#theory--context)
     - [The model](#the-model)
@@ -787,46 +787,50 @@ weights.
 ## Cadences
 
 `score.cadences` names the melodic close of each phrase. Where metrics
-only counts the divisio bars, this identifies the figure. One `Cadence` per
+only counts the divisio bars, this identifies the close. One `Cadence` per
 phrase-ending divisio: its resolution `target`, the melodic `approach`, and the
 `divisio` that tells medial from final (the double bar `::` is the final
 cadence). Each note that forms a cadence carries a `cadenceRef` back-index on
 the tabula.
 
-### One spine, two annotations
+### One key, two levels
 
-Two catalogues describe a cadence, and they answer different questions. Read
-this before deciding which field to use:
+A cadence is keyed by its closing tail in **letter steps** from the chant's
+own closing note (its sounded final), resolution last, signed, not
+octave-reduced. Letter steps, not semitones, because the same gesture on a
+different final is the same gesture: F E onto E and E D onto D are both a
+step down onto the final. Letter steps, not the mode's scale, so B-flat and
+B-natural are one degree and a mode-less chant keys like any other. The one
+tail is read at two levels:
 
-> Every cadence carries a **`signature`**, always. Some are **catalogued** by
-> the corpus (`finality`, and everything in
-> [`CADENTIAE`](index.md#the-appendix)). Some, on the final, are **named** by
-> received theory (`formula`).
+- **`species`** is the whole collapsed tail, at most three notes: `"2,1,0"`.
+  The cadence, what the melody did. Interior repeats collapse (G G A G is
+  G A G); the landing's own repeat is kept once, so A G G is `"1,0,0"`.
+- **`genus`** is the last motion and the landing: `"step down @0"`. The
+  landing, and the level at which corpus counts hold per mode. `motion` and
+  `degree` are its two halves, with `degree` in signed letter steps from the
+  final: 0 the final, -1 the note below, +2 the third, +4 the fifth.
 
-- **`formula`** is _tradita_: the mode's cadence figures as the treatises give
-  them ([tuning.md](tuning.md#cadence-figures)), matched in solmization
-  relative to the final (`"la-sol"`, `"mi-re"`). It fires **only on the
-  finalis**, because the received catalogue holds only final figures.
-- **`signature`** is _inventa_: the tail's interval shape and where it lands,
-  keyed as `"2,0,-2 @0"` and mined from the corpus. It fires on **any** target,
-  so it is the one of the two that speaks about **medial** cadences.
+Both join [`CADENTIAE`](index.md#the-appendix), the mined catalogue, which
+tables the 48 genera above a floor of fifty corpus occurrences and, under
+each, the species above the same floor. A close whose genus fails to join is
+not unknown, it is **rarer** than anything tabled: about one live close in a
+hundred. The received figures of the treatises are no longer a second
+annotation; each is a species of this key, and they stand as a reference
+note beside the table.
 
-Measured over the cadences `notatio` reports across the shipped corpus (about
-26,800 of them), roughly 43% carry a formula, 57% join the catalogue, and 31%
-carry both, so about a third carry neither. Neither is derivable from the
-other, because the signature is mode-blind and the formula is mode-relative.
+### `finality` — how often this close closes
 
-### `finality` — how often this family closes
+`finality` is the share of the **species'** corpus occurrences that fall at a
+final close, or the **genus'** where only the genus is tabled. It is a
+measurement, not a property of this particular cadence, and it cannot be read
+off the landing: genera landing on the final close between 7% and 100% of the
+time, so `degree === 0` implies nothing about whether a close is final.
 
-`finality` is the share of **this family's** corpus occurrences that fall at a
-final close. It is a measurement, not a property of this particular cadence,
-and it cannot be read off the signature: of the 50 families that land **on**
-the final, 31 do not close, and finality across the catalogue runs the whole
-range from 0 to 1. So
-`arrival === 0` implies nothing about whether a close is final.
-
-It is `null` when the signature falls below the catalogue's floor: an
-uncatalogued close, not a close that never closes.
+It is `null` when both levels fall below the catalogue's floor: an
+uncatalogued close, not a close that never closes. `confidence` rises with
+the same evidence: a landing on the finalis or tenor starts at 0.6, a tabled
+species adds 0.4, a tabled genus alone 0.2.
 
 ```ts
 interface Cadence {
@@ -834,23 +838,24 @@ interface Cadence {
   divisio: string; // the bar that ends the phrase ("::" = final cadence)
   target: "finalis" | "tenor" | "other";
   approach: "descending" | "ascending" | "unison";
-  formula: string | null; // tradita: matched figure id, e.g. "la-sol"; finalis only
   pcs: number[]; // observed pitch classes, resolution last
   steps: (number | null)[]; // diatonic steps from the target; [] with no mode
   confidence: number; // 0–1
   notes: [number, number, number][]; // [phrase, syllable, note] positions
-  signature: string | null; // inventa: the family key, "shape @arrival"
-  shape: number[]; // the tail's successive semitone intervals
-  arrival: number; // SIGNED semitones from the chant's own closing note
-  finality: number | null; // the family's measured finality; null below the floor
+  species: string; // the collapsed tail from the sounded final, "2,1,0"
+  tail: number[]; // the species as numbers
+  genus: string; // "<motion> @<degree>", e.g. "step down @0"
+  motion: "none" | "repeat" | "step up" | "step down" | "third up" | "third down" | "leap up" | "leap down";
+  degree: number; // SIGNED letter steps from the chant's own closing note
+  finality: number | null; // the catalogued finality; null below both floors
 }
 ```
 
-A one-note phrase is a cadence (a landing with no gesture) and keys with an
-empty shape (`" @0"`), which is why `signature` is that key rather than null.
+A one-note phrase is a cadence (a landing with no gesture) and keys as its
+landing alone (`"0"`, genus `"none @0"`).
 
-`arrival` is signed and not octave-reduced: `@-5`, a fourth below the final,
-and `@+7`, a fifth above, are distinct families.
+`degree` is signed and not octave-reduced: `@-3`, a fourth below the final,
+and `@4`, a fifth above, are distinct genera.
 
 ## Modulations
 

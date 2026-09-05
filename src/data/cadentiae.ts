@@ -2,198 +2,326 @@
 // (No timestamp by design: identical input must bake to an identical file,
 // or every regeneration churns the diff. Git carries the dates.)
 // ---------------------------------------------------------------------------
-// data/cadentiae — the corpus-grounded cadence catalogue (CADENTIAE)
+// data/cadentiae — the corpus cadence catalogue (CADENTIAE)
 // ---------------------------------------------------------------------------
-// Every phrase-end in the corpus tonus SHIPS (am, ams, cot, cse, gr, la, lh, lu, nr, psm — 26787
-// ends), keyed by the last <=4 notes' interval signature in semitones (the
-// shape — the gesture) and the closing note's offset from the CHANT'S OWN
-// closing note (its sounded final — not the labeled mode's final), as a SIGNED
-// semitone count (the arrival — the function).
+// Every phrase-end in the SUNG corpus (7718 chants, 66565 ends —
+// the same chants the census counts), keyed on the one cadence key
+// (engines/score/cadence.ts): the closing tail in LETTER STEPS from the chant's
+// own closing note, resolution last, signed, not octave-reduced. Two levels of
+// one key:
 //
-// The arrival is deliberately not octave-reduced: the mod-12 fold pooled a
-// fifth ABOVE the final with a fourth BELOW — measured, 3,499 of
-// 27,985 phrase ends landed on @-5, of which 2,427 were really +7. Two
-// opposite gestures under one key. Folding survives as a degree field on a live
-// cadence event, where it is the scale degree and mode-theoretically real.
+//   genus    the last motion and the landing — "step down @0". The level at
+//            which counts hold per mode, and the one a share is read from.
+//   species  the collapsed tail, at most three notes — "2,1,0". The cadence.
 //
-// The population is the SUNG corpus, not the printed books: this table and the
-// census now count the same chants, which they never did before. No Latin
-// arrival names ride the table, for the same reason no family names do:
-// the key carries the arrival; the reader can count. Families with n >= 50 are tabled here (110 families,
-// 56.8% of all phrase-ends); the full tally lives in the mining
-// artifact. finality = share of a family's occurrences at a final close
-// ("::" or chant end) — measured function, continuous, corpus-derived.
+// Classes with n >= 50 are tabled: 48 genera holding 99.0% of all
+// phrase-ends, and under them 119 species holding 96.1%. A close
+// that fails to join is not unknown, it is RARER than anything tabled. The
+// full tally, no floor, lives in the mining artifact.
+//
+// share = n over ALL phrase-ends (CADENTIAE_POPULATION.ends), never over the
+// tabled subset. finality = share of occurrences at a final close ("::" or
+// chant end) — measured function, continuous. modes/closes = the same two
+// counts per mode digit, so an in-mode share or finality is one division; the
+// mode's own reading is derived at call (engines/temper/cadentiae.ts), never
+// stored twice.
 //
 // This is inventa, not tradita: a computed catalogue with stated method and
-// open code ("tonus catalogue, method §cadentiae"). Families are identified by
-// their key alone — the shape and its arrival; no editorial names ride the
-// table. Method + display doctrine: working/design-analysis-track.md §CADENTIAE.
+// open code. No editorial names ride the table; the key is the name. The
+// received figures of the treatises are a reference note beside it
+// (working/notes/cadentiae-tradita.md), and each is a species of this key.
 
-/** One corpus cadence family: a (shape, arrival) pair with its statistics. */
-export interface CadentiaFamilia {
-  /** "shape @arrival", e.g. "2,0,-2 @0" — joins mining/census artifacts. */
+/** One species: a collapsed closing tail with its corpus statistics. */
+export interface CadentiaSpecies {
+  /** Letter steps from the chant's closing note, resolution last — "2,1,0". */
   key: string;
-  /** Interval signature in semitones between the tail's consecutive notes. */
-  shape: number[];
-  /** Closing note minus the chant's own closing note (sounded final),
-   *  in SIGNED semitones — not octave-reduced; see the arrival note above. */
-  arrival: number;
+  /** The key as numbers. */
+  tail: number[];
   /** Corpus occurrences. */
   n: number;
-  /** `n` over ALL phrase-ends (CADENTIAE_POPULATION.ends) — not over the
-   *  tabled subset, which would flatter every family that cleared the floor. */
+  /** `n` over ALL phrase-ends (CADENTIAE_POPULATION.ends). */
   share: number;
   /** Share of occurrences at a final close — the measured finality index. */
   finality: number;
   /** Occurrences by mode digit ("1".."8"; "?" = mode-less chants). */
   modes: Record<string, number>;
+  /** Occurrences at a final close, by mode digit. */
+  closes: Record<string, number>;
 }
+
+/** One genus: a landing — the last motion and the degree it lands on — with
+ *  its statistics and the species tabled under it. */
+export interface CadentiaGenus {
+  /** "<motion> @<degree>" — "step down @0", "repeat @4". */
+  key: string;
+  motion: "none" | "repeat" | "step up" | "step down" | "third up" | "third down" | "leap up" | "leap down";
+  /** The landing in signed letter steps from the final: 0 the final, -1 below, +4 the fifth. */
+  degree: number;
+  n: number;
+  share: number;
+  finality: number;
+  modes: Record<string, number>;
+  closes: Record<string, number>;
+  /** The species under this genus that clear the floor, commonest first. */
+  species: CadentiaSpecies[];
+}
+
+/** The floor a class must clear, corpus-wide, to be tabled — and the floor a
+ *  species must clear IN a mode for the page to print it there. */
+export const CADENTIAE_FLOOR = 50;
 
 /**
  * The denominator behind every `share`: all phrase-ends in the sung corpus,
  * and the same total per mode digit. Both are the FULL tally, never summed
- * from the tabled families — a family's mode counts divided by the tabled
- * subset would overstate every one of them.
- *
- * With `byMode`, a family's lift in a given mode is one division:
- * `(modes[m] / byMode[m]) / share` — how much more (or less) that mode
- * reaches for this close than the corpus at large. Baked as vocabulary, not
- * as arithmetic: the ratio is the caller's to take.
+ * from the tabled classes — a genus' mode counts divided by the tabled subset
+ * would overstate every one of them.
  */
 export const CADENTIAE_POPULATION: {
   readonly ends: number;
   readonly byMode: Readonly<Record<string, number>>;
 } = Object.freeze({
-  ends: 26787,
-  byMode: Object.freeze({"1":5180,"2":3704,"3":2640,"4":2700,"5":2770,"6":1597,"7":3335,"8":4610,"?":251}),
+  ends: 66565,
+  byMode: Object.freeze({"1":13353,"2":8610,"3":5893,"4":8546,"5":3614,"6":3973,"7":6507,"8":14004,"?":2065}),
 });
 
-/** The cadence catalogue, most frequent family first. */
-export const CADENTIAE: CadentiaFamilia[] = [
-  {"key":"2,0,-2 @0","shape":[2,0,-2],"arrival":0,"n":1116,"share":0.0417,"finality":0.43,"modes":{"1":153,"2":204,"3":34,"4":8,"5":142,"6":143,"7":109,"8":321,"?":2}},
-  {"key":"2,-2,0 @0","shape":[2,-2,0],"arrival":0,"n":785,"share":0.0293,"finality":0.397,"modes":{"1":82,"2":131,"3":7,"4":4,"5":91,"6":148,"7":106,"8":200,"?":16}},
-  {"key":"-2,0,-2 @0","shape":[-2,0,-2],"arrival":0,"n":581,"share":0.0217,"finality":0.685,"modes":{"1":6,"2":24,"3":2,"4":2,"5":174,"6":27,"7":118,"8":227,"?":1}},
-  {"key":"-2,2,0 @0","shape":[-2,2,0],"arrival":0,"n":537,"share":0.02,"finality":0.436,"modes":{"1":115,"2":124,"3":7,"4":50,"7":60,"8":169,"?":12}},
-  {"key":"1,-1,-2 @0","shape":[1,-1,-2],"arrival":0,"n":349,"share":0.013,"finality":0.484,"modes":{"1":238,"2":80,"3":1,"4":8,"5":5,"7":8,"8":9}},
-  {"key":"-2,2,-2 @0","shape":[-2,2,-2],"arrival":0,"n":341,"share":0.0127,"finality":0.302,"modes":{"1":33,"2":38,"3":11,"4":3,"5":22,"6":14,"7":48,"8":171,"?":1}},
-  {"key":"2,0,-2 @-2","shape":[2,0,-2],"arrival":-2,"n":333,"share":0.0124,"finality":0.228,"modes":{"1":63,"2":51,"3":50,"4":13,"5":36,"6":6,"7":22,"8":74,"?":18}},
-  {"key":"2,-2,-2 @0","shape":[2,-2,-2],"arrival":0,"n":277,"share":0.0103,"finality":0.498,"modes":{"1":27,"2":3,"3":7,"5":22,"6":44,"7":52,"8":121,"?":1}},
-  {"key":"-2,0,-2 @-2","shape":[-2,0,-2],"arrival":-2,"n":264,"share":0.0099,"finality":0.068,"modes":{"1":78,"2":68,"3":1,"4":2,"5":2,"7":13,"8":100}},
-  {"key":"2,2,-2 @0","shape":[2,2,-2],"arrival":0,"n":258,"share":0.0096,"finality":0.438,"modes":{"1":48,"2":121,"3":8,"4":2,"5":1,"6":6,"7":18,"8":54}},
-  {"key":"2,0,-2 @3","shape":[2,0,-2],"arrival":3,"n":254,"share":0.0095,"finality":0.035,"modes":{"1":48,"2":53,"3":32,"4":53,"5":39,"6":3,"7":8,"8":12,"?":6}},
-  {"key":"-3,2,-2 @0","shape":[-3,2,-2],"arrival":0,"n":240,"share":0.009,"finality":0.292,"modes":{"1":89,"2":113,"3":17,"4":14,"5":6,"7":1}},
-  {"key":"-2,-1,0 @0","shape":[-2,-1,0],"arrival":0,"n":229,"share":0.0085,"finality":0.69,"modes":{"3":95,"4":130,"6":1,"?":3}},
-  {"key":"-1,-2,0 @0","shape":[-1,-2,0],"arrival":0,"n":227,"share":0.0085,"finality":0.59,"modes":{"1":139,"2":66,"3":15,"7":1,"8":3,"?":3}},
-  {"key":"-2,-2,2 @0","shape":[-2,-2,2],"arrival":0,"n":220,"share":0.0082,"finality":0.441,"modes":{"1":73,"2":73,"3":7,"4":4,"5":13,"7":12,"8":37,"?":1}},
-  {"key":"-2,-2,0 @0","shape":[-2,-2,0],"arrival":0,"n":220,"share":0.0082,"finality":0.536,"modes":{"1":4,"4":2,"5":22,"6":80,"7":30,"8":81,"?":1}},
-  {"key":"2,-4,2 @0","shape":[2,-4,2],"arrival":0,"n":212,"share":0.0079,"finality":0.689,"modes":{"1":18,"2":13,"3":127,"4":3,"7":16,"8":34,"?":1}},
-  {"key":"-2,2,-2 @-2","shape":[-2,2,-2],"arrival":-2,"n":210,"share":0.0078,"finality":0.119,"modes":{"1":22,"2":48,"3":11,"4":53,"5":1,"7":24,"8":45,"?":6}},
-  {"key":"2,-2,-2 @-2","shape":[2,-2,-2],"arrival":-2,"n":206,"share":0.0077,"finality":0.126,"modes":{"1":57,"2":74,"3":7,"7":11,"8":56,"?":1}},
-  {"key":"0,-2,0 @0","shape":[0,-2,0],"arrival":0,"n":204,"share":0.0076,"finality":0.544,"modes":{"1":33,"2":11,"4":1,"6":49,"7":14,"8":93,"?":3}},
-  {"key":"2,1,-3 @0","shape":[2,1,-3],"arrival":0,"n":195,"share":0.0073,"finality":0.938,"modes":{"1":67,"2":125,"3":2,"5":1}},
-  {"key":"1,-3,0 @0","shape":[1,-3,0],"arrival":0,"n":185,"share":0.0069,"finality":0.27,"modes":{"1":99,"2":62,"3":1,"4":14,"5":8,"7":1}},
-  {"key":"0,0,-1 @0","shape":[0,0,-1],"arrival":0,"n":166,"share":0.0062,"finality":0.627,"modes":{"2":2,"3":53,"4":103,"5":3,"6":1,"7":1,"8":3}},
-  {"key":"-2,-1,-2 @0","shape":[-2,-1,-2],"arrival":0,"n":163,"share":0.0061,"finality":0.325,"modes":{"1":118,"2":25,"5":1,"7":19}},
-  {"key":"2,0,-2 @-4","shape":[2,0,-2],"arrival":-4,"n":159,"share":0.0059,"finality":0.472,"modes":{"1":21,"2":5,"3":17,"4":6,"5":35,"6":14,"7":33,"8":21,"?":7}},
-  {"key":"0,0,0 @3","shape":[0,0,0],"arrival":3,"n":153,"share":0.0057,"finality":0.392,"modes":{"1":16,"2":33,"3":101,"5":2,"6":1}},
-  {"key":"-1,-2,-2 @0","shape":[-1,-2,-2],"arrival":0,"n":152,"share":0.0057,"finality":0.368,"modes":{"2":2,"3":1,"4":1,"5":19,"6":24,"7":14,"8":90,"?":1}},
-  {"key":"2,0,-2 @5","shape":[2,0,-2],"arrival":5,"n":151,"share":0.0056,"finality":0.073,"modes":{"1":39,"2":41,"3":7,"4":12,"5":21,"6":2,"7":5,"8":23,"?":1}},
-  {"key":"0,2,-2 @0","shape":[0,2,-2],"arrival":0,"n":147,"share":0.0055,"finality":0.177,"modes":{"1":14,"2":22,"3":3,"4":2,"5":14,"6":32,"7":9,"8":51}},
-  {"key":"2,-4,0 @0","shape":[2,-4,0],"arrival":0,"n":146,"share":0.0055,"finality":0.466,"modes":{"5":33,"6":58,"7":15,"8":40}},
-  {"key":"-3,0,-2 @0","shape":[-3,0,-2],"arrival":0,"n":139,"share":0.0052,"finality":0.065,"modes":{"1":3,"2":28,"4":2,"5":9,"7":8,"8":89}},
-  {"key":"2,0,-2 @2","shape":[2,0,-2],"arrival":2,"n":138,"share":0.0052,"finality":0.297,"modes":{"1":9,"2":16,"3":14,"4":2,"5":14,"6":45,"7":13,"8":21,"?":4}},
-  {"key":"-4,2,0 @0","shape":[-4,2,0],"arrival":0,"n":134,"share":0.005,"finality":0.261,"modes":{"1":66,"2":32,"4":1,"7":10,"8":25}},
-  {"key":"-1,0,-2 @0","shape":[-1,0,-2],"arrival":0,"n":130,"share":0.0049,"finality":0.346,"modes":{"1":54,"2":40,"3":1,"4":1,"7":27,"8":7}},
-  {"key":"2,1,-1 @4","shape":[2,1,-1],"arrival":4,"n":128,"share":0.0048,"finality":0.141,"modes":{"1":14,"2":1,"3":3,"4":4,"5":12,"6":54,"7":15,"8":25}},
-  {"key":"-2,0,-1 @0","shape":[-2,0,-1],"arrival":0,"n":127,"share":0.0047,"finality":0.669,"modes":{"2":1,"3":41,"4":73,"6":6,"7":4,"8":2}},
-  {"key":"2,0,-2 @7","shape":[2,0,-2],"arrival":7,"n":124,"share":0.0046,"finality":0.008,"modes":{"1":10,"3":1,"5":72,"7":38,"8":3}},
-  {"key":"2,0,-2 @-7","shape":[2,0,-2],"arrival":-7,"n":124,"share":0.0046,"finality":0.306,"modes":{"1":21,"2":14,"3":9,"4":4,"5":12,"6":3,"7":35,"8":26}},
-  {"key":"2,1,-1 @0","shape":[2,1,-1],"arrival":0,"n":123,"share":0.0046,"finality":0.293,"modes":{"1":11,"2":7,"3":27,"4":60,"5":6,"6":2,"7":7,"8":3}},
-  {"key":"0,0,0 @7","shape":[0,0,0],"arrival":7,"n":115,"share":0.0043,"finality":0.539,"modes":{"1":29,"3":2,"5":18,"7":66}},
-  {"key":"-5,0,-2 @-2","shape":[-5,0,-2],"arrival":-2,"n":114,"share":0.0043,"finality":0.035,"modes":{"1":28,"2":31,"3":7,"7":6,"8":42}},
-  {"key":"2,-2,0 @7","shape":[2,-2,0],"arrival":7,"n":113,"share":0.0042,"finality":0,"modes":{"1":29,"5":42,"6":5,"7":35,"8":2}},
-  {"key":"1,-3,-2 @0","shape":[1,-3,-2],"arrival":0,"n":113,"share":0.0042,"finality":0.558,"modes":{"5":11,"7":21,"8":80,"?":1}},
-  {"key":"2,-2,0 @3","shape":[2,-2,0],"arrival":3,"n":112,"share":0.0042,"finality":0,"modes":{"1":37,"2":46,"3":6,"4":15,"5":3,"6":2,"7":1,"8":1,"?":1}},
-  {"key":"-2,2,-2 @5","shape":[-2,2,-2],"arrival":5,"n":111,"share":0.0041,"finality":0.081,"modes":{"1":35,"2":2,"3":3,"4":17,"7":7,"8":47}},
-  {"key":"-2,0,-3 @0","shape":[-2,0,-3],"arrival":0,"n":109,"share":0.0041,"finality":0.743,"modes":{"1":21,"2":10,"3":50,"4":18,"5":3,"8":7}},
-  {"key":"-3,0,-2 @-2","shape":[-3,0,-2],"arrival":-2,"n":106,"share":0.004,"finality":0,"modes":{"1":40,"2":35,"3":8,"4":2,"5":3,"7":3,"8":15}},
-  {"key":"2,0,0 @0","shape":[2,0,0],"arrival":0,"n":102,"share":0.0038,"finality":0.451,"modes":{"1":18,"2":13,"3":2,"4":37,"8":32}},
-  {"key":"2,-2,-3 @0","shape":[2,-2,-3],"arrival":0,"n":99,"share":0.0037,"finality":0.626,"modes":{"1":25,"2":8,"3":15,"4":44,"5":3,"8":4}},
-  {"key":"2,-2,0 @5","shape":[2,-2,0],"arrival":5,"n":99,"share":0.0037,"finality":0.03,"modes":{"1":13,"2":20,"3":2,"4":9,"5":2,"6":3,"7":20,"8":27,"?":3}},
-  {"key":"-2,0,-2 @3","shape":[-2,0,-2],"arrival":3,"n":99,"share":0.0037,"finality":0.02,"modes":{"1":32,"2":7,"3":48,"5":2,"6":1,"7":2,"8":7}},
-  {"key":"2,0,-2 @-5","shape":[2,0,-2],"arrival":-5,"n":97,"share":0.0036,"finality":0.258,"modes":{"1":11,"2":8,"3":3,"4":4,"5":6,"6":14,"7":20,"8":31}},
-  {"key":"2,-2,-2 @3","shape":[2,-2,-2],"arrival":3,"n":96,"share":0.0036,"finality":0.146,"modes":{"1":39,"2":36,"3":17,"4":2,"5":1,"8":1}},
-  {"key":"0,-3,-2 @0","shape":[0,-3,-2],"arrival":0,"n":96,"share":0.0036,"finality":0.854,"modes":{"6":2,"7":92,"8":2}},
-  {"key":"2,1,-1 @7","shape":[2,1,-1],"arrival":7,"n":96,"share":0.0036,"finality":0,"modes":{"1":64,"2":7,"3":21,"4":3,"8":1}},
-  {"key":"-2,2,-2 @3","shape":[-2,2,-2],"arrival":3,"n":93,"share":0.0035,"finality":0.065,"modes":{"1":21,"2":30,"3":15,"4":10,"5":2,"7":8,"8":7}},
-  {"key":"-2,-2,0 @-2","shape":[-2,-2,0],"arrival":-2,"n":90,"share":0.0034,"finality":0.089,"modes":{"1":16,"2":24,"3":4,"4":1,"5":1,"6":8,"7":4,"8":31,"?":1}},
-  {"key":"-2,2,0 @7","shape":[-2,2,0],"arrival":7,"n":89,"share":0.0033,"finality":0,"modes":{"1":22,"2":3,"3":2,"7":58,"8":3,"?":1}},
-  {"key":"0,0,-3 @0","shape":[0,0,-3],"arrival":0,"n":88,"share":0.0033,"finality":0.568,"modes":{"1":50,"2":34,"3":2,"4":1,"5":1}},
-  {"key":"-2,0,-2 @-5","shape":[-2,0,-2],"arrival":-5,"n":86,"share":0.0032,"finality":0.198,"modes":{"1":6,"2":23,"3":1,"5":25,"6":4,"8":27}},
-  {"key":"2,-2,-2 @-4","shape":[2,-2,-2],"arrival":-4,"n":85,"share":0.0032,"finality":0.412,"modes":{"1":21,"2":2,"3":1,"4":26,"5":3,"6":14,"7":2,"8":2,"?":14}},
-  {"key":"1,0,-1 @0","shape":[1,0,-1],"arrival":0,"n":84,"share":0.0031,"finality":0.274,"modes":{"1":6,"3":5,"4":42,"5":21,"6":1,"7":9}},
-  {"key":"2,2,-2 @2","shape":[2,2,-2],"arrival":2,"n":83,"share":0.0031,"finality":0,"modes":{"1":10,"4":2,"5":14,"6":8,"7":12,"8":37}},
-  {"key":"0,0,0 @5","shape":[0,0,0],"arrival":5,"n":82,"share":0.0031,"finality":0.22,"modes":{"2":8,"4":34,"5":5,"7":2,"8":33}},
-  {"key":"3,0,0 @3","shape":[3,0,0],"arrival":3,"n":79,"share":0.0029,"finality":0.165,"modes":{"1":2,"3":63,"5":13,"7":1}},
-  {"key":"3,2,-2 @0","shape":[3,2,-2],"arrival":0,"n":79,"share":0.0029,"finality":0.646,"modes":{"1":3,"4":6,"5":10,"6":48,"7":2,"8":10}},
-  {"key":"2,2,0 @7","shape":[2,2,0],"arrival":7,"n":76,"share":0.0028,"finality":0,"modes":{"1":44,"2":17,"3":7,"8":1,"?":7}},
-  {"key":"-2,2,-2 @2","shape":[-2,2,-2],"arrival":2,"n":75,"share":0.0028,"finality":0.16,"modes":{"1":8,"2":3,"3":4,"4":2,"5":10,"6":21,"7":13,"8":14}},
-  {"key":"2,-4,0 @-2","shape":[2,-4,0],"arrival":-2,"n":73,"share":0.0027,"finality":0.082,"modes":{"1":2,"2":29,"3":1,"4":2,"5":2,"7":15,"8":22}},
-  {"key":"-2,0,-2 @-4","shape":[-2,0,-2],"arrival":-4,"n":73,"share":0.0027,"finality":0.151,"modes":{"2":23,"3":7,"4":10,"5":7,"6":9,"7":3,"8":14}},
-  {"key":"-2,2,-2 @-5","shape":[-2,2,-2],"arrival":-5,"n":73,"share":0.0027,"finality":0.329,"modes":{"1":1,"2":5,"3":2,"4":10,"5":2,"6":7,"7":11,"8":35}},
-  {"key":"4,-2,0 @0","shape":[4,-2,0],"arrival":0,"n":72,"share":0.0027,"finality":0.208,"modes":{"1":12,"2":30,"6":2,"7":9,"8":19}},
-  {"key":"3,-1,-2 @0","shape":[3,-1,-2],"arrival":0,"n":71,"share":0.0027,"finality":0.296,"modes":{"1":32,"2":25,"3":8,"7":1,"8":2,"?":3}},
-  {"key":"3,-1,-4 @0","shape":[3,-1,-4],"arrival":0,"n":70,"share":0.0026,"finality":0.786,"modes":{"5":59,"8":11}},
-  {"key":"0,2,-2 @7","shape":[0,2,-2],"arrival":7,"n":70,"share":0.0026,"finality":0,"modes":{"1":11,"3":1,"5":46,"7":10,"8":2}},
-  {"key":"-2,2,0 @2","shape":[-2,2,0],"arrival":2,"n":70,"share":0.0026,"finality":0,"modes":{"1":5,"2":34,"5":4,"6":4,"7":19,"8":4}},
-  {"key":"2,2,-2 @7","shape":[2,2,-2],"arrival":7,"n":70,"share":0.0026,"finality":0,"modes":{"1":1,"2":2,"6":1,"7":60,"8":5,"?":1}},
-  {"key":"-4,2,-2 @0","shape":[-4,2,-2],"arrival":0,"n":69,"share":0.0026,"finality":0.551,"modes":{"3":1,"5":49,"6":6,"7":9,"8":4}},
-  {"key":"-1,-4,2 @0","shape":[-1,-4,2],"arrival":0,"n":69,"share":0.0026,"finality":0.362,"modes":{"1":52,"2":15,"4":1,"7":1}},
-  {"key":"1,-3,-2 @-2","shape":[1,-3,-2],"arrival":-2,"n":68,"share":0.0025,"finality":0,"modes":{"1":9,"2":29,"8":30}},
-  {"key":"-3,1,-3 @0","shape":[-3,1,-3],"arrival":0,"n":68,"share":0.0025,"finality":0.456,"modes":{"1":32,"2":7,"5":29}},
-  {"key":"2,2,0 @2","shape":[2,2,0],"arrival":2,"n":67,"share":0.0025,"finality":0.015,"modes":{"1":22,"2":12,"3":7,"7":5,"8":21}},
-  {"key":"1,0,-1 @2","shape":[1,0,-1],"arrival":2,"n":66,"share":0.0025,"finality":0.045,"modes":{"1":7,"2":37,"3":8,"4":3,"5":7,"7":3,"8":1}},
-  {"key":"4,0,-2 @0","shape":[4,0,-2],"arrival":0,"n":66,"share":0.0025,"finality":0.561,"modes":{"1":29,"2":20,"7":16,"8":1}},
-  {"key":"-3,0,-2 @3","shape":[-3,0,-2],"arrival":3,"n":65,"share":0.0024,"finality":0,"modes":{"1":14,"2":17,"3":26,"4":5,"7":1,"8":2}},
-  {"key":"-3,2,-2 @-2","shape":[-3,2,-2],"arrival":-2,"n":64,"share":0.0024,"finality":0,"modes":{"3":40,"4":24}},
-  {"key":"-1,-2,-2 @-2","shape":[-1,-2,-2],"arrival":-2,"n":64,"share":0.0024,"finality":0,"modes":{"1":26,"2":33,"3":2,"6":2,"7":1}},
-  {"key":"2,-2,0 @2","shape":[2,-2,0],"arrival":2,"n":64,"share":0.0024,"finality":0.062,"modes":{"1":4,"2":3,"5":10,"6":21,"7":11,"8":14,"?":1}},
-  {"key":"-2,-3,0 @0","shape":[-2,-3,0],"arrival":0,"n":63,"share":0.0024,"finality":0.175,"modes":{"1":12,"2":35,"3":3,"4":7,"5":6}},
-  {"key":"-1,1,-3 @0","shape":[-1,1,-3],"arrival":0,"n":61,"share":0.0023,"finality":0.279,"modes":{"1":33,"2":21,"3":6,"5":1}},
-  {"key":"-2,-2,0 @3","shape":[-2,-2,0],"arrival":3,"n":60,"share":0.0022,"finality":0,"modes":{"1":18,"2":15,"3":15,"4":9,"5":1,"7":1,"8":1}},
-  {"key":" @0","shape":[],"arrival":0,"n":60,"share":0.0022,"finality":1,"modes":{"1":12,"2":4,"3":6,"4":4,"5":5,"6":4,"7":15,"8":10}},
-  {"key":"2,2,-2 @5","shape":[2,2,-2],"arrival":5,"n":59,"share":0.0022,"finality":0.017,"modes":{"1":29,"2":4,"3":4,"4":16,"5":1,"7":5}},
-  {"key":"0,0,-1 @-5","shape":[0,0,-1],"arrival":-5,"n":59,"share":0.0022,"finality":0.712,"modes":{"3":45,"4":14}},
-  {"key":"1,-1,-2 @-5","shape":[1,-1,-2],"arrival":-5,"n":59,"share":0.0022,"finality":0.22,"modes":{"1":15,"2":2,"3":1,"4":6,"7":5,"8":30}},
-  {"key":"-1,1,-1 @4","shape":[-1,1,-1],"arrival":4,"n":58,"share":0.0022,"finality":0.224,"modes":{"1":2,"5":2,"7":52,"8":2}},
-  {"key":"-2,-1,0 @-5","shape":[-2,-1,0],"arrival":-5,"n":58,"share":0.0022,"finality":1,"modes":{"3":57,"4":1}},
-  {"key":"-2,2,-5 @-5","shape":[-2,2,-5],"arrival":-5,"n":57,"share":0.0021,"finality":0,"modes":{"1":11,"2":22,"3":6,"4":9,"8":9}},
-  {"key":"2,-2,0 @-2","shape":[2,-2,0],"arrival":-2,"n":57,"share":0.0021,"finality":0.105,"modes":{"1":5,"2":7,"3":3,"4":3,"5":7,"6":2,"7":5,"8":21,"?":4}},
-  {"key":"-1,1,2 @5","shape":[-1,1,2],"arrival":5,"n":56,"share":0.0021,"finality":0.018,"modes":{"1":25,"2":30,"5":1}},
-  {"key":"2,-2,-1 @0","shape":[2,-2,-1],"arrival":0,"n":56,"share":0.0021,"finality":0.411,"modes":{"1":1,"3":7,"4":42,"5":3,"7":3}},
-  {"key":"-5,0,-2 @0","shape":[-5,0,-2],"arrival":0,"n":56,"share":0.0021,"finality":0.054,"modes":{"4":1,"5":15,"6":2,"7":32,"8":6}},
-  {"key":"0,-1,-2 @0","shape":[0,-1,-2],"arrival":0,"n":55,"share":0.0021,"finality":0.382,"modes":{"1":12,"2":21,"3":4,"4":13,"5":4,"8":1}},
-  {"key":"0,0,-3 @4","shape":[0,0,-3],"arrival":4,"n":55,"share":0.0021,"finality":0,"modes":{"5":55}},
-  {"key":"-3,2,-2 @4","shape":[-3,2,-2],"arrival":4,"n":54,"share":0.002,"finality":0,"modes":{"1":1,"5":53}},
-  {"key":"-3,-2,2 @0","shape":[-3,-2,2],"arrival":0,"n":53,"share":0.002,"finality":0.245,"modes":{"1":2,"2":32,"3":2,"4":2,"5":1,"7":1,"8":12,"?":1}},
-  {"key":"0,2,-2 @3","shape":[0,2,-2],"arrival":3,"n":53,"share":0.002,"finality":0,"modes":{"1":10,"2":10,"3":1,"4":14,"5":7,"7":7,"8":4}},
-  {"key":"-2,0,-3 @4","shape":[-2,0,-3],"arrival":4,"n":52,"share":0.0019,"finality":0,"modes":{"5":42,"7":10}},
-  {"key":"-2,2,0 @5","shape":[-2,2,0],"arrival":5,"n":51,"share":0.0019,"finality":0,"modes":{"1":7,"2":6,"3":4,"4":26,"?":8}},
-  {"key":"0,-2,2 @0","shape":[0,-2,2],"arrival":0,"n":51,"share":0.0019,"finality":0.078,"modes":{"1":5,"2":6,"3":6,"8":34}},
+/** The cadence catalogue: genera, commonest first, each with its species. */
+export const CADENTIAE: CadentiaGenus[] = [
+  { ...{"key":"step down @0","motion":"step down","degree":0,"n":12359,"share":0.1857,"finality":0.4298,"modes":{"1":2036,"2":1696,"3":582,"4":1514,"5":696,"6":902,"7":1086,"8":3561,"?":286},"closes":{"1":897,"2":654,"3":291,"4":607,"5":327,"6":466,"7":534,"8":1354,"?":182}}, species: [
+    {"key":"0,1,0","tail":[0,1,0],"n":5594,"share":0.084,"finality":0.374,"modes":{"1":608,"2":977,"3":257,"4":393,"5":364,"6":590,"7":463,"8":1796,"?":146},"closes":{"1":234,"2":388,"3":79,"4":68,"5":151,"6":275,"7":173,"8":642,"?":82}},
+    {"key":"2,1,0","tail":[2,1,0],"n":5408,"share":0.0812,"finality":0.4675,"modes":{"1":1333,"2":556,"3":263,"4":1011,"5":282,"6":267,"7":441,"8":1155,"?":100},"closes":{"1":621,"2":157,"3":188,"4":515,"5":155,"6":164,"7":257,"8":405,"?":66}},
+    {"key":"3,1,0","tail":[3,1,0],"n":896,"share":0.0135,"finality":0.4621,"modes":{"1":26,"2":28,"3":34,"4":77,"5":29,"6":33,"7":113,"8":551,"?":5},"closes":{"1":3,"2":2,"3":6,"4":4,"5":15,"6":24,"7":75,"8":280,"?":5}},
+    {"key":"-1,1,0","tail":[-1,1,0],"n":324,"share":0.0049,"finality":0.6636,"modes":{"1":55,"2":130,"3":20,"4":22,"5":3,"6":3,"7":28,"8":36,"?":27},"closes":{"1":26,"2":102,"3":13,"4":10,"5":3,"6":2,"7":14,"8":19,"?":26}},
+    {"key":"4,1,0","tail":[4,1,0],"n":69,"share":0.001,"finality":0.087,"modes":{"3":2,"4":1,"5":18,"6":4,"7":26,"8":18},"closes":{"5":3,"8":3}},
+    {"key":"1,0","tail":[1,0],"n":57,"share":0.0009,"finality":0.8947,"modes":{"1":13,"2":4,"3":5,"4":10,"6":1,"7":13,"8":3,"?":8},"closes":{"1":12,"2":4,"3":5,"4":10,"6":1,"7":13,"8":3,"?":3}},
+  ] },
+  { ...{"key":"repeat @0","motion":"repeat","degree":0,"n":11996,"share":0.1802,"finality":0.5235,"modes":{"1":2289,"2":1396,"3":670,"4":1832,"5":311,"6":960,"7":831,"8":3272,"?":435},"closes":{"1":1217,"2":664,"3":473,"4":863,"5":137,"6":533,"7":530,"8":1608,"?":255}}, species: [
+    {"key":"1,0,0","tail":[1,0,0],"n":5900,"share":0.0886,"finality":0.5902,"modes":{"1":1196,"2":426,"3":508,"4":563,"5":210,"6":639,"7":496,"8":1584,"?":278},"closes":{"1":742,"2":233,"3":382,"4":319,"5":100,"6":341,"7":329,"8":898,"?":138}},
+    {"key":"-1,0,0","tail":[-1,0,0],"n":3939,"share":0.0592,"finality":0.4146,"modes":{"1":656,"2":671,"3":102,"4":892,"5":8,"6":36,"7":127,"8":1335,"?":112},"closes":{"1":270,"2":337,"3":53,"4":284,"6":13,"7":75,"8":522,"?":79}},
+    {"key":"2,0,0","tail":[2,0,0],"n":1668,"share":0.0251,"finality":0.5743,"modes":{"1":416,"2":234,"3":41,"4":271,"5":67,"6":164,"7":187,"8":280,"?":8},"closes":{"1":201,"2":80,"3":30,"4":235,"5":27,"6":114,"7":112,"8":153,"?":6}},
+    {"key":"-2,0,0","tail":[-2,0,0],"n":182,"share":0.0027,"finality":0.2747,"modes":{"1":10,"2":6,"3":9,"4":79,"5":11,"6":48,"8":7,"?":12},"closes":{"1":1,"2":4,"3":4,"4":2,"5":6,"6":24,"8":2,"?":7}},
+    {"key":"0,0","tail":[0,0],"n":144,"share":0.0022,"finality":0.7917,"modes":{"1":6,"2":8,"3":3,"4":18,"5":6,"6":58,"7":7,"8":14,"?":24},"closes":{"1":3,"2":8,"3":2,"4":17,"5":3,"6":38,"7":7,"8":12,"?":24}},
+    {"key":"3,0,0","tail":[3,0,0],"n":100,"share":0.0015,"finality":0.26,"modes":{"1":3,"2":39,"3":6,"4":6,"5":6,"7":9,"8":31},"closes":{"2":1,"3":2,"4":3,"7":4,"8":16}},
+  ] },
+  { ...{"key":"step down @-1","motion":"step down","degree":-1,"n":4758,"share":0.0715,"finality":0.1042,"modes":{"1":887,"2":1130,"3":417,"4":668,"5":82,"6":75,"7":282,"8":1037,"?":180},"closes":{"1":48,"2":87,"3":27,"4":76,"5":20,"6":23,"7":52,"8":98,"?":65}}, species: [
+    {"key":"1,0,-1","tail":[1,0,-1],"n":2416,"share":0.0363,"finality":0.0753,"modes":{"1":524,"2":703,"3":242,"4":292,"5":12,"6":16,"7":85,"8":522,"?":20},"closes":{"1":32,"2":64,"3":5,"4":68,"6":1,"7":5,"8":7}},
+    {"key":"-1,0,-1","tail":[-1,0,-1],"n":1617,"share":0.0243,"finality":0.1899,"modes":{"1":207,"2":169,"3":150,"4":368,"5":68,"6":57,"7":154,"8":287,"?":157},"closes":{"1":16,"2":23,"3":22,"4":6,"5":20,"6":22,"7":47,"8":89,"?":62}},
+    {"key":"2,0,-1","tail":[2,0,-1],"n":349,"share":0.0052,"finality":0.0029,"modes":{"1":125,"2":96,"3":16,"4":5,"5":2,"7":5,"8":100},"closes":{"4":1}},
+    {"key":"3,0,-1","tail":[3,0,-1],"n":319,"share":0.0048,"finality":0.0063,"modes":{"1":23,"2":161,"3":6,"7":3,"8":126},"closes":{"8":2}},
+    {"key":"-2,0,-1","tail":[-2,0,-1],"n":51,"share":0.0008,"finality":0.0588,"modes":{"1":5,"3":3,"4":3,"6":1,"7":35,"8":2,"?":2},"closes":{"4":1,"?":2}},
+  ] },
+  { ...{"key":"step up @0","motion":"step up","degree":0,"n":3739,"share":0.0562,"finality":0.6074,"modes":{"1":649,"2":735,"3":301,"4":656,"5":51,"6":105,"7":202,"8":853,"?":187},"closes":{"1":436,"2":444,"3":253,"4":321,"5":35,"6":75,"7":133,"8":438,"?":136}}, species: [
+    {"key":"0,-1,0","tail":[0,-1,0],"n":2295,"share":0.0345,"finality":0.6357,"modes":{"1":474,"2":544,"3":143,"4":405,"5":25,"6":39,"7":138,"8":477,"?":50},"closes":{"1":327,"2":322,"3":124,"4":236,"5":15,"6":28,"7":112,"8":259,"?":36}},
+    {"key":"1,-1,0","tail":[1,-1,0],"n":669,"share":0.0101,"finality":0.4649,"modes":{"1":63,"2":148,"3":121,"4":84,"7":32,"8":216,"?":5},"closes":{"1":17,"2":89,"3":103,"4":23,"7":1,"8":76,"?":2}},
+    {"key":"-2,-1,0","tail":[-2,-1,0],"n":527,"share":0.0079,"finality":0.6338,"modes":{"1":79,"2":28,"3":22,"4":144,"5":20,"6":52,"7":13,"8":119,"?":50},"closes":{"1":73,"2":23,"3":16,"4":45,"5":16,"6":37,"7":10,"8":72,"?":42}},
+    {"key":"-3,-1,0","tail":[-3,-1,0],"n":200,"share":0.003,"finality":0.645,"modes":{"1":28,"2":9,"3":8,"4":22,"5":6,"6":12,"7":10,"8":28,"?":77},"closes":{"1":17,"2":4,"3":5,"4":17,"5":4,"6":8,"7":3,"8":20,"?":51}},
+  ] },
+  { ...{"key":"step down @2","motion":"step down","degree":2,"n":3510,"share":0.0527,"finality":0.0632,"modes":{"1":568,"2":425,"3":571,"4":358,"5":336,"6":229,"7":380,"8":577,"?":66},"closes":{"1":21,"2":3,"3":56,"4":19,"5":23,"6":43,"7":28,"8":25,"?":4}}, species: [
+    {"key":"2,3,2","tail":[2,3,2],"n":1927,"share":0.0289,"finality":0.0669,"modes":{"1":333,"2":276,"3":182,"4":280,"5":254,"6":155,"7":163,"8":233,"?":51},"closes":{"1":1,"2":1,"3":9,"4":5,"5":23,"6":40,"7":27,"8":19,"?":4}},
+    {"key":"4,3,2","tail":[4,3,2],"n":979,"share":0.0147,"finality":0.0817,"modes":{"1":187,"2":51,"3":323,"4":47,"5":82,"6":45,"7":103,"8":127,"?":14},"closes":{"1":20,"2":2,"3":46,"4":3,"6":3,"7":1,"8":5}},
+    {"key":"1,3,2","tail":[1,3,2],"n":386,"share":0.0058,"finality":0,"modes":{"1":4,"2":33,"3":7,"4":1,"6":29,"7":106,"8":205,"?":1},"closes":{}},
+    {"key":"5,3,2","tail":[5,3,2],"n":163,"share":0.0024,"finality":0.0061,"modes":{"1":19,"2":65,"3":48,"4":19,"7":5,"8":7},"closes":{"3":1}},
+  ] },
+  { ...{"key":"step down @1","motion":"step down","degree":1,"n":2298,"share":0.0345,"finality":0.0983,"modes":{"1":510,"2":293,"3":185,"4":225,"5":98,"6":230,"7":243,"8":463,"?":51},"closes":{"1":20,"2":29,"3":18,"4":32,"5":6,"6":38,"7":19,"8":52,"?":12}}, species: [
+    {"key":"1,2,1","tail":[1,2,1],"n":1220,"share":0.0183,"finality":0.1336,"modes":{"1":165,"2":163,"3":89,"4":96,"5":59,"6":202,"7":125,"8":271,"?":50},"closes":{"1":6,"2":18,"3":11,"4":10,"5":5,"6":38,"7":19,"8":44,"?":12}},
+    {"key":"3,2,1","tail":[3,2,1],"n":903,"share":0.0136,"finality":0.0653,"modes":{"1":310,"2":81,"3":68,"4":115,"5":21,"6":23,"7":101,"8":183,"?":1},"closes":{"1":14,"2":9,"3":7,"4":20,"5":1,"8":8}},
+    {"key":"0,2,1","tail":[0,2,1],"n":95,"share":0.0014,"finality":0.0421,"modes":{"1":26,"2":31,"3":7,"4":5,"5":4,"6":4,"7":16,"8":2},"closes":{"2":2,"4":2}},
+  ] },
+  { ...{"key":"repeat @4","motion":"repeat","degree":4,"n":2234,"share":0.0336,"finality":0.0448,"modes":{"1":1008,"2":95,"3":225,"4":9,"5":215,"6":19,"7":531,"8":93,"?":39},"closes":{"1":45,"3":5,"5":7,"7":32,"8":5,"?":6}}, species: [
+    {"key":"3,4,4","tail":[3,4,4],"n":1261,"share":0.0189,"finality":0.069,"modes":{"1":543,"2":95,"3":168,"4":5,"5":40,"7":299,"8":81,"?":30},"closes":{"1":41,"3":3,"5":3,"7":30,"8":4,"?":6}},
+    {"key":"5,4,4","tail":[5,4,4],"n":658,"share":0.0099,"finality":0.0167,"modes":{"1":283,"3":35,"4":3,"5":127,"6":9,"7":185,"8":9,"?":7},"closes":{"1":4,"3":2,"5":4,"8":1}},
+    {"key":"2,4,4","tail":[2,4,4],"n":146,"share":0.0022,"finality":0,"modes":{"1":97,"3":19,"5":23,"6":3,"7":2,"?":2},"closes":{}},
+    {"key":"6,4,4","tail":[6,4,4],"n":117,"share":0.0018,"finality":0.0171,"modes":{"1":72,"3":3,"5":11,"7":28,"8":3},"closes":{"7":2}},
+  ] },
+  { ...{"key":"repeat @2","motion":"repeat","degree":2,"n":2016,"share":0.0303,"finality":0.121,"modes":{"1":368,"2":293,"3":472,"4":282,"5":153,"6":173,"7":66,"8":103,"?":106},"closes":{"1":16,"2":44,"3":87,"4":29,"5":20,"6":27,"8":3,"?":18}}, species: [
+    {"key":"3,2,2","tail":[3,2,2],"n":999,"share":0.015,"finality":0.0771,"modes":{"1":221,"2":137,"3":224,"4":125,"5":50,"6":83,"7":40,"8":58,"?":61},"closes":{"2":12,"3":39,"4":10,"6":3,"?":13}},
+    {"key":"1,2,2","tail":[1,2,2],"n":450,"share":0.0068,"finality":0.1244,"modes":{"1":71,"2":11,"3":61,"4":140,"5":40,"6":72,"7":10,"8":19,"?":26},"closes":{"1":15,"4":17,"5":3,"6":16,"?":5}},
+    {"key":"0,2,2","tail":[0,2,2],"n":280,"share":0.0042,"finality":0.2286,"modes":{"1":46,"2":64,"3":117,"4":1,"5":19,"6":2,"7":5,"8":9,"?":17},"closes":{"1":1,"2":1,"3":48,"5":14}},
+    {"key":"-1,2,2","tail":[-1,2,2],"n":114,"share":0.0017,"finality":0.2895,"modes":{"1":5,"2":72,"3":27,"4":4,"5":5,"?":1},"closes":{"2":31,"5":2}},
+    {"key":"4,2,2","tail":[4,2,2],"n":103,"share":0.0015,"finality":0.0388,"modes":{"1":18,"2":3,"3":23,"4":2,"5":25,"6":4,"7":11,"8":17},"closes":{"5":1,"8":3}},
+    {"key":"2,2","tail":[2,2],"n":54,"share":0.0008,"finality":0.1852,"modes":{"1":4,"2":6,"3":19,"4":10,"5":3,"6":11,"?":1},"closes":{"4":2,"6":8}},
+  ] },
+  { ...{"key":"third down @0","motion":"third down","degree":0,"n":2004,"share":0.0301,"finality":0.482,"modes":{"1":534,"2":316,"3":207,"4":261,"5":203,"6":154,"7":78,"8":217,"?":34},"closes":{"1":231,"2":147,"3":150,"4":197,"5":127,"6":25,"7":16,"8":40,"?":33}}, species: [
+    {"key":"1,2,0","tail":[1,2,0],"n":879,"share":0.0132,"finality":0.4937,"modes":{"1":236,"2":200,"3":41,"4":74,"5":91,"6":143,"7":11,"8":76,"?":7},"closes":{"1":114,"2":137,"3":22,"4":42,"5":74,"6":20,"7":2,"8":16,"?":7}},
+    {"key":"3,2,0","tail":[3,2,0],"n":686,"share":0.0103,"finality":0.4708,"modes":{"1":162,"2":73,"3":77,"4":117,"5":66,"6":3,"7":57,"8":131},"closes":{"1":93,"2":7,"3":56,"4":94,"5":45,"6":3,"7":7,"8":18}},
+    {"key":"4,2,0","tail":[4,2,0],"n":196,"share":0.0029,"finality":0.7143,"modes":{"1":14,"2":4,"3":74,"4":54,"5":26,"7":5,"8":5,"?":14},"closes":{"2":1,"3":67,"4":54,"5":2,"7":2,"8":1,"?":13}},
+    {"key":"0,2,0","tail":[0,2,0],"n":185,"share":0.0028,"finality":0.1622,"modes":{"1":119,"2":39,"3":9,"4":9,"5":1,"6":8},"closes":{"1":24,"2":2,"4":1,"5":1,"6":2}},
+  ] },
+  { ...{"key":"step down @-2","motion":"step down","degree":-2,"n":1804,"share":0.0271,"finality":0.306,"modes":{"1":244,"2":255,"3":176,"4":267,"5":152,"6":152,"7":231,"8":200,"?":127},"closes":{"1":112,"2":56,"3":58,"4":38,"5":68,"6":39,"7":94,"8":29,"?":58}}, species: [
+    {"key":"-2,-1,-2","tail":[-2,-1,-2],"n":832,"share":0.0125,"finality":0.3954,"modes":{"1":90,"2":85,"3":79,"4":57,"5":118,"6":85,"7":164,"8":75,"?":79},"closes":{"1":24,"2":26,"3":25,"4":7,"5":60,"6":33,"7":84,"8":23,"?":47}},
+    {"key":"0,-1,-2","tail":[0,-1,-2],"n":813,"share":0.0122,"finality":0.2595,"modes":{"1":147,"2":109,"3":90,"4":159,"5":29,"6":67,"7":55,"8":114,"?":43},"closes":{"1":87,"2":30,"3":32,"4":28,"5":7,"6":6,"7":10,"8":3,"?":8}},
+    {"key":"1,-1,-2","tail":[1,-1,-2],"n":73,"share":0.0011,"finality":0.0137,"modes":{"1":5,"2":14,"3":5,"4":34,"5":3,"7":5,"8":7},"closes":{"5":1}},
+    {"key":"2,-1,-2","tail":[2,-1,-2],"n":58,"share":0.0009,"finality":0,"modes":{"1":1,"2":47,"3":1,"4":4,"5":2,"7":1,"?":2},"closes":{}},
+  ] },
+  { ...{"key":"step down @3","motion":"step down","degree":3,"n":1677,"share":0.0252,"finality":0.0489,"modes":{"1":352,"2":114,"3":331,"4":159,"5":79,"6":14,"7":183,"8":407,"?":38},"closes":{"1":7,"2":2,"3":18,"4":2,"5":3,"6":6,"7":8,"8":31,"?":5}}, species: [
+    {"key":"3,4,3","tail":[3,4,3],"n":1204,"share":0.0181,"finality":0.0482,"modes":{"1":234,"2":86,"3":123,"4":138,"5":75,"6":9,"7":143,"8":372,"?":24},"closes":{"2":1,"3":10,"4":2,"5":3,"6":4,"7":6,"8":27,"?":5}},
+    {"key":"5,4,3","tail":[5,4,3],"n":371,"share":0.0056,"finality":0.0647,"modes":{"1":62,"2":15,"3":204,"4":3,"5":2,"6":5,"7":40,"8":28,"?":12},"closes":{"1":7,"2":1,"3":8,"6":2,"7":2,"8":4}},
+    {"key":"2,4,3","tail":[2,4,3],"n":75,"share":0.0011,"finality":0,"modes":{"1":39,"2":8,"3":4,"4":18,"5":1,"8":3,"?":2},"closes":{}},
+  ] },
+  { ...{"key":"repeat @3","motion":"repeat","degree":3,"n":1596,"share":0.024,"finality":0.0363,"modes":{"1":349,"2":93,"3":103,"4":524,"5":47,"6":18,"7":174,"8":221,"?":67},"closes":{"2":3,"4":17,"5":9,"6":1,"8":21,"?":7}}, species: [
+    {"key":"2,3,3","tail":[2,3,3],"n":757,"share":0.0114,"finality":0.0172,"modes":{"1":92,"2":24,"3":46,"4":441,"5":3,"6":6,"7":48,"8":56,"?":41},"closes":{"4":13}},
+    {"key":"4,3,3","tail":[4,3,3],"n":610,"share":0.0092,"finality":0.0246,"modes":{"1":245,"2":56,"3":28,"4":64,"5":17,"6":10,"7":102,"8":62,"?":26},"closes":{"2":2,"4":4,"6":1,"8":1,"?":7}},
+    {"key":"1,3,3","tail":[1,3,3],"n":116,"share":0.0017,"finality":0.0776,"modes":{"3":20,"4":4,"5":19,"6":2,"7":19,"8":52},"closes":{"5":9}},
+    {"key":"0,3,3","tail":[0,3,3],"n":59,"share":0.0009,"finality":0.339,"modes":{"1":8,"2":5,"5":3,"7":3,"8":40},"closes":{"8":20}},
+  ] },
+  { ...{"key":"step down @4","motion":"step down","degree":4,"n":1488,"share":0.0224,"finality":0.0208,"modes":{"1":402,"2":35,"3":215,"4":11,"5":267,"6":7,"7":467,"8":75,"?":9},"closes":{"1":9,"5":16,"7":3,"8":3}}, species: [
+    {"key":"4,5,4","tail":[4,5,4],"n":1069,"share":0.0161,"finality":0.0131,"modes":{"1":302,"2":33,"3":108,"4":10,"5":216,"6":7,"7":332,"8":58,"?":3},"closes":{"1":2,"5":10,"7":1,"8":1}},
+    {"key":"6,5,4","tail":[6,5,4],"n":320,"share":0.0048,"finality":0.05,"modes":{"1":93,"3":49,"4":1,"5":43,"7":114,"8":14,"?":6},"closes":{"1":6,"5":6,"7":2,"8":2}},
+    {"key":"3,5,4","tail":[3,5,4],"n":79,"share":0.0012,"finality":0.0127,"modes":{"1":6,"2":2,"3":52,"5":3,"7":14,"8":2},"closes":{"1":1}},
+  ] },
+  { ...{"key":"repeat @1","motion":"repeat","degree":1,"n":1477,"share":0.0222,"finality":0.0352,"modes":{"1":315,"2":361,"3":64,"4":93,"5":24,"6":106,"7":127,"8":325,"?":62},"closes":{"1":8,"2":9,"3":2,"4":5,"5":5,"6":16,"7":3,"8":3,"?":1}}, species: [
+    {"key":"0,1,1","tail":[0,1,1],"n":809,"share":0.0122,"finality":0.0185,"modes":{"1":178,"2":214,"3":21,"4":23,"5":8,"6":37,"7":63,"8":227,"?":38},"closes":{"2":2,"3":1,"4":1,"6":10,"8":1}},
+    {"key":"2,1,1","tail":[2,1,1],"n":441,"share":0.0066,"finality":0.0544,"modes":{"1":78,"2":118,"3":24,"4":44,"5":9,"6":54,"7":54,"8":41,"?":19},"closes":{"1":8,"2":3,"3":1,"4":4,"6":3,"7":3,"8":1,"?":1}},
+    {"key":"-1,1,1","tail":[-1,1,1],"n":118,"share":0.0018,"finality":0,"modes":{"1":53,"2":12,"3":11,"4":23,"7":3,"8":15,"?":1},"closes":{}},
+    {"key":"3,1,1","tail":[3,1,1],"n":60,"share":0.0009,"finality":0.2167,"modes":{"1":5,"2":6,"3":6,"4":2,"5":7,"6":13,"7":7,"8":14},"closes":{"2":4,"5":5,"6":3,"8":1}},
+  ] },
+  { ...{"key":"step down @-3","motion":"step down","degree":-3,"n":1395,"share":0.021,"finality":0.2115,"modes":{"1":130,"2":154,"3":133,"4":138,"5":54,"6":171,"7":163,"8":443,"?":9},"closes":{"1":27,"2":39,"3":50,"4":32,"5":6,"6":9,"7":38,"8":92,"?":2}}, species: [
+    {"key":"-1,-2,-3","tail":[-1,-2,-3],"n":768,"share":0.0115,"finality":0.2031,"modes":{"1":69,"2":117,"3":61,"4":82,"5":23,"6":76,"7":63,"8":269,"?":8},"closes":{"1":21,"2":35,"3":40,"4":32,"6":3,"7":9,"8":14,"?":2}},
+    {"key":"-3,-2,-3","tail":[-3,-2,-3],"n":520,"share":0.0078,"finality":0.2519,"modes":{"1":45,"2":36,"3":71,"4":51,"5":21,"6":37,"7":97,"8":161,"?":1},"closes":{"1":5,"2":4,"3":10,"5":6,"6":6,"7":27,"8":73}},
+    {"key":"0,-2,-3","tail":[0,-2,-3],"n":88,"share":0.0013,"finality":0,"modes":{"1":14,"3":1,"4":1,"5":10,"6":54,"8":8},"closes":{}},
+  ] },
+  { ...{"key":"repeat @-1","motion":"repeat","degree":-1,"n":1217,"share":0.0183,"finality":0.1282,"modes":{"1":158,"2":178,"3":90,"4":268,"5":27,"6":27,"7":142,"8":259,"?":68},"closes":{"1":8,"2":4,"4":14,"5":7,"6":3,"7":84,"8":26,"?":10}}, species: [
+    {"key":"0,-1,-1","tail":[0,-1,-1],"n":725,"share":0.0109,"finality":0.1407,"modes":{"1":128,"2":120,"3":48,"4":111,"5":20,"6":23,"7":80,"8":138,"?":57},"closes":{"1":7,"2":3,"4":10,"5":6,"6":3,"7":53,"8":10,"?":10}},
+    {"key":"1,-1,-1","tail":[1,-1,-1],"n":304,"share":0.0046,"finality":0.0855,"modes":{"1":11,"2":45,"3":11,"4":80,"5":5,"7":50,"8":94,"?":8},"closes":{"1":1,"4":1,"5":1,"7":23}},
+    {"key":"-2,-1,-1","tail":[-2,-1,-1],"n":141,"share":0.0021,"finality":0.1631,"modes":{"1":1,"2":7,"3":27,"4":73,"6":1,"7":9,"8":21,"?":2},"closes":{"2":1,"4":2,"7":8,"8":12}},
+  ] },
+  { ...{"key":"step up @4","motion":"step up","degree":4,"n":1088,"share":0.0163,"finality":0.0294,"modes":{"1":633,"2":126,"3":47,"4":6,"5":57,"6":15,"7":152,"8":38,"?":14},"closes":{"1":14,"3":3,"5":3,"6":6,"7":6}}, species: [
+    {"key":"4,3,4","tail":[4,3,4],"n":492,"share":0.0074,"finality":0.0244,"modes":{"1":290,"2":33,"3":5,"4":3,"5":37,"6":2,"7":97,"8":18,"?":7},"closes":{"1":10,"7":2}},
+    {"key":"2,3,4","tail":[2,3,4],"n":395,"share":0.0059,"finality":0.0177,"modes":{"1":204,"2":69,"3":32,"4":3,"5":19,"6":9,"7":32,"8":20,"?":7},"closes":{"5":2,"6":5}},
+    {"key":"1,3,4","tail":[1,3,4],"n":96,"share":0.0014,"finality":0.0417,"modes":{"1":78,"2":2,"6":3,"7":13},"closes":{"1":1,"6":1,"7":2}},
+    {"key":"5,3,4","tail":[5,3,4],"n":95,"share":0.0014,"finality":0.0737,"modes":{"1":57,"2":21,"3":10,"5":1,"6":1,"7":5},"closes":{"1":3,"3":3,"5":1}},
+  ] },
+  { ...{"key":"step down @-4","motion":"step down","degree":-4,"n":936,"share":0.0141,"finality":0.219,"modes":{"1":201,"2":49,"3":63,"4":66,"5":51,"6":50,"7":179,"8":266,"?":11},"closes":{"1":42,"2":14,"3":12,"4":26,"5":16,"6":15,"7":54,"8":25,"?":1}}, species: [
+    {"key":"-2,-3,-4","tail":[-2,-3,-4],"n":475,"share":0.0071,"finality":0.2042,"modes":{"1":124,"2":22,"3":29,"4":37,"5":8,"6":24,"7":42,"8":179,"?":10},"closes":{"1":30,"2":10,"3":10,"4":23,"5":1,"6":9,"7":10,"8":4}},
+    {"key":"-4,-3,-4","tail":[-4,-3,-4],"n":401,"share":0.006,"finality":0.2569,"modes":{"1":56,"2":25,"3":31,"4":26,"5":41,"6":17,"7":130,"8":75},"closes":{"1":12,"2":4,"3":2,"4":1,"5":15,"6":6,"7":42,"8":21}},
+  ] },
+  { ...{"key":"step up @1","motion":"step up","degree":1,"n":919,"share":0.0138,"finality":0.0294,"modes":{"1":150,"2":139,"3":23,"4":188,"5":48,"6":34,"7":62,"8":250,"?":25},"closes":{"1":1,"3":1,"4":14,"6":5,"8":2,"?":4}}, species: [
+    {"key":"1,0,1","tail":[1,0,1],"n":618,"share":0.0093,"finality":0.0243,"modes":{"1":115,"2":89,"3":16,"4":166,"5":31,"6":22,"7":25,"8":142,"?":12},"closes":{"4":11,"6":3,"8":1}},
+    {"key":"2,0,1","tail":[2,0,1],"n":160,"share":0.0024,"finality":0,"modes":{"1":20,"2":38,"3":4,"4":4,"5":15,"6":3,"7":27,"8":49},"closes":{}},
+    {"key":"-1,0,1","tail":[-1,0,1],"n":99,"share":0.0015,"finality":0.0707,"modes":{"1":13,"2":9,"3":3,"4":16,"5":1,"6":1,"7":3,"8":44,"?":9},"closes":{"3":1,"4":3,"6":1,"?":2}},
+  ] },
+  { ...{"key":"step up @2","motion":"step up","degree":2,"n":908,"share":0.0136,"finality":0.1542,"modes":{"1":122,"2":94,"3":59,"4":148,"5":44,"6":199,"7":68,"8":88,"?":86},"closes":{"1":3,"2":2,"3":1,"4":13,"6":70,"7":6,"8":9,"?":36}}, species: [
+    {"key":"0,1,2","tail":[0,1,2],"n":310,"share":0.0047,"finality":0.2323,"modes":{"1":61,"2":36,"3":20,"4":84,"5":10,"6":65,"7":8,"8":8,"?":18},"closes":{"2":2,"4":3,"6":46,"7":2,"8":5,"?":14}},
+    {"key":"-1,1,2","tail":[-1,1,2],"n":220,"share":0.0033,"finality":0.2545,"modes":{"1":10,"3":3,"4":5,"6":115,"7":13,"8":9,"?":65},"closes":{"1":3,"3":1,"4":1,"6":22,"7":4,"8":3,"?":22}},
+    {"key":"2,1,2","tail":[2,1,2],"n":200,"share":0.003,"finality":0.04,"modes":{"1":45,"2":6,"3":23,"4":35,"5":23,"6":8,"7":44,"8":14,"?":2},"closes":{"4":7,"8":1}},
+    {"key":"3,1,2","tail":[3,1,2],"n":166,"share":0.0025,"finality":0.0241,"modes":{"1":4,"2":52,"3":13,"4":24,"5":8,"6":5,"7":3,"8":57},"closes":{"4":2,"6":2}},
+  ] },
+  { ...{"key":"step up @3","motion":"step up","degree":3,"n":882,"share":0.0133,"finality":0.0181,"modes":{"1":130,"2":91,"3":187,"4":273,"5":16,"6":2,"7":60,"8":110,"?":13},"closes":{"1":1,"2":3,"3":3,"4":6,"7":2,"?":1}}, species: [
+    {"key":"3,2,3","tail":[3,2,3],"n":545,"share":0.0082,"finality":0.0055,"modes":{"1":65,"2":42,"3":57,"4":232,"5":5,"6":2,"7":48,"8":83,"?":11},"closes":{"3":3}},
+    {"key":"1,2,3","tail":[1,2,3],"n":240,"share":0.0036,"finality":0.0292,"modes":{"1":49,"2":44,"3":102,"4":19,"5":2,"7":8,"8":16},"closes":{"2":3,"4":4}},
+  ] },
+  { ...{"key":"repeat @-3","motion":"repeat","degree":-3,"n":643,"share":0.0097,"finality":0.5972,"modes":{"1":154,"2":11,"3":126,"4":26,"5":3,"6":52,"7":156,"8":106,"?":9},"closes":{"1":109,"2":2,"3":110,"4":14,"5":1,"7":96,"8":48,"?":4}}, species: [
+    {"key":"-2,-3,-3","tail":[-2,-3,-3],"n":396,"share":0.0059,"finality":0.6338,"modes":{"1":101,"2":9,"3":93,"4":13,"5":2,"6":41,"7":72,"8":59,"?":6},"closes":{"1":76,"2":2,"3":90,"4":7,"5":1,"7":42,"8":30,"?":3}},
+    {"key":"-1,-3,-3","tail":[-1,-3,-3],"n":168,"share":0.0025,"finality":0.5238,"modes":{"1":22,"2":1,"3":27,"4":2,"5":1,"6":11,"7":69,"8":34,"?":1},"closes":{"1":15,"3":17,"4":2,"7":43,"8":10,"?":1}},
+    {"key":"-4,-3,-3","tail":[-4,-3,-3],"n":74,"share":0.0011,"finality":0.6081,"modes":{"1":29,"2":1,"3":4,"4":11,"7":15,"8":12,"?":2},"closes":{"1":18,"3":3,"4":5,"7":11,"8":8}},
+  ] },
+  { ...{"key":"leap down @0","motion":"leap down","degree":0,"n":574,"share":0.0086,"finality":0.0732,"modes":{"1":151,"2":81,"3":54,"4":20,"5":11,"6":2,"7":102,"8":151,"?":2},"closes":{"1":7,"2":1,"4":5,"5":2,"6":2,"7":2,"8":22,"?":1}}, species: [
+    {"key":"2,3,0","tail":[2,3,0],"n":314,"share":0.0047,"finality":0.0828,"modes":{"1":80,"2":67,"3":54,"4":20,"5":9,"6":2,"7":13,"8":69},"closes":{"1":6,"4":5,"5":2,"6":2,"8":11}},
+    {"key":"3,4,0","tail":[3,4,0],"n":108,"share":0.0016,"finality":0.0278,"modes":{"1":70,"2":6,"5":1,"7":23,"8":8},"closes":{"1":1,"8":2}},
+    {"key":"4,3,0","tail":[4,3,0],"n":73,"share":0.0011,"finality":0,"modes":{"1":1,"2":7,"5":1,"7":38,"8":26},"closes":{}},
+    {"key":"1,3,0","tail":[1,3,0],"n":51,"share":0.0008,"finality":0.1765,"modes":{"7":16,"8":34,"?":1},"closes":{"7":2,"8":7}},
+  ] },
+  { ...{"key":"repeat @-2","motion":"repeat","degree":-2,"n":567,"share":0.0085,"finality":0.4974,"modes":{"1":182,"2":17,"3":31,"4":99,"5":73,"6":32,"7":34,"8":29,"?":70},"closes":{"1":109,"2":6,"3":17,"4":19,"5":46,"6":9,"7":14,"8":10,"?":52}}, species: [
+    {"key":"-1,-2,-2","tail":[-1,-2,-2],"n":400,"share":0.006,"finality":0.5575,"modes":{"1":122,"2":14,"3":21,"4":79,"5":46,"6":27,"7":20,"8":16,"?":55},"closes":{"1":83,"2":5,"3":15,"4":16,"5":30,"6":9,"7":13,"8":9,"?":43}},
+    {"key":"0,-2,-2","tail":[0,-2,-2],"n":88,"share":0.0013,"finality":0.375,"modes":{"1":32,"2":1,"3":3,"4":12,"5":26,"7":5,"8":3,"?":6},"closes":{"1":13,"3":1,"5":16,"?":3}},
+    {"key":"-3,-2,-2","tail":[-3,-2,-2],"n":71,"share":0.0011,"finality":0.3662,"modes":{"1":27,"2":1,"3":3,"4":8,"5":1,"6":4,"7":9,"8":9,"?":9},"closes":{"1":13,"2":1,"3":1,"4":3,"7":1,"8":1,"?":6}},
+  ] },
+  { ...{"key":"third down @2","motion":"third down","degree":2,"n":381,"share":0.0057,"finality":0.021,"modes":{"1":32,"2":7,"3":73,"4":14,"5":198,"6":6,"7":30,"8":20,"?":1},"closes":{"3":1,"5":5,"8":2}}, species: [
+    {"key":"3,4,2","tail":[3,4,2],"n":183,"share":0.0027,"finality":0.0437,"modes":{"1":21,"2":7,"3":55,"4":13,"5":61,"6":1,"7":12,"8":12,"?":1},"closes":{"3":1,"5":5,"8":2}},
+    {"key":"5,4,2","tail":[5,4,2],"n":104,"share":0.0016,"finality":0,"modes":{"1":10,"3":18,"5":49,"6":1,"7":18,"8":8},"closes":{}},
+    {"key":"2,4,2","tail":[2,4,2],"n":66,"share":0.001,"finality":0,"modes":{"1":1,"4":1,"5":60,"6":4},"closes":{}},
+  ] },
+  { ...{"key":"third down @-1","motion":"third down","degree":-1,"n":349,"share":0.0052,"finality":0.0659,"modes":{"1":80,"2":35,"3":37,"4":75,"5":6,"6":4,"7":13,"8":90,"?":9},"closes":{"2":5,"4":13,"7":2,"8":3}}, species: [
+    {"key":"0,1,-1","tail":[0,1,-1],"n":170,"share":0.0026,"finality":0.0412,"modes":{"1":30,"2":6,"3":11,"4":35,"5":4,"6":4,"7":2,"8":70,"?":8},"closes":{"2":5,"8":2}},
+    {"key":"2,1,-1","tail":[2,1,-1],"n":149,"share":0.0022,"finality":0.1007,"modes":{"1":47,"2":29,"3":24,"4":35,"5":2,"7":7,"8":4,"?":1},"closes":{"4":13,"7":2}},
+  ] },
+  { ...{"key":"step up @-1","motion":"step up","degree":-1,"n":312,"share":0.0047,"finality":0.0962,"modes":{"1":14,"2":24,"3":30,"4":56,"5":6,"6":25,"7":13,"8":143,"?":1},"closes":{"2":16,"4":5,"7":2,"8":6,"?":1}}, species: [
+    {"key":"-1,-2,-1","tail":[-1,-2,-1],"n":165,"share":0.0025,"finality":0.1091,"modes":{"1":3,"2":15,"3":14,"4":39,"5":5,"6":9,"7":9,"8":70,"?":1},"closes":{"2":10,"4":4,"7":2,"8":1,"?":1}},
+    {"key":"0,-2,-1","tail":[0,-2,-1],"n":90,"share":0.0014,"finality":0.1222,"modes":{"2":9,"3":13,"4":11,"5":1,"6":13,"7":1,"8":42},"closes":{"2":6,"8":5}},
+    {"key":"-3,-2,-1","tail":[-3,-2,-1],"n":55,"share":0.0008,"finality":0,"modes":{"1":11,"3":3,"4":5,"6":3,"7":3,"8":30},"closes":{}},
+  ] },
+  { ...{"key":"third down @1","motion":"third down","degree":1,"n":270,"share":0.0041,"finality":0.0519,"modes":{"1":39,"2":13,"3":19,"4":16,"5":31,"6":11,"7":33,"8":108},"closes":{"1":1,"2":3,"4":1,"5":8,"8":1}}, species: [
+    {"key":"2,3,1","tail":[2,3,1],"n":125,"share":0.0019,"finality":0.104,"modes":{"1":10,"2":9,"3":14,"4":10,"5":15,"6":11,"7":9,"8":47},"closes":{"1":1,"2":3,"5":8,"8":1}},
+    {"key":"4,3,1","tail":[4,3,1],"n":95,"share":0.0014,"finality":0.0105,"modes":{"1":22,"2":3,"4":6,"5":13,"7":21,"8":30},"closes":{"4":1}},
+  ] },
+  { ...{"key":"repeat @-4","motion":"repeat","degree":-4,"n":225,"share":0.0034,"finality":0.4978,"modes":{"1":65,"3":23,"4":3,"5":11,"6":31,"7":52,"8":34,"?":6},"closes":{"1":41,"3":13,"5":6,"6":12,"7":35,"?":5}}, species: [
+    {"key":"-3,-4,-4","tail":[-3,-4,-4],"n":159,"share":0.0024,"finality":0.4906,"modes":{"1":44,"3":9,"4":3,"5":11,"6":29,"7":33,"8":28,"?":2},"closes":{"1":30,"3":7,"5":6,"6":12,"7":22,"?":1}},
+  ] },
+  { ...{"key":"third down @-3","motion":"third down","degree":-3,"n":206,"share":0.0031,"finality":0.0583,"modes":{"1":18,"2":55,"3":13,"4":3,"5":4,"6":11,"7":10,"8":85,"?":7},"closes":{"1":2,"2":1,"3":2,"4":1,"8":3,"?":3}}, species: [
+    {"key":"0,-1,-3","tail":[0,-1,-3],"n":94,"share":0.0014,"finality":0.0213,"modes":{"1":14,"2":35,"3":9,"4":2,"5":1,"6":3,"7":9,"8":20,"?":1},"closes":{"1":1,"3":1}},
+    {"key":"-2,-1,-3","tail":[-2,-1,-3],"n":87,"share":0.0013,"finality":0.1034,"modes":{"1":4,"2":2,"3":3,"5":3,"6":7,"7":1,"8":63,"?":4},"closes":{"1":1,"2":1,"3":1,"8":3,"?":3}},
+  ] },
+  { ...{"key":"step down @-5","motion":"step down","degree":-5,"n":179,"share":0.0027,"finality":0.2067,"modes":{"1":36,"2":15,"3":31,"4":12,"5":13,"6":4,"7":45,"8":22,"?":1},"closes":{"1":9,"2":4,"3":8,"4":3,"5":3,"7":8,"8":2}}, species: [
+    {"key":"-3,-4,-5","tail":[-3,-4,-5],"n":98,"share":0.0015,"finality":0.2347,"modes":{"1":14,"2":9,"3":12,"4":10,"5":5,"6":2,"7":29,"8":17},"closes":{"1":8,"2":4,"3":7,"4":3,"8":1}},
+    {"key":"-5,-4,-5","tail":[-5,-4,-5],"n":62,"share":0.0009,"finality":0.2097,"modes":{"1":7,"2":4,"3":19,"4":1,"5":8,"6":2,"7":16,"8":4,"?":1},"closes":{"3":1,"5":3,"7":8,"8":1}},
+  ] },
+  { ...{"key":"leap down @-1","motion":"leap down","degree":-1,"n":172,"share":0.0026,"finality":0.0116,"modes":{"1":66,"2":45,"3":17,"4":19,"5":4,"7":3,"8":4,"?":14},"closes":{"3":1,"5":1}}, species: [
+    {"key":"1,2,-1","tail":[1,2,-1],"n":101,"share":0.0015,"finality":0.0099,"modes":{"1":51,"2":34,"3":2,"4":10,"8":2,"?":2},"closes":{"3":1}},
+  ] },
+  { ...{"key":"third down @-2","motion":"third down","degree":-2,"n":171,"share":0.0026,"finality":0.2398,"modes":{"1":39,"2":12,"3":7,"4":9,"5":28,"6":38,"7":9,"8":24,"?":5},"closes":{"1":17,"2":4,"4":1,"5":2,"6":4,"7":4,"8":7,"?":2}}, species: [
+    {"key":"1,0,-2","tail":[1,0,-2],"n":103,"share":0.0015,"finality":0.2718,"modes":{"1":29,"2":5,"3":2,"4":4,"5":23,"6":28,"7":6,"8":4,"?":2},"closes":{"1":16,"2":1,"4":1,"5":1,"6":4,"7":2,"8":1,"?":2}},
+    {"key":"-1,0,-2","tail":[-1,0,-2],"n":57,"share":0.0009,"finality":0.2281,"modes":{"1":7,"2":6,"3":5,"4":5,"5":3,"6":7,"7":3,"8":19,"?":2},"closes":{"1":1,"2":3,"5":1,"7":2,"8":6}},
+  ] },
+  { ...{"key":"third up @3","motion":"third up","degree":3,"n":155,"share":0.0023,"finality":0,"modes":{"2":22,"3":2,"4":62,"5":2,"6":2,"7":3,"8":62},"closes":{}}, species: [
+    {"key":"2,1,3","tail":[2,1,3],"n":86,"share":0.0013,"finality":0,"modes":{"2":21,"3":1,"4":57,"6":2,"8":5},"closes":{}},
+  ] },
+  { ...{"key":"third down @4","motion":"third down","degree":4,"n":138,"share":0.0021,"finality":0.0072,"modes":{"1":61,"3":8,"5":36,"7":32,"8":1},"closes":{"7":1}}, species: [
+    {"key":"5,6,4","tail":[5,6,4],"n":81,"share":0.0012,"finality":0.0123,"modes":{"1":25,"3":7,"5":33,"7":15,"8":1},"closes":{"7":1}},
+  ] },
+  { ...{"key":"third up @0","motion":"third up","degree":0,"n":136,"share":0.002,"finality":0.5735,"modes":{"1":21,"2":5,"3":3,"4":24,"5":3,"6":24,"7":39,"8":17},"closes":{"1":19,"2":5,"3":3,"6":8,"7":35,"8":8}}, species: [
+    {"key":"-1,-2,0","tail":[-1,-2,0],"n":60,"share":0.0009,"finality":0.45,"modes":{"1":2,"4":23,"6":3,"7":24,"8":8},"closes":{"6":3,"7":24}},
+  ] },
+  { ...{"key":"none @0","motion":"none","degree":0,"n":132,"share":0.002,"finality":1,"modes":{"1":25,"2":13,"3":18,"4":13,"5":10,"6":12,"7":21,"8":20},"closes":{"1":25,"2":13,"3":18,"4":13,"5":10,"6":12,"7":21,"8":20}}, species: [
+    {"key":"0","tail":[0],"n":132,"share":0.002,"finality":1,"modes":{"1":25,"2":13,"3":18,"4":13,"5":10,"6":12,"7":21,"8":20},"closes":{"1":25,"2":13,"3":18,"4":13,"5":10,"6":12,"7":21,"8":20}},
+  ] },
+  { ...{"key":"third up @2","motion":"third up","degree":2,"n":131,"share":0.002,"finality":0.0305,"modes":{"1":27,"2":68,"3":9,"4":6,"5":10,"6":4,"7":1,"8":5,"?":1},"closes":{"4":2,"6":2}}, species: [
+    {"key":"-1,0,2","tail":[-1,0,2],"n":77,"share":0.0012,"finality":0,"modes":{"1":8,"2":66,"3":1,"5":1,"?":1},"closes":{}},
+  ] },
+  { ...{"key":"leap down @-3","motion":"leap down","degree":-3,"n":121,"share":0.0018,"finality":0.0165,"modes":{"1":30,"2":20,"3":8,"4":9,"5":5,"6":12,"7":6,"8":31},"closes":{"4":2}}, species: [
+    {"key":"-1,0,-3","tail":[-1,0,-3],"n":84,"share":0.0013,"finality":0.0238,"modes":{"1":28,"2":19,"3":7,"4":9,"6":5,"8":16},"closes":{"4":2}},
+  ] },
+  { ...{"key":"repeat @5","motion":"repeat","degree":5,"n":120,"share":0.0018,"finality":0.0083,"modes":{"1":15,"2":1,"3":82,"4":1,"5":4,"7":4,"8":12,"?":1},"closes":{"8":1}}, species: [
+    {"key":"3,5,5","tail":[3,5,5],"n":64,"share":0.001,"finality":0,"modes":{"1":2,"3":57,"8":5},"closes":{}},
+  ] },
+  { ...{"key":"step up @-2","motion":"step up","degree":-2,"n":104,"share":0.0016,"finality":0.1635,"modes":{"1":15,"2":5,"3":19,"4":23,"5":1,"6":7,"7":6,"8":17,"?":11},"closes":{"1":1,"2":2,"3":2,"4":2,"5":1,"8":3,"?":6}}, species: [
+    {"key":"-2,-3,-2","tail":[-2,-3,-2],"n":64,"share":0.001,"finality":0.2031,"modes":{"1":4,"2":5,"3":11,"4":20,"6":3,"7":1,"8":12,"?":8},"closes":{"1":1,"2":2,"4":2,"8":2,"?":6}},
+  ] },
+  { ...{"key":"step up @5","motion":"step up","degree":5,"n":96,"share":0.0014,"finality":0,"modes":{"1":9,"3":13,"5":8,"7":64,"8":2},"closes":{}}, species: [
+    {"key":"5,4,5","tail":[5,4,5],"n":74,"share":0.0011,"finality":0,"modes":{"1":1,"3":9,"5":5,"7":59},"closes":{}},
+  ] },
+  { ...{"key":"third up @1","motion":"third up","degree":1,"n":91,"share":0.0014,"finality":0.0769,"modes":{"1":20,"2":18,"3":10,"4":8,"5":1,"6":2,"7":7,"8":22,"?":3},"closes":{"1":1,"4":1,"7":4,"?":1}}, species: [
+    {"key":"0,-1,1","tail":[0,-1,1],"n":66,"share":0.001,"finality":0.0152,"modes":{"1":18,"2":18,"3":1,"4":1,"6":1,"7":3,"8":22,"?":2},"closes":{"1":1}},
+  ] },
+  { ...{"key":"third down @3","motion":"third down","degree":3,"n":72,"share":0.0011,"finality":0.0139,"modes":{"1":11,"2":1,"3":21,"4":25,"6":4,"7":5,"8":5},"closes":{"4":1}}, species: [
+
+  ] },
+  { ...{"key":"third up @4","motion":"third up","degree":4,"n":69,"share":0.001,"finality":0.0435,"modes":{"1":19,"2":1,"3":7,"4":1,"5":35,"6":1,"7":4,"8":1},"closes":{"2":1,"3":1,"4":1}}, species: [
+
+  ] },
+  { ...{"key":"leap down @1","motion":"leap down","degree":1,"n":68,"share":0.001,"finality":0,"modes":{"1":16,"2":1,"3":3,"4":4,"5":24,"6":4,"7":8,"8":8},"closes":{}}, species: [
+
+  ] },
+  { ...{"key":"third down @-4","motion":"third down","degree":-4,"n":61,"share":0.0009,"finality":0.0328,"modes":{"1":18,"2":6,"3":7,"4":2,"5":1,"6":1,"7":3,"8":23},"closes":{"1":2}}, species: [
+
+  ] },
+  { ...{"key":"step down @5","motion":"step down","degree":5,"n":54,"share":0.0008,"finality":0.0741,"modes":{"1":12,"2":1,"3":15,"5":3,"7":15,"8":8},"closes":{"5":2,"7":1,"8":1}}, species: [
+
+  ] },
 ];
 
-// THE index, built once and shared. Every consumer joins on the family key, so
-// each one that builds its own Map is a third copy of the same lookup — the
-// renderer had one, the score builder needed one, and any caller wanting a
-// family's statistics had to write a fourth.
-let _index: Map<string, CadentiaFamilia> | null = null;
+// THE indexes, built once and shared. Every consumer joins on a key, so each
+// one that builds its own Map is another copy of the same lookup.
+let _genera: Map<string, CadentiaGenus> | null = null;
+let _species: Map<string, CadentiaSpecies> | null = null;
 
-/**
- * The catalogued family for a cadence signature, or undefined when the
- * signature falls below the table's floor. Deferred: a caller who never asks
- * does not pay for the Map.
- */
-export function cadentiaFamilia(key: string): CadentiaFamilia | undefined {
-  if (!_index) _index = new Map(CADENTIAE.map((f) => [f.key, f]));
-  return _index.get(key);
+/** The tabled genus for a genus key, or undefined below the floor. */
+export function cadentiaGenus(key: string): CadentiaGenus | undefined {
+  if (!_genera) _genera = new Map(CADENTIAE.map((g) => [g.key, g]));
+  return _genera.get(key);
+}
+
+/** The tabled species for a species key, or undefined below the floor. A
+ *  species key names its genus (the last two steps), so one index serves. */
+export function cadentiaSpecies(key: string): CadentiaSpecies | undefined {
+  if (!_species) _species = new Map(CADENTIAE.flatMap((g) => g.species.map((s) => [s.key, s] as const)));
+  return _species.get(key);
 }

@@ -14,7 +14,8 @@ import type { Neume, NeumeShape } from "./neume.js";
 import { buildGamut } from "./gamut.js";
 import type { GamutOptions } from "./gamut.js";
 import { getMode } from "./modes.js";
-import type { ModeData, ModeProfile, CadenceFigure } from "./modes.js";
+import type { ModeData, ModeProfile } from "./modes.js";
+import { modusCadentiae, type ModusCadentiae, type ModusGenus } from "./cadentiae.js";
 import { getTone, getDifferentia } from "./data/tones.js";
 import type { GuidonianEntry, GuidonianVariant } from "./guido.js";
 
@@ -55,14 +56,15 @@ export interface TunedNote {
 
 /**
  * A mode's reference data (ModeData), enriched with its structural pitches
- * tuned through the temperamentum that returned it. `modus()`. Cadence figures
- * stay in their diatonic-step form on `cadences` — they are transposition-
- * relative by design.
+ * tuned through the temperamentum that returned it. `modus()`. `cadences` is
+ * the mode's trimmed set from the corpus catalogue, derived at call — a
+ * measurement riding the verb, where the reference data above is fixed.
  */
 export interface Modus extends ModeData {
   finalis: TunedNote;         // the final, tuned
   reciting: TunedNote;        // the tenor / reciting tone, tuned
   ambitusNotes: TunedNote[];  // every diatonic step across the mode's range
+  cadences: ModusCadentiae;   // the top five genera the mode closes on, with their species
 }
 
 export interface Temperamentum {
@@ -248,6 +250,7 @@ export function buildTemper(input?: TemperamentumInput): Temperamentum {
         finalis: tuned(data.final),
         reciting: tuned(data.tenor),
         ambitusNotes,
+        cadences: modusCadentiae(data),
       };
     },
 
@@ -284,7 +287,8 @@ export type {
   IntervalQuality,
   ModeData,
   ModeProfile,
-  CadenceFigure,
+  ModusCadentiae,
+  ModusGenus,
   GamutOptions,
   GuidonianEntry,
   GuidonianVariant,

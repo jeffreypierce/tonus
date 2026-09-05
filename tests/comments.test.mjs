@@ -214,12 +214,12 @@ describe("docs — a corpus measurement the library can answer for itself", () =
 
   test("the cadence catalogue's size and population are quoted as they stand", async () => {
     const { CADENTIAE, CADENTIAE_POPULATION } = await import("../dist/index.js");
-    // 110 families over 26,787 ends. Both are stated in tuning.md, and the
-    // family count again in score.md where `rara` is explained — the number
-    // that was 122 in three places at once.
+    // The genus count and the population. Both are stated in tuning.md, and
+    // the genus count again in score.md where `rara` is explained — the
+    // number that was 122 in three places at once.
     for (const name of ["tuning.md", "score.md"]) {
       assert.ok(states(page(name), CADENTIAE.length),
-        `${name} does not state the catalogue's ${CADENTIAE.length} families`);
+        `${name} does not state the catalogue's ${CADENTIAE.length} genera`);
     }
     assert.ok(states(page("tuning.md"), CADENTIAE_POPULATION.ends),
       `tuning.md does not state the population's ${CADENTIAE_POPULATION.ends} ends`);

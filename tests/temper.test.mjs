@@ -640,7 +640,9 @@ describe("modus", () => {
     const m = buildTemper({ mode: 1 }).modus(1);
     assert.equal(m.nomen, "Protus Authenticus");
     assert.equal(m.final, 2); // raw pc still present
-    assert.ok(Array.isArray(m.cadences)); // diatonic cadence figures untouched
+    // The corpus set rides the verb: five genera, derived at call.
+    assert.equal(m.cadences.genera.length, 5);
+    assert.ok(m.cadences.ends > 0);
   });
 });
 

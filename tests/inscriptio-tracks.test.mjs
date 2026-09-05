@@ -60,17 +60,19 @@ describe("inscriptio — the tonarium track (moderna)", () => {
   });
 
   test("labels each confident cadence by its in-mode share, and keys it in the margin", () => {
-    const confident = score.cadences.filter((c) => c.confidence >= 0.45 && c.signature);
+    const confident = score.cadences.filter((c) => c.confidence >= 0.45);
     assert.ok(confident.length > 0, "the subject has confident cadences");
 
-    // The KEY moves to the group: still the family's name and still the join
-    // back to CADENTIAE, but no longer the thing the reader is handed.
+    // The KEYS ride the group: both levels, the join back to CADENTIAE, but
+    // not the thing the reader is handed.
     for (const cad of confident) {
-      assert.ok(tracked.svg.includes(`data-cadentia="${cad.signature}"`),
-        `signature "${cad.signature}" keys its group`);
-      assert.ok(!tracked.svg.includes(`>${cad.signature}</text>`),
-        `signature "${cad.signature}" is no longer printed as the label`);
+      assert.ok(tracked.svg.includes(`data-genus="${cad.genus}" data-species="${cad.species}"`),
+        `"${cad.genus}" / "${cad.species}" key their group`);
+      assert.ok(!tracked.svg.includes(`>${cad.species}</text>`),
+        `species "${cad.species}" is not printed as the label`);
     }
+    // A species prints its own share only where it clears the floor in the mode.
+    assert.ok(/data-species-share="[\d.]+%"/.test(tracked.svg), "some species clears the floor in mode 7");
 
     // What the READER gets is the measure: lift against the chant's own mode
     // ("×2.1"), or the plain corpus share where the mode is unknown or the
