@@ -212,6 +212,52 @@ export function nomenOf(motion: CadenceMotion, degree: number, role: CadenceTarg
   return `${motion} ${landingWord(degree, role)}`;
 }
 
+/**
+ * The English of every word a `nomen` can contain: the eight motions, the
+ * mode's two readings, and the degrees above and below the final. The Latin
+ * is the name; this is its gloss, for a page that has to explain "cadens
+ * finalis" to a reader. A motion's gloss ends on its preposition and a
+ * landing's begins with its article, so the two words of a name join into
+ * one phrase — `glossOf` does the joining.
+ */
+export const CADENTIA_LABEL: Readonly<Record<string, string>> = Object.freeze({
+  sola: "a landing alone on",
+  insistens: "standing on",
+  surgens: "rising a step onto",
+  cadens: "falling a step onto",
+  transcendens: "climbing over a third onto",
+  translabens: "sliding down a third onto",
+  exsiliens: "springing up a leap onto",
+  desiliens: "leaping down onto",
+  finalis: "the final",
+  tenor: "the tenor",
+  subfinalis: "the note below the final",
+  secunda: "the second",
+  tertia: "the third",
+  quarta: "the fourth",
+  quinta: "the fifth",
+  sexta: "the sixth",
+  septima: "the seventh",
+  octava: "the octave",
+  nona: "the ninth",
+  decima: "the tenth",
+  subsecunda: "the second below",
+  subtertia: "the third below",
+  subquarta: "the fourth below",
+  subquinta: "the fifth below",
+  subsexta: "the sixth below",
+  subseptima: "the seventh below",
+  suboctava: "the octave below",
+  subnona: "the ninth below",
+  subdecima: "the tenth below",
+});
+
+/** A `nomen` in English: "cadens finalis" → "falling a step onto the final".
+ *  A word the table does not know (a landing past the tenth) passes through. */
+export function glossOf(nomen: string): string {
+  return nomen.split(" ").map((w) => CADENTIA_LABEL[w] ?? w).join(" ");
+}
+
 /** The genus key for a tail: its motion and its landing. */
 export function genusKey(tail: readonly number[]): string {
   return `${motionOf(tail)} @${tail[tail.length - 1] ?? 0}`;

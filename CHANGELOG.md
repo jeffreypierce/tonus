@@ -31,7 +31,10 @@ One cadence catalogue.
   (`subfinalis`, `secunda`, `tertia`, `quarta`, `quinta`). Together they are
   `nomen`, the two-word name a page prints: `cadens finalis`, `insistens
   tenor`, `desiliens quinta`. The third note role is `alia`, on `Cadence.
-  target`, `NoteRole` and `ModusGenus.role` alike.
+  target`, `NoteRole` and `ModusGenus.role` alike. The English sits beside
+  it: `CADENTIA_LABEL` on the appendix glosses every word a `nomen` can
+  contain, and `glossOf(nomen)` reads a whole name — "cadens finalis" is
+  "falling a step onto the final".
 - **`Cadence`** loses `formula`, `signature`, `shape` and `arrival`, and gains
   `species`, `tail`, `genus`, `motion`, `degree` and `nomen`. `finality` is the
   species' where the species is tabled, else the genus'; `confidence` rises
