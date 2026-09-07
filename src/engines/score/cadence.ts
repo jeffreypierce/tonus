@@ -18,7 +18,7 @@
 //
 //   species  the whole collapsed tail, at most TAIL notes: "2,1,0" — the
 //            cadence, what the melody did;
-//   genus    the last motion and the landing: "step down @0" — the landing,
+//   genus    the last motion and the landing: "cadens @0" — the landing,
 //            the level at which corpus counts hold per mode.
 //
 // Letter steps, not semitones, because the same gesture on a different final
@@ -30,7 +30,7 @@
 //
 // Repeats. Interior repeats collapse (G G A G is G A G), so a note reiterated
 // on the way in does not multiply spellings. The LANDING's own repeat is kept,
-// once: A G G stays "repeat @0". Collapsing that too would fold the
+// once: A G G stays "insistens @0". Collapsing that too would fold the
 // reiterated close — 18% of all phrase-ends — into the motion before it.
 //
 // The received figures (Niedermeyer & d'Ortigue, Bragers) are no longer data
@@ -39,19 +39,29 @@
 import type { Phrase } from "./types.js";
 import type { ModeData } from "../temper/data/modes.js";
 
-export type CadenceTarget = "finalis" | "tenor" | "other";
+export type CadenceTarget = "finalis" | "tenor" | "alia";
 export type CadenceApproach = "descending" | "ascending" | "unison";
-/** The last motion of a close, in letter steps: one is a step, two a third,
- *  three or more a leap; "none" is a landing with no gesture. */
+/**
+ * The last motion of a close, in letter steps, named the way a neume is: one
+ * descriptive word, the direction in the sense of the verb and the size in
+ * its root (ruled 2026-09-06). A step is the bare verb, rising or falling;
+ * a third crosses one note, climbing over or sliding over; a leap springs.
+ *
+ *   insistens     standing on it — the repeated landing
+ *   surgens       rising a step          cadens        falling a step
+ *   transcendens  climbing over a third  translabens   sliding over a third
+ *   exsiliens     springing up a leap    desiliens     leaping down
+ *   sola          a landing alone — a one-note phrase, no gesture
+ */
 export type CadenceMotion =
-  | "none"
-  | "repeat"
-  | "step up"
-  | "step down"
-  | "third up"
-  | "third down"
-  | "leap up"
-  | "leap down";
+  | "sola"
+  | "insistens"
+  | "surgens"
+  | "cadens"
+  | "transcendens"
+  | "translabens"
+  | "exsiliens"
+  | "desiliens";
 
 export interface Cadence {
   /** Index of the phrase this cadence closes. */
@@ -87,7 +97,7 @@ export interface Cadence {
   species: string;
   /** The species as numbers — what `species` joins. */
   tail: number[];
-  /** The genus key: `"<motion> @<degree>"`, e.g. "step down @0". */
+  /** The genus key: `"<motion> @<degree>"`, e.g. "cadens @0". */
   genus: string;
   /** The last motion into the landing. */
   motion: CadenceMotion;
@@ -95,6 +105,9 @@ export interface Cadence {
    *  0 the final, -1 the note below, +2 the third, +4 the fifth. Not
    *  octave-reduced: the fifth above and the fourth below are different. */
   degree: number;
+  /** The two-word name, "cadens finalis": the motion and the landing's word
+   *  in the chant's mode. The printed form; `genus` stays the key. */
+  nomen: string;
   /**
    * The catalogued finality: the share of THIS SPECIES' corpus occurrences
    * that fall at a final close, or the genus' where the species is below the
@@ -140,16 +153,63 @@ export function collapseTail(positions: number[]): number[] {
   return out;
 }
 
+/**
+ * The key of a phrase-end from its window as final-relative LETTER STEPS
+ * (0 the final, resolution last) — the pure core shared by every keyer, so a
+ * consumer that already has letter steps (the census blocks, the day's
+ * selection) keys exactly as `cadenceKeys` does, no second parser. Interior
+ * repeats collapse, the landing's own repeat is kept once, the tail is the
+ * last TAIL of that.
+ */
+export function genusFromSteps(steps: readonly number[]): {
+  species: string; tail: number[]; genus: string; motion: CadenceMotion; degree: number;
+} {
+  const tail = collapseTail(steps.slice()).slice(-TAIL);
+  return {
+    species: tail.join(","),
+    tail,
+    genus: genusKey(tail),
+    motion: motionOf(tail),
+    degree: tail[tail.length - 1] ?? 0,
+  };
+}
+
 /** The motion of the last interval of a tail, in letter steps. */
 export function motionOf(tail: readonly number[]): CadenceMotion {
-  if (tail.length < 2) return "none";
+  if (tail.length < 2) return "sola";
   const d = tail[tail.length - 1]! - tail[tail.length - 2]!;
-  if (d === 0) return "repeat";
-  const dir = d > 0 ? "up" : "down";
+  if (d === 0) return "insistens";
+  const up = d > 0;
   const m = Math.abs(d);
-  if (m === 1) return `step ${dir}`;
-  if (m === 2) return `third ${dir}`;
-  return `leap ${dir}`;
+  if (m === 1) return up ? "surgens" : "cadens";
+  if (m === 2) return up ? "transcendens" : "translabens";
+  return up ? "exsiliens" : "desiliens";
+}
+
+/** The landing's names by degree above the final; below, "sub-" is prefixed
+ *  (subfinalis, the note below the final, is the received word; subtertia
+ *  and subquarta follow it). */
+const ORDINALES = ["finalis", "secunda", "tertia", "quarta", "quinta", "sexta",
+  "septima", "octava", "nona", "decima"];
+
+/**
+ * The landing's word: the mode's reading where it has one (finalis, tenor),
+ * else the degree itself. With the motion it makes the two-word name of a
+ * genus — "cadens finalis", "insistens tenor", "desiliens quinta" — the
+ * printed form, while `genus` stays the key.
+ */
+export function landingWord(degree: number, role: CadenceTarget): string {
+  if (role === "finalis") return "finalis";
+  if (role === "tenor") return "tenor";
+  const m = Math.abs(degree);
+  const ord = ORDINALES[m] ?? `${m + 1}a`;
+  if (degree < 0) return m === 1 ? "subfinalis" : `sub${ord}`;
+  return ord;
+}
+
+/** The two-word name of a close: its motion and its landing's word. */
+export function nomenOf(motion: CadenceMotion, degree: number, role: CadenceTarget): string {
+  return `${motion} ${landingWord(degree, role)}`;
 }
 
 /** The genus key for a tail: its motion and its landing. */
@@ -161,7 +221,7 @@ interface WindowNote {
   pc: number;
   midi: number;
   spn: string;
-  role: "finalis" | "tenor" | "other" | null;
+  role: "finalis" | "tenor" | "alia" | null;
   syllableIndex: number;
   noteIndex: number;
 }
@@ -189,10 +249,10 @@ function phraseFinalWindow(phrase: Phrase): WindowNote[] {
 }
 
 function classifyTarget(final: WindowNote | undefined): CadenceTarget {
-  if (!final) return "other";
+  if (!final) return "alia";
   if (final.role === "finalis") return "finalis";
   if (final.role === "tenor") return "tenor";
-  return "other";
+  return "alia";
 }
 
 function classifyApproach(window: WindowNote[]): CadenceApproach {
@@ -233,7 +293,7 @@ export interface CadenceKeyEvent {
   species: string;
   /** The species as numbers. */
   tail: number[];
-  /** The genus key, "step down @0". */
+  /** The genus key, "cadens @0". */
   genus: string;
   motion: CadenceMotion;
   /** Signed letter steps of the landing from the chant's sounded final. */
@@ -278,13 +338,10 @@ export function cadenceKeys(
       seg.unshift(p - final);
     }
     if (broken) continue;
-    const tail = collapseTail(seg).slice(-TAIL);
+    const g = genusFromSteps(seg);
     events.push({
-      species: tail.join(","),
-      tail,
-      genus: genusKey(tail),
-      motion: motionOf(tail),
-      degree: tail[tail.length - 1]!,
+      ...g,
+      degree: g.tail[g.tail.length - 1]!,
       isFinal: rows[i]!.divisio === "::" || !next,
       phraseIndex: rows[i]!.phraseIndex,
     });
@@ -328,7 +385,7 @@ export function detectCadences(
 
     // A clean landing on finalis/tenor is confident on its own; no modal role
     // is a weak baseline. The builder raises this by what the corpus knows.
-    const confidence = target === "other" ? 0.3 : 0.6;
+    const confidence = target === "alia" ? 0.3 : 0.6;
     let steps: Array<number | null> = [];
 
     if (modeData && (target === "finalis" || target === "tenor")) {
@@ -359,8 +416,9 @@ export function detectCadences(
       species: ev?.species ?? "0",
       tail,
       genus: ev?.genus ?? genusKey(tail),
-      motion: ev?.motion ?? "none",
+      motion: ev?.motion ?? "sola",
       degree: ev?.degree ?? 0,
+      nomen: nomenOf(ev?.motion ?? "sola", ev?.degree ?? 0, target),
       // Left null here on purpose. Detection is a pure pass over the phrase
       // tree; the corpus catalogue is generated data, and reaching for it from
       // inside the detector would put a baked artifact in the detection path.

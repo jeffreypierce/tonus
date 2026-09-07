@@ -346,7 +346,7 @@ interface ChantTabulaRow {
 
   // step fields
   degree: number | null;
-  role: "finalis" | "tenor" | "other" | null;
+  role: "finalis" | "tenor" | "alia" | null;
   name: string | null; // Guidonian short name
   nomen: string | null; // Guidonian compound name, "Delasolre"
   hand: { finger: Finger; region: Region } | null;
@@ -806,10 +806,27 @@ tail is read at two levels:
 - **`species`** is the whole collapsed tail, at most three notes: `"2,1,0"`.
   The cadence, what the melody did. Interior repeats collapse (G G A G is
   G A G); the landing's own repeat is kept once, so A G G is `"1,0,0"`.
-- **`genus`** is the last motion and the landing: `"step down @0"`. The
+- **`genus`** is the last motion and the landing: `"cadens @0"`. The
   landing, and the level at which corpus counts hold per mode. `motion` and
   `degree` are its two halves, with `degree` in signed letter steps from the
   final: 0 the final, -1 the note below, +2 the third, +4 the fifth.
+
+The motion is named the way a neume is, one descriptive word, the direction
+in the sense of the verb and the size in its root:
+
+| motion | | |
+|---|---|---|
+| `insistens` | standing on it | the repeated landing |
+| `surgens` / `cadens` | rising / falling | a step |
+| `transcendens` / `translabens` | climbing over / sliding over | a third, one note crossed |
+| `exsiliens` / `desiliens` | springing up / leaping down | a leap |
+| `sola` | alone | a one-note phrase, a landing with no gesture |
+
+The landing's word is the mode's reading where it has one, `finalis` or
+`tenor`, else the degree itself: `subfinalis`, `secunda`, `tertia`, `quarta`,
+`quinta` (below the final, `sub-` is prefixed). Together they are **`nomen`**,
+the two-word name a page prints: `cadens finalis`, `insistens tenor`,
+`desiliens quinta`. The key stays `genus`; the name is its reading in a mode.
 
 Both join [`CADENTIAE`](index.md#the-appendix), the mined catalogue, which
 tables the 48 genera above a floor of fifty corpus occurrences and, under
@@ -836,7 +853,7 @@ species adds 0.4, a tabled genus alone 0.2.
 interface Cadence {
   phraseIndex: number;
   divisio: string; // the bar that ends the phrase ("::" = final cadence)
-  target: "finalis" | "tenor" | "other";
+  target: "finalis" | "tenor" | "alia";
   approach: "descending" | "ascending" | "unison";
   pcs: number[]; // observed pitch classes, resolution last
   steps: (number | null)[]; // diatonic steps from the target; [] with no mode
@@ -844,9 +861,10 @@ interface Cadence {
   notes: [number, number, number][]; // [phrase, syllable, note] positions
   species: string; // the collapsed tail from the sounded final, "2,1,0"
   tail: number[]; // the species as numbers
-  genus: string; // "<motion> @<degree>", e.g. "step down @0"
-  motion: "none" | "repeat" | "step up" | "step down" | "third up" | "third down" | "leap up" | "leap down";
+  genus: string; // "<motion> @<degree>", e.g. "cadens @0"
+  motion: "sola" | "insistens" | "surgens" | "cadens" | "transcendens" | "translabens" | "exsiliens" | "desiliens";
   degree: number; // SIGNED letter steps from the chant's own closing note
+  nomen: string; // the two-word name in the chant's mode, "cadens finalis"
   finality: number | null; // the catalogued finality; null below both floors
 }
 ```

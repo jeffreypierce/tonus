@@ -66,8 +66,8 @@ describe("inscriptio — the tonarium track (moderna)", () => {
     // The KEYS ride the group: both levels, the join back to CADENTIAE, but
     // not the thing the reader is handed.
     for (const cad of confident) {
-      assert.ok(tracked.svg.includes(`data-genus="${cad.genus}" data-species="${cad.species}"`),
-        `"${cad.genus}" / "${cad.species}" key their group`);
+      assert.ok(tracked.svg.includes(`data-genus="${cad.genus}" data-nomen="${cad.nomen}" data-species="${cad.species}"`),
+        `"${cad.genus}" / "${cad.nomen}" / "${cad.species}" key their group`);
       assert.ok(!tracked.svg.includes(`>${cad.species}</text>`),
         `species "${cad.species}" is not printed as the label`);
     }

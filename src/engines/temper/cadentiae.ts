@@ -15,14 +15,17 @@ import {
   type CadentiaSpecies,
 } from "../../data/cadentiae.js";
 import type { ModeData } from "./data/modes.js";
-import type { CadenceMotion } from "../score/cadence.js";
+import { nomenOf, type CadenceMotion } from "../score/cadence.js";
 
-export type CadentiaRole = "finalis" | "tenor" | "other";
+export type CadentiaRole = "finalis" | "tenor" | "alia";
 
 /** One genus of the mode's trimmed set. */
 export interface ModusGenus {
-  /** The genus key, "step down @0". */
+  /** The genus key, "cadens @0". */
   key: string;
+  /** The two-word name, "cadens finalis": the motion and the landing's word
+   *  in this mode. The printed form; `key` stays the key. */
+  nomen: string;
   motion: CadenceMotion;
   /** The landing in signed letter steps from the final: 0 the final, -1 below, +4 the fifth. */
   degree: number;
@@ -97,7 +100,7 @@ export function degreeRole(degree: number, mode: ModeData): CadentiaRole {
   const pc = mode.scalePcs[((degree % 7) + 7) % 7]!;
   if (pc === mode.final) return "finalis";
   if (pc === mode.tenor) return "tenor";
-  return "other";
+  return "alia";
 }
 
 /**
@@ -120,6 +123,7 @@ export function modusCadentiae(mode: ModeData): ModusCadentiae {
     .slice(0, MODUS_GENERA)
     .map((g): ModusGenus => ({
       key: g.key,
+      nomen: nomenOf(g.motion, g.degree, degreeRole(g.degree, mode)),
       motion: g.motion,
       degree: g.degree,
       role: degreeRole(g.degree, mode),

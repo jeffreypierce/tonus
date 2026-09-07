@@ -910,7 +910,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       const speciesShare = data.mode != null && speciesTabledInMode(species, data.mode)
         ? pctLabel((species!.modes[String(data.mode)] ?? 0) / (CADENTIAE_POPULATION.byMode[String(data.mode)] ?? 1))
         : null;
-      g.push(`<g data-genus="${esc(cad.genus)}" data-species="${esc(cad.species)}"` +
+      g.push(`<g data-genus="${esc(cad.genus)}" data-nomen="${esc(cad.nomen)}" data-species="${esc(cad.species)}"` +
         `${speciesShare ? ` data-species-share="${speciesShare}"` : ""}` +
         `${lift ? ` data-lift="${lift}"` : ""}>`);
 

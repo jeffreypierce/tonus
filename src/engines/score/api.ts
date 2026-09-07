@@ -183,5 +183,5 @@ export type { Cadence, CadenceTarget, CadenceApproach, CadenceMotion, CadenceKey
 // THE cadence family key, exported as a FUNCTION and not only a type: the
 // census and the CADENTIAE miner need to key a flat tabula, and re-deriving
 // the algorithm is exactly the fork this shared export forbids.
-export { cadenceKeys } from "./cadence.js";
+export { cadenceKeys, genusFromSteps, landingWord, nomenOf } from "./cadence.js";
 export type { Modulation } from "./modulation.js";

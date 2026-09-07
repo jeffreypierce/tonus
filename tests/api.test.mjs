@@ -177,7 +177,7 @@ describe("the appendix (the export law)", () => {
     // CADENTIAE — the corpus cadence catalogue: genera, commonest first, the
     // step onto the final leading, statistics in sane ranges.
     assert.ok(Array.isArray(CADENTIAE) && CADENTIAE.length > 40);
-    assert.equal(CADENTIAE[0].key, "step down @0");
+    assert.equal(CADENTIAE[0].key, "cadens @0");
     assert.equal(CADENTIAE[0].degree, 0);
     for (const g of CADENTIAE) {
       assert.ok(g.n >= 50 && g.finality >= 0 && g.finality <= 1);
@@ -297,7 +297,8 @@ describe("the appendix (the export law)", () => {
       assert.equal(g.n, table.modes["1"]);
       assert.ok(Math.abs(g.share - g.n / set.ends) < 0.0001);
       assert.ok(g.species.length >= 1 && g.species.length <= 3);
-      assert.ok(["finalis", "tenor", "other"].includes(g.role));
+      assert.ok(["finalis", "tenor", "alia"].includes(g.role));
+      assert.equal(g.nomen, `${g.motion} ${g.role === "alia" ? g.nomen.split(" ")[1] : g.role}`);
     }
     // Commonest first, and the mode's tenor in its set (measured, §5 of the plan).
     assert.ok(set.genera[0].n >= set.genera[1].n);

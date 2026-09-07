@@ -26,7 +26,7 @@ export interface Step {
   variants: StepVariant[];
   hand: { finger: Finger; region: Region } | null;
   degree: number | null;                            // 1–7 diatonic degree in mode
-  role: "finalis" | "tenor" | "other" | null;
+  role: "finalis" | "tenor" | "alia" | null;
 }
 
 // SPN letter fallback (e.g. "D" for D4, pc 2) for out-of-gamut pitches.
@@ -53,7 +53,7 @@ export function toStep(midi: number, scala?: Scale): Step {
       if (degree != null) {
         if (pc === modeData.final) role = "finalis";
         else if (pc === modeData.tenor) role = "tenor";
-        else role = "other";
+        else role = "alia";
       }
     }
   }

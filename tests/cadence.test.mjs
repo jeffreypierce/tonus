@@ -46,24 +46,27 @@ describe("the cadence key", () => {
   });
 
   test("motion reads the last interval in letter steps", () => {
-    assert.equal(motionOf([1, 0]), "step down");
-    assert.equal(motionOf([-1, 0]), "step up");
-    assert.equal(motionOf([2, 0]), "third down");
-    assert.equal(motionOf([3, 0]), "leap down");
-    assert.equal(motionOf([1, 0, 0]), "repeat");
-    assert.equal(motionOf([0]), "none");
+    assert.equal(motionOf([1, 0]), "cadens");
+    assert.equal(motionOf([-1, 0]), "surgens");
+    assert.equal(motionOf([2, 0]), "translabens");
+    assert.equal(motionOf([-2, 0]), "transcendens");
+    assert.equal(motionOf([3, 0]), "desiliens");
+    assert.equal(motionOf([-3, 0]), "exsiliens");
+    assert.equal(motionOf([1, 0, 0]), "insistens");
+    assert.equal(motionOf([0]), "sola");
   });
 
   test("the species is the last TAIL collapsed notes from the sounded final", () => {
     assert.equal(TAIL, 3);
     // f g f e d in mode 1, final D: positions 2 3 2 1 0 — species is the
-    // last three, "2,1,0"; genus "step down @0".
+    // last three, "2,1,0"; genus "cadens @0".
     const score = buildScore(makeChant(MODE1_FINAL, "1"));
     const last = score.cadences.at(-1);
     assert.equal(last.species, "2,1,0");
     assert.deepEqual(last.tail, [2, 1, 0]);
-    assert.equal(last.genus, "step down @0");
-    assert.equal(last.motion, "step down");
+    assert.equal(last.genus, "cadens @0");
+    assert.equal(last.motion, "cadens");
+    assert.equal(last.nomen, "cadens finalis");
     assert.equal(last.degree, 0);
   });
 
@@ -95,8 +98,9 @@ describe("the cadence key", () => {
     const score = buildScore(makeChant("(c4) one(d.) (;) clos(e) ing(d.) (::)", "1"));
     const first = score.cadences[0];
     assert.equal(first.species, "0");
-    assert.equal(first.genus, "none @0");
-    assert.equal(first.motion, "none");
+    assert.equal(first.genus, "sola @0");
+    assert.equal(first.motion, "sola");
+    assert.equal(first.nomen, "sola finalis");
   });
 });
 
@@ -122,16 +126,17 @@ describe("detectCadences", () => {
     // In letter steps from the sounded final that A sits a fourth BELOW D —
     // the degree is signed and not octave-reduced, so it reads -3, not +4.
     assert.equal(medial.degree, -3);
-    assert.equal(medial.genus, "repeat @-3");
+    assert.equal(medial.genus, "insistens @-3");
+    assert.equal(medial.nomen, "insistens tenor");
   });
 
   test("the reiterated final is a repeat, not a step", () => {
     // e d d — mi-re landing on the final and repeating it. The landing's
-    // repeat survives collapsing, so this is "repeat @0", not "step down @0".
+    // repeat survives collapsing, so this is "insistens @0", not "cadens @0".
     const score = buildScore(makeChant("(c4) mi(e) re(d) peat(d.) (::)", "1"));
     const last = score.cadences.at(-1);
     assert.equal(last.species, "1,0,0");
-    assert.equal(last.genus, "repeat @0");
+    assert.equal(last.genus, "insistens @0");
     assert.deepEqual(last.steps, [1, 0, 0]);
   });
 
@@ -141,7 +146,7 @@ describe("detectCadences", () => {
     assert.equal(last.target, "finalis");
     assert.deepEqual(last.steps, [0, -1, 0]);
     assert.equal(last.species, "0,-1,0");
-    assert.equal(last.genus, "step up @0");
+    assert.equal(last.genus, "surgens @0");
   });
 
   test("one cadence per phrase-ending divisio", () => {
@@ -222,11 +227,11 @@ describe("CADENTIAE — one table, two levels", () => {
     // The complaint that started the re-key: F E F G onto G printed "rara"
     // because its four-note semitone spelling was one of 73 under the floor.
     // In letter steps from G it is -1 -2 -1 0; the tail is "-2,-1,0", a
-    // tabled species of "step up @0", the fourth genus of mode 8.
+    // tabled species of "surgens @0", the fourth genus of mode 8.
     const score = buildScore(makeChant("(c4) f(f) e(e) f(f) g(g.) (::)", "8"));
     const last = score.cadences.at(-1);
     assert.equal(last.species, "-2,-1,0");
-    assert.equal(last.genus, "step up @0");
+    assert.equal(last.genus, "surgens @0");
     assert.ok(cadentiaSpecies(last.species), "tabled as a species");
     assert.ok((cadentiaGenus(last.genus).modes["8"] ?? 0) > 500);
   });

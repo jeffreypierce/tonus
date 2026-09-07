@@ -211,7 +211,7 @@ interface Step {
   variants: StepVariant[]; // available mutations across hexachords
   hand: { finger: string; region: string } | null; // Guidonian hand position
   degree: number | null; // 1–7 diatonic degree in mode
-  role: "finalis" | "tenor" | "other" | null;
+  role: "finalis" | "tenor" | "alia" | null;
 }
 ```
 
@@ -451,10 +451,11 @@ interface ModusCadentiae {
 }
 
 interface ModusGenus {
-  key: string;      // "step down @0"
-  motion: string;   // "step down"
+  key: string;      // "cadens @0"
+  nomen: string;    // "cadens finalis" — the two-word name, the printed form
+  motion: string;   // "cadens"
   degree: number;   // 0 = the final, -1 = below, +4 = the fifth
-  role: "finalis" | "tenor" | "other"; // the mode's reading of the degree
+  role: "finalis" | "tenor" | "alia"; // the mode's reading of the degree
   n: number;        // the mode's phrase-ends landing here
   share: number;    // n / ends
   finality: number; // share of those at a final close, in this mode
@@ -463,10 +464,10 @@ interface ModusGenus {
 ```
 
 ```js
-tonus.temperamentum().modus(1).cadences.genera.map((g) => [g.key, g.role, g.share]);
-// [["repeat @0", "finalis", 0.171], ["step down @0", "finalis", 0.153],
-//  ["repeat @4", "tenor", 0.076], ["step down @-1", "other", 0.066],
-//  ["step up @0", "finalis", 0.049]]
+tonus.temperamentum().modus(1).cadences.genera.map((g) => [g.key, g.nomen, g.share]);
+// [["insistens @0", "insistens finalis", 0.171], ["cadens @0", "cadens finalis", 0.153],
+//  ["insistens @4", "insistens tenor", 0.076], ["cadens @-1", "cadens subfinalis", 0.066],
+//  ["surgens @0", "surgens finalis", 0.049]]
 ```
 
 The static `MODES` table carries no cadences: reference data is fixed, a
@@ -480,9 +481,10 @@ beside the table, not data; every one of them is a species of the key.
 sung corpus, keyed by what the melody did. The key is the closing tail in
 **letter steps** from the chant's own closing note, resolution last, signed,
 not octave-reduced ([score.md](score.md#one-key-two-levels)), read at two
-levels. A **genus** is the last motion and the landing, `"step down @0"`, the
+levels. A **genus** is the last motion and the landing, `"cadens @0"`, the
 level at which counts hold per mode. A **species** is the whole collapsed
-tail, at most three notes, `"2,1,0"`, the cadence itself.
+tail, at most three notes, `"2,1,0"`, the cadence itself. The motion words
+and the landing's word are [score.md's](score.md#one-key-two-levels).
 
 The 48 genera above a floor of 50 occurrences hold 99% of all phrase-ends;
 under them, 119 species above the same floor hold 96%. The rest is real but
@@ -491,7 +493,7 @@ too thin to characterise, and rarer than anything tabled.
 ```ts
 interface CadentiaGenus {
   key: string;      // "<motion> @<degree>" — the name, and the join
-  motion: string;   // "repeat" | "step down" | "step up" | "third down" | …
+  motion: string;   // "insistens" | "cadens" | "surgens" | "translabens" | …
   degree: number;   // SIGNED letter steps from the chant's own closing note
   n: number;        // corpus occurrences
   share: number;    // n over ALL phrase-ends (CADENTIAE_POPULATION.ends)
@@ -526,7 +528,7 @@ than the corpus at large.
 ```js
 import { CADENTIAE, CADENTIAE_POPULATION as POP } from "tonus";
 
-const genus = CADENTIAE.find((g) => g.key === "repeat @4");
+const genus = CADENTIAE.find((g) => g.key === "insistens @4");
 const lift = (g, mode) =>
   (g.modes[String(mode)] / POP.byMode[String(mode)]) / g.share;
 
