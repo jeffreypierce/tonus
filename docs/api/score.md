@@ -828,6 +828,20 @@ The landing's word is the mode's reading where it has one, `finalis` or
 the two-word name a page prints: `cadens finalis`, `insistens tenor`,
 `desiliens quinta`. The key stays `genus`; the name is its reading in a mode.
 
+The English sits beside the Latin. [`CADENTIA_LABEL`](index.md#the-appendix)
+glosses every word a `nomen` can contain, and `glossOf` reads a whole name:
+
+```js
+import { CADENTIA_LABEL } from "tonus";
+import { glossOf } from "tonus/dist/engines/score/api.js";
+
+CADENTIA_LABEL.cadens; // "falling a step onto"
+CADENTIA_LABEL.subfinalis; // "the note below the final"
+glossOf("cadens finalis"); // "falling a step onto the final"
+glossOf("insistens tenor"); // "standing on the tenor"
+glossOf("desiliens quinta"); // "leaping down onto the fifth"
+```
+
 Both join [`CADENTIAE`](index.md#the-appendix), the mined catalogue, which
 tables the 48 genera above a floor of fifty corpus occurrences and, under
 each, the species above the same floor. A close whose genus fails to join is

@@ -96,6 +96,10 @@ export { TONES } from "./engines/temper/data/tones.js";
 export type { PsalmTone, Differentia } from "./engines/temper/data/tones.js";
 export { CADENTIAE, CADENTIAE_POPULATION } from "./data/cadentiae.js";
 export type { CadentiaGenus, CadentiaSpecies } from "./data/cadentiae.js";
+// CADENTIA_LABEL glosses every word a cadence's `nomen` can contain — the
+// Latin is the name, this is its English, the way SEASON_LABEL sits beside
+// TEMPORA.
+export { CADENTIA_LABEL } from "./engines/score/cadence.js";
 
 // planet — the zodiac. ZODIACA is the whole table: it carries each sign's own
 // `sign` and `signum` beside its doctrine, so `ZODIACA[body.zodiac]` answers

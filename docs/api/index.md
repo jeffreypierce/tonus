@@ -101,6 +101,7 @@ table of codes or English keeps English.
 | `TONES`                | the psalm tones (Graduale Romanum appendix), with their differentiae                                  |
 | `CADENTIAE`            | the **mined** cadence catalogue (`CadentiaGenus`) — genera, their species, share, finality, per mode  |
 | `CADENTIAE_POPULATION` | the denominator behind every `share`: all phrase-ends, and the same total per mode                    |
+| `CADENTIA_LABEL`       | the English of every word a cadence's `nomen` can contain (`cadens` → "falling a step onto")          |
 
 There is one kind of cadence data, and it is mined: `CADENTIAE` is what the
 corpus was measured doing at every phrase-end, any target, so it accounts for

@@ -236,3 +236,38 @@ describe("CADENTIAE — one table, two levels", () => {
     assert.ok((cadentiaGenus(last.genus).modes["8"] ?? 0) > 500);
   });
 });
+
+describe("the English beside the Latin", () => {
+  test("every word a nomen can contain has a gloss", async () => {
+    const { CADENTIA_LABEL, landingWord, glossOf, nomenOf } = await import("../dist/engines/score/api.js");
+    const motions = ["sola", "insistens", "surgens", "cadens", "transcendens", "translabens", "exsiliens", "desiliens"];
+    for (const m of motions) assert.ok(CADENTIA_LABEL[m], `${m} has no gloss`);
+    for (const role of ["finalis", "tenor", "alia"]) {
+      // The ordinals run to the tenth (degree ±9); past that the degree
+      // itself is the word and passes through the gloss.
+      for (let d = -9; d <= 9; d++) {
+        const w = landingWord(d, role);
+        assert.ok(CADENTIA_LABEL[w], `${w} (degree ${d}, ${role}) has no gloss`);
+      }
+    }
+    // A whole name reads as one English phrase.
+    assert.equal(glossOf(nomenOf("cadens", 0, "finalis")), "falling a step onto the final");
+    assert.equal(glossOf("insistens tenor"), "standing on the tenor");
+    assert.equal(glossOf("desiliens quinta"), "leaping down onto the fifth");
+    assert.equal(glossOf("surgens subfinalis"), "rising a step onto the note below the final");
+    // Past the tenth the Latin passes through rather than inventing a word.
+    assert.equal(glossOf("cadens 12a"), "falling a step onto 12a");
+    assert.ok(Object.isFrozen(CADENTIA_LABEL));
+  });
+
+  test("the table is on the appendix, and reads a live cadence", async () => {
+    const { CADENTIA_LABEL, glossOf } = await import("../dist/index.js").then(async (m) => ({
+      CADENTIA_LABEL: m.CADENTIA_LABEL,
+      glossOf: (await import("../dist/engines/score/api.js")).glossOf,
+    }));
+    const score = buildScore(makeChant(MODE1_FINAL, "1"));
+    const last = score.cadences.at(-1);
+    assert.equal(last.nomen, "cadens finalis");
+    assert.equal(glossOf(last.nomen), `${CADENTIA_LABEL.cadens} ${CADENTIA_LABEL.finalis}`);
+  });
+});
