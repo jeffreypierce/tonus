@@ -32,8 +32,9 @@ import type { ChantTabulaRow } from "../tabula.js";
 import type { Cadence } from "../cadence.js";
 import type { Modulation } from "../modulation.js";
 import {
-  cadentiaFamilia, CADENTIAE_POPULATION, type CadentiaFamilia,
+  cadentiaGenus, cadentiaSpecies, CADENTIAE_POPULATION, type CadentiaGenus,
 } from "../../../data/cadentiae.js";
+import { genusShare, genusLift, speciesTabledInMode } from "../../temper/cadentiae.js";
 import {
   INK, STRATUM, CONF_FLOOR, nib, sc, esc, HOUSE_SERIF, HOUSE_MONO,
   sampleCubic, crSamples, velocityAt, velocityCeiling, ribbonPath, type Pt,
@@ -714,14 +715,13 @@ const MODE_FINAL: Record<number, string> = { 1: "D", 2: "D", 3: "E", 4: "E", 5: 
 const RAIL_ORDER = ["D", "E", "F", "G"]; // the finals ladder, D on the bottom
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
-// A family's occurrences in one mode must reach this before its in-mode share
-// is printed. Under it the figure is a rumour: one or two chants deciding a
-// percentage that reads like a measurement.
-const SHARE_FLOOR = 10;
-
 /**
- * What the label says about a cadence: HOW OFTEN THIS FAMILY ENDS A CHANT IN
- * THIS MODE. "3.9%" — the frequency a singer actually meets it at.
+ * What the label says about a cadence: HOW OFTEN THIS LANDING ENDS A PHRASE
+ * IN THIS MODE. "3.9%" — the frequency a singer actually meets it at. It is
+ * the GENUS share, always: the species (the whole tail) rides the group as
+ * data, with its own share where it clears the floor in the mode. The share
+ * comes from the same function the mode object reads
+ * (temper/cadentiae.ts), so the page and `modus(n).cadences` cannot drift.
  *
  * It used to print a lift, the family's in-mode share over its corpus share
  * ("×2.3"). That number answered a real question — is this close distinctive
@@ -740,13 +740,16 @@ const SHARE_FLOOR = 10;
  * "how common is this close in this chant's mode?", and re-basing per-phrase
  * would make two adjacent labels incomparable.
  */
-function cadenceLabel(fam: CadentiaFamilia | undefined, mode?: number): string {
-  // NO CATALOGUE FAMILY IS ITSELF A MEASUREMENT. CADENTIAE holds the families
-  // above a floor of fifty corpus occurrences — 110 of them — so a close that
-  // fails to join is not unknown, it is RARER than anything the catalogue
-  // records. A third of inked cadences land here, and leaving them bare made
-  // the rarest closes look like the ones the analysis had nothing to say
-  // about.
+const pctLabel = (n: number) => `${(n * 100).toFixed(1)}%`;
+
+function cadenceLabel(genus: CadentiaGenus | undefined, mode?: number): string {
+  // NO CATALOGUE CLASS IS ITSELF A MEASUREMENT. CADENTIAE tables the genera
+  // above a floor of fifty corpus occurrences, so a close that fails to join
+  // is not unknown, it is RARER than anything the catalogue records. At the
+  // genus level that is about one close in a hundred; it used to be a third,
+  // when the key was the exact four-note tail and one gesture lay scattered
+  // across seventy spellings — the commonest close in mode VIII printed as
+  // rare. Now the word means what it says.
   //
   // A WORD, NOT A NUMBER. The shares printed beside it run down to 0.2%, so
   // any numeral here would be read on their scale — and "<1%" put an
@@ -754,26 +757,16 @@ function cadenceLabel(fam: CadentiaFamilia | undefined, mode?: number): string {
   // cannot be compared to a percentage by accident, agrees with the cadentia
   // it describes, and sits in the Latin the rest of the page already speaks
   // (finalis, tenor, diapason).
-  if (!fam) return "rara";
-  const share = (n: number) => `${(n * 100).toFixed(1)}%`;
-  if (mode == null) return share(fam.share);
-  const inMode = fam.modes[String(mode)] ?? 0;
-  const modeEnds = CADENTIAE_POPULATION.byMode[String(mode)] ?? 0;
-  // Too thin to divide, or no mode population: fall back to the corpus share,
-  // which is the same KIND of number — a frequency, not a ratio.
-  if (inMode < SHARE_FLOOR || !modeEnds) return share(fam.share);
-  return share(inMode / modeEnds);
+  const share = genusShare(genus, mode);
+  return share == null ? "rara" : pctLabel(share);
 }
 
-/** The family's lift — its in-mode share against its corpus share. Not shown
+/** The genus' lift — its in-mode share against its corpus share. Not shown
  *  on the page (see cadenceLabel), but carried on the group so a caller can
  *  ask how DISTINCTIVE a close is rather than how common. */
-function cadenceLift(fam: CadentiaFamilia | undefined, mode?: number): string | null {
-  if (!fam || mode == null || !fam.share) return null;
-  const inMode = fam.modes[String(mode)] ?? 0;
-  const modeEnds = CADENTIAE_POPULATION.byMode[String(mode)] ?? 0;
-  if (inMode < SHARE_FLOOR || !modeEnds) return null;
-  return ((inMode / modeEnds) / fam.share).toFixed(2);
+function cadenceLift(genus: CadentiaGenus | undefined, mode?: number): string | null {
+  const lift = genusLift(genus, mode);
+  return lift == null ? null : lift.toFixed(2);
 }
 
 /** The tonarium track, every system. */
@@ -901,19 +894,25 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       const x0 = Math.min(...fig.map((n) => n.inkLeft));
       const x1 = Math.max(...fig.map((n) => n.inkRight));
       const op = 0.45 + 0.5 * cad.confidence;
-      const fam = cad.signature ? cadentiaFamilia(cad.signature) : undefined;
+      const genus = cadentiaGenus(cad.genus);
+      const species = cadentiaSpecies(cad.species);
       // The score builder already joined finality; read it rather than
       // re-deriving. A cadence handed in straight from the detector carries
       // null here, and falls back to the modal target — see TrackData.cadences.
       const closes = (cad.finality ?? (cad.target === "finalis" ? 1 : 0)) >= 0.5;
 
-      // The family key rides the group, not the page: the label now carries
-      // the measure, so the NAME lives here — machine-readable, the join back
-      // to CADENTIAE, and the provenance a margin gloss can print.
-      const lift = cadenceLift(fam, data.mode);
-      g.push(cad.signature
-        ? `<g data-cadentia="${esc(cad.signature)}"${lift ? ` data-lift="${lift}"` : ""}>`
-        : "<g>");
+      // The keys ride the group, not the page: the label carries the measure,
+      // so the NAMES live here — machine-readable, the join back to CADENTIAE,
+      // and the provenance a margin gloss can print. The species' own in-mode
+      // share rides too, only where the species clears the floor in the mode
+      // — printed when it clears, silent when it does not.
+      const lift = cadenceLift(genus, data.mode);
+      const speciesShare = data.mode != null && speciesTabledInMode(species, data.mode)
+        ? pctLabel((species!.modes[String(data.mode)] ?? 0) / (CADENTIAE_POPULATION.byMode[String(data.mode)] ?? 1))
+        : null;
+      g.push(`<g data-genus="${esc(cad.genus)}" data-nomen="${esc(cad.nomen)}" data-species="${esc(cad.species)}"` +
+        `${speciesShare ? ` data-species-share="${speciesShare}"` : ""}` +
+        `${lift ? ` data-lift="${lift}"` : ""}>`);
 
       // The figure's slice of its phrase's own samples — the same curve at
       // the same width, the ink change alone marking the claim.
@@ -945,7 +944,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       // reader gets the measure instead. It always FOLLOWS its figure; at the
       // system's edge it clamps to the margin rather than jumping to the
       // figure's other side. A light end-ticked bracket ties it to the span.
-      const lab = cadenceLabel(fam, data.mode);
+      const lab = cadenceLabel(genus, data.mode);
       if (lab && lands) {
         // The label sits UNDER THE CLOSING DOT, centred on it. The dot is
         // where the cadence lands — the one point the measure is about — so

@@ -2,6 +2,61 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.11.0 — 2026-09-06
+
+One cadence catalogue.
+
+### Changed
+
+- **One kind of cadence data, on one key.** The tonarium printed "rara" on
+  the commonest close in mode VIII, because the catalogue keyed a phrase-end
+  by its exact last four notes in semitones: one gesture lay scattered across
+  73 spellings, each under the floor, and 22% of all ends went uncatalogued.
+  The same thing was also described four ways — the treatise figures on
+  `ModeData.cadences`, the semitone `CADENTIAE`, the census dictionaries, and
+  the metrics' bar counts. A cadence is now keyed once, by its closing tail in
+  **letter steps** from the chant's sounded final, signed, not
+  octave-reduced, read at two levels: the **genus** (the last motion and the
+  landing, `"cadens @0"`), the level at which counts hold per mode, and
+  the **species** (the collapsed tail, at most three notes, `"2,1,0"`), the
+  cadence itself. Measured over 66,565 ends: 48 genera clear the floor and
+  hold 99% of them; under them 119 species hold 96%. `rara` now means what it
+  says, about one close in a hundred.
+- **The nomenclature is Latin, and descriptive.** A motion is one word, the
+  way a neume is, the direction in the sense of the verb and the size in its
+  root: `insistens` (the repeated landing), `surgens` / `cadens` (a step),
+  `transcendens` / `translabens` (a third, one note crossed), `exsiliens` /
+  `desiliens` (a leap), `sola` (a one-note phrase). The landing's word is the
+  mode's reading where it has one, `finalis` or `tenor`, else the degree
+  (`subfinalis`, `secunda`, `tertia`, `quarta`, `quinta`). Together they are
+  `nomen`, the two-word name a page prints: `cadens finalis`, `insistens
+  tenor`, `desiliens quinta`. The third note role is `alia`, on `Cadence.
+  target`, `NoteRole` and `ModusGenus.role` alike.
+- **`Cadence`** loses `formula`, `signature`, `shape` and `arrival`, and gains
+  `species`, `tail`, `genus`, `motion`, `degree` and `nomen`. `finality` is the
+  species' where the species is tabled, else the genus'; `confidence` rises
+  with the same evidence. `steps`, `pcs`, `target`, `approach` stay.
+- **`CADENTIAE`** is now `CadentiaGenus[]`, each carrying its tabled species,
+  with per-mode `closes` beside `modes` so an in-mode finality is one
+  division. `cadentiaFamilia` becomes `cadentiaGenus` and `cadentiaSpecies`.
+  `cadenceKeys` takes rows with `spn`, not `midi`, and emits both levels.
+- **`ModeData.cadences` and `CadenceFigure` are gone.** Reference data is
+  fixed; a cadence is a measurement, and measurements ride the verb:
+  `modus(n).cadences` returns the mode's top five genera by in-mode share,
+  each with its `nomen` and its three commonest species, derived from the
+  table at call. The
+  received figures of Niedermeyer & d'Ortigue and Bragers stand as a
+  reference note (`working/notes/cadentiae-tradita.md`); each is a species of
+  the key.
+- **The tonarium label** prints the genus' in-mode share, read from the same
+  function the mode object uses. The group carries `data-genus`,
+  `data-nomen` and `data-species` (`data-cadentia` is gone), and
+  `data-species-share` where the species clears the floor in the mode.
+- **The census re-mined on the genus key.** The `cadenceFinal` and
+  `cadenceMedial` blocks index the top fifteen genera of the one table, so a
+  census cell and the tonarium label name a close the same way. Population
+  unchanged.
+
 ## 0.10.3 — 2026-09-04
 
 The close ritards.

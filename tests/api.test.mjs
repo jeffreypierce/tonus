@@ -174,22 +174,20 @@ describe("the appendix (the export law)", () => {
     assert.ok(MODES instanceof Map && MODES.get(1).nomen === "Protus Authenticus");
     assert.equal(TONES.length, 9); // eight tones + Tonus Peregrinus
     assert.equal(TONES[0].nomen, "Tonus I");
-    // CADENTIAE — the corpus cadence catalogue: most frequent family first,
-    // the universal close leading, statistics in sane ranges.
-    assert.ok(Array.isArray(CADENTIAE) && CADENTIAE.length > 100);
-    assert.equal(CADENTIAE[0].key, "2,0,-2 @0");
-    assert.equal(CADENTIAE[0].arrival, 0);
-    for (const f of CADENTIAE) {
-      // FLOOR is 50, rescaled from 150 when the table was re-mined over the
-      // sung corpus: the old number was set against 77,275 pre-cut phrase
-      // ends, and the sung corpus has 28,481. Carrying it over would have
-      // shrunk the table to ~29.
-      assert.ok(f.n >= 50 && f.finality >= 0 && f.finality <= 1);
-      assert.ok(f.shape.length >= 0 && f.shape.length <= 3);
-      // Arrival is SIGNED now, not folded to [-5..+6] — a fifth above the final
-      // no longer shares a family with a fourth below. Bounded generously; the
-      // corpus spans -7..9 and an octave-equivalent tail is filtered by FLOOR.
-      assert.ok(f.arrival >= -24 && f.arrival <= 24);
+    // CADENTIAE — the corpus cadence catalogue: genera, commonest first, the
+    // step onto the final leading, statistics in sane ranges.
+    assert.ok(Array.isArray(CADENTIAE) && CADENTIAE.length > 40);
+    assert.equal(CADENTIAE[0].key, "cadens @0");
+    assert.equal(CADENTIAE[0].degree, 0);
+    for (const g of CADENTIAE) {
+      assert.ok(g.n >= 50 && g.finality >= 0 && g.finality <= 1);
+      // The degree is SIGNED, not octave-reduced — a fifth above the final is
+      // not a fourth below. Bounded generously.
+      assert.ok(g.degree >= -14 && g.degree <= 14);
+      for (const s of g.species) {
+        assert.ok(s.n >= 50 && s.n <= g.n);
+        assert.ok(s.tail.length >= 1 && s.tail.length <= 3);
+      }
     }
   });
 
@@ -215,41 +213,45 @@ describe("the appendix (the export law)", () => {
     assert.ok(Object.isFrozen(POP) && Object.isFrozen(POP.byMode));
   });
 
-  test("cadentiaFamilia is THE index, not a second one", async () => {
+  test("cadentiaGenus and cadentiaSpecies are THE indexes, not second ones", async () => {
     const { CADENTIAE } = await import("../dist/index.js");
-    // Not on the appendix: it is a function, and the export law admits tables
-    // only. Consumers reach it through the data module.
-    const { cadentiaFamilia } = await import("../dist/data/cadentiae.js");
-    const fresh = new Map(CADENTIAE.map((f) => [f.key, f]));
-    for (const [key, fam] of fresh) {
-      assert.equal(cadentiaFamilia(key), fam, `${key} resolves to a different object`);
+    // Not on the appendix: they are functions, and the export law admits
+    // tables only. Consumers reach them through the data module.
+    const { cadentiaGenus, cadentiaSpecies } = await import("../dist/data/cadentiae.js");
+    for (const g of CADENTIAE) {
+      assert.equal(cadentiaGenus(g.key), g, `${g.key} resolves to a different object`);
+      for (const s of g.species) assert.equal(cadentiaSpecies(s.key), s);
     }
-    assert.equal(cadentiaFamilia("no such key @99"), undefined);
+    assert.equal(cadentiaGenus("no such @99"), undefined);
+    assert.equal(cadentiaSpecies("99,99,99"), undefined);
   });
 
-  test("a cadence carries its family's finality, joined not re-derived", async () => {
-    const { cadentiaFamilia } = await import("../dist/data/cadentiae.js");
-    let joined = 0, floored = 0;
+  test("a cadence carries its catalogued finality, joined not re-derived", async () => {
+    const { cadentiaGenus, cadentiaSpecies } = await import("../dist/data/cadentiae.js");
+    let bySpecies = 0, byGenus = 0, floored = 0;
     for (const chant of tonus.cantus({ source: "gr", limit: 60 })) {
       let score;
       try { score = tonus.notatio(chant); } catch { continue; }
       for (const cad of score.cadences) {
-        const fam = cad.signature ? cadentiaFamilia(cad.signature) : undefined;
-        if (fam) {
-          // The joined value must BE the family's, not something recomputed
-          // from arrival or target that happens to look similar.
-          assert.equal(cad.finality, fam.finality,
-            `${cad.signature}: cadence says ${cad.finality}, table says ${fam.finality}`);
-          joined++;
+        const species = cadentiaSpecies(cad.species);
+        const genus = cadentiaGenus(cad.genus);
+        if (species) {
+          // The joined value must BE the species', not something recomputed
+          // from the degree or target that happens to look similar.
+          assert.equal(cad.finality, species.finality, `${cad.species}: species finality`);
+          bySpecies++;
+        } else if (genus) {
+          assert.equal(cad.finality, genus.finality, `${cad.genus}: genus finality`);
+          byGenus++;
         } else {
-          // Below the floor there is no family — an uncatalogued close, not a
+          // Below both floors there is nothing — an uncatalogued close, not a
           // close that never closes.
-          assert.equal(cad.finality, null, `${cad.signature} has no family but finality is set`);
+          assert.equal(cad.finality, null, `${cad.species} has no class but finality is set`);
           floored++;
         }
       }
     }
-    assert.ok(joined > 0 && floored > 0, `saw ${joined} joined / ${floored} floored`);
+    assert.ok(bySpecies > 0 && byGenus > 0, `saw ${bySpecies} by species / ${byGenus} by genus / ${floored} floored`);
   });
 
   test("detector-fresh cadences carry null finality — the join is the builder's", async () => {
@@ -266,43 +268,42 @@ describe("the appendix (the export law)", () => {
     assert.ok(score.cadences.some((c) => c.finality !== null));
   });
 
-  test("no formula rides a cadence off the finalis", async () => {
-    // True by construction (cadence.ts assigns `formula` only inside the
-    // target === "finalis" branch), kept as a tripwire: the tradita catalogue
-    // holds only final figures, so widening that branch without widening the
-    // catalogue would silently mislabel medial closes.
-    for (const chant of tonus.cantus({ source: "gr", limit: 80 })) {
+  test("the genus is the level at which rara means rare", async () => {
+    // The re-key's promise: on the exact four-note semitone key a third of
+    // live closes fell under the floor and printed "rara", the commonest
+    // close in mode VIII among them. On the genus, about one in a hundred.
+    const { cadentiaGenus } = await import("../dist/data/cadentiae.js");
+    let seen = 0, rara = 0;
+    for (const chant of tonus.cantus({ source: "gr", limit: 120 })) {
       let score;
       try { score = tonus.notatio(chant); } catch { continue; }
       for (const cad of score.cadences) {
-        if (cad.formula != null) {
-          assert.equal(cad.target, "finalis",
-            `${cad.formula} on a ${cad.target} cadence`);
-        }
+        seen++;
+        if (!cadentiaGenus(cad.genus)) rara++;
       }
     }
+    assert.ok(seen > 200, `saw ${seen} cadences`);
+    assert.ok(rara / seen < 0.05, `${rara} of ${seen} live closes are below the genus floor`);
   });
 
-  test("CADENTIAE joins live signatures — the key-orphan gap is closed", async () => {
-    const { CADENTIAE } = await import("../dist/index.js");
-    // Between the signed-arrival re-key and the re-mine, the table spoke
-    // folded keys while live signatures spoke signed ones, and the join rate
-    // sat at 49.3% — HALF-WORKING, which reads as data rather than as
-    // breakage. The re-mine closed it. This asserts the two speak one key.
-    const table = new Set(CADENTIAE.map((f) => f.key));
-    // A signed table must carry arrivals the old fold could not express.
-    assert.ok(
-      CADENTIAE.some((f) => f.arrival > 6 || f.arrival < -5),
-      "the table is still folded — re-mine did not land",
-    );
-    // And a live signature from the shipped corpus must find its family.
-    const score = tonus.notatio(tonus.cantus({ source: "gr", limit: 1 })[0]);
-    const sigs = score.cadences.map((c) => c.signature).filter(Boolean);
-    assert.ok(sigs.length > 0, "the engine emits signatures");
-    assert.ok(
-      sigs.some((sig) => table.has(sig)),
-      "no live signature joined the table — the keys have forked again",
-    );
+  test("modus(n).cadences is derived from CADENTIAE, not stored twice", async () => {
+    const { CADENTIAE, CADENTIAE_POPULATION: POP } = await import("../dist/index.js");
+    const set = tonus.temperamentum().modus(1).cadences;
+    assert.equal(set.ends, POP.byMode["1"]);
+    assert.equal(set.genera.length, 5);
+    for (const g of set.genera) {
+      const table = CADENTIAE.find((x) => x.key === g.key);
+      assert.ok(table, `${g.key} is tabled`);
+      assert.equal(g.n, table.modes["1"]);
+      assert.ok(Math.abs(g.share - g.n / set.ends) < 0.0001);
+      assert.ok(g.species.length >= 1 && g.species.length <= 3);
+      assert.ok(["finalis", "tenor", "alia"].includes(g.role));
+      assert.equal(g.nomen, `${g.motion} ${g.role === "alia" ? g.nomen.split(" ")[1] : g.role}`);
+    }
+    // Commonest first, and the mode's tenor in its set (measured, §5 of the plan).
+    assert.ok(set.genera[0].n >= set.genera[1].n);
+    assert.ok(set.genera.some((g) => g.role === "tenor"), "mode 1's tenor close makes the five");
+    assert.ok(set.covered > 0.4 && set.covered < 0.7);
   });
 
   test("HORAE is the office order, and officium agrees with it", async () => {

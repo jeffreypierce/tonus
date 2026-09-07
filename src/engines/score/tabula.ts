@@ -11,7 +11,7 @@ import { staffPositionForLetter } from "../../data/gabc-glyphs.js";
 import type { Cadence } from "./cadence.js";
 import type { ChantType, InterpretationOptions, WrittenShape } from "./types.js";
 
-export type NoteRole = "finalis" | "tenor" | "other" | null;
+export type NoteRole = "finalis" | "tenor" | "alia" | null;
 
 // ChantTabulaRow is the DENORMALIZED projection of one note: everything an
 // emitter or analysis pass needs in a flat row, so consumers never re-walk the
@@ -97,7 +97,7 @@ export interface ChantTabulaRow {
   divisio: string | null;
   /** Index into score.cadences[] when this note forms a cadence; null otherwise. */
   cadenceRef: number | null;
-  /** Modal role: "finalis" | "tenor" | "other" | null if no mode or no match */
+  /** Modal role: "finalis" | "tenor" | "alia" | null if no mode or no match */
   role: NoteRole;
   /** Guidonian short name (e.g. "g", "aa") — null for chromatic pitches with no gamut entry */
   name: string | null;

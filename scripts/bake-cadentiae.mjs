@@ -1,10 +1,9 @@
 // ---------------------------------------------------------------------------
 // scripts/bake-cadentiae — generate src/data/cadentiae.ts from the corpus tally
 // ---------------------------------------------------------------------------
-// Reads working/qa-sweep/cadfams-omni.json (produced by
-// working/qa-sweep/mine-cadentiae-omni-2.mjs + aggregate-cadentiae-2.py) and
-// bakes the CADENTIAE appendix table: every (shape, arrival) family with
-// n >= FLOOR, with its corpus statistics.
+// Reads working/qa-sweep/cadentiae-tally.json (scripts/mine-cadentiae.mjs) and
+// bakes the CADENTIAE appendix table: every genus with n >= FLOOR, carrying
+// every species under it with n >= FLOOR, with corpus statistics per mode.
 //
 // Run from repo root:  node scripts/bake-cadentiae.mjs
 import { readFileSync, writeFileSync } from "node:fs";
@@ -13,181 +12,179 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const SRC = resolve(__dir, "../working/qa-sweep/cadfams-omni.json");
+const SRC = resolve(__dir, "../working/qa-sweep/cadentiae-tally.json");
 const OUT = resolve(__dir, "../src/data/cadentiae.ts");
 
-// Families below this corpus count stay in the qa artifact, out of the table.
-//
-// An earlier floor of 150 was chosen against the pre-cut books, whose phrase-end
-// population was some three times the shipped corpus's — so carrying 150 over
-// would have silently shrunk the table to a couple of dozen families. The floor
-// is scaled to the population it describes, not to its own former number: at 50
-// the table keeps the old shelf's granularity against a third of the ends.
+// Classes below this corpus count stay in the mining artifact, out of the
+// table. Fifty was set when the table first described the sung corpus, and it
+// holds on today's population: at the genus level it leaves about one end in
+// a hundred uncatalogued, at the species level about one in twenty-five.
 //
 // NO COUNT IS WRITTEN DOWN HERE. The header this script emits interpolates the
-// live figures (`${entries.length}` families, the population, the tabled share),
-// so the generated file cannot go stale. This comment is the part a human
-// maintains, and it once said "122 families" long after the bake made it 110 —
-// which is where that number leaked into tracks.ts and score.md. State the
-// reasoning; let the emitted header state the numbers.
+// live figures, so the generated file cannot go stale. State the reasoning;
+// let the emitted header state the numbers.
 const FLOOR = 50;
 
-
 const tally = JSON.parse(readFileSync(SRC, "utf8"));
-// The book list is DERIVED, never spelled out: it said "gr, lu, la, lh, am, nr,
-// ky — the full retrievable repertory" long after the corpus had been cut and
-// widened past it, which made the header a false claim about its own data.
-const books = [...new Set(tally.families.flatMap((f) => Object.keys(f.books ?? {})))]
-  .sort()
-  .join(", ");
+
 // Has the engine moved since this was mined? A WARNING, not a throw: the data
 // may well still be right, and refusing to bake would block work over a doc
-// comment in parse.ts. But it must be said out loud, because the silent version
-// of this is exactly how the shipped table went stale under the syllable
-// splitter — 46 event keys moved and nothing failed.
-const drift = checkFingerprint(tally.engineFingerprint, "cadfams-omni.json");
-if (drift) {
-  console.warn(`\n  ⚠ ${drift}\n`);
-}
+// comment in parse.ts. But it must be said out loud, because the silent
+// version of this is exactly how a shipped table went stale under the
+// syllable splitter — 46 event keys moved and nothing failed.
+const drift = checkFingerprint(tally.engineFingerprint, "cadentiae-tally.json");
+if (drift) console.warn(`\n  ⚠ ${drift}\n`);
 
 // The population is baked, so a tally that predates it must fail loudly rather
 // than emit `undefined` into a shipped constant.
-if (!tally.byMode || !tally.phraseEnds) {
-  throw new Error(
-    "cadfams-omni.json has no byMode/phraseEnds — re-run aggregate-cadentiae-2.py",
-  );
+if (!tally.byMode || !tally.ends) {
+  throw new Error("cadentiae-tally.json has no byMode/ends — re-run scripts/mine-cadentiae.mjs");
 }
 const byModeSum = Object.values(tally.byMode).reduce((s, n) => s + n, 0);
-if (byModeSum !== tally.phraseEnds) {
-  throw new Error(
-    `byMode sums to ${byModeSum} but phraseEnds is ${tally.phraseEnds} — the denominator is not the full tally`,
-  );
+if (byModeSum !== tally.ends) {
+  throw new Error(`byMode sums to ${byModeSum} but ends is ${tally.ends} — the denominator is not the full tally`);
 }
 
-const rows = tally.families.filter((f) => f.n >= FLOOR);
-const kept = rows.reduce((s, r) => s + r.n, 0);
+// Against ALL phrase-ends, not the tabled subset — a share taken against the
+// subset that cleared the floor would flatter every class in it.
+const share = (n) => Number((n / tally.ends).toFixed(4));
+const finality = (r) => Number((r.F / r.n).toFixed(4));
 
-const entries = rows.map((f) => {
-  const [shapeStr, arrStr] = f.key.split(" @");
-  // An empty shape (the one-note-phrase family, key " @0") must bake to [] —
-  // "".split(",").map(Number) gives [0], indistinguishable from a real
-  // two-note unison tail ("0 @0").
-  const shape = shapeStr ? shapeStr.split(",").map(Number) : [];
-  const arrival = Number(arrStr);
-  return {
-    key: f.key,
-    shape,
-    arrival,
-    n: f.n,
-    // Against ALL phrase-ends, not the tabled 58.8% — a share taken against
-    // the subset that cleared the floor would flatter every family in it.
-    share: Number((f.n / tally.phraseEnds).toFixed(4)),
-    finality: f.finality,
-    modes: f.modes,
-  };
-});
+const genera = tally.genera
+  .filter((g) => g.n >= FLOOR)
+  .map((g) => ({
+    key: g.key, motion: g.motion, degree: g.degree,
+    n: g.n, share: share(g.n), finality: finality(g), modes: g.modes, closes: g.closes,
+    species: g.species
+      .filter((s) => s.n >= FLOOR)
+      .map((s) => ({
+        key: s.key, tail: s.tail,
+        n: s.n, share: share(s.n), finality: finality(s), modes: s.modes, closes: s.closes,
+      })),
+  }));
 
-const body = entries
-  .map(
-    (e) =>
-      `  ${JSON.stringify({
-        key: e.key, shape: e.shape, arrival: e.arrival,
-        n: e.n, share: e.share, finality: e.finality, modes: e.modes,
-      })},`,
-  )
+const generaEnds = genera.reduce((s, g) => s + g.n, 0);
+const speciesCount = genera.reduce((s, g) => s + g.species.length, 0);
+const speciesEnds = genera.reduce((s, g) => s + g.species.reduce((t, x) => t + x.n, 0), 0);
+const pct = (n) => ((n / tally.ends) * 100).toFixed(1);
+
+const body = genera
+  .map((g) => {
+    const { species, ...head } = g;
+    const rows = species.map((s) => `    ${JSON.stringify(s)},`).join("\n");
+    return `  { ...${JSON.stringify(head)}, species: [\n${rows}\n  ] },`;
+  })
   .join("\n");
 
 const file = `// AUTO-GENERATED by scripts/bake-cadentiae.mjs — do not edit manually
 // (No timestamp by design: identical input must bake to an identical file,
 // or every regeneration churns the diff. Git carries the dates.)
 // ---------------------------------------------------------------------------
-// data/cadentiae — the corpus-grounded cadence catalogue (CADENTIAE)
+// data/cadentiae — the corpus cadence catalogue (CADENTIAE)
 // ---------------------------------------------------------------------------
-// Every phrase-end in the corpus tonus SHIPS (${books} — ${tally.phraseEnds}
-// ends), keyed by the last <=4 notes' interval signature in semitones (the
-// shape — the gesture) and the closing note's offset from the CHANT'S OWN
-// closing note (its sounded final — not the labeled mode's final), as a SIGNED
-// semitone count (the arrival — the function).
+// Every phrase-end in the SUNG corpus (${tally.chants} chants, ${tally.ends} ends —
+// the same chants the census counts), keyed on the one cadence key
+// (engines/score/cadence.ts): the closing tail in LETTER STEPS from the chant's
+// own closing note, resolution last, signed, not octave-reduced. Two levels of
+// one key:
 //
-// The arrival is deliberately not octave-reduced: the mod-12 fold pooled a
-// fifth ABOVE the final with a fourth BELOW — measured, 3,499 of
-// 27,985 phrase ends landed on @-5, of which 2,427 were really +7. Two
-// opposite gestures under one key. Folding survives as a degree field on a live
-// cadence event, where it is the scale degree and mode-theoretically real.
+//   genus    the last motion and the landing — "cadens @0". The level at
+//            which counts hold per mode, and the one a share is read from.
+//   species  the collapsed tail, at most three notes — "2,1,0". The cadence.
 //
-// The population is the SUNG corpus, not the printed books: this table and the
-// census now count the same chants, which they never did before. No Latin
-// arrival names ride the table, for the same reason no family names do:
-// the key carries the arrival; the reader can count. Families with n >= ${FLOOR} are tabled here (${entries.length} families,
-// ${((kept / tally.phraseEnds) * 100).toFixed(1)}% of all phrase-ends); the full tally lives in the mining
-// artifact. finality = share of a family's occurrences at a final close
-// ("::" or chant end) — measured function, continuous, corpus-derived.
+// Classes with n >= ${FLOOR} are tabled: ${genera.length} genera holding ${pct(generaEnds)}% of all
+// phrase-ends, and under them ${speciesCount} species holding ${pct(speciesEnds)}%. A close
+// that fails to join is not unknown, it is RARER than anything tabled. The
+// full tally, no floor, lives in the mining artifact.
+//
+// share = n over ALL phrase-ends (CADENTIAE_POPULATION.ends), never over the
+// tabled subset. finality = share of occurrences at a final close ("::" or
+// chant end) — measured function, continuous. modes/closes = the same two
+// counts per mode digit, so an in-mode share or finality is one division; the
+// mode's own reading is derived at call (engines/temper/cadentiae.ts), never
+// stored twice.
 //
 // This is inventa, not tradita: a computed catalogue with stated method and
-// open code ("tonus catalogue, method §cadentiae"). Families are identified by
-// their key alone — the shape and its arrival; no editorial names ride the
-// table. Method + display doctrine: working/design-analysis-track.md §CADENTIAE.
+// open code. No editorial names ride the table; the key is the name. The
+// received figures of the treatises are a reference note beside it
+// (working/notes/cadentiae-tradita.md), and each is a species of this key.
 
-/** One corpus cadence family: a (shape, arrival) pair with its statistics. */
-export interface CadentiaFamilia {
-  /** "shape @arrival", e.g. "2,0,-2 @0" — joins mining/census artifacts. */
+/** One species: a collapsed closing tail with its corpus statistics. */
+export interface CadentiaSpecies {
+  /** Letter steps from the chant's closing note, resolution last — "2,1,0". */
   key: string;
-  /** Interval signature in semitones between the tail's consecutive notes. */
-  shape: number[];
-  /** Closing note minus the chant's own closing note (sounded final),
-   *  in SIGNED semitones — not octave-reduced; see the arrival note above. */
-  arrival: number;
+  /** The key as numbers. */
+  tail: number[];
   /** Corpus occurrences. */
   n: number;
-  /** \`n\` over ALL phrase-ends (CADENTIAE_POPULATION.ends) — not over the
-   *  tabled subset, which would flatter every family that cleared the floor. */
+  /** \`n\` over ALL phrase-ends (CADENTIAE_POPULATION.ends). */
   share: number;
   /** Share of occurrences at a final close — the measured finality index. */
   finality: number;
   /** Occurrences by mode digit ("1".."8"; "?" = mode-less chants). */
   modes: Record<string, number>;
+  /** Occurrences at a final close, by mode digit. */
+  closes: Record<string, number>;
 }
+
+/** One genus: a landing — the last motion and the degree it lands on — with
+ *  its statistics and the species tabled under it. */
+export interface CadentiaGenus {
+  /** "<motion> @<degree>" — "cadens @0", "insistens @4". */
+  key: string;
+  motion: "sola" | "insistens" | "surgens" | "cadens" | "transcendens" | "translabens" | "exsiliens" | "desiliens";
+  /** The landing in signed letter steps from the final: 0 the final, -1 below, +4 the fifth. */
+  degree: number;
+  n: number;
+  share: number;
+  finality: number;
+  modes: Record<string, number>;
+  closes: Record<string, number>;
+  /** The species under this genus that clear the floor, commonest first. */
+  species: CadentiaSpecies[];
+}
+
+/** The floor a class must clear, corpus-wide, to be tabled — and the floor a
+ *  species must clear IN a mode for the page to print it there. */
+export const CADENTIAE_FLOOR = ${FLOOR};
 
 /**
  * The denominator behind every \`share\`: all phrase-ends in the sung corpus,
  * and the same total per mode digit. Both are the FULL tally, never summed
- * from the tabled families — a family's mode counts divided by the tabled
- * subset would overstate every one of them.
- *
- * With \`byMode\`, a family's lift in a given mode is one division:
- * \`(modes[m] / byMode[m]) / share\` — how much more (or less) that mode
- * reaches for this close than the corpus at large. Baked as vocabulary, not
- * as arithmetic: the ratio is the caller's to take.
+ * from the tabled classes — a genus' mode counts divided by the tabled subset
+ * would overstate every one of them.
  */
 export const CADENTIAE_POPULATION: {
   readonly ends: number;
   readonly byMode: Readonly<Record<string, number>>;
 } = Object.freeze({
-  ends: ${tally.phraseEnds},
+  ends: ${tally.ends},
   byMode: Object.freeze(${JSON.stringify(tally.byMode)}),
 });
 
-/** The cadence catalogue, most frequent family first. */
-export const CADENTIAE: CadentiaFamilia[] = [
+/** The cadence catalogue: genera, commonest first, each with its species. */
+export const CADENTIAE: CadentiaGenus[] = [
 ${body}
 ];
 
-// THE index, built once and shared. Every consumer joins on the family key, so
-// each one that builds its own Map is a third copy of the same lookup — the
-// renderer had one, the score builder needed one, and any caller wanting a
-// family's statistics had to write a fourth.
-let _index: Map<string, CadentiaFamilia> | null = null;
+// THE indexes, built once and shared. Every consumer joins on a key, so each
+// one that builds its own Map is another copy of the same lookup.
+let _genera: Map<string, CadentiaGenus> | null = null;
+let _species: Map<string, CadentiaSpecies> | null = null;
 
-/**
- * The catalogued family for a cadence signature, or undefined when the
- * signature falls below the table's floor. Deferred: a caller who never asks
- * does not pay for the Map.
- */
-export function cadentiaFamilia(key: string): CadentiaFamilia | undefined {
-  if (!_index) _index = new Map(CADENTIAE.map((f) => [f.key, f]));
-  return _index.get(key);
+/** The tabled genus for a genus key, or undefined below the floor. */
+export function cadentiaGenus(key: string): CadentiaGenus | undefined {
+  if (!_genera) _genera = new Map(CADENTIAE.map((g) => [g.key, g]));
+  return _genera.get(key);
+}
+
+/** The tabled species for a species key, or undefined below the floor. A
+ *  species key names its genus (the last two steps), so one index serves. */
+export function cadentiaSpecies(key: string): CadentiaSpecies | undefined {
+  if (!_species) _species = new Map(CADENTIAE.flatMap((g) => g.species.map((s) => [s.key, s] as const)));
+  return _species.get(key);
 }
 `;
 
 writeFileSync(OUT, file);
-console.log(`baked ${entries.length} families (${((kept / tally.phraseEnds) * 100).toFixed(1)}% of ${tally.phraseEnds} ends) -> src/data/cadentiae.ts`);
+console.log(`baked ${genera.length} genera (${pct(generaEnds)}%) and ${speciesCount} species (${pct(speciesEnds)}%) of ${tally.ends} ends -> src/data/cadentiae.ts`);

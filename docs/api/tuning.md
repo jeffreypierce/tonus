@@ -16,7 +16,7 @@ Pythagorean, as in the treatises.
   - [Ratios — `ratio`](#ratios--ratio)
   - [The gamut — `gamut`](#the-gamut--gamut)
   - [Modes — `modus`](#modes--modus)
-    - [Cadence figures](#cadence-figures)
+    - [The mode's cadences — `modus(n).cadences`](#the-modes-cadences--modusncadences)
     - [The corpus catalogue — `CADENTIAE`](#the-corpus-catalogue--cadentiae)
       - [Lift — how mode-bound a close is](#lift--how-mode-bound-a-close-is)
   - [Psalm tones — `tonus`](#psalm-tones--tonus)
@@ -211,7 +211,7 @@ interface Step {
   variants: StepVariant[]; // available mutations across hexachords
   hand: { finger: string; region: string } | null; // Guidonian hand position
   degree: number | null; // 1–7 diatonic degree in mode
-  role: "finalis" | "tenor" | "other" | null;
+  role: "finalis" | "tenor" | "alia" | null;
 }
 ```
 
@@ -433,89 +433,116 @@ interface Modus extends ModeData {
 }
 ```
 
-### Cadence figures
+### The mode's cadences — `modus(n).cadences`
 
-Each mode carries the melodic figures its phrases characteristically close
-on, in `modus(n).cadences`, the shapes by which a chant comes to rest, stored
-as diatonic steps relative to the final. The score engine reads them to name a
-phrase's cadence ([score.md](score.md#cadences)).
-
-| Maneria (final) | Figures (solmization → final)     |
-| --------------- | --------------------------------- |
-| Protus (Re)     | mi-re, ut-re, sol-fa-re, mi-fa-re |
-| Deuterus (Mi)   | fa-mi, re-mi, sol-fa-mi           |
-| Tritus (Fa)     | mi-fa, fa-mi-fa, la-sol-fa        |
-| Tetrardus (Sol) | la-sol, fa-sol, ut-sol, ut-ti-sol |
-
-The catalogue is an editorial synthesis covering the final cadences; its step
-encoding, sources, and known gaps (medial cadences are not yet included) are
-documented at the data. See `CadenceFigure` in
-[`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
-
-This is the **tradita** half, what the treatises say. Its counterpart is the
-corpus tally below, and they are not interchangeable: see [one spine, two
-annotations](score.md#one-spine-two-annotations).
-
-### The corpus catalogue — `CADENTIAE`
-
-Where the figures above are received, [`CADENTIAE`](index.md#the-appendix) is
-**mined**: every phrase-end in the sung corpus, grouped into families by what
-the melody actually did. A family is a **shape** (the closing tail's
-successive semitone intervals) and an **arrival**, where it landed relative
-to the chant's own closing note. Together they are the key, `"2,0,-2 @0"`, and
-the key is the family's whole name.
-
-About 110 families clear the floor of 50 occurrences, covering about 57% of all
-phrase-ends. The rest of the tail is real but too thin to characterise.
+Each mode reads its own set out of the corpus catalogue below, derived at
+call: the **five** genera the mode's phrases most often close on, each with
+its three commonest species in the mode. Five is a fixed count, not a
+threshold. Measured at five, six of the eight modes' tenors appear in their
+own set (1, 5 and 7 rest on the fifth, 4 on the fourth, 2 rests on and 6 steps
+up to the third); at four, modes 4, 5 and 6 had none. Modes 3 and 8 stay
+loose, their tenor closes ranking 18th and 8th.
 
 ```ts
-interface CadentiaFamilia {
-  key: string;       // "shape @arrival" — the name, and the join
-  shape: number[];   // successive semitone intervals of the closing tail
-  arrival: number;   // SIGNED semitones from the chant's own closing note
-  n: number;         // corpus occurrences
-  share: number;     // n over ALL phrase-ends (CADENTIAE_POPULATION.ends)
-  finality: number;  // share of those occurrences at a final close
-  modes: Record<string, number>; // occurrences by mode digit ("?" = mode-less)
+interface ModusCadentiae {
+  ends: number;    // the mode's phrase-ends, the denominator
+  covered: number; // share of them the five genera account for
+  genera: ModusGenus[]; // commonest first
+}
+
+interface ModusGenus {
+  key: string;      // "cadens @0"
+  nomen: string;    // "cadens finalis" — the two-word name, the printed form
+  motion: string;   // "cadens"
+  degree: number;   // 0 = the final, -1 = below, +4 = the fifth
+  role: "finalis" | "tenor" | "alia"; // the mode's reading of the degree
+  n: number;        // the mode's phrase-ends landing here
+  share: number;    // n / ends
+  finality: number; // share of those at a final close, in this mode
+  species: { key: string; tail: number[]; n: number; share: number; finality: number }[];
 }
 ```
 
-`share` is taken against **every** phrase-end, not against the ~57% that
-cleared the floor. The denominator ships beside the table:
+```js
+tonus.temperamentum().modus(1).cadences.genera.map((g) => [g.key, g.nomen, g.share]);
+// [["insistens @0", "insistens finalis", 0.171], ["cadens @0", "cadens finalis", 0.153],
+//  ["insistens @4", "insistens tenor", 0.076], ["cadens @-1", "cadens subfinalis", 0.066],
+//  ["surgens @0", "surgens finalis", 0.049]]
+```
+
+The static `MODES` table carries no cadences: reference data is fixed, a
+cadence is a measurement, and measurements ride the verb. The treatises'
+received figures (Niedermeyer & d'Ortigue, Bragers) are a reference note
+beside the table, not data; every one of them is a species of the key.
+
+### The corpus catalogue — `CADENTIAE`
+
+[`CADENTIAE`](index.md#the-appendix) is **mined**: every phrase-end in the
+sung corpus, keyed by what the melody did. The key is the closing tail in
+**letter steps** from the chant's own closing note, resolution last, signed,
+not octave-reduced ([score.md](score.md#one-key-two-levels)), read at two
+levels. A **genus** is the last motion and the landing, `"cadens @0"`, the
+level at which counts hold per mode. A **species** is the whole collapsed
+tail, at most three notes, `"2,1,0"`, the cadence itself. The motion words
+and the landing's word are [score.md's](score.md#one-key-two-levels).
+
+The 48 genera above a floor of 50 occurrences hold 99% of all phrase-ends;
+under them, 119 species above the same floor hold 96%. The rest is real but
+too thin to characterise, and rarer than anything tabled.
 
 ```ts
-CADENTIAE_POPULATION.ends;   // 26787 — all phrase-ends, sung corpus
+interface CadentiaGenus {
+  key: string;      // "<motion> @<degree>" — the name, and the join
+  motion: string;   // "insistens" | "cadens" | "surgens" | "translabens" | …
+  degree: number;   // SIGNED letter steps from the chant's own closing note
+  n: number;        // corpus occurrences
+  share: number;    // n over ALL phrase-ends (CADENTIAE_POPULATION.ends)
+  finality: number; // share of those occurrences at a final close
+  modes: Record<string, number>;  // occurrences by mode digit ("?" = mode-less)
+  closes: Record<string, number>; // occurrences at a final close, by mode digit
+  species: CadentiaSpecies[];     // the tabled species under it, commonest first
+}
+
+interface CadentiaSpecies {
+  key: string;   // "2,1,0" — the tail, and the join
+  tail: number[];
+  n: number; share: number; finality: number;
+  modes: Record<string, number>; closes: Record<string, number>;
+}
+```
+
+`share` is taken against **every** phrase-end, not against the tabled subset.
+The denominator ships beside the table:
+
+```ts
+CADENTIAE_POPULATION.ends;   // 66565 — all phrase-ends, sung corpus
 CADENTIAE_POPULATION.byMode; // the same total per mode digit
 ```
 
 #### Lift — how mode-bound a close is
 
-`modes` and `byMode` share a denominator, so a family's **lift** in a given
+`modes` and `byMode` share a denominator, so a genus' **lift** in a given
 mode is one division: how much more (or less) that mode reaches for this close
 than the corpus at large.
 
 ```js
 import { CADENTIAE, CADENTIAE_POPULATION as POP } from "tonus";
 
-const fam = CADENTIAE.find((f) => f.key === "2,0,-2 @0");
-const lift = (f, mode) =>
-  (f.modes[String(mode)] / POP.byMode[String(mode)]) / f.share;
+const genus = CADENTIAE.find((g) => g.key === "insistens @4");
+const lift = (g, mode) =>
+  (g.modes[String(mode)] / POP.byMode[String(mode)]) / g.share;
 
-lift(fam, 6); // 2.15
-lift(fam, 4); // 0.07
+lift(genus, 7); // 2.4 — mode 7 rests on its fifth far more than the corpus does
+lift(genus, 4); // 0.03 — mode 4 almost never
 ```
-
-The commonest family in the corpus (about 1,100 occurrences, about 4% of all
-phrase-ends, closing a little under half the time) is not reached for evenly.
-Mode 6 reaches for this close more than twice as often as the corpus does;
-mode 4 almost never. That is the figure the tonarium prints under a cadence
-([score.md](score.md#the-analysis-tracks)).
 
 **The ratio is not baked.** The table exports the vocabulary (counts and
 their denominators) and leaves the arithmetic to the caller. Two cautions when
 you take it: below roughly ten in-mode occurrences the ratio is one or two
 chants deciding a number that reads like a measurement, and a mode-less chant
-(`"?"`) has no denominator at all. In both cases fall back to `share`.
+(`"?"`) has no denominator at all. In both cases fall back to `share`. The
+tonarium prints the in-mode **share** under a cadence, not the lift
+([score.md](score.md#the-analysis-tracks)).
 
 ## Psalm tones — `tonus`
 

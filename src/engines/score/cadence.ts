@@ -1,34 +1,67 @@
 // ---------------------------------------------------------------------------
-// engines/score/cadence — mode-specific cadence detection
+// engines/score/cadence — cadence detection on the one corpus key
 // ---------------------------------------------------------------------------
 // A pure detection pass, modelled on the arsis/thesis classifier in ir.ts:
 // walk the phrase tree, inspect the notes that approach each phrase-final
-// divisio, and classify the cadence as data. Detection only — no interpretation.
+// divisio, and classify the cadence as data. Detection only — no interpretation,
+// and no corpus table: the catalogue join (finality, confidence from evidence)
+// is the score builder's, so a baked artifact never enters the detection path.
 //
 // "Cadence" here is the melodic close of a phrase (Solesmes incise), distinct
 // from the metrics' cadenceWeight/cadenceDistribution, which merely count the
-// divisio bars. Cadence figures are mode-specific, so this consumes the
-// per-mode ModeData.cadences catalog.
+// divisio bars.
 //
-// `adventus` — a Latin arrival-case ladder ("in finalem", "in quintam", …) —
-// is deliberately absent, for the same reason `familia` is: the signature IS
-// the name, and `arrival` already carries the number the ladder would rename.
-// (Its one mode-aware value, "in tenorem", overlapped `target`.) The mod-12
-// fold (+7 ≡ −5) the ladder would have had to name honestly is answered in
-// the family key itself, whose arrival is signed.
+// ONE KEY. A phrase-end is its tail in DIATONIC steps — letter steps — relative
+// to the chant's SOUNDED final (its closing note, not the labelled mode's
+// final, which disagrees on a transposed or mislabelled chant), resolution
+// last, signed, not octave-reduced. Two levels read off one tail:
 //
-// Two catalogues serve two claims. ModeData.cadences (tradita — the treatises'
-// per-mode figures) names the `formula`; CADENTIAE (inventa — the corpus tally)
-// is joined by the `signature`: the tail's interval shape (the gesture) and
-// where it lands relative to the chant final (the function). The corpus key
-// is computed exactly as the mining does — last <=4 notes, semitone intervals,
-// arrival as the SIGNED semitone offset from the chant's own closing
-// note (its sounded final) — so every classification joins the table.
+//   species  the whole collapsed tail, at most TAIL notes: "2,1,0" — the
+//            cadence, what the melody did;
+//   genus    the last motion and the landing: "cadens @0" — the landing,
+//            the level at which corpus counts hold per mode.
+//
+// Letter steps, not semitones, because the same gesture on a different final
+// is the same gesture: F E in mode 3 and E D in mode 1 are both "step down
+// onto the final"; the third above F and the third above D are both "the
+// third". And letter steps, not the mode's scale, so B-flat and B-natural are
+// one degree and a mode-less chant keys like any other — every phrase-end in
+// the corpus keys, where a scale-relative reading covered 59%.
+//
+// Repeats. Interior repeats collapse (G G A G is G A G), so a note reiterated
+// on the way in does not multiply spellings. The LANDING's own repeat is kept,
+// once: A G G stays "insistens @0". Collapsing that too would fold the
+// reiterated close — 18% of all phrase-ends — into the motion before it.
+//
+// The received figures (Niedermeyer & d'Ortigue, Bragers) are no longer data
+// here; they are a reference note beside the mined table, and every one of
+// them is a species of this key.
 import type { Phrase } from "./types.js";
-import type { ModeData, CadenceFigure } from "../temper/data/modes.js";
+import type { ModeData } from "../temper/data/modes.js";
 
-export type CadenceTarget = "finalis" | "tenor" | "other";
+export type CadenceTarget = "finalis" | "tenor" | "alia";
 export type CadenceApproach = "descending" | "ascending" | "unison";
+/**
+ * The last motion of a close, in letter steps, named the way a neume is: one
+ * descriptive word, the direction in the sense of the verb and the size in
+ * its root (ruled 2026-09-06). A step is the bare verb, rising or falling;
+ * a third crosses one note, climbing over or sliding over; a leap springs.
+ *
+ *   insistens     standing on it — the repeated landing
+ *   surgens       rising a step          cadens        falling a step
+ *   transcendens  climbing over a third  translabens   sliding over a third
+ *   exsiliens     springing up a leap    desiliens     leaping down
+ *   sola          a landing alone — a one-note phrase, no gesture
+ */
+export type CadenceMotion =
+  | "sola"
+  | "insistens"
+  | "surgens"
+  | "cadens"
+  | "transcendens"
+  | "translabens"
+  | "exsiliens"
+  | "desiliens";
 
 export interface Cadence {
   /** Index of the phrase this cadence closes. */
@@ -42,56 +75,153 @@ export interface Cadence {
   target: CadenceTarget;
   /** Melodic contour into the resolution, across the observed window. */
   approach: CadenceApproach;
-  /** Matched finalis-cadence figure id (e.g. "mi-re"), or null. */
-  formula: string | null;
   /** The observed final pitch-class run — the evidence, resolution note last. */
   pcs: number[];
   /**
-   * The window as diatonic steps relative to the resolution target (0 = target,
-   * -1 = the note below), resolution last — the surface the catalog matches on.
-   * Empty when there is no mode/target; null entries are notes off the scale.
+   * The window as diatonic steps relative to the resolution TARGET (0 = the
+   * target, -1 = the note below), resolution last — the mode's reading of the
+   * approach. Empty when there is no mode/target; null entries are notes off
+   * the scale.
    */
   steps: Array<number | null>;
-  /** 0–1: how cleanly the ending lands, raised by a catalog match. */
+  /** 0–1: how cleanly the ending lands; the builder raises it by corpus evidence. */
   confidence: number;
   /** Note positions forming this cadence: [phraseIndex, syllableIndex, noteIndex]. */
   notes: Array<[number, number, number]>;
   /**
-   * The corpus-catalogue key, "shape @arrival" (e.g. "2,0,-2 @0" — see
-   * CADENTIAE). A single-note phrase keys with an empty shape (" @0"):
-   * a landing with no gesture is still a cadence.
+   * The species key: the collapsed tail as letter steps from the chant's
+   * sounded final, resolution last, at most TAIL long — "2,1,0". A one-note
+   * phrase keys as its landing alone ("0"): a landing with no gesture is
+   * still a cadence.
    */
-  signature: string | null;
-  /** Interval signature of the closing tail (<=4 notes), in semitones. */
-  shape: number[];
-  /** Closing note minus the CHANT'S OWN closing note (its sounded final —
-   *  not the labeled mode's final, which may disagree on a transposed or
-   *  mislabeled chant), in SIGNED semitones — not octave-reduced. */
-  arrival: number;
+  species: string;
+  /** The species as numbers — what `species` joins. */
+  tail: number[];
+  /** The genus key: `"<motion> @<degree>"`, e.g. "cadens @0". */
+  genus: string;
+  /** The last motion into the landing. */
+  motion: CadenceMotion;
+  /** The landing minus the chant's sounded final, in signed letter steps —
+   *  0 the final, -1 the note below, +2 the third, +4 the fifth. Not
+   *  octave-reduced: the fifth above and the fourth below are different. */
+  degree: number;
+  /** The two-word name, "cadens finalis": the motion and the landing's word
+   *  in the chant's mode. The printed form; `genus` stays the key. */
+  nomen: string;
   /**
-   * The catalogued family's measured finality: the share of THIS FAMILY's
-   * corpus occurrences that fall at a final close. null when the signature is
-   * below the catalogue's floor (about a third of cadences), and null on a
-   * cadence taken straight from `detectCadences` — the join happens in the
-   * score builder, not the detector.
-   *
-   * A measurement, not a name, which is why it rides here while `familia`
-   * does not: the signature is already the family's name, but how often that
-   * family CLOSES cannot be read off the signature. Families landing on the
-   * final range from 0.054 to 1.000, so `arrival === 0` does not imply a close.
+   * The catalogued finality: the share of THIS SPECIES' corpus occurrences
+   * that fall at a final close, or the genus' where the species is below the
+   * catalogue's floor, or null where the genus is too. Null on a cadence taken
+   * straight from `detectCadences` — the join happens in the score builder,
+   * not the detector.
    */
   finality: number | null;
 }
 
 // Cadence formulae run four to ten notes [biblio: homan-cadence, p. xiii]. Take
 // a window at the upper end so the longest figures fit, with room for the
-// approach; tail-matching ignores the extra leading notes.
+// approach; the key reads the tail out of it.
 const WINDOW = 8;
+
+/** The species tail length, in collapsed notes. Ruled at three (plan-cadentiae
+ *  §8.1, 2026-09-04): it matches the longest received figures, and measured
+ *  in-mode it leaves 11–38% of a mode's ends in species under the floor where
+ *  four left 24–58%. */
+export const TAIL = 3;
+
+const LETTER: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+
+/**
+ * Absolute diatonic (letter) position of a scientific pitch name: seven per
+ * octave, C4 = 28. Accidentals do not move it — B-flat and B-natural are one
+ * degree. null for anything that is not a pitch name.
+ */
+export function letterPosition(spn: string): number | null {
+  const m = /^([A-G])[b#x]*(-?\d+)$/.exec(spn);
+  if (!m) return null;
+  return Number(m[2]) * 7 + LETTER[m[1]!]!;
+}
+
+/** Collapse interior repeats; keep the landing's repeat once. */
+export function collapseTail(positions: number[]): number[] {
+  const out: number[] = [];
+  for (const p of positions) {
+    if (out.length === 0 || out[out.length - 1] !== p) out.push(p);
+  }
+  const n = positions.length;
+  if (n >= 2 && positions[n - 1] === positions[n - 2]) out.push(positions[n - 1]!);
+  return out;
+}
+
+/**
+ * The key of a phrase-end from its window as final-relative LETTER STEPS
+ * (0 the final, resolution last) — the pure core shared by every keyer, so a
+ * consumer that already has letter steps (the census blocks, the day's
+ * selection) keys exactly as `cadenceKeys` does, no second parser. Interior
+ * repeats collapse, the landing's own repeat is kept once, the tail is the
+ * last TAIL of that.
+ */
+export function genusFromSteps(steps: readonly number[]): {
+  species: string; tail: number[]; genus: string; motion: CadenceMotion; degree: number;
+} {
+  const tail = collapseTail(steps.slice()).slice(-TAIL);
+  return {
+    species: tail.join(","),
+    tail,
+    genus: genusKey(tail),
+    motion: motionOf(tail),
+    degree: tail[tail.length - 1] ?? 0,
+  };
+}
+
+/** The motion of the last interval of a tail, in letter steps. */
+export function motionOf(tail: readonly number[]): CadenceMotion {
+  if (tail.length < 2) return "sola";
+  const d = tail[tail.length - 1]! - tail[tail.length - 2]!;
+  if (d === 0) return "insistens";
+  const up = d > 0;
+  const m = Math.abs(d);
+  if (m === 1) return up ? "surgens" : "cadens";
+  if (m === 2) return up ? "transcendens" : "translabens";
+  return up ? "exsiliens" : "desiliens";
+}
+
+/** The landing's names by degree above the final; below, "sub-" is prefixed
+ *  (subfinalis, the note below the final, is the received word; subtertia
+ *  and subquarta follow it). */
+const ORDINALES = ["finalis", "secunda", "tertia", "quarta", "quinta", "sexta",
+  "septima", "octava", "nona", "decima"];
+
+/**
+ * The landing's word: the mode's reading where it has one (finalis, tenor),
+ * else the degree itself. With the motion it makes the two-word name of a
+ * genus — "cadens finalis", "insistens tenor", "desiliens quinta" — the
+ * printed form, while `genus` stays the key.
+ */
+export function landingWord(degree: number, role: CadenceTarget): string {
+  if (role === "finalis") return "finalis";
+  if (role === "tenor") return "tenor";
+  const m = Math.abs(degree);
+  const ord = ORDINALES[m] ?? `${m + 1}a`;
+  if (degree < 0) return m === 1 ? "subfinalis" : `sub${ord}`;
+  return ord;
+}
+
+/** The two-word name of a close: its motion and its landing's word. */
+export function nomenOf(motion: CadenceMotion, degree: number, role: CadenceTarget): string {
+  return `${motion} ${landingWord(degree, role)}`;
+}
+
+/** The genus key for a tail: its motion and its landing. */
+export function genusKey(tail: readonly number[]): string {
+  return `${motionOf(tail)} @${tail[tail.length - 1] ?? 0}`;
+}
 
 interface WindowNote {
   pc: number;
   midi: number;
-  role: "finalis" | "tenor" | "other" | null;
+  spn: string;
+  role: "finalis" | "tenor" | "alia" | null;
   syllableIndex: number;
   noteIndex: number;
 }
@@ -106,6 +236,7 @@ function phraseFinalWindow(phrase: Phrase): WindowNote[] {
       window.push({
         pc: note.step.pc,
         midi: note.pitch.midi,
+        spn: note.pitch.spn,
         role: note.step.role,
         syllableIndex: si,
         noteIndex: ni,
@@ -118,10 +249,10 @@ function phraseFinalWindow(phrase: Phrase): WindowNote[] {
 }
 
 function classifyTarget(final: WindowNote | undefined): CadenceTarget {
-  if (!final) return "other";
+  if (!final) return "alia";
   if (final.role === "finalis") return "finalis";
   if (final.role === "tenor") return "tenor";
-  return "other";
+  return "alia";
 }
 
 function classifyApproach(window: WindowNote[]): CadenceApproach {
@@ -154,103 +285,18 @@ function diatonicStep(
   return d;
 }
 
-/**
- * Collapse consecutive equal steps to one. A chant that lands on the final and
- * repeats it (a final distropha, say) should still match the plain figure the
- * treatises write with one note per pitch. Figures have no adjacent repeats, so
- * collapsing is a no-op on them.
- */
-function collapseRepeats(steps: Array<number | null>): Array<number | null> {
-  const out: Array<number | null> = [];
-  for (const s of steps) {
-    if (out.length === 0 || out[out.length - 1] !== s) out.push(s);
-  }
-  return out;
-}
+// ── The corpus key ──────────────────────────────────────────────────────────
 
-/**
- * Match a collapsed step-run against a catalog figure. Both end on the
- * resolution (0), so compare from the tail backward. Returns a fraction in
- * 0..1: how much of the figure the ending realises (0 = no tail match).
- */
-function figureMatch(observed: Array<number | null>, figure: number[]): number {
-  if (figure.length === 0 || observed.length === 0) return 0;
-  let matched = 0;
-  for (let k = 1; k <= figure.length && k <= observed.length; k++) {
-    if (observed[observed.length - k] === figure[figure.length - k]) matched++;
-    else break;
-  }
-  return matched / figure.length;
-}
-
-/**
- * The best catalog figure for an ending. A figure the ending realises in full
- * (frac === 1) is preferred, and among those the longest — the most specific
- * description — wins, so e.g. sol-fa-mi beats its own fa-mi suffix. Failing a
- * full match, the highest partial fraction is kept (a weaker signal).
- */
-function bestFigure(
-  observed: Array<number | null>,
-  figures: CadenceFigure[],
-): { figure: CadenceFigure; frac: number } | null {
-  const collapsed = collapseRepeats(observed);
-  let best: { figure: CadenceFigure; frac: number } | null = null;
-  for (const figure of figures) {
-    const frac = figureMatch(collapsed, figure.steps);
-    if (frac === 0) continue;
-    if (!best) {
-      best = { figure, frac };
-      continue;
-    }
-    // Rank: a full match outranks any partial; among full matches the longer
-    // figure wins; otherwise the higher fraction.
-    const bestFull = best.frac === 1;
-    const thisFull = frac === 1;
-    if (thisFull && !bestFull) best = { figure, frac };
-    else if (
-      thisFull &&
-      bestFull &&
-      figure.steps.length > best.figure.steps.length
-    )
-      best = { figure, frac };
-    else if (!thisFull && !bestFull && frac > best.frac)
-      best = { figure, frac };
-  }
-  return best;
-}
-
-// ── The corpus catalogue (CADENTIAE) ────────────────────────────────────────
-
-// The mining keyed tails by their last <=4 notes; the classifier reads the same
-// span out of the (longer) formula window.
-const TAIL = 4;
-
-/**
- * Octave-reduce a semitone offset to [-5..+6].
- *
- * NOT part of the family key — kept because the folded value is still worth
- * reporting (it is the scale DEGREE, mode-theoretically real). As a key the
- * fold made a fifth ABOVE the final share a family with a fourth BELOW — two
- * opposite gestures under one key. The measurement behind that ruling is
- * stated once, in `data/cadentiae.ts`'s header, beside the table it governs.
- * Arrival in the key is therefore the SIGNED offset; see cadenceKeys().
- */
-export function reduceArrival(semitones: number): number {
-  let a = semitones % 12;
-  if (a > 6) a -= 12;
-  if (a < -5) a += 12;
-  return a;
-}
-
-/** One phrase-end event: the family key, and whether it closes the chant. */
+/** One phrase-end event: both levels of the key, and whether it closes the chant. */
 export interface CadenceKeyEvent {
-  /** `"<interval,interval,…> @<signed arrival>"` — empty shape for a 1-note phrase. */
-  key: string;
-  /** Shape only: the tail's successive semitone intervals. */
-  shape: number[];
-  /** Signed semitone offset of the landing note from the chant's closing note. */
-  arrival: number;
-  /** The arrival octave-reduced to [-5..+6] — the scale degree, not the key. */
+  /** The species key, "2,1,0". */
+  species: string;
+  /** The species as numbers. */
+  tail: number[];
+  /** The genus key, "cadens @0". */
+  genus: string;
+  motion: CadenceMotion;
+  /** Signed letter steps of the landing from the chant's sounded final. */
   degree: number;
   /** A chant end, or a full-bar "::" — as opposed to an interior phrase end. */
   isFinal: boolean;
@@ -259,53 +305,43 @@ export interface CadenceKeyEvent {
 }
 
 /**
- * THE cadence family key — one implementation, shared by every consumer.
- *
- * This once existed three times: here (keyed off the Phrase tree), in
- * tonus-corpus `census/_shared.mjs` (keyed off flat tabula rows), and in the
- * CADENTIAE miner (a character-for-character copy of the census one). They
- * agreed — measured corpus-wide, 28,051 engine cadences against 27,985 census
- * phrase ends with ZERO key disagreements — but agreement by luck across three
- * copies is what "no second parser, no drift" forbids; hence this one shared
- * function.
- *
- * That 27,985 is the population of the run that PROVED the agreement, and it
- * does not match `CADENTIAE_POPULATION.ends`: the table was rebaked afterwards
- * against the sung corpus. Two measurements of different populations, not a
- * contradiction — the figure here is fixed to its proof and does not track the
- * table.
+ * THE cadence key — one implementation, shared by every consumer: the detector
+ * below, the CADENTIAE miner, and the tonus-corpus census, which once each
+ * carried a copy. Agreement by luck across copies is what "no second parser,
+ * no drift" forbids; hence this one function.
  *
  * Takes the FLAT shape, because that is what the census and the miner have; the
- * engine's own detection flattens into it. A phrase end is a `phraseIndex`
- * transition or the last row.
+ * detector projects its window into it. A phrase end is a `phraseIndex`
+ * transition or the last row. A ONE-NOTE PHRASE IS A CADENCE — it has a landing
+ * but no gesture, so it keys as its landing alone rather than being skipped.
  *
- * A ONE-NOTE PHRASE IS A CADENCE — it has a landing but no gesture, so it is
- * emitted with an empty shape rather than skipped. (The census once dropped
- * these — 68 corpus-wide, all real phrases carrying a real divisio, mostly
- * "::" at the chant end — a hole this shared key closes.)
+ * `finalSpn` is the chant's closing note; it defaults to the last row's, which
+ * is right when `rows` is the whole tabula and wrong when it is one phrase.
  */
 export function cadenceKeys(
-  rows: readonly { phraseIndex: number; midi: number; divisio: string | null }[],
-  finalMidi?: number,
+  rows: readonly { phraseIndex: number; spn: string; divisio: string | null }[],
+  finalSpn?: string,
 ): CadenceKeyEvent[] {
   if (!rows.length) return [];
-  const final = finalMidi ?? rows[rows.length - 1]!.midi;
+  const final = letterPosition(finalSpn ?? rows[rows.length - 1]!.spn);
+  if (final == null) return [];
   const events: CadenceKeyEvent[] = [];
   for (let i = 0; i < rows.length; i++) {
     const next = rows[i + 1];
     if (next && next.phraseIndex === rows[i]!.phraseIndex) continue; // not a phrase end
-    // The last <=TAIL rows of this phrase, ending at row i.
-    const seg: typeof rows[number][] = [];
-    for (let j = i; j >= 0 && seg.length < TAIL && rows[j]!.phraseIndex === rows[i]!.phraseIndex; j--) {
-      seg.unshift(rows[j]!);
+    // The last <=WINDOW rows of this phrase, ending at row i.
+    const seg: number[] = [];
+    let broken = false;
+    for (let j = i; j >= 0 && seg.length < WINDOW && rows[j]!.phraseIndex === rows[i]!.phraseIndex; j--) {
+      const p = letterPosition(rows[j]!.spn);
+      if (p == null) { broken = true; break; }
+      seg.unshift(p - final);
     }
-    const shape = seg.slice(1).map((r, k) => r.midi - seg[k]!.midi);
-    const arrival = seg[seg.length - 1]!.midi - final;
+    if (broken) continue;
+    const g = genusFromSteps(seg);
     events.push({
-      key: `${shape.join(",")} @${arrival}`,
-      shape,
-      arrival,
-      degree: reduceArrival(arrival),
+      ...g,
+      degree: g.tail[g.tail.length - 1]!,
       isFinal: rows[i]!.divisio === "::" || !next,
       phraseIndex: rows[i]!.phraseIndex,
     });
@@ -313,26 +349,26 @@ export function cadenceKeys(
   return events;
 }
 
-/** The chant's closing note — the reference every arrival is measured from. */
-function chantFinalMidi(phrases: Phrase[]): number | undefined {
+/** The chant's closing note — the reference every landing is measured from. */
+function chantFinalSpn(phrases: Phrase[]): string | undefined {
   for (let pi = phrases.length - 1; pi >= 0; pi--) {
     const w = phraseFinalWindow(phrases[pi]!);
-    if (w.length > 0) return w[w.length - 1]!.midi;
+    if (w.length > 0) return w[w.length - 1]!.spn;
   }
   return undefined;
 }
 
 /**
  * Detect the cadence closing each phrase. One Cadence per phrase that carries a
- * divisio. With no mode, targets/approach are still classified but no figure is
- * named (formula: null), matching the score's graceful-degradation convention.
+ * divisio. With no mode, targets/approach are still classified and the key is
+ * still computed — it needs no mode — but `steps` stays empty.
  */
 export function detectCadences(
   phrases: Phrase[],
   modeData: ModeData | undefined,
 ): Cadence[] {
   const cadences: Cadence[] = [];
-  const finalMidi = chantFinalMidi(phrases);
+  const finalSpn = chantFinalSpn(phrases);
 
   for (let pi = 0; pi < phrases.length; pi++) {
     const phrase = phrases[pi]!;
@@ -347,52 +383,42 @@ export function detectCadences(
     const approach = classifyApproach(window);
     const pcs = window.map((w) => w.pc);
 
-    // A clean landing on finalis/tenor is confident on its own; a catalog match
-    // raises it further. No modal role → a weak baseline.
-    let confidence = target === "other" ? 0.3 : 0.6;
-    let formula: string | null = null;
+    // A clean landing on finalis/tenor is confident on its own; no modal role
+    // is a weak baseline. The builder raises this by what the corpus knows.
+    const confidence = target === "alia" ? 0.3 : 0.6;
     let steps: Array<number | null> = [];
 
     if (modeData && (target === "finalis" || target === "tenor")) {
       // Express the window as diatonic steps relative to the note it resolved
-      // onto. The catalogue holds final cadences, so only match on the finalis.
+      // onto — the mode's reading of the approach.
       const onPc = target === "finalis" ? modeData.final : modeData.tenor;
       steps = window.map((w) => diatonicStep(w.pc, onPc, modeData.scalePcs));
-      if (target === "finalis") {
-        const match = bestFigure(steps, modeData.cadences);
-        if (match) {
-          formula = match.figure.id;
-          confidence = Math.min(1, confidence + 0.4 * match.frac);
-        }
-      }
     }
 
-    // The corpus classification, from THE shared key function — the engine does
-    // not compute this itself. `cadenceKeys` takes flat rows, so the window is
-    // projected into that shape; one phrase in, one event out.
+    // The key, from THE shared function — the detector does not compute it
+    // itself. `cadenceKeys` takes flat rows, so the window is projected into
+    // that shape; one phrase in, one event out.
     const ev = cadenceKeys(
-      window.map((w) => ({ phraseIndex: 0, midi: w.midi, divisio: null })),
-      finalMidi,
+      window.map((w) => ({ phraseIndex: 0, spn: w.spn, divisio: null })),
+      finalSpn,
     )[0];
-    const shape = ev?.shape ?? [];
-    const arrival = ev?.arrival ?? 0;
-    // A 1-note phrase has a landing but no gesture: a real cadence with an
-    // empty shape, which is why `signature` is the key rather than null.
-    const signature = ev?.key ?? null;
+    const tail = ev?.tail ?? [0];
 
     cadences.push({
       phraseIndex: pi,
       divisio,
       target,
       approach,
-      formula,
       pcs,
       steps,
-      confidence: Math.round(confidence * 100) / 100,
+      confidence,
       notes: window.map((w) => [pi, w.syllableIndex, w.noteIndex]),
-      signature,
-      shape,
-      arrival,
+      species: ev?.species ?? "0",
+      tail,
+      genus: ev?.genus ?? genusKey(tail),
+      motion: ev?.motion ?? "sola",
+      degree: ev?.degree ?? 0,
+      nomen: nomenOf(ev?.motion ?? "sola", ev?.degree ?? 0, target),
       // Left null here on purpose. Detection is a pure pass over the phrase
       // tree; the corpus catalogue is generated data, and reaching for it from
       // inside the detector would put a baked artifact in the detection path.
