@@ -163,7 +163,19 @@ const CORPUS: Chant[] = [
 // still resolve to exactly one chant — the census contract says so in as many
 // words. So they stay addressable by `id`, by `office: "or"`, and by
 // `ordinary`, and stay out of the shelf's book list and row count.
-const KYRIALE_CHANTS: Chant[] = KYRIALE.map(entryToOrdinaryChant);
+//
+// Not shelved, but CITED: each entry carries the books that print it (gr, lu)
+// and their pages, so its by-book map is registered here the same way a corpus
+// record's is. That is what lets `cantus({ id, source: "lu" })` answer with the
+// Liber Usualis's leaf number instead of nothing.
+const KYRIALE_CHANTS: Chant[] = KYRIALE.map((entry) => {
+  const chant = entryToOrdinaryChant(entry);
+  const byBook = entry.pages as unknown;
+  if (byBook && !Array.isArray(byBook)) {
+    PAGES_BY_BOOK.set(chant.id, byBook as Record<string, Chant["pages"]>);
+  }
+  return chant;
+});
 
 /** Everything nameable: the shelf, plus the ordinary that no shelf holds. */
 const ADDRESSABLE: Chant[] = [...CORPUS, ...KYRIALE_CHANTS];

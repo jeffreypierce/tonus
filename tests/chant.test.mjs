@@ -66,6 +66,11 @@ describe("getChants", () => {
       assert.ok(c.ordinary, `${c.id}: the per-ordinary code rides \`ordinary\``);
       assert.ok(c.ordinarium, `${c.id}: the Latin name rides \`ordinarium\``);
       assert.ok(c.gabc.length > 0);
+      // Not a book, but PRINTED in books — and so citable. `ky` names the
+      // printing in `source`; `books` names the volumes a reader can open.
+      assert.ok(!c.books.includes("ky"), `${c.id}: \`ky\` is not a volume`);
+      assert.deepEqual(c.books, ["lu", "gr"], `${c.id}: printed in both`);
+      assert.ok(c.pages.length > 0, `${c.id}: carries a leaf number`);
     }
     // The per-ordinary identity survives into the book: every part is present.
     const parts = new Set(ky.map((c) => c.ordinary));
@@ -86,6 +91,64 @@ describe("getChants", () => {
     const viaBook = getChants({ id: viaOrdo.id })[0];
     assert.ok(viaBook, `${viaOrdo.id} is reachable by id too`);
     assert.deepEqual(viaOrdo, viaBook);
+  });
+
+  // The gap this closes: the Kyriale used to ship books: ["ky"] and pages: [],
+  // so nothing downstream could cite it — `ky` is a category, not a volume, and
+  // a citation section drawing on SOURCES had nothing to draw. The chants were
+  // in the Graduale and in the Liber Usualis all along.
+  test("a kyriale chant cites the Graduale and the Liber Usualis, each with its own pages", () => {
+    // Ite VII: Graduale 28*, Liber Usualis 37. Two books, two leaf numbers, and
+    // asking for one must never answer with the other's.
+    const [gr] = getChants({ id: "gregobase:31", source: "gr" });
+    assert.ok(gr, "the Graduale prints Ite VII");
+    assert.equal(gr.source.code, "gr");
+    assert.equal(gr.pages[0].page, "28*");
+
+    const [lu] = getChants({ id: "gregobase:31", source: "lu" });
+    assert.ok(lu, "the Liber Usualis prints it too");
+    assert.equal(lu.source.code, "lu");
+    assert.equal(lu.pages[0].page, "37");
+
+    // Reached without naming a book, the record is the owner's — lu is first in
+    // the extractor's PRIMARY_ORDER — and its source stays the Kyriale, which
+    // is the note a singer holding the book would want.
+    const [bare] = getChants({ id: "gregobase:31" });
+    assert.equal(bare.source.code, "ky");
+    assert.equal(bare.pages[0].page, "37");
+  });
+
+  test("every kyriale chant is citable, and `ky` is still not a book", () => {
+    const ky = ORDINARY_CODES.flatMap((code) => getChants({ ordinary: code }));
+    assert.equal(ky.length, 120);
+    for (const c of ky) {
+      for (const code of ["gr", "lu"]) {
+        const [asBook] = getChants({ id: c.id, source: code });
+        assert.ok(asBook, `${c.id} resolves under source "${code}"`);
+        assert.equal(asBook.source.code, code);
+        assert.ok(asBook.pages.length > 0, `${c.id}: "${code}" cites a page`);
+        for (const p of asBook.pages) assert.ok(p.page.length > 0);
+      }
+    }
+    // The shelf is unchanged: the Kyriale is cited BY books, it is not one.
+    const shelf = getCorpus();
+    assert.ok(!shelf.books.some((b) => b.code === "ky"));
+    assert.deepEqual(getChants({ source: "ky" }), []);
+  });
+
+  test("citing the Kyriale does not put it on the shelf", () => {
+    // The law: you ask for a Kyrie, you do not stumble onto one. `books` now
+    // says gr and lu, and a bare book query must STILL not sweep the ordinary
+    // in — the default pool is the shelf, and the Kyriale is not on it.
+    for (const code of ["gr", "lu"]) {
+      const book = getChants({ source: code });
+      assert.ok(!book.some((c) => c.office === "ky"), `${code} sweeps no ordinary`);
+    }
+    // Nor does the ordinary join either book's genre breakdown: `corpus(code)`
+    // tallies the shelf, and no Kyriale row appears under either book.
+    for (const code of ["gr", "lu"]) {
+      assert.ok(!getCorpus(code).genera.some((g) => g.office === "ky"));
+    }
   });
 
   test("accepts array values for mode, office, and source", () => {
