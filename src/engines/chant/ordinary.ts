@@ -338,11 +338,21 @@ export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
   const ordinary = ORDINARY_OFFICES.has(entry.office as OrdinaryCode)
     ? (entry.office as OrdinaryCode)
     : ("ke" as OrdinaryCode);
+  // The Kyriale's citation. `ky` is a category, not a volume, so it can never
+  // be cited — which is why these chants shipped with books: ["ky"] and no page
+  // at all, and nothing downstream could name where to find them. But they ARE
+  // printed: the extractor now carries the Graduale's and the Liber Usualis's
+  // listings on every entry. `books` is those volumes, owner first; `pages` is
+  // the OWNER's, exactly as chant.ts's withLabels() does for a shelf record —
+  // presentAs() swaps in the asked-for book's when a caller names one. An entry
+  // with no citation still falls back to its own printing, so it stays findable.
+  const books = (entry.books?.length ? entry.books : ["ky"]) as OrdinaryChant["books"];
+  const pages = entry.pages?.[books[0] as string] ?? [];
   return {
     id: entry.id,
     incipit: entry.incipit,
     gabc: entry.gabc,
-    books: ["ky"],
+    books,
     office: "ky",
     // The genus follows the office code, as everywhere else — OFFICIA.ky.
     // It read "Ordinarium" while the office read "or", which was tonus's own
@@ -350,7 +360,10 @@ export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
     genus: OFFICIA.ky,
     mode: entry.mode ? String(entry.mode) : null,
     modus: entry.mode ? (MODI[String(entry.mode)] ?? null) : null,
-    pages: [],
+    pages,
+    // Still KY_SOURCE: the bibliographic note says a singer is holding the
+    // Kyriale, which is true, and is a different claim from which shelved
+    // volumes print it. `books` carries that.
     source: KY_SOURCE,
     ordinary,
     ordinarium: ORDINARIA[ordinary] ?? entry.incipit,

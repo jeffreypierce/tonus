@@ -2,6 +2,22 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.11.1 — 2026-09-10
+
+The Kyriale says where it is printed.
+
+### Changed
+
+- **The Kyriale can be cited.** Its 120 chants shipped with `books: ["ky"]` and
+  no page at all, so nothing downstream could say where to find one — `ky` is a
+  category, not a volume, and a citation drawn from `SOURCES` had nothing to
+  draw on. They are printed all the same, and twice over: every one carries
+  `books: ["lu", "gr"]` and the Liber Usualis's and the Graduale's own pages, so
+  `cantus({ id, source: "lu" })` and `cantus({ id, source: "gr" })` each answer
+  with that book's leaf number. `ky` remains outside `SOURCES`, the shelf's row
+  counts are unchanged, and a bare book query still does not sweep the ordinary
+  in: you ask for a Kyrie, you do not stumble onto one.
+
 ## 0.11.0 — 2026-09-06
 
 One cadence catalogue.

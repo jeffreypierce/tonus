@@ -311,6 +311,18 @@ The Kyriale is a **partition of the Graduale**, so it is not a `source` and not
 a row in the shelf. It stays nameable by `id` and by the part of the Mass it
 belongs to.
 
+It is not a book, but it is **printed in** books, and it says which: every
+ordinary chant carries `books: ["lu", "gr"]` and the Graduale's and the Liber
+Usualis's pages, so it can be cited like anything else on the shelf.
+
+```js
+tonus.cantus({ id: "gregobase:31", source: "gr" })[0].pages; // [{ page: "28*", … }]
+tonus.cantus({ id: "gregobase:31", source: "lu" })[0].pages; // [{ page: "37",  … }]
+```
+
+`source` stays `ky` when no book is named — the note a singer holding the
+Kyriale would want — and `ky` is still absent from the book registry.
+
 A plain search does not sweep it in: `{ mode: 5 }` returns the shelf. Ask for a
 Kyrie and you get Kyries.
 
