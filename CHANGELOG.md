@@ -2,6 +2,23 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.12.0 — 2026-09-24
+
+A mass number is a Mass.
+
+### Changed
+
+- **Breaking: `mass` is one of Masses I–XVIII, or 0.** The Kyriale's appendix
+  carried its Graduale page as a mass number, so Clemens Rector read as mass
+  75 and the Requiem as 94, 101 and 102. Two ad libitum Kyries whose incipits
+  carry a numeral were worse: they read as Masses VI and X, so
+  `ordinarium({ mass: 6 })` returned an appendix Kyrie beside Mass VI's own,
+  and the era rule dated it by Mass VI's century. Every entry now carries a
+  `section` (`mass`, `credo`, `sprinkling`, `ad-libitum`, `requiem`), and only
+  the `mass` section is numbered. `ordinarium({ section: "requiem" })` replaces
+  `ordinarium({ mass: 102 })`. The appendix still rotates in the book's order,
+  now read from its Graduale pages.
+
 ## 0.11.1 — 2026-09-10
 
 The Kyriale says where it is printed.

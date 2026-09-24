@@ -405,8 +405,12 @@ interface PropriumQuery extends CantusQuery {
 `ordinarium(query?)` retrieves the fixed chants of the Mass from the
 Kyriale. A feast drives mass selection through its `masses` list, the
 masses the day's Kyriale RUBRIC appoints, derived as described in
-[calendar.md](calendar.md#the-days-feasts--festum); `mass` pins a kyriale
-number directly. Where the rubric names several masses, the year rotates
+[calendar.md](calendar.md#the-days-feasts--festum); `mass` pins one of the
+eighteen numbered Masses directly, and `section` asks for a part of the book:
+`mass` (Masses I–XVIII), `credo` (Credo I–VI), `sprinkling` (Asperges me,
+Vidi aquam), `ad-libitum` (the Cantus ad libitum) or `requiem` (the Missa pro
+defunctis). Only the `mass` section carries a mass number; every other entry
+reads `mass: 0`. Where the rubric names several masses, the year rotates
 through them (same feast, same year → same answer, every time), and sibling
 printings under one number (Mass I prints two dismissals; Mass XVII prints
 Kyrie A/B/C) rotate with it. Slots resolve independently, which the book
@@ -420,7 +424,7 @@ const [easter] = tonus.festum({ date: new Date("2026-04-05") });
 tonus.ordinarium({ feast: easter });
 // ky  Kyrie I       (mass 1) — Lux et origo, Paschal time, every year
 // gl  Gloria I      (mass 1)
-// cr  Credo III     (mass 3) — the credo rotates on its own cycle
+// cr  Credo III     (mass 0) — the credo rotates on its own cycle
 // sa  Sanctus I     (mass 1)
 // ag  Agnus Dei I   (mass 1)
 // it  Ite Ia        (mass 1)
@@ -437,7 +441,7 @@ sings Mass XVI whole with the Mass II Benedicamus. The ad libitum appendix
 is a **solemnity boost**, reachable only under the festal rubrics (it takes
 its turn in the rotation once every _n + 1_ years); it never reaches a
 penitential day or a feria, and the Requiem settings stay out of every
-calendar-driven pick (reachable by `ordinarium({ mass: 102 })` only). The
+calendar-driven pick (reachable by `ordinarium({ section: "requiem" })` only). The
 Triduum returns no ordinary at all: Good Friday has no Mass, and the
 Vigil's ordinary belongs to Easter. A pinned `mass` overrides the Triduum
 rule and the rotation both.
@@ -452,6 +456,7 @@ me** (`as`) otherwise.
 ```js
 tonus.ordinarium({ ordinary: "ke" }); // every Kyrie
 tonus.ordinarium({ mass: 9, ordinary: "gl" }); // Gloria of Cum jubilo
+tonus.ordinarium({ section: "ad-libitum", ordinary: "ke" }); // the eleven ad libitum Kyries
 ```
 
 | `ordinary` | `ordinarium`                                  |
@@ -470,13 +475,15 @@ tonus.ordinarium({ mass: 9, ordinary: "gl" }); // Gloria of Cum jubilo
 interface OrdinaryChant extends Chant {
   ordinary: OrdinaryCode; // movement code
   ordinarium: string; // Latin movement name, "Kyrie eleison" …
-  mass: number;
+  mass: number; // 1–18, or 0 outside the numbered Masses
+  section: "mass" | "credo" | "sprinkling" | "ad-libitum" | "requiem";
 }
 
 interface OrdinariumQuery extends CantusQuery {
   feast?: Feast | Feast[];
   ordinary?: OrdinaryCode;
-  mass?: number;
+  mass?: number; // 1–18
+  section?: "mass" | "credo" | "sprinkling" | "ad-libitum" | "requiem";
 }
 ```
 

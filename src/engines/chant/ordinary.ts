@@ -9,7 +9,7 @@ import {
   type MassEntry,
   type MassRubric,
 } from "./data/masses.js";
-import { KYRIALE, type KyrialeEntry } from "../../data/kyriale.js";
+import { KYRIALE, type KyrialeEntry, type KyrialeSection } from "../../data/kyriale.js";
 import { attestationCutoff, eraCutoff, chantAdmissible } from "./attest.js";
 import { CANTUS_QUERY_KEYS } from "./types.js";
 import {
@@ -41,17 +41,22 @@ function resolveMasses(feast: Feast): MassEntry[] {
   return [feast.marian ? AD_LIB.bvm : AD_LIB.standard];
 }
 
-// The numbered kyriale runs 1–18. The book's appendix — ad libitum settings and
-// the like — carries synthetic numbers above that range, which no feast's
-// `masses` list ever names; those settings are therefore reachable only as a
-// last-resort fallback here, or by direct `ordinarium({ mass })` query.
-const NUMBERED_MASS_MAX = 18;
+// Where the Kyriale prints an entry. Only the "mass" section carries a mass
+// number; the others are addressed by section. The appendix used to carry its
+// Graduale page as a "mass" (Clemens Rector was mass 75, the Requiem 94, 101
+// and 102), and the two ad libitum Kyries whose incipits carry a numeral
+// collided with Masses VI and X.
+const KYRIALE_SECTIONS: ReadonlySet<KyrialeSection> = new Set<KyrialeSection>([
+  "mass", "credo", "sprinkling", "ad-libitum", "requiem",
+]);
 
+const SPRINKLING_OFFICES: ReadonlySet<string> = new Set(["as", "va"]);
+
+// The Cantus ad libitum, which no feast's `masses` list ever names: reachable
+// on the appendix's solemnity turn, as a last-resort fallback here, or by a
+// direct `ordinarium({ section: "ad-libitum" })` query.
 function isAdLibitum(entry: KyrialeEntry): boolean {
-  // Most appendix settings sit above the numbered range, but two ad libitum
-  // Kyries are numbered 6 and 10 in the source data, colliding with the
-  // numbered masses — for those the incipit is the only discriminator.
-  return (entry.mass ?? 0) > NUMBERED_MASS_MAX || /\(ad lib\./i.test(entry.incipit);
+  return entry.section === "ad-libitum";
 }
 
 /** Prefer a proper numbered setting over an appendix one at equal standing. */
@@ -61,12 +66,13 @@ function adLibLast(a: KyrialeEntry, b: KyrialeEntry): number {
 
 // The Missa pro defunctis settings belong to the Requiem, not to the temporal or
 // sanctoral day. They stay out of every calendar-driven pick and remain
-// reachable only by direct `ordinarium({ mass })` query. Note the Requiem's own
-// dismissal carries the bare incipit "Requiescant" — no "(in Miss. def.)"
-// qualifier — so it must be named here explicitly, or it leaks through the
-// last-resort appendix onto every feria whose mass prints no dismissal.
+// reachable only by direct `ordinarium({ section: "requiem" })` query. The
+// Requiem's own dismissal carries the bare incipit "Requiescant", which is why
+// the section is data and not an incipit test: left to the incipit it leaked
+// through the last-resort appendix onto every feria whose mass prints no
+// dismissal.
 function isRequiem(entry: KyrialeEntry): boolean {
-  return /in\s+Miss\.\s*def|defunct|requiescant/i.test(entry.incipit);
+  return entry.section === "requiem";
 }
 
 /**
@@ -135,10 +141,17 @@ function appendixLeadsThisYear(
   return ((year % n) + n) % n === poolSize;
 }
 
+// The appendix in the book's own order. Its settings carry no mass number, so
+// the Graduale's page orders them: Kyrie I to XI, then the Glorias, and so on.
+function grPage(entry: KyrialeEntry): number {
+  const page = /\d+/.exec(entry.pages?.gr?.[0]?.page ?? "")?.[0];
+  return page == null ? Number.POSITIVE_INFINITY : Number(page);
+}
+
 function appendixFor(office: string, pool: KyrialeEntry[]): KyrialeEntry[] {
   return pool.filter(
     (e) => e.office === office && isAdLibitum(e) && !isRequiem(e),
-  ).sort((a, b) => (a.mass ?? 0) - (b.mass ?? 0) || (a.id < b.id ? -1 : 1));
+  ).sort((a, b) => grPage(a) - grPage(b) || (a.id < b.id ? -1 : 1));
 }
 
 /**
@@ -241,7 +254,7 @@ function entriesForOffice(
   // as equals, or the appendix would be sung more often than the rite itself.
   // They arrive on the appendix turn like every other appendix setting.
   const unnumbered = pool.filter(
-    (e) => e.office === office && e.mass == null && !isRequiem(e),
+    (e) => e.office === office && SPRINKLING_OFFICES.has(office) && !isRequiem(e),
   );
   const plain = unnumbered.filter((e) => !isAdLibitum(e));
   if (plain.length) return rotate(plain, year);
@@ -368,6 +381,7 @@ export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
     ordinary,
     ordinarium: ORDINARIA[ordinary] ?? entry.incipit,
     mass: entry.mass ?? 0,
+    section: entry.section,
   };
 }
 
@@ -546,7 +560,7 @@ function assertFeasts(feasts: Feast[] | undefined, method: string): void {
 }
 
 
-const ORDINARIUM_QUERY_KEYS = new Set([...CANTUS_QUERY_KEYS, "feast", "ordinary", "mass"]);
+const ORDINARIUM_QUERY_KEYS = new Set([...CANTUS_QUERY_KEYS, "feast", "ordinary", "mass", "section"]);
 
 /**
  * Mass ordinary retrieval (`tonus.ordinarium`) from the Kyriale. A feast
@@ -572,6 +586,13 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
     );
   }
 
+  if (query.section != null && !KYRIALE_SECTIONS.has(query.section)) {
+    throw new Error(
+      `ordinarium: unknown section "${query.section}" ` +
+      `(expected ${[...KYRIALE_SECTIONS].join(", ")}).`,
+    );
+  }
+
   const feasts = toArray(query.feast);
   assertFeasts(feasts, "ordinarium");
   // `mode` accepts a scalar or an array, with cantus's semantics: match any.
@@ -594,7 +615,7 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
         : null;
       return ordinaryForFeast(f, query.mass, filterModes, adm);
     });
-  } else if (query.mass != null || query.ordinary) {
+  } else if (query.mass != null || query.ordinary || query.section) {
     // Direct kyriale query without feast context — same admissibility rule as
     // cantus, so the two doors cannot disagree.
     let entries = KYRIALE.slice();
@@ -603,6 +624,7 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
       entries = entries.filter((e) => chantAdmissible(e.id, cutoff, query.cursus));
     }
     if (query.mass != null) entries = entries.filter((e) => e.mass === query.mass);
+    if (query.section) entries = entries.filter((e) => e.section === query.section);
     if (query.ordinary) entries = entries.filter((e) => e.office === query.ordinary);
     if (filterModes) entries = entries.filter((e) => e.mode != null && filterModes.includes(e.mode));
 
@@ -614,6 +636,10 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
   }
 
   // Apply remaining CantusQuery filters
+  if (feasts && query.section) {
+    results = results.filter((c) => c.section === query.section);
+  }
+
   if (query.incipit) {
     const needle = query.incipit.toLowerCase();
     results = results.filter((c) => c.incipit.toLowerCase().includes(needle));

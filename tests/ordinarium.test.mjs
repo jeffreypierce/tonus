@@ -56,12 +56,13 @@ describe("ordinarium — ferias and the appendix gate", () => {
     }
   });
 
-  test("the Requiem ordinary remains reachable by direct mass query", () => {
-    const req = getOrdinary({ mass: 102 });
+  test("the Requiem ordinary remains reachable by direct section query", () => {
+    const req = getOrdinary({ section: "requiem" });
     assert.ok(
       req.some((c) => /requiescant/i.test(c.incipit)),
-      "Requiescant serves under ordinarium({ mass: 102 })",
+      'Requiescant serves under ordinarium({ section: "requiem" })',
     );
+    assert.ok(req.every((c) => c.section === "requiem" && c.mass === 0));
   });
 });
 
@@ -184,5 +185,31 @@ describe("ordinarium — the door validates the code it is given", () => {
     assert.throws(() => getOrdinary({ ordinary: "ky" }), /The Kyrie is "ke" from 0\.10\.0/);
     assert.throws(() => getOrdinary({ ordinary: "zz" }), /unknown ordinary code/);
     assert.equal(getOrdinary({ ordinary: "ke" }).length, 31);
+  });
+});
+
+describe("ordinarium — a mass number is one of the eighteen Masses", () => {
+  test("only the mass section is numbered, and only I–XVIII", () => {
+    for (const section of ["mass", "credo", "sprinkling", "ad-libitum", "requiem"]) {
+      for (const c of getOrdinary({ section })) {
+        if (section === "mass") assert.ok(c.mass >= 1 && c.mass <= 18, `${c.incipit}: mass ${c.mass}`);
+        else assert.equal(c.mass, 0, `${c.incipit} (${section}) carries no mass number`);
+      }
+    }
+  });
+
+  test("the ad libitum Kyries VI and X are not Masses VI and X", () => {
+    for (const mass of [6, 10]) {
+      const kyries = getOrdinary({ mass, ordinary: "ke" });
+      assert.ok(kyries.length >= 1);
+      assert.ok(kyries.every((c) => !/ad lib/i.test(c.incipit)),
+        `Mass ${mass}'s Kyrie: ${kyries.map((c) => c.incipit).join(", ")}`);
+    }
+    const appendix = getOrdinary({ section: "ad-libitum", ordinary: "ke" });
+    assert.equal(appendix.length, 11, "the book prints eleven ad libitum Kyries");
+  });
+
+  test("an unknown section throws", () => {
+    assert.throws(() => getOrdinary({ section: "appendix" }), /unknown section/);
   });
 });
