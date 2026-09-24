@@ -2,6 +2,7 @@
 // engines/chant/types — internal types and shared constants for chant engines
 // ---------------------------------------------------------------------------
 import type { Season, Grade, Feast } from "../cal/types.js";
+import type { KyrialeSection } from "../../data/kyriale.js";
 
 export type { Season, Grade, Feast };
 
@@ -220,12 +221,15 @@ export interface Chant {
   ordinary?: OrdinaryCode;   // machine code; present for kyriale chants
   ordinarium?: string;       // Latin ordinary name, e.g. "Kyrie eleison"
   mass?: number;
+  section?: KyrialeSection;  // where the Kyriale prints it; present for kyriale chants
 }
 
 export interface OrdinaryChant extends Chant {
   ordinary: OrdinaryCode;
   ordinarium: string;
+  /** One of Masses I–XVIII; 0 outside the numbered Masses (see `section`). */
   mass: number;
+  section: KyrialeSection;
 }
 
 // One genre's chant count within a book (office code + its Latin label).
@@ -366,7 +370,10 @@ export interface PropriumQuery extends CantusQuery {
 export interface OrdinariumQuery extends CantusQuery {
   feast?: Feast | Feast[];
   ordinary?: OrdinaryCode;
+  /** One of Masses I–XVIII. */
   mass?: number;
+  /** A section of the Kyriale: "mass", "credo", "sprinkling", "ad-libitum", "requiem". */
+  section?: KyrialeSection;
 }
 
 // A `Rite` type and a `rite` option are deliberately absent. tonus assembles

@@ -1,9 +1,10 @@
 // kyriale.ts — Mass ordinary (kyriale) chants
 // Extracted from GregoBase (GR source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-09-02T05:09:24.171Z
+// Generated: 2026-09-24T19:56:36.053Z
 // Entries: 120
 //
-// Mass numbers are derived from GR page references (e.g. page "18*" = Mass XVIII).
+// `mass` is one of the eighteen numbered Masses, read from the incipit, or null;
+// `section` says where the book prints the entry.
 // office-part 'ky' in GregoBase covers all ordinary parts (Kyrie, Gloria, Credo,
 // Sanctus, Agnus Dei, Ite missa est, Benedicamus); office code is inferred from incipit.
 
@@ -18,9 +19,19 @@ export type KyrialeOffice =
   | "as"
   | "va";
 
+/** Where the Kyriale prints an entry. Only `mass` entries carry a mass number. */
+export type KyrialeSection =
+  | "mass"
+  | "credo"
+  | "sprinkling"
+  | "ad-libitum"
+  | "requiem";
+
 export interface KyrialeEntry {
   id: string;
   office: KyrialeOffice;
+  section: KyrialeSection;
+  /** One of Masses I–XVIII, or null outside the numbered Masses. */
   mass: number | null;
   mode: string | null;
   incipit: string;
@@ -39,6 +50,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:497",
     office: "as",
+    section: "sprinkling",
     mass: null,
     mode: "7",
     incipit: "Asperges me",
@@ -49,6 +61,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:555",
     office: "ag",
+    section: "mass",
     mass: 2,
     mode: "1",
     incipit: "Agnus Dei II",
@@ -59,6 +72,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1279",
     office: "sa",
+    section: "mass",
     mass: 2,
     mode: "1",
     incipit: "Sanctus II",
@@ -69,6 +83,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:298",
     office: "sa",
+    section: "mass",
     mass: 18,
     mode: null,
     incipit: "Sanctus XVIII",
@@ -79,7 +94,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2118",
     office: "ag",
-    mass: 101,
+    section: "requiem",
+    mass: null,
     mode: null,
     incipit: "Agnus Dei (in Miss. def.)",
     gabc: "(c4) A(g')gnus(g) De(gh)i,(h.) *(,) qui(h') tol(h)lis(h') pec(g)cá(h)ta(f') mun(g)di :(h.) (,) do(g')na(h) e(i')is(g) ré(h')qui(g)em.(g.) (::) A(g')gnus(g) De(gh)i,(h.) *(,) qui(h') tol(h)lis(h') pec(g)cá(h)ta(f') mun(g)di :(h.) (,) do(g')na(h) e(i')is(g) ré(h')qui(g)em.(g.) (::) A(g')gnus(g) De(gh)i,(h.) *(,) qui(h') tol(h)lis(h') pec(g)cá(h)ta(f') mun(g)di :(h.) (,) do(g')na(h) e(i')is(g) ré(h')qui(g)em(g') **() sem(f)pi(h)tér(hg~)nam.(g.) (::)",
@@ -89,7 +105,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:823",
     office: "it",
-    mass: 102,
+    section: "requiem",
+    mass: null,
     mode: null,
     incipit: "Requiescant",
     gabc: "(c4) RE(g)qui(h)é(h)scant(g') in(h) pa(hg)ce.(g.) (::) <sp>R/</sp>. A(g)men.(gh..) (::)",
@@ -99,6 +116,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:804",
     office: "it",
+    section: "mass",
     mass: 2,
     mode: "5",
     incipit: "Ite IIb",
@@ -109,6 +127,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:825",
     office: "ke",
+    section: "mass",
     mass: 3,
     mode: "4",
     incipit: "Kyrie III",
@@ -119,6 +138,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1280",
     office: "it",
+    section: "mass",
     mass: 2,
     mode: "3",
     incipit: "Ite IIa",
@@ -129,6 +149,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:71",
     office: "gl",
+    section: "mass",
     mass: 3,
     mode: "8",
     incipit: "Gloria III",
@@ -139,6 +160,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:566",
     office: "sa",
+    section: "mass",
     mass: 3,
     mode: "4",
     incipit: "Sanctus III",
@@ -149,6 +171,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:578",
     office: "ag",
+    section: "mass",
     mass: 3,
     mode: "4",
     incipit: "Agnus Dei III",
@@ -159,6 +182,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1061",
     office: "ke",
+    section: "mass",
     mass: 4,
     mode: "1",
     incipit: "Kyrie IV",
@@ -169,6 +193,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2978",
     office: "gl",
+    section: "mass",
     mass: 4,
     mode: "4",
     incipit: "Gloria IV",
@@ -179,6 +204,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:264",
     office: "ag",
+    section: "mass",
     mass: 4,
     mode: "6",
     incipit: "Agnus Dei IV",
@@ -189,6 +215,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2518",
     office: "sa",
+    section: "mass",
     mass: 4,
     mode: "8",
     incipit: "Sanctus IV",
@@ -199,6 +226,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:337",
     office: "gl",
+    section: "mass",
     mass: 5,
     mode: "8",
     incipit: "Gloria V",
@@ -209,6 +237,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:353",
     office: "it",
+    section: "mass",
     mass: 4,
     mode: "1",
     incipit: "Ite IV",
@@ -219,6 +248,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:474",
     office: "ke",
+    section: "mass",
     mass: 5,
     mode: "8",
     incipit: "Kyrie V",
@@ -229,6 +259,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:958",
     office: "va",
+    section: "sprinkling",
     mass: null,
     mode: "8",
     incipit: "Vidi aquam",
@@ -239,6 +270,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1241",
     office: "ag",
+    section: "mass",
     mass: 5,
     mode: "4",
     incipit: "Agnus Dei V",
@@ -249,6 +281,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2984",
     office: "sa",
+    section: "mass",
     mass: 5,
     mode: "4",
     incipit: "Sanctus V",
@@ -259,6 +292,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1006",
     office: "it",
+    section: "mass",
     mass: 5,
     mode: "8",
     incipit: "Ite V",
@@ -269,6 +303,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2903",
     office: "ke",
+    section: "mass",
     mass: 6,
     mode: "7",
     incipit: "Kyrie VI",
@@ -279,6 +314,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:321",
     office: "gl",
+    section: "mass",
     mass: 6,
     mode: "8",
     incipit: "Gloria VI",
@@ -289,6 +325,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2988",
     office: "it",
+    section: "mass",
     mass: 1,
     mode: "8",
     incipit: "Ite Ia",
@@ -299,6 +336,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:387",
     office: "ag",
+    section: "mass",
     mass: 6,
     mode: "8",
     incipit: "Agnus Dei VI",
@@ -309,6 +347,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:431",
     office: "sa",
+    section: "mass",
     mass: 6,
     mode: "3",
     incipit: "Sanctus VI",
@@ -319,6 +358,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:721",
     office: "gl",
+    section: "mass",
     mass: 7,
     mode: "6",
     incipit: "Gloria VII",
@@ -329,6 +369,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1160",
     office: "it",
+    section: "mass",
     mass: 6,
     mode: "8",
     incipit: "Ite VI",
@@ -339,6 +380,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1262",
     office: "ke",
+    section: "mass",
     mass: 7,
     mode: "8",
     incipit: "Kyrie VII",
@@ -349,6 +391,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1089",
     office: "sa",
+    section: "mass",
     mass: 7,
     mode: "8",
     incipit: "Sanctus VII",
@@ -359,6 +402,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2985",
     office: "ag",
+    section: "mass",
     mass: 7,
     mode: "8",
     incipit: "Agnus Dei VII",
@@ -369,6 +413,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:31",
     office: "it",
+    section: "mass",
     mass: 7,
     mode: "8",
     incipit: "Ite VII",
@@ -379,6 +424,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1184",
     office: "ke",
+    section: "mass",
     mass: 8,
     mode: "5",
     incipit: "Kyrie VIII",
@@ -389,6 +435,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:961",
     office: "gl",
+    section: "mass",
     mass: 8,
     mode: "5",
     incipit: "Gloria VIII",
@@ -399,6 +446,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:905",
     office: "as",
+    section: "ad-libitum",
     mass: null,
     mode: "7",
     incipit: "Asperges me (ad lib.) I",
@@ -409,6 +457,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1384",
     office: "sa",
+    section: "mass",
     mass: 8,
     mode: "6",
     incipit: "Sanctus VIII",
@@ -419,6 +468,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:832",
     office: "it",
+    section: "mass",
     mass: 8,
     mode: "5",
     incipit: "Ite VIII",
@@ -429,6 +479,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2760",
     office: "ag",
+    section: "mass",
     mass: 8,
     mode: "6",
     incipit: "Agnus Dei VIII",
@@ -439,6 +490,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2771",
     office: "gl",
+    section: "mass",
     mass: 9,
     mode: "7",
     incipit: "Gloria IX",
@@ -449,6 +501,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2976",
     office: "ke",
+    section: "mass",
     mass: 9,
     mode: "1",
     incipit: "Kyrie IX",
@@ -459,6 +512,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:587",
     office: "sa",
+    section: "mass",
     mass: 9,
     mode: "5",
     incipit: "Sanctus IX",
@@ -469,6 +523,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:707",
     office: "ag",
+    section: "mass",
     mass: 9,
     mode: "5",
     incipit: "Agnus Dei IX",
@@ -479,6 +534,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:795",
     office: "ke",
+    section: "mass",
     mass: 10,
     mode: "1",
     incipit: "Kyrie X",
@@ -489,6 +545,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2989",
     office: "it",
+    section: "mass",
     mass: 9,
     mode: "1",
     incipit: "Ite IX",
@@ -499,6 +556,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1204",
     office: "gl",
+    section: "mass",
     mass: 10,
     mode: "8",
     incipit: "Gloria X",
@@ -509,6 +567,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2770",
     office: "sa",
+    section: "mass",
     mass: 10,
     mode: "4",
     incipit: "Sanctus X",
@@ -519,6 +578,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2981",
     office: "ag",
+    section: "mass",
     mass: 10,
     mode: "4",
     incipit: "Agnus Dei X",
@@ -529,6 +589,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2982",
     office: "ke",
+    section: "mass",
     mass: 11,
     mode: "1",
     incipit: "Kyrie XI",
@@ -539,6 +600,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:303",
     office: "gl",
+    section: "mass",
     mass: 11,
     mode: "2",
     incipit: "Gloria XI",
@@ -549,6 +611,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:142",
     office: "as",
+    section: "ad-libitum",
     mass: null,
     mode: "4",
     incipit: "Asperges me (ad lib.) II",
@@ -559,6 +622,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1143",
     office: "ke",
+    section: "mass",
     mass: 1,
     mode: "8",
     incipit: "Kyrie I",
@@ -569,6 +633,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1106",
     office: "sa",
+    section: "mass",
     mass: 11,
     mode: "2",
     incipit: "Sanctus XI",
@@ -579,6 +644,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:856",
     office: "it",
+    section: "mass",
     mass: 11,
     mode: "1",
     incipit: "Ite XI",
@@ -589,6 +655,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1243",
     office: "ag",
+    section: "mass",
     mass: 11,
     mode: "1",
     incipit: "Agnus Dei XI",
@@ -599,6 +666,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2068",
     office: "ke",
+    section: "mass",
     mass: 12,
     mode: "8",
     incipit: "Kyrie XII",
@@ -609,6 +677,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2114",
     office: "gl",
+    section: "mass",
     mass: 12,
     mode: "4",
     incipit: "Gloria XII",
@@ -619,6 +688,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1062",
     office: "sa",
+    section: "mass",
     mass: 12,
     mode: "2",
     incipit: "Sanctus XII",
@@ -629,6 +699,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:37",
     office: "it",
+    section: "mass",
     mass: 12,
     mode: "8",
     incipit: "Ite XII",
@@ -639,6 +710,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:137",
     office: "ke",
+    section: "mass",
     mass: 13,
     mode: "1",
     incipit: "Kyrie XIII",
@@ -649,6 +721,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:759",
     office: "ag",
+    section: "mass",
     mass: 12,
     mode: "2",
     incipit: "Agnus XII",
@@ -659,6 +732,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2107",
     office: "gl",
+    section: "mass",
     mass: 13,
     mode: "1",
     incipit: "Gloria XIII",
@@ -669,6 +743,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1067",
     office: "sa",
+    section: "mass",
     mass: 13,
     mode: "8",
     incipit: "Sanctus XIII",
@@ -679,6 +754,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:441",
     office: "ke",
+    section: "mass",
     mass: 14,
     mode: "8",
     incipit: "Kyrie XIV",
@@ -689,6 +765,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:878",
     office: "it",
+    section: "mass",
     mass: 13,
     mode: "1",
     incipit: "Ite XIII",
@@ -699,6 +776,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2886",
     office: "ag",
+    section: "mass",
     mass: 13,
     mode: "1",
     incipit: "Agnus XIII",
@@ -709,6 +787,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:908",
     office: "gl",
+    section: "mass",
     mass: 14,
     mode: "3",
     incipit: "Gloria XIV",
@@ -719,6 +798,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2979",
     office: "sa",
+    section: "mass",
     mass: 14,
     mode: "1",
     incipit: "Sanctus XIV",
@@ -729,6 +809,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2980",
     office: "gl",
+    section: "mass",
     mass: 1,
     mode: "4",
     incipit: "Gloria I",
@@ -739,6 +820,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2076",
     office: "ag",
+    section: "mass",
     mass: 14,
     mode: "8",
     incipit: "Agnus XIV",
@@ -749,6 +831,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2986",
     office: "it",
+    section: "mass",
     mass: 14,
     mode: "8",
     incipit: "Ite XIV",
@@ -759,6 +842,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:393",
     office: "ke",
+    section: "mass",
     mass: 15,
     mode: "4",
     incipit: "Kyrie XV",
@@ -769,6 +853,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2975",
     office: "gl",
+    section: "mass",
     mass: 15,
     mode: "4",
     incipit: "Gloria XV",
@@ -779,6 +864,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:386",
     office: "sa",
+    section: "mass",
     mass: 15,
     mode: "2",
     incipit: "Sanctus XV",
@@ -789,6 +875,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:620",
     office: "it",
+    section: "mass",
     mass: 15,
     mode: "4",
     incipit: "Ite XV",
@@ -799,6 +886,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:959",
     office: "ag",
+    section: "mass",
     mass: 15,
     mode: "1",
     incipit: "Agnus XV",
@@ -809,6 +897,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:545",
     office: "ke",
+    section: "mass",
     mass: 16,
     mode: "3",
     incipit: "Kyrie XVI",
@@ -819,6 +908,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1336",
     office: "ag",
+    section: "mass",
     mass: 16,
     mode: "1",
     incipit: "Agnus XVI",
@@ -829,6 +919,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2990",
     office: "sa",
+    section: "mass",
     mass: 16,
     mode: "2",
     incipit: "Sanctus XVI",
@@ -839,6 +930,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:272",
     office: "ke",
+    section: "mass",
     mass: 17,
     mode: "1",
     incipit: "Kyrie XVII",
@@ -849,6 +941,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:168",
     office: "ke",
+    section: "mass",
     mass: 17,
     mode: "6",
     incipit: "Kyrie XVII C",
@@ -859,6 +952,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:871",
     office: "sa",
+    section: "mass",
     mass: 17,
     mode: "5",
     incipit: "Sanctus XVII",
@@ -869,6 +963,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:1137",
     office: "ag",
+    section: "mass",
     mass: 17,
     mode: "5",
     incipit: "Agnus XVII",
@@ -879,6 +974,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2522",
     office: "ke",
+    section: "mass",
     mass: 18,
     mode: "4",
     incipit: "Kyrie XVIII",
@@ -889,6 +985,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2412",
     office: "ag",
+    section: "mass",
     mass: 18,
     mode: null,
     incipit: "Agnus XVIII",
@@ -899,6 +996,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:344",
     office: "cr",
+    section: "credo",
     mass: null,
     mode: "4",
     incipit: "Credo I",
@@ -909,7 +1007,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2227",
     office: "be",
-    mass: 59,
+    section: "ad-libitum",
+    mass: null,
     mode: null,
     incipit: "Benedicamus (ad lib.)",
     gabc: "(c4) BE(h')ne(h)di(h)cá(fh)mus(h.) Dó(gh)mi(g)no.(gvFE.) (::) <sp>R/</sp>. De(h')o(h) grá(gh)ti(g)as.(gvFE.) (::)",
@@ -919,6 +1018,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:16096",
     office: "be",
+    section: "mass",
     mass: 2,
     mode: "5",
     incipit: "Benedicamus II",
@@ -929,6 +1029,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:300",
     office: "sa",
+    section: "mass",
     mass: 1,
     mode: "4",
     incipit: "Sanctus I",
@@ -939,6 +1040,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2983",
     office: "cr",
+    section: "credo",
     mass: null,
     mode: "4",
     incipit: "Credo II",
@@ -949,6 +1051,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:749",
     office: "cr",
+    section: "credo",
     mass: null,
     mode: "5",
     incipit: "Credo III",
@@ -959,6 +1062,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:678",
     office: "cr",
+    section: "credo",
     mass: null,
     mode: "1",
     incipit: "Credo IV",
@@ -969,6 +1073,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:955",
     office: "cr",
+    section: "credo",
     mass: null,
     mode: "4",
     incipit: "Credo V",
@@ -979,6 +1084,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2977",
     office: "ag",
+    section: "mass",
     mass: 1,
     mode: "4",
     incipit: "Agnus Dei I",
@@ -989,6 +1095,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2987",
     office: "it",
+    section: "mass",
     mass: 1,
     mode: "7",
     incipit: "Ite Ib",
@@ -999,6 +1106,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2934",
     office: "cr",
+    section: "credo",
     mass: null,
     mode: "4",
     incipit: "Credo VI",
@@ -1009,7 +1117,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2993",
     office: "ke",
-    mass: 75,
+    section: "ad-libitum",
+    mass: null,
     mode: "1",
     incipit: "Kyrie (ad lib.) I. - Clemens Rector",
     gabc: "(c4) KY(ixfg!hi)ri(h)e(hv.//ghFD.) *(,) (ixfg!hih./ghFD.) e(fvED'd)lé(c')i(d)son.(d.) (::) Ký(dc)ri(dvCA')e(cdd//cf//egFE.) (,) e(deC'A)lé(cc)i(d)son.(d.) (::) Ký(ixfg!hi)ri(h)e(hv.//ghFD.) (,) (ixfg!hih./ghFD.) e(fvED'd)lé(c')i(d)son.(d.) (::) \r\n\r\nChrí(hih)ste(hgkkkh.//ijh'/igh.) (,) e(gjI'GhhvGF'ED'd)lé(c')i(d)son.(d.) (::) Chrí(dc)ste(dvCA'/cdd cf//egFE.) (,) e(deC'A)lé(cc)i(d)son.(d.) (::) Chrí(hih)ste(hgkkkh.//ijh'/igh.) (,) e(gjI'G/hhvGF'ED'd)lé(c')i(d)son.(d.) (::) \r\n\r\nKý(ixdc/fg!hi)ri(h)e(hv.//ghFD'cdd) (,) (ixdc/fg!hih./ghFD.//hhg/hhf/ghFD.) (,) (fvEDC./ed/fgFE.) e(deC'A)lé(cc)i(d)son.(d.) (::)\r\nKý(d!ew!fvED'd)ri(cd)e(dv./cf//egFE.) (,) e(deC'A)lé(cc)i(d)son.(d.) (::) Ký(ixdc/fg!hi)ri(h)e(hv.//ghFD'/cdd) *(,) (ixdc/fg!hih.//ghFD'/cdd) *(,) (hhg/hhf/ghFD.) *(,) (hhg/hhf/ghFD.) **(,) (fvEDC./ed/fgFE.) e(deC'A)lé(cc)i(d)son.(d.) (::)",
@@ -1019,7 +1128,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2021",
     office: "ke",
-    mass: 76,
+    section: "ad-libitum",
+    mass: null,
     mode: "1",
     incipit: "Kyrie (ad lib.) II. - Summe Deus",
     gabc: "(c4) KY(dh)ri(h)e(jvHGhv.//fgFDC.) <clear>*(,) e(fgf)lé(g')i(h)son.(h.) (::)\r\nKý(hj)ri(jk)e(kjk.ixhi/ghf.1) (,) e(hjIG'F)lé(g')i(h)son.(h.) (::)\r\nKý(dh)ri(h)e(jvHGhv.//fgFDC.) (,) e(fgf)lé(g')i(h)son.(h.) (::)\r\nChri(hj)ste(jkkjk.ixhiGF.) (,) e(hjIG'F)lé(g')i(h)son.(h.) (::)\r\nChri(h)ste(jk!mvmjjvIG.) e(kvJIG'F)lé(g')i(h)son.(h.) (::)\r\nChri(hj)ste(jkkjk.ixhiGF.) (,) e(hjIG'F)lé(g')i(h)son.(h.) (::)\r\nKý(hg)ri(f')e(gffvEDfg!hvhd.) e(fgf/gh!jvIG'F)lé(g')i(h)son.(h.) (::)\r\nKý(h')ri(j)e(kvJIkvJIGh.) (,) e(kvJIG'F)lé(g')i(h)son.(h.) (::)\r\nKý(hg)ri(f')e(gffvEDfg!hvhd.) <clear>*(,) (hvGF'gffvEDfg!hvhd.) <clear>**(,) e(fgf/gh!jvIG'F)lé(g')i(h)son.(h.) (::)",
@@ -1029,7 +1139,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2237",
     office: "ke",
-    mass: 77,
+    section: "ad-libitum",
+    mass: null,
     mode: "2",
     incipit: "Kyrie (ad lib.) III / III A",
     gabc: "(f3) KY(f)ri(fe)e(eef.) ~~*() (fhG'FE.) (,) e(giHF'E)lé(g')i(g)son.(f.) (::) Ký(f)ri(fe)e(effc.) e(bc!evec)lé(e')i(f)son.(f.) (::) Ký(f)ri(fe)e(eef. fhG'FE.) (,) e(giHF'E)lé(g')i(g)son.(f.) (::) Chri(f!gwh)ste(hg/hji/hhe.) (,) e(giHF'E)lé(g')i(g)son.(f.) (::) Chri(f)ste(fvEC) e(efe/fhg)lé(e')i(f)son.(f.) (::) Chri(f!gwh)ste(hg/hji/hhe.) (,) e(giHF'E)lé(g')i(g)son.(f.) (::) Ký(fj)ri(ji)e(ijjh.) (,) e(jji/hhf)lé(ef)i(g)son.(f.) (::) Ký(f)ri(fe)e(i.) e(h!iw!jvIH/iif)lé(ef)i(g)son.(f.) (::) Ký(fj)ri(ji)e(ijjh.) (,) (jjvIH/iih//fhG'Ef.) ~~~~~*(;) (e!fg!hi!jvjh.) (,) e(jji/hhf)lé(ef)i(g)son.(f.) (::)",
@@ -1039,7 +1150,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2254",
     office: "ke",
-    mass: 78,
+    section: "ad-libitum",
+    mass: null,
     mode: "5",
     incipit: "Kyrie (ad lib.) IV. - Kyrie altissime",
     gabc: "(c3) KY(d)ri(fh)e(hf/hiih) *{ }(jvIH'if.) e(gxhvG'FE'fd)lé(efe')i(e)son.(d.) (::) \r\nKý(d)ri(ef)e(gxfegvFD.1) e(gxd'!fh!ivvHF'E//gvFE'fd)lé(efe')i(e)son.(d.) (::) \r\nKý(d)ri(fh)e(hf/hiih//jvIH'if.) e(hvG'FE'fd)lé(efe')i(e)son.(d.) (::) \r\nChri(h)ste(gxhiH'GhvGFE'/f!gh./ivHGh.) (,) e(ijIH'h)lé(gxg')i(h)son.(h.) (::) \r\nChri(h)ste(gxf./hvG'FE'/fd.) (,) e(gx!d'!fh!ivvHF'E//gvFE'/fd)lé(efe')i(e)son.(d.) (::) \r\nChri(h)ste(gxhiH'G/hvGFE'/f!gh./ivHGh.) (,) e(ijIH'h)lé(gxg')i(h)son.(h.) (::) \r\nKý(hih)ri(gxgh)e(h./kj/klKJ'IH.0/ijh//f!gh/ih.) (,) e(gxfhG'FE'fd)lé(efe')i(e)son.(d.) (::) \r\nKý(kj)ri(kl)e(lvKJ'IH.) (,) e(gxijhhg//ikJ'IH'h)lé(g')i(h)son.(h.) (::) \r\nKý(hih)ri(gxgh)e(h./kj/klKJ'IH./ijh//f!gh/ih.0) ~~~~~*(;) (kj/klKJ'IH./gxijh//f!gh/ih.0) ~~~~~**(,) e(gxfhG'FE'fd)lé(efe')i(e)son.(d.) (::)",
@@ -1049,7 +1161,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2261",
     office: "ke",
-    mass: 79,
+    section: "ad-libitum",
+    mass: null,
     mode: "7",
     incipit: "Kyrie (ad lib.) V / I B",
     gabc: "(c3) KY(efe)ri(de)e(ev./df!hvGF.) ~~~~~*(,) (hiH'GE.) e(fvED)lé(f')i(f)son.(e.) (::) Ký(bc)ri(de)e(efEDf.) (,) e(fhhvGFE'e)lé(d')i(e)son.(e.) (::) Ký(efe)ri(de)e(ev./df!hvGF.) (,) (hiH'GE.) e(fvED)lé(f')i(f)son.(e.) (::) Chri(iji)ste(hvvGF.) (,) (fi!jvIH'hvGE.) e(fvED)lé(f')i(f)son.(e.) (::) Chri(bc!de)ste(efEDf.) (,) e(fhhvGFE'e)lé(d')i(e)son.(e.) (::) Chri(iji)ste(hvvGF.) (,) (fi!jvIH'hvGE.) e(fvED)lé(f')i(f)son.(e.) (::) Ký(iji)ri(hi)e(iv./hj!kvJI.) e(jvIH)lé(jk)i(i)son.(i.) (::) Ký(iji)ri(hhg)e(f.) (,) (fi!jvIH'/hvGE.) e(fvED)lé(f')i(f)son.(e.) (::) Ký(iji)ri(hi)e(iv./hj!kvJI./jvIH/jki.) ~~~~~*(,) (ijIH/ii//hj!kvJI./jvIH/jki.) ~~~~~**(,) (ijIH'/hvGF'f//ijIH'GE.) e(fvED)lé(f')i(f)son.(e.) (::)",
@@ -1059,6 +1172,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:309",
     office: "ke",
+    section: "mass",
     mass: 2,
     mode: "3",
     incipit: "Kyrie II",
@@ -1069,6 +1183,7 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:862",
     office: "gl",
+    section: "mass",
     mass: 2,
     mode: "1",
     incipit: "Gloria II",
@@ -1079,7 +1194,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2269",
     office: "ke",
-    mass: 6,
+    section: "ad-libitum",
+    mass: null,
     mode: "8",
     incipit: "Kyrie (ad lib.) VI",
     gabc: "(c4) KY(g!hw!ij)ri(ih)e(hi/jiig) ~~~~~*() (hvGEfvEDe.) (,) e(g!hjH'GF)lé(g')i(g)son.(e.) (::) \r\nKý(c!dw!ef)ri(ed)e(de/fe/!ed//evDC/dee) (,) e(c!dw!efeed//evDC)lé(d')i(e)son.(e.) (::) \r\nKý(g!hw!ij)ri(ih)e(hi/jiig//hvGE/fvEDe.) (,) e(g!hjH'GF)lé(g')i(g)son.(e.) (::) \r\nChri(j_k_j_)ste(ihj./hji/gfh.) (,) e(hjI'HG'h)lé(e)i(f)son.(g.) (::) Chri(ghe)ste(fgg ghe/fgg) (,) e(dggvF'ED)lé(e')i(f)son.(g.) (::) \r\nChri(j_k_j_)ste(ihj./hji/gfh.) (,) e(hjI'HG'h)lé(e')i(f)son.(g.) (z0::c3) \r\nKý([oll:0{1]i.j!kwll)ri(j)e(lv[oll:}]/KJ.) e(ikJI'jh)lé(j')i(i)son.(i.) (::) \r\nKý(iij)ri(ih)e(hv./fhG'E) e(fdf)lé(fg)i(e)son.(e.) (::) \r\nKý([oll:0{1]i.j!kwll)ri(j)e(lv[oll:}]/KJ./ikJI'/jh/jji.) ~~~~~*(,) ([oll:0{1]i.j!kwllvKJ//lv[oll:}]/KJI'/kvJI'jh/jji.) ~~~~~**(,) (i_[oh:h]h/ijIH./fhG'E) e(fdf)lé(fg)i(e)son.(e.) (::)",
@@ -1089,7 +1205,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2363",
     office: "ke",
-    mass: 81,
+    section: "ad-libitum",
+    mass: null,
     mode: "1",
     incipit: "Kyrie (ad lib.) VII. - Splendor aeterne",
     gabc: "(c4) KY(d')ri(d)e(dcca/cd.) ~~~~~*() e(dg/hffvED'C)lé(ef)i(d)son.(d.) <i>iij.</i>(::) \r\nChri(h)ste(ghGF./gefED.) (,) e(ce!gvge/fvED'edd)lé(cd!ev)i(e)son.(d.) <i>iij.</i>(::) \r\nKý(h')ri(h)e(hg/jkJ'IH/jjh.) (,) e(ivHG'E)lé(gh!iv)i(i)son.(h.) <i>ij.</i>(::) \r\nKý(h')ri(h)e(hg/jkJ'IH/jjh./ivHG'E/gh!ivih.0) ~~~~~*(;) (jkJ'IH/jjh./ivHG'E/ghh) (,) (hiHG'hvGEed.0) ~~~~~**(,) e(ce!gvge/fvED'/edd)lé(cd!ev)i(e)son.(d.) (::)",
@@ -1099,7 +1216,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2468",
     office: "ke",
-    mass: 81,
+    section: "ad-libitum",
+    mass: null,
     mode: "6",
     incipit: "Kyrie (ad lib.) VIII. - Firmator sancte",
     gabc: "(c4) KY(f)ri(df)e(ixf./gh!ivHGF') () * e(f)lé(d')i(e)son.(f.) <i>iij.</i>(::) \r\nChri(fj)ste(ixjvIH/ij/kjjh/ivHGF') e(f)lé(d')i(e)son.(f.) <i>iij.</i>(::) \r\nKý(fj)ri(j)e(kj//mvLKJ./ixij/kjjh/ivHGF') e(f)lé(d')i(e)son.(f.) <i>ij.</i>(::) \r\nKý(fj)ri(j)e(kj//mvLKJ./ixij/kjjh.) ~~~~~*(,) (ixji/jkjjh/ivHGF') e(f)lé(d')i(e)son.(f.) (::)",
@@ -1109,7 +1227,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2599",
     office: "ke",
-    mass: 82,
+    section: "ad-libitum",
+    mass: null,
     mode: "8",
     incipit: "Kyrie (ad lib.) IX. - O Pater excelse",
     gabc: "(c3) KY(e')ri(e)e(evDB'/d/efe.) ~~~~~*(,) (ehhvGE) e(fe)lé(d')i(e)son.(e.) <i>iij.</i>(::) \r\nChri(f)ste(ehGE'/edf.) (,) (fhhvGF'E) e(fgeevDC)lé(d')i(e)son.(e.) <i>iij.</i>(::) \r\nKý(ei)ri(hi)e(iv./kiihj./klJ'I/kvJI.) ~~~~~*(,) e(ihhvGF'E)lé(fgf')i(f)son.(e.) <i>iij.</i>(::)",
@@ -1119,7 +1238,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2604",
     office: "ke",
-    mass: 10,
+    section: "ad-libitum",
+    mass: null,
     mode: "1",
     incipit: "Kyrie (ad lib.) X",
     gabc: "(c4) KY(ixhi)ri(hg)e(hd..) *(,) e(fhGE'D)lé(c')i(d)son.(d.) <i>iij.</i>(::) Chri(hg)ste(kv.jkJH'Gh.) (,) e(hg/fvED)lé(c')i(d)son.(d.) <i>iij.</i>(::) Ký(h')ri(g)e(hghd.) (,) e(fhGE'D)lé(c')i(d)son.(d.) <i>ij.</i>(::) Ký(dfd)ri(cd)e(d./gvvF'ED.) ~~~~~*(,) e(ce!fvED)lé(c')i(d)son.(d.) (::)",
@@ -1129,7 +1249,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2614",
     office: "ke",
-    mass: 83,
+    section: "ad-libitum",
+    mass: null,
     mode: "1",
     incipit: "Kyrie (ad lib.) XI. - Kyrie Salve",
     gabc: "(c4) KY(c)ri(df)e(evDC/dfe.) ~~~~~*(,) e(fgF'ED)lé(ef)i(d)son.(d.) <i>iij.</i>(::) \r\nChri(dhGFE'e)ste(d.) (,) e(fgF'ED/evDC)lé(ef)i(d)son.(d.) <i>iij.</i>(::) \r\nKý(h)ri(gh)e(h./jkJ'IH/jjh.) (,) e(hvGF'ED)lé(ef)i(d)son.(d.) <i>ij.</i>(::) \r\nKý(h)ri(gh)e(h./jkJ'IH/jjh.) ~~~~~*(,) (hghh//jkJ'IH/jjh.) ~~~~~**(,) e(hvGF'ED)lé(ef)i(d)son.(d.) (::)",
@@ -1139,7 +1260,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2659",
     office: "gl",
-    mass: 83,
+    section: "ad-libitum",
+    mass: null,
     mode: "8",
     incipit: "Gloria (ad lib.) I.",
     gabc: "(c3) GLó(e)ri(ce)a(e') in(e) ex(fg)cél(hvFE'ef~)sis(e) De(c!de)o.(e.) (::)\r\nEt(e') in(h) ter(g!hi~)ra(i') pax(i) ho(hg)mí(hi)ni(hg)bus(g.) (,) bo(hi)næ(ivHG) vo(fe)lun(fh)tá(e.)tis.(e.) (::)\r\nLau(b!ce~)dá(f')mus(c) te.(b!ce.) (::)\r\nBe(e')ne(g)dí(hiH'GF'E)ci(fhf')mus(f) te.(e.) (::)\r\nAd(f')o(b)rá(c!de)mus(fe) te.(c!de.) (::)\r\nGlo(d)ri(fhG'F)fi(efb)cá(c!de)mus(fe) te.(c!de.) (::)\r\nGrá(ehg)ti(hi)as(i) á(ji)gi(h')mus(g) ti(hi)bi(i.) (;) pro(i')pter(e) ma(fh)gnam(ed~) gló(bd)ri(c)am(de~) tu(e.)am.(e.) (::)\r\nDó(h')mi(g)ne(f) De(hi)us,(i.) (,) Rex(ji) cæ(hg)lé(hi)stis,(e.) (;) De(f)us(h') Pa(i)ter(hvGE) o(fhee)mní(b)pot(de)ens.(e.) (::)\r\nDó(i')mi(h)ne(i') Fi(i)li(h') u(i)ni(k')gé(l)ni(kj)te(h.) (,) Je(hg)su(fh) Chri(e.)ste.(e.) (::)\r\nDó(i')mi(h)ne(i') De(i)us,(i.) (,) A(i')gnus(l[oll:1{1]) De(kl)i,(l.) (,0) Fí(m')li(l)us(kl) Pa([oll:}]l.)tris.(h.) (::)\r\nQui(i') tol(k)lis(l') pec(i)cá(hi)ta(f) mun(hi~)di,(i.) (;) mi(e!fg)se(fh)ré(e)re(dvCB) no(de)bis.(e.) (::)\r\nQui(i') tol(k)lis(l') pec(i)cá(hi)ta(f) mun(hi~)di,(i.) (;) <nlba>sús(il[oll:1{1]!mv)ci(l)pe(l') de(l)pre(k')ca([oll:}]l)ti(hg)ó(f)nem</nlba>(hi~) no(i.)stram.(i.) (::)\r\nQui(ef) se(e)des(dvCB') ad(e) déx(fhg)te(f')ram(e) Pa(hi)tris,(i.) (;) mi(e!fg)se(fh)ré(e)re(dvCB) no(de)bis,(e.) (::)\r\nQuó(h')ni(g)am(f) tu(hi) so(kj)lus(i) san(hi~)ctus.(i.) (::)\r\nTu(ei) so(h')lus(k) Dó(ji)mi(hi)nus.(i.) (::)\r\nTu(il[oll:1{1]) so(k')lus(l) Al([oll:}]ml)tís(k')si(j)mus,(i.) (,) Je(hg)su(fh) Chri(e.)ste.(e.) (::)\r\nCum(b) San(de~)cto(e) Spí(ehg)ri(hih)tu,(i.) (,) in(ij) gló(i)ri(hg)a(fe) De(fh)i(fe) Pa(c!de)tris.(dvCB.) (::)\r\nA(ef!hvGF'/he./cd/efe)men.(de..) (::)",
@@ -1149,7 +1271,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2685",
     office: "gl",
-    mass: 85,
+    section: "ad-libitum",
+    mass: null,
     mode: "2",
     incipit: "Gloria (ad lib.) II.",
     gabc: "(f3) GLó(c)ri(ef)a(f') in(g) ex(fe)cél(eg)sis(g) De(f_[oh:h]g_[oh:h]f_[oh:h])o.(f.) (::) Et(b) in(c') ter(d)ra(ef) pax(fe) ho(f')mí(g)ni(ef)bus(f.) (,) bo(f)næ(fe) vo(fg)lun(g)tá(f_[oh:h]g_[oh:h]f_[oh:h])tis.(f.) (::) Lau(fe~)dá(eg)mus(ghG'F) te.(f_[oh:h]g_[oh:h]f._[oh:h]) (::) Be(f')ne(f)dí(fe)ci(eg)mus(ghG'F) te.(f_[oh:h]g_[oh:h]f._[oh:h]) (::) Ad(f)o(fe)rá(eg)mus(ghG'F) te.(f_[oh:h]g_[oh:h]f._[oh:h]) (::) Glo(f')ri(g)fi(hi)cá(h)mus(hvGF'g) te.(e!fg!hvGF/gfg/hhg.) (::) Grá(g)ti(gf)as(ef!gvgf) á(g)gi(fg)mus(fe) ti(e!fg!hvGF)bi(f./gfg/hhg.) (;) pro(g)pter(ij) ma(j)gnam(ivH~G~) gló(g!hi)ri(hg)am(fg) tu(e!fg!hvGF)am.(fg!hvhg.) (::) Dó(g)mi(gi)ne(h) De(hg)us,(f_e) (,) Rex(f') cæ(h)lé(fg)stis,(ghhg.) (;) De(g)us(fe) Pa(fgf)ter(f.) o(g!hi)mní(h)pot(hg)ens.(fg!hhg.) (::) Dó(g')mi(i)ne(j') Fi(j)li(i') u(h)ni(g')gé(f)ni(gh)te(g.) (,) Je(fe)su(fg) Chri(f)ste.(fg/hihhg.) (::) Dó(g)mi(gi)ne(h) De(hg)us,(f_e) (,) A(f')gnus(h) De(fg)i,(ghhg.) (;) Fí(fe)li(fg)us(g) Pa(f_[oh:h]g_[oh:h]f_[oh:h])tris.(f.) (::) Qui(f) tol(e!fg)lis(f.) pec(fe)cá(fg)ta(g) mun(fg)di,(fg/hihhg.) (;) mi(g)se(fe)ré(fg)re(g) no(f_[oh:h]g_[oh:h]f_[oh:h])bis.(f.) (::) Qui(f) tol(e!fg)lis(f.) pec(fe)cá(fg)ta(g) mun(fg)di,(fg/hihhg.) (;) sús(g')ci(i)pe(j') de(j)pre(i')ca(h)ti(g')ó(f)nem(gh) no(f.)stram.(f.) (::) Qui(e!fg!hvGFE'/fggf.0) se(g)des(gi) ad(h) déx(hg)te(fg)ram(fe) Pa(fg)tris,(f.) (;) mi(f)se(fe)ré(fg)re(g) no(f_[oh:h]g_[oh:h]f_[oh:h])bis.(f.) (::) Quó(e)ni(fg)am(g) tu(fe) so(f')lus(h) san(fg~)ctus.(g.) (::) Tu(f) so(g')lus(f) Dó(gf)mi(ef)nus.(f.) (::) Tu(f) so(g')lus(h) Al(gf~)tís(gf)si(ef)mus,(fg/hihhg.) (;) Je(fe)su(fg) Chri(f)ste.(fg/hihhg.) (::) Cum(g) San(ef!gh)cto(g') Spí(h)ri(fg)tu,(fe..) (;) in(e) gló(fg)ri(g')a(g) De(hvGF'E)i(e) Pa(f_[oh:h]g_[oh:h]f_[oh:h])tris.(f.) (::) A(fi!jvIH'G)men.(giG'FE'/fggf.0) (::)",
@@ -1159,7 +1282,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2707",
     office: "gl",
-    mass: 87,
+    section: "ad-libitum",
+    mass: null,
     mode: "2",
     incipit: "Gloria (ad lib.) III / III B",
     gabc: "(f3) GLó(fg)ri(gf)a(ef) in(hg) ex(hi)cél(ivH~'G~)sis(fg) De(e_[uh:l]f)o.(f.) (::) Et(f) in(f!gwh) ter(g_[oh:h]f~)ra(f.) pax(giH'G) ho(hi)mí(gh)ni(gf)bus(f.) (,) bo(f)næ(feec) vo(ed)lun(ef~)tá(fv./ef!hvGF'Ef)tis.(f.) (::) Lau(fi~)dá(i)mus(hg) te.(f./iih/ivHGF'/ghffef.) (::) Be(f)ne(fi)dí(iji')ci(h)mus(hg) te.(f./iih/ivHGF'/ghffef.) (::) Ad(e)o(fg)rá(gfh)mus(gf) te.(f./iih/ivHGF'/ghffef.) (::) Glo(ef)ri(e)fi(fg)cá(gfh)mus(gf) te.(f./iih/ivHGF'/ghffef.) (::) Grá(fg)ti(gf)as(ef) á(g_0[uh:l]!hi)gi(hg)mus(fgF'E) ti(fg)bi(g.) (;) pro(gfh)pter(fgF'E) ma(fg~)gnam(g.) gló(gfh)ri(hg)am(gf~) tu(ef!gvgf)am.(f.) (::) Dó(fg)mi(gf)ne(fg!hi) De(gh)us,(gf..) (,) Rex(fh) cæ(fe)lé(fg)stis,(g.) (;) De(gfhhg)us(g.) Pa(gvFEfg)ter(f.) (`) o(fe~)mní(ffvEC./ef/gf)pot(ef)ens.(f.) (::) Dó(kxfjji/jkJI'/ivHG)mi(fg)ne(g.) (,) Fi(iji)li(hvGF) u(g')ni(i)gé(g')ni(f)te(giG'Fg.) (,) Je(gf)su(hg) Chri(ef!gvgf)ste.(f.) (::) Dó(kxfjji/jkJ'I/ivHG)mi(fg)ne(g) De(ef)us,(f.) (,) A(h)gnus(hg) De(fg)i,(g.) (,) Fí(iji)li(hvGF)us(giG'Fg) Pa(e_[uh:l]f)tris.(f.) (::) Qui(h) tol(g_[oh:h]f~)lis(f') pec(g)cá(ijI'H)ta(gf) mun(i_[oh:h]h)di,(fg..) (;) mi(e)se(ef)ré(f_e)re(ghg) no(f.)bis.(f.) (::) Qui(h) tol(g_[oh:h]f~)lis(f') pec(g)cá(ijI'H)ta(gf) mun(i_[oh:h]h)di,(fg..) (;) sús(e)ci(ef)pe(fgFE.) (,) de(g)pre(fe)ca(f)ti(hg)ó(hi!jvIG'F)nem(hg~) no(e_[uh:l]f)stram.(f.) (::) Qui(h) se(gvFE/fg)des(f.) (`) ad(g') déx(i)te(ij)ram(kxj_i/jkJI'/ivHG) Pa(fg)tris,(g.) (;) mi(e)se(ef)ré(f_e)re(ghg) no(f.)bis,(f.) (::) Quó(fg)ni(gf)am(ef) tu(g') so(h)lus(fe) san(fg)ctus.(f.) (::) Tu(h') so(i)lus(hvGF'g) Dó(e)mi(ef)nus.(f.) (::) Tu(g') so(i)lus(kxj_i/jkJ'Ij.) Al(fg!hi)tís(ivHG)si(fg)mus,(g.) (,) Je(gf)su(hg) Chri(ef!gvgf)ste.(f.) (::) Cum(h) San(gvFEfg)cto(f.) Spí(h_g/ivGF/h_f)ri(ef)tu,(f.) (;) in(fe~) gló(ffvEC./ef/gf)ri(ef)a(f.) (,) De(e')i(g) Pa(kxiv./jkJI'/ivH'GE/f./hvGF/gvFE/f.`eg!ijIG'h)tris.(gf..) (::) A(ffvEC./ef/gf)men.(ef..) (::)",
@@ -1169,7 +1293,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2749",
     office: "gl",
-    mass: 89,
+    section: "ad-libitum",
+    mass: null,
     mode: "4",
     incipit: "Gloria (Ambrosian)",
     gabc: "(c4) GLó(h)ri(h)a(h) in(h) ex(h)cél(h)sis(h) De(h.)o.(g.) (::) Et(g) in(g) ter(h)ra(h) pax(h) ho(h)mí(i')ni(h)bus(h.) bo(h)næ(h) vo(h)lun(h)tá(h.)tis.(g.) (::) Lau(h)dá(h')mus(h) te.(g.) (::) Be(h)ne(h)dí(h')ci(h)mus(h) te.(g.) (::) Ad(h)o(h)rá(h')mus(h) te.(g.) (::) Glo(h)ri(h)fi(h)cá(h')mus(h) te.(g.) (::) Grá(g)ti(g)as(g') á(g)gi(g)mus(g') ti(g)bi(ivHG/jjkJI'j//hiHG.) (,) pro(h)pter(h) ma(h)gnam(h) gló(i)ri(h)am(h) tu(h.)am.(g.) (::) Dó(h)mi(h)ne(h) De(h)us,(g.) Rex(h) cæ(h)lé(h)stis,(g.) (,) De(h)us(h) Pa(h)ter(h) o(h)mní(h')pot(h)ens.(g.) (::) Dó(h)mi(h)ne(h) Fi(h)li(h) u(h)ni(h)gé(h')ni(h)te(g.) Je(i)su(i') Chri(j)ste.(hiH'G/jjkJI'j//hiHG.) (::) Dó(h)mi(h)ne(h) De(h)us,(g.) A(h)gnus(h) De(h)i,(g.) Fí(h)li(h)us(h) Pa(h.)tris.(g.) (::) Qui(h) tol(h)lis(h) pec(h)cá(i)ta(h') mun(g)di,(ivHG/jjkJI'j//hiHG.) (,) mi(h)se(h)ré(h)re(h) no(h.)bis.(g.) (::) Qui(h) tol(h)lis(h) pec(h)cá(i)ta(h') mun(g)di,(ivHG/jjkJI'j//hiHG.) (,) sús(h)ci(h)pe(h) de(h)pre(h)ca(h)ti(h)ó(h)nem(h) no(h.)stram.(g.) (::) Qui(g) se(h)des(h) ad(h) déx(h)te(h)ram(h) Pa(h)tris,(g.) mi(h)se(h)ré(h)re(h) no(h.)bis.(g.) (::) Quó(h)ni(h)am(h) tu(h) so(h)lus(h) san(h.)ctus.(g.) (::) Tu(h) so(h)lus(h) Dó(h')mi(h)nus.(g.) (::) Tu(h) so(h)lus(h) Al(h)tís(h')si(h)mus,(g.) Je(i)su(i) Chri(j)ste.(hiH'G/jjkJI'j//hiHG.) (::) Cum(h) San(h)cto(h) Spí(h)ri(h)tu,(h.) in(h) gló([oh:m{]i_h_)ri(g_)a(h'_) De(i_)i(h'_) Pa(h_)tris.(h.) **(,) A(h)men.(ghg/hiHG'/hvG'F_E'_/fg_2//g'1_g_2//gv'1_F_E_e[oh}]) (::)",
@@ -1179,7 +1304,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2816",
     office: "sa",
-    mass: 90,
+    section: "ad-libitum",
+    mass: null,
     mode: "1",
     incipit: "Sanctus (ad lib.) I.",
     gabc: "(c4) SAn(ccd~)ctus,(d.) *(,) San(ecd)ctus,(d.) (,) San(fg)ctus(d.) (,) Dó(e')mi(g)nus(g) De(g')us(e) Sá(g')ba(g)oth.(h.) (:) Ple(h')ni(h) sunt(hg~) cæ(hj)li(g') et(h) ter(ef)ra(e.) (,) gló(evDC')ri(d)a(dfe) tu(d.)a.(d.) (:) Ho(d)sán(e')na(f) in(g') ex(f)cél(dccd~)sis.(d.) (:) Be(e')ne(e)dí(ed)ctus(c') qui(e) ve(gh)nit(h.) (,) in(g) nó(hj)mi(g)ne(eg) Dó(fe)mi(de)ni.(e.) (:) Ho(d)sán(de)na(ca) in(c) ex(dfe)cél(dccd~)sis.(d.) (::)",
@@ -1189,7 +1315,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2820",
     office: "sa",
-    mass: 91,
+    section: "ad-libitum",
+    mass: null,
     mode: "4",
     incipit: "Sanctus (ad lib.) II.",
     gabc: "(c4) SAn(c!df~)ctus,(ffvED.) (,) * San(gfg)ctus,(g.) (,) San(edf)ctus(ffvEDe.) (,) Dó(d')mi(e)nus(g) De(f')us(g) Sá(ed)ba(ffe)oth.(e.) (:) Ple(d')ni(e) sunt(g!hj) cæ(hvGF')li(g) et(gh) ter(gvFE)ra(e.) (,) gló(gf)ri(e)a(fg) tu(fvED)a.(d.) (:) Ho(e)sán(fg~)na(g') in(f) ex(g)cél(ed/ffe)sis.(e.) (:) Be(d')ne(e)dí(g!hj)ctus(h.) qui(h) ve(hg)nit(h_j) (,) in(g) nó(gf)mi(e)ne(fg) Dó(f)mi(fvED)ni.(d.) (:) Ho(e)sán(fg~)na(g') in(f) ex(g)cél(ed/ffe)sis.(e.) (::)",
@@ -1199,7 +1326,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2849",
     office: "sa",
-    mass: 91,
+    section: "ad-libitum",
+    mass: null,
     mode: "8",
     incipit: "Sanctus (ad lib.) III.",
     gabc: "(c3) SAn(ee/fe/hvGF)ctus,(g.) *(,) San(efe)ctus,(e.) (,) San(e)ctus(gi) Dó(i)mi(hvGF)nus(g.) (,) De(e)us(fg) Sá(giGE./hvGF'E/fg)ba(fe)oth.(e.) (:) Ple(ef)ni(e) sunt(fg) cæ(efe)li(e.) (,) et(e!gi) ter(hvGF)ra(g.) gló(e')ri(f)a(fg) tu(fe)a.(e.) (:) Ho(e)sán(gi~)na(ivGE.) in(h) ex(fgf)cél(e.)sis.(e.) (:) Be(iji')ne(g)dí(hi)ctus(i.) (,) qui(ivHF'g) ve(efe)nit(e.) (;) in(ef) nó(e)mi(fg)ne(g') Dó(i)mi(jvIH)ni.(i.) (:) Ho(i')sán(g)na(e.) in(h) ex(fgf)cél(e.)sis.(e.) (::)",
@@ -1209,7 +1337,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2850",
     office: "ag",
-    mass: 92,
+    section: "ad-libitum",
+    mass: null,
     mode: "8",
     incipit: "Agnus (ad lib.) I.",
     gabc: "(c4) A(gg/ijhh)gnus(g) De(gihhg)i,(g.) *(,) qui(edg/hi) tol(ijhh)lis(g.) pec(g')cá(j)ta(kl) mun(l)di :(kvJI.) (;) mi(i')se(j)ré(ki)re(jiivHG) no(hihhg)bis.(g.) (::) A(gg/ijhh)gnus(g) De(gihhg)i,(g.) *(,) qui(edg/hi) tol(ijhh)lis(g.) pec(g')cá(j)ta(kl) mun(l)di :(kvJI.) (;) mi(i')se(j)ré(ki)re(jiivHG) no(hihhg)bis.(g.) (::) A(gg/ijhh)gnus(g) De(gihhg)i,(g.) *(,) qui(edg/hi) tol(ijhh)lis(g.) pec(g')cá(j)ta(kl) mun(l)di :(kvJI.) (;) do(i')na(j) no(ki)bis(jiivHG) pa(hihhg)cem.(g.) (::)",
@@ -1219,7 +1348,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:2851",
     office: "ag",
-    mass: 93,
+    section: "ad-libitum",
+    mass: null,
     mode: "6",
     incipit: "Agnus (ad lib.) II.",
     gabc: "(c4) A(ixi)gnus(hg) De(h)i,(f.) (,) * qui(e) tol(f')lis(g) pec(g')cá(f)ta(d') mun(e)di :(c.) (;) mi(f')se(d)ré(e')re(f) no(g.)bis.(f.) (::) \r\nA(ixi)gnus(hg) De(h)i,(f.) (,) * qui(e) tol(f')lis(g) pec(g')cá(f)ta(d') mun(e)di :(c.) (;) mi(f')se(d)ré(e')re(f) no(g.)bis.(f.) (::) \r\nA(ixi)gnus(hg) De(h)i,(f.) (,) * qui(e) tol(f')lis(g) pec(g')cá(f)ta(d') mun(e)di :(c.) (;) do(f')na(d) no(e')bis(f) pa(g.)cem.(f.) (::)",
@@ -1229,7 +1359,8 @@ export const KYRIALE: KyrialeEntry[] = [
   {
     id: "gregobase:541",
     office: "ke",
-    mass: 94,
+    section: "requiem",
+    mass: null,
     mode: "6",
     incipit: "Kyrie eleison (in Miss. def.)",
     gabc: "(c4) KY(ixfg!hi)ri(h)e(hg..) <clear>*(,) e(hvGF'Ef)lé(g)i(f)son.(f.) <i>iij.</i>(::)\r\nChri(ixfg!hi)ste(hg..) (,) e(hvGF'Ef)lé(g)i(f)son.(f.) <i>iij.</i>(::)\r\nKý(ixfg!hi)ri(h)e(hg..) (,) e(hvGF'Ef)lé(g)i(f)son.(f.) <i>ij.</i>(::)\r\nKý(j)ri(f)e(ixf./ji/jkJ'IHG.) <clear>*(,) e(hvGF'Ef)lé(g)i(f)son.(f.) (::)",
