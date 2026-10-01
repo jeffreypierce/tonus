@@ -172,6 +172,26 @@ export function buildPlates(tonus, fonts = {}) {
       },
     },
     {
+      title: "Quadrata — heads: liquescents, orisci, strophae",
+      note: "g G G~ G> g~ g< g> go1 go0 go~ gw gs gs< — every head its own Bravura glyph, none a shrunk punctum",
+      render: () => {
+        const row = ["g", "G", "G~", "G>", "g~", "g<", "g>", "go1", "go0", "go~", "gw", "gs", "gs<"];
+        const gabc = "(c4) " + row.map((g) => `${g.replace(/</g, "‹").replace(/>/g, "›")}(${g})`).join(" ") + " (::)";
+        const [c] = tonus.cantus({ gabc, incipit: "Capita", mode: 1 });
+        return tonus.inscriptio(tonus.notatio(c), { theme: JF });
+      },
+    },
+    {
+      title: "Quadrata — empty notes and signs",
+      note: "gr hr Gr G<r gR gr0 gr1 gr0r2–r5 — Gr and G<r are the diamond traced (Bravura has no hollow inclinatum), as the score app hollows it",
+      render: () => {
+        const row = ["gr", "hr", "Gr", "G<r", "gR", "gr0", "gr1", "gr0r2", "gr0r3", "gr0r4", "gr0r5"];
+        const gabc = "(c4) " + row.map((g) => `${g.replace(/</g, "‹")}(${g})`).join(" ") + " (::)";
+        const [c] = tonus.cantus({ gabc, incipit: "Cava", mode: 1 });
+        return tonus.inscriptio(tonus.notatio(c), { theme: JF });
+      },
+    },
+    {
       title: "Quadrata — phrase boundary (grouping regression)",
       note: "a(f) (;) men(gf): both lyrics + both divisios must render",
       render: () => tonus.inscriptio(tonus.notatio(

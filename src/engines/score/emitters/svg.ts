@@ -30,6 +30,8 @@ import {
 import {
   GLYPH,
   SHAPE_GLYPH,
+  headGlyph,
+  tracedHollow,
   DIVISIO_GLYPH,
   ligaturaDesc,
 } from "../../../data/gabc-glyphs.js";
@@ -545,17 +547,22 @@ interface PlacedGlyph {
 // SMuFL nominal (noteheads use r.noteScale; clefs/divisiones use 1). dyFont
 // shifts the glyph in font units (y-up) before the flip — used to re-register
 // base-registered components.
+// `traced` draws the outline alone, at the staff line's weight whatever the
+// scale — the hollow for a head Bravura carries only full.
 function placeGlyph(
   code: string, x: number, y: number, r: Resolved,
-  cls: string, data = "", factor = 1, dyFont = 0,
+  cls: string, data = "", factor = 1, dyFont = 0, traced = false,
 ): PlacedGlyph | null {
   const g: SmuflGlyph | undefined = GLYPHS[code];
   if (!g) return null;
   const s = r.glyphScale * factor;
   const yy = y - dyFont * s;
+  const paint = traced
+    ? `fill="none" stroke="${r.noteColor}" stroke-width="${r.lineWeight.toFixed(2)}" vector-effect="non-scaling-stroke"`
+    : `fill="${r.noteColor}"`;
   const svg =
     `<g class="${cls}"${data} transform="translate(${x.toFixed(2)} ${yy.toFixed(2)}) scale(${s.toFixed(5)} ${(-s).toFixed(5)})">` +
-    `<path d="${g.path}" fill="${r.noteColor}"/></g>`;
+    `<path d="${g.path}" ${paint}/></g>`;
   return {
     svg,
     advance: g.advance * s,
@@ -749,10 +756,14 @@ export function toSvg(
 
   // Place a notehead glyph for a row at x; returns the placement.
   const placeNote = (row: ChantTabulaRow, atX: number, code?: string, dyFont = 0): PlacedGlyph | null => {
-    const glyphCode = code ?? SHAPE_GLYPH[row.shape] ?? GLYPH.punctum;
+    // A liquescent with a head of its own draws it at full size; one Bravura
+    // does not carry (a liquescent virga, a figure component) keeps the small
+    // head that stood for every liquescence before the heads were routed.
+    const head = code ? null : headGlyph(row);
+    const glyphCode = code ?? head ?? SHAPE_GLYPH[row.shape] ?? GLYPH.punctum;
     const y = yFor(row.staffPosition, L, r);
-    const sc = row.liquescent ? r.noteScale * 0.66 : r.noteScale;
-    const p = placeGlyph(glyphCode, atX, y, r, "note", dataAttrs(row), sc, dyFont);
+    const sc = row.liquescent && !head ? r.noteScale * 0.66 : r.noteScale;
+    const p = placeGlyph(glyphCode, atX, y, r, "note", dataAttrs(row), sc, dyFont, !code && tracedHollow(row));
     if (!p) return null;
     ledger(row.staffPosition, p.inkLeft, p.inkRight);
     body.push(p.svg);
@@ -1395,6 +1406,36 @@ export function toSvg(
       const p = placeGlyph(code, midX - w / 2, y, r, "ictus", "", r.noteScale);
       if (p) body.push(p.svg);
     }
+  }
+
+  // ── Signa over the note (GABC r1–r5) ──
+  // Bravura carries the accentus and the semicirculus one way round only, so
+  // one of each pair is the glyph mirrored about its own ink. For the accentus
+  // that is the reversus; for the semicirculus it is the plain one — gregorio's
+  // r4 is the cup, r5 the cap, and Bravura's "semicirculus above" is the cap.
+  const SIGNUM: Record<string, { code: string; flip?: "x" | "y" }> = {
+    accentus: { code: GLYPH.accentus },
+    accentusReversus: { code: GLYPH.accentus, flip: "x" },
+    circulus: { code: GLYPH.circulus },
+    semicirculus: { code: GLYPH.semicirculus, flip: "y" },
+    semicirculusReversus: { code: GLYPH.semicirculus },
+  };
+  for (const pl of placements) {
+    const sign = pl.row.signum ? SIGNUM[pl.row.signum] : undefined;
+    const g = sign ? GLYPHS[sign.code] : undefined;
+    if (!sign || !g) continue;
+    const s = r.glyphScale * r.noteScale;
+    const w = (g.bbox[2] - g.bbox[0]) * s;
+    const midX = (pl.inkLeft + pl.inkRight) / 2;
+    const y = yAt(pl.row.staffPosition, pl.systemY, L, r) - r.noteheadH * 0.45;
+    const p = placeGlyph(sign.code, midX - w / 2, y, r, "signum", "", r.noteScale);
+    if (!p) continue;
+    if (!sign.flip) { body.push(p.svg); continue; }
+    const cy = y - ((g.bbox[1] + g.bbox[3]) / 2) * s;
+    const m = sign.flip === "x"
+      ? `translate(${(2 * midX).toFixed(2)} 0) scale(-1 1)`
+      : `translate(0 ${(2 * cy).toFixed(2)}) scale(1 -1)`;
+    body.push(`<g transform="${m}">${p.svg}</g>`);
   }
 
   // Close the final system; height reaches the last.

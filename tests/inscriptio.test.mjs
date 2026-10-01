@@ -5,6 +5,8 @@ import { inscriptio } from "../dist/engines/score/inscriptio.js";
 import { decideBreak } from "../dist/engines/score/emitters/breaking.js";
 import { autoRubricLines } from "../dist/engines/score/emitters/svg.js";
 import { OFFICIA } from "../dist/engines/chant/types.js";
+import { headGlyph } from "../dist/data/gabc-glyphs.js";
+import { GLYPHS } from "../dist/data/smufl-glyphs.js";
 
 const KYRIE_GABC = "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (::)";
 
@@ -975,5 +977,36 @@ describe("scale — the one layout decision a caller makes", () => {
         inscriptio(score, { width: 900, scale }).svg,
       )[1]);
     assert.equal(clefX("small"), clefX("large"));
+  });
+});
+
+describe("heads — every written shape reaches its Bravura glyph", () => {
+  // The two rows of gregorio's charts: the liquescents and orisci, then the
+  // empty notes. Each head is baked, so none falls back to a shrunk punctum.
+  const heads = {
+    "g": "E990", "G": "E991", "G~": "E993", "G>": "E992", "g~": "E9A1",
+    "g<": "E994", "g>": "E995", "go1": "E99C", "go0": "E99D", "go~": "E99E",
+    "gw": "E99B", "gs": "E99F", "gs<": "E9A0",
+    "gr": "E998", "gR": "E999", "gr0": "E99A",
+  };
+  for (const [gabc, code] of Object.entries(heads)) {
+    test(`${gabc} → ${code}`, () => {
+      const row = buildScore(makeChant(`(c4) a(${gabc}) (::)`)).tabula[0];
+      assert.equal(headGlyph(row), code);
+      assert.ok(GLYPHS[code], `${code} is in the bake`);
+    });
+  }
+
+  test("a hollow inclinatum is the diamond traced, as the score app draws it", () => {
+    const row = buildScore(makeChant("(c4) a(Gr) (::)")).tabula[0];
+    assert.equal(headGlyph(row), "E991");
+    const { svg } = inscriptio(buildScore(makeChant("(c4) a(Gr) b(G) (::)")));
+    assert.equal(svg.match(/fill="none" stroke=/g)?.length, 1);
+  });
+
+  test("a sign over the note is drawn, the reversed ones mirrored", () => {
+    const { svg } = inscriptio(buildScore(makeChant("(c4) a(gr1) b(gr0r2) c(gr3) d(gr4) e(gr5) (::)")));
+    assert.equal(svg.match(/class="signum"/g)?.length, 5);
+    assert.equal(svg.match(/scale\(-1 1\)|scale\(1 -1\)/g)?.length, 2);
   });
 });

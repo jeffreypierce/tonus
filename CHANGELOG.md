@@ -2,6 +2,33 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.13.0 — 2026-10-01
+
+Every written head reaches its glyph.
+
+### Changed
+
+- **Breaking: the hollow is a flag, not a shape.** `WrittenShape` loses
+  `cavum` and `linea` and gains `lineaPunctum` (gabc `R`, the punctum between
+  two vertical lines). A hollow note keeps its shape and sets `hollow`, since
+  gregorio empties a punctum, an inclinatum or a lineaPunctum alike. `linea`
+  could never be parsed; its glyph was the lineaPunctum's under a wrong label.
+- `gr1`–`gr5` were read as hollow notes. They are full notes carrying a sign.
+
+### Added
+
+- Rows carry `liquescence` (`~` deminutive, `<` ascending, `>` descending),
+  `oriscusDirection` (written `o0`/`o1`, or toward the next pitch that differs,
+  as gregorio resolves it), `hollow`, and `signum` (gabc `r1`–`r5`).
+- The quadrata emitter draws the liquescent puncta and inclinata, the orisci
+  both ways and liquescent, the stropha and its auctus, the cavum and the
+  lineaPunctum (full and hollow) from their own Bravura glyphs, where it drew a
+  shrunk punctum for every liquescence. The signa print over the note; the
+  reversed accentus and the cup semicircle are Bravura's mirrored. A hollow
+  inclinatum, which Bravura does not carry, is the diamond's outline traced at
+  the staff line's weight — the way the score app already hollows it.
+- A lone `s` is a stropha, as in gregorio.
+
 ## 0.12.0 — 2026-09-24
 
 A mass number is a Mass.

@@ -271,10 +271,15 @@ interface Context {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  liquescence: "deminutive" | "ascending" | "descending" | null; // ~ < >
+  oriscusDirection: "ascending" | "descending" | null; // o1/o0, else toward the next pitch
+  hollow: boolean; // cavum, gabc r
+  signum: "accentus" | "accentusReversus" | "circulus"
+    | "semicirculus" | "semicirculusReversus" | null; // gabc r1–r5
   mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
   staffLetter: string; // the GABC staff letter as written
   clef: string; // the clef in force at this note ("c3", "f4", …)
-  shape: string; // the notehead shape (punctum, inclinatum, quilisma, …)
+  shape: string; // the notehead shape (punctum, inclinatum, quilisma, lineaPunctum, …)
   weight: number; // articulation weight
 }
 ```
@@ -326,6 +331,11 @@ interface ChantTabulaRow {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  liquescence: "deminutive" | "ascending" | "descending" | null; // ~ < >
+  oriscusDirection: "ascending" | "descending" | null; // o1/o0, else toward the next pitch
+  hollow: boolean; // cavum, gabc r
+  signum: "accentus" | "accentusReversus" | "circulus"
+    | "semicirculus" | "semicirculusReversus" | null; // gabc r1–r5
   mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
   hz: number;
   offset: number;
@@ -333,7 +343,7 @@ interface ChantTabulaRow {
   staffLetter: string; // the GABC staff letter as written
   staffPosition: number; // vertical staff position (line/space index)
   clef: string; // the clef in force at this note ("c3", "f4", …)
-  shape: string; // the notehead shape (punctum, inclinatum, quilisma, …)
+  shape: string; // the notehead shape (punctum, inclinatum, quilisma, lineaPunctum, …)
   bend: number; // 14-bit MIDI pitch bend (8192 = center)
   velocity: number | null;
   duration: number;

@@ -34,17 +34,27 @@ export const GLYPH = {
   // clefs
   fClef: "E902",
   cClef: "E906",
-  // single notes
+  // single notes (SMuFL plainchant, E990–E9A1)
   punctum: "E990",
   punctumInclinatum: "E991",
+  punctumInclinatumAuctum: "E992",
+  punctumInclinatumDeminutum: "E993",
+  auctumAsc: "E994",
+  auctumDesc: "E995",
   virga: "E996",
   virgaReversa: "E997",
   cavum: "E998",
-  linea: "E999",
+  // chantPunctumLinea: a punctum BETWEEN two vertical lines, gabc R (and, hollow,
+  // r0). Not the linea — gabc's `=` bar-shaped note, which SMuFL does not carry.
+  // gabc-smufl's map labels it "bar note, no notehead"; the outline says otherwise.
+  lineaPunctum: "E999",
+  lineaPunctumCavum: "E99A",
   quilisma: "E99B",
   oriscusAsc: "E99C",
   oriscusDesc: "E99D",
+  oriscusLiquescens: "E99E",
   strophicus: "E99F",
+  strophicusAuctus: "E9A0",
   punctumDeminutum: "E9A1",
   // THE CUSTOS, added to the bake 2026-08-12. Bravura carries it at EA00-EA09
   // and the subset did not, so the emitter drew a plain punctum at a line's
@@ -79,6 +89,9 @@ export const GLYPH = {
   // rhythmic signs
   ictusAbove: "E9D0",
   ictusBelow: "E9D1",
+  circulus: "E9D2",
+  semicirculus: "E9D4",
+  accentus: "E9D6",
   episema: "E9D8",
   mora: "E9D9",
   // accidentals (medieval soft-b flat / natural; standard sharp fallback).
@@ -90,7 +103,7 @@ export const GLYPH = {
   sharp: "E262",
 } as const;
 
-/** Written note shape → notehead glyph codepoint. */
+/** Written note shape → notehead glyph codepoint, before liquescence and the hollow. */
 export const SHAPE_GLYPH: Readonly<Record<string, string>> = Object.freeze({
   punctum: GLYPH.punctum,
   inclinatum: GLYPH.punctumInclinatum,
@@ -99,9 +112,57 @@ export const SHAPE_GLYPH: Readonly<Record<string, string>> = Object.freeze({
   quilisma: GLYPH.quilisma,
   oriscus: GLYPH.oriscusAsc,
   strophicus: GLYPH.strophicus,
-  cavum: GLYPH.cavum,
-  linea: GLYPH.linea,
+  lineaPunctum: GLYPH.lineaPunctum,
 });
+
+/** The fields of a note that choose its head. */
+export interface HeadSpec {
+  shape: string;
+  liquescence: "deminutive" | "ascending" | "descending" | null;
+  oriscusDirection: "ascending" | "descending" | null;
+  hollow: boolean;
+}
+
+/**
+ * The notehead for a note, or null when Bravura draws no head for that
+ * combination (a liquescent virga or quilisma) and the caller keeps its
+ * fallback. Gregorio's rules: an oriscus takes only the deminutive
+ * liquescence; a strophicus either augmentation as its auctus. A hollow
+ * inclinatum returns the full diamond: Bravura has no cavum of it, so the
+ * emitter traces that outline instead (see `tracedHollow`).
+ */
+export function headGlyph(n: HeadSpec): string | null {
+  const liq = n.liquescence;
+  switch (n.shape) {
+    case "punctum":
+      if (liq === "deminutive") return GLYPH.punctumDeminutum;
+      if (liq === "ascending") return GLYPH.auctumAsc;
+      if (liq === "descending") return GLYPH.auctumDesc;
+      return n.hollow ? GLYPH.cavum : GLYPH.punctum;
+    case "inclinatum":
+      if (liq === "deminutive") return GLYPH.punctumInclinatumDeminutum;
+      if (liq) return GLYPH.punctumInclinatumAuctum;
+      return GLYPH.punctumInclinatum;
+    case "oriscus":
+      if (liq === "deminutive") return GLYPH.oriscusLiquescens;
+      return n.oriscusDirection === "descending" ? GLYPH.oriscusDesc : GLYPH.oriscusAsc;
+    case "strophicus":
+      return liq ? GLYPH.strophicusAuctus : GLYPH.strophicus;
+    case "lineaPunctum":
+      return n.hollow ? GLYPH.lineaPunctumCavum : GLYPH.lineaPunctum;
+    default:
+      return liq ? null : SHAPE_GLYPH[n.shape] ?? null;
+  }
+}
+
+/**
+ * A hollow head Bravura does not carry, drawn as its full glyph's outline:
+ * the inclinatum (gabc Gr, G<r). The score app hollows its diamond the same
+ * way, so the two agree.
+ */
+export function tracedHollow(n: HeadSpec): boolean {
+  return n.hollow && n.shape === "inclinatum";
+}
 
 /** Divisio mark → glyph codepoint. */
 export const DIVISIO_GLYPH: Readonly<Record<string, string>> = Object.freeze({

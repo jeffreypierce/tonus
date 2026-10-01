@@ -37,6 +37,8 @@ import type {
   ParseResult,
   RestEvent,
   WrittenShape,
+  Liquescence,
+  Signum,
 } from "./types.js";
 import { buildArticulation } from "./articulation.js";
 import { createLyricDecoder } from "./lyric.js";
@@ -122,9 +124,35 @@ interface IntermNote {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  liquescence: Liquescence | null;
+  oriscusDirection: "ascending" | "descending" | null;
+  hollow: boolean;
+  signum: Signum | null;
   mora: 0 | 1 | 2; // mora vocis count: 0 none, 1 dot '.', 2 double dot '..'
   _weight: number;
   _durWeight: number;
+}
+
+// GABC r1–r5, the signs gregorio prints over a note.
+const SIGNA: Readonly<Record<string, Signum>> = Object.freeze({
+  "1": "accentus",
+  "2": "accentusReversus",
+  "3": "circulus",
+  "4": "semicirculus",
+  "5": "semicirculusReversus",
+});
+
+// An oriscus written without o0/o1 points at the next pitch that differs from
+// its own: up is ascending, down (or nothing after it) descending. Gregorio's
+// rule (gabc_determine_oriscus_orientation), run over the whole score because
+// the next pitch is often in the next syllable.
+function orientOrisci(events: ParseResult["events"]): void {
+  const notes = events.filter((e) => e.type === "note");
+  notes.forEach((n, i) => {
+    if (!n.oriscus || n.oriscusDirection) return;
+    const next = notes.slice(i + 1).find((m) => m.step !== n.step);
+    n.oriscusDirection = next && next.step > n.step ? "ascending" : "descending";
+  });
 }
 
 // Helpers
@@ -406,15 +434,35 @@ function parseNeume(
     // Written note shape (gregorio's S_* vocabulary, simplified) — what the
     // renderer draws. Priority: the inclinatum diamond and the ornamental
     // shapes win over the plain punctum/virga forms.
+    //
+    // The r family is read the way gregorio's lexer reads it: r alone empties
+    // the note (cavum), R draws it between two vertical lines, r0 does both,
+    // and r1–r5 are signs printed over a FULL note. Testing for a bare "r"
+    // made gr1 a hollow head, which is the one thing its accent does not say.
+    const marks = modifiers.replace(/\[[^\]]*\]?/g, "");
+    const hollow = /r(?![1-8])/.test(marks);
+    const signum = SIGNA[/r([1-5])/.exec(marks)?.[1] ?? ""] ?? null;
     let shape: WrittenShape = "punctum";
     if (isInclinatum) shape = "inclinatum";
     else if (isQuilisma) shape = "quilisma";
-    else if (isStrophicus) shape = "strophicus";
+    // A lone s is gregorio's stropha too; the analytical `strophicus` flag
+    // above stays with the repeated ss/sss, whose weighting it drives.
+    else if (isStrophicus || marks.includes("s")) shape = "strophicus";
     else if (modifiers.includes("V")) shape = "virgaReversa";
     else if (modifiers.includes("v")) shape = "virga";
     else if (isOriscus) shape = "oriscus";
-    else if (modifiers.includes("r")) shape = "cavum";
-    else if (modifiers.includes("=")) shape = "linea";
+    else if (marks.includes("R") || marks.includes("r0")) shape = "lineaPunctum";
+
+    const liquescence: Liquescence | null = !isLiquescent ? null
+      : marks.includes("~") ? "deminutive"
+      : marks.includes("<") ? "ascending"
+      : "descending";
+    // o0 / o1 write the orientation; a bare o leaves it to the next pitch,
+    // resolved after the syllable's notes are known (below).
+    const oriscusDirection: "ascending" | "descending" | null = !isOriscus ? null
+      : marks.includes("o1") ? "ascending"
+      : marks.includes("o0") ? "descending"
+      : null;
 
     intermed.push({
       step,
@@ -438,6 +486,10 @@ function parseNeume(
       liquescent: isLiquescent,
       strophicus: isStrophicus,
       oriscus: isOriscus,
+      liquescence,
+      oriscusDirection,
+      hollow,
+      signum,
       mora,
       _weight: w,
       _durWeight: durWeight,
@@ -511,6 +563,10 @@ function parseNeume(
       liquescent: note.liquescent,
       strophicus: note.strophicus,
       oriscus: note.oriscus,
+      liquescence: note.liquescence,
+      oriscusDirection: note.oriscusDirection,
+      hollow: note.hollow,
+      signum: note.signum,
       mora: note.mora,
     };
   });
@@ -662,6 +718,7 @@ export function parseGABC(
   if (events.length === 0) {
     errors.push({ message: "No parseable notation found" });
   }
+  orientOrisci(events);
 
   return { events, errors };
 }
