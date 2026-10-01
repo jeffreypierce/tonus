@@ -516,3 +516,47 @@ describe("a parsed chant sits on the gamut, not below it", () => {
     );
   });
 });
+
+describe("written heads — liquescence, oriscus, hollow, signa", () => {
+  const rows = (gabc) => buildScore(makeChant(`(c4) ${gabc} (::)`)).tabula;
+  const head = (g) => {
+    const r = rows(`a(${g})`)[0];
+    return [r.shape, r.liquescence, r.oriscusDirection, r.hollow, r.signum];
+  };
+
+  test("the liquescent marks keep their direction", () => {
+    assert.deepEqual(head("g~"), ["punctum", "deminutive", null, false, null]);
+    assert.deepEqual(head("g<"), ["punctum", "ascending", null, false, null]);
+    assert.deepEqual(head("g>"), ["punctum", "descending", null, false, null]);
+    assert.deepEqual(head("G~"), ["inclinatum", "deminutive", null, false, null]);
+    assert.equal(rows("a(g~)")[0].liquescent, true);
+  });
+
+  test("a lone s is a stropha, the auctus on it too", () => {
+    assert.deepEqual(head("gs"), ["strophicus", null, null, false, null]);
+    assert.deepEqual(head("gs<"), ["strophicus", "ascending", null, false, null]);
+  });
+
+  test("o0/o1 write the oriscus's direction; a bare o reads the next pitch", () => {
+    assert.equal(rows("a(go0h)")[0].oriscusDirection, "descending");
+    assert.equal(rows("a(go1f)")[0].oriscusDirection, "ascending");
+    assert.equal(rows("a(goh)")[0].oriscusDirection, "ascending");
+    assert.equal(rows("a(gof)")[0].oriscusDirection, "descending");
+    // across a syllable, past a unison, as gregorio looks
+    assert.equal(rows("a(go) b(g) c(h)")[0].oriscusDirection, "ascending");
+    // nothing after it: descending
+    assert.equal(rows("a(go)")[0].oriscusDirection, "descending");
+  });
+
+  test("r empties, R and r0 draw the lines, r1–r5 are signs over a full note", () => {
+    assert.deepEqual(head("gr"), ["punctum", null, null, true, null]);
+    assert.deepEqual(head("Gr"), ["inclinatum", null, null, true, null]);
+    assert.deepEqual(head("gR"), ["lineaPunctum", null, null, false, null]);
+    assert.deepEqual(head("gr0"), ["lineaPunctum", null, null, true, null]);
+    assert.deepEqual(head("gr1"), ["punctum", null, null, false, "accentus"]);
+    assert.deepEqual(head("gr0r2"), ["lineaPunctum", null, null, true, "accentusReversus"]);
+    assert.equal(head("gr3")[4], "circulus");
+    assert.equal(head("gr4")[4], "semicirculus");
+    assert.equal(head("gr5")[4], "semicirculusReversus");
+  });
+});

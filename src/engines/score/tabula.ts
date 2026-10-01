@@ -9,7 +9,7 @@ import { inferMode } from "./infer.js";
 import { CHROMA_TO_SOLFEGE as SOLFEGE_BY_PC } from "../temper/data/constants.js";
 import { staffPositionForLetter } from "../../data/gabc-glyphs.js";
 import type { Cadence } from "./cadence.js";
-import type { ChantType, InterpretationOptions, WrittenShape } from "./types.js";
+import type { ChantType, InterpretationOptions, Liquescence, Signum, WrittenShape } from "./types.js";
 
 export type NoteRole = "finalis" | "tenor" | "alia" | null;
 
@@ -92,6 +92,14 @@ export interface ChantTabulaRow {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  /** Which way a liquescent bends (see `Liquescence`); null when not liquescent. */
+  liquescence: Liquescence | null;
+  /** An oriscus's orientation — written (o0/o1) or read off the next pitch; null otherwise. */
+  oriscusDirection: "ascending" | "descending" | null;
+  /** Written hollow (GABC r, cavum). */
+  hollow: boolean;
+  /** Editorial sign over the note (GABC r1–r5); null when none. */
+  signum: Signum | null;
   /** Mora vocis count: 0 none, 1 dot '.', 2 double dot '..' (a stronger cadential hold). */
   mora: 0 | 1 | 2;
   divisio: string | null;
@@ -271,6 +279,10 @@ export function computeTabula(
       liquescent: n.context.liquescent,
       strophicus: n.context.strophicus,
       oriscus: n.context.oriscus,
+      liquescence: n.context.liquescence,
+      oriscusDirection: n.context.oriscusDirection,
+      hollow: n.context.hollow,
+      signum: n.context.signum,
       mora: n.context.mora,
       divisio: a.divisio,
       cadenceRef:

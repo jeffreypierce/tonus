@@ -51,11 +51,25 @@ export interface Performance {
 }
 
 // Written note shape as encoded in GABC (gregorio's S_* vocabulary,
-// simplified): uppercase letters are puncta inclinata; suffixes v/V/o/s/r/=
-// select virga, oriscus, strophicus, cavum, linea; w marks the quilisma.
+// simplified): uppercase letters are puncta inclinata; suffixes v/V/o/s select
+// virga, oriscus, strophicus; w marks the quilisma; R and r0 the punctum
+// between two vertical lines (S_LINEA_PUNCTUM). The hollow (r, cavum) is a
+// flag on the shape, not a shape: gregorio empties a punctum, an inclinatum or
+// a lineaPunctum alike.
 export type WrittenShape =
   | "punctum" | "inclinatum" | "virga" | "virgaReversa"
-  | "quilisma" | "oriscus" | "strophicus" | "cavum" | "linea";
+  | "quilisma" | "oriscus" | "strophicus" | "lineaPunctum";
+
+/**
+ * Which way a liquescent note bends, from its GABC mark: `~` deminutive (the
+ * small head), `<` augmented ascending, `>` augmented descending.
+ */
+export type Liquescence = "deminutive" | "ascending" | "descending";
+
+/** An editorial sign printed over the note, GABC r1–r5 (gregorio's names). */
+export type Signum =
+  | "accentus" | "accentusReversus" | "circulus"
+  | "semicirculus" | "semicirculusReversus";
 
 /**
  * One styled span of a syllable's lyric — the decoded form of GABC's text
@@ -115,6 +129,14 @@ export interface Context {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  /** Which way a liquescent bends (see `Liquescence`); null when not liquescent. */
+  liquescence: Liquescence | null;
+  /** An oriscus's orientation — written (o0/o1) or read off the next pitch; null otherwise. */
+  oriscusDirection: "ascending" | "descending" | null;
+  /** Written hollow (GABC r, cavum). */
+  hollow: boolean;
+  /** Editorial sign over the note (GABC r1–r5); null when none. */
+  signum: Signum | null;
   mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
   weight: number;
 }
@@ -261,6 +283,14 @@ export interface ParsedNote {
   liquescent: boolean;
   strophicus: boolean;
   oriscus: boolean;
+  /** Which way a liquescent bends (see `Liquescence`); null when not liquescent. */
+  liquescence: Liquescence | null;
+  /** An oriscus's orientation — written (o0/o1) or read off the next pitch; null otherwise. */
+  oriscusDirection: "ascending" | "descending" | null;
+  /** Written hollow (GABC r, cavum). */
+  hollow: boolean;
+  /** Editorial sign over the note (GABC r1–r5); null when none. */
+  signum: Signum | null;
   mora: 0 | 1 | 2; // mora vocis: 0 none, 1 dot, 2 double dot
 }
 
