@@ -2,7 +2,7 @@
 
 All notable changes to tonus. Newest first.
 
-## 0.13.0 — unreleased
+## 0.13.0 — 2026-10-01
 
 Every written head reaches its glyph.
 
