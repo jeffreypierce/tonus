@@ -34,7 +34,7 @@ export function buildPlates(tonus, fonts = {}) {
   // The house dress: Junicode on every role, lyrics a notch bolder. Black
   // rubrica while refining, so shape reads before colour — drop when settled.
   const JF = {
-    fonts: { dropcap: jr(700), title: jr(620), annotation: jr(640), lyric: jr(560, 1.06) },
+    fonts: { dropcap: jr(700), title: jr(620), annotation: jr(640), lyric: jr(500) },
     colors: { rubrica: "#111" },
   };
 
@@ -82,7 +82,7 @@ export function buildPlates(tonus, fonts = {}) {
     render: () => tonus.inscriptio(tonus.notatio(kyrie()), {
       title: "Kyrie", annotation: "auto", dropcap: true,
       theme: {
-        fonts: { dropcap: jw(700), title: jw(620), annotation: jw(640), lyric: jw(560, 1.06) },
+        fonts: { dropcap: jw(700), title: jw(620), annotation: jw(640), lyric: jw(500) },
         colors: { rubrica: "#111" },
       },
     }),

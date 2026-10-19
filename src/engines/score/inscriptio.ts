@@ -52,9 +52,11 @@ export interface InscriptioOpts {
   width?: number;
   /**
    * How big the chant is drawn: `"small"`, `"normal"` (default), `"large"`, or
-   * a staff height in px for fitting a known column. Everything scales from it
-   * — notes, lyrics, the gap between systems — and it reflows the music, so a
-   * larger scale means fewer notes per line.
+   * a staff height in px for fitting a known column. A named size sets the
+   * lyric at one size in both species (16px at `normal`); a number is the
+   * staff height exactly, so in quadrata `40` draws larger than `"normal"`.
+   * Everything scales from it — notes, lyrics, the gap between systems — and
+   * it reflows the music, so a larger scale means fewer notes per line.
    */
   scale?: "small" | "normal" | "large" | number;
 
@@ -122,7 +124,8 @@ function flattenTheme(theme: Theme | undefined): Record<string, unknown> {
   return out;
 }
 
-/** The named sizes, as staff heights in px. `normal` is the default 40. */
+/** The named sizes, as moderna's staff heights in px; quadrata draws its staff
+ *  at `QUADRATA_STAFF` of these, so the lyric is the same size in both. */
 const SCALES: Record<string, number> = {
   small: 30,
   normal: 40,
@@ -136,18 +139,28 @@ const SCALES: Record<string, number> = {
  * pixels — so the public option is a size and the staff height is what it
  * resolves to. A raw number still works for the caller who is fitting a known
  * column, and means exactly what `staffHeight` meant.
+ *
+ * A named size is a size of TYPE: the lyric is the same at `normal` in both
+ * species (16px), and each species draws its staff to suit. Quadrata's suits
+ * at 16/17 of the nominal height — its music was judged against a 17px lyric,
+ * and the lyric came down to moderna's 16 with the staff following, rather
+ * than the proportion changing. A raw number is not adjusted: it is the staff
+ * height the caller asked for.
  */
-function resolveScale(scale: InscriptioOpts["scale"]): number | undefined {
-  if (scale === undefined) return undefined;
+const QUADRATA_STAFF = 16 / 17;
+
+function resolveScale(
+  scale: InscriptioOpts["scale"], quadrata: boolean,
+): number | undefined {
   if (typeof scale === "number") return scale;
-  const px = SCALES[scale];
+  const px = SCALES[scale ?? "normal"];
   if (px === undefined) {
     throw new Error(
       `inscriptio: unknown scale "${scale}" ` +
       `(expected ${Object.keys(SCALES).join(", ")}, or a staff height in px)`,
     );
   }
-  return px;
+  return quadrata ? px * QUADRATA_STAFF : px;
 }
 
 /**
@@ -192,7 +205,7 @@ export function inscriptio(score: Score, opts: InscriptioOpts = {}): Inscriptio 
   // Both species honour the front matter (title, rubric/annotation) — the
   // official opening is `title` + `annotation: "auto"`, no dropcap.
   const emitterOpts: Record<string, unknown> = flattenTheme(opts.theme);
-  const staffHeight = resolveScale(opts.scale);
+  const staffHeight = resolveScale(opts.scale, opts.notation !== "moderna");
   if (staffHeight !== undefined) emitterOpts.staffHeight = staffHeight;
   for (const k of EMITTER_KEYS) if (opts[k] !== undefined) emitterOpts[k] = opts[k];
 

@@ -420,7 +420,11 @@ Options, by group (all optional):
 
 - **layout**: `width` wraps systems to fit (absent = a single line); `scale`
   sets how big the chant is drawn: `"small"`, `"normal"` (default), `"large"`,
-  or a staff height in px for fitting a known column. Everything scales from it
+  or a staff height in px for fitting a known column. A named size is a size of
+  type: the lyric is the same in both species (16px at `"normal"`), and each
+  draws its staff to suit, so quadrata's staff at `"normal"` is a little under
+  40px. A number is the staff height exactly, so in quadrata `scale: 40` draws
+  slightly larger than `"normal"`. Everything scales from it
   (notes, lyrics, the air between systems), and it reflows the music, so a
   larger scale means fewer notes per line. The page margin does not scale: it
   belongs to the page rather than the notation, and scaling it gave a large
