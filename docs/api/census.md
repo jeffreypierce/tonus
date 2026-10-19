@@ -1,7 +1,8 @@
 # Census
 
-`census` measures one chant against the corpus that holds it: how typical it
-is, where it is unusual, and what it is near.
+`census` measures one chant against the corpus: how typical it is, where it
+is unusual, and what it is near. The chant can be one tonus ships, named by
+`id`, or any notated score — one composed, or from another book.
 
 - [Census](#census)
   - [The method](#the-method)
@@ -12,6 +13,7 @@ is, where it is unusual, and what it is near.
   - [Balance — distance and deviance](#balance--distance-and-deviance)
   - [Neighbors, and `by`](#neighbors-and-by)
   - [The era view](#the-era-view)
+  - [A chant the corpus never held](#a-chant-the-corpus-never-held)
   - [What the census is not](#what-the-census-is-not)
 
 ## The method
@@ -49,7 +51,8 @@ Everything comes back in one call: profile, balance, neighbors.
 
 ```ts
 interface CensusQuery {
-  id: string; // the chant to census
+  id?: string; // a shipped chant to census, or…
+  score?: Score; // …any notated chant (exactly one of the two)
   k?: number; // how many neighbors, default 8; 0 returns none
   by?: CensusBy; // which field group similarity is measured on, default "all"
   before?: number; // restrict neighbors to chants attested by this year
@@ -66,9 +69,10 @@ them. They are simply not what typicality is measured against.
 That population is now the books themselves. Until 2026-08-31 it was the 2,187
 the calendar reached, which meant every typicality figure below was quietly
 measured against one rite's selection rather than against the repertory. An id
-with no block throws
-rather than returning an empty answer, because a silent nothing reads as "this
-chant is unlike everything," which is a different claim.
+with no block throws rather than returning an empty answer, because a silent
+nothing reads as "this chant is unlike everything," which is a different claim.
+A chant outside the corpus is censused by its score instead; see [a chant the
+corpus never held](#a-chant-the-corpus-never-held).
 
 ## What a block holds
 
@@ -288,6 +292,29 @@ through the same admissibility door: **evidence, not existence**, so a chant
 with no dated witness is excluded rather than assumed old.
 
 The seed chant itself is never filtered, because you asked about it by name.
+
+## A chant the corpus never held
+
+```js
+tonus.census({ score: tonus.notatio(composed) });
+```
+
+A block is a function of one parse. The corpus ran that function over every
+shipped chant, and tonus carries the same function, so a score the corpus never
+saw is measured exactly as one it did: the same eight groups, counted against
+the same two dictionaries, compared with the same corpus mean, with neighbors
+drawn from the same shipped blocks. `by`, `k` and `before` mean what they mean
+for an id. The test suite holds the function to every shipped block, bit for
+bit, so the two cannot drift apart unnoticed.
+
+The answer's `id` is the score's own, `score.chant.id`; a score without one
+throws, because a census has to say what it measured. A shipped chant's score
+gives the same answer as its id, and a chant is never its own neighbor either
+way.
+
+The trigram and cadence groups are sixteen slots each. Their keys are in
+[`CENSUS_DICTIONARIES`](index.md#the-appendix), commonest first; the
+sixteenth slot is everything else.
 
 ## What the census is not
 

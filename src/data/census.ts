@@ -30,6 +30,17 @@ export const CENSUS_GROUPS: Readonly<Record<string, { offset: number; count: num
     textual: { offset: 203, count: 7 },
   });
 
+/**
+ * The vocabularies the trigram and cadence groups count against, commonest
+ * first; anything else counts as the sixteenth slot, "other".
+ * trigrams.json sha256 0ec683ea… · cadences.json sha256 89ec9928…
+ */
+export const CENSUS_DICTIONARIES: Readonly<{ trigrams: readonly string[]; cadences: readonly string[] }> =
+  Object.freeze({
+    trigrams: Object.freeze(["1,-1,-1","1,1,-1","-1,-1,1","-1,1,1","-1,1,-1","-1,-1,-1","1,-1,0","0,0,0","1,0,-1","0,1,-1","1,-1,1","0,-1,1","-1,-1,0","-1,1,0","-1,0,-1"]),
+    cadences: Object.freeze(["cadens @0","insistens @0","cadens @-1","surgens @0","cadens @2","cadens @1","insistens @4","insistens @2","translabens @0","cadens @-2","cadens @3","insistens @3","cadens @4","insistens @1","cadens @-3"]),
+  });
+
 /** Floats per block. */
 export const CENSUS_BLOCK_FLOATS = 221;
 

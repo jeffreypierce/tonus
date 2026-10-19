@@ -8,9 +8,12 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import tonus from "../dist/index.js";
-import { CENSUS_ORDER, CENSUS_GROUPS, CENSUS_BLOCK_FLOATS } from "../dist/data/census.js";
+import {
+  CENSUS_ORDER, CENSUS_GROUPS, CENSUS_BLOCK_FLOATS, CENSUS_BLOCKS_B64, CENSUS_DICTIONARIES,
+} from "../dist/data/census.js";
+import { censusGroups } from "../dist/engines/census/block.js";
 
-const { census, cantus, corpus } = tonus;
+const { census, cantus, corpus, notatio } = tonus;
 const SEED = "gregobase:1210"; // Ab occultis meis — a mode-2 Graduale
 
 describe("census — the shape of the answer", () => {
@@ -262,5 +265,69 @@ describe("census — the geometry is what the artifact says", () => {
         "field groups must not overlap",
       );
     }
+  });
+});
+
+describe("census({ score }) — a chant the corpus never held", () => {
+  // A composed chant: notated, with an id, in no book.
+  const composed = () => tonus.notatio({
+    id: "compositum:1", incipit: "Laudate", office: "an", genus: "Antiphona",
+    mode: "8", modus: "Modus VIII", pages: [], source: { book: "Compositum", year: null, editor: null },
+    gabc: "(c4) Lau(g)da(h)te(ixjh) Do(g)mi(h)num(g.) (;) om(h)nes(j) gen(jk)tes.(j.) (::)",
+  });
+
+  test("the formula reproduces every shipped block, to the bit", () => {
+    // The guarantee census({ score }) rests on: the bake ran this function, so
+    // a composed chant is read as a shipped one was. A drift in notatio that
+    // the bake has not caught up with fails here, naming the group.
+    const bin = Buffer.from(CENSUS_BLOCKS_B64, "base64");
+    const view = new DataView(bin.buffer, bin.byteOffset, bin.byteLength);
+    const off = {};
+    for (let i = 0; i < CENSUS_ORDER.length; i++) {
+      const groups = censusGroups(notatio(cantus({ id: CENSUS_ORDER[i] })[0]), CENSUS_DICTIONARIES);
+      for (const [g, { offset, count }] of Object.entries(CENSUS_GROUPS)) {
+        for (let k = 0; k < count; k++) {
+          const shipped = view.getFloat32((i * CENSUS_BLOCK_FLOATS + offset + k) * 4, true);
+          if (groups[g][k] !== shipped) { (off[g] ??= []).push(CENSUS_ORDER[i]); break; }
+        }
+      }
+    }
+    assert.deepEqual(off, {}, "groups that differ from the bake, by chant");
+  });
+
+  test("a shipped chant's score censuses as its id does", () => {
+    const byId = census({ id: SEED });
+    const byScore = census({ score: notatio(cantus({ id: SEED })[0]) });
+    assert.deepEqual(byScore, byId);
+  });
+
+  test("a composed chant gets the whole answer, under its own id", () => {
+    const c = census({ score: composed(), k: 3 });
+    assert.equal(c.id, "compositum:1");
+    assert.deepEqual(Object.keys(c.profile).sort(), Object.keys(CENSUS_GROUPS).sort());
+    for (const [g, { count }] of Object.entries(CENSUS_GROUPS)) {
+      assert.equal(c.profile[g].values.length, count, g);
+    }
+    assert.ok(c.balance.distance >= 0 && c.balance.distance <= 1);
+    assert.equal(c.neighbors.length, 3);
+    assert.ok(c.neighbors.every((n) => CENSUS_ORDER.includes(n.id)), "neighbors are shipped chants");
+  });
+
+  test("by and before work on a score as on an id", () => {
+    const score = composed();
+    const all = census({ score, k: CENSUS_ORDER.length }).neighbors.length;
+    const early = census({ score, k: CENSUS_ORDER.length, before: 1100 }).neighbors.length;
+    assert.equal(all, CENSUS_ORDER.length, "every shipped chant is a candidate");
+    assert.ok(early < all);
+    assert.equal(census({ score, by: "cadenceFinal" }).by, "cadenceFinal");
+  });
+
+  test("exactly one of id and score", () => {
+    const score = composed();
+    assert.throws(() => census({ id: SEED, score }), /not both/);
+    assert.throws(() => census({ k: 3 }), /requires an id or a score/);
+    assert.throws(() => census({ score: { tabula: "no" } }), /notated Score/);
+    const anonymous = { ...score, chant: { ...score.chant, id: "" } };
+    assert.throws(() => census({ score: anonymous }), /no id/);
   });
 });

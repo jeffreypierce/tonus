@@ -3,9 +3,13 @@
 // ---------------------------------------------------------------------------
 // The corpus repo censuses every shipped chant into a block of 221 float32s:
 // modal behaviour, degree histogram, interval bigrams, trigram and cadence
-// vocabulary, chironomy, text setting, formula hits. This engine reads those
-// blocks and answers one question — how typical is this chant, and what is it
-// near?
+// vocabulary, chironomy, text setting. This engine reads those blocks and
+// answers one question — how typical is this chant, and what is it near?
+//
+// A chant the corpus never held — one composed, or one from elsewhere — is
+// measured by the same formula the bake ran (block.ts), against the same
+// dictionaries and the same mean. What is shipped is cited; what is not is
+// computed the way it would have been.
 //
 // DISTANCE IS COSINE PER FIELD GROUP, never over the flat 221. Cosine
 // on the whole vector is dominated by the 121-float melodic block and by sheer
@@ -16,9 +20,11 @@
 import {
   CENSUS_BLOCKS_B64,
   CENSUS_BLOCK_FLOATS,
+  CENSUS_DICTIONARIES,
   CENSUS_GROUPS,
   CENSUS_ORDER,
 } from "../../data/census.js";
+import { censusGroups } from "./block.js";
 import { attestationCutoff, chantAdmissible } from "../chant/attest.js";
 import type {
   Census,
@@ -112,7 +118,54 @@ function means(): Record<CensusGroup, Float32Array> {
   return out;
 }
 
-const VALID_KEYS = new Set(["id", "k", "by", "before"]);
+const VALID_KEYS = new Set(["id", "score", "k", "by", "before"]);
+
+/**
+ * Resolve the query's chant to its group slices. Exactly one of `id` and
+ * `score`: both is a contradiction, neither is nothing to census.
+ */
+function resolveChant(query: CensusQuery): {
+  id: string;
+  slices: Record<CensusGroup, ArrayLike<number>>;
+  self: number | undefined;
+} {
+  const hasId = query.id !== undefined;
+  const hasScore = query.score !== undefined;
+  if (hasId === hasScore) {
+    throw new Error(
+      hasId
+        ? "census: pass an id or a score, not both."
+        : 'census requires an id or a score: census({ id: "gregobase:1210" }) or census({ score }).',
+    );
+  }
+
+  if (hasScore) {
+    const score = query.score;
+    if (!score || typeof score !== "object" || !Array.isArray(score.tabula)) {
+      throw new Error("census: score must be a notated Score, as notatio() returns.");
+    }
+    const id = score.chant?.id;
+    if (typeof id !== "string" || !id) {
+      throw new Error("census: the score's chant has no id; census({ score }) names its chant by score.chant.id.");
+    }
+    return { id, slices: censusGroups(score, CENSUS_DICTIONARIES), self: index().get(id) };
+  }
+
+  const id = query.id;
+  if (typeof id !== "string" || !id) {
+    throw new Error("census requires an id (a string), e.g. census({ id: \"gregobase:1210\" }).");
+  }
+  const self = index().get(id);
+  if (self == null) {
+    throw new Error(
+      `census: no block for "${id}". The census covers the ${CENSUS_ORDER.length} chants ` +
+        "tonus ships; to census any other chant, pass its notated score: census({ score }).",
+    );
+  }
+  const slices = {} as Record<CensusGroup, ArrayLike<number>>;
+  for (const g of GROUP_NAMES) slices[g] = slice(self, g);
+  return { id, slices, self };
+}
 
 /**
  * The census of one chant: its profile against the corpus, where it is
@@ -120,7 +173,7 @@ const VALID_KEYS = new Set(["id", "k", "by", "before"]);
  */
 export function getCensus(query: CensusQuery): Census {
   if (!query || typeof query !== "object") {
-    throw new Error('census requires a query: census({ id: "gregobase:1210" }).');
+    throw new Error('census requires a query: census({ id: "gregobase:1210" }) or census({ score }).');
   }
   const unknown = Object.keys(query).filter((k) => !VALID_KEYS.has(k));
   if (unknown.length) {
@@ -130,17 +183,10 @@ export function getCensus(query: CensusQuery): Census {
     );
   }
 
-  const { id } = query;
-  if (typeof id !== "string" || !id) {
-    throw new Error("census requires an id (a string), e.g. census({ id: \"gregobase:1210\" }).");
-  }
-  const self = index().get(id);
-  if (self == null) {
-    throw new Error(
-      `census: no block for "${id}". The census covers the ${CENSUS_ORDER.length} chants ` +
-        "tonus ships; an id from a catalogue at large will not be among them.",
-    );
-  }
+  // The chant, as its eight group slices: read from its block, or computed
+  // from its score. `self` is its block index where it has one, so a chant is
+  // never its own neighbor.
+  const { id, slices, self } = resolveChant(query);
 
   const by: CensusBy = query.by ?? "all";
   if (by !== "all" && !GROUP_NAMES.includes(by as CensusGroup)) {
@@ -163,7 +209,7 @@ export function getCensus(query: CensusQuery): Census {
   const mean = means();
   const profile = {} as Record<CensusGroup, CensusGroupProfile>;
   for (const g of GROUP_NAMES) {
-    const s = slice(self, g);
+    const s = slices[g]!;
     profile[g] = {
       values: Array.from(s),
       typicality: cosine(s, mean[g]!),
@@ -187,7 +233,7 @@ export function getCensus(query: CensusQuery): Census {
   const neighbors: CensusNeighbor[] = [];
   if (k > 0) {
     const groupsToUse = by === "all" ? GROUP_NAMES : [by as CensusGroup];
-    const selfSlices = groupsToUse.map((g) => slice(self, g));
+    const selfSlices = groupsToUse.map((g) => slices[g]!);
     const scored: CensusNeighbor[] = [];
     for (let i = 0; i < CENSUS_ORDER.length; i++) {
       if (i === self) continue;
