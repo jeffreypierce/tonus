@@ -147,7 +147,14 @@ category per mass, by RANK: "In Paschal Time", "For feasts of the I class",
 "For Sundays throughout the Year", "For ferias". A day resolves to exactly
 one rubric (a BVM feast is "of the Blessed Virgin" even in Paschaltide),
 and the masses carrying that rubric are the masses it may sing, in the
-book's own numbering. Where a rubric names several (II class 1–5), that
+book's own numbering. Two headings run past their first line, and the
+second line appoints days by kind rather than rank: Mass XV is "for
+commemorations **and ferias of the Christmas season**", and Mass XVIII "for
+the ferias of Advent and Lent **as well as for Vigils, Ember Days, and
+Rogation Days**". So a lesser vigil sings XVIII in any season but
+Paschaltide, ahead of the BVM rubric, since a vigil is not the feast it
+precedes. The September Ember Days are not in the calendar data, so they
+reach no rubric at all. Where a rubric names several (II class 1–5), that
 numbering is the book's invitation to choose, and `ordinarium` rotates
 among them by year. The book's per-mass nicknames (_Orbis factor_ for
 Sundays, and so on) record customary use, which disagrees with the rubric for 9

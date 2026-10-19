@@ -91,6 +91,7 @@ table of codes or English keeps English.
 | `OFFICIA`   | office code → the Latin genus (`an` → "Antiphona")                         |
 | `ORDINARIA` | ordinary code → the Latin name (`ke` → "Kyrie eleison")                    |
 | `MODI`      | mode number → the Latin name (`"1"` → "Modus I")                           |
+| `MISSAE`    | Kyriale mass number → its Latin name (`1` → "Lux et origo"); XVI and XVII are `null`, as the book leaves them |
 | `SOURCES`   | book code → its bibliographic record; the codes `cantus({ source })` takes |
 
 **Tuning**
@@ -113,10 +114,10 @@ is for.
 
 **Heavens**
 
-| Export  | What it holds                                        |
-| ------- | ---------------------------------------------------- |
-| `SIGNS` | the twelve zodiac signs, English, ecliptic order     |
-| `SIGNA` | the same twelve in Latin (`Scorpius`, `Capricornus`) |
+| Export      | What it holds                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------- |
+| `ZODIACA`   | the twelve signs in ecliptic order, each with its English `sign`, Latin `signum` and its doctrine    |
+| `DOCTRINAE` | the four authorities `harmonia` voices the spheres by → source, date, span, and each planet's ratio |
 
 **Census**
 
@@ -124,6 +125,7 @@ is for.
 | --------------- | ------------------------------------------------------------------------------------------------------ |
 | `CENSUS_GROUPS` | the field groups → `{ offset, count }`; the keys are the valid `by:` values **and** the `profile` keys |
 | `CENSUS_ORDER`  | every censused chant id, in block order — so membership is a lookup, not a `try/catch`                 |
+| `CENSUS_DICTIONARIES` | `{ trigrams, cadences }`: the fifteen keys each of those groups counts, in slot order; slot sixteen is "other" |
 
 Use these to pool blocks without reproducing the distance rule. See [the census
 contract](census.md#distance-is-cosine-per-field-group).

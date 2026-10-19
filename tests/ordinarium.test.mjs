@@ -91,7 +91,7 @@ describe("ordinarium — penitential days and the Gloria rubric", () => {
 });
 
 describe("ordinarium — Paschaltide is a time, not a rank", () => {
-  test("an ordinary Eastertide day sings Lux et Origo, never the appendix", () => {
+  test("an ordinary Eastertide day sings Lux et origo, never the appendix", () => {
     // 2027 caught this live: Pasc3-2 (a semiduplex Tuesday) led with
     // "Kyrie XVII C" — the Advent/Lent Kyrie, misfiled as ad libitum, boosted
     // onto an ordinary day because "paschal" sat among the solemn rubrics.
@@ -113,7 +113,7 @@ describe("ordinarium — Paschaltide is a time, not a rank", () => {
     }
   });
 
-  test("Easter leads with Lux et Origo every year", () => {
+  test("Easter leads with Lux et origo every year", () => {
     const easters = [
       [2025, 4, 20], [2026, 4, 5], [2027, 3, 28],
       [2028, 4, 16], [2029, 4, 1], [2030, 4, 21],
@@ -211,5 +211,63 @@ describe("ordinarium — a mass number is one of the eighteen Masses", () => {
 
   test("an unknown section throws", () => {
     assert.throws(() => getOrdinary({ section: "appendix" }), /unknown section/);
+  });
+});
+
+describe("ordinarium — Mass XVIII is for Vigils too", () => {
+  // The book's heading runs on: "For the ferias of Advent and Lent as well as
+  // for Vigils, Ember Days, and Rogation Days." tonus carried only its first
+  // line, so the green-season vigils sang the ferial Mass XVI, the Vigil of
+  // St John the Baptist (ranked Simplex) the commemoration Mass XV, and the
+  // Vigil of the Assumption the Marian masses.
+  for (const [label, y, m, d, id] of [
+    ["a vigilia-graded vigil (St James)", 2020, 7, 24, "07-24"],
+    ["the Vigil of St John the Baptist, ranked Simplex", 2021, 6, 23, "06-23"],
+    ["the Vigil of the Assumption, ahead of the BVM rubric", 2020, 8, 14, "08-14"],
+  ]) {
+    test(label, () => {
+      const day = dayAt(y, m, d);
+      assert.equal(day.id, id, "fixture: the vigil is the day");
+      assert.deepEqual(day.masses, [18]);
+      assert.equal(part(getOrdinary({ feast: day }), "ke")?.mass, 18);
+    });
+  }
+
+  test("inside Paschaltide the season still governs", () => {
+    const day = dayAt(2020, 5, 30); // Vigil of Pentecost
+    assert.equal(day.id, "Pasc6-6");
+    assert.deepEqual(day.masses, [1]);
+  });
+});
+
+describe("MISSAE — the names the Kyriale prints", () => {
+  test("each mass carries the Liber's name, and XVI and XVII none", async () => {
+    // Read from the Liber Usualis (1961), Kyriale pp. 16–62: the name each
+    // mass prints in parentheses under its heading. XVI and XVII print none.
+    // These were typed in by hand at the start and never checked: XVI had
+    // taken XVIII's name, and XVII had taken "Salve", which is ad libitum
+    // Kyrie XI — offered for XVII's Sundays, not the name of the mass.
+    const { MISSAE } = await import("../dist/index.js");
+    assert.deepEqual({ ...MISSAE }, {
+      1: "Lux et origo",
+      2: "Kyrie fons bonitatis",
+      3: "Kyrie Deus sempiterne",
+      4: "Cunctipotens Genitor Deus",
+      5: "Kyrie magnæ Deus potentiæ",
+      6: "Kyrie Rex Genitor",
+      7: "Kyrie Rex splendens",
+      8: "De Angelis",
+      9: "Cum jubilo",
+      10: "Alme Pater",
+      11: "Orbis factor",
+      12: "Pater cuncta",
+      13: "Stelliferi Conditor orbis",
+      14: "Jesu Redemptor",
+      15: "Dominator Deus",
+      16: null,
+      17: null,
+      18: "Deus Genitor alme",
+    });
+    assert.ok(Object.isFrozen(MISSAE));
   });
 });

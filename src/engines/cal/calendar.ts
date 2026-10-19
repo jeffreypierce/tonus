@@ -199,6 +199,15 @@ const SUNDAY_GRADES: readonly Grade[] = [
   "semiduplex",
 ];
 
+// Vigils the calendar data ranks plainly Simplex (as Divinum Officium does),
+// so their grade does not say they are vigils. Every other lesser vigil carries
+// the grade `vigilia`; a vigil ranked semiduplex or above (Christmas, the
+// Epiphany, Pentecost) takes its class like any feast of that rank.
+const SIMPLEX_VIGIL_IDS: ReadonlySet<string> = new Set([
+  "06-23", // Vigil of St. John the Baptist
+  "08-14", // Vigil of the Assumption
+]);
+
 /**
  * The Kyriale rubric this day falls under — the book classifies by RANK and
  * appoints one category per day [biblio: liber-usualis, Kyriale].
@@ -222,6 +231,13 @@ function rubricForDay(
   const isSunday = date.getUTCDay() === 0;
   const penitential = PENITENTIAL_SEASONS.has(season);
 
+  // Mass XVIII is "for the ferias of Advent and Lent as well as for Vigils".
+  // A vigil is not the feast it precedes, so this comes before the BVM test —
+  // the Vigil of the Assumption was singing Cum jubilo. Paschaltide still
+  // governs inside its own season, as for every other rubric below.
+  const vigil = grade === "vigilia" || SIMPLEX_VIGIL_IDS.has(id);
+  if (vigil && season !== "pasc") return "feria-penitential";
+
   // The book's own subject category outranks the season: a BVM feast in
   // Paschaltide is "For feasts of the Blessed Virgin", not "In Paschal Time" —
   // paschal-first left Cum jubilo unreachable for the whole of Eastertide.
@@ -236,6 +252,11 @@ function rubricForDay(
   if (CLASS_II_GRADES.includes(grade)) return "class-ii";
   if (CLASS_III_GRADES.includes(grade)) return "class-iii";
   if (grade === "simplex") return "commemoration";
+
+  // Mass XV is "for commemorations and ferias of the Christmas season". No day
+  // of Christmastide is a bare feria in this calendar today — octaves and
+  // saints fill it — but the book appoints XV there, not XVI.
+  if (season === "nat") return "commemoration";
 
   return penitential ? "feria-penitential" : "feria";
 }

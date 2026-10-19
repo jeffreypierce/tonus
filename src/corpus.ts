@@ -16,6 +16,7 @@
 export { getChants as cantus, getCorpus as corpus, SOURCES } from "./engines/chant/chant.js";
 
 export { HORAE, OFFICIA, ORDINARIA, MODI } from "./engines/chant/types.js";
+export { MISSAE } from "./engines/chant/data/masses.js";
 
 export type {
   Chant,
