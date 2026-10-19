@@ -2,7 +2,7 @@
 
 All notable changes to tonus. Newest first.
 
-## 0.14.0 — unreleased
+## 0.14.0 — 2026-10-19
 
 The notes take their size from the book.
 
