@@ -33,7 +33,7 @@ export const CENSUS_GROUPS: Readonly<Record<string, { offset: number; count: num
 /**
  * The vocabularies the trigram and cadence groups count against, commonest
  * first; anything else counts as the sixteenth slot, "other".
- * trigrams.json sha256 0ec683ea… · cadences.json sha256 89ec9928…
+ * trigrams: vocabulary.json sha256 29ab95e5… (pinned) · cadences.json sha256 89ec9928…
  */
 export const CENSUS_DICTIONARIES: Readonly<{ trigrams: readonly string[]; cadences: readonly string[] }> =
   Object.freeze({
