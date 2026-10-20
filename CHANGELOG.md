@@ -2,6 +2,40 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.14.0 — 2026-10-19
+
+The notes take their size from the book.
+
+### Changed
+
+- **Breaking: a named `scale` is a size of type.** The lyric is the same in
+  both species — 12, 16 and 22.4px at `small`, `normal` and `large` — and each
+  draws its staff to suit, so quadrata's staff is 16/17 of moderna's (about
+  37.65px at `normal`, where it was 40). A number is still the staff height
+  exactly, so in quadrata `scale: 40` now draws slightly larger than
+  `"normal"`. Every geometry coordinate a default quadrata render returns
+  moves with it.
+- Quadrata's heads, clefs and signs stand at 0.85 of the SMuFL nominal (was
+  0.7, which left a punctum at 57% of its staff space); moderna's notehead at
+  0.92 of its engraved size (was 0.825). A drawn stem takes the weight of the
+  stem Bravura bakes into the virga.
+- Moderna's lyric setting — size, staff-to-baseline gap, the room beneath,
+  the air between systems — scales with its staff, as quadrata's does. The
+  lyric is 16px at the default staff (was 15), and the default lyric weight
+  is 500 in both species (was 518).
+- Stems lie inside the upper head's edge, whichever way the figure moves;
+  the pes stem stops at the lower pitch. Inclinata stand clear of the head
+  they fall from and are never stemmed to it.
+- The margin mark is set at 0.9 of the lyric (was 1.05), and the dropcap
+  column widens to hold it.
+
+### Fixed
+
+- A wrapped quadrata score could leave an empty staff between two full ones,
+  where a word break or the source's `z` followed a divisio break.
+- Beside a narrow initial (an I, a J), "Comm." and "Offert." ran across the
+  clef.
+
 ## 0.13.0 — 2026-10-01
 
 Every written head reaches its glyph.

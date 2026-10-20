@@ -1,5 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
+import tonus from "../dist/index.js";
 import { buildScore } from "../dist/engines/score/api.js";
 import { inscriptio } from "../dist/engines/score/inscriptio.js";
 import { decideBreak } from "../dist/engines/score/emitters/breaking.js";
@@ -393,6 +394,18 @@ describe("inscriptio — multi-system layout", () => {
     const single = inscriptio(long).svg;   // no width → one system, nothing follows
     assert.equal((single.match(/class="custos"/g) || []).length, 0);
   });
+
+  test("no system is left empty when a divisio break meets the source's z", () => {
+    // A divisio break opened a line, then the next figure's `z` opened
+    // another: an empty staff between two full ones. At 250px this hit 80 of
+    // the first 1,500 chants; gregobase:713 is one.
+    const s = tonus.notatio(tonus.cantus({ id: "gregobase:713" })[0]);
+    const { geometry } = inscriptio(s, { width: 250, dropcap: true, annotation: "auto" });
+    const systems = new Set(geometry.map((p) => p.system));
+    for (let k = 0; k <= Math.max(...systems); k++) {
+      assert.ok(systems.has(k), `system ${k} holds no notes`);
+    }
+  });
 });
 
 describe("inscriptio — front matter", () => {
@@ -466,6 +479,21 @@ describe("inscriptio — front matter", () => {
     // --tonus-rubrica still overrides it. An inline literal could not be
     // overridden at all — an inline fill beats any stylesheet rule.
     assert.ok(/fill="var\(--tonus-rubrica, #c00\)"/.test(svg));
+  });
+
+  test("the margin mark clears the clef beside a narrow initial", () => {
+    // The cap column was cut to the initial alone, so an I put "Comm." and
+    // "Offert." across the clef. 0.6 em a letter overstates the mark's width.
+    for (const id of ["gregobase:514", "gregobase:708"]) {   // Ignem veni, Illumina
+      const { svg } = inscriptio(tonus.notatio(tonus.cantus({ id })[0]),
+        { dropcap: true, annotation: "auto" });
+      const clefX = Number(svg.match(/class="clef" transform="translate\(([\d.]+)/)[1]);
+      for (const [, x, size, text] of svg.matchAll(
+        /<text class="rubric" x="([\d.]+)"[^>]*font-size="([\d.]+)"[^>]*>([^<]*)</g)) {
+        const right = Number(x) + text.length * 0.6 * Number(size) / 2;
+        assert.ok(right < clefX, `${id} "${text}" ends at ${right.toFixed(1)}, clef at ${clefX}`);
+      }
+    }
   });
 
   test("no front-matter options → no header band (bare score)", () => {
@@ -644,7 +672,7 @@ describe("inscriptio — the fonts option (references only, never bundled)", () 
       notation: "moderna", theme: { fonts: { lyric: { family: "Pfeffer Mediaeval", weight: 400, scale: 1.1 } } },
     });
     assert.match(svg, /class="lyric" [^>]*font-family="Pfeffer Mediaeval"/);
-    assert.match(svg, /class="lyric" [^>]*font-size="16.5"/);
+    assert.match(svg, /class="lyric" [^>]*font-size="17.6"/);
   });
 
   test("no fonts option → byte-identical to before (pure fallback)", () => {

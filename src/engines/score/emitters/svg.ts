@@ -6,11 +6,12 @@
 // notation is inline <path>; only lyric text uses a system font.
 //
 // SMuFL fonts are metrically standardized: 1 em = 4 staff spaces, so one staff
-// space = upm/4 font units. Bravura's chant noteheads are drawn to fill ~0.8 of
-// a space; Solesmes engraving leaves more air, so noteheads render at
-// `noteScale` (default 0.8) of the SMuFL size while clefs and divisiones stay
-// full-size. Staff positions are half-spaces from the bottom line (odd = lines,
-// even = spaces); y = baseline − position × staffInterval.
+// space = upm/4 font units. Bravura draws its punctum 0.81 of a space tall;
+// `noteScale` is a factor on that SMuFL nominal (`NOTE_SCALE` by default),
+// carried by noteheads, clefs and signs alike, while divisiones are drawn to
+// the staff. Staff positions are half-spaces from the
+// bottom line (odd = lines, even = spaces); y = baseline − position ×
+// staffInterval.
 //
 // Figures follow Solesmes engraving: the pes stacks its two notes; the clivis
 // is two abutting puncta with a left stem; the torculus three abutting puncta
@@ -148,10 +149,12 @@ function fontAttrs(f: ResolvedFont): string {
  *  caller. `scale` is the public control, resolved to `staffHeight` before it
  *  arrives (see inscriptio.ts). */
 export interface SvgOpts {
-  /** Height of the 4-line staff in px (line 1 to line 4). Default 40.
-   *  Set from the public `scale`; not settable directly. */
+  /** Height of the 4-line staff in px (line 1 to line 4). Set from the public
+   *  `scale`, whose `normal` resolves to 40 × 16/17; 40 only when the emitter
+   *  is called directly. Not settable directly. */
   staffHeight?: number;
-  /** Notehead/clef size relative to the SMuFL nominal (1 = fill the space). Default 0.7. */
+  /** Notehead/clef/sign size as a factor on the SMuFL nominal, where Bravura's
+   *  punctum stands 0.81 of a staff space. Default `NOTE_SCALE`. */
   noteScale?: number;
   /** Horizontal padding / left margin in px. Default 12. */
   padding?: number;
@@ -217,6 +220,18 @@ interface Resolved {
   rubricaColor: string;   // liturgical red
 }
 
+// A factor on the SMuFL nominal, where Bravura's punctum stands 0.81 of a staff
+// space: at 0.85 it stands 0.69. 0.7 until 2026-10-13, which left it at 57% of
+// the space it sits in — small against the staff beside any printed book. This
+// is the one number; the factors below are fractions of it.
+const NOTE_SCALE = 0.85;
+// Width of the virga's own stem (E996), in font units.
+const BAKED_STEM = 19;
+// A liquescent Bravura carries no head for keeps the small punctum.
+const LIQUESCENT_FACTOR = 0.66;
+// Accidentals, inline and in the key signature.
+const ACCIDENTAL_FACTOR = 0.62;
+
 /** A themeable colour: the caller's value, reachable from CSS by name. */
 const cssVar = (name: string, value: string): string => `var(--tonus-${name}, ${value})`;
 
@@ -225,7 +240,7 @@ function resolveOpts(o: SvgOpts): Resolved {
   // 4 lines span 3 gaps; each gap = 2 staffIntervals ⇒ staffInterval = h/6.
   const staffInterval = staffHeight / 6;
   const glyphScale = (staffInterval * 2) / (GLYPH_UPM / 4);
-  const noteScale = o.noteScale ?? 0.7;
+  const noteScale = o.noteScale ?? NOTE_SCALE;
   const punctum = GLYPHS[GLYPH.punctum];
   const noteheadH = punctum
     ? (punctum.bbox[3] - punctum.bbox[1]) * glyphScale * noteScale
@@ -265,7 +280,10 @@ function resolveOpts(o: SvgOpts): Resolved {
     glyphScale,
     noteScale,
     lineWeight: Math.max(0.5, staffInterval * 0.11),
-    stemWeight: Math.max(0.6, staffInterval * 0.14),
+    // The weight of the stem Bravura bakes into its virga, so a drawn stem and
+    // a baked one are the same line. It was a fraction of the staff, which
+    // agreed with the glyphs at no note scale in particular.
+    stemWeight: Math.max(0.6, BAKED_STEM * glyphScale * noteScale),
     noteheadH,
     // Air between figures within a syllable. 0.62 until 2026-08-04, which set
     // the square notation tighter than the books do — the neumes read as one
@@ -278,7 +296,10 @@ function resolveOpts(o: SvgOpts): Resolved {
     // staff, so the relationship holds at any size.
     interSyllable: staffInterval * 2.35,
     interWord: staffInterval * 1.55,
-    lyricSize: staffInterval * 2.2,
+    // 17px against a 40px staff — and 16px at the staff `normal` resolves to
+    // (inscriptio's QUADRATA_STAFF), the size moderna sets its lyrics at: the
+    // duae species share one lyric setting. 2.2 until 2026-10-13.
+    lyricSize: staffInterval * 2.55,
     width: o.width ?? null,
     // Likewise the air between systems: flat 24px held the system pitch at
     // 135px whether the staff was 30 or 56, so a large chant crowded and a
@@ -511,7 +532,10 @@ function makeLayout(r: Resolved, trackExtra = 0): Layout {
   // 2026-08-04, which crowded the lyrics against notes hanging below the
   // staff, then 10.2 (28px) until 2026-09-01. Those notes share this room,
   // as they do in the books.
-  const lyricY = topY + r.staffInterval * 11.1;
+  //
+  // 11.42 since 2026-10-13: the same 34px at the staff `normal` now resolves
+  // to, which is 16/17 of 40.
+  const lyricY = topY + r.staffInterval * 11.42;
   return {
     topY,
     bottomY: topY + r.staffInterval * 6,
@@ -646,7 +670,11 @@ export function toSvg(
   // The mark STACKS as the books set it — "Offert." over "2." — one line per
   // element; an explicit `rubric` string stays a single line.
   const rubricLines: string[] = r.rubric ? [r.rubric] : autoLines;
-  const markSize = r.lyricSize * 1.05;
+  // 0.9 of the lyric since 2026-10-13 (was 1.05): the lyric grew against the
+  // staff that day and the mark with it, while the cap column it sits in is
+  // sized from the staff — so "Offert." and "Tract." ran into the clef. This
+  // is the size the mark had against the staff before.
+  const markSize = r.lyricSize * 0.9;
   const markLineH = markSize * 0.98;   // tight, as the books stack Intr. over 8.
   // The stack's full height in rows — genus over mode. In the margin it is
   // bottom-aligned to this, so a lone mode keeps the mode's row rather than
@@ -691,6 +719,25 @@ export function toSvg(
   };
   const placements: NotePlacement[] = [];
 
+  // Estimated lyric width, for the column rule and the margin mark (headless:
+  // no text measurement). Case-aware, because a flat
+  // per-character average is wrong exactly where it matters: chant sets its
+  // opening word in capitals ("CAntábo", "DE us"), and capitals run about 0.70
+  // em against lowercase's 0.50. A flat 0.52 underestimated "CAn" by 5px — a
+  // quarter of its width — so the opening syllables were placed as if they
+  // fitted and then collided with what followed.
+  const estLyricW = (text: string): number => {
+    let w = 0;
+    for (const ch of text) {
+      w += /[A-ZÀ-ÞŒÆ]/.test(ch) ? 0.70 : /[.,;:'’\- ]/.test(ch) ? 0.28 : 0.50;
+    }
+    return w * r.lyricSize;
+  };
+  // The same estimate at the MARGIN MARK's size — its own size, and its own
+  // `scale`, which the lyric's does not carry. Used to keep the genus/mode
+  // stack inside the cap column.
+  const estMarkW = (text: string): number =>
+    estLyricW(text) / r.lyricSize * markSize * r.fonts.annotation.scale;
   // Dropcap column — the book's illuminated capital owns the left margin of
   // the FIRST system only: its staff, clef, and lyric all start past the cap;
   // later systems return to the full margin (Solesmes practice).
@@ -701,11 +748,18 @@ export function toSvg(
   // 9.5, not 10: the initial spans staff + lyric, and a twentieth off it
   // gives the margin mark above room without shrinking the letter's weight.
   const capSize = r.staffInterval * 9.5;
-  // The letter's OWN advance, plus a hair of air before the staff begins.
+  // The letter's OWN advance, plus a hair of air before the staff begins —
+  // or the margin mark's width, where that is the wider. The mark sits in this
+  // column beside the staff's top line, so a column cut to a narrow initial
+  // (an I, a J) put "Comm." across the clef whatever size it was set at.
+  const markW = capInitial && rubricLines.length > 0
+    ? Math.max(...rubricLines.map((line) => estMarkW(line))) + r.staffInterval * 0.9
+    : 0;
   const capIndent = capInitial
-    ? capSize * r.fonts.dropcap.scale
-        * capAdvance(capInitial, r.fonts.dropcap.family)
-      + r.staffInterval * 0.45
+    ? Math.max(
+        capSize * r.fonts.dropcap.scale * capAdvance(capInitial, r.fonts.dropcap.family),
+        markW,
+      ) + r.staffInterval * 0.45
     : 0;
 
   let x = r.padding + capIndent;
@@ -729,11 +783,18 @@ export function toSvg(
     ` data-note-index="${row.phraseIndex}.${row.syllableIndex}.${row.neumeGroup}.${row.neumeIndex}"` +
     ` data-staff="${row.staffLetter}"`;
 
-  // Vertical stem joining two pitches at a notehead edge. Runs from the upper
-  // pitch down past the lower one by a slight overshoot, as in the books.
-  const stem = (edgeX: number, posA: number, posB: number): string => {
+  // Vertical stem joining two pitches at a notehead edge, its right side at
+  // `edgeX`. Runs from the upper pitch down past the lower one by a slight
+  // overshoot, as in the books — unless the lower head carries its own foot
+  // (the pes), where the stem stops at the pitch.
+  //
+  // The stem lies INSIDE THE UPPER HEAD's edge, whichever way the figure moves.
+  // A punctum's top corners are round and its bottom ones square, so a stem
+  // set outside the upper head shows a notch where it passes the shoulder;
+  // beside the lower head it only lengthens the corner.
+  const stem = (edgeX: number, posA: number, posB: number, overshoot = true): string => {
     const y0 = yFor(Math.max(posA, posB), L, r);
-    const y1 = yFor(Math.min(posA, posB), L, r) + r.noteheadH * 0.45;
+    const y1 = yFor(Math.min(posA, posB), L, r) + (overshoot ? r.noteheadH * 0.45 : 0);
     const w = r.stemWeight;
     return `<rect class="stem" x="${(edgeX - w).toFixed(2)}" y="${y0.toFixed(2)}" ` +
       `width="${w.toFixed(2)}" height="${(y1 - y0).toFixed(2)}" fill="${r.noteColor}"/>`;
@@ -762,7 +823,7 @@ export function toSvg(
     const head = code ? null : headGlyph(row);
     const glyphCode = code ?? head ?? SHAPE_GLYPH[row.shape] ?? GLYPH.punctum;
     const y = yFor(row.staffPosition, L, r);
-    const sc = row.liquescent && !head ? r.noteScale * 0.66 : r.noteScale;
+    const sc = row.liquescent && !head ? r.noteScale * LIQUESCENT_FACTOR : r.noteScale;
     const p = placeGlyph(glyphCode, atX, y, r, "note", dataAttrs(row), sc, dyFont, !code && tracedHollow(row));
     if (!p) return null;
     ledger(row.staffPosition, p.inkLeft, p.inkRight);
@@ -789,7 +850,7 @@ export function toSvg(
     // The sign sits on the line of the pitch it alters, which is not this
     // row's own line where the sign was written before the figure it governs.
     const p = placeGlyph(mark.glyph!, atX, yFor(mark.degree ?? row.staffPosition, L, r), r,
-      "accidental", "", r.noteScale * 0.62);
+      "accidental", "", r.noteScale * ACCIDENTAL_FACTOR);
     if (!p) return 0;
     body.push(p.svg);
     return p.advance + r.interGlyph * 0.6;
@@ -814,7 +875,7 @@ export function toSvg(
     if (!lower) return cx;
     const upper = placeNote(hi, cx + lower.advance, GLYPH.podatusUpper, -96);
     if (hi.staffPosition - lo.staffPosition > 1) {
-      body.push(stem(lower.inkRight, lo.staffPosition, hi.staffPosition));
+      body.push(stem(upper?.inkRight ?? lower.inkRight, lo.staffPosition, hi.staffPosition, false));
     }
     return Math.max(lower.inkRight, upper?.inkRight ?? 0);
   };
@@ -831,7 +892,7 @@ export function toSvg(
 
   const renderFallback = (figure: ChantTabulaRow[], atX: number): number => {
     let cx = atX;
-    let prev: { pos: number; inkRight: number } | null = null;
+    let prev: { pos: number; inkRight: number; diamond: boolean } | null = null;
     // A short figure's marks were hoisted before the figure by renderFigure
     // (a ligature draws connected); a longer run interleaves each sign before
     // the note that carries it, as the books print them.
@@ -842,17 +903,26 @@ export function toSvg(
       if (prev && prev.pos === row.staffPosition)
         cx += r.staffInterval * 0.55;          /* strophae breathe (Solesmes) */
       if (inline) cx += placeAccidental(row, cx);
+      // The first diamond of a descent stands clear of the head it falls from
+      // — a virga's stem most of all, which it otherwise touches like a flag.
+      const diamond = row.shape === "inclinatum";
+      if (prev && diamond && !prev.diamond)
+        cx += r.staffInterval * 0.25;
       const p = placeNote(row, cx);
       if (!p) continue;
-      if (prev && !inclinata && Math.abs(prev.pos - row.staffPosition) > 1) {
-        body.push(stem(p.inkLeft + r.stemWeight, prev.pos, row.staffPosition));
+      // Square notes a third or more apart are joined; a diamond never is, on
+      // either side — the books set inclinata free of the figure they follow.
+      if (prev && !diamond && !prev.diamond &&
+          Math.abs(prev.pos - row.staffPosition) > 1) {
+        const falling = prev.pos > row.staffPosition;
+        body.push(stem(falling ? prev.inkRight : p.inkLeft + r.stemWeight, prev.pos, row.staffPosition));
       }
       // Inclinata cascade uses wider, interval-scaled steps (exsurge rule);
       // square notes abut.
       const step = inclinata && i > 0
         ? p.advance * Math.max(1.1, Math.abs(prev!.pos - row.staffPosition) * (2 / 3))
         : p.advance;
-      prev = { pos: row.staffPosition, inkRight: p.inkRight };
+      prev = { pos: row.staffPosition, inkRight: p.inkRight, diamond };
       cx += step;
     }
     return prev?.inkRight ?? cx;
@@ -931,7 +1001,7 @@ export function toSvg(
       body.push(stem(first.inkRight + r.stemWeight, figure[0]!.staffPosition, figure[1]!.staffPosition));
       const second = placeNote(figure[1]!, first.inkRight);
       if (!second) return first.inkRight;
-      body.push(stem(second.inkRight + r.stemWeight, figure[1]!.staffPosition, figure[2]!.staffPosition));
+      body.push(stem(second.inkRight, figure[1]!.staffPosition, figure[2]!.staffPosition));
       const third = placeNote(figure[2]!, second.inkRight);
       return third?.inkRight ?? second.inkRight;
     }
@@ -992,7 +1062,7 @@ export function toSvg(
       // below fa for F clefs.
       const flatPos = isF ? pos - 4 : pos - 1;
       const fp = placeGlyph(GLYPH.flat, cx, yFor(flatPos, L, r), r,
-        "accidental key-flat", "", r.noteScale * 0.62);
+        "accidental key-flat", "", r.noteScale * ACCIDENTAL_FACTOR);
       if (fp) { body.push(fp.svg); cx = fp.inkRight + r.interGlyph; }
     }
     return cx + r.staffInterval * 1.2;
@@ -1000,25 +1070,6 @@ export function toSvg(
   x = drawClef(clefStr, x);
   let activeClef = clefStr;
 
-  // Estimated lyric width for column spacing (headless: no text measurement).
-  // Lyric width, for the collision check below. Case-aware, because a flat
-  // per-character average is wrong exactly where it matters: chant sets its
-  // opening word in capitals ("CAntábo", "DE us"), and capitals run about 0.70
-  // em against lowercase's 0.50. A flat 0.52 underestimated "CAn" by 5px — a
-  // quarter of its width — so the opening syllables were placed as if they
-  // fitted and then collided with what followed.
-  const estLyricW = (text: string): number => {
-    let w = 0;
-    for (const ch of text) {
-      w += /[A-ZÀ-ÞŒÆ]/.test(ch) ? 0.70 : /[.,;:'’\- ]/.test(ch) ? 0.28 : 0.50;
-    }
-    return w * r.lyricSize;
-  };
-  // The same estimate at the MARGIN MARK's size — its own size, and its own
-  // `scale`, which the lyric's does not carry. Used to keep the genus/mode
-  // stack inside the cap column.
-  const estMarkW = (text: string): number =>
-    estLyricW(text) / r.lyricSize * markSize * r.fonts.annotation.scale;
   // Clear air between one syllable's right edge and the next one's left.
   // 0.25 em until 2026-08-04, which let syllables touch even when the width
   // estimate was right — a space between words has to read as a space.
@@ -1034,6 +1085,7 @@ export function toSvg(
   let prevSyllable = -1;
   let prevPhrase = -1;
   let afterDivisio = false;
+  let freshSystem = false;   // the open system holds no figure yet
   while (i < rows.length) {
     const { phraseIndex, syllableIndex, neumeGroup } = rows[i]!;
     let j = i;
@@ -1063,7 +1115,9 @@ export function toSvg(
       // arbitrary against a printed copy.
       //
       // It wins over the fit test. Where it is absent the layout still decides.
-      if (r.width != null && figure[0]!.lineBreak && prevSyllable !== -1) {
+      // Where the layout has just opened a line here itself, the `z` is
+      // already honoured — breaking again left an empty staff behind.
+      if (r.width != null && figure[0]!.lineBreak && prevSyllable !== -1 && !freshSystem) {
         if (r.custos) {
           const cp = placeGlyph(custosGlyph(figure[0]!.staffPosition),
             custosX(x, prevLyricRight, r),
@@ -1120,11 +1174,13 @@ export function toSvg(
       x = r.padding;
       x = drawClef(activeClef, x);
       afterDivisio = false;
+      freshSystem = true;
       prevLyricRight = -Infinity;
     };
 
     const figureStartX = x;
     x = renderFigure(figure, x);
+    freshSystem = false;
 
     if (newSyllable) {
       const { text, runs } = displayLyric(figure[0]!);
@@ -1296,6 +1352,7 @@ export function toSvg(
         // The clef repeats at the head of every system.
         x = drawClef(activeClef, x);
         afterDivisio = false; // a fresh system starts clean, not "after a divisio"
+        freshSystem = true;
         // Forget the previous system's rightmost lyric — otherwise the lyric-
         // column rule would shove this system's first syllable across the page
         // to clear a lyric that is now a line above.
@@ -1316,8 +1373,14 @@ export function toSvg(
     // The books break mid-phrase freely; the unit is the word, never a syllable
     // mid-word (which would split a lyric) and never mid-neume. So: at a word
     // start, with the coming word measured, break if it will not fit.
+    //
+    // And never on a system that holds nothing yet: a word wider than the whole
+    // line cannot be rescued by breaking, and a divisio break just above has
+    // already opened the line it would open — breaking again left an empty
+    // staff between two full ones (the long Kyrie at 250px, once the heads
+    // grew).
     if (r.width != null && j < rows.length && rows[j]!.wordStart &&
-        !afterDivisio && !rows[j]!.keepWithPrev) {
+        !afterDivisio && !freshSystem && !rows[j]!.keepWithPrev) {
       // Measure the coming WORD the same way the phrase is measured — by
       // placing and rewinding, so the number is the one the drawing produces.
       let tw = 0;
@@ -1552,9 +1615,9 @@ export function toSvg(
 
   const lyricSvgs: string[] = [];
   const lyricFontSize = r.lyricSize * r.fonts.lyric.scale;
-  // Lyric weight defaults to moderna's 518 (one weight across the duae
+  // Lyric weight defaults to moderna's 500 (one weight across the duae
   // species, ruled 2026-07-29); an explicit fonts.lyric.weight overrides.
-  const lyricWeightAttr = r.fonts.lyric.weight != null ? "" : ' font-weight="518"';
+  const lyricWeightAttr = r.fonts.lyric.weight != null ? "" : ' font-weight="500"';
   const lyricText = (cx: number, systemY: number, text: string, runs?: LyricRun[]): string =>
     `<text class="lyric" x="${cx.toFixed(2)}" y="${(systemY + L.lyricY).toFixed(2)}" ` +
     `text-anchor="middle" ${fontAttrs(r.fonts.lyric)}${lyricWeightAttr} ` +
@@ -1623,29 +1686,20 @@ export function toSvg(
     // (the "Offert." / "2." of the books). Otherwise it sits left-aligned in
     // its own header band. Oldstyle figures for the mode numeral.
     const inMargin = r.dropcap && capIndent > 0;
-    // LEFT-ALIGNED OVER THE CAP, not centred on it. Centring worked while the
-    // initial was a plain roman capital whose ink stopped well below the
-    // stack; a blackletter's flourishes climb into that band, and the numeral
-    // landed on top of one. Sitting at the margin the mark clears the letter's
-    // reach whatever face draws it, and the books set it there anyway.
-    // CENTRED OVER THE INITIAL when there is one, and left-aligned when there
-    // is not. The stack names the chant the cap opens, so it belongs over that
-    // letter's own width rather than at the margin beside it — and the width
-    // is the letter's real advance, so an M centres over an M and an I over an
-    // I. (It was briefly left-aligned for Jacquard, whose flourishes climb
-    // into the numeral's band; Junicode's capitals do not, and the initial is
-    // Junicode again.)
-    // CENTRED, BUT INSIDE ITS COLUMN. Centring on the cap's advance alone
-    // ignored the MARK's own width, and the column is only as wide as the
-    // indent, so a wide mark ran past the staff's left edge into the clef.
+    // CENTRED OVER THE INITIAL, INSIDE ITS COLUMN. The stack names the chant
+    // the cap opens, so it belongs over that letter's own width — its real
+    // advance, so an M centres over an M and an I over an I. (It was briefly
+    // left-aligned for Jacquard, whose flourishes climb into the numeral's
+    // band; Junicode's capitals do not, and the initial is Junicode again.)
+    // Where the mark is wider than the letter, the run is pulled left to stay
+    // in the column, never past the margin.
     //
-    // The WIDTH is GENUS_ABBREV's job, not this one's: the books abbreviate in
-    // the margin, and that table is what keeps "Toni Communes" down to
-    // "Ton. comm." Shrinking the type here instead would set the genus smaller
-    // than the numeral beneath it and break the stack's one size — and it
-    // would fire on abbreviations that are already correct. So this only
-    // CENTRES, pulling the run left when it overhangs and never past the
-    // margin. A mark that fits is centred exactly as before.
+    // The column itself is cut to the wider of the letter and the mark (see
+    // `capIndent`), so a narrow initial no longer puts "Comm." across the
+    // clef. The mark's TYPE is not shrunk to fit: that would set the genus
+    // smaller than the numeral beneath it and break the stack's one size.
+    // Keeping the run short is GENUS_ABBREV's job — the books abbreviate in
+    // the margin, "Toni Communes" to "Ton. comm."
     const markRight = r.padding + capIndent - r.staffInterval * 0.3;
     const capMid = r.padding + capSize * r.fonts.dropcap.scale
       * capAdvance(capInitial, r.fonts.dropcap.family) / 2;

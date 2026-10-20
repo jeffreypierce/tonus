@@ -112,8 +112,20 @@ describe("inscriptio — duae species parity (ruled 2026-07-29)", () => {
     const mGap = gapOf(mod, 5);    // 5-line staff
     assert.ok(Math.abs(qGap - mGap) < 0.1, `gaps match (${qGap} vs ${mGap})`);
     // Both species set the same default lyric weight.
-    assert.ok(/class="lyric"[^>]*font-weight="518"/.test(quad), "quadrata weight 518");
-    assert.ok(/class="lyric"[^>]*font-weight="518"/.test(mod), "moderna weight 518");
+    assert.ok(/class="lyric"[^>]*font-weight="500"/.test(quad), "quadrata weight 500");
+    assert.ok(/class="lyric"[^>]*font-weight="500"/.test(mod), "moderna weight 500");
+  });
+
+  test("a named scale sets one lyric size in both species", () => {
+    // A named size is a size of type: quadrata draws its staff at 16/17 of
+    // moderna's so the lyric matches. A raw number is the staff height as
+    // given, so there the species part.
+    const size = (svg) => Number(svg.match(/class="lyric"[^>]*font-size="([\d.]+)"/)[1]);
+    for (const [scale, px] of [["small", 12], ["normal", 16], ["large", 22.4]]) {
+      assert.equal(size(inscriptio(score, { scale }).svg), px, `quadrata ${scale}`);
+      assert.equal(size(inscriptio(score, { scale, notation: "moderna" }).svg), px, `moderna ${scale}`);
+    }
+    assert.equal(size(inscriptio(score, { scale: 40 }).svg), 17);
   });
 
   test("both species take the title; the book's opening is quadrata's alone", () => {

@@ -124,12 +124,16 @@ const MTOP_1 = 20;                     // top staff line, system-local
 // the same number of systems.
 const ADV_1 = 11.6;
 const SYL_GAP_1 = 9.5;                   // gap after each syllable
-// Staff bottom → lyric baseline. NOT scaled with the staff: the duae species
-// share one lyric setting (ruled 2026-07-29), and that ruling is about type,
-// which sits at its own size. Scaling it with the staff broke the parity the
-// moment moderna's staff started moving.
-const LYRIC_GAP = 34;
-const SYSTEM_GAP_DEFAULT = 24;
+// The lyric setting, at the default staff: size, staff bottom → baseline, the
+// room beneath the baseline, and the air between systems. The duae species
+// share one lyric setting (ruled 2026-07-29), and quadrata's scales with its
+// staff — so these do too, by `k`. They were flat until 2026-10-13, which kept
+// the parity only at the default: a `large` moderna set 16px lyrics under a
+// staff quadrata would give 22px.
+const LYRIC_SIZE_1 = 16;
+const LYRIC_GAP_1 = 34;
+const LYRIC_TAIL_1 = 24;
+const SYSTEM_GAP_1 = 24;
 
 /** The staff height both species answer to when the caller names none. */
 const DEFAULT_STAFF_HEIGHT = 40;
@@ -183,7 +187,7 @@ export function metrics(staffHeight?: number): ModernaMetrics {
     NH_W: 295 * SCALE,
     ADV: ADV_1 * k,
     SYL_GAP: SYL_GAP_1 * k,
-    LYRIC_Y: MTOP + 4 * MSP + LYRIC_GAP,
+    LYRIC_Y: MTOP + 4 * MSP + LYRIC_GAP_1 * k,
     k,
   };
 }
@@ -269,15 +273,16 @@ function classedGlyph(
     `<path d="${g.path}" fill="${INK}"/></g>`;
 }
 
-// The notehead is drawn at 0.825 of its engraved size. Only the GLYPH
-// shrinks: advance still comes from NH_W and ADV, so the spacing — and
-// therefore every x in the geometry — is exactly what it was. Bravura's black
-// notehead is drawn for a five-line orchestral staff, and against chant's
-// wider spacing and single melodic line it reads heavy; reduced, the note is a
-// mark on the staff rather than a blot. Three quarters proved too far — the
-// head lost the staff line it sits on — so this is that, opened back up a
-// tenth.
-const HEAD_K = 0.825;
+// The notehead's size against its engraved one, where it fills the staff space
+// — so 1 is the ceiling, not a midpoint. Only the GLYPH scales: advance still
+// comes from NH_W and ADV, so the spacing — and therefore every x in the
+// geometry — is the same at any value here.
+//
+// 0.825 until 2026-10-13, on the reasoning that Bravura's black head is drawn
+// for an orchestral staff and reads heavy on a single melodic line; three
+// quarters before that lost the staff line the head sits on. Raised when
+// quadrata's heads grew (0.7 → 0.85); the engraved size was tried and 0.92 kept.
+const HEAD_K = 0.92;
 
 /** Which head a written shape takes in the modern transcription.
  *
@@ -408,8 +413,10 @@ function divisioMark(x: number, kind: string, top: number, final: boolean, gm: M
     `<line class="divisio" x1="${x.toFixed(2)}" y1="${top}" x2="${x.toFixed(2)}" y2="${bot}" stroke="${INK}" stroke-width="0.9"/>`;
 }
 
-function textW(s: string): number {
-  return s.replace(/-/g, "").length * 6.7 + 2;
+// Estimated lyric width for spacing (headless: no text measurement). 6.7px a
+// letter at the 15px the estimate was fitted to, carried to any size.
+function textW(s: string, size: number): number {
+  return s.replace(/-/g, "").length * size * (6.7 / 15) + 2;
 }
 
 // Lyric text arrives pre-decoded (the parser strips GABC markup into `runs`);
@@ -432,7 +439,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     : typeof lyricSlot === "string" ? lyricSlot : lyricSlot.family;
   const lyricWeight = typeof lyricSlot === "object" && lyricSlot.weight != null
     ? lyricSlot.weight
-    : 518;
+    : 500;
   const lyricScale = typeof lyricSlot === "object" && lyricSlot.scale != null
     ? lyricSlot.scale
     : 1;
@@ -446,11 +453,13 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
   const padding = options.padding ?? 14;
   const width = options.width ?? null;
-  const systemGap = options.systemGap ?? SYSTEM_GAP_DEFAULT;
+  const systemGap = options.systemGap ?? SYSTEM_GAP_1 * gm.k;
+  const lyricSize = LYRIC_SIZE_1 * gm.k * lyricScale;
+  const lyricTail = LYRIC_TAIL_1 * gm.k;
   // A requested track band widens every system by its reserved room. Moderna's
   // tracks scale with the staff they annotate — gm.k is 1 at the default.
   const bands = trackBands(options.tracks, gm.k);
-  const systemHeight = gm.LYRIC_Y + 24 + bands.extra + systemGap;
+  const systemHeight = gm.LYRIC_Y + lyricTail + bands.extra + systemGap;
 
   // Intonation channel: precompute each row's accidental/cents mark once (the
   // repeat-suppression and heji guard live in the engine), keyed by identity.
@@ -627,7 +636,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       nx += gm.ADV + 4.6 * r.mora;
     }
     const notesW = nx - x - gm.ADV + gm.NH_W / 2 + 2;
-    const sylW = Math.max(notesW, textW(lyr));
+    const sylW = Math.max(notesW, textW(lyr, lyricSize));
 
     // Draw notes.
     srows.forEach((r, i) => {
@@ -722,7 +731,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
   const contentW = Math.ceil(Math.max(...systemMaxX));
   // The requested width — see the matching note in svg.ts.
   const W = width != null ? Math.ceil(width) : contentW;
-  const height = Math.ceil(systemY + gm.LYRIC_Y + 24 + bands.extra);
+  const height = Math.ceil(systemY + gm.LYRIC_Y + lyricTail + bands.extra);
 
   // ── The analysis tracks, below each system ──
   // Downstream of the notation: they consume the placements (the same anchors
@@ -777,7 +786,6 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
   // Second pass: lyric texts, with a centred hyphen in the gap between
   // syllables of one word when both sit in the same system.
-  const lyricSize = 15 * lyricScale;
   const rubricaColor = RUBRICA;
   const estW = (t: string): number => t.length * lyricSize * 0.52;
   for (let k = 0; k < lyricRuns.length; k++) {
