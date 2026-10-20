@@ -59,6 +59,15 @@ corpus to be censused.
   carried XVIII's name and XVII was called "Salve" (that is ad libitum Kyrie
   XI); the book names neither. Capitals follow the book ("Cunctipotens Genitor
   Deus"), and the XV and XVIII headings are quoted whole.
+- **The Mass propers name the day's own chants.** The corpus matched each
+  Divinum Officium text to a chant on its first five words, so a slot could
+  take a chant with the right opening and the wrong genre or setting. It now
+  compares the full texts in order. Across 505 calendar days, none now lists a
+  chant twice, an office antiphon, or two Introits, Graduals, Offertories or
+  Communions; before, 35, 6 and 60 days did. Among the fixes: the Advent I
+  Offertory (it was the Introit), each "Gaudeamus" Introit's own feast, each
+  Easter-week Gradual's own verse, the Tract on 172 days (it held the day's
+  Gradual, or nothing in Lent), and the Mass of the Popes, which was empty.
 
 ## 0.13.0 — 2026-10-01
 
