@@ -519,6 +519,16 @@ describe("getHour — the monastic rite", () => {
     );
   });
 
+  test("a responsory is the day's own, not a namesake's", () => {
+    // The office matcher once compared five-word incipits, so the Epiphany's
+    // "In columbae specie Spiritus Sanctus visus est" took St Scholastica's
+    // "In columbae specie Scholasticae anima visa est" from the Antiphonale.
+    const [epiphany] = getFeast({ date: new Date(Date.UTC(2026, 0, 6)) });
+    const ids = getHour({ feast: epiphany, hora: "matutinum" }).map((c) => c.id);
+    assert.ok(ids.includes("nocturnale:0106N1R2"), "the Epiphany's own responsory");
+    assert.ok(!ids.includes("gregobase:9694"), "not St Scholastica's");
+  });
+
   test("the commune fills a saint's office when the day has no proper antiphons", () => {
     // The Mass has always resolved proper → seasonal → commune (propers.ts);
     // the Office has the same fallback — and it fills EVERY slot type the

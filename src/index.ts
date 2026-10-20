@@ -89,6 +89,7 @@ export {
   MODI,       // mode number → Latin name   ("1" → "Modus I")
 } from "./engines/chant/types.js";
 export { SOURCES } from "./engines/chant/chant.js";  // book code → bibliographic record
+export { MISSAE } from "./engines/chant/data/masses.js";  // mass number → Latin name (1 → "Lux et origo")
 
 // temper — modes, tones, cadences
 export { MODES } from "./engines/temper/data/modes.js";
@@ -106,11 +107,18 @@ export { CADENTIA_LABEL } from "./engines/score/cadence.js";
 // both what the sign is CALLED and what it MEANS. The bare name arrays stay
 // inside the engine that computes a longitude, where they are the lookup.
 export { ZODIACA } from "./engines/harmonia/data/zodiac.js";
+// DOCTRINAE — the four authorities `harmonia({ doctrina })` voices the spheres
+// by, each with its source, its span and its planets' ratios: what a caller
+// reads to draw or retune the doctrine it asked for.
+export { DOCTRINAE } from "./engines/harmonia/data/doctrines.js";
+export type { Doctrina } from "./engines/harmonia/data/doctrines.js";
 
 // census — the field groups and the block index. CENSUS_GROUPS keys are the
 // valid `by:` values AND the `profile` keys; CENSUS_ORDER holds every censused
 // id, so asking whether a chant is in the census stops needing a try/catch.
-export { CENSUS_GROUPS, CENSUS_ORDER } from "./data/census.js";
+// CENSUS_DICTIONARIES names the slots of the trigram and cadence groups, which
+// are otherwise sixteen anonymous numbers.
+export { CENSUS_GROUPS, CENSUS_ORDER, CENSUS_DICTIONARIES } from "./data/census.js";
 
 export type {
   Feast, FeastQuery, Pascha, Season, Grade, Chant, CantusQuery,

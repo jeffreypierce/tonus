@@ -4,7 +4,21 @@ All notable changes to tonus. Newest first.
 
 ## 0.14.0 — 2026-10-19
 
-The notes take their size from the book.
+The notes take their size from the book, and a chant need not be in the
+corpus to be censused.
+
+### Added
+
+- **`census({ score })`** censuses any notated chant — one composed, or from
+  another book — by the formula the corpus bake runs, against the same
+  dictionaries and corpus mean, with neighbors from the shipped blocks. Exactly
+  one of `id` and `score`; the answer's `id` is `score.chant.id`. The suite
+  holds the formula to every shipped block, bit for bit.
+- Appendix: `MISSAE` (Kyriale mass number → its Latin name, XVI and XVII
+  `null`), `DOCTRINAE` (the four authorities `harmonia` voices the spheres
+  by) with its `Doctrina` type, and `CENSUS_DICTIONARIES` (the keys of the
+  trigram and cadence groups' sixteen slots). `MISSAE` is also on
+  `tonus/corpus`, `CENSUS_DICTIONARIES` on `tonus/census`.
 
 ### Changed
 
@@ -28,6 +42,12 @@ The notes take their size from the book.
   they fall from and are never stemmed to it.
 - The margin mark is set at 0.9 of the lyric (was 1.05), and the dropcap
   column widens to hold it.
+- **Lesser vigils sing Mass XVIII**, as the Kyriale appoints it "for the
+  ferias of Advent and Lent as well as for Vigils" — outside Paschaltide, and
+  ahead of the BVM rubric. The green-season vigils had sung XVI, the Vigil of
+  St John the Baptist XV, and the Vigil of the Assumption IX/X. A Christmastide
+  feria, should one occur, takes XV, the book's "ferias of the Christmas
+  season".
 
 ### Fixed
 
@@ -35,6 +55,25 @@ The notes take their size from the book.
   where a word break or the source's `z` followed a divisio break.
 - Beside a narrow initial (an I, a J), "Comm." and "Offert." ran across the
   clef.
+- The Kyriale's mass names, checked against the Liber Usualis (1961): Mass XVI
+  carried XVIII's name and XVII was called "Salve" (that is ad libitum Kyrie
+  XI); the book names neither. Capitals follow the book ("Cunctipotens Genitor
+  Deus"), and the XV and XVIII headings are quoted whole.
+- **The Mass propers name the day's own chants.** The corpus matched each
+  Divinum Officium text to a chant on its first five words, so a slot could
+  take a chant with the right opening and the wrong genre or setting. It now
+  compares the full texts in order. Across 505 calendar days, none now lists a
+  chant twice, an office antiphon, or two Introits, Graduals, Offertories or
+  Communions; before, 35, 6 and 60 days did. Among the fixes: the Advent I
+  Offertory (it was the Introit), each "Gaudeamus" Introit's own feast, each
+  Easter-week Gradual's own verse, the Tract on 172 days (it held the day's
+  Gradual, or nothing in Lent), and the Mass of the Popes, which was empty.
+- **The monastic office names its own chants too**, by the same full-text
+  matcher. Its hymns are matched on the first stanza of the monastic text DO
+  prints (`[HymnusM …]`), not the first line of the Urban VIII revision. False
+  matches are gone: the Epiphany's "In columbae specie" was St Scholastica's
+  responsory, and any antiphon opening "In…" could become "In caelestibus
+  regnis".
 
 ## 0.13.0 — 2026-10-01
 

@@ -108,7 +108,7 @@ function feastYear(feast: Feast): number {
 // "paschal" is deliberately NOT here: it is a TIME, not a rank — every
 // Eastertide day carries it, ordinary Tuesdays included (their grade is
 // semiduplex, so no grade test separates them from a feast either). And Easter
-// itself sings Lux et Origo every year — a fixed point — which an appendix turn
+// itself sings Lux et origo every year — a fixed point — which an appendix turn
 // on the paschal rubric would break every second year. Mass I is complete in
 // every slot, so paschal days never need the appendix at all.
 const SOLEMN_RUBRICS: ReadonlySet<MassRubric> = new Set<MassRubric>([

@@ -5,6 +5,8 @@
 // repertoire: it says how a chant sits against the corpus it belongs to, and
 // the vocabulary for that is arithmetic, not liturgy.
 
+import type { Score } from "../score/api.js";
+
 /** A field group census() can measure similarity on. */
 export type CensusGroup =
   | "modal"
@@ -19,9 +21,7 @@ export type CensusGroup =
 /** `all` = the equal-weight mean of every group's cosine. */
 export type CensusBy = CensusGroup | "all";
 
-export interface CensusQuery {
-  /** The chant to census. Exactly one block per id (blocks are deduped by id). */
-  id: string;
+interface CensusOptions {
   /** How many neighbors to return. Default 8; 0 returns none. */
   k?: number;
   /** Which field group similarity is measured on. Default "all". */
@@ -32,6 +32,17 @@ export interface CensusQuery {
    */
   before?: number;
 }
+
+/**
+ * The chant to census: a shipped chant by `id`, read from its baked block, or
+ * any notated `score`, measured by the same formula the bake used — so a
+ * chant composed outside the corpus is read exactly as one inside it. Exactly
+ * one of the two.
+ */
+export type CensusQuery = CensusOptions & (
+  | { /** A shipped chant. Exactly one block per id (deduped by id). */ id: string; score?: never }
+  | { /** A notated chant; its id is `score.chant.id`. */ score: Score; id?: never }
+);
 
 /** One field group's reading for a chant, beside the corpus norm. */
 export interface CensusGroupProfile {

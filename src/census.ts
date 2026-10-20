@@ -17,7 +17,8 @@
 // CENSUS_BLOCK_FLOATS joins the two constants the root already exported. A
 // caller decoding a block had to know the stride and could get it only by
 // counting CENSUS_GROUPS, which is the transcription the appendix rule exists
-// to prevent.
+// to prevent. CENSUS_DICTIONARIES is the same case for the trigram and
+// cadence groups: their sixteen slots mean nothing without the keys.
 
 export { getCensus as census } from "./engines/census/census.js";
 
@@ -34,4 +35,5 @@ export {
   CENSUS_GROUPS,
   CENSUS_ORDER,
   CENSUS_BLOCK_FLOATS,
+  CENSUS_DICTIONARIES,
 } from "./data/census.js";

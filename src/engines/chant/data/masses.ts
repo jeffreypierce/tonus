@@ -33,10 +33,10 @@ export type MassRubric =
   | "class-iii" // For feasts of the III class
   | "bvm" // For feasts of the Blessed Virgin
   | "sunday" // For Sundays throughout the Year
-  | "commemoration" // For commemorations
+  | "commemoration" // For commemorations and ferias of the Christmas season
   | "feria" // For ferias throughout the Year
   | "sunday-penitential" // For the Sundays of Advent and Lent
-  | "feria-penitential"; // For the ferias of Advent and Lent
+  | "feria-penitential"; // For the ferias of Advent and Lent, Vigils, Ember and Rogation Days
 
 // "This Ordinary is NOT meant to be a matter of hard and fast rule: chants from
 // one Mass may be used together with those from others, the Ferial Masses
@@ -50,7 +50,9 @@ export const WHOLE_MASS_RUBRICS: ReadonlySet<MassRubric> = new Set<MassRubric>([
 export interface MassEntry {
   id: string;
   mass: number; // 1–18 (also the lookup key into the Kyriale)
-  title: string;
+  /** The name the Kyriale prints in parentheses under the heading, as the
+   *  Liber Usualis spells it; null for XVI and XVII, which it leaves unnamed. */
+  nomen: string | null;
   rubric: MassRubric; // THE selector — the book's category
   heading: string; // the LU's printed rubric, verbatim
   bvm: boolean; // BVM-specific mass (rubric "bvm")
@@ -91,14 +93,13 @@ export const FERIA_GRADES: readonly Grade[] = [
 // back with a Credo and the sprinkling and no Kyrie, Gloria, Sanctus or Agnus at
 // all, on roughly 50 days a year. The numbers below are the settings these
 // entries are already named after: de Angelis IS mass VIII, Cum jubilo IS the
-// BVM mass. An open editorial question on bvm: "Missa Salve" could instead
-// point at the ad libitum Kyrie Salve (appendix); mass IX is the plain reading
-// of "de Beata Maria".
+// BVM mass. (The bvm entry was labelled "Missa Salve", which is no mass: Kyrie
+// Salve is ad libitum Kyrie XI, offered for the Sundays of Advent and Lent.)
 export const AD_LIB: { standard: MassEntry; bvm: MassEntry } = {
   standard: {
     id: "adlib_standard",
     mass: 8,
-    title: "Missa de Angelis (short)",
+    nomen: "De Angelis",
     rubric: "class-ii",
     heading: "For feasts of the II class. 5.",
     bvm: false,
@@ -108,7 +109,7 @@ export const AD_LIB: { standard: MassEntry; bvm: MassEntry } = {
   bvm: {
     id: "adlib_bvm",
     mass: 9,
-    title: "Missa de Beata Maria (Missa Salve)",
+    nomen: "Cum jubilo",
     rubric: "bvm",
     heading: "For feasts of the Blessed Virgin. 1.",
     bvm: true,
@@ -123,7 +124,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_1",
       mass: 1,
-      title: "Lux et Origo",
+      nomen: "Lux et origo",
       rubric: "paschal" as MassRubric,
       heading: "I. — In Paschal Time.",
       bvm: false,
@@ -136,7 +137,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_2",
       mass: 2,
-      title: "Kyrie fons bonitatis",
+      nomen: "Kyrie fons bonitatis",
       rubric: "class-i" as MassRubric,
       heading: "II. — For feasts of the I class. 1.",
       bvm: false,
@@ -149,7 +150,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_3",
       mass: 3,
-      title: "Kyrie Deus sempiterne",
+      nomen: "Kyrie Deus sempiterne",
       rubric: "class-i" as MassRubric,
       heading: "III. — For feasts of the I class. 2.",
       bvm: false,
@@ -163,7 +164,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_4",
       mass: 4,
-      title: "Cunctipotens genitor Deus",
+      nomen: "Cunctipotens Genitor Deus",
       rubric: "class-ii" as MassRubric,
       heading: "IV. — For feasts of the II class. 1.",
       bvm: false,
@@ -176,7 +177,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_5",
       mass: 5,
-      title: "Kyrie magnæ Deus potentiæ",
+      nomen: "Kyrie magnæ Deus potentiæ",
       rubric: "class-ii" as MassRubric,
       heading: "V. — For feasts of the II class. 2.",
       bvm: false,
@@ -189,7 +190,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_6",
       mass: 6,
-      title: "Kyrie Rex genitor",
+      nomen: "Kyrie Rex Genitor",
       rubric: "class-ii" as MassRubric,
       heading: "VI. — For feasts of the II class. 3.",
       bvm: false,
@@ -202,7 +203,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_7",
       mass: 7,
-      title: "Kyrie Rex splendens",
+      nomen: "Kyrie Rex splendens",
       rubric: "class-ii" as MassRubric,
       heading: "VII. — For feasts of the II class. 4.",
       bvm: false,
@@ -215,7 +216,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_8",
       mass: 8,
-      title: "De Angelis",
+      nomen: "De Angelis",
       rubric: "class-ii" as MassRubric,
       heading: "VIII. — For feasts of the II class. 5.",
       bvm: false,
@@ -228,7 +229,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_9",
       mass: 9,
-      title: "Cum jubilo",
+      nomen: "Cum jubilo",
       rubric: "bvm" as MassRubric,
       heading: "IX. — For feasts of the Blessed Virgin. 1.",
       bvm: true,
@@ -242,7 +243,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_10",
       mass: 10,
-      title: "Alme Pater",
+      nomen: "Alme Pater",
       rubric: "bvm" as MassRubric,
       heading: "X. — For feasts of the Blessed Virgin. 2.",
       bvm: true,
@@ -255,7 +256,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_11",
       mass: 11,
-      title: "Orbis factor",
+      nomen: "Orbis factor",
       rubric: "sunday" as MassRubric,
       heading: "XI. — For Sundays throughout the Year.",
       bvm: false,
@@ -268,7 +269,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_12",
       mass: 12,
-      title: "Pater cuncta",
+      nomen: "Pater cuncta",
       rubric: "class-iii" as MassRubric,
       heading: "XII. — For feasts of the III class. 1.",
       bvm: false,
@@ -281,7 +282,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_13",
       mass: 13,
-      title: "Stelliferi conditor orbis",
+      nomen: "Stelliferi Conditor orbis",
       rubric: "class-iii" as MassRubric,
       heading: "XIII. — For feasts of the III class. 2.",
       bvm: false,
@@ -294,7 +295,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_14",
       mass: 14,
-      title: "Jesu Redemptor",
+      nomen: "Jesu Redemptor",
       rubric: "class-iii" as MassRubric,
       heading: "XIV. — For feasts of the III class. 3.",
       bvm: false,
@@ -307,9 +308,9 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_15",
       mass: 15,
-      title: "Dominator Deus",
+      nomen: "Dominator Deus",
       rubric: "commemoration" as MassRubric,
-      heading: "XV. — For commemorations.",
+      heading: "XV. — For commemorations and ferias of the Christmas season.",
       bvm: false,
       credos: [],
       notes: "For Sundays after Pentecost of lower solemnity.",
@@ -320,7 +321,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_16",
       mass: 16,
-      title: "Deus genitor alme",
+      nomen: null,
       rubric: "feria" as MassRubric,
       heading: "XVI. — For ferias throughout the Year.",
       bvm: false,
@@ -333,7 +334,7 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_17",
       mass: 17,
-      title: "Salve",
+      nomen: null,
       rubric: "sunday-penitential" as MassRubric,
       heading: "XVII. — For the Sundays of Advent and Lent.",
       bvm: false,
@@ -346,15 +347,24 @@ export const MASSES: Map<number, MassEntry> = new Map([
     {
       id: "mass_18",
       mass: 18,
-      title: "Deus Genitor alme",
+      nomen: "Deus Genitor alme",
       rubric: "feria-penitential" as MassRubric,
-      heading: "XVIII. — For the ferias of Advent and Lent.",
+      heading: "XVIII. — For the ferias of Advent and Lent as well as for Vigils, Ember Days, and Rogation Days.",
       bvm: false,
       credos: [],
       notes: "For weekdays of Advent, pre-Lent, and Lent; penitential ferias.",
     },
   ],
 ]);
+
+/**
+ * Mass number → the name the Kyriale prints for it, I–XVIII. XVI and XVII are
+ * present and null: the book names them by number alone, and an absent key
+ * would read as a gap in the table rather than as the book's silence.
+ */
+export const MISSAE: Readonly<Record<number, string | null>> = Object.freeze(
+  Object.fromEntries([...MASSES].map(([n, m]) => [n, m.nomen])),
+);
 
 /** The masses the book appoints under one rubric, in mass-number order. */
 export function massesForRubric(rubric: MassRubric): MassEntry[] {
@@ -402,7 +412,7 @@ export interface MassCentury {
 
 /** mass number → ordinary code → what the Kyriale prints. */
 export const MASS_CENTURY: Record<number, Partial<Record<string, MassCentury>>> = {
-  // Mass I — Lux et Origo
+  // Mass I — Lux et origo
   1: {
     ke: { from: 10, to: 10, printed: "X. s." },
     gl: { from: 10, to: 10, printed: "X. s." },
