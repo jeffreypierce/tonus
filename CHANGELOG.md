@@ -68,6 +68,12 @@ corpus to be censused.
   Offertory (it was the Introit), each "Gaudeamus" Introit's own feast, each
   Easter-week Gradual's own verse, the Tract on 172 days (it held the day's
   Gradual, or nothing in Lent), and the Mass of the Popes, which was empty.
+- **The monastic office names its own chants too**, by the same full-text
+  matcher. Its hymns are matched on the first stanza of the monastic text DO
+  prints (`[HymnusM …]`), not the first line of the Urban VIII revision. False
+  matches are gone: the Epiphany's "In columbae specie" was St Scholastica's
+  responsory, and any antiphon opening "In…" could become "In caelestibus
+  regnis".
 
 ## 0.13.0 — 2026-10-01
 
