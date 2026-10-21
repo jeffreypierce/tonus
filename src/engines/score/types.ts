@@ -251,6 +251,10 @@ export interface ParsedNote {
   /** Styled lyric spans; present only when GABC markup styled this syllable. */
   runs?: LyricRun[];
   syllableIndex: number;
+  /** Serial of the GABC syllable cell this note came from, unique in the score.
+   *  The IR groups notes into syllables by it: two adjacent cells with the same
+   *  text (purpu-re re-gis, ve ve) are still two syllables. */
+  cell?: number;
   /** True when this note's syllable bears the Latin tonic word-accent. */
   accent: boolean;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */

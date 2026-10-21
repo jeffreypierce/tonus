@@ -102,6 +102,7 @@ interface IntermNote {
   runs?: LyricRun[];
   keepWithPrev?: boolean;
   syllableIndex: number;
+  cell: number;
   neumeGroup: number;
   staffLetter: string;      // raw GABC pitch letter a–m (drives staff position)
   clef: string;             // the active clef, for the renderer's position math
@@ -178,9 +179,35 @@ function isSkippable(token: string): boolean {
   );
 }
 
+/**
+ * GABC's repetition shorthand writes two or three notes on one pitch as one
+ * token: `hss`/`hsss` are strophae, `hvv`/`hvvv` virgae. Read as one token they
+ * were one note, and 664 runs on the shelf lost their repeats. Unrolled here so
+ * every later step sees one token per note: the head keeps the shorthand (the
+ * strophicus weighting reads it, once, as before), modifiers after the run go to
+ * the last note (`hsss<` liquesces on the third), and the repeats are returned
+ * so they carry the `strophicus` flag without the weighting a second time.
+ */
+function unrollRepeats(tokens: string[]): { notation: string[]; repeats: Set<number> } {
+  const notation: string[] = [];
+  const repeats = new Set<number>();
+  for (const token of tokens) {
+    const m = /^(-?)([a-mA-M])([^sv[]*?)(s{2,3}|v{2,3})(.*)$/.exec(token ?? "");
+    if (!m) { notation.push(token); continue; }
+    const [, dash, letter, before, run, after] = m;
+    const n = run!.length;
+    notation.push(dash! + letter! + before! + run!);
+    for (let k = 1; k < n; k++) {
+      repeats.add(notation.length);
+      notation.push(letter! + run![0]! + (k === n - 1 ? after! : ""));
+    }
+  }
+  return { notation, repeats };
+}
+
 // parseNeume
 function parseNeume(
-  notation: string[],
+  written: string[],
   context: {
     lyric: string;
     runs?: LyricRun[];
@@ -188,6 +215,7 @@ function parseNeume(
     clef: string;
     oct: number;
     syllableIndex: number;
+    cell: number;
     accent: boolean;
     accidentalState: Map<number, AccidentalValue>;
     /** Carries a pending accidental SIGN across syllables — see below. */
@@ -195,7 +223,7 @@ function parseNeume(
     profile: ArticulationProfile;
   },
 ): ParseResult["events"] {
-  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, accent, accidentalState, pending, profile } =
+  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, cell, accent, accidentalState, pending, profile } =
     context;
   const weights = profile.weights;
   const ruleGain = profile.ruleGain ?? 1.0;
@@ -207,6 +235,8 @@ function parseNeume(
   // bmolle: set from clef key sig, updated by x/y modifiers within tokens
   let bmolle = clef.includes("b");
 
+
+  const { notation, repeats } = unrollRepeats(written);
 
   // Count note tokens for initio/melisma detection
   const noteTokenCount = notation.filter((t) =>
@@ -260,20 +290,22 @@ function parseNeume(
     const degree = ((pos % 7) + 7) % 7;
     const baseStep = STAFF_STEPS[degree];
 
-    // bmolle / accidental modifier extraction
-    // Modifiers appear after the pitch letter in the token string
-    const modifiers = token.slice(1);
+    // The written marks after the pitch letter, with gregorio's bracketed
+    // attributes removed. A bracket is an address, not a mark: `_[oh:h]`
+    // places an episema and `[alt:IV.]` sets text, and read raw their letters
+    // were an oriscus (4,839 false ones on the shelf) and a mora (9).
+    const marks = token.slice(1).replace(/\[[^\]]*\]?/g, "");
     let explicitAccidental: AccidentalValue | null = null;
 
-    if (modifiers.includes("x")) {
+    if (marks.includes("x")) {
       bmolle = true;
       explicitAccidental = -1;
       accidentalState.set(degree, -1);
-    } else if (modifiers.includes("y")) {
+    } else if (marks.includes("y")) {
       bmolle = false;
       explicitAccidental = 0;
       accidentalState.set(degree, 0);
-    } else if (modifiers.includes("#")) {
+    } else if (marks.includes("#")) {
       explicitAccidental = 1;
       accidentalState.set(degree, 1);
     }
@@ -335,8 +367,8 @@ function parseNeume(
     // Ictus markers (' and _). Both signal the rhythmic footfall (weight
     // unchanged), but they are DISTINCT written marks the renderer must draw
     // apart: ' is the vertical episema (ictus mark), _ the horizontal episema.
-    const hasIctusSign = modifiers.includes("'");
-    const hasEpisema = modifiers.includes("_");
+    const hasIctusSign = marks.includes("'");
+    const hasEpisema = marks.includes("_");
     if (hasIctusSign || hasEpisema) {
       w += weights.ictusWeight;
       durWeight += weights.ictusDuration;
@@ -348,30 +380,31 @@ function parseNeume(
     // major cadence); it adds to this note's duration, not the neume's first
     // note — the dots belong to the note that carries them. (The horizontal
     // episema is '_', handled with the ictus markers above.)
-    if (modifiers.includes(".")) {
+    if (marks.includes(".")) {
       w += weights.episemaWeight;
       durWeight += weights.episemaDuration;
       ictus = true;
       mora = 1;
-      if (modifiers.includes("..")) {
+      if (marks.includes("..")) {
         mora = 2;
         durWeight += weights.episemaDoubleDuration;
       }
     }
 
     // Strophicus (ss or vv = repeated/tremolo notes)
-    if (modifiers.includes("ss") || modifiers.includes("vv")) {
+    if (marks.includes("ss") || marks.includes("vv")) {
       w += weights.strophicusWeight;
       durWeight += weights.strophicusDuration;
       ictus = true;
       isStrophicus = true;
-      if (modifiers.includes("sss") || modifiers.includes("vvv")) {
+      if (marks.includes("sss") || marks.includes("vvv")) {
         durWeight += weights.strophicusTripleDuration;
       }
     }
+    if (repeats.has(i)) isStrophicus = true;
 
     // Quilisma (w = wavy ornamental note; boosts preceding note)
-    if (modifiers.toLowerCase().includes("w")) {
+    if (marks.toLowerCase().includes("w")) {
       const prev = intermed.length > 0 ? intermed[intermed.length - 1] : null;
       if (prev) prev._weight += weights.quilismaPrevWeight;
       w += weights.quilismaWeight; // reduces this note's weight
@@ -396,9 +429,9 @@ function parseNeume(
 
     // Liquescent (softened ending: ~, <, >)
     if (
-      modifiers.includes("~") ||
-      modifiers.includes("<") ||
-      modifiers.includes(">")
+      marks.includes("~") ||
+      marks.includes("<") ||
+      marks.includes(">")
     ) {
       w += weights.liquescentWeight;
       durWeight += weights.liquescentDuration;
@@ -413,7 +446,7 @@ function parseNeume(
 
     // Oriscus (o = soft, light note taken slightly faster; the rhythmic
     // support falls on the note before it). Suñol, Textbook Ch. V.
-    if (modifiers.includes("o")) {
+    if (marks.includes("o")) {
       w += weights.oriscusWeight;
       durWeight += weights.oriscusDuration;
       isOriscus = true;
@@ -426,7 +459,7 @@ function parseNeume(
     if (prev && step === prev.step) {
       prev._weight += weights.repercussionPrevWeight;
       prev._durWeight += weights.repercussionPrevDuration;
-      if (modifiers.includes("o")) {
+      if (marks.includes("o")) {
         prev._weight += weights.repercussionOriscusWeight;
       }
     }
@@ -439,17 +472,17 @@ function parseNeume(
     // the note (cavum), R draws it between two vertical lines, r0 does both,
     // and r1–r5 are signs printed over a FULL note. Testing for a bare "r"
     // made gr1 a hollow head, which is the one thing its accent does not say.
-    const marks = modifiers.replace(/\[[^\]]*\]?/g, "");
     const hollow = /r(?![1-8])/.test(marks);
     const signum = SIGNA[/r([1-5])/.exec(marks)?.[1] ?? ""] ?? null;
     let shape: WrittenShape = "punctum";
     if (isInclinatum) shape = "inclinatum";
     else if (isQuilisma) shape = "quilisma";
-    // A lone s is gregorio's stropha too; the analytical `strophicus` flag
-    // above stays with the repeated ss/sss, whose weighting it drives.
-    else if (isStrophicus || marks.includes("s")) shape = "strophicus";
-    else if (modifiers.includes("V")) shape = "virgaReversa";
-    else if (modifiers.includes("v")) shape = "virga";
+    // A lone s is gregorio's stropha too. The shape is what is written, not
+    // the analytical `strophicus` flag, which the bivirga `vv` also sets: a
+    // repeated virga is drawn as virgae.
+    else if (marks.includes("s")) shape = "strophicus";
+    else if (marks.includes("V")) shape = "virgaReversa";
+    else if (marks.includes("v")) shape = "virga";
     else if (isOriscus) shape = "oriscus";
     else if (marks.includes("R") || marks.includes("r0")) shape = "lineaPunctum";
 
@@ -471,6 +504,7 @@ function parseNeume(
       runs,
       keepWithPrev,
       syllableIndex,
+      cell,
       neumeGroup,
       staffLetter: letter,
       clef,
@@ -543,6 +577,7 @@ function parseNeume(
       runs: note.runs,
       keepWithPrev: note.keepWithPrev,
       syllableIndex: note.syllableIndex,
+      cell: note.cell,
       neumeGroup: note.neumeGroup,
       // Tonic word-accent of this note's syllable (Latin accentuation), the same
       // boolean the articulation weighting reads above — surfaced as data so the
@@ -587,6 +622,7 @@ export function parseGABC(
   );
   const errors: ParseResult["errors"] = [];
   const events: ParseResult["events"] = [];
+  let cellSerial = 0;   // one per notated syllable cell — see ParsedNote.cell
   const source = (gabc || "").trim();
 
   if (!source) {
@@ -683,6 +719,7 @@ export function parseGABC(
             clef: currentClef,
             oct: opts.oct,
             syllableIndex,
+            cell: cellSerial++,
             accent,
             accidentalState,
             pending: pendingAccidental,
