@@ -125,14 +125,16 @@ const MTOP_1 = 20;                     // top staff line, system-local
 // round noteheads need air where quadrata's squares can abut, and 8.4 (a true
 // match) read as cramped. 10.4 keeps the air and still fits a chant in about
 // the same number of systems.
-const ADV_1 = 11.6;
+const ADV_1 = 13.2;
 // Rule 1 (plan-moderna-neumes, ruled 2026-10-21): the neume is shown by
 // spacing, not by the slur. Notes of one joined stroke set tighter than the
 // plain advance, which stays between the detached marks of one figure (a
 // climacus's inclinata); a gap opens before the next figure of the syllable.
-// The tight advance gives back roughly what the figure gap takes, so a line
-// holds about as much music as it did.
-const STROKE_ADV_1 = 10.2;
+// Loosened 2026-10-21 (stroke 10.2 -> 12.4, plain 11.6 -> 13.2): at the
+// tighter values the heads of a stroke nearly touched and every short slur
+// was squeezed flat against them. It costs 4.2% of line width across 300
+// shelf chants (lyrics set much of a line, so the notes' share is small).
+const STROKE_ADV_1 = 12.4;
 const FIGURE_GAP_1 = 4.4;
 const SYL_GAP_1 = 9.5;                   // gap after each syllable
 // The lyric setting, at the default staff: size, staff bottom → baseline, the
