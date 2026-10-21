@@ -290,20 +290,22 @@ function parseNeume(
     const degree = ((pos % 7) + 7) % 7;
     const baseStep = STAFF_STEPS[degree];
 
-    // bmolle / accidental modifier extraction
-    // Modifiers appear after the pitch letter in the token string
-    const modifiers = token.slice(1);
+    // The written marks after the pitch letter, with gregorio's bracketed
+    // attributes removed. A bracket is an address, not a mark: `_[oh:h]`
+    // places an episema and `[alt:IV.]` sets text, and read raw their letters
+    // were an oriscus (4,839 false ones on the shelf) and a mora (9).
+    const marks = token.slice(1).replace(/\[[^\]]*\]?/g, "");
     let explicitAccidental: AccidentalValue | null = null;
 
-    if (modifiers.includes("x")) {
+    if (marks.includes("x")) {
       bmolle = true;
       explicitAccidental = -1;
       accidentalState.set(degree, -1);
-    } else if (modifiers.includes("y")) {
+    } else if (marks.includes("y")) {
       bmolle = false;
       explicitAccidental = 0;
       accidentalState.set(degree, 0);
-    } else if (modifiers.includes("#")) {
+    } else if (marks.includes("#")) {
       explicitAccidental = 1;
       accidentalState.set(degree, 1);
     }
@@ -365,8 +367,8 @@ function parseNeume(
     // Ictus markers (' and _). Both signal the rhythmic footfall (weight
     // unchanged), but they are DISTINCT written marks the renderer must draw
     // apart: ' is the vertical episema (ictus mark), _ the horizontal episema.
-    const hasIctusSign = modifiers.includes("'");
-    const hasEpisema = modifiers.includes("_");
+    const hasIctusSign = marks.includes("'");
+    const hasEpisema = marks.includes("_");
     if (hasIctusSign || hasEpisema) {
       w += weights.ictusWeight;
       durWeight += weights.ictusDuration;
@@ -378,31 +380,31 @@ function parseNeume(
     // major cadence); it adds to this note's duration, not the neume's first
     // note — the dots belong to the note that carries them. (The horizontal
     // episema is '_', handled with the ictus markers above.)
-    if (modifiers.includes(".")) {
+    if (marks.includes(".")) {
       w += weights.episemaWeight;
       durWeight += weights.episemaDuration;
       ictus = true;
       mora = 1;
-      if (modifiers.includes("..")) {
+      if (marks.includes("..")) {
         mora = 2;
         durWeight += weights.episemaDoubleDuration;
       }
     }
 
     // Strophicus (ss or vv = repeated/tremolo notes)
-    if (modifiers.includes("ss") || modifiers.includes("vv")) {
+    if (marks.includes("ss") || marks.includes("vv")) {
       w += weights.strophicusWeight;
       durWeight += weights.strophicusDuration;
       ictus = true;
       isStrophicus = true;
-      if (modifiers.includes("sss") || modifiers.includes("vvv")) {
+      if (marks.includes("sss") || marks.includes("vvv")) {
         durWeight += weights.strophicusTripleDuration;
       }
     }
     if (repeats.has(i)) isStrophicus = true;
 
     // Quilisma (w = wavy ornamental note; boosts preceding note)
-    if (modifiers.toLowerCase().includes("w")) {
+    if (marks.toLowerCase().includes("w")) {
       const prev = intermed.length > 0 ? intermed[intermed.length - 1] : null;
       if (prev) prev._weight += weights.quilismaPrevWeight;
       w += weights.quilismaWeight; // reduces this note's weight
@@ -427,9 +429,9 @@ function parseNeume(
 
     // Liquescent (softened ending: ~, <, >)
     if (
-      modifiers.includes("~") ||
-      modifiers.includes("<") ||
-      modifiers.includes(">")
+      marks.includes("~") ||
+      marks.includes("<") ||
+      marks.includes(">")
     ) {
       w += weights.liquescentWeight;
       durWeight += weights.liquescentDuration;
@@ -444,7 +446,7 @@ function parseNeume(
 
     // Oriscus (o = soft, light note taken slightly faster; the rhythmic
     // support falls on the note before it). Suñol, Textbook Ch. V.
-    if (modifiers.includes("o")) {
+    if (marks.includes("o")) {
       w += weights.oriscusWeight;
       durWeight += weights.oriscusDuration;
       isOriscus = true;
@@ -457,7 +459,7 @@ function parseNeume(
     if (prev && step === prev.step) {
       prev._weight += weights.repercussionPrevWeight;
       prev._durWeight += weights.repercussionPrevDuration;
-      if (modifiers.includes("o")) {
+      if (marks.includes("o")) {
         prev._weight += weights.repercussionOriscusWeight;
       }
     }
@@ -470,7 +472,6 @@ function parseNeume(
     // the note (cavum), R draws it between two vertical lines, r0 does both,
     // and r1–r5 are signs printed over a FULL note. Testing for a bare "r"
     // made gr1 a hollow head, which is the one thing its accent does not say.
-    const marks = modifiers.replace(/\[[^\]]*\]?/g, "");
     const hollow = /r(?![1-8])/.test(marks);
     const signum = SIGNA[/r([1-5])/.exec(marks)?.[1] ?? ""] ?? null;
     let shape: WrittenShape = "punctum";
@@ -480,8 +481,8 @@ function parseNeume(
     // the analytical `strophicus` flag, which the bivirga `vv` also sets: a
     // repeated virga is drawn as virgae.
     else if (marks.includes("s")) shape = "strophicus";
-    else if (modifiers.includes("V")) shape = "virgaReversa";
-    else if (modifiers.includes("v")) shape = "virga";
+    else if (marks.includes("V")) shape = "virgaReversa";
+    else if (marks.includes("v")) shape = "virga";
     else if (isOriscus) shape = "oriscus";
     else if (marks.includes("R") || marks.includes("r0")) shape = "lineaPunctum";
 

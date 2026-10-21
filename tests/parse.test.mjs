@@ -331,4 +331,13 @@ describe("parseGABC", () => {
     assert.deepEqual(n.map((e) => e.liquescent), [false, false, true], "a trailing modifier goes to the last");
     assert.deepEqual(notes("(c4) a(-hss)").map((e) => e.staffLetter), ["h", "h"]);
   });
+  test("a bracketed attribute is not a written mark", () => {
+    // `_[oh:h]` places an episema; its o is not an oriscus, nor a . in
+    // [alt:I.] a mora. Read raw, 4,839 notes on the shelf were false oriscus.
+    const [n] = notes("(c4) a(g_[oh:h])");
+    assert.equal(n.oriscus, false);
+    assert.equal(n.shape, "punctum");
+    assert.equal(notes("(c4) a(go)")[0].oriscus, true, "a written o still is one");
+    assert.equal(notes("(c4) a(g[alt:I.])")[0].mora, 0);
+  });
 });
