@@ -75,3 +75,23 @@ describe("moderna spacing and the liquescent (rules 1 and 5)", () => {
     assert.equal(stems("fgf"), 0);
   });
 });
+
+describe("the moderna slur", () => {
+  test("each end sits just above its own note", () => {
+    // The slur once hung both ends at the first note's height: a rising
+    // stroke ran into its top note, a falling one left a tail over nothing.
+    for (const neume of ["gh", "ghj", "hg", "dcd", "fgf", "hjjg"]) {
+      const { svg, geometry } = tonus.inscriptio(
+        tonus.notatio(tonus.cantus({ gabc: `(c4) a(${neume})` })[0]), { notation: "moderna", scale: "large" });
+      const m = /<path class="slur" d="M ([-\d.]+) ([-\d.]+) C (?:[-\d.]+ ){4}([-\d.]+) ([-\d.]+) /.exec(svg);
+      assert.ok(m, `${neume}: a slur`);
+      const [x0, y0, x1, y1] = m.slice(1).map(Number);
+      const first = geometry[0], last = geometry[geometry.length - 1];
+      assert.ok(Math.abs(x0 - first.x) < 0.1 && Math.abs(x1 - last.x) < 0.1, `${neume}: ends on the end heads`);
+      for (const [y, head] of [[y0, first], [y1, last]]) {
+        const above = head.y - y;
+        assert.ok(above > 4 && above < 30, `${neume}: end ${above.toFixed(1)}px above its head`);
+      }
+    }
+  });
+});
