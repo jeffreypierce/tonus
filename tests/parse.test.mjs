@@ -318,4 +318,17 @@ describe("parseGABC", () => {
       assert.ok(n[i].step > n[i - 1].step, `step ${i} should be higher than step ${i - 1}`);
     }
   });
+  test("the repetition shorthand is one note per repeat", () => {
+    // hss/hsss are two and three strophae, hvv/hvvv two and three virgae.
+    // Read as one token they were one note; gregobase:16139 drew one head.
+    const shape = (g) => notes(`(c4) a(${g})`).map((e) => e.shape);
+    assert.deepEqual(shape("hss"), ["strophicus", "strophicus"]);
+    assert.deepEqual(shape("hsss"), ["strophicus", "strophicus", "strophicus"]);
+    assert.deepEqual(shape("hvv"), ["virga", "virga"], "a bivirga is virgae, not strophae");
+    assert.deepEqual(shape("hvvv"), ["virga", "virga", "virga"]);
+    const n = notes("(c4) a(hsss<)");
+    assert.ok(n.every((e) => e.strophicus), "every note of the run carries the flag");
+    assert.deepEqual(n.map((e) => e.liquescent), [false, false, true], "a trailing modifier goes to the last");
+    assert.deepEqual(notes("(c4) a(-hss)").map((e) => e.staffLetter), ["h", "h"]);
+  });
 });

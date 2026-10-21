@@ -179,9 +179,35 @@ function isSkippable(token: string): boolean {
   );
 }
 
+/**
+ * GABC's repetition shorthand writes two or three notes on one pitch as one
+ * token: `hss`/`hsss` are strophae, `hvv`/`hvvv` virgae. Read as one token they
+ * were one note, and 664 runs on the shelf lost their repeats. Unrolled here so
+ * every later step sees one token per note: the head keeps the shorthand (the
+ * strophicus weighting reads it, once, as before), modifiers after the run go to
+ * the last note (`hsss<` liquesces on the third), and the repeats are returned
+ * so they carry the `strophicus` flag without the weighting a second time.
+ */
+function unrollRepeats(tokens: string[]): { notation: string[]; repeats: Set<number> } {
+  const notation: string[] = [];
+  const repeats = new Set<number>();
+  for (const token of tokens) {
+    const m = /^(-?)([a-mA-M])([^sv[]*?)(s{2,3}|v{2,3})(.*)$/.exec(token ?? "");
+    if (!m) { notation.push(token); continue; }
+    const [, dash, letter, before, run, after] = m;
+    const n = run!.length;
+    notation.push(dash! + letter! + before! + run!);
+    for (let k = 1; k < n; k++) {
+      repeats.add(notation.length);
+      notation.push(letter! + run![0]! + (k === n - 1 ? after! : ""));
+    }
+  }
+  return { notation, repeats };
+}
+
 // parseNeume
 function parseNeume(
-  notation: string[],
+  written: string[],
   context: {
     lyric: string;
     runs?: LyricRun[];
@@ -209,6 +235,8 @@ function parseNeume(
   // bmolle: set from clef key sig, updated by x/y modifiers within tokens
   let bmolle = clef.includes("b");
 
+
+  const { notation, repeats } = unrollRepeats(written);
 
   // Count note tokens for initio/melisma detection
   const noteTokenCount = notation.filter((t) =>
@@ -371,6 +399,7 @@ function parseNeume(
         durWeight += weights.strophicusTripleDuration;
       }
     }
+    if (repeats.has(i)) isStrophicus = true;
 
     // Quilisma (w = wavy ornamental note; boosts preceding note)
     if (modifiers.toLowerCase().includes("w")) {
@@ -447,9 +476,10 @@ function parseNeume(
     let shape: WrittenShape = "punctum";
     if (isInclinatum) shape = "inclinatum";
     else if (isQuilisma) shape = "quilisma";
-    // A lone s is gregorio's stropha too; the analytical `strophicus` flag
-    // above stays with the repeated ss/sss, whose weighting it drives.
-    else if (isStrophicus || marks.includes("s")) shape = "strophicus";
+    // A lone s is gregorio's stropha too. The shape is what is written, not
+    // the analytical `strophicus` flag, which the bivirga `vv` also sets: a
+    // repeated virga is drawn as virgae.
+    else if (marks.includes("s")) shape = "strophicus";
     else if (modifiers.includes("V")) shape = "virgaReversa";
     else if (modifiers.includes("v")) shape = "virga";
     else if (isOriscus) shape = "oriscus";
