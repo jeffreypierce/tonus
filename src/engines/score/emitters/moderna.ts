@@ -9,7 +9,8 @@
 //
 // This is a faithful port of the locked reference `working/moderna-generator.py`
 // (Lomer transcription practice, Vendome deltas): stemless black noteheads, one
-// engraved slur per figure (strophic runs merged), small heads for liquescents,
+// engraved slur per joined stroke of the square hand (strokes.ts; ruled
+// 2026-10-21, working/plan-moderna-neumes.md), small heads for liquescents,
 // noteheadHalf for the double mora, the medRenQuilismaCMN squiggle fused before
 // its head, augmentation dots for the mora, divisio ticks/bars by kind, centred
 // floating hyphens. The generator's constants are its spec and are reproduced
@@ -21,6 +22,7 @@ import { GLYPHS, GLYPH_UPM } from "../../../data/smufl-glyphs.js";
 import { fontFaceCss, lyricMarkup } from "./svg.js";
 import { trimRuns } from "../lyric.js";
 import { decideBreak } from "./breaking.js";
+import { joinStrokes } from "./strokes.js";
 import type { LyricRun } from "../types.js";
 import {
   computeAccidentals, type AccidentalMode, type AccidentalMark,
@@ -670,27 +672,20 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       placements.push({ row: r, x: mx, y: my, system, systemY });
     });
 
-    // Slurs per figure; strophic runs on the same pitch merge into one.
-    const figs: Row[][] = [];
-    let curG = -1;
-    for (const r of srows) {
-      if (r.neumeGroup !== curG) { figs.push([]); curG = r.neumeGroup; }
-      figs[figs.length - 1]!.push(r);
-    }
-    const merged: Row[][] = [];
-    for (const fg of figs) {
-      const prev = merged[merged.length - 1];
-      if (prev && fg.every((q) => q.strophicus) && prev.every((q) => q.strophicus) &&
-          fg[0]!.spn === prev[prev.length - 1]!.spn) {
-        prev.push(...fg);
-      } else merged.push(fg);
-    }
-    for (const fg of merged) {
-      if (fg.length > 1) {
-        const idxs = fg.map((r) => srows.indexOf(r));
+    // One slur per joined stroke (strokes.ts): the square hand's ligatures,
+    // a pressus closed up. Detached marks (inclinata, strophae, virgae) and
+    // single notes take none.
+    let start = 0;
+    while (start < srows.length) {
+      let end = start;
+      while (end < srows.length && srows[end]!.neumeGroup === srows[start]!.neumeGroup) end++;
+      for (const stroke of joinStrokes(srows.slice(start, end))) {
+        if (stroke.length < 2) continue;
+        const idxs = stroke.map((k) => start + k);
         const ytop = Math.min(...idxs.map((i) => notePos[i]!.my));
         slurs.push(slur(notePos[idxs[0]!]!.mx, notePos[idxs[0]!]!.my, notePos[idxs[idxs.length - 1]!]!.mx, ytop));
       }
+      start = end;
     }
 
     // Lyric — collected here, emitted (with centred hyphens between same-word
