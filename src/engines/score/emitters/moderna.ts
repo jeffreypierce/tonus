@@ -373,15 +373,15 @@ function notehead(
 
 /** Rule 5 (plan-moderna-neumes): a liquescent is a small head with a downward
  *  stem. The stem hangs from the head's left edge at Bravura's stemDownNW
- *  anchor (0.168 spaces below centre), 0.12 spaces thick, and runs two and a
- *  half spaces: the short stem of a small note. */
+ *  anchor (0.168 spaces below centre), 0.12 spaces thick, and runs a space and
+ *  a half: 2.5 read long against the small head (Jeffrey, 2026-10-21). */
 function liquescentStem(x: number, y: number, gm: ModernaMetrics): string {
   const s = gm.SCALE * 0.68 * HEAD_K;
   const left = x - (295 * s) / 2;
   const t = 0.12 * gm.MSP;
   const sx = left + t / 2;
   return `<line class="stem" x1="${sx.toFixed(2)}" y1="${(y + 42 * s).toFixed(2)}" ` +
-    `x2="${sx.toFixed(2)}" y2="${(y + 2.5 * gm.MSP).toFixed(2)}" stroke="${INK}" stroke-width="${t.toFixed(2)}"/>`;
+    `x2="${sx.toFixed(2)}" y2="${(y + 1.5 * gm.MSP).toFixed(2)}" stroke="${INK}" stroke-width="${t.toFixed(2)}"/>`;
 }
 
 function clef(x: number, systemY: number, gm: ModernaMetrics): string {
