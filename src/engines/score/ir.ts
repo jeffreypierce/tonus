@@ -329,15 +329,17 @@ export function buildIR(
   let currentPhrase: Phrase = { syllables: [], noteCount: 0, syllableCount: 0, beats: [], rhythmicType: null };
   let currentNotes: Note[] = [];
   let currentLyric: string | null = null;
+  let currentCell: number | undefined;
 
   for (const event of parsed.events) {
     if (event.type === "note") {
       const scored = rawToNote(event, scale);
-      if (currentLyric === null || event.lyric !== currentLyric) {
+      if (currentLyric === null || event.lyric !== currentLyric || event.cell !== currentCell) {
         if (currentLyric !== null && currentNotes.length > 0) {
           currentPhrase.syllables.push(makeSyllable(currentLyric, currentNotes));
         }
         currentLyric = event.lyric;
+        currentCell = event.cell;
         currentNotes = [scored];
       } else {
         currentNotes.push(scored);

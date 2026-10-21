@@ -102,6 +102,7 @@ interface IntermNote {
   runs?: LyricRun[];
   keepWithPrev?: boolean;
   syllableIndex: number;
+  cell: number;
   neumeGroup: number;
   staffLetter: string;      // raw GABC pitch letter a–m (drives staff position)
   clef: string;             // the active clef, for the renderer's position math
@@ -188,6 +189,7 @@ function parseNeume(
     clef: string;
     oct: number;
     syllableIndex: number;
+    cell: number;
     accent: boolean;
     accidentalState: Map<number, AccidentalValue>;
     /** Carries a pending accidental SIGN across syllables — see below. */
@@ -195,7 +197,7 @@ function parseNeume(
     profile: ArticulationProfile;
   },
 ): ParseResult["events"] {
-  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, accent, accidentalState, pending, profile } =
+  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, cell, accent, accidentalState, pending, profile } =
     context;
   const weights = profile.weights;
   const ruleGain = profile.ruleGain ?? 1.0;
@@ -471,6 +473,7 @@ function parseNeume(
       runs,
       keepWithPrev,
       syllableIndex,
+      cell,
       neumeGroup,
       staffLetter: letter,
       clef,
@@ -543,6 +546,7 @@ function parseNeume(
       runs: note.runs,
       keepWithPrev: note.keepWithPrev,
       syllableIndex: note.syllableIndex,
+      cell: note.cell,
       neumeGroup: note.neumeGroup,
       // Tonic word-accent of this note's syllable (Latin accentuation), the same
       // boolean the articulation weighting reads above — surfaced as data so the
@@ -587,6 +591,7 @@ export function parseGABC(
   );
   const errors: ParseResult["errors"] = [];
   const events: ParseResult["events"] = [];
+  let cellSerial = 0;   // one per notated syllable cell — see ParsedNote.cell
   const source = (gabc || "").trim();
 
   if (!source) {
@@ -683,6 +688,7 @@ export function parseGABC(
             clef: currentClef,
             oct: opts.oct,
             syllableIndex,
+            cell: cellSerial++,
             accent,
             accidentalState,
             pending: pendingAccidental,
