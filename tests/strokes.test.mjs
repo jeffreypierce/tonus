@@ -52,3 +52,19 @@ describe("pressus and stropha (moderna rule 3)", () => {
     assert.equal(slurs("hgfgh"), 2);
   });
 });
+
+describe("moderna spacing (rule 1)", () => {
+  const render = (neume) => tonus.inscriptio(
+    tonus.notatio(tonus.cantus({ gabc: `(c4) a(${neume})` })[0]), { notation: "moderna" });
+  const gaps = (neume) => {
+    const xs = render(neume).geometry.map((g) => g.x);
+    return xs.slice(1).map((x, i) => Number((x - xs[i]).toFixed(2)));
+  };
+
+  test("tight inside a stroke, plain between detached marks, a gap between figures", () => {
+    const [inStroke, betweenFigures] = gaps("gh/hg").filter((_, i) => i !== 2);
+    assert.ok(inStroke < betweenFigures, `${inStroke} < ${betweenFigures}`);
+    const [, detached] = gaps("hvGF");
+    assert.ok(inStroke < detached && detached < betweenFigures, "an inclinatum sits between the two");
+  });
+});

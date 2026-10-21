@@ -10,7 +10,8 @@
 // This is a faithful port of the locked reference `working/moderna-generator.py`
 // (Lomer transcription practice, Vendome deltas): stemless black noteheads, one
 // engraved slur per joined stroke of the square hand (strokes.ts; ruled
-// 2026-10-21, working/plan-moderna-neumes.md), small heads for liquescents,
+// 2026-10-21, working/plan-moderna-neumes.md) with the neume shown by spacing,
+// small heads for liquescents,
 // noteheadHalf for the double mora, the medRenQuilismaCMN squiggle fused before
 // its head, augmentation dots for the mora, divisio ticks/bars by kind, centred
 // floating hyphens. The generator's constants are its spec and are reproduced
@@ -125,6 +126,14 @@ const MTOP_1 = 20;                     // top staff line, system-local
 // match) read as cramped. 10.4 keeps the air and still fits a chant in about
 // the same number of systems.
 const ADV_1 = 11.6;
+// Rule 1 (plan-moderna-neumes, ruled 2026-10-21): the neume is shown by
+// spacing, not by the slur. Notes of one joined stroke set tighter than the
+// plain advance, which stays between the detached marks of one figure (a
+// climacus's inclinata); a gap opens before the next figure of the syllable.
+// The tight advance gives back roughly what the figure gap takes, so a line
+// holds about as much music as it did.
+const STROKE_ADV_1 = 10.2;
+const FIGURE_GAP_1 = 4.4;
 const SYL_GAP_1 = 9.5;                   // gap after each syllable
 // The lyric setting, at the default staff: size, staff bottom → baseline, the
 // room beneath the baseline, and the air between systems. The duae species
@@ -155,6 +164,10 @@ export interface ModernaMetrics {
   NH_W: number;
   /** Per-note advance inside a melisma. */
   ADV: number;
+  /** Advance between the notes of one joined stroke. */
+  STROKE_ADV: number;
+  /** Extra air before the next figure of a syllable. */
+  FIGURE_GAP: number;
   /** Gap after each syllable. */
   SYL_GAP: number;
   /** Lyric baseline, system-local. */
@@ -188,6 +201,8 @@ export function metrics(staffHeight?: number): ModernaMetrics {
     MTOP,
     NH_W: 295 * SCALE,
     ADV: ADV_1 * k,
+    STROKE_ADV: STROKE_ADV_1 * k,
+    FIGURE_GAP: FIGURE_GAP_1 * k,
     SYL_GAP: SYL_GAP_1 * k,
     LYRIC_Y: MTOP + 4 * MSP + LYRIC_GAP_1 * k,
     k,
@@ -195,6 +210,38 @@ export function metrics(staffHeight?: number): ModernaMetrics {
 }
 
 const LETTERS: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+
+/** A syllable's joined strokes (strokes.ts), figure by figure, as indices
+ *  into the syllable's rows. */
+function syllableStrokes(srows: readonly ChantTabulaRow[]): number[][][] {
+  const figures: number[][][] = [];
+  let start = 0;
+  while (start < srows.length) {
+    let end = start;
+    while (end < srows.length && srows[end]!.neumeGroup === srows[start]!.neumeGroup) end++;
+    const base = start;
+    figures.push(joinStrokes(srows.slice(start, end)).map((s) => s.map((k) => base + k)));
+    start = end;
+  }
+  return figures;
+}
+
+/** The advance after each note of a syllable: tight inside a stroke, plain
+ *  between the strokes of one figure, plus the figure gap before the next
+ *  figure. The last note takes the plain advance; the syllable gap follows. */
+function noteAdvances(figures: number[][][], count: number, gm: ModernaMetrics): number[] {
+  const adv: number[] = new Array(count).fill(gm.ADV);
+  figures.forEach((strokes, f) => {
+    for (const stroke of strokes) {
+      for (let j = 0; j < stroke.length - 1; j++) adv[stroke[j]!] = gm.STROKE_ADV;
+    }
+    if (f < figures.length - 1) {
+      const last = strokes[strokes.length - 1]!;
+      adv[last[last.length - 1]!] = gm.ADV + gm.FIGURE_GAP;
+    }
+  });
+  return adv;
+}
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -553,7 +600,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     // advance, and the only measuring this emitter owes the break decision.
     const sylWidth = (key: string): number => {
       const rows = bySyl.get(key) ?? [];
-      return rows.length * gm.ADV + gm.SYL_GAP;
+      return noteAdvances(syllableStrokes(rows), rows.length, gm).reduce((a, b) => a + b, 0) + gm.SYL_GAP;
     };
 
     const breakBefore = (k: string, si: number): boolean => {
@@ -612,6 +659,8 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     const lyr = spans ? spans.map((s) => s.text).join("") : stripLyric(srows[0]!.lyric ?? "");
 
     // Note x-positions within the syllable.
+    const figures = syllableStrokes(srows);
+    const advances = noteAdvances(figures, srows.length, gm);
     let nx = x + gm.NH_W / 2 + 1;
     const notePos: Array<{ mx: number; my: number; steps: number; spelled: string | null }> = [];
     for (const r of srows) {
@@ -635,7 +684,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
         : null;
       if (spelled) nx += accidentalWidth(spelled, gm);
       notePos.push({ mx: nx, my: y, steps, spelled });
-      nx += gm.ADV + 4.6 * r.mora;
+      nx += advances[notePos.length - 1]! + 4.6 * r.mora;
     }
     const notesW = nx - x - gm.ADV + gm.NH_W / 2 + 2;
     const sylW = Math.max(notesW, textW(lyr, lyricSize));
@@ -675,17 +724,10 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     // One slur per joined stroke (strokes.ts): the square hand's ligatures,
     // a pressus closed up. Detached marks (inclinata, strophae, virgae) and
     // single notes take none.
-    let start = 0;
-    while (start < srows.length) {
-      let end = start;
-      while (end < srows.length && srows[end]!.neumeGroup === srows[start]!.neumeGroup) end++;
-      for (const stroke of joinStrokes(srows.slice(start, end))) {
-        if (stroke.length < 2) continue;
-        const idxs = stroke.map((k) => start + k);
-        const ytop = Math.min(...idxs.map((i) => notePos[i]!.my));
-        slurs.push(slur(notePos[idxs[0]!]!.mx, notePos[idxs[0]!]!.my, notePos[idxs[idxs.length - 1]!]!.mx, ytop));
-      }
-      start = end;
+    for (const idxs of figures.flat()) {
+      if (idxs.length < 2) continue;
+      const ytop = Math.min(...idxs.map((i) => notePos[i]!.my));
+      slurs.push(slur(notePos[idxs[0]!]!.mx, notePos[idxs[0]!]!.my, notePos[idxs[idxs.length - 1]!]!.mx, ytop));
     }
 
     // Lyric — collected here, emitted (with centred hyphens between same-word
