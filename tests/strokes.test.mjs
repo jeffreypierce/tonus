@@ -53,7 +53,7 @@ describe("pressus and stropha (moderna rule 3)", () => {
   });
 });
 
-describe("moderna spacing (rule 1)", () => {
+describe("moderna spacing and the liquescent (rules 1 and 5)", () => {
   const render = (neume) => tonus.inscriptio(
     tonus.notatio(tonus.cantus({ gabc: `(c4) a(${neume})` })[0]), { notation: "moderna" });
   const gaps = (neume) => {
@@ -66,5 +66,12 @@ describe("moderna spacing (rule 1)", () => {
     assert.ok(inStroke < betweenFigures, `${inStroke} < ${betweenFigures}`);
     const [, detached] = gaps("hvGF");
     assert.ok(inStroke < detached && detached < betweenFigures, "an inclinatum sits between the two");
+  });
+
+  test("a liquescent takes a down stem, nothing else does", () => {
+    const stems = (neume) => (render(neume).svg.match(/class="stem"/g) ?? []).length;
+    assert.equal(stems("fe~"), 1);
+    assert.equal(stems("hsss<"), 1);
+    assert.equal(stems("fgf"), 0);
   });
 });

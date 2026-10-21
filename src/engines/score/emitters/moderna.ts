@@ -11,7 +11,7 @@
 // (Lomer transcription practice, Vendome deltas): stemless black noteheads, one
 // engraved slur per joined stroke of the square hand (strokes.ts; ruled
 // 2026-10-21, working/plan-moderna-neumes.md) with the neume shown by spacing,
-// small heads for liquescents,
+// small heads with a short down stem for liquescents,
 // noteheadHalf for the double mora, the medRenQuilismaCMN squiggle fused before
 // its head, augmentation dots for the mora, divisio ticks/bars by kind, centred
 // floating hyphens. The generator's constants are its spec and are reproduced
@@ -369,6 +369,19 @@ function notehead(
   return classedGlyph("note", code, x - own / 2, y, s, attrs);
 }
 
+/** Rule 5 (plan-moderna-neumes): a liquescent is a small head with a downward
+ *  stem. The stem hangs from the head's left edge at Bravura's stemDownNW
+ *  anchor (0.168 spaces below centre), 0.12 spaces thick, and runs two and a
+ *  half spaces: the short stem of a small note. */
+function liquescentStem(x: number, y: number, gm: ModernaMetrics): string {
+  const s = gm.SCALE * 0.68 * HEAD_K;
+  const left = x - (295 * s) / 2;
+  const t = 0.12 * gm.MSP;
+  const sx = left + t / 2;
+  return `<line class="stem" x1="${sx.toFixed(2)}" y1="${(y + 42 * s).toFixed(2)}" ` +
+    `x2="${sx.toFixed(2)}" y2="${(y + 2.5 * gm.MSP).toFixed(2)}" stroke="${INK}" stroke-width="${t.toFixed(2)}"/>`;
+}
+
 function clef(x: number, systemY: number, gm: ModernaMetrics): string {
   return glyph(G.gClef8vb, x, systemY + gm.MTOP + 3 * gm.MSP, gm.SCALE);
 }
@@ -717,6 +730,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       }
       body.push(notehead(mx, my, r.liquescent, r.mora === 2, gm,
         ` data-note-index="${r.phraseIndex}.${r.syllableIndex}.${r.neumeGroup}.${r.neumeIndex}"`));
+      if (r.liquescent) body.push(liquescentStem(mx, my, gm));
       if (r.mora === 1) body.push(moraDots(mx, my, onLine, gm));
       placements.push({ row: r, x: mx, y: my, system, systemY });
     });
