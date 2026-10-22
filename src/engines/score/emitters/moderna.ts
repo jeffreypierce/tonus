@@ -9,7 +9,9 @@
 //
 // This is a faithful port of the locked reference `working/moderna-generator.py`
 // (Lomer transcription practice, Vendome deltas): stemless black noteheads, one
-// engraved slur per figure (strophic runs merged), small heads for liquescents,
+// engraved slur per joined stroke of the square hand (strokes.ts; ruled
+// 2026-10-21, working/plan-moderna-neumes.md) with the neume shown by spacing,
+// small heads with a short down stem for liquescents,
 // noteheadHalf for the double mora, the medRenQuilismaCMN squiggle fused before
 // its head, augmentation dots for the mora, divisio ticks/bars by kind, centred
 // floating hyphens. The generator's constants are its spec and are reproduced
@@ -21,6 +23,7 @@ import { GLYPHS, GLYPH_UPM } from "../../../data/smufl-glyphs.js";
 import { fontFaceCss, lyricMarkup } from "./svg.js";
 import { trimRuns } from "../lyric.js";
 import { decideBreak } from "./breaking.js";
+import { joinStrokes } from "./strokes.js";
 import type { LyricRun } from "../types.js";
 import {
   computeAccidentals, type AccidentalMode, type AccidentalMark,
@@ -122,7 +125,17 @@ const MTOP_1 = 20;                     // top staff line, system-local
 // round noteheads need air where quadrata's squares can abut, and 8.4 (a true
 // match) read as cramped. 10.4 keeps the air and still fits a chant in about
 // the same number of systems.
-const ADV_1 = 11.6;
+const ADV_1 = 13.2;
+// Rule 1 (plan-moderna-neumes, ruled 2026-10-21): the neume is shown by
+// spacing, not by the slur. Notes of one joined stroke set tighter than the
+// plain advance, which stays between the detached marks of one figure (a
+// climacus's inclinata); a gap opens before the next figure of the syllable.
+// Loosened 2026-10-21 (stroke 10.2 -> 12.4, plain 11.6 -> 13.2): at the
+// tighter values the heads of a stroke nearly touched and every short slur
+// was squeezed flat against them. It costs 4.2% of line width across 300
+// shelf chants (lyrics set much of a line, so the notes' share is small).
+const STROKE_ADV_1 = 12.4;
+const FIGURE_GAP_1 = 4.4;
 const SYL_GAP_1 = 9.5;                   // gap after each syllable
 // The lyric setting, at the default staff: size, staff bottom → baseline, the
 // room beneath the baseline, and the air between systems. The duae species
@@ -153,6 +166,10 @@ export interface ModernaMetrics {
   NH_W: number;
   /** Per-note advance inside a melisma. */
   ADV: number;
+  /** Advance between the notes of one joined stroke. */
+  STROKE_ADV: number;
+  /** Extra air before the next figure of a syllable. */
+  FIGURE_GAP: number;
   /** Gap after each syllable. */
   SYL_GAP: number;
   /** Lyric baseline, system-local. */
@@ -186,6 +203,8 @@ export function metrics(staffHeight?: number): ModernaMetrics {
     MTOP,
     NH_W: 295 * SCALE,
     ADV: ADV_1 * k,
+    STROKE_ADV: STROKE_ADV_1 * k,
+    FIGURE_GAP: FIGURE_GAP_1 * k,
     SYL_GAP: SYL_GAP_1 * k,
     LYRIC_Y: MTOP + 4 * MSP + LYRIC_GAP_1 * k,
     k,
@@ -193,6 +212,38 @@ export function metrics(staffHeight?: number): ModernaMetrics {
 }
 
 const LETTERS: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+
+/** A syllable's joined strokes (strokes.ts), figure by figure, as indices
+ *  into the syllable's rows. */
+function syllableStrokes(srows: readonly ChantTabulaRow[]): number[][][] {
+  const figures: number[][][] = [];
+  let start = 0;
+  while (start < srows.length) {
+    let end = start;
+    while (end < srows.length && srows[end]!.neumeGroup === srows[start]!.neumeGroup) end++;
+    const base = start;
+    figures.push(joinStrokes(srows.slice(start, end)).map((s) => s.map((k) => base + k)));
+    start = end;
+  }
+  return figures;
+}
+
+/** The advance after each note of a syllable: tight inside a stroke, plain
+ *  between the strokes of one figure, plus the figure gap before the next
+ *  figure. The last note takes the plain advance; the syllable gap follows. */
+function noteAdvances(figures: number[][][], count: number, gm: ModernaMetrics): number[] {
+  const adv: number[] = new Array(count).fill(gm.ADV);
+  figures.forEach((strokes, f) => {
+    for (const stroke of strokes) {
+      for (let j = 0; j < stroke.length - 1; j++) adv[stroke[j]!] = gm.STROKE_ADV;
+    }
+    if (f < figures.length - 1) {
+      const last = strokes[strokes.length - 1]!;
+      adv[last[last.length - 1]!] = gm.ADV + gm.FIGURE_GAP;
+    }
+  });
+  return adv;
+}
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -320,6 +371,19 @@ function notehead(
   return classedGlyph("note", code, x - own / 2, y, s, attrs);
 }
 
+/** Rule 5 (plan-moderna-neumes): a liquescent is a small head with a downward
+ *  stem. The stem hangs from the head's left edge at Bravura's stemDownNW
+ *  anchor (0.168 spaces below centre), 0.12 spaces thick, and runs a space and
+ *  a half: 2.5 read long against the small head (Jeffrey, 2026-10-21). */
+function liquescentStem(x: number, y: number, gm: ModernaMetrics): string {
+  const s = gm.SCALE * 0.68 * HEAD_K;
+  const left = x - (295 * s) / 2;
+  const t = 0.12 * gm.MSP;
+  const sx = left + t / 2;
+  return `<line class="stem" x1="${sx.toFixed(2)}" y1="${(y + 42 * s).toFixed(2)}" ` +
+    `x2="${sx.toFixed(2)}" y2="${(y + 1.5 * gm.MSP).toFixed(2)}" stroke="${INK}" stroke-width="${t.toFixed(2)}"/>`;
+}
+
 function clef(x: number, systemY: number, gm: ModernaMetrics): string {
   return glyph(G.gClef8vb, x, systemY + gm.MTOP + 3 * gm.MSP, gm.SCALE);
 }
@@ -329,18 +393,99 @@ function moraDots(x: number, y: number, onLine: boolean, gm: ModernaMetrics): st
   return glyph(G.augmentationDot, x + 6.4, y + dy, gm.SCALE);
 }
 
-// The engraved slur: a filled two-cubic shape tapered to points, belly ~1.55.
-function slur(x0: number, y0: number, x1: number, ytop: number): string {
-  const span = x1 - x0;
-  const h = Math.min(3.8 + span * 0.075, 8.6);
-  const a0 = y0 - 4.7;
-  const co = ytop - 4.7 - h;      // outer control height
-  const ci = co + 1.55;           // inner control height (belly thickness)
-  const c0x = x0 + span * 0.30;
-  const c1x = x1 - span * 0.30;
-  return `<path class="slur" d="M ${x0.toFixed(2)} ${a0.toFixed(2)} ` +
-    `C ${c0x.toFixed(2)} ${co.toFixed(2)} ${c1x.toFixed(2)} ${co.toFixed(2)} ${x1.toFixed(2)} ${a0.toFixed(2)} ` +
-    `C ${c1x.toFixed(2)} ${ci.toFixed(2)} ${c0x.toFixed(2)} ${ci.toFixed(2)} ${x0.toFixed(2)} ${a0.toFixed(2)} Z" fill="${INK}"/>`;
+/** A note under a slur: its head's centre and whether the head is small. */
+interface SlurNote { x: number; y: number; small: boolean }
+
+/**
+ * The engraved slur over one joined stroke: a filled two-cubic shape tapered
+ * to points.
+ *
+ * Each end sits over its OWN note, centred on the head and a little above it,
+ * the lower end lifted when the stroke climbs steeply; the slur then rises
+ * until it clears every note in between. It used to hang
+ * both ends at the first note's height, so a stroke ending higher ran into
+ * its top note and one ending lower left a tail hanging over nothing, and
+ * every offset was a fixed pixel count, so at a larger staff the slur sat on
+ * the heads. Everything here is in staff spaces. The belly is Bravura's
+ * slurMidpointThickness (0.22 spaces).
+ */
+function slur(notes: readonly SlurNote[], gm: ModernaMetrics): string {
+  const sp = gm.MSP;
+  const top = (n: SlurNote): number => n.y - 125 * gm.SCALE * HEAD_K * (n.small ? 0.68 : 1);
+  const first = notes[0]!;
+  const last = notes[notes.length - 1]!;
+  const x0 = first.x, x1 = last.x;
+  const span = Math.max(x1 - x0, 1);
+  let y0 = top(first) - 0.35 * sp;
+  let y1 = top(last) - 0.35 * sp;
+  // A slur is flatter than the line it covers: past this slope the LOWER end
+  // rises off its note, as an engraver lifts it, rather than the slur
+  // climbing steeply beside the first head.
+  const maxRise = 0.3 * span;
+  if (y0 - y1 > maxRise) y0 = y1 + maxRise;
+  if (y1 - y0 > maxRise) y1 = y0 + maxRise;
+  // The arc's visible height: low for a short slur, higher for a long one.
+  // The controls sit a third in, so the ends leave at an easy angle.
+  const height = Math.min(Math.max(span * 0.14, 0.45 * sp), 1.3 * sp);
+  const c0x = x0 + span / 3;
+  const c1x = x1 - span / 3;
+  const path = (lift: number, ra: number, rb: number) => {
+    const a = y0 - ra, b = y1 - rb;
+    const chord = (x: number): number => a + ((b - a) * (x - x0)) / span;
+    return { a, b, cy0: chord(c0x) - lift, cy1: chord(c1x) - lift };
+  };
+  const yAt = (p: ReturnType<typeof path>, x: number): number => {
+    let best = Infinity, by = 0;
+    for (let k = 0; k <= 48; k++) {
+      const t = k / 48, u = 1 - t;
+      const px = u * u * u * x0 + 3 * u * u * t * c0x + 3 * u * t * t * c1x + t * t * t * x1;
+      if (Math.abs(px - x) < best) {
+        best = Math.abs(px - x);
+        by = u * u * u * p.a + 3 * u * u * t * p.cy0 + 3 * u * t * t * p.cy1 + t * t * t * p.b;
+      }
+    }
+    return by;
+  };
+  // Every head under the slur keeps 0.4 spaces of air. Where a head would
+  // touch, the arc first grows rounder, up to two spaces; past that the slur
+  // rises at that end, each end by its share of the distance (an engraver's
+  // tilt), so neither a tall arch nor a floating end does all the work.
+  const maxLift = (2 * sp) / 0.75;
+  let lift = height / 0.75;
+  let ra = 0, rb = 0;
+  for (let pass = 0; pass < 16; pass++) {
+    const p = path(lift, ra, rb);
+    let needA = 0, needB = 0;
+    notes.forEach((n, i) => {
+      // Each head's shoulders as well as its centre, and the inner shoulder
+      // of the two end heads: a falling stroke otherwise grazes the head
+      // before the last one.
+      const hw = (295 * gm.SCALE * HEAD_K * (n.small ? 0.68 : 1)) / 2;
+      const xs = i === 0 ? [n.x + hw] : i === notes.length - 1 ? [n.x - hw] : [n.x - hw, n.x, n.x + hw];
+      for (const x of xs) {
+        const d = yAt(p, x) - (top(n) - 0.4 * sp);
+        if (d <= 0.01) continue;
+        const f = Math.min(Math.max((x - x0) / span, 0), 1);
+        needA = Math.max(needA, d * (1 - f));
+        needB = Math.max(needB, d * f);
+      }
+    });
+    if (needA === 0 && needB === 0) break;
+    const need = Math.max(needA, needB);
+    if (lift < maxLift) {
+      lift = Math.min(lift + need * 1.8, maxLift);
+      continue;
+    }
+    // Overshoot a little so a deficit split across both ends still clears.
+    ra += needA * 1.6;
+    rb += needB * 1.6;
+  }
+  const p = path(lift, ra, rb);
+  const belly = 0.22 * sp * (4 / 3);
+  const f = (v: number): string => v.toFixed(2);
+  return `<path class="slur" d="M ${f(x0)} ${f(p.a)} ` +
+    `C ${f(c0x)} ${f(p.cy0)} ${f(c1x)} ${f(p.cy1)} ${f(x1)} ${f(p.b)} ` +
+    `C ${f(c1x)} ${f(p.cy1 + belly)} ${f(c0x)} ${f(p.cy0 + belly)} ${f(x0)} ${f(p.a)} Z" fill="${INK}"/>`;
 }
 
 function quilismaMark(x: number, y: number, gm: ModernaMetrics): string {
@@ -551,7 +696,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     // advance, and the only measuring this emitter owes the break decision.
     const sylWidth = (key: string): number => {
       const rows = bySyl.get(key) ?? [];
-      return rows.length * gm.ADV + gm.SYL_GAP;
+      return noteAdvances(syllableStrokes(rows), rows.length, gm).reduce((a, b) => a + b, 0) + gm.SYL_GAP;
     };
 
     const breakBefore = (k: string, si: number): boolean => {
@@ -610,6 +755,8 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     const lyr = spans ? spans.map((s) => s.text).join("") : stripLyric(srows[0]!.lyric ?? "");
 
     // Note x-positions within the syllable.
+    const figures = syllableStrokes(srows);
+    const advances = noteAdvances(figures, srows.length, gm);
     let nx = x + gm.NH_W / 2 + 1;
     const notePos: Array<{ mx: number; my: number; steps: number; spelled: string | null }> = [];
     for (const r of srows) {
@@ -633,7 +780,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
         : null;
       if (spelled) nx += accidentalWidth(spelled, gm);
       notePos.push({ mx: nx, my: y, steps, spelled });
-      nx += gm.ADV + 4.6 * r.mora;
+      nx += advances[notePos.length - 1]! + 4.6 * r.mora;
     }
     const notesW = nx - x - gm.ADV + gm.NH_W / 2 + 2;
     const sylW = Math.max(notesW, textW(lyr, lyricSize));
@@ -666,31 +813,17 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       }
       body.push(notehead(mx, my, r.liquescent, r.mora === 2, gm,
         ` data-note-index="${r.phraseIndex}.${r.syllableIndex}.${r.neumeGroup}.${r.neumeIndex}"`));
+      if (r.liquescent) body.push(liquescentStem(mx, my, gm));
       if (r.mora === 1) body.push(moraDots(mx, my, onLine, gm));
       placements.push({ row: r, x: mx, y: my, system, systemY });
     });
 
-    // Slurs per figure; strophic runs on the same pitch merge into one.
-    const figs: Row[][] = [];
-    let curG = -1;
-    for (const r of srows) {
-      if (r.neumeGroup !== curG) { figs.push([]); curG = r.neumeGroup; }
-      figs[figs.length - 1]!.push(r);
-    }
-    const merged: Row[][] = [];
-    for (const fg of figs) {
-      const prev = merged[merged.length - 1];
-      if (prev && fg.every((q) => q.strophicus) && prev.every((q) => q.strophicus) &&
-          fg[0]!.spn === prev[prev.length - 1]!.spn) {
-        prev.push(...fg);
-      } else merged.push(fg);
-    }
-    for (const fg of merged) {
-      if (fg.length > 1) {
-        const idxs = fg.map((r) => srows.indexOf(r));
-        const ytop = Math.min(...idxs.map((i) => notePos[i]!.my));
-        slurs.push(slur(notePos[idxs[0]!]!.mx, notePos[idxs[0]!]!.my, notePos[idxs[idxs.length - 1]!]!.mx, ytop));
-      }
+    // One slur per joined stroke (strokes.ts): the square hand's ligatures,
+    // a pressus closed up. Detached marks (inclinata, strophae, virgae) and
+    // single notes take none.
+    for (const idxs of figures.flat()) {
+      if (idxs.length < 2) continue;
+      slurs.push(slur(idxs.map((i) => ({ x: notePos[i]!.mx, y: notePos[i]!.my, small: srows[i]!.liquescent })), gm));
     }
 
     // Lyric — collected here, emitted (with centred hyphens between same-word
