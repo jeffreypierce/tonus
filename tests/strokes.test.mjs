@@ -115,3 +115,31 @@ describe("quadrata draws the same glyphs", () => {
     assert.ok((svg.match(/class="stem"/g) ?? []).length >= 1, "the clivis takes its stem");
   });
 });
+
+describe("the separators, drawn", () => {
+  const qx = (neume) => tonus.inscriptio(tonus.notatio(tonus.cantus({ gabc: `(c4) a(${neume})` })[0])).geometry.map((g) => g.x);
+  const gap = (neume) => { const [a, b] = qx(neume); return b - a; };
+
+  test("quadrata spaces each separator as gregorio does", () => {
+    // ! cuts the glyph but stays in the figure: closer than /.
+    assert.ok(gap("f!h") < gap("f/h"), "! is tighter than /");
+    assert.ok(gap("f/0h") < gap("f/h") && gap("f/h") < gap("f//h"), "/0 < / < //");
+    assert.ok(gap("f/[3]h") > gap("f//h"), "/[3] is three units");
+    assert.ok(gap("f/[-1]h") < gap("f/0h"), "a negative space pulls back");
+  });
+
+  test("@ fuses; ! cuts; neither slurs across !", () => {
+    assert.deepEqual(segmentGlyphs(rows("go@hv")), [[0, 1]], "a fused oriscus and virga are one glyph");
+    assert.deepEqual(segmentGlyphs(rows("fg!hi")), [[0, 1], [2, 3]], "two pes");
+    assert.deepEqual(strokes("f!fe"), [[0], [1, 2]], "no pressus across ! (ruling C)");
+  });
+});
+
+
+describe("the clivis", () => {
+  test("a clivis of a third or more is joined at the junction", () => {
+    const stems = (neume) => (tonus.inscriptio(tonus.notatio(tonus.cantus({ gabc: `(c4) a(${neume})` })[0])).svg.match(/class="stem"/g) ?? []).length;
+    assert.equal(stems("hg"), 1, "a second: the left stem only, the heads touch");
+    assert.equal(stems("he"), 2, "a fourth: the left stem and the junction");
+  });
+});

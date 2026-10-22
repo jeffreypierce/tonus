@@ -26,6 +26,12 @@ export interface ChantTabulaRow {
   noteIndex: number;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
+  /** The GABC separator written just before this note, as written: `!` cuts
+   *  the glyph with no space (the pieces stay one neume), `@` fuses two glyphs
+   *  into one, `/` adds the small space between elements, `//` the larger,
+   *  `/0` half the small, `/[n]` n times it. null otherwise. `neumeGroup`
+   *  counts every one of them but `@` as a new figure. */
+  separator: string | null;
   /** 0-based position of this note within its neume figure. */
   neumeIndex: number;
   lyric: string;
@@ -239,6 +245,7 @@ export function computeTabula(
       syllableIndex: a.syllableIndex,
       noteIndex: a.noteIndex,
       neumeGroup: n.context.neumeGroup,
+      separator: n.context.separator,
       neumeIndex: neumeIndices[i],
       lyric: n.context.lyric,
       runs: n.context.runs,

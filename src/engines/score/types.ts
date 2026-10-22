@@ -104,6 +104,12 @@ export interface Context {
   accent: boolean;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
+  /** The GABC separator written just before this note, as written: `!` cuts
+   *  the glyph with no space (the pieces stay one neume), `@` fuses two glyphs
+   *  into one, `/` adds the small space between elements, `//` the larger,
+   *  `/0` half the small, `/[n]` n times it. null otherwise. `neumeGroup`
+   *  counts every one of them but `@` as a new figure. */
+  separator: string | null;
   /** The engraver asked for a line break BEFORE this note — GABC's `z` (and
    *  `Z`, its page-break sibling, honoured the same way since tonus paginates
    *  nothing). An editor who set a chant chose where its lines end, and that
@@ -259,6 +265,12 @@ export interface ParsedNote {
   accent: boolean;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
+  /** The GABC separator written just before this note, as written: `!` cuts
+   *  the glyph with no space (the pieces stay one neume), `@` fuses two glyphs
+   *  into one, `/` adds the small space between elements, `//` the larger,
+   *  `/0` half the small, `/[n]` n times it. null otherwise. `neumeGroup`
+   *  counts every one of them but `@` as a new figure. */
+  separator: string | null;
   /** The engraver asked for a line break BEFORE this note — GABC's `z` (and
    *  `Z`, its page-break sibling, honoured the same way since tonus paginates
    *  nothing). An editor who set a chant chose where its lines end, and that
