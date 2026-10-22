@@ -20,6 +20,7 @@
 // in the printed books.
 
 import type { ChantTabulaRow } from "../tabula.js";
+import { segmentGlyphs } from "./strokes.js";
 import { decideBreak } from "./breaking.js";
 import type { Chant } from "../../chant/types.js";
 import type { LyricRun } from "../types.js";
@@ -929,6 +930,50 @@ export function toSvg(
   };
 
   /**
+   * Draw one GABC figure as the glyphs square notation makes of it.
+   *
+   * A figure is not one ligature. strokes.ts splits it the way gregorio
+   * does (a pes, clivis, torculus, porrectus or scandicus, or one of their
+   * extensions, broken at a unison, at a shape that never ligates, after a
+   * liquescent and before a quilisma), and moderna slurs the same answer, so
+   * a slur and a ligature cannot disagree. Before this, a figure of four or
+   * more notes was drawn as one abutting chain whatever its glyphs.
+   *
+   * Between glyphs the figure breathes: two glyphs on one pitch (a stropha
+   * pair or a pressus) take the strophic breath, the first diamond after a
+   * square note keeps its clearance, and any other pair of square glyphs
+   * stands a third of a space apart. A virga trailed by inclinata keeps its
+   * cascade.
+   *
+   * RULED 2026-10-21 (Jeffrey), glyphs apart, as the books print them: in
+   * the LU (1961, p. xj, "Pressus" and "Other pressus or apposed neums") the
+   * two notes of a pressus do not touch. A first pass closed them up, the
+   * clivis stem between two touching heads, and it was wrong. The page that
+   * decided it: working/review/quadrata-strokes.html.
+   */
+  const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
+    const glyphs = segmentGlyphs(figure);
+    const cascade = figure.every((f, i) => i === 0 || f.shape === "inclinatum");
+    if (glyphs.length === 1 || cascade) return renderGlyph(figure, atXIn);
+    let x = atXIn;
+    for (const glyph of glyphs) {
+      const first = figure[glyph[0]!]!;
+      const before = glyph[0]! > 0 ? figure[glyph[0]! - 1]! : null;
+      if (before) {
+        if (first.staffPosition === before.staffPosition) {
+          x += r.staffInterval * 0.55;   /* strophae and pressus breathe */
+        } else if (first.shape === "inclinatum" && before.shape !== "inclinatum") {
+          x += r.staffInterval * 0.25;   /* a diamond stands clear of the head it falls from */
+        } else if (first.shape !== "inclinatum" && before.shape !== "inclinatum") {
+          x += r.staffInterval * 0.35;   /* glyphs of one figure stand apart */
+        }
+      }
+      x = renderGlyph(glyph.map((k) => figure[k]!), x);
+    }
+    return x;
+  };
+
+  /**
    * Place a figure, report where it ended, and leave nothing behind.
    *
    * PLACEMENT IS THE MEASUREMENT. The break test used to estimate the coming
@@ -964,7 +1009,7 @@ export function toSvg(
   };
 
 
-  const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
+  const renderGlyph = (figure: ChantTabulaRow[], atXIn: number): number => {
     // Solesmes practice: an accidental inflecting ANY note of a LIGATURE is
     // printed BEFORE the whole figure, at the inflected note's staff position —
     // never interleaved mid-ligature. (Placing only the first note's mark
