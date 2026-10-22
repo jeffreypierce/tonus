@@ -1,8 +1,14 @@
 // ---------------------------------------------------------------------------
 // engines/score/neume — neume classification from parsed notes
 // ---------------------------------------------------------------------------
-import type { Neume, Note } from "./types.js";
+import type { Neume, NeumeShape, Note } from "./types.js";
 import { classifyShape, type Direction } from "../temper/neume.js";
+
+const LIQUESCENT_FORM: Partial<Record<NeumeShape, NeumeShape>> = {
+  pes: "epiphonus",
+  clivis: "cephalicus",
+  climacus: "ancus",
+};
 
 function toDirection(delta: number): Direction {
   if (delta > 0) return "up";
@@ -59,6 +65,23 @@ export function classifyNeume(notes: Note[]): Neume {
   const allAscending = dirs.length >= 2 && dirs.every((d) => d === "up");
   if (allAscending && notes[notes.length - 2]!.context.oriscus) {
     type = "salicus";
+  }
+
+  // The liquescent figures take their name from the last note's half-note:
+  // "the Epiphonus becomes a Podatus, the Cephalicus a Clivis" when the
+  // syllable is sung in full, and the ancus is the climacus whose lower notes
+  // "may be liquescent, at any rate the last of them" [biblio: liber-usualis,
+  // preface]. Only the deminutive (`~`) counts. The augmented `<`/`>` is
+  // gregorio's auctus, which the Liber's table does not name, so a pes or clivis
+  // carrying it keeps its name (ruled 2026-10-22). A one-note `>` is the
+  // Antiphonale Monasticum's punctum liquescens, a simple note, and stays a
+  // punctum.
+  //
+  // Only the last note counts. The Liber's half-note "is found only at the end
+  // of a syllable", and the corpus agrees: all 4,521 such figures end their
+  // syllable. The salicus cannot clash, because it ends rising.
+  if (notes[notes.length - 1]?.context.liquescence === "deminutive") {
+    type = LIQUESCENT_FORM[type] ?? type;
   }
   return { type, intervals, hasQuilisma, hasLiquescent, hasStrophicus };
 }
