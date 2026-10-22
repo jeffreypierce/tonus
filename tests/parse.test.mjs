@@ -252,6 +252,32 @@ describe("parseGABC", () => {
     assert.ok(n.some((e) => e.ictus === true));
   });
 
+  // ── The Liber's ictus rules (Rules §VI) ──
+  const ictusOf = (gabc) => notes(gabc).map((e) => e.ictus);
+
+  test("`!` keeps its neume: no group-start ictus after it", () => {
+    assert.deepEqual(ictusOf("(c4) A(fg!hi) (::)"), [true, false, false, false]);
+  });
+
+  test("rule 2: the note before a quilisma takes the ictus, the quilisma none", () => {
+    assert.deepEqual(ictusOf("(c4) A(fgwh) (::)"), [true, false, false]);
+    // Written with !, as GregoBase usually has it. The group start yields too.
+    assert.deepEqual(ictusOf("(c4) A(ef!gwh) (::)"), [false, true, false, false]);
+  });
+
+  test("rule 2: the first note of a pressus takes the ictus, and rule 3 yields", () => {
+    // pes + clivis at the unison: "the first of the two notes forming the double note".
+    assert.deepEqual(ictusOf("(c4) A(gh/hg) (::)"), [false, true, false, false]);
+    // A plain run on one pitch is one double note, its ictus on the first.
+    assert.deepEqual(ictusOf("(c4) A(gggf) (::)"), [true, false, false, false]);
+  });
+
+  test("rule 3 yields to the vertical episema, not to the dot", () => {
+    assert.deepEqual(ictusOf("(c4) A(fg'h) (::)"), [false, true, false]);
+    // The AM stars both notes of a dotted clivis (Regulæ, II a).
+    assert.deepEqual(ictusOf("(c4) A(hg.) (::)"), [true, true]);
+  });
+
   // ── Pipe separator in lyrics ──
 
   test("pipe in lyric text takes only the part before pipe", () => {

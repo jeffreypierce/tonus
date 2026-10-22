@@ -141,6 +141,14 @@ interface IntermNote {
   mora: 0 | 1 | 2; // mora vocis count: 0 none, 1 dot '.', 2 double dot '..'
   _weight: number;
   _durWeight: number;
+  /** The ictus was placed by a written mark or a sustained note (the LU's
+   *  rules 1 and 2), which a group start (rule 3) must yield to. */
+  _marked: boolean;
+  /** A group start just before this note yields its ictus to it. True for the
+   *  vertical episema and the sustained notes. False for the dot, because the
+   *  Antiphonale Monasticum stars both notes of a dotted clivis (Regulæ, II a),
+   *  and for the horizontal episema, which is not yet ruled. */
+  _dislodges: boolean;
 }
 
 // GABC r1–r5, the signs gregorio prints over a note.
@@ -279,6 +287,7 @@ function parseNeume(
     let w = 0;
     let durWeight = 0;
     let ictus = false;
+    let marked = false;
     let isQuilisma = false;
     let isLiquescent = false;
     let isStrophicus = false;
@@ -389,6 +398,7 @@ function parseNeume(
       w += weights.ictusWeight;
       durWeight += weights.ictusDuration;
       ictus = true;
+      marked = true;
     }
 
     // Mora vocis — the GABC dot '.' lengthens THIS note (a held note before a
@@ -400,6 +410,7 @@ function parseNeume(
       w += weights.episemaWeight;
       durWeight += weights.episemaDuration;
       ictus = true;
+      marked = true;
       mora = 1;
       if (marks.includes("..")) {
         mora = 2;
@@ -412,6 +423,7 @@ function parseNeume(
       w += weights.strophicusWeight;
       durWeight += weights.strophicusDuration;
       ictus = true;
+      marked = true;
       isStrophicus = true;
       if (marks.includes("sss") || marks.includes("vvv")) {
         durWeight += weights.strophicusTripleDuration;
@@ -544,6 +556,8 @@ function parseNeume(
       mora,
       _weight: w,
       _durWeight: durWeight,
+      _marked: marked,
+      _dislodges: hasIctusSign || isStrophicus,
     });
   });
 
@@ -552,10 +566,48 @@ function parseNeume(
     const idx = b - bi;
     const target = intermed[idx];
     if (target) {
+      target.separator = breakKinds[bi]!;
+      // `!` cuts a glyph and keeps the neume: gregorio sets the pieces as one
+      // figure, and strokes.ts reads them so. So it begins no group and takes
+      // no group-start ictus. It was the largest source of ictus the Liber
+      // forbids: 12,999 of them, 5,349 on the quilisma itself.
+      if (target.separator === "!") return;
       target._weight += weights.breakWeight;
       target.ictus = true;
-      target.separator = breakKinds[bi]!;
     }
+  });
+
+  // The Liber's rule 2, completed, and rule 3 made to yield to it [biblio:
+  // liber-usualis, Rules §VI]. Rule 2 puts the ictus on "the note before a
+  // quilisma", and on the pressus and oriscus "the first of the two notes
+  // forming the double note is the place of the ictus". Rule 3 (any note
+  // beginning a group) "holds good only when it does not clash with rules 1 or
+  // 2". The group-start ictus "is dislodged by a Pressus, or Oriscus, or by the
+  // vertical episema".
+  //
+  // A unison here is two notes on one pitch in one syllable (the pressus and the
+  // oriscus pair). A stropha run is not one: it holds its own ictus on its
+  // first note. Successive syllables on one pitch are recitation, which this
+  // per-syllable pass never sees.
+  const doubled = (a: IntermNote, b: IntermNote | undefined): boolean =>
+    !!b && b.step === a.step && !a.strophicus && !b.strophicus;
+  intermed.forEach((n, idx) => {
+    const next = intermed[idx + 1];
+    // A run on one pitch is one double note, its ictus on the first.
+    const prev = intermed[idx - 1];
+    const opensUnison = doubled(n, next) && !(prev && doubled(prev, n));
+    if (next?.quilisma || opensUnison) {
+      n.ictus = true;
+      n._marked = true;
+      n._dislodges = true;
+    }
+  });
+  intermed.forEach((n, idx) => {
+    if (n._marked) return;
+    const prev = intermed[idx - 1];
+    const next = intermed[idx + 1];
+    // The quilisma is the light note, its support on the note before.
+    if (n.quilisma || (prev && doubled(prev, n)) || next?._dislodges) n.ictus = false;
   });
 
   // A figure that is one liquescent note is the punctum liquescens, and it is
