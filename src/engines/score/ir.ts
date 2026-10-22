@@ -67,6 +67,7 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
       syllableIndex: raw.syllableIndex,
       accent: raw.accent,
       neumeGroup: raw.neumeGroup,
+      separator: raw.separator,
       lineBreak: raw.lineBreak,
       keepWithPrev: raw.keepWithPrev,
       staffLetter: raw.staffLetter,

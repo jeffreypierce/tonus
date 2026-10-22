@@ -340,4 +340,16 @@ describe("parseGABC", () => {
     assert.equal(notes("(c4) a(go)")[0].oriscus, true, "a written o still is one");
     assert.equal(notes("(c4) a(g[alt:I.])")[0].mora, 0);
   });
+  test("every separator is read as written", () => {
+    // gregorio's spacing chart: ! cuts, @ fuses, / small, // larger, /0 half,
+    // /[n] n times. Before, @ /0 and /[n] lost their marks, and /// was read
+    // as a note that was not one.
+    const sep = (g) => notes(`(c4) a(${g})`).map((e) => [e.neumeGroup, e.separator]);
+    assert.deepEqual(sep("f!h"), [[0, null], [1, "!"]]);
+    assert.deepEqual(sep("f@h"), [[0, null], [0, "@"]], "a fusion parts no figure");
+    assert.deepEqual(sep("f//h"), [[0, null], [1, "//"]]);
+    assert.deepEqual(sep("f/0h"), [[0, null], [1, "/0"]]);
+    assert.deepEqual(sep("f/[-1]g"), [[0, null], [1, "/[-1]"]]);
+    assert.deepEqual(sep("f///h"), [[0, null], [1, "///"]]);
+  });
 });

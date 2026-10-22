@@ -90,7 +90,13 @@ const STAFF_STEPS = [0, 2, 4, 5, 7, 9, 11] as const;
 
 const SYLLABLES_REGEX = /(?=.)((?:[^(])*)(?:\(?([^)]*)\)?)?/g;
 const NOTATIONS_REGEX =
-  /z0|z|Z|::|:|[,;][1-6]?|`|[cf][1-4]|cb[1-4]|fb[1-4]|\/+| |\!|-?[a-mA-M][oOwWvVrRsxy#~\+><_\.'012345]*(?:\[[^\]]*\]?)*|\{([^}]+)\}?/g;
+  /z0|z|Z|::|:|[,;][1-6]?|`|[cf][1-4]|cb[1-4]|fb[1-4]|\/\[-?[\d.]+\]|\/0|\/+|@| |\!|-?[a-mA-M][oOwWvVrRsxy#~\+><_\.'012345]*(?:\[[^\]]*\]?)*|\{([^}]+)\}?/g;
+
+/** GABC's separators inside a syllable's notes: `!` cuts the glyph with no
+ *  space, `/` adds the small space between elements, `//` the larger one,
+ *  `/0` half the small one, `/[n]` n times it (n may be negative). A run of
+ *  three or four slashes is read as its slashes. Each parts the figure. */
+const SEPARATOR = /^(?:!|\/+|\/0|\/\[-?[\d.]+\])$/;
 
 // Types
 type AccidentalValue = -1 | 0 | 1;
@@ -104,6 +110,7 @@ interface IntermNote {
   syllableIndex: number;
   cell: number;
   neumeGroup: number;
+  separator: string | null;
   staffLetter: string;      // raw GABC pitch letter a–m (drives staff position)
   clef: string;             // the active clef, for the renderer's position math
   shape: WrittenShape;      // the written notehead shape (gregorio S_* vocabulary)
@@ -187,11 +194,16 @@ function isSkippable(token: string): boolean {
  * strophicus weighting reads it, once, as before), modifiers after the run go to
  * the last note (`hsss<` liquesces on the third), and the repeats are returned
  * so they carry the `strophicus` flag without the weighting a second time.
+ * The same pass takes out `@`, the fusion sign, and returns the notes it joins.
  */
-function unrollRepeats(tokens: string[]): { notation: string[]; repeats: Set<number> } {
+function unrollRepeats(tokens: string[]): { notation: string[]; repeats: Set<number>; fused: Set<number> } {
   const notation: string[] = [];
   const repeats = new Set<number>();
+  const fused = new Set<number>();
   for (const token of tokens) {
+    // `@` fuses the glyph before it to the glyph after (gregorio). It is no
+    // break, so it leaves the token stream; the note after it carries it.
+    if (token === "@") { fused.add(notation.length); continue; }
     const m = /^(-?)([a-mA-M])([^sv[]*?)(s{2,3}|v{2,3})(.*)$/.exec(token ?? "");
     if (!m) { notation.push(token); continue; }
     const [, dash, letter, before, run, after] = m;
@@ -202,7 +214,7 @@ function unrollRepeats(tokens: string[]): { notation: string[]; repeats: Set<num
       notation.push(letter! + run![0]! + (k === n - 1 ? after! : ""));
     }
   }
-  return { notation, repeats };
+  return { notation, repeats, fused };
 }
 
 // parseNeume
@@ -236,7 +248,7 @@ function parseNeume(
   let bmolle = clef.includes("b");
 
 
-  const { notation, repeats } = unrollRepeats(written);
+  const { notation, repeats, fused } = unrollRepeats(written);
 
   // Count note tokens for initio/melisma detection
   const noteTokenCount = notation.filter((t) =>
@@ -244,6 +256,7 @@ function parseNeume(
   ).length;
 
   const breaks: number[] = [];
+  const breakKinds: string[] = [];
   const intermed: IntermNote[] = [];
   // neumeGroup: 0-based index of the neume figure within this syllable. GABC
   // glyph separators (!, /, //) start a new figure; MusicXML slurs each figure.
@@ -253,8 +266,9 @@ function parseNeume(
     if (!rawToken || rawToken.length < 1) return;
 
     // Break markers — end the current neume figure, begin the next.
-    if (rawToken === "!" || rawToken === "/" || rawToken === "//") {
+    if (SEPARATOR.test(rawToken)) {
       breaks.push(i);
+      breakKinds.push(rawToken);
       neumeGroup++;
       return;
     }
@@ -506,6 +520,7 @@ function parseNeume(
       syllableIndex,
       cell,
       neumeGroup,
+      separator: fused.has(i) ? "@" : null,
       staffLetter: letter,
       clef,
       shape,
@@ -537,6 +552,7 @@ function parseNeume(
     if (target) {
       target._weight += weights.breakWeight;
       target.ictus = true;
+      target.separator = breakKinds[bi]!;
     }
   });
 
@@ -579,6 +595,7 @@ function parseNeume(
       syllableIndex: note.syllableIndex,
       cell: note.cell,
       neumeGroup: note.neumeGroup,
+      separator: note.separator,
       // Tonic word-accent of this note's syllable (Latin accentuation), the same
       // boolean the articulation weighting reads above — surfaced as data so the
       // tabula carries it (accent stats, prose-cursus). Syllable-wide constant.

@@ -23,7 +23,7 @@ import { GLYPHS, GLYPH_UPM } from "../../../data/smufl-glyphs.js";
 import { fontFaceCss, lyricMarkup } from "./svg.js";
 import { trimRuns } from "../lyric.js";
 import { decideBreak } from "./breaking.js";
-import { joinStrokes } from "./strokes.js";
+import { joinStrokes, sameFigure, separatorSpace } from "./strokes.js";
 import type { LyricRun } from "../types.js";
 import {
   computeAccidentals, type AccidentalMode, type AccidentalMark,
@@ -214,13 +214,13 @@ export function metrics(staffHeight?: number): ModernaMetrics {
 const LETTERS: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
 
 /** A syllable's joined strokes (strokes.ts), figure by figure, as indices
- *  into the syllable's rows. */
+ *  into the syllable's rows. A `!` keeps its figure (sameFigure). */
 function syllableStrokes(srows: readonly ChantTabulaRow[]): number[][][] {
   const figures: number[][][] = [];
   let start = 0;
   while (start < srows.length) {
-    let end = start;
-    while (end < srows.length && srows[end]!.neumeGroup === srows[start]!.neumeGroup) end++;
+    let end = start + 1;
+    while (end < srows.length && sameFigure(srows[end - 1]!, srows[end]!)) end++;
     const base = start;
     figures.push(joinStrokes(srows.slice(start, end)).map((s) => s.map((k) => base + k)));
     start = end;
@@ -230,8 +230,14 @@ function syllableStrokes(srows: readonly ChantTabulaRow[]): number[][][] {
 
 /** The advance after each note of a syllable: tight inside a stroke, plain
  *  between the strokes of one figure, plus the figure gap before the next
- *  figure. The last note takes the plain advance; the syllable gap follows. */
-function noteAdvances(figures: number[][][], count: number, gm: ModernaMetrics): number[] {
+ *  figure, scaled by the separator written there (`//` twice, `/0` half,
+ *  `/[n]` n times; never below nothing, since round notes are read in time
+ *  and cannot stack as gregorio's `f/[-1]g` does). The last note takes the
+ *  plain advance; the syllable gap follows. */
+function noteAdvances(
+  figures: number[][][], srows: readonly ChantTabulaRow[], gm: ModernaMetrics,
+): number[] {
+  const count = srows.length;
   const adv: number[] = new Array(count).fill(gm.ADV);
   figures.forEach((strokes, f) => {
     for (const stroke of strokes) {
@@ -239,7 +245,8 @@ function noteAdvances(figures: number[][][], count: number, gm: ModernaMetrics):
     }
     if (f < figures.length - 1) {
       const last = strokes[strokes.length - 1]!;
-      adv[last[last.length - 1]!] = gm.ADV + gm.FIGURE_GAP;
+      const next = srows[figures[f + 1]![0]![0]!]!;
+      adv[last[last.length - 1]!] = gm.ADV + gm.FIGURE_GAP * Math.max(0, separatorSpace(next.separator));
     }
   });
   return adv;
@@ -696,7 +703,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     // advance, and the only measuring this emitter owes the break decision.
     const sylWidth = (key: string): number => {
       const rows = bySyl.get(key) ?? [];
-      return noteAdvances(syllableStrokes(rows), rows.length, gm).reduce((a, b) => a + b, 0) + gm.SYL_GAP;
+      return noteAdvances(syllableStrokes(rows), rows, gm).reduce((a, b) => a + b, 0) + gm.SYL_GAP;
     };
 
     const breakBefore = (k: string, si: number): boolean => {
@@ -756,7 +763,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
 
     // Note x-positions within the syllable.
     const figures = syllableStrokes(srows);
-    const advances = noteAdvances(figures, srows.length, gm);
+    const advances = noteAdvances(figures, srows, gm);
     let nx = x + gm.NH_W / 2 + 1;
     const notePos: Array<{ mx: number; my: number; steps: number; spelled: string | null }> = [];
     for (const r of srows) {

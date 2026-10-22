@@ -10,11 +10,13 @@
 // The segmentation follows gregorio's: a glyph grows note by note while the
 // motion stays one of the ligature shapes below. It breaks at a unison, at a
 // shape that never ligates, after a liquescent (which always ends its glyph),
-// and before a quilisma (which always begins one).
+// and before a quilisma (which always begins one). What the engraver wrote
+// outranks the rule: `!` always cuts, `@` always fuses.
 import type { ChantTabulaRow } from "../tabula.js";
 import type { WrittenShape } from "../types.js";
 
-type StrokeNote = Pick<ChantTabulaRow, "staffPosition" | "shape" | "liquescent" | "quilisma">;
+type StrokeNote = Pick<ChantTabulaRow, "staffPosition" | "shape" | "liquescent" | "quilisma"> &
+  Partial<Pick<ChantTabulaRow, "separator">>;
 
 /** Shapes square notation draws on their own, never inside a ligature: the
  *  inclinatum diamond, the stropha, the virga with its own stem, the linea. */
@@ -39,8 +41,10 @@ export function segmentGlyphs(figure: readonly StrokeNote[]): number[][] {
     if (prev) {
       const step = Math.sign(note.staffPosition - prev.staffPosition);
       const next = motion + (step > 0 ? "u" : "d");
-      if (step !== 0 && !ALONE.has(prev.shape) && !ALONE.has(note.shape) &&
-          !prev.liquescent && !note.quilisma && LIGATURES.has(next)) {
+      const fused = note.separator === "@";
+      const cut = note.separator != null && note.separator !== "@";
+      if (fused || (!cut && step !== 0 && !ALONE.has(prev.shape) && !ALONE.has(note.shape) &&
+          !prev.liquescent && !note.quilisma && LIGATURES.has(next))) {
         cur.push(i);
         motion = next;
         return;
@@ -67,11 +71,36 @@ export function joinStrokes(figure: readonly StrokeNote[]): number[][] {
     const prev = strokes[strokes.length - 1];
     const last = prev ? figure[prev[prev.length - 1]!]! : null;
     const first = figure[glyph[0]!]!;
+    // Never across a written separator: ruling C (2026-10-21), no slur over `!`.
     const pressus = prev && last!.staffPosition === first.staffPosition &&
-      (prev.length > 1 || glyph.length > 1) &&
+      (prev.length > 1 || glyph.length > 1) && first.separator == null &&
       !ALONE.has(last!.shape) && !ALONE.has(first.shape);
     if (pressus) prev!.push(...glyph);
     else strokes.push([...glyph]);
   }
   return strokes;
+}
+
+type FigureRow = Pick<ChantTabulaRow, "phraseIndex" | "syllableIndex" | "neumeGroup" | "separator">;
+
+/** Whether `row` belongs to the same drawn figure as `prev`: the same
+ *  syllable, and the same GABC figure or joined to it by `!`. gregorio's `!`
+ *  cuts the glyph without parting the neume, so the pieces are spaced as
+ *  glyphs of one figure, not as figures. (The analysis keeps `neumeGroup`.) */
+export function sameFigure(prev: FigureRow, row: FigureRow): boolean {
+  return prev.phraseIndex === row.phraseIndex && prev.syllableIndex === row.syllableIndex &&
+    (prev.neumeGroup === row.neumeGroup || row.separator === "!");
+}
+
+/** The space a separator asks for between figures, in units of `/` (the
+ *  small space between elements): `//` two, `/0` a half, `/[n]` n (negative
+ *  overlaps, as gregorio stacks `f/[-1]g`), a run of slashes its count. A
+ *  figure that opens with no written separator takes one unit. */
+export function separatorSpace(separator: string | null | undefined): number {
+  if (!separator) return 1;
+  if (separator === "/0") return 0.5;
+  const n = /^\/\[(-?[\d.]+)\]$/.exec(separator);
+  if (n) return Number(n[1]);
+  if (/^\/+$/.test(separator)) return separator.length;
+  return 0;   // ! and @ part no figures
 }

@@ -20,7 +20,7 @@
 // in the printed books.
 
 import type { ChantTabulaRow } from "../tabula.js";
-import { segmentGlyphs } from "./strokes.js";
+import { sameFigure, segmentGlyphs, separatorSpace } from "./strokes.js";
 import { decideBreak } from "./breaking.js";
 import type { Chant } from "../../chant/types.js";
 import type { LyricRun } from "../types.js";
@@ -954,7 +954,8 @@ export function toSvg(
   const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
     const glyphs = segmentGlyphs(figure);
     const cascade = figure.every((f, i) => i === 0 || f.shape === "inclinatum");
-    if (glyphs.length === 1 || cascade) return renderGlyph(figure, atXIn);
+    const fused = figure.some((f, i) => i > 0 && f.separator === "@");
+    if ((glyphs.length === 1 && !fused) || cascade) return renderGlyph(figure, atXIn);
     let x = atXIn;
     for (const glyph of glyphs) {
       const first = figure[glyph[0]!]!;
@@ -968,7 +969,15 @@ export function toSvg(
           x += r.staffInterval * 0.35;   /* glyphs of one figure stand apart */
         }
       }
-      x = renderGlyph(glyph.map((k) => figure[k]!), x);
+      const rowsOf = glyph.map((k) => figure[k]!);
+      // A fusion (`@`) is drawn as gregorio draws it: the heads abutting in
+      // order, a stem joining any leap, never stacked as a pes would be.
+      if (rowsOf.some((row, k) => k > 0 && row.separator === "@")) {
+        for (const row of rowsOf) x += placeAccidental(row, x);
+        x = renderFallback(rowsOf, x);
+      } else {
+        x = renderGlyph(rowsOf, x);
+      }
     }
     return x;
   };
@@ -1122,6 +1131,8 @@ export function toSvg(
   let prevLyricRight = -Infinity;
 
   // ── Walk figures grouped by (phraseIndex, syllableIndex, neumeGroup) ──
+  // (sameFigure, strokes.ts: a `!` joins the figure after it to this one,
+  // since gregorio's `!` cuts a glyph and parts no neume.)
   // syllableIndex resets per phrase, so the phrase must be part of the key:
   // without it, phrase N's last figure and phrase N+1's first merge whenever
   // the indices collide, silently dropping the second figure's lyric and the
@@ -1132,14 +1143,9 @@ export function toSvg(
   let afterDivisio = false;
   let freshSystem = false;   // the open system holds no figure yet
   while (i < rows.length) {
-    const { phraseIndex, syllableIndex, neumeGroup } = rows[i]!;
-    let j = i;
-    while (
-      j < rows.length &&
-      rows[j]!.phraseIndex === phraseIndex &&
-      rows[j]!.syllableIndex === syllableIndex &&
-      rows[j]!.neumeGroup === neumeGroup
-    ) j++;
+    const { phraseIndex, syllableIndex } = rows[i]!;
+    let j = i + 1;
+    while (j < rows.length && sameFigure(rows[j - 1]!, rows[j]!)) j++;
     const figure = rows.slice(i, j);
 
     // Mid-score clef change.
@@ -1200,7 +1206,11 @@ export function toSvg(
         }
       }
     } else if (!newSyllable && prevSyllable !== -1) {
-      x += figure[0]!.quilisma ? r.staffInterval * 0.12 : r.interGlyph;
+      // The space the engraver wrote: `/` one unit, `//` two, `/0` a half,
+      // `/[n]` n. (A figure opening on a quilisma used to take a hand-set
+      // 0.12: that was `!gw`, read as a new figure. `!` now stays inside
+      // its figure, so the patch has nothing left to mend.)
+      x += r.interGlyph * separatorSpace(figure[0]!.separator);
     }
 
     // Close the current system and open the next, optionally guiding the eye
@@ -1299,16 +1309,13 @@ export function toSvg(
         let tx = 0;
         let prevSyl = -1;
         for (let k = j; k < rows.length && rows[k]!.phraseIndex === phrase;) {
-          let e = k;
-          while (e < rows.length &&
-                 rows[e]!.phraseIndex === rows[k]!.phraseIndex &&
-                 rows[e]!.syllableIndex === rows[k]!.syllableIndex &&
-                 rows[e]!.neumeGroup === rows[k]!.neumeGroup) e++;
+          let e = k + 1;
+          while (e < rows.length && sameFigure(rows[e - 1]!, rows[e]!)) e++;
           if (rows[k]!.syllableIndex !== prevSyl && prevSyl !== -1) {
             tx += r.interSyllable;
             if (rows[k]!.wordStart) tx += r.interWord;
           } else if (prevSyl !== -1) {
-            tx += r.interGlyph;
+            tx += r.interGlyph * separatorSpace(rows[k]!.separator);
           }
           prevSyl = rows[k]!.syllableIndex;
           tx = measureFigure(rows.slice(k, e), tx);
@@ -1433,13 +1440,10 @@ export function toSvg(
       let k = j;
       while (k < rows.length) {
         if (k > j && rows[k]!.wordStart) break;          // the next word begins
-        let e = k;
-        while (e < rows.length &&
-               rows[e]!.phraseIndex === rows[k]!.phraseIndex &&
-               rows[e]!.syllableIndex === rows[k]!.syllableIndex &&
-               rows[e]!.neumeGroup === rows[k]!.neumeGroup) e++;
+        let e = k + 1;
+        while (e < rows.length && sameFigure(rows[e - 1]!, rows[e]!)) e++;
         if (rows[k]!.syllableIndex !== pSyl) tw += r.interSyllable;
-        else if (k > j) tw += r.interGlyph;
+        else if (k > j) tw += r.interGlyph * separatorSpace(rows[k]!.separator);
         pSyl = rows[k]!.syllableIndex;
         tw = measureFigure(rows.slice(k, e), tw);
         k = e;
