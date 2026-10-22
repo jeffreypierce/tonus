@@ -95,3 +95,23 @@ describe("the moderna slur", () => {
     }
   });
 });
+
+describe("quadrata draws the same glyphs", () => {
+  const xs = (neume) => tonus.inscriptio(tonus.notatio(tonus.cantus({ gabc: `(c4) a(${neume})` })[0])).geometry.map((g) => g.x);
+
+  test("the glyphs of one figure stand apart", () => {
+    // Ruled 2026-10-21: glyphs apart, the pressus included. hgf is a clivis
+    // and a punctum; the punctum no longer abuts the clivis.
+    const [, c1, p] = xs("hgf");
+    const [a0, a1] = xs("hg");
+    assert.ok(p - c1 > a1 - a0, `the punctum stands off: ${(p - c1).toFixed(2)} > ${(a1 - a0).toFixed(2)}`);
+    const [p0, p1] = xs("ffe");
+    const [s0, s1] = xs("ff");
+    assert.equal((p1 - p0).toFixed(2), (s1 - s0).toFixed(2), "a pressus breathes as a stropha pair does");
+  });
+
+  test("a run past the longest ligature is drawn as its glyphs", () => {
+    const svg = tonus.inscriptio(tonus.notatio(tonus.cantus({ gabc: "(c4) a(hgfgh)" })[0])).svg;
+    assert.ok((svg.match(/class="stem"/g) ?? []).length >= 1, "the clivis takes its stem");
+  });
+});
