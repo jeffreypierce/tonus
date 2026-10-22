@@ -135,3 +135,11 @@ describe("the separators, drawn", () => {
   });
 });
 
+
+describe("the clivis", () => {
+  test("a clivis of a third or more is joined at the junction", () => {
+    const stems = (neume) => (tonus.inscriptio(tonus.notatio(tonus.cantus({ gabc: `(c4) a(${neume})` })[0])).svg.match(/class="stem"/g) ?? []).length;
+    assert.equal(stems("hg"), 1, "a second: the left stem only, the heads touch");
+    assert.equal(stems("he"), 2, "a fourth: the left stem and the junction");
+  });
+});

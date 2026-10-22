@@ -339,6 +339,10 @@ const GENUS_ABBREV: Record<string, string> = {
   Hymnus: "Hymn.", Sequentia: "Seq.", Canticum: "Cant.", Psalmus: "Ps.",
   "Toni Communes": "Ton. comm.", Supplicatio: "Suppl.", Improperia: "Improp.",
   Tropa: "Trop.", Prosa: "Pros.", Varia: "Var.",
+  // Hildegard (the Pierce Edition): the antiphon classes keep "Ant." and add
+  // the qualifier the way the books do (Ant. ad Magn.); the drama is a play.
+  "Antiphona ad psalmum": "Ant. ad ps.", "Antiphona votiva": "Ant. vot.",
+  "Antiphona in evangelio": "Ant. in ev.", Symphonia: "Symph.", Drama: "Dram.",
   // Never printed — an ordinary chant shows its mode alone (below) — but the
   // table is complete, not merely sufficient.
   Kyriale: "Kyr.",
@@ -887,7 +891,14 @@ export function toSvg(
     body.push(stem(cx + r.stemWeight, hi.staffPosition, lo.staffPosition));
     const first = placeNote(hi, cx);
     if (!first) return cx;
-    const second = placeNote(lo, first.inkRight);
+    // A third or more apart, the notes are joined at the junction, as the
+    // pes and the torculus join theirs; at a second the heads touch. Without
+    // it the lower note of a clivis of a fourth floated free of its stem. The
+    // lower head sits OVER the line, as the books set it: placed at the line's
+    // far edge it read as a note beside a stem, not a note on one.
+    const leap = hi.staffPosition - lo.staffPosition > 1;
+    if (leap) body.push(stem(first.inkRight, hi.staffPosition, lo.staffPosition, false));
+    const second = placeNote(lo, first.inkRight - (leap ? r.stemWeight : 0));
     return second?.inkRight ?? first.inkRight;
   };
 
@@ -1056,7 +1067,8 @@ export function toSvg(
       const second = placeNote(figure[1]!, first.inkRight);
       if (!second) return first.inkRight;
       body.push(stem(second.inkRight, figure[1]!.staffPosition, figure[2]!.staffPosition));
-      const third = placeNote(figure[2]!, second.inkRight);
+      // The falling note sits over the junction line (see renderClivis).
+      const third = placeNote(figure[2]!, second.inkRight - r.stemWeight);
       return third?.inkRight ?? second.inkRight;
     }
     if (figure.length === 3 && dirs[0] === -1 && dirs[1] === 1) {
