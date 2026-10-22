@@ -249,6 +249,8 @@ name:
 | `co`     | Communio  | `ps`     | Psalmus      | `or`     | Toni Communes      |
 | `gr`     | Graduale  | `re`     | Responsorium | `ky`     | Kyriale            |
 | `im`     | Improperia| `rb`     | Resp. Breve  | `va`     | Varia              |
+| `ap`     | Antiphona ad psalmum | `av` | Antiphona votiva | `ae` | Antiphona in evangelio |
+| `sv`     | Symphonia | `dr`     | Drama        |          |                    |
 | `pa`     | Prosa     | `su`     | Supplicatio  |          |                    |
 
 The labels are GregoBase's own vocabulary (`$txt['usage']`), not tonus's

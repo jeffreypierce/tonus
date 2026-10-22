@@ -10,6 +10,10 @@ export type { Season, Grade, Feast };
 export type OfficeCode =
   | "an" | "al" | "ca" | "co" | "gr" | "hy" | "in"
   | "of" | "ps" | "re" | "rb" | "se" | "tr" | "tp" | "or" | "ky" | "va"
+  // Hildegard's Symphonia and Ordo Virtutum (the Pierce Edition, 2026-10-21):
+  // Newman's finer antiphon classes, the symphoniae, and the sung drama. The
+  // Roman books never need them; a source that has them supplies them.
+  | "ap" | "av" | "ae" | "sv" | "dr"
   // Genera tonus does not SHIP but does REPORT: they appear in a book's
   // pre-cut `full` tally, so they need names there. The cut keeps them out of
   // the shipped corpus (extract-gregobase.mjs OFFICE_MAP is the admission
@@ -124,6 +128,12 @@ export const OFFICIA: Readonly<Record<OfficeCode, string>> = Object.freeze({
   // lived in both until today — but if that overlap is unwanted, this is the
   // one to rename, not the ordinary.
   va: "Varia",
+  // ── Hildegard (the Pierce Edition) ──────────────────────────────────────
+  ap: "Antiphona ad psalmum",
+  av: "Antiphona votiva",
+  ae: "Antiphona in evangelio",
+  sv: "Symphonia",          // Symphonia virginum, Symphonia viduarum
+  dr: "Drama",              // the Ordo Virtutum, a sung morality play
 });
 
 export const ORDINARIA: Readonly<Record<string, string>> = Object.freeze({
