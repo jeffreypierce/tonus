@@ -97,6 +97,13 @@ exception and reports at syllable scope: its rule reads the oriscus on the
 next-to-last note of an ascent, and the scribe may break the figure between
 that oriscus and the summit.
 
+The written marks name two kinds of figure. The salicus is one, and the Liber's
+liquescent figures are the other: a pes, clivis or climacus whose last note
+carries the deminutive half-note (GABC `~`) reports as `epiphonus`,
+`cephalicus` or `ancus`, with `hasLiquescent` still set. The augmented `<`
+and `>` leave the name alone. A lone note marked with one is the punctum
+liquescens, and stays a `punctum`.
+
 GABC's lyric markup is decoded at parse, so `lyric` is always clean display
 text: the `<sp>` shortcuts arrive as real characters (`<sp>V/</sp>` → ℣,
 `<sp>R/</sp>` → ℟, `<sp>+</sp>` → the flex †, `<sp>'ae</sp>` → ǽ, the

@@ -285,6 +285,17 @@ The repercussive figures restate a pitch rather than leave it.
 | `tristropha`       | three on one pitch  | `pressus maior` | falling in, then out   |
 | `tristropha flexa` | three, then falling | `compound`      | any figure not above   |
 
+The liquescent figures are the pes, clivis and climacus ending on the
+deminished half-note. The name comes from a written mark that pitches can't
+carry, so, like the salicus, only the score names them (`notatio`, see
+[score.md](score.md)). `neuma` never returns them.
+
+| `shape`      | figure                           |
+| ------------ | -------------------------------- |
+| `epiphonus`  | a pes, upper note liquescent     |
+| `cephalicus` | a clivis, lower note liquescent  |
+| `ancus`      | a climacus, last note liquescent |
+
 ```ts
 interface Neume {
   pitches: Pitch[];

@@ -191,7 +191,11 @@ function classifyGroup(
   // Conventional overrides: specific neume shapes have fixed rhythmic quality
   // regardless of melodic context.
   if (group.neumeTypes.has("salicus")) return "arsic";
-  if (group.hasDoubleMora && group.neumeTypes.has("clivis")) return "thetic";
+  // A cephalicus is a clivis by contour, so the clivis rule holds for it.
+  if (group.hasDoubleMora &&
+      (group.neumeTypes.has("clivis") || group.neumeTypes.has("cephalicus"))) {
+    return "thetic";
+  }
 
   const groupIctusMidi = group.ictusMidi ?? group.notes[0]!.pitch.midi;
 

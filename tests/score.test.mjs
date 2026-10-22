@@ -147,6 +147,44 @@ describe("buildScore", () => {
     }
   });
 
+  // The Liber's liquescent figures: the plain contour, named by a deminutive
+  // half-note (`~`) on its last note.
+  const firstSyl = (gabc) => buildScore(makeChant(gabc)).phrases[0].syllables[0];
+
+  test("a deminutive ending names the epiphonus, cephalicus and ancus", () => {
+    assert.equal(firstSyl("(c4) A(gh~) (::)").neume.type, "epiphonus");
+    assert.equal(firstSyl("(c4) Te(hg~) (::)").neume.type, "cephalicus");
+    assert.equal(firstSyl("(c4) Al(hgf~) (::)").neume.type, "ancus");
+    assert.equal(firstSyl("(c4) Al(hGF~) (::)").neume.type, "ancus", "with the diamonds");
+    // The flag stays alongside the name.
+    assert.ok(firstSyl("(c4) A(gh~) (::)").neume.hasLiquescent);
+  });
+
+  test("only a deminutive LAST note renames the figure", () => {
+    // A liquescent that is not the last note: the pes stays a pes.
+    assert.equal(firstSyl("(c4) A(g~h) (::)").neume.type, "pes");
+    // The augmented forms are gregorio's auctus, unnamed in the Liber's table.
+    assert.equal(firstSyl("(c4) A(gh<) (::)").neume.type, "pes");
+    assert.equal(firstSyl("(c4) A(hg>) (::)").neume.type, "clivis");
+    // A one-note `>` is the punctum liquescens, a simple note.
+    assert.equal(firstSyl("(c4) Al(i>) (::)").neume.type, "punctum");
+    // Other contours keep their names. The Liber's table names no liquescent torculus.
+    assert.equal(firstSyl("(c4) A(ghg~) (::)").neume.type, "torculus");
+  });
+
+  test("each figure of a syllable takes its own liquescent name", () => {
+    const syl = firstSyl("(c4) A(hg/gh~) (::)");
+    assert.deepEqual(syl.neumes.map((n) => n.type), ["clivis", "epiphonus"]);
+  });
+
+  test("a doubly-dotted cephalicus is thetic, as its clivis is", () => {
+    const syl = firstSyl("(c4) Cli(h..g~) (::)");
+    assert.equal(syl.neume.type, "cephalicus");
+    for (const n of syl.notes) {
+      assert.equal(n.performance.rhythmicShape, "thetic");
+    }
+  });
+
   test("classifies neume shapes on syllables", () => {
     const score = buildScore(makeChant(KYRIE_GABC));
     for (const phrase of score.phrases) {
