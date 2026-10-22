@@ -177,6 +177,35 @@ describe("buildScore", () => {
     assert.deepEqual(syl.neumes.map((n) => n.type), ["clivis", "epiphonus"]);
   });
 
+  // A liquescent is lighter, not shorter: it loses "half its force rather than
+  // its duration" (LU preface; Rules §10).
+  const noteOf = (gabc, i, opts) =>
+    buildScore(makeChant(gabc), opts).phrases[0].syllables.flatMap((s) => s.notes)[i];
+  const durOf = (gabc, i, opts) => noteOf(gabc, i, opts).performance;
+
+  test("a liquescent keeps its duration and loses weight", () => {
+    for (const pondus of ["balanced", "strict", "restrained", "expressive"]) {
+      const liq = noteOf("(c4) A(gh~) (::)", 1, { pondus });
+      const plain = noteOf("(c4) A(gh) (::)", 1, { pondus });
+      assert.equal(liq.performance.duration, plain.performance.duration, `${pondus}: same duration`);
+      assert.ok(liq.context.weight < plain.context.weight, `${pondus}: lighter`);
+    }
+  });
+
+  test("the punctum liquescens is drawn out a little", () => {
+    // The Antiphonale Monasticum's one-note liquescent: "aliquantulum protracte".
+    const liq = durOf("(c4) Al(i>) le(h) (::)", 0);
+    const plain = durOf("(c4) Al(i) le(h) (::)", 0);
+    assert.ok(liq.duration > plain.duration);
+    // Not a note inside a figure. The cephalicus's half-note isn't lengthened.
+    assert.equal(durOf("(c4) Te(hg~) (::)", 1).duration, durOf("(c4) Te(hg) (::)", 1).duration);
+  });
+
+  test("a pondus override shortens liquescents again, one weight at a time", () => {
+    const clipped = { pondus: { overrides: { weights: { liquescentDuration: -0.35 } } } };
+    assert.ok(durOf("(c4) A(gh~) (::)", 1, clipped).duration < durOf("(c4) A(gh) (::)", 1, clipped).duration);
+  });
+
   test("a doubly-dotted cephalicus is thetic, as its clivis is", () => {
     const syl = firstSyl("(c4) Cli(h..g~) (::)");
     assert.equal(syl.neume.type, "cephalicus");

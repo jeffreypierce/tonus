@@ -176,6 +176,7 @@ export interface ArticulationWeights {
   quilismaWeight: number;
   liquescentWeight: number;
   liquescentDuration: number;
+  punctumLiquescensDuration: number;
   initioWeight: number;
   initioMelismaWeight: number;
   initioMelismaDuration: number;
@@ -192,6 +193,12 @@ export interface ArticulationWeights {
   dashWeight: number;
   dashDuration: number;
 }
+
+/** Overrides on an articulation profile. `weights` merges key by key, so one
+ *  weight can change without restating the rest. */
+export type ArticulationOverrides = Omit<Partial<ArticulationProfile>, "weights"> & {
+  weights?: Partial<ArticulationWeights>;
+};
 
 export interface ArticulationProfile {
   weights: ArticulationWeights;
@@ -233,7 +240,7 @@ export interface PhrasingProfile {
 
 export interface InterpretationOptions {
   articulation?: ArticulationType;
-  articulationOverrides?: Partial<ArticulationProfile>;
+  articulationOverrides?: ArticulationOverrides;
   phrasing?: PhrasingType;
   phrasingOverrides?: Partial<PhrasingProfile>;
   modalInfluence?: number;

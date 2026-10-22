@@ -15,7 +15,7 @@ import { cadentiaGenus, cadentiaSpecies } from "../../data/cadentiae.js";
 import type { Chant } from "../chant/types.js";
 import type { Temperamentum } from "../temper/api.js";
 import type {
-  ArticulationProfile,
+  ArticulationOverrides,
   ArticulationType,
   PhrasingProfile,
   PhrasingType,
@@ -28,7 +28,7 @@ export type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
 
 export interface PondusOpts {
   style?: PondusStyle;
-  overrides?: Partial<ArticulationProfile>;
+  overrides?: ArticulationOverrides;
 }
 
 export interface AccentusOpts {
