@@ -15,16 +15,10 @@
 // The rhythm/ictus model was designed from the Liber Usualis "Rules for
 // Interpretation" [biblio: liber-usualis]; the rules below are its.
 //
-// Ictus (the rhythmic footfall) is assigned by the Liber's three rules, in
-// priority order:
-//   1. an ictus falls on any note bearing a vertical episema (GABC '), and on a
-//      horizontal episema (_), which the Liber says "generally receives the
-//      ictus ... this need not be always the case";
-//   2. on sustained/doubled elements — distropha, tristropha, bivirga, pressus,
-//      oriscus, a dotted note, the note before a quilisma;
-//   3. otherwise on the first note of each group, unless displaced by 1 or 2.
-// Where more than three simple notes fall between ictus, a subdivision ictus is
-// inserted (the compound beat prefers 2- or 3-note groups).
+// The ictus (the rhythmic footfall) follows the Liber's three rules, its spacing
+// and its subdivision. Those reach across syllables and words, so this file
+// only records each note's facts (marks, group starts, the word around it).
+// ictus.ts places the ictus for each section between two bars.
 //
 // Accidental scope follows the Liber: a flat holds for the rest of the word, or
 // until the next bar line (even a quarter-bar), and is cancelled by a natural —
@@ -36,6 +30,7 @@ import type {
   ArticulationProfile,
   LyricRun,
   ParseOptions,
+  ParsedNote,
   ParseResult,
   RestEvent,
   WrittenShape,
@@ -43,6 +38,7 @@ import type {
   Signum,
 } from "./types.js";
 import { buildArticulation } from "./articulation.js";
+import { assignIctus, type IctusFacts } from "./ictus.js";
 import { createLyricDecoder } from "./lyric.js";
 import { detectVowelAccent } from "../chant/syllabify.js";
 
@@ -141,14 +137,11 @@ interface IntermNote {
   mora: 0 | 1 | 2; // mora vocis count: 0 none, 1 dot '.', 2 double dot '..'
   _weight: number;
   _durWeight: number;
-  /** The ictus was placed by a written mark or a sustained note (the LU's
-   *  rules 1 and 2), which a group start (rule 3) must yield to. */
-  _marked: boolean;
-  /** A group start just before this note yields its ictus to it. True for the
-   *  vertical episema and the sustained notes. False for the dot, because the
-   *  Antiphonale Monasticum stars both notes of a dotted clivis (Regulæ, II a),
-   *  and for the horizontal episema, which is not yet ruled. */
-  _dislodges: boolean;
+  /** First note of a stropha run (ss / vv) — the run's ictus. */
+  _strophaHead: boolean;
+  /** Begins a group (the Liber's rule 3): a melismatic syllable's first note,
+   *  or the note after a separator other than `!` and `@`. */
+  _groupStart: boolean;
 }
 
 // GABC r1–r5, the signs gregorio prints over a note.
@@ -243,16 +236,17 @@ function parseNeume(
     /** Carries a pending accidental SIGN across syllables — see below. */
     pending: { acc: AccidentalValue | null };
     profile: ArticulationProfile;
+    /** Collects each note's ictus facts for the section pass. */
+    facts: Map<ParsedNote, IctusFacts>;
   },
 ): ParseResult["events"] {
-  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, cell, accent, accidentalState, pending, profile } =
+  const { lyric, runs, keepWithPrev, clef, oct, syllableIndex, cell, accent, accidentalState, pending, profile, facts } =
     context;
   const weights = profile.weights;
   const ruleGain = profile.ruleGain ?? 1.0;
   const contourScale = profile.contourScale ?? 0.2;
   const neumeArch = profile.neumeArch ?? 0.5;
   const durArch = profile.durArch ?? 0.08;
-  const ictusBoost = profile.ictusBoost ?? 1.08;
 
   // bmolle: set from clef key sig, updated by x/y modifiers within tokens
   let bmolle = clef.includes("b");
@@ -286,8 +280,8 @@ function parseNeume(
     let token = rawToken;
     let w = 0;
     let durWeight = 0;
-    let ictus = false;
-    let marked = false;
+    let strophaHead = false;
+    let groupStart = false;
     let isQuilisma = false;
     let isLiquescent = false;
     let isStrophicus = false;
@@ -397,8 +391,6 @@ function parseNeume(
     if (hasIctusSign || hasEpisema) {
       w += weights.ictusWeight;
       durWeight += weights.ictusDuration;
-      ictus = true;
-      marked = true;
     }
 
     // Mora vocis — the GABC dot '.' lengthens THIS note (a held note before a
@@ -409,8 +401,6 @@ function parseNeume(
     if (marks.includes(".")) {
       w += weights.episemaWeight;
       durWeight += weights.episemaDuration;
-      ictus = true;
-      marked = true;
       mora = 1;
       if (marks.includes("..")) {
         mora = 2;
@@ -422,8 +412,7 @@ function parseNeume(
     if (marks.includes("ss") || marks.includes("vv")) {
       w += weights.strophicusWeight;
       durWeight += weights.strophicusDuration;
-      ictus = true;
-      marked = true;
+      strophaHead = true;
       isStrophicus = true;
       if (marks.includes("sss") || marks.includes("vvv")) {
         durWeight += weights.strophicusTripleDuration;
@@ -439,21 +428,19 @@ function parseNeume(
       isQuilisma = true;
     }
 
-    // First note of neume (initio debilis treatment)
-    if (i === 0 || (accent && i === 2)) {
+    // First note of the syllable (initio debilis treatment). In a melisma it
+    // begins a group, the Liber's rule 3. The word accent weights its syllable
+    // but places no ictus: the Liber calls it "light, lifted up", and the
+    // ictus pass reads it only to choose a subdivision (ictus.ts).
+    if (i === 0) {
       w += weights.initioWeight;
       if (noteTokenCount > 1) {
-        ictus = true;
+        groupStart = true;
         w += weights.initioMelismaWeight;
         durWeight += weights.initioMelismaDuration;
       }
     }
-
-    // Accented syllable
-    if (accent) {
-      w += weights.accentWeight;
-      if (i === 0 || i === 2) ictus = true;
-    }
+    if (accent) w += weights.accentWeight;
 
     // Liquescent (softened ending: ~, <, >)
     if (
@@ -538,7 +525,7 @@ function parseNeume(
       staffLetter: letter,
       clef,
       shape,
-      ictus,
+      ictus: false,
       ictusSign: hasIctusSign,
       episema: hasEpisema,
       accidental: activeAccidental as AccidentalValue,
@@ -556,8 +543,8 @@ function parseNeume(
       mora,
       _weight: w,
       _durWeight: durWeight,
-      _marked: marked,
-      _dislodges: hasIctusSign || isStrophicus,
+      _strophaHead: strophaHead,
+      _groupStart: groupStart,
     });
   });
 
@@ -573,41 +560,8 @@ function parseNeume(
       // forbids: 12,999 of them, 5,349 on the quilisma itself.
       if (target.separator === "!") return;
       target._weight += weights.breakWeight;
-      target.ictus = true;
+      target._groupStart = true;
     }
-  });
-
-  // The Liber's rule 2, completed, and rule 3 made to yield to it [biblio:
-  // liber-usualis, Rules §VI]. Rule 2 puts the ictus on "the note before a
-  // quilisma", and on the pressus and oriscus "the first of the two notes
-  // forming the double note is the place of the ictus". Rule 3 (any note
-  // beginning a group) "holds good only when it does not clash with rules 1 or
-  // 2". The group-start ictus "is dislodged by a Pressus, or Oriscus, or by the
-  // vertical episema".
-  //
-  // A unison here is two notes on one pitch in one syllable (the pressus and the
-  // oriscus pair). A stropha run is not one: it holds its own ictus on its
-  // first note. Successive syllables on one pitch are recitation, which this
-  // per-syllable pass never sees.
-  const doubled = (a: IntermNote, b: IntermNote | undefined): boolean =>
-    !!b && b.step === a.step && !a.strophicus && !b.strophicus;
-  intermed.forEach((n, idx) => {
-    const next = intermed[idx + 1];
-    // A run on one pitch is one double note, its ictus on the first.
-    const prev = intermed[idx - 1];
-    const opensUnison = doubled(n, next) && !(prev && doubled(prev, n));
-    if (next?.quilisma || opensUnison) {
-      n.ictus = true;
-      n._marked = true;
-      n._dislodges = true;
-    }
-  });
-  intermed.forEach((n, idx) => {
-    if (n._marked) return;
-    const prev = intermed[idx - 1];
-    const next = intermed[idx + 1];
-    // The quilisma is the light note, its support on the note before.
-    if (n.quilisma || (prev && doubled(prev, n)) || next?._dislodges) n.ictus = false;
   });
 
   // A figure that is one liquescent note is the punctum liquescens, and it is
@@ -645,13 +599,13 @@ function parseNeume(
         Math.tanh((note._weight + contour) / profile.weightSaturation) +
       arch * neumeArch;
 
+    // The ictus boost and the clamp wait for the ictus, which is placed per
+    // section once every syllable is read (ictus.ts).
     let duration =
       profile.durationBase * (1 + profile.durationGain * Math.tanh(note._durWeight));
     duration *= 1 + arch * durArch;
-    if (note.ictus) duration *= ictusBoost;
-    duration = Math.max(profile.durationMin, Math.min(profile.durationMax, duration));
 
-    return {
+    const event: ParsedNote = {
       type: "note" as const,
       step: note.step,
       lyric: note.lyric,
@@ -686,6 +640,23 @@ function parseNeume(
       signum: note.signum,
       mora: note.mora,
     };
+    facts.set(event, {
+      sign: note.ictusSign,
+      episema: note.episema,
+      mora: note.mora,
+      strophaHead: note._strophaHead,
+      strophic: note.strophicus,
+      quilisma: note.quilisma,
+      groupStart: note._groupStart,
+      cell: note.cell,
+      step: note.step,
+      syllableFirst: idx === 0,
+      wordEnd: false,
+      stressed: false,
+      weakPenult: false,
+      rawDuration: duration,
+    });
+    return event;
   });
 
   return result;
@@ -704,6 +675,7 @@ export function parseGABC(
   );
   const errors: ParseResult["errors"] = [];
   const events: ParseResult["events"] = [];
+  const facts = new Map<ParsedNote, IctusFacts>();
   let cellSerial = 0;   // one per notated syllable cell — see ParsedNote.cell
   const source = (gabc || "").trim();
 
@@ -741,6 +713,9 @@ export function parseGABC(
     SYLLABLES_REGEX.lastIndex = 0;
     let match: RegExpExecArray | null;
     let syllableIndex = 0;
+    // The word's sung syllables, for the ictus pass: where the word ends, which
+    // syllable bears its stress, which is a weak penultimate.
+    const wordSyllables: { notes: ParsedNote[]; accent: boolean }[] = [];
 
     while ((match = SYLLABLES_REGEX.exec(word)) !== null) {
       const rawText = (match[1] ? match[1].trim().split("|")[0] : "") || "";
@@ -806,8 +781,13 @@ export function parseGABC(
             accidentalState,
             pending: pendingAccidental,
             profile: articulation,
+            facts,
           }),
         );
+        wordSyllables.push({
+          notes: events.slice(before).filter((e): e is ParsedNote => e.type === "note"),
+          accent,
+        });
           // The break lands on the FIRST note the marker precedes, and is
           // spent there. A `z` usually sits in a group with NO notes of its
           // own — "…(::) (z)Ps. E(g)ru…" — so the flag outlives that group
@@ -832,12 +812,43 @@ export function parseGABC(
 
       syllableIndex += 1;
     }
+    markWord(wordSyllables, facts);
   });
 
   if (events.length === 0) {
     errors.push({ message: "No parseable notation found" });
   }
   orientOrisci(events);
+  assignIctus(events, facts, {
+    ictusBoost: articulation.ictusBoost ?? 1.08,
+    durationMin: articulation.durationMin,
+    durationMax: articulation.durationMax,
+  });
 
   return { events, errors };
+}
+
+/**
+ * The word facts the ictus pass weighs. The editions mark the accent only on
+ * words of three syllables or more. A word of two carries it on the first, and
+ * a monosyllable carries none. In a proparoxytone (stress on the antepenult)
+ * the penultimate is the weak syllable the Liber says to avoid.
+ */
+function markWord(
+  syllables: { notes: ParsedNote[]; accent: boolean }[],
+  facts: Map<ParsedNote, IctusFacts>,
+): void {
+  const k = syllables.length;
+  if (k === 0) return;
+  let stress = syllables.findIndex((s) => s.accent);
+  if (stress < 0 && k === 2) stress = 0;
+  syllables.forEach((s, i) => {
+    for (const note of s.notes) {
+      const f = facts.get(note);
+      if (!f) continue;
+      f.wordEnd = i === k - 1;
+      f.stressed = i === stress;
+      f.weakPenult = k >= 3 && stress === k - 3 && i === k - 2;
+    }
+  });
 }

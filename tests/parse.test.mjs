@@ -256,7 +256,9 @@ describe("parseGABC", () => {
   const ictusOf = (gabc) => notes(gabc).map((e) => e.ictus);
 
   test("`!` keeps its neume: no group-start ictus after it", () => {
-    assert.deepEqual(ictusOf("(c4) A(fg!hi) (::)"), [true, false, false, false]);
+    assert.deepEqual(ictusOf("(c4) A(fg!h) (::)"), [true, false, false]);
+    // Four notes still take a second ictus: the subdivision's 2+2, not the `!`.
+    assert.deepEqual(ictusOf("(c4) A(fg!hi) (::)"), [true, false, true, false]);
   });
 
   test("rule 2: the note before a quilisma takes the ictus, the quilisma none", () => {
@@ -276,6 +278,30 @@ describe("parseGABC", () => {
     assert.deepEqual(ictusOf("(c4) A(fg'h) (::)"), [false, true, false]);
     // The AM stars both notes of a dotted clivis (Regulæ, II a).
     assert.deepEqual(ictusOf("(c4) A(hg.) (::)"), [true, true]);
+  });
+
+  test("a horizontal episema over a group lengthens it; the group's rhythm places the ictus", () => {
+    // Over one note it "generally receives the ictus".
+    assert.deepEqual(ictusOf("(c4) A(h_g) (::)"), [true, false]);
+    // Over a group, one ictus at the group start, not one per note.
+    assert.deepEqual(ictusOf("(c4) A(h_g_f_) (::)"), [true, false, false]);
+  });
+
+  test("the subdivision: more than three notes are cut 2+2, 2+3 or 3+2", () => {
+    assert.deepEqual(ictusOf("(c4) A(hgfe) (::)"), [true, false, true, false]);
+    // Five: the count-back puts the twos nearest the bar, so 3+2.
+    assert.deepEqual(ictusOf("(c4) A(hgfed) (::)"), [true, false, false, true, false]);
+  });
+
+  test("syllabic: the word accent places no ictus; word endings are preferred", () => {
+    // The dotted final is the last certain ictus. Before it, five plain notes
+    // are cut 2+3: "Dó-mi | nus vo bís". The word ending -nus wins over the
+    // accented -bís, and the weak penultimate -mi- is passed over.
+    const n = notes("(c4) Dó(g)mi(g)nus(g) vo(g)bís(g)cum(g.) (::)");
+    assert.equal(n.length, 6);
+    assert.deepEqual(n.map((e) => e.ictus), [true, false, true, false, false, true]);
+    // Never two in succession without a double note.
+    for (let i = 1; i < n.length; i++) assert.ok(!(n[i].ictus && n[i - 1].ictus));
   });
 
   // ── Pipe separator in lyrics ──
