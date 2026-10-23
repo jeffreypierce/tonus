@@ -971,6 +971,25 @@ tonus stores the quality as `Performance.rhythmicShape` rather than as a
 velocity signal. Phrases, bounded by any divisio, serve as the
 **incise**, the unit within which rhythm is judged.
 
+The ictus follows the Liber's Rules for Interpretation, section by section
+between bars:
+
+1. Every vertical episema takes it.
+2. So does every sustained note: the first of a distropha, tristropha,
+   bivirga, pressus or oriscus pair, a dotted note, and the note before a
+   quilisma.
+3. So does any note that begins a group, unless rules 1 or 2 claim a note
+   beside it.
+
+Two ictus never fall in succession unless the first is of double value. The
+one exception, a group start before its own dotted note, is taken from the
+Antiphonale Monasticum. Wherever more than three notes would pass without an
+ictus, the run is cut 2+2, 2+3 or 3+2. The cut prefers word endings, then
+accented syllables, and avoids a weak penultimate. Where those tie, it counts
+back by twos from the next ictus. The word accent never places an ictus on its
+own. A horizontal episema over one note takes the ictus; over a group, it
+lengthens the group.
+
 ### The classification rules
 
 The classifier applies Carroll's three melodic rules in priority order
