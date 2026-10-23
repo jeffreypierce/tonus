@@ -17,7 +17,9 @@
 //
 // Ictus (the rhythmic footfall) is assigned by the Liber's three rules, in
 // priority order:
-//   1. an ictus falls on any note bearing a vertical episema (GABC ' or _);
+//   1. an ictus falls on any note bearing a vertical episema (GABC '), and on a
+//      horizontal episema (_), which the Liber says "generally receives the
+//      ictus ... this need not be always the case";
 //   2. on sustained/doubled elements — distropha, tristropha, bivirga, pressus,
 //      oriscus, a dotted note, the note before a quilisma;
 //   3. otherwise on the first note of each group, unless displaced by 1 or 2.
@@ -555,6 +557,17 @@ function parseNeume(
       target.separator = breakKinds[bi]!;
     }
   });
+
+  // A figure that is one liquescent note is the punctum liquescens, and it is
+  // drawn out a little (see punctumLiquescensDuration). Whether a note stands
+  // alone is known only once the syllable's figures are, so it is read here.
+  const figureSize = new Map<number, number>();
+  for (const n of intermed) figureSize.set(n.neumeGroup, (figureSize.get(n.neumeGroup) ?? 0) + 1);
+  for (const n of intermed) {
+    if (n.liquescent && figureSize.get(n.neumeGroup) === 1) {
+      n._durWeight += weights.punctumLiquescensDuration;
+    }
+  }
 
   // Finalization pass: arch + melodic contour + tanh saturation
   const result: ParseResult["events"] = intermed.map((note, idx) => {

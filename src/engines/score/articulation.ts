@@ -24,13 +24,14 @@
 // by ear, not taken from a table — the sources fix the direction, not the value.
 
 import type {
+  ArticulationOverrides,
   ArticulationProfile,
   ArticulationType,
   ArticulationWeights,
 } from "./types.js";
 
 export interface BuildArticulationOptions {
-  overrides?: Partial<ArticulationProfile>;
+  overrides?: ArticulationOverrides;
 }
 
 const BASE_WEIGHTS: ArticulationWeights = {
@@ -53,10 +54,21 @@ const BASE_WEIGHTS: ArticulationWeights = {
   // Hence prev is positive and the quilisma negative — not a sign error.
   quilismaPrevWeight: 0.6,
   quilismaWeight: -0.3,
-  // Liquescent — a diminished, half-voiced note easing a consonant cluster:
-  // lighter and shorter.
+  // Liquescent — a half-voiced note easing a diphthong or a consonant cluster.
+  // It is LIGHTER, NOT SHORTER. The half-note seems "to lose half its force
+  // rather than its duration", and the small type "does not affect their
+  // duration nor their execution, except in that they must be sung lightly"
+  // [biblio: liber-usualis, preface and Rules §10]. So the duration delta is 0.
+  // A choir that clips liquescents, the common modern habit, does it through
+  // an override and not in the default (ruled 2026-10-22: the LU is the rubric).
   liquescentWeight: -0.4,
-  liquescentDuration: -0.35,
+  liquescentDuration: 0,
+  // Punctum liquescens — a lone note carrying a liquescence. It is the
+  // Antiphonale Monasticum's sign, and the LU has none. The AM fills that gap:
+  // the syllable, "nedum valore suo partim privetur, aliquantulum protracte,
+  // dulcius et quasi rotunde cantari debet". Far from losing value, it is drawn
+  // out a little. It also takes the liquescent lightening ("dulcius").
+  punctumLiquescensDuration: 0.15,
   // Initio — the first note of a group/melisma gets a gentle onset stress.
   initioWeight: 0.6,
   initioMelismaWeight: 0.3,
@@ -151,7 +163,6 @@ const ARTICULATION_PROFILES: Record<ArticulationType, ArticulationProfile> = {
       episemaDuration: 1.0,
       quilismaPrevWeight: 0.7,
       quilismaWeight: -0.4,
-      liquescentDuration: -0.4,
     },
     weightBase: 5,
     weightGain: 3.2,

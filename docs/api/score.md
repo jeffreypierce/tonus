@@ -201,12 +201,24 @@ The `pondus` profile (`ArticulationProfile`):
 
 | field                                                        | governs                                                                                            |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `weights`                                                    | per-mark weight and duration multipliers: ictus, episema (single and double), strophicus, quilisma |
+| `weights`                                                    | per-mark weight and duration deltas: ictus, episema, strophicus, quilisma, liquescent, oriscus, …  |
 | `weightBase`, `weightGain`, `weightSaturation`               | how ornament weight accumulates and where it caps                                                  |
 | `durationBase`, `durationGain`, `durationMin`, `durationMax` | how accumulated weight maps to note duration                                                       |
 | `neumeArch`, `durArch`                                       | arch shaping across a neume, in weight and duration                                                |
 | `ictusBoost`                                                 | extra weight on ictic notes                                                                        |
 | `ruleGain`, `contourScale`                                   | strength of rule-driven and contour-driven shaping                                                 |
+
+`weights` merges key by key, so one mark can change on its own. The defaults
+follow the Liber's rubrics, and taste goes through an override. A liquescent,
+for instance, is lighter but not shorter: it loses "half its force rather than
+its duration". The Antiphonale Monasticum's punctum liquescens, a lone
+liquescent note, is drawn out a little. A choir that clips liquescents sets:
+
+```js
+tonus.notatio(chant, {
+  pondus: { overrides: { weights: { liquescentDuration: -0.35 } } },
+});
+```
 
 The `accentus` profile (`PhrasingProfile`):
 
