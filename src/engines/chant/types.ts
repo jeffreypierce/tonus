@@ -57,7 +57,13 @@ export type ChantSource =
   // eleven listings are all sole — the ferial weekday antiphons, "Per singulos
   // dies" among them. The admission rule is stated at extract-gregobase.mjs
   // OFFICE_BOOKS, and the cut beside it.
-  | "psm";
+  | "psm"
+  // Hildegard von Bingen (2026-10-22): the Symphonia and the Ordo Virtutum,
+  // two works from one edition (hildegabc), shelved as two books so each has
+  // its own listing and its own census bin. They carry no rhythmic marks; they
+  // are admitted as a repertoire to compare with the Gregorian books, not as
+  // more of the same shelf.
+  | "sym" | "ov";
 
 export type CanonicalHour =
   | "matutinum" | "laudes" | "prima" | "tertia" | "sexta" | "nona"

@@ -67,7 +67,14 @@ describe("census — the blocks address the right chants", () => {
     // chants without one are exactly the formulas. A block for a formula, or a
     // censused chant missing one, both fail here.
     const shelf = new Set();
+    // ⟨2026-10-22⟩ Hildegard's two books (sym, ov) are on the shelf and NOT in
+    // the census: the census measures the Gregorian repertoire, and whether
+    // her works get a census of their own is still to be decided. Until then
+    // they are left out here by name, which is the one place a book list is
+    // allowed to be hardcoded: the exclusion is the claim.
+    const uncensused = new Set(["sym", "ov"]);
     for (const book of corpus().books) {
+      if (uncensused.has(book.code)) continue;
       for (const c of cantus({ source: book.code })) shelf.add(c.id);
     }
     for (const code of ["ke", "gl", "cr", "sa", "ag", "be", "it", "as", "va"]) {

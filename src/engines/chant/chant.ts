@@ -17,13 +17,24 @@ import { NR_DATA, NR_SOURCE } from "../../data/nocturnale-romanum.js";
 // Office books — the antiphons and short responsories that fill weekday
 // office slots; see ChantSource in types.ts for why.
 import { PSM_DATA, PSM_SOURCE } from "../../data/psm.js";
+// Hildegard's two works — see ChantSource in types.ts.
+import { SYM_DATA, SYM_SOURCE, OV_DATA, OV_SOURCE } from "../../data/hildegard.js";
 // Further marked Solesmes books — see ChantSource in types.ts.
 import { KYRIALE } from "../../data/kyriale.js";
 import { entryToOrdinaryChant } from "./ordinary.js";
 
+// A transposed mode, as the Cantus Database writes it ("1T", Hildegard's
+// books): one of the eight, moved up a fifth, so its name is that mode's with
+// "transpositus". MODI stays the eight church modes; the suffix is read here.
+const TRANSPOSED = /^([1-8])T$/;
 function modusOf(mode: string | null): string | null {
-  return mode != null ? (MODI[mode] ?? null) : null;
+  if (mode == null) return null;
+  if (MODI[mode]) return MODI[mode];
+  const t = TRANSPOSED.exec(mode);
+  return t ? `${MODI[t[1]]} transpositus` : null;
 }
+/** Tally order: 1–8, then 1T–8T. */
+const MODE_ORDER = [...Object.keys(MODI), ...Object.keys(MODI).map((m) => `${m}T`)];
 
 const HEADER_FIELD_REGEX = /([A-Za-z0-9_-]+)\s*:\s*([^;]*);/g;
 
@@ -147,6 +158,8 @@ const CORPUS: Chant[] = [
   ...AM_DATA.map((c) => withLabels(c, AM_SOURCE)),
   ...NR_DATA.map((c) => withLabels(c, NR_SOURCE)),
   ...PSM_DATA.map((c) => withLabels(c, PSM_SOURCE)),
+  ...SYM_DATA.map((c) => withLabels(c, SYM_SOURCE)),
+  ...OV_DATA.map((c) => withLabels(c, OV_SOURCE)),
 ];
 
 // The Kyriale, addressable but not shelved — ruled 2026-08-04.
@@ -195,6 +208,8 @@ export const SOURCES: Record<ChantSource, Chant["source"]> = {
   gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
   // office books — provenance, not acquisition
   psm: PSM_SOURCE,
+  // Hildegard — two works, two books, one edition
+  sym: SYM_SOURCE, ov: OV_SOURCE,
 };
 
 // Tally a book's genre and mode distribution — computed once per code, cached.
@@ -241,12 +256,13 @@ function generaRows(tally: Record<string, number>): GenusCount[] {
     .sort((a, b) => b.count - a.count || (a.office < b.office ? -1 : 1));
 }
 
-/** Sort a raw mode tally into ModeCount rows: 1–8 in order, then the rest. */
+/** Sort a raw mode tally into ModeCount rows: 1–8, then the transposed modes,
+ *  then the rest. */
 function modesRows(tally: Record<string, number>): ModeCount[] {
   const rows: ModeCount[] = [];
-  for (const m of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
+  for (const m of MODE_ORDER) {
     const count = tally[m];
-    if (count) rows.push({ mode: m, modus: MODI[m]!, count });
+    if (count) rows.push({ mode: m, modus: modusOf(m)!, count });
   }
   // The extractor buckets differentia forms, tonus peregrinus and unlabelled
   // chants together under "other" — the same bucket the shipped counts report
@@ -291,7 +307,7 @@ function corpusLedger(): CorpusLedger {
   const modes: Record<string, number> = {};
   for (const c of byId().values()) {
     genera[c.office] = (genera[c.office] ?? 0) + 1;
-    const m = c.mode != null && MODI[c.mode] ? c.mode : "other";
+    const m = c.mode != null && modusOf(c.mode) ? c.mode : "other";
     modes[m] = (modes[m] ?? 0) + 1;
   }
 
@@ -326,12 +342,13 @@ function oneCorpus(code: ChantSource): Corpus {
 
   // Genre distribution — count by office code, descending by count.
   const officeCounts = new Map<OfficeCode, number>();
-  // Mode distribution — count by mode 1–8; everything else (p/d/e, null) into one bucket.
+  // Mode distribution — count by mode 1–8 and the transposed modes; everything
+  // else (p/d/e, null) into one bucket.
   const modeCounts = new Map<string, number>();
   let otherModes = 0;
   for (const c of chants) {
     officeCounts.set(c.office, (officeCounts.get(c.office) ?? 0) + 1);
-    if (c.mode != null && MODI[c.mode]) {
+    if (c.mode != null && modusOf(c.mode)) {
       modeCounts.set(c.mode, (modeCounts.get(c.mode) ?? 0) + 1);
     } else {
       otherModes++;
@@ -343,9 +360,9 @@ function oneCorpus(code: ChantSource): Corpus {
     .sort((a, b) => b.count - a.count);
 
   const modes: ModeCount[] = [];
-  for (const m of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
+  for (const m of MODE_ORDER) {
     const count = modeCounts.get(m);
-    if (count) modes.push({ mode: m, modus: MODI[m], count });
+    if (count) modes.push({ mode: m, modus: modusOf(m)!, count });
   }
   if (otherModes > 0) modes.push({ mode: null, modus: null, count: otherModes });
 

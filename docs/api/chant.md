@@ -32,7 +32,8 @@ carries page-level provenance back to its book.
 
 Six Solesmes books, extracted from
 [GregoBase](https://gregobase.selapa.net/), joined by the Divinum Officium
-propers, office, and psalter, plus the Nocturnale Romanum for the night office:
+propers, office, and psalter, plus the Nocturnale Romanum for the night office
+and Hildegard von Bingen's two works:
 
 | Source | Book                    | Edition        | Chants |
 | ------ | ----------------------- | -------------- | ------ |
@@ -43,13 +44,15 @@ propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 | `am`   | Antiphonale Monasticum  | Solesmes, 1934 | 1,448  |
 | `psm`  | Psalterium Monasticum   | Solesmes, 1981 | 60     |
 | `nr`   | Nocturnale Romanum      | Sandhofe, 2002 | 1,549  |
+| `sym`  | Symphonia               | Pierce, 2026   | 80     |
+| `ov`   | Ordo Virtutum           | Pierce, 2026   | 83     |
 
-**7,825 chants in all**, the Mass ordinary among them (120 settings, reached by
+**7,988 chants in all**, the Mass ordinary among them (120 settings, reached by
 [`ordinary`](#reaching-the-ordinary--ordinary) rather than by book). That is the
 books themselves: tonus carries what they print, whether or not the calendar
 reaches it.
 
-The seven books list 9,743 rows for those 7,825 chants: a melody printed in two
+The nine books list 9,906 rows for those 7,988 chants: a melody printed in two
 books is stored once and listed under each, with each book's own page citation.
 
 `am` and `psm` are the monastic (Benedictine) books; the rest are
@@ -57,8 +60,18 @@ Roman. Every book here bears the rhythmic markings the score engine reads; that
 is the admission rule. `nr` is the night-office repertoire (responsories,
 antiphons) from the
 [Nocturnale Romanum](https://github.com/Nocturnale-Romanum/nocturnale-romanum)
-community restitution, the one non-Solesmes source, admitted because it carries
-those marks too.
+community restitution, admitted because it carries those marks too.
+
+`sym` and `ov` are the exception to that rule. They are Hildegard von Bingen's
+Symphonia (77 chants in 80 files: three are shelved in both their Dendermonde
+and Riesencodex readings, `041D` and `041R`) and Ordo Virtutum (83 sung items, all
+`dr`), from the [hildegabc](https://github.com/jeffreypierce/hildegabc)
+edition: pitch from Lomer's transcriptions and the Cantus Database, text from
+Newman. They carry no rhythmic marks, and they are not Gregorian: they are on
+the shelf as a repertoire to compare with the Roman and monastic books. Their
+modes are the Cantus Database's, transposed modes kept as written (`1T`,
+`modus` "Modus I transpositus"); the Ordo has none. Their `pages` carry the
+manuscript folio.
 
 ### The shelf is the books
 
@@ -93,12 +106,12 @@ book's ledger:
 
 ```js
 tonus.corpus();
-// { count: 7825,      // chants tonus holds, each counted once
-//   listings: 9743,   // rows on the shelf — a chant in two books appears twice
-//   total: 9796,     // what the books hold, before dedup
-//   genera: [ { office: "an", genus: "Antiphona", count: 3959 }, … ],
-//   modes:  [ { mode: "1", modus: "Modus I", count: 1505 }, … ],
-//   books:  [ …7 Corpus entries, in registry order ] }
+// { count: 7988,      // chants tonus holds, each counted once
+//   listings: 9906,   // rows on the shelf — a chant in two books appears twice
+//   total: 9959,     // what the books hold, before dedup
+//   genera: [ { office: "an", genus: "Antiphona", count: 3961 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 1514 }, … ],
+//   books:  [ …9 Corpus entries, in registry order ] }
 ```
 
 **`count` is the number of chants**, the one to quote. `listings` is how long
