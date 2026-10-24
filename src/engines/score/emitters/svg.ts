@@ -1226,10 +1226,22 @@ export function toSvg(
     }
 
     // Close the current system and open the next, optionally guiding the eye
-    // with a custos at `nextPos`. Both break paths (divisio and word boundary)
+    // with a custos naming `next`. Both break paths (divisio and word boundary)
     // route through here so the two cannot drift apart.
-    const closeSystem = (nextPos: number | null): void => {
-      if (r.custos && nextPos != null) {
+    //
+    // A clef change on the next note is announced at the end of this line,
+    // as the forced break (`z`) already did: the new clef, then the custos in
+    // it, and the next line opens on it. Drawn only at the next line's head,
+    // the custos was read in the old clef and named the wrong pitch, and the
+    // new line opened with both clefs side by side (symphonia:030, once its
+    // neumes were the manuscript's and a width break fell before "cus").
+    const closeSystem = (next: ChantTabulaRow, custos: boolean): void => {
+      if (next.clef !== activeClef) {
+        activeClef = next.clef;
+        x = drawClef(activeClef, x + r.interGlyph);
+      }
+      const nextPos = next.staffPosition;
+      if (r.custos && custos) {
         const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
                              yFor(nextPos, L, r), r, "custos", "",
                              r.noteScale * CUSTOS_FACTOR);
@@ -1400,27 +1412,10 @@ export function toSvg(
         //
         // After a minor divisio it earns its place: the phrase is punctuated,
         // not finished, and the eye still has to find the next pitch.
-        if (r.custos && div !== "::") {
-          // The line-end guide naming the next system's first pitch, drawn as
-          // the real custos now that the bake carries one (see gabc-glyphs.ts).
-          const nextPos = rows[j]!.staffPosition;
-
-          const p = placeGlyph(custosGlyph(nextPos), custosX(x, prevLyricRight, r),
-            yFor(nextPos, L, r), r, "custos", "", r.noteScale * CUSTOS_FACTOR);
-          if (p) { ledger(nextPos, p.inkLeft, p.inkRight); body.push(p.svg); }
-        }
-        systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
-        system++;
-        L.systemY += L.systemHeight;
-        x = r.padding;
-        // The clef repeats at the head of every system.
-        x = drawClef(activeClef, x);
-        afterDivisio = false; // a fresh system starts clean, not "after a divisio"
-        freshSystem = true;
-        // Forget the previous system's rightmost lyric — otherwise the lyric-
-        // column rule would shove this system's first syllable across the page
-        // to clear a lyric that is now a line above.
-        prevLyricRight = -Infinity;
+        // The custos is the line-end guide naming the next system's first
+        // pitch, drawn as the real custos now that the bake carries one (see
+        // gabc-glyphs.ts). The clef repeats at the head of every system.
+        closeSystem(rows[j]!, div !== "::");
       }
     }
 
@@ -1475,7 +1470,7 @@ export function toSvg(
         lineStart: r.padding,
         forcedHandled: true,
       });
-      if (wordVerdict.break) closeSystem(rows[j]!.staffPosition);
+      if (wordVerdict.break) closeSystem(rows[j]!, true);
     }
 
     prevSyllable = syllableIndex;
