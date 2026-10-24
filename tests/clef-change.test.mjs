@@ -114,6 +114,20 @@ describe("clef changes — Hildegard's chants", () => {
           if (e.before != null) assert.ok(glyph.x < e.before, `clef ${k} precedes the note after it`);
         });
 
+        // Every custos names the next line's first note on THIS line's staff,
+        // in the clef drawn just before it: the new one, when a change falls
+        // on the break.
+        const custodes = [...svg.matchAll(/<g class="custos" transform="translate\(([\d.-]+) ([\d.-]+)\)/g)]
+          .map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+        const breaks = rows.map((_, i) => i).filter((i) => i > 0 && geometry[i].system !== geometry[i - 1].system);
+        for (const c of custodes) {
+          const i = breaks.find((b) => c.y >= geometry[b - 1].systemY && c.y < geometry[b].systemY);
+          assert.ok(i != null, `custos at y ${c.y} closes a line`);
+          const y = staffOf(rows, geometry, geometry[i - 1].system)(rows[i].staffPosition);
+          assert.ok(Math.abs(c.y - y) < 0.05,
+            `custos before row ${i} (${rows[i].clef}) names its note: y ${c.y} vs ${y.toFixed(2)}`);
+        }
+
         // The staff letter places a quadrata note whatever the clef. So within
         // a system one letter is one height, before a change and after it.
         const heights = new Map();
