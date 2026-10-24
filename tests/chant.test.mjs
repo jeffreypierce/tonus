@@ -413,11 +413,27 @@ describe("getCorpus — Hildegard's two books", () => {
     assert.equal(t.modus, "Modus I transpositus");
   });
 
-  test("ov is the Ordo Virtutum: 83 sung items, all `dr`, no mode", () => {
+  test("ov is the Ordo Virtutum: 83 sung items, all `dr`, moded as the Symphonia is", () => {
     const ov = getCorpus("ov");
     assert.equal(ov.count, 83);
     assert.deepEqual(ov.genera.map((g) => g.office), ["dr"]);
-    assert.deepEqual(ov.modes, [{ mode: null, modus: null, count: 83 }]);
+    // Both works take their modes from the Cantus Database's index of the
+    // Riesencodex, so Hildegard reads alike in either book.
+    assert.ok(!ov.modes.some((m) => m.mode === null), "every sung item is moded");
+    assert.equal(ov.modes.find((m) => m.mode === "4").count, 33);
+    assert.equal(ov.modes.find((m) => m.mode === "6T").modus, "Modus VI transpositus");
+    const [first] = getChants({ id: "ordo:001" });
+    assert.equal(first.mode, "2");
+    assert.equal(first.modus, "Modus II");
+  });
+
+  test("every Hildegard record carries the Cantus id its source names", () => {
+    const all = [...getChants({ source: "sym" }), ...getChants({ source: "ov" })];
+    assert.equal(all.length, 163);
+    assert.ok(all.every((c) => typeof c.cantusId === "string" && c.cantusId.length > 0));
+    // The Symphonia's respond, not its verse (a00518a).
+    assert.equal(getChants({ id: "symphonia:001" })[0].cantusId, "a00518");
+    assert.equal(getChants({ id: "ordo:001" })[0].cantusId, "007484");
   });
 
   test("a Symphonia chant answers by id with its genus, modus and folio", () => {
@@ -434,6 +450,18 @@ describe("getCorpus — Hildegard's two books", () => {
     const ids = getChants({ source: "sym" }).map((c) => c.id);
     const pairs = ids.filter((id) => /\d[DR]$/.test(id));
     assert.equal(pairs.length, 6, "three chants, each in D and R");
+  });
+});
+
+describe("cantusId on every chant record", () => {
+  test("a Gregorian chant carries the id its attestation was read from", () => {
+    const [c] = getChants({ id: "gregobase:10" });
+    assert.equal(c.cantusId, "g03522c");
+  });
+
+  test("a chant with no known id reports null, not undefined", () => {
+    const [u] = getChants({ gabc: "(c4) A(g) (::)" });
+    assert.equal(u.cantusId, null);
   });
 });
 

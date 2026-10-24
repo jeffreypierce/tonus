@@ -11,6 +11,7 @@ import {
 } from "./data/masses.js";
 import { KYRIALE, type KyrialeEntry, type KyrialeSection } from "../../data/kyriale.js";
 import { attestationCutoff, eraCutoff, chantAdmissible } from "./attest.js";
+import { ATTESTATION } from "../../data/attestation.js";
 import { CANTUS_QUERY_KEYS } from "./types.js";
 import {
   KY_SOURCE,
@@ -373,6 +374,7 @@ export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
     genus: OFFICIA.ky,
     mode: entry.mode ? String(entry.mode) : null,
     modus: entry.mode ? (MODI[String(entry.mode)] ?? null) : null,
+    cantusId: ATTESTATION[entry.id]?.cantusId ?? null,
     pages,
     // Still KY_SOURCE: the bibliographic note says a singer is holding the
     // Kyriale, which is true, and is a different claim from which shelved

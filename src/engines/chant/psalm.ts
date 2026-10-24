@@ -56,6 +56,8 @@ function verseToChant(
     genus: "Psalmus",
     mode: String(mode),
     modus: mode === 0 ? "Tonus Peregrinus" : (MODI[String(mode)] ?? `Modus ${mode}`),
+    // A verse pointed at request time has no Cantus entry of its own.
+    cantusId: null,
     pages: [],
     source: {
       book: "Psalterium",

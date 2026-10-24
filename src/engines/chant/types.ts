@@ -205,6 +205,13 @@ export interface Chant {
   mode: string | null;       // raw from source: "1"–"8", "*", "†" …
   modus: string | null;      // Latin mode name, "Modus I"–"Modus VIII";
                              // "Tonus Peregrinus" for psalm tone P
+  /**
+   * The chant's Cantus Database id (cantusdatabase.org), or null where none is
+   * known. Hildegard's books carry the id their source names. The Gregorian
+   * books carry the id the attestation data was read from, which is a text
+   * match against Cantus, not a citation printed in the book.
+   */
+  cantusId: string | null;
   pages: { page: string; sequence: number; extent: number }[];
   source: {
     book: string;

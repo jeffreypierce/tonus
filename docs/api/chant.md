@@ -69,9 +69,10 @@ and Riesencodex readings, `041D` and `041R`) and Ordo Virtutum (83 sung items, a
 edition: pitch from Lomer's transcriptions and the Cantus Database, text from
 Newman. They carry no rhythmic marks, and they are not Gregorian: they are on
 the shelf as a repertoire to compare with the Roman and monastic books. Their
-modes are the Cantus Database's, transposed modes kept as written (`1T`,
-`modus` "Modus I transpositus"); the Ordo has none. Their `pages` carry the
-manuscript folio.
+modes are the Cantus Database's, from its index of the manuscripts, for both
+works alike. Transposed modes are kept as written (`1T`, `modus` "Modus I
+transpositus"). Their `pages` carry the manuscript folio, and their `cantusId`
+is the one the edition cites.
 
 ### The shelf is the books
 
@@ -110,7 +111,7 @@ tonus.corpus();
 //   listings: 9906,   // rows on the shelf — a chant in two books appears twice
 //   total: 9959,     // what the books hold, before dedup
 //   genera: [ { office: "an", genus: "Antiphona", count: 3961 }, … ],
-//   modes:  [ { mode: "1", modus: "Modus I", count: 1514 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 1532 }, … ],
 //   books:  [ …9 Corpus entries, in registry order ] }
 ```
 
@@ -282,6 +283,7 @@ interface Chant {
   genus: string; // Latin genre name, "Antiphona", "Introitus" …
   mode: string | null; // raw from source: "1"–"8", differentia forms ("2d", "8g"), "p"/"d"/"e" …
   modus: string | null; // Latin mode name, "Modus I"–"Modus VIII"
+  cantusId: string | null; // Cantus Database id, where one is known — see below
   books: (ChantSource | "user" | "ky")[]; // every book that prints it
   pages: { page: string; sequence: number; extent: number }[]; // the presented book's
 
@@ -311,6 +313,14 @@ interface CantusQuery {
   sort?: "incipit" | "mode" | "id";
 }
 ```
+
+`cantusId` links a chant to the [Cantus Database](https://cantusdatabase.org).
+Where its source names one, the record carries that id: every Symphonia and
+Ordo record cites the edition's own. On the Gregorian books it is the id the
+attestation data was read from (the era view's `before`), which is a text
+match against Cantus, not a citation printed in the book. About 6,300 of the
+shelf's chants have one. A chant parsed from raw GABC, or a psalm verse
+pointed at request time, reports `null`.
 
 ### Reaching the ordinary — `ordinary`
 

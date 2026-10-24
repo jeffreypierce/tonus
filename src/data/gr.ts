@@ -29,6 +29,9 @@ export interface ChantData {
   gabc: string;
   office: OfficeCode;
   mode: string | null;
+  /** The Cantus Database id, where the source itself names one (Hildegard's
+   *  books). The Gregorian books' ids ride the attestation data instead. */
+  cantusId?: string | null;
   /** Every book that prints this chant, the one storing the record first. */
   books?: string[];
   /**
