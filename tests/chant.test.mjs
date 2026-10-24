@@ -234,7 +234,8 @@ describe("getCorpus", () => {
     // each was the SOLE source of nothing — every chant they listed was already
     // on the shelf under gr, lu or am — so removing all three emptied no slot on
     // any day of the year. ky rides inside rather than as its own row.
-    assert.equal(L.books.length, 7, "every registered book is in the ledger");
+    // Nine since 2026-10-22: Hildegard's Symphonia (sym) and Ordo Virtutum (ov).
+    assert.equal(L.books.length, 9, "every registered book is in the ledger");
     assert.ok(L.count > 0 && L.listings > 0 && L.total > 0);
     // `count` leads and means chants — each one once, the ordinary included.
     // `listings` is the shelf's length, where a melody printed in two books
@@ -391,6 +392,48 @@ describe("getCorpus", () => {
   test("unknown code throws (message lists the known codes)", () => {
     assert.throws(() => getCorpus("zz"), /Unknown corpus code/);
     assert.throws(() => getCorpus("zz"), /nr/); // derived list includes nr now
+  });
+});
+
+describe("getCorpus — Hildegard's two books", () => {
+  // Two works from one edition (hildegabc), shelved as two books so each has
+  // its own listing. Neither carries rhythmic marks; they are a repertoire to
+  // compare with the Gregorian books, not more of that shelf.
+  test("sym is the Symphonia: 80 files for 77 chants, three in D and R", () => {
+    const sym = getCorpus("sym");
+    assert.equal(sym.count, 80);
+    // Each work is its own book; the shared printing is the edition.
+    assert.equal(sym.book, "Symphonia");
+    assert.equal(getCorpus("ov").book, "Ordo Virtutum");
+    assert.equal(sym.total, 80, "the edition ships whole: full is shipped");
+    assert.deepEqual(sym.shared, [], "nothing on the Gregorian shelf prints these");
+    // The transposed modes are real rows, not swept into "other".
+    const t = sym.modes.find((m) => m.mode === "1T");
+    assert.ok(t && t.count > 0, "mode 1T is tallied");
+    assert.equal(t.modus, "Modus I transpositus");
+  });
+
+  test("ov is the Ordo Virtutum: 83 sung items, all `dr`, no mode", () => {
+    const ov = getCorpus("ov");
+    assert.equal(ov.count, 83);
+    assert.deepEqual(ov.genera.map((g) => g.office), ["dr"]);
+    assert.deepEqual(ov.modes, [{ mode: null, modus: null, count: 83 }]);
+  });
+
+  test("a Symphonia chant answers by id with its genus, modus and folio", () => {
+    const [c] = getChants({ id: "symphonia:001" });
+    assert.equal(c.incipit, "O vis eternitatis");
+    assert.equal(c.office, "re");
+    assert.equal(c.genus, "Responsorium");
+    assert.equal(c.modus, "Modus IV");
+    assert.deepEqual(c.books, ["sym"]);
+    assert.equal(c.pages[0].page, "R 466ra", "the folio rides pages");
+  });
+
+  test("the D and R readings of one chant are two records", () => {
+    const ids = getChants({ source: "sym" }).map((c) => c.id);
+    const pairs = ids.filter((id) => /\d[DR]$/.test(id));
+    assert.equal(pairs.length, 6, "three chants, each in D and R");
   });
 });
 
