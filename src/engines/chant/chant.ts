@@ -8,6 +8,7 @@ import type {
 import { OFFICIA, MODI, CANTUS_QUERY_KEYS, assertOrdinaryCodes } from "./types.js";
 import { CORPUS_OVERLAP, CORPUS_FULL } from "../../data/corpus-overlap.js";
 import { attestationCutoff, chantAdmissible } from "./attest.js";
+import { ATTESTATION } from "../../data/attestation.js";
 import { GR_DATA, GR_SOURCE, type ChantData } from "../../data/gr.js";
 import { LU_DATA, LU_SOURCE } from "../../data/lu.js";
 import { LA_DATA, LA_SOURCE } from "../../data/la.js";
@@ -93,6 +94,7 @@ function chantFromGABC(query: CantusQuery): Chant[] {
     genus: OFFICIA[office] ?? office,
     mode: mode ?? null,
     modus: modusOf(mode ?? null),
+    cantusId: null,
     pages: [],
     source: { book: "User", year: null, editor: null, code: "user" },
   }];
@@ -147,6 +149,7 @@ function withLabels(c: ChantData, source: Chant["source"]): Chant {
     pages: pagesFor(c, source.code),
     genus: OFFICIA[c.office as OfficeCode] ?? c.office,
     modus: modusOf(c.mode),
+    cantusId: c.cantusId ?? ATTESTATION[c.id]?.cantusId ?? null,
   };
 }
 

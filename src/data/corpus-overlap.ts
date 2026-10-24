@@ -1,6 +1,6 @@
 // corpus-overlap.ts — pre-dedup chant-count relationships between the books
 // Extracted from GregoBase (chant-id sets) by scripts/extract-gregobase.mjs
-// Generated: 2026-09-02T05:09:24.171Z
+// Generated: 2026-10-24T15:05:15.131Z
 //
 // tonus stores one record per chant, owned by the first book in PRIMARY_ORDER
 // that prints it, so a book's STORED count is less than what it LISTS. This
@@ -302,7 +302,16 @@ export const CORPUS_FULL: Record<string, CorpusFull> = {
       "dr": 83
     },
     "modes": {
-      "other": 83
+      "1": 18,
+      "2": 12,
+      "3": 6,
+      "4": 33,
+      "5": 1,
+      "8": 3,
+      "4T": 2,
+      "2T": 1,
+      "6T": 5,
+      "5T": 2
     }
   }
 };
