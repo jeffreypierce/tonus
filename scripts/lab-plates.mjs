@@ -191,6 +191,32 @@ export function buildPlates(tonus, fonts = {}) {
         return tonus.inscriptio(tonus.notatio(c), { theme: JF });
       },
     },
+    // Clef changes, Hildegard's way: 73 of her 163 chants change clef. The
+    // assertions live in tests/clef-change.test.mjs; these plates are for eyes.
+    {
+      title: "Quadrata — clef walking down the staff (Ordo, c4 → c3 → c2 → c1)",
+      note: "ordo:024, narrow: two changes inside a word, the second line opening on the clef in force",
+      render: () => tonus.inscriptio(tonus.notatio(byId("ordo:024")()), { width: 520, theme: JF }),
+    },
+    {
+      title: "Moderna — the same chant (pitch runs on through every change)",
+      note: "ordo:024: one treble-8vb clef throughout; the notes follow the sounding pitch",
+      render: () => tonus.inscriptio(tonus.notatio(byId("ordo:024")()), {
+        width: 520, notation: "moderna", theme: JF,
+      }),
+    },
+    {
+      title: "Quadrata — F clef and C clefs (Symphonia, O vos angeli)",
+      note: "symphonia:030: f3 → c3 → c1 → c2 …, eight changes over many lines",
+      render: () => tonus.inscriptio(tonus.notatio(byId("symphonia:030")()), { width: 900, theme: JF }),
+    },
+    {
+      title: "Quadrata — a clef change on a forced break",
+      note: "(z) (c3): the new clef closes the old line, the custos speaks in it, the next line opens on it",
+      render: () => tonus.inscriptio(tonus.notatio(
+        tonus.cantus({ gabc: "(c4) A(h) B(i) C(j) (z) (c3) D(h) E(i) (::)", incipit: "Clavis", mode: 1 })[0],
+      ), { width: 300, theme: JF }),
+    },
     {
       title: "Quadrata — phrase boundary (grouping regression)",
       note: "a(f) (;) men(gf): both lyrics + both divisios must render",
