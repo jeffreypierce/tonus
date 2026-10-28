@@ -22,7 +22,7 @@ import type {
   ModusGenus, Modus, TunedNote, GamutOptions, Tonus, TonusOpts
 } from "./engines/temper/api.js";
 import type {
-  Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
+  Score, ScoreOpts, Knobs, PondusInput, PondusOpts, AccentusInput, AccentusOpts,
   Cadence, Modulation
 } from "./engines/score/api.js";
 
@@ -126,7 +126,7 @@ export type {
   Corpus, CorpusLedger, CorpusQuery, Temperamentum, TemperamentumInput,
   TemperamentumOpts, Tuning, Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, ModusCadentiae, ModusGenus, Modus, TunedNote, GamutOptions, Tonus,
-  TonusOpts, Score, ScoreOpts, PondusInput, PondusOpts, AccentusInput,
+  TonusOpts, Score, ScoreOpts, Knobs, PondusInput, PondusOpts, AccentusInput,
   AccentusOpts, Cadence, Modulation, VoicedPitch, Cosmos, CosmosQuery, Body,
   BodyName, Aspect, Imprint, Metrics, Harmony, HarmoniaOpts, VoicedBody,
   VoicedAspect, Frame, Author, HarmonyTabulaRow, PlanetVowel

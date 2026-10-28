@@ -20,7 +20,7 @@ export interface ShapePhrasingForModeOptions {
   strength?: number;
 }
 
-const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
+export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
   recitative: {
     curve: 0.1,
     accent: 0.5,

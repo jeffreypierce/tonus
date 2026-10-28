@@ -7,7 +7,7 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
 
 - [Score](#score)
   - [The score — `notatio`](#the-score--notatio)
-  - [Interpretation — `pondus` and `accentus`](#interpretation--pondus-and-accentus)
+  - [Interpretation, the five knobs](#interpretation-the-five-knobs)
   - [The note](#the-note)
   - [The tabula](#the-tabula)
   - [Rendering](#rendering)
@@ -145,27 +145,53 @@ interface ParseError {
 }
 ```
 
-## Interpretation — `pondus` and `accentus`
+## Interpretation, the five knobs
 
-Interpretation is set at build time.
+Interpretation is set at build time, by five numbers, each 0 to 1:
 
-- `pondus` governs articulation: note weight, duration, ornament response;
-- `accentus` governs phrasing: velocity curves, cadence weight, tenor emphasis.
+| knob        |           | governs                                                   |
+| ----------- | --------- | --------------------------------------------------------- |
+| `pondus`    | stress    | how hard the accents and the signs are leaned on          |
+| `modulatio` | phrasing  | how much a phrase arches, its rise and fall               |
+| `cadentia`  | cadence   | how much the ends broaden and settle                      |
+| `expressio` | dynamics  | the span from soft to loud, and from short to long        |
+| `modalitas` | mode      | how far the chant's mode bends the phrasing               |
 
-Each accepts a style name
-or an options object with overrides. `rhythmicShape` and `rhythmicIndex`
-are always populated by the Solesmes classifier, whatever the styles.
+0.5 on every knob is the reference reading (the `balanced` articulation and
+the `lyrical` phrasing below). 0 leans to the restrained and the recitative;
+1 goes past the expressive and the solemn, so a reading that pushes hard has
+room above it. Each number in the two profiles is a line through those
+anchors, read at the knob that owns it; a knob left out keeps its 0.5 value.
+A knob outside 0 to 1 throws, and so does a knob given beside a preset
+(`pondus` by name, or `accentus`): the knobs speak for the whole
+interpretation or not at all.
+
+`modalitas` is different in kind: it is not a line through the presets but
+the strength of the mode's own bend on the phrasing (the tenor's pull, the
+cadence's weight, a little curve and floor by the mode's character). 0 turns
+it off, 0.5 is the strength tonus always applied, 1 is twice that.
 
 ```js
 tonus.notatio(chant, {
   temperamentum: t,
+  pondus: 0.8, modulatio: 0.8, cadentia: 0.9, expressio: 0.7, modalitas: 0.5,
+});
+```
+
+`rhythmicShape` and `rhythmicIndex` are always populated by the Solesmes
+classifier, whatever the knobs.
+
+### The presets, the older way
+
+Before the knobs, `pondus` took an articulation style and `accentus` a
+phrasing style, by name or as `{ style, overrides }`. Both still work when no
+knob is given, and `accentus` is still the way to reach a single profile
+field by hand.
+
+```js
+tonus.notatio(chant, {
   pondus: "expressive", // style name…
-  accentus: {
-    style: "solemn",
-    overrides: {
-      /* … */
-    },
-  }, // …or opts
+  accentus: { style: "solemn", overrides: { /* … */ } }, // …or opts
 });
 ```
 
@@ -183,7 +209,8 @@ tonus.notatio(chant, {
 | `"hymnic"`     | measured, steady; suits metrical hymns              |
 | `"solemn"`     | deep curve, strong cadence, elevated velocity       |
 
-When `accentus` is omitted, tabula shaping picks the best style per mode.
+When neither a knob nor `accentus` is given, the phrasing is `lyrical` with
+the mode's bend at 0.5, the same reading as every knob at 0.5.
 
 A style is a named profile of numbers; `overrides` adjusts individual
 fields on top of the chosen style. The presets in
@@ -238,7 +265,11 @@ The `accentus` profile (`PhrasingProfile`):
 ```ts
 interface ScoreOpts {
   temperamentum?: Temperamentum;
-  pondus?: string | PondusOpts; // a style from the table, or opts
+  pondus?: number | string | PondusOpts; // the stress knob, or a style from the table, or opts
+  modulatio?: number;
+  cadentia?: number;
+  expressio?: number;
+  modalitas?: number;
   accentus?: string | AccentusOpts;
 }
 
@@ -397,8 +428,8 @@ interface ChantTabulaRow {
 
 The score is drawn as **SVG**: a self-contained, square-note chant staff with
 SMuFL glyphs baked as inline paths (no external font). It consumes `score.tabula`,
-so the interpretation applied through `pondus` and `accentus` is already in the
-geometry. Microtuning lives on each tabula row's `bend`, `hz`, and `offset` for
+so the interpretation applied through the knobs (or the older `pondus` and
+`accentus`) is already in the geometry. Microtuning lives on each tabula row's `bend`, `hz`, and `offset` for
 a Web-Audio player to read directly.
 
 ### inscriptio — the standalone renderer

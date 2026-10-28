@@ -111,7 +111,7 @@ const BASE_WEIGHTS: ArticulationWeights = {
 //   neumeArch/durArch— the within-neume rise-and-fall (see phrasing.ts's arch).
 //   ictusBoost       — a final multiplier on ictus notes.
 // All tuned by ear; the ordering across profiles is the doctrine, the values are not.
-const ARTICULATION_PROFILES: Record<ArticulationType, ArticulationProfile> = {
+export const ARTICULATION_PROFILES: Record<ArticulationType, ArticulationProfile> = {
   restrained: {
     weights: { ...BASE_WEIGHTS, accentWeight: 0.25, ictusDuration: 0.2 },
     weightBase: 5,

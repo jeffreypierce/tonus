@@ -205,7 +205,7 @@ the list resolve their pitches through the ones before.
 **[Score](score.md)** — GABC parsed into tuned, rhythmicized, drawable notes.
 
 - [The score — `notatio`](score.md#the-score--notatio)
-- [Interpretation — `pondus` and `accentus`](score.md#interpretation--pondus-and-accentus)
+- [Interpretation, the five knobs](score.md#interpretation-the-five-knobs)
 - [The note](score.md#the-note)
 - [The tabula](score.md#the-tabula)
 - [Rendering — `inscriptio`](score.md#rendering) · [theme](score.md#theme--faces-and-ink) · [The analysis tracks](score.md#the-analysis-tracks)
