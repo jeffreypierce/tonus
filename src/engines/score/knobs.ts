@@ -11,7 +11,9 @@
 // 0.5 value.
 //
 //   pondus     stress: how hard the accents and signs are leaned on
-//   modulatio  phrasing: how much a phrase arches, rise and fall
+//   modulatio  phrasing: how much a phrase arches, rise and fall; and, one
+//              level down, how much a melisma's real notes are leaned into
+//              and its runs rushed (the profile's lean and rush)
 //   cadentia   cadence: how much the ends broaden and settle
 //   expressio  dynamics: the span from soft to loud, short to long
 //   modalitas  mode: how far the chant's mode bends the phrasing (its tenor
@@ -63,6 +65,7 @@ const WEIGHTS_OWNER: Knob = "pondus";
 const PHRASING_OWNER: Partial<Record<keyof PhrasingProfile, Knob>> = {
   accent: "pondus", ictusBoost: "pondus",   // tenor stays lyrical: recitative leans on it most, so it is no stress axis
   curve: "modulatio", neumeArch: "modulatio", durArch: "modulatio", contourVel: "modulatio", contourDur: "modulatio",
+  lean: "modulatio", rush: "modulatio",
   cadence: "cadentia", ritard: "cadentia", ritardNotes: "cadentia", ritardCurve: "cadentia", finisBoost: "cadentia",
   velSpread: "expressio", baseVelocity: "expressio",
 };
@@ -72,6 +75,7 @@ const PHRASING_OWNER: Partial<Record<keyof PhrasingProfile, Knob>> = {
 const MANNER: Partial<PhrasingProfile> = {
   curve: 0.55, accent: 1.0, cadence: 0.3, ritard: 0.65, ritardNotes: 5,
   finisBoost: 2.5, velSpread: 0.65, contourVel: 0.27, contourDur: 0.17,
+  lean: 0.5, rush: 0.45,
 };
 const STRETCH = 1 / 0.6;
 /** The top anchor: the middle pushed past a reference by STRETCH. */

@@ -166,6 +166,15 @@ A knob outside 0 to 1 throws, and so does a knob given beside a preset
 (`pondus` by name, or `accentus`): the knobs speak for the whole
 interpretation or not at all.
 
+Inside `modulatio` is the phrasing one level down, lean and rush. A sung
+melisma is not a row of equal notes: its first and last, its turning points
+and the notes on the tenor or the final are the real notes, and the rest are
+runs between them. A sung cadence leans into the note before the final when
+it comes by step, and releases on the final. `modulatio` at 0 leaves every
+note equal; at 0.5 the lean and the rush are modest; at 1 a long melisma is
+three or four notes with runs between. Syllables of fewer than four notes
+are untouched, so syllabic chant keeps its even flow apart from the cadence.
+
 `modalitas` is different in kind: it is not a line through the presets but
 the strength of the mode's own bend on the phrasing (the tenor's pull, the
 cadence's weight, a little curve and floor by the mode's character). 0 turns
@@ -261,6 +270,7 @@ The `accentus` profile (`PhrasingProfile`):
 | `contourVel`, `contourDur`  | melodic-contour influence on velocity and duration |
 | `ictusBoost`                | extra velocity on ictic notes                      |
 | `neumeArch`, `durArch`      | arch shaping across a neume                        |
+| `lean`, `rush`              | the real notes of a melisma leaned into, its runs rushed; the cadence's penultimate leaned into, its final released |
 
 ```ts
 interface ScoreOpts {

@@ -37,6 +37,8 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     ictusBoost: 1.06,
     neumeArch: 0.2,
     durArch: 0.04,
+    lean: 0.1,
+    rush: 0.1,
   },
   lyrical: {
     curve: 0.35,
@@ -54,6 +56,8 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     ictusBoost: 1.08,
     neumeArch: 0.5,
     durArch: 0.08,
+    lean: 0.3,
+    rush: 0.3,
   },
   hymnic: {
     curve: 0.25,
@@ -71,6 +75,8 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     ictusBoost: 1.08,
     neumeArch: 0.38,
     durArch: 0.06,
+    lean: 0.25,
+    rush: 0.25,
   },
   solemn: {
     curve: 0.5,
@@ -88,6 +94,8 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     ictusBoost: 1.12,
     neumeArch: 0.62,
     durArch: 0.1,
+    lean: 0.45,
+    rush: 0.4,
   },
 };
 
@@ -275,10 +283,62 @@ export type PhrasingInputEvent =
   | (Note & { type?: "note" })
   | { type: "rest"; divisio: string; duration: number };
 
+// LEAN AND RUSH: the phrasing one level down. A sung melisma is not a row of
+// equal notes: a few are the real notes and the rest are runs between them,
+// and a sung cadence leans into the note before the final and releases on
+// it. `realNotes` marks the real ones in a phrase; the shaping then leans
+// into those by `lean` and rushes the rest by `rush`. In a syllable of fewer
+// than MELISMA_MIN notes nothing is marked, so syllabic chant is untouched
+// apart from the cadence.
+const MELISMA_MIN = 4;
+const LEAN_VELOCITY = 0.18;
+const LEAN_DURATION = 0.22;
+const RUSH_VELOCITY = 0.18;
+const RUSH_DURATION = 0.3;
+const RELEASE_VELOCITY = 0.12;
+
+type Role = "real" | "passing" | "release" | null;
+
+function realNotes(notes: Note[], closing: string | undefined, tenorPc?: number, finalPc?: number): Role[] {
+  const roles: Role[] = notes.map(() => null);
+  // the melismas: group by syllable
+  let start = 0;
+  for (let i = 1; i <= notes.length; i++) {
+    const same = i < notes.length && notes[i].context.syllableIndex === notes[start].context.syllableIndex;
+    if (same) continue;
+    const n = i - start;
+    if (n >= MELISMA_MIN) {
+      for (let k = start; k < i; k++) {
+        const m = notes[k].pitch.midi;
+        const first = k === start, last = k === i - 1;
+        const prev = k > start ? notes[k - 1].pitch.midi : m;
+        const next = k < i - 1 ? notes[k + 1].pitch.midi : m;
+        const turn = (m > prev && m >= next) || (m < prev && m <= next);
+        const pc = notes[k].pitch.pc;
+        const onTenor = typeof tenorPc === "number" && pc === tenorPc;
+        const onFinal = typeof finalPc === "number" && pc === finalPc;
+        roles[k] = first || last || turn || onTenor || onFinal ? "real" : "passing";
+      }
+    }
+    start = i;
+  }
+  // the cadence: a phrase closing on a bar whose last note is approached by step
+  if (notes.length >= 2 && getDivisioStrength(closing) > 0) {
+    const a = notes[notes.length - 2].pitch.midi, b = notes[notes.length - 1].pitch.midi;
+    const step = Math.abs(a - b);
+    if (step >= 1 && step <= 2) {
+      roles[notes.length - 2] = "real";
+      roles[notes.length - 1] = "release";
+    }
+  }
+  return roles;
+}
+
 export function applyPhrasing(
   events: PhrasingInputEvent[],
   profile: PhrasingProfile,
   tenorPc?: number,
+  finalPc?: number,
 ): ShapedNote[] {
   const shaped: ShapedNote[] = [];
 
@@ -329,6 +389,11 @@ export function applyPhrasing(
 
     const arsisSpan = maxArsis - minArsis || 1;
     const stepSpan = maxStep - minStep || 1;
+    const roles = realNotes(
+      noteEntries.map((e) => e.ev as Note),
+      noteEntries[noteEntries.length - 1].nextDivisio,
+      tenorPc, finalPc,
+    );
 
     noteEntries.forEach(({ ev, nextDivisio }, order) => {
       const note = ev as Note;
@@ -364,6 +429,11 @@ export function applyPhrasing(
       const divisioStrength = getDivisioStrength(nextDivisio);
       velocity *=
         1 - profile.cadence * divisioStrength * CADENCE_VELOCITY_FACTOR;
+
+      const role = roles[order];
+      if (role === "real") velocity *= 1 + profile.lean * LEAN_VELOCITY;
+      else if (role === "passing") velocity *= 1 - profile.rush * RUSH_VELOCITY;
+      else if (role === "release") velocity *= 1 - profile.lean * RELEASE_VELOCITY;
 
       const finalVelocity = Math.max(
         VELOCITY_MIN,
@@ -405,6 +475,9 @@ export function applyPhrasing(
         durFactor *=
           1 + profile.ritard * getDivisioStrength(closing) * finis * ramp;
       }
+
+      if (role === "real") durFactor *= 1 + profile.lean * LEAN_DURATION;
+      else if (role === "passing") durFactor *= 1 - profile.rush * RUSH_DURATION;
 
       const shapedDuration = Math.max(
         DURATION_MIN,
