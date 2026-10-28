@@ -339,10 +339,10 @@ const GENUS_ABBREV: Record<string, string> = {
   Hymnus: "Hymn.", Sequentia: "Seq.", Canticum: "Cant.", Psalmus: "Ps.",
   "Toni Communes": "Ton. comm.", Supplicatio: "Suppl.", Improperia: "Improp.",
   Tropa: "Trop.", Prosa: "Pros.", Varia: "Var.",
-  // Hildegard (the Pierce Edition): the antiphon classes keep "Ant." and add
-  // the qualifier the way the books do (Ant. ad Magn.); the drama is a play.
+  // The finer antiphon classes keep "Ant." and add the qualifier the way the
+  // books do (Ant. ad Magn.).
   "Antiphona ad psalmum": "Ant. ad ps.", "Antiphona votiva": "Ant. vot.",
-  "Antiphona in evangelio": "Ant. in ev.", Symphonia: "Symph.", Drama: "Dram.",
+  "Antiphona in evangelio": "Ant. in ev.",
   // Never printed — an ordinary chant shows its mode alone (below) — but the
   // table is complete, not merely sufficient.
   Kyriale: "Kyr.",
@@ -1233,8 +1233,8 @@ export function toSvg(
     // as the forced break (`z`) already did: the new clef, then the custos in
     // it, and the next line opens on it. Drawn only at the next line's head,
     // the custos was read in the old clef and named the wrong pitch, and the
-    // new line opened with both clefs side by side (symphonia:030, once its
-    // neumes were the manuscript's and a width break fell before "cus").
+    // new line opened with both clefs side by side (found where a width
+    // break fell just before a clef change).
     const closeSystem = (next: ChantTabulaRow, custos: boolean): void => {
       if (next.clef !== activeClef) {
         activeClef = next.clef;

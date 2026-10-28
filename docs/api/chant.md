@@ -32,8 +32,7 @@ carries page-level provenance back to its book.
 
 Six Solesmes books, extracted from
 [GregoBase](https://gregobase.selapa.net/), joined by the Divinum Officium
-propers, office, and psalter, plus the Nocturnale Romanum for the night office
-and Hildegard von Bingen's two works:
+propers, office, and psalter, plus the Nocturnale Romanum for the night office:
 
 | Source | Book                    | Edition        | Chants |
 | ------ | ----------------------- | -------------- | ------ |
@@ -44,15 +43,13 @@ and Hildegard von Bingen's two works:
 | `am`   | Antiphonale Monasticum  | Solesmes, 1934 | 1,448  |
 | `psm`  | Psalterium Monasticum   | Solesmes, 1981 | 60     |
 | `nr`   | Nocturnale Romanum      | Sandhofe, 2002 | 1,549  |
-| `sym`  | Symphonia               | Pierce, 2026   | 80     |
-| `ov`   | Ordo Virtutum           | Pierce, 2026   | 83     |
 
-**7,988 chants in all**, the Mass ordinary among them (120 settings, reached by
+**7,825 chants in all**, the Mass ordinary among them (120 settings, reached by
 [`ordinary`](#reaching-the-ordinary--ordinary) rather than by book). That is the
 books themselves: tonus carries what they print, whether or not the calendar
 reaches it.
 
-The nine books list 9,906 rows for those 7,988 chants: a melody printed in two
+The seven books list 9,743 rows for those 7,825 chants: a melody printed in two
 books is stored once and listed under each, with each book's own page citation.
 
 `am` and `psm` are the monastic (Benedictine) books; the rest are
@@ -61,18 +58,6 @@ is the admission rule. `nr` is the night-office repertoire (responsories,
 antiphons) from the
 [Nocturnale Romanum](https://github.com/Nocturnale-Romanum/nocturnale-romanum)
 community restitution, admitted because it carries those marks too.
-
-`sym` and `ov` are the exception to that rule. They are Hildegard von Bingen's
-Symphonia (77 chants in 80 files: three are shelved in both their Dendermonde
-and Riesencodex readings, `041D` and `041R`) and Ordo Virtutum (83 sung items, all
-`dr`), from the [hildegabc](https://github.com/jeffreypierce/hildegabc)
-edition: pitch from Lomer's transcriptions and the Cantus Database, text from
-Newman. They carry no rhythmic marks, and they are not Gregorian: they are on
-the shelf as a repertoire to compare with the Roman and monastic books. Their
-modes are the Cantus Database's, from its index of the manuscripts, for both
-works alike. Transposed modes are kept as written (`1T`, `modus` "Modus I
-transpositus"). Their `pages` carry the manuscript folio, and their `cantusId`
-is the one the edition cites.
 
 ### The shelf is the books
 
@@ -107,12 +92,12 @@ book's ledger:
 
 ```js
 tonus.corpus();
-// { count: 7988,      // chants tonus holds, each counted once
-//   listings: 9906,   // rows on the shelf — a chant in two books appears twice
-//   total: 9959,     // what the books hold, before dedup
-//   genera: [ { office: "an", genus: "Antiphona", count: 3961 }, … ],
-//   modes:  [ { mode: "1", modus: "Modus I", count: 1532 }, … ],
-//   books:  [ …9 Corpus entries, in registry order ] }
+// { count: 7825,      // chants tonus holds, each counted once
+//   listings: 9743,   // rows on the shelf — a chant in two books appears twice
+//   total: 9796,     // what the books hold, before dedup
+//   genera: [ { office: "an", genus: "Antiphona", count: 3959 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 1505 }, … ],
+//   books:  [ …7 Corpus entries, in registry order ] }
 ```
 
 **`count` is the number of chants**, the one to quote. `listings` is how long
@@ -124,10 +109,10 @@ same population `count` does, so `genera` and `modes` sum to it.
 tonus.corpus("am");
 // { code: "am", book: "Antiphonale Monasticum", fullTitle: null,
 //   edition: "Pro Diurnis Horis", year: 1934, editor: "Solesmes",
-//   scanSource: "Scans courtesy of Corpus Christi Watershed", count: 576,
-//   genera: [ { office: "an", genus: "Antiphona", count: 458 }, … ],
-//   modes:  [ { mode: "1", modus: "Modus I", count: 101 }, …,
-//             { mode: null, modus: null, count: 24 } ] }
+//   scanSource: "Scans courtesy of Corpus Christi Watershed", count: 1448,
+//   genera: [ { office: "an", genus: "Antiphona", count: 1045 }, … ],
+//   modes:  [ { mode: "1", modus: "Modus I", count: 320 }, …,
+//             { mode: null, modus: null, count: 63 } ] }
 ```
 
 ```ts
@@ -264,7 +249,6 @@ name:
 | `gr`     | Graduale  | `re`     | Responsorium | `ky`     | Kyriale            |
 | `im`     | Improperia| `rb`     | Resp. Breve  | `va`     | Varia              |
 | `ap`     | Antiphona ad psalmum | `av` | Antiphona votiva | `ae` | Antiphona in evangelio |
-| `sv`     | Symphonia | `dr`     | Drama        |          |                    |
 | `pa`     | Prosa     | `su`     | Supplicatio  |          |                    |
 
 The labels are GregoBase's own vocabulary (`$txt['usage']`), not tonus's
@@ -274,6 +258,10 @@ and `pa` reads **Prosa**. `ky` is the Mass ordinary's roll-up genus — the
 part itself rides `ordinary` (`ke`, `gl`, `cr`, …), and `va` is the
 catch-all for a chant whose office-part tonus does not recognise.
 
+`ap`, `av` and `ae` are not GregoBase's. They name the finer antiphon
+classes the Roman books distinguish (to a psalm, votive, to the Gospel), and
+no book tonus ships marks them yet. A source that has them supplies them.
+
 ```ts
 interface Chant {
   id: string; // "gregobase:1210", "nocturnale:E1F2R3" — see below
@@ -282,8 +270,8 @@ interface Chant {
   office: OfficeCode; // genre code
   genus: string; // Latin genre name, "Antiphona", "Introitus" …
   mode: string | null; // raw from source: "1"–"8", differentia forms ("2d", "8g"), "p"/"d"/"e" …
-  modus: string | null; // Latin mode name, "Modus I"–"Modus VIII"
-  cantusId: string | null; // Cantus Database id, where one is known — see below
+  modus: string | null; // Latin mode name, "Modus I"–"Modus VIII"; "1T" reads "Modus I transpositus"
+  cantusId?: string | null; // Cantus Database id, where one is known — see below
   books: (ChantSource | "user" | "ky")[]; // every book that prints it
   pages: { page: string; sequence: number; extent: number }[]; // the presented book's
 
@@ -315,12 +303,13 @@ interface CantusQuery {
 ```
 
 `cantusId` links a chant to the [Cantus Database](https://cantusdatabase.org).
-Where its source names one, the record carries that id: every Symphonia and
-Ordo record cites the edition's own. On the Gregorian books it is the id the
-attestation data was read from (the era view's `before`), which is a text
-match against Cantus, not a citation printed in the book. About 6,300 of the
-shelf's chants have one. A chant parsed from raw GABC, or a psalm verse
-pointed at request time, reports `null`.
+On the Gregorian books it is the id the attestation data was read from (the
+era view's `before`), which is a text match against Cantus, not a citation
+printed in the book. Where a source names its own id, the record carries that
+one. About 6,100 of the shelf's chants have one. A chant parsed from raw GABC,
+or a psalm verse pointed at request time, reports `null`. Every chant tonus
+returns sets the field; it is optional only on a `Chant` a caller builds by
+hand.
 
 ### Reaching the ordinary — `ordinary`
 
@@ -363,12 +352,12 @@ to have catalogued; the corpus is assembled from seven books, and GregoBase is
 one source among several.
 
 The prefix is therefore **not a namespace you can query against**. GregoBase
-holds 18,148 chants; tonus ships 1,717 of them (9.5%), because the corpus is
-assignment-driven, so an id copied from the GregoBase site will usually return
-`[]` here. That is not a lookup failure; it means no day of the calendar calls
-for that chant. The two prefixes in the shipped corpus are `gregobase:` (1,717)
-and `nocturnale:` (470), the latter carrying the Nocturnale's own alphanumeric
-keys rather than numbers.
+holds 18,148 chants; tonus ships 6,160 of them (34%), the ones the six
+Solesmes books on the shelf print, so an id copied from the GregoBase site may
+return `[]` here. That is not a lookup failure; it means none of the books on
+the shelf prints that chant. The two prefixes in the
+shipped corpus are `gregobase:` (6,160) and `nocturnale:` (1,549), the latter
+carrying the Nocturnale's own alphanumeric keys rather than numbers.
 
 Within tonus an id is exactly one chant. A melody printed in several books is
 stored once, under the record `cantus({ id })` returns, so `id` is a stable key

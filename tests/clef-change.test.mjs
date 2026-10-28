@@ -2,33 +2,24 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import tonus from "../dist/index.js";
 
-// Clef changes, on Hildegard's chants: 73 of the 163 change clef, some four
-// times in a few lines. A wrong clef moves every note after it, and nothing
-// else would notice: the chant still renders.
+// Clef changes. A wrong clef moves every note after it, and nothing else would
+// notice: the chant still renders.
 //
-// The ground truth is independent of tonus: the Cantus Database's Volpiano
-// for the Riesencodex, which writes absolute pitch with no clefs at all. The
-// hildegabc edition took the Ordo's pitch from it, so tonus's pitches through
-// every clef change must equal it. (Measured 2026-10-24: 81 of the 83 Ordo
-// chants match note for note. The other two differ by one editorial note.)
+// The pitch check is independent of any edition: one pitch written under
+// every clef must sound as one pitch. Middle C sits on the clef's own line for
+// a C clef (j under c4, h under c3, f under c2, d under c1) and a fourth above
+// the line for an F clef (l under f3). The render checks run on the shelf's
+// own clef changes: the Nocturnale's Toni Communes move between c4, f3 and c3
+// six times, a Matins responsory moves from c3 to c2, and a Graduale chant
+// from c4 to c3.
+//
+// (Through 0.15.0's development these ran on Hildegard's chants against the
+// Cantus Database's Volpiano for the Riesencodex. Her books left the shelf
+// before the release; the Volpiano check returns with them.)
 
-const VOLPIANO = {
-  // Cantus a00995, Riesencodex f. 479v. c4 → c3 → c2 → c1, twice inside a word.
-  "ordo:024":
-    "1---ef--d--c7---d--d--fe--ccd--d---g--hj-kjhgg--fe---ef--g--gfe---d---g---h--j-jjl--kjkjhgg---fe--de--e7---4",
-  // Cantus a01044, Riesencodex f. 481r. c4 → c3 → c2 → c1, with B-flats.
-  "ordo:072":
-    "1---ede---e-eeg--ffE7---dfe---e---eda-dE--e---gfe---e--e--d--e---fed--e---ej-k---h--g--fe7---db--de--e---e-eegF---d---e---fg--f--gfedc--d---d---dh--lk--ijhgfed---f--ged--fed-e--cd---d7--dh-ij--gf---gfg--h---ddc---f--g--h--dc---fedd-e--cd---d--dh--lk--ijh---hjhgf7---ed---d--ca--cd--fedcc-d---dC--acb-ccd---fgfed--feddc--d---d---dh---lk--hij---gfdca-ccd777---fged--fedc-d---d-ddfE--c---e-eegfeda--cD-d---dh-j--g--f---gfg--h---h--k---l--hij---gfg--h---hjH7--gf---g--d-ddfdc---f---g--hij---g---h---ddc--fed--edc--d---dca-cd--fec--d---d7---dh---ggF---gh--h--h---hk--l---ijjH--gh---hhG---hj--gf---gF--gh--h---ddC7--fgh---jhgff--g--fe7---4",
-};
+const SAME_PITCH = "(c4) A(j) (c3) B(h) (c2) C(f) (c1) D(d) (f3) E(l) (::)";
+const STEP_ABOVE = "(c4) A(jk) (c3) B(hi) (c2) C(fg) (c1) D(de) (f3) E(lm) (::)";
 
-// Volpiano's pitch letters, low to high. `c` is middle C. Upper case is the
-// liquescent form of the same pitch. `i`, `w`–`z` and the digits are signs,
-// not notes.
-const ORDER = "89abcdefghjklmnopqrs";
-const C4 = 4 * 7;
-const volpianoDegrees = (v) =>
-  [...v].filter((ch) => ORDER.includes(ch.toLowerCase()))
-    .map((ch) => C4 + ORDER.indexOf(ch.toLowerCase()) - ORDER.indexOf("c"));
 const LETTER = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
 const degree = (spn) => {
   const m = /^([A-G])[#b]?(-?\d+)$/.exec(spn);
@@ -56,24 +47,23 @@ function staffOf(rows, geometry, system) {
   return (pos) => g1.y + slope * (pos - p1);
 }
 
-describe("clef changes — Hildegard's chants", () => {
-  test("the pitch after every change is the manuscript's (Cantus Volpiano)", () => {
-    for (const [id, volpiano] of Object.entries(VOLPIANO)) {
-      const sc = score(id);
-      const clefs = new Set(sc.tabula.map((r) => r.clef));
-      assert.ok(clefs.size >= 4, `${id} changes clef (${[...clefs].join(" ")})`);
-      assert.deepEqual(
-        sc.tabula.map((r) => degree(r.spn)),
-        volpianoDegrees(volpiano),
-        `${id}: tonus's pitches are Cantus's, in absolute register`,
-      );
+describe("clef changes", () => {
+  test("one pitch written under every clef sounds as one pitch", () => {
+    const same = fromGabc(SAME_PITCH).tabula;
+    assert.deepEqual(same.map((r) => r.clef), ["c4", "c3", "c2", "c1", "f3"]);
+    assert.ok(same.every((r) => r.spn === "C4"), same.map((r) => `${r.clef} ${r.spn}`).join(", "));
+    // And the step above it is the step above, in every clef.
+    const steps = fromGabc(STEP_ABOVE).tabula.map((r) => degree(r.spn));
+    for (let k = 0; k < steps.length; k += 2) {
+      assert.equal(steps[k], degree("C4"));
+      assert.equal(steps[k + 1], degree("D4"));
     }
   });
 
-  // ordo:024 steps a C clef down all four lines. symphonia:030 ("O vos angeli")
-  // moves between an F clef and C clefs on three lines. At 520 the lines
-  // break, so some changes meet a system's head.
-  const CASES = ["ordo:024", "ordo:072", "symphonia:030"];
+  // nocturnale:ORAL2 moves between c4, f3 and c3 six times; 0915N2R3 moves
+  // from c3 to c2; gregobase:1092 ("Omnes collaudant") from c4 to c3. At 520
+  // the lines break, so some changes meet a system's head.
+  const CASES = ["nocturnale:ORAL2", "nocturnale:0915N2R3", "gregobase:1092"];
 
   for (const id of CASES) {
     for (const width of [900, 520]) {

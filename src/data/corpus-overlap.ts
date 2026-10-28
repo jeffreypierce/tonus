@@ -1,6 +1,6 @@
 // corpus-overlap.ts — pre-dedup chant-count relationships between the books
 // Extracted from GregoBase (chant-id sets) by scripts/extract-gregobase.mjs
-// Generated: 2026-10-24T15:05:15.131Z
+// Generated: 2026-10-28T17:06:24.428Z
 //
 // tonus stores one record per chant, owned by the first book in PRIMARY_ORDER
 // that prints it, so a book's STORED count is less than what it LISTS. This
@@ -65,16 +65,6 @@ export const CORPUS_OVERLAP: Record<string, CorpusOverlap> = {
   "nr": {
     "total": 1549,
     "unique": 1549,
-    "shared": {}
-  },
-  "sym": {
-    "total": 80,
-    "unique": 80,
-    "shared": {}
-  },
-  "ov": {
-    "total": 83,
-    "unique": 83,
     "shared": {}
   }
 };
@@ -264,54 +254,6 @@ export const CORPUS_FULL: Record<string, CorpusFull> = {
       "7": 246,
       "8": 342,
       "other": 27
-    }
-  },
-  "sym": {
-    "total": 80,
-    "genera": {
-      "re": 18,
-      "av": 13,
-      "an": 2,
-      "ap": 28,
-      "hy": 4,
-      "al": 1,
-      "va": 1,
-      "se": 7,
-      "sv": 3,
-      "ae": 2,
-      "ky": 1
-    },
-    "modes": {
-      "1": 9,
-      "2": 2,
-      "3": 7,
-      "4": 29,
-      "5": 1,
-      "7": 1,
-      "8": 3,
-      "6T": 9,
-      "2T": 3,
-      "5T": 2,
-      "1T": 13,
-      "4T": 1
-    }
-  },
-  "ov": {
-    "total": 83,
-    "genera": {
-      "dr": 83
-    },
-    "modes": {
-      "1": 18,
-      "2": 12,
-      "3": 6,
-      "4": 33,
-      "5": 1,
-      "8": 3,
-      "4T": 2,
-      "2T": 1,
-      "6T": 5,
-      "5T": 2
     }
   }
 };
