@@ -2,6 +2,29 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.16.0 — 2026-10-28
+
+Lean and rush.
+
+### Added
+
+- **Lean and rush**, the phrasing one level down, inside `modulatio`. A sung
+  melisma is not a row of equal notes: its first and last, its turning points
+  and the notes on the tenor or the final are the real notes, leaned into
+  (louder, longer); the rest are runs between them, rushed (softer, shorter).
+  A sung cadence leans into the note before the final when it comes by step
+  and releases on the final. Two profile fields, `lean` and `rush`, on every
+  phrasing preset, modest at `lyrical`; `modulatio` at 0 leaves every note
+  equal, at 1 a long melisma is three or four notes with runs between.
+  Syllables of fewer than four notes are untouched. `applyPhrasing` takes the
+  mode's final as a fourth argument.
+
+### Changed
+
+- The phrasing presets now carry `lean` and `rush`, so a score built with a
+  preset or with `modulatio` at 0.5 shapes long melismas and stepwise
+  cadences a little differently from 0.15.0. Syllabic chant is unchanged.
+
 ## 0.15.0 — 2026-10-28
 
 The ictus where the Liber puts it, and the knobs.
