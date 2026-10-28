@@ -234,8 +234,10 @@ describe("getCorpus", () => {
     // each was the SOLE source of nothing — every chant they listed was already
     // on the shelf under gr, lu or am — so removing all three emptied no slot on
     // any day of the year. ky rides inside rather than as its own row.
-    // Nine since 2026-10-22: Hildegard's Symphonia (sym) and Ordo Virtutum (ov).
-    assert.equal(L.books.length, 9, "every registered book is in the ledger");
+    // Hildegard's Symphonia (sym) and Ordo Virtutum (ov) joined on 2026-10-22
+    // and left again before 0.15.0 (their license is CC BY-NC-SA); they return
+    // as an outside shelf.
+    assert.equal(L.books.length, 7, "every registered book is in the ledger");
     assert.ok(L.count > 0 && L.listings > 0 && L.total > 0);
     // `count` leads and means chants — each one once, the ordinary included.
     // `listings` is the shelf's length, where a melody printed in two books
@@ -395,61 +397,37 @@ describe("getCorpus", () => {
   });
 });
 
-describe("getCorpus — Hildegard's two books", () => {
-  // Two works from one edition (hildegabc), shelved as two books so each has
-  // its own listing. Neither carries rhythmic marks; they are a repertoire to
-  // compare with the Gregorian books, not more of that shelf.
-  test("sym is the Symphonia: 80 files for 77 chants, three in D and R", () => {
-    const sym = getCorpus("sym");
-    assert.equal(sym.count, 80);
-    // Each work is its own book; the shared printing is the edition.
-    assert.equal(sym.book, "Symphonia");
-    assert.equal(getCorpus("ov").book, "Ordo Virtutum");
-    assert.equal(sym.total, 80, "the edition ships whole: full is shipped");
-    assert.deepEqual(sym.shared, [], "nothing on the Gregorian shelf prints these");
-    // The transposed modes are real rows, not swept into "other".
-    const t = sym.modes.find((m) => m.mode === "1T");
-    assert.ok(t && t.count > 0, "mode 1T is tallied");
-    assert.equal(t.modus, "Modus I transpositus");
+describe("the shelf without Hildegard, and what her books left behind", () => {
+  // Her two books were pulled before 0.15.0. The machinery they brought stays:
+  // transposed modes, the finer office codes, cantusId, folio pages. These
+  // pin both halves: the books are gone, the machinery still answers.
+  test("sym and ov are not books on the shelf", () => {
+    assert.throws(() => getCorpus("sym"), /Unknown corpus code/);
+    assert.throws(() => getCorpus("ov"), /Unknown corpus code/);
+    assert.equal(getChants({ id: ["symphonia:001", "ordo:001"] }).length, 0);
+    assert.ok(!getCorpus().books.some((b) => b.code === "sym" || b.code === "ov"));
   });
 
-  test("ov is the Ordo Virtutum: 83 sung items, all `dr`, moded as the Symphonia is", () => {
-    const ov = getCorpus("ov");
-    assert.equal(ov.count, 83);
-    assert.deepEqual(ov.genera.map((g) => g.office), ["dr"]);
-    // Both works take their modes from the Cantus Database's index of the
-    // Riesencodex, so Hildegard reads alike in either book.
-    assert.ok(!ov.modes.some((m) => m.mode === null), "every sung item is moded");
-    assert.equal(ov.modes.find((m) => m.mode === "4").count, 33);
-    assert.equal(ov.modes.find((m) => m.mode === "6T").modus, "Modus VI transpositus");
-    const [first] = getChants({ id: "ordo:001" });
-    assert.equal(first.mode, "2");
-    assert.equal(first.modus, "Modus II");
+  test("the Gregorian shelf is 7,825 chants over 9,743 listings", () => {
+    const L = getCorpus();
+    assert.equal(L.count, 7825);
+    assert.equal(L.listings, 9743);
   });
 
-  test("every Hildegard record carries the Cantus id its source names", () => {
-    const all = [...getChants({ source: "sym" }), ...getChants({ source: "ov" })];
-    assert.equal(all.length, 163);
-    assert.ok(all.every((c) => typeof c.cantusId === "string" && c.cantusId.length > 0));
-    // The Symphonia's respond, not its verse (a00518a).
-    assert.equal(getChants({ id: "symphonia:001" })[0].cantusId, "a00518");
-    assert.equal(getChants({ id: "ordo:001" })[0].cantusId, "007484");
+  test("a transposed mode still reads as its mode, transpositus", () => {
+    const [c] = getChants({ gabc: "(c4) A(j) (::)", mode: "1T" });
+    assert.equal(c.mode, "1T");
+    assert.equal(c.modus, "Modus I transpositus");
+    const [h] = getChants({ gabc: "name:x;\nmode:6T;\n%%\n(c4) A(j) (::)" });
+    assert.equal(h.modus, "Modus VI transpositus");
   });
 
-  test("a Symphonia chant answers by id with its genus, modus and folio", () => {
-    const [c] = getChants({ id: "symphonia:001" });
-    assert.equal(c.incipit, "O vis eternitatis");
-    assert.equal(c.office, "re");
-    assert.equal(c.genus, "Responsorium");
-    assert.equal(c.modus, "Modus IV");
-    assert.deepEqual(c.books, ["sym"]);
-    assert.equal(c.pages[0].page, "R 466ra", "the folio rides pages");
-  });
-
-  test("the D and R readings of one chant are two records", () => {
-    const ids = getChants({ source: "sym" }).map((c) => c.id);
-    const pairs = ids.filter((id) => /\d[DR]$/.test(id));
-    assert.equal(pairs.length, 6, "three chants, each in D and R");
+  test("the finer office codes keep their names", () => {
+    assert.equal(OFFICIA.ap, "Antiphona ad psalmum");
+    assert.equal(OFFICIA.av, "Antiphona votiva");
+    assert.equal(OFFICIA.ae, "Antiphona in evangelio");
+    assert.equal(OFFICIA.sv, undefined);
+    assert.equal(OFFICIA.dr, undefined);
   });
 });
 

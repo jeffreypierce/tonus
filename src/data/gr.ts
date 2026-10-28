@@ -1,6 +1,6 @@
 // gr.ts — Graduale Romanum 1961 corpus
 // Extracted from GregoBase (source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-09-02T05:09:24.171Z
+// Generated: 2026-10-28T15:45:09.738Z
 // Chants: 425
 import type { Chant, OfficeCode } from "./types.js";
 

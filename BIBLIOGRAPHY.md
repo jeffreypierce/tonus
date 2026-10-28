@@ -7,35 +7,30 @@ doctrine tables, and the references behind them. Code cites by bracketed key
 ## Data corpora
 
 - `gregobase` — **GregoBase.** <https://gregobase.selapa.net/>. Chant corpora
-  in GABC, extracted by book. Counts are the chants tonus ships: the corpus is
-  assignment-driven, so a book contributes the chants some day of the calendar
-  calls for (see COVERAGE.md). Admission is Solesmes and the rhythmic marks
-  the score engine reads; the 1974 Graduale, the 1990 Gregorian Missal, and
-  the 1983 Liber cantualis are excluded as post-conciliar re-editions of books
-  already here.
+  in GABC, extracted by book. Counts are the chants each book lists on the
+  shelf, as `corpus(code).count` reports them: tonus carries the books whole,
+  whether or not a day of the calendar calls for a chant, and a chant printed
+  in two books is listed under each (see COVERAGE.md). Admission is Solesmes
+  and the rhythmic marks the score engine reads; the 1974 Graduale, the 1990
+  Gregorian Missal, and the 1983 Liber cantualis are excluded as
+  post-conciliar re-editions of books already here.
 
   - _Graduale sacrosanctæ Romanæ ecclesiæ de tempore et de sanctis_ (Graduale
-    Romanum). Ed. Solesmes. Tournai: Desclée, 1961 — 780 chants (`gr`).
+    Romanum). Ed. Solesmes. Tournai: Desclée, 1961 — 1,373 chants (`gr`).
   - _Liber Usualis Missæ et Officii pro dominicis et festis cum cantu
-    Gregoriano_. Ed. Solesmes. Tournai: Desclée, 1961 — 707 chants (`lu`).
+    Gregoriano_. Ed. Solesmes. Tournai: Desclée, 1961 — 2,446 chants (`lu`).
   - _Liber antiphonarius pro diurnis horis_ (Antiphonale Romanum). Solesmes,
-    1960 — 160 chants (`la`).
+    1960 — 2,506 chants (`la`).
   - _Liber Hymnarius cum invitatoriis & aliquibus responsoriis_. Solesmes, 1983
-    — 25 chants (`lh`).
-  - _Antiphonale Monasticum pro diurnis horis_. Solesmes, 1934 — 576 chants
+    — 361 chants (`lh`).
+  - _Antiphonale Monasticum pro diurnis horis_. Solesmes, 1934 — 1,448 chants
     (`am`). The 1934 edition with the classic rhythmic marks, not the 2005–07
     restoration.
   - _Kyriale_ (from the Graduale Romanum). Solesmes, 1961 — 120 settings
     (`ky`). The eighteen numbered Masses, the ad libitum chants, and the
     Requiem.
-  - _Antiphonale Monasticum Solesmense — Proprium Sanctorum_, the offices
-    proper to the Solesmes congregation. Solesmes, 1935 — 11 chants (`ams`).
   - _Psalterium Monasticum — Office divin selon le rit bénédictin_. Solesmes,
-    1981 — 11 chants (`psm`).
-  - _Cantus selecti ad benedictionem Sanctissimi Sacramenti_. Solesmes, 1957 —
-    11 chants (`cse`).
-  - _Chants of the Church — Selected Gregorian Chants_, compiled by the monks
-    of Solesmes. 1956 — 16 chants (`cot`).
+    1981 — 60 chants (`psm`).
 - `divinum-officium` — **Divinum Officium.** The 1570–1962 Roman Breviary and
   Missal in machine-readable form.
   <https://github.com/DivinumOfficium/divinum-officium>;
@@ -46,7 +41,7 @@ doctrine tables, and the references behind them. Code cites by bracketed key
 - `nocturnale-romanum` — **_Nocturnale Romanum_ — Matins of the Roman Rite.**
   Community restitution after Holger Peter Sandhofe (2002 base),
   Hartker-derived. <https://github.com/Nocturnale-Romanum/nocturnale-romanum>.
-  The night-office corpus: responsories, antiphons, and hymns (470 chants,
+  The night-office corpus: responsories, antiphons, and hymns (1,549 chants,
   `nr`).
 - `graduale-toni-communes` — **Graduale Romanum appendix (Toni Communes).**
   The psalm tones and differentiae, including the tonus peregrinus.

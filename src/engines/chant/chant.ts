@@ -18,14 +18,12 @@ import { NR_DATA, NR_SOURCE } from "../../data/nocturnale-romanum.js";
 // Office books — the antiphons and short responsories that fill weekday
 // office slots; see ChantSource in types.ts for why.
 import { PSM_DATA, PSM_SOURCE } from "../../data/psm.js";
-// Hildegard's two works — see ChantSource in types.ts.
-import { SYM_DATA, SYM_SOURCE, OV_DATA, OV_SOURCE } from "../../data/hildegard.js";
 // Further marked Solesmes books — see ChantSource in types.ts.
 import { KYRIALE } from "../../data/kyriale.js";
 import { entryToOrdinaryChant } from "./ordinary.js";
 
-// A transposed mode, as the Cantus Database writes it ("1T", Hildegard's
-// books): one of the eight, moved up a fifth, so its name is that mode's with
+// A transposed mode, as the Cantus Database writes it ("1T"): one of the
+// eight, moved up a fifth, so its name is that mode's with
 // "transpositus". MODI stays the eight church modes; the suffix is read here.
 const TRANSPOSED = /^([1-8])T$/;
 function modusOf(mode: string | null): string | null {
@@ -161,8 +159,6 @@ const CORPUS: Chant[] = [
   ...AM_DATA.map((c) => withLabels(c, AM_SOURCE)),
   ...NR_DATA.map((c) => withLabels(c, NR_SOURCE)),
   ...PSM_DATA.map((c) => withLabels(c, PSM_SOURCE)),
-  ...SYM_DATA.map((c) => withLabels(c, SYM_SOURCE)),
-  ...OV_DATA.map((c) => withLabels(c, OV_SOURCE)),
 ];
 
 // The Kyriale, addressable but not shelved — ruled 2026-08-04.
@@ -211,8 +207,6 @@ export const SOURCES: Record<ChantSource, Chant["source"]> = {
   gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
   // office books — provenance, not acquisition
   psm: PSM_SOURCE,
-  // Hildegard — two works, two books, one edition
-  sym: SYM_SOURCE, ov: OV_SOURCE,
 };
 
 // Tally a book's genre and mode distribution — computed once per code, cached.
