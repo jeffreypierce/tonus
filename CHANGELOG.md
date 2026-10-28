@@ -2,6 +2,99 @@
 
 All notable changes to tonus. Newest first.
 
+## 0.15.0 — 2026-10-28
+
+The ictus where the Liber puts it, and the knobs.
+
+### Added
+
+- Transposed modes as the Cantus Database writes them (`1T`) read as "Modus I
+  transpositus" and tally as their own rows, after 1–8. No book on the shelf
+  carries one; they are ready for shelves from outside the Roman books.
+- Office codes `ap`, `av` and `ae` (antiphons to a psalm, votive, to the
+  Gospel), the finer antiphon classes the Roman books distinguish. No book on
+  the shelf marks them yet.
+- **`cantusId`** on every `Chant`: the Cantus Database id, or `null`. The
+  Gregorian books and the Kyriale carry the id their attestation was read
+  from, a text match rather than a citation in the book; a source that prints
+  its own id carries that one. 6,124 of 7,709 shelf chants have one. A chant
+  from raw GABC, or a psalm verse pointed at request time, reports `null`. The
+  field is optional on the type, so a `Chant` built by hand need not set it.
+- Each note carries the GABC separator written before it (tabula row
+  `separator`).
+- **The five knobs.** `tonus.notatio` takes `pondus`, `modulatio`,
+  `cadentia`, `expressio` and `modalitas`, each a number from 0 to 1, in
+  place of the articulation and phrasing presets: stress, phrasing, cadence,
+  dynamics, and how far the mode bends the phrasing. 0.5 on every knob is
+  what the presets sang (`balanced`, `lyrical`); 0 is the restrained and the
+  recitative; 1 goes past the expressive and the solemn. The preset names
+  still work when no knob is given; a knob beside a preset throws, and so
+  does a knob outside 0 to 1. `modalitas` names what was always applied
+  quietly at 0.5. The `Knobs` type is exported. See docs/api/score.md.
+
+### Changed
+
+- **Breaking, at the type level:** `OfficeCode` gains `ap`, `av` and `ae`,
+  and `mode` may now read `1T` to `8T`. An exhaustive `switch` or
+  `Record<OfficeCode, …>` no longer compiles, and code that takes a mode to be
+  `"1"` to `"8"` or a differentia form should allow the transposed forms.
+  `MODI` still lists the eight modes only; `modus` names the transposed ones.
+- The shelf is unchanged from 0.14.0: seven books, 7,825 chants over 9,743
+  listings.
+- **Breaking: the ictus is placed per section by the Liber's rules**
+  (Rules for Interpretation §VI), across syllables and words, where it was
+  placed one syllable at a time. `!` cuts a glyph and keeps the neume, so it
+  begins no group. The note before a quilisma and the first of a pressus or
+  oriscus pair take the ictus; the quilisma takes none. A group start yields
+  to a vertical episema or a sustained note after it. Every run between two
+  certain ictus is cut into beats of two or three, by word endings first and
+  accents second, the count-back from the last certain ictus breaking ties.
+  The word accent no longer places an ictus by itself. Across the Graduale,
+  the Liber and the Antiphonale Monasticum: ictus on a quilisma 5,486 → 11;
+  adjacent ictus with no double note 29,935 → 5,224 (4,172 of them the AM's
+  dotted clivis); beats over three notes 17,299 → 1,238.
+- **Breaking: a liquescent is lighter, not shorter.** The Liber's half-note
+  loses "half its force rather than its duration": `liquescentDuration` is 0
+  (was −0.35, and −0.4 in `strict`); the weight cut stays. The Antiphonale
+  Monasticum's punctum liquescens, a lone liquescent note, is sung
+  "aliquantulum protracte": new weight `punctumLiquescensDuration`, +0.15.
+  13,694 of 845,758 corpus notes lengthen, none shorten. `pondus` overrides
+  type their weights as `Partial`, matching the key-by-key merge.
+- **Breaking: the liquescent figures take the Liber's names.** A pes, clivis
+  or climacus whose last note carries the deminutive half-note (`~`) reports
+  as epiphonus, cephalicus or ancus (3,481, 4,407 and 252 on the shelf). The
+  augmented `<` and `>` keep pes and clivis; a lone `>` stays a punctum.
+- **Moderna slurs the joined stroke, not the GABC figure.** A figure splits
+  into the glyphs square notation draws, following gregorio; one slur per
+  stroke of two or more notes, and a pressus keeps its slur. The neume is
+  shown by spacing: 12.4 between notes of a stroke, 13.2 between detached
+  marks, a 4.4 gap before the next figure (unwrapped width +4.2%). The slur
+  sits over its own notes, measured in staff spaces. A liquescent is a small
+  head with a down stem a space and a half long.
+- **Quadrata draws gregorio's glyphs, set apart**: a third of a space between
+  square glyphs, and the two notes of a pressus not touching, as the Liber
+  prints them (1961, p. xj). A pes subpunctis stacks its pes. 3,790 of 7,709
+  shelf chants draw differently; width −0.6%.
+- Every GABC separator is read and spaced as written: `!`, `@`, `/`, `//`,
+  `/0` and `/[n]`. `@` fuses two glyphs, and quadrata draws the fusion
+  abutting.
+- A clivis of a third or more is joined at the junction, its lower head over
+  the line, as the pes and torculus already were.
+- The shipped census blocks are re-baked for all of the above.
+
+### Fixed
+
+- Two adjacent GABC cells with the same text are two syllables: _toto_, _in
+  incorruptionem_ and their kind had merged their twin syllables (234 chants).
+- The repetition shorthand is one note per repeat: `hss` and `hvv` runs had
+  lost their repeats (664 on the shelf). A bivirga is drawn as virgae.
+- A bracketed attribute is not a written mark: the `o` of `_[oh:h]` made an
+  oriscus and the `.` of `[alt:I.]` a mora. Orisci on the shelf 9,966 → 5,127.
+- A run of three or four slashes was read as a note.
+- A clef change just after a line closed by width: the custos named the wrong
+  pitch, and the next line opened with both clefs. The new clef now closes the
+  old line, as it did on a forced break.
+
 ## 0.14.0 — 2026-10-19
 
 The notes take their size from the book, and a chant need not be in the
