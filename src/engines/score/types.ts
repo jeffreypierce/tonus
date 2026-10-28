@@ -236,6 +236,14 @@ export interface PhrasingProfile {
   ictusBoost: number;
   neumeArch: number;
   durArch: number;
+  /** How much a REAL note is leaned into (louder, longer): in a long melisma
+   *  the first and last note, the turning points and the notes on the tenor
+   *  or the final; at a cadence the note before the final when it comes by
+   *  step. 0 leaves every note equal. */
+  lean: number;
+  /** How much a PASSING note is rushed (softer, shorter): the rest of a long
+   *  melisma, the runs between the real notes. 0 leaves every note equal. */
+  rush: number;
 }
 
 export interface InterpretationOptions {

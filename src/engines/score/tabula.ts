@@ -203,10 +203,12 @@ export function computeTabula(
       strength: interpretation.modalInfluence,
     });
     const tenorPc = modeData?.tenor;
+    const finalPc = modeData?.final;
     const shaped = applyPhrasing(
       flatForPhrasing as Parameters<typeof applyPhrasing>[0],
       modeProfile,
       tenorPc,
+      finalPc,
     );
 
     for (let i = 0; i < shaped.length && i < annotated.length; i++) {

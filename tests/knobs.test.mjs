@@ -91,6 +91,35 @@ describe("the five knobs", () => {
     assert.throws(() => buildScore(chant, { accentus: "solemn", expressio: 0.5 }), /mixed/);
   });
 
+  test("lean and rush: a melisma's turning points lean, its runs rush, and the cadence leans into the penultimate", () => {
+    const melisma = { ...chant, gabc: "(c4) Ky(ghgfghjhgh)ri(h)e(gf) (,) e(h)le(ih)i(hg)son.(f.) (::)" };
+    const rows = (o) => buildScore(melisma, o).tabula;
+    const flat = rows({ modulatio: 0 });
+    const full = rows({ modulatio: 1 });
+    // the summit of the run (C4, index 6) is a real note: louder and longer at 1 than at 0
+    assert.ok(full[6].velocity > flat[6].velocity);
+    assert.ok(full[6].shapedDuration > flat[6].shapedDuration);
+    // a passing note of the run (G3, index 2) is shorter at 1 than at 0
+    assert.ok(full[2].shapedDuration < flat[2].shapedDuration);
+    // the summit stands well above its neighbours at 1
+    assert.ok(full[6].velocity > 2 * full[5].velocity || full[6].velocity > 0.6);
+    // the cadence: the penultimate (G3, step to the final F) leans; the final releases
+    const n = full.length;
+    assert.ok(full[n - 2].velocity > flat[n - 2].velocity);
+    assert.ok(full[n - 1].velocity < flat[n - 1].velocity);
+    // a syllabic phrase closing by a leap is untouched by lean and rush
+    const syllabic = { ...chant, gabc: "(c4) A(g)ve(h) Ma(j)ri(h)a(f) (::)" };
+    const a = buildScore(syllabic, { accentus: "lyrical" }).tabula;
+    const b = buildScore(syllabic, { accentus: { style: "lyrical", overrides: { lean: 0, rush: 0 } } }).tabula;
+    assert.deepEqual(a.map((r) => r.velocity), b.map((r) => r.velocity));
+    assert.deepEqual(a.map((r) => r.shapedDuration), b.map((r) => r.shapedDuration));
+    // closing by step, the same phrase does lean into its penultimate
+    const stepwise = { ...chant, gabc: "(c4) A(g)ve(h) Ma(j)ri(h)a(g) (::)" };
+    const c = buildScore(stepwise, { accentus: "lyrical" }).tabula;
+    const d = buildScore(stepwise, { accentus: { style: "lyrical", overrides: { lean: 0, rush: 0 } } }).tabula;
+    assert.ok(c[c.length - 2].velocity > d[d.length - 2].velocity);
+  });
+
   test("a style name for pondus still works when no knob is given", () => {
     const s = buildScore(chant, { pondus: "expressive" });
     assert.ok(s.tabula.length > 0);
