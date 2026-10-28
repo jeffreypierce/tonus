@@ -277,7 +277,7 @@ and 4 that happen to end with the same gesture. Both answers are correct; they
 are answers to different questions.
 
 `k` bounds the result (default 8, `0` returns none, larger than the corpus
-returns all 2,186 others).
+returns all the others, about 7,700).
 
 ## The era view
 
@@ -286,7 +286,8 @@ tonus.census({ id: "gregobase:1210", before: 1100 });
 ```
 
 Restricts neighbors to chants a manuscript of the 11th century or earlier
-already holds, 1,790 of the 2,186 candidates. This is the same rule as
+already holds: about 5,400 candidates for this chant, where the whole census
+offers about 7,700. This is the same rule as
 [`cantus({ before })`](chant.md#the-repertoire-as-of-a-date--the-era-view),
 through the same admissibility door: **evidence, not existence**, so a chant
 with no dated witness is excluded rather than assumed old.
@@ -319,6 +320,7 @@ sixteenth slot is everything else.
 ## What the census is not
 
 It is not a similarity search over Gregorian chant at large. The blocks
-describe the chants tonus ships, which is the assignment-driven corpus: what
-some day of the calendar calls for. A melody's neighbors are its neighbors
-_within that repertoire_.
+describe the chants tonus ships, which is the shelf: the Solesmes books and
+the Nocturnale Romanum as they print, whether or not a day of the calendar
+calls for them. A melody's neighbors are its neighbors _within that
+repertoire_.
