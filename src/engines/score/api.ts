@@ -22,6 +22,8 @@ import type {
   ParseError,
   Phrase as IRPhrase,
 } from "./types.js";
+import { hasKnobs, knobProfiles, checkKnobs, type Knobs } from "./knobs.js";
+export type { Knobs } from "./knobs.js";
 
 export type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
 export type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
@@ -39,10 +41,17 @@ export interface AccentusOpts {
 export type PondusInput = PondusStyle | PondusOpts;
 export type AccentusInput = AccentusStyle | AccentusOpts;
 
-export interface ScoreOpts {
+export interface ScoreOpts extends Omit<Knobs, "pondus"> {
   temperamentum?: Temperamentum;
-  pondus?: PondusInput;
+  /** the stress knob, 0..1; or, the older way, a pondus preset by name or opts */
+  pondus?: number | PondusInput;
   accentus?: AccentusInput;
+}
+
+function knobsOf(opts?: ScoreOpts): Knobs | undefined {
+  if (!opts) return undefined;
+  const { modulatio, cadentia, expressio, modalitas } = opts;
+  return { pondus: typeof opts.pondus === "number" ? opts.pondus : undefined, modulatio, cadentia, expressio, modalitas };
 }
 
 export interface Score {
@@ -93,13 +102,24 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     throw new Error(
       "notatio needs a Chant with a gabc string — build one with tonus.cantus({ gabc })",
     );
-  const pondus = resolvePondus(opts?.pondus);
+  // The five knobs. When any is given they speak for the whole
+  // interpretation, so a preset beside them is a contradiction, not a layer.
+  const k = knobsOf(opts);
+  if (hasKnobs(k)) {
+    checkKnobs(k);
+    if (typeof opts?.pondus === "string" || (opts?.pondus && typeof opts.pondus === "object") || opts?.accentus)
+      throw new Error("notatio: the knobs (pondus as a number, modulatio, cadentia, expressio, modalitas) and the presets (pondus by name, accentus) cannot be mixed");
+  }
+  const knobs = hasKnobs(k) ? knobProfiles(k) : undefined;
+  const pondus = resolvePondus(typeof opts?.pondus === "number" ? undefined : opts?.pondus);
   const accentus = resolveAccentus(opts?.accentus);
   const parsed = parseGABC(chant.gabc, {
-    interpretation: {
-      articulation: PONDUS_TO_ARTICULATION[pondus.style ?? "balanced"],
-      articulationOverrides: pondus.overrides,
-    },
+    interpretation: knobs
+      ? { articulation: "balanced", articulationOverrides: knobs.articulation }
+      : {
+          articulation: PONDUS_TO_ARTICULATION[pondus.style ?? "balanced"],
+          articulationOverrides: pondus.overrides,
+        },
   });
   const modeNum = chant.mode ? parseInt(chant.mode) || undefined : undefined;
   const scale = buildRatios({
@@ -150,12 +170,14 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     cadences,
     // Only pass phrasing when the caller asked for it, so the default
     // tabula shaping (mode-gated) is unchanged.
-    interpretation: opts?.accentus
-      ? {
-          phrasing: ACCENTUS_TO_PHRASING[accentus.style ?? "lyrical"],
-          phrasingOverrides: accentus.overrides,
-        }
-      : undefined,
+    interpretation: knobs
+      ? { phrasing: "lyrical", phrasingOverrides: knobs.phrasing, modalInfluence: k?.modalitas }
+      : opts?.accentus
+        ? {
+            phrasing: ACCENTUS_TO_PHRASING[accentus.style ?? "lyrical"],
+            phrasingOverrides: accentus.overrides,
+          }
+        : undefined,
   });
 
   return {

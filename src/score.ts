@@ -20,6 +20,7 @@
 export type {
   Score,
   ScoreOpts,
+  Knobs,
   PondusInput,
   PondusOpts,
   AccentusInput,
