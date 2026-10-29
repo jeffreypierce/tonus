@@ -5,6 +5,7 @@ import {
   syllabifyPhrase,
   selectVowel,
   detectVowelAccent,
+  wordAccent,
 } from "../dist/engines/chant/syllabify.js";
 
 describe("syllabifyWord", () => {
@@ -181,5 +182,24 @@ describe("hiatus, glides, and consonantal i (the ecclesiastical rules)", () => {
 
   test("qu still swallows its u: qui-a", () => {
     assert.deepEqual(syllabifyWord("quia"), ["qui", "a"]);
+  });
+});
+
+describe("wordAccent: the rule the editions leave unprinted", () => {
+  test("a printed acute wins at any length", () => {
+    assert.equal(wordAccent([false, false, true, false]), 2);   // ho-no-rá-ti
+    assert.equal(wordAccent([true, false, false]), 0);          // Dó-mi-nus
+    assert.equal(wordAccent([true, false]), 0);
+  });
+  test("a disyllable is accented on its first", () => {
+    assert.equal(wordAccent([false, false]), 0);                // Mi-hi, au-tem, ni-mis
+  });
+  test("three and more with no acute take the penult", () => {
+    assert.equal(wordAccent([false, false, false]), 1);
+    assert.equal(wordAccent([false, false, false, false]), 2);
+  });
+  test("a monosyllable carries none", () => {
+    assert.equal(wordAccent([false]), -1);
+    assert.equal(wordAccent([]), -1);
   });
 });

@@ -40,7 +40,7 @@ import type {
 import { buildArticulation } from "./articulation.js";
 import { assignIctus, type IctusFacts } from "./ictus.js";
 import { createLyricDecoder } from "./lyric.js";
-import { detectVowelAccent } from "../chant/syllabify.js";
+import { detectVowelAccent, wordAccent } from "../chant/syllabify.js";
 
 // Constants
 // `oct` anchors the staff onto the gamut, which is an absolute frame: guido.ts
@@ -829,10 +829,17 @@ export function parseGABC(
 }
 
 /**
- * The word facts the ictus pass weighs. The editions mark the accent only on
- * words of three syllables or more. A word of two carries it on the first, and
- * a monosyllable carries none. In a proparoxytone (stress on the antepenult)
- * the penultimate is the weak syllable the Liber says to avoid.
+ * The word facts the ictus pass weighs, and THE WORD ACCENT written onto the
+ * notes. The editions mark the accent only on words of three syllables or
+ * more; `wordAccent` (syllabify.ts) supplies the rest: a word of two carries
+ * it on the first, an unmarked word of three or more on the penult, a
+ * monosyllable none. An accent the rule supplies is written to every note of
+ * its syllable as `accent` with `accentInferred`, so the score's syllables
+ * and rows read the accent honestly (plan-genus-tables § 5). The articulation
+ * weight (`accentWeight`, applied in parseNeume from the printed acute) is
+ * not re-applied for an inferred accent: that moves every disyllable's
+ * velocity and is his ear's to rule. In a proparoxytone (stress on the
+ * antepenult) the penultimate is the weak syllable the Liber says to avoid.
  */
 function markWord(
   syllables: { notes: ParsedNote[]; accent: boolean }[],
@@ -840,8 +847,13 @@ function markWord(
 ): void {
   const k = syllables.length;
   if (k === 0) return;
-  let stress = syllables.findIndex((s) => s.accent);
-  if (stress < 0 && k === 2) stress = 0;
+  const stress = wordAccent(syllables.map((s) => s.accent));
+  if (stress >= 0 && !syllables[stress]!.accent) {
+    for (const note of syllables[stress]!.notes) {
+      note.accent = true;
+      note.accentInferred = true;
+    }
+  }
   syllables.forEach((s, i) => {
     for (const note of s.notes) {
       const f = facts.get(note);

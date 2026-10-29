@@ -18,7 +18,7 @@ export const PSM_DATA: ChantData[] = [
   {
     id: "gregobase:3252",
     incipit: "Domine in virtute",
-    gabc: "(c4) DO(f)mi(fg)ne,(g) *() in(g) vir(g)tú(gh)te(g) tu(g) a(f) (,) l<sp>ae</sp> -(h) tá(hjh)bi(i)tur(h) rex.(g) (::) (z) \r\nE(j) u(j) o(i) u(j) a(h) e.(g) (::)",
+    gabc: "(c4) DÓ(f)mi(fg)ne,(g) *() in(g) vir(g)tú(gh)te(g) tu(g) a(f) (,) l<sp>ae</sp> -(h) tá(hjh)bi(i)tur(h) rex.(g) (::) (z) \r\nE(j) u(j) o(i) u(j) a(h) e.(g) (::)",
     office: "an",
     mode: "8",
     books: ["psm"],
@@ -234,7 +234,7 @@ export const PSM_DATA: ChantData[] = [
   {
     id: "gregobase:9158",
     incipit: "Domine in caelo",
-    gabc: "(f3) DO(h)mi(h)ne,(g') in(h) cæ(fe)lo(g'_) *(,) mi(f)se(g')ri(h)cór(f')di(e)a(f') tu(gh)a.(f.) (::) E(h) u(h) o(h) u(g) a(ef) e.(f.) (::)",
+    gabc: "(f3) DÓ(h)mi(h)ne,(g') in(h) cæ(fe)lo(g'_) *(,) mi(f)se(g')ri(h)cór(f')di(e)a(f') tu(gh)a.(f.) (::) E(h) u(h) o(h) u(g) a(ef) e.(f.) (::)",
     office: "an",
     mode: null,
     books: ["psm"],
@@ -405,7 +405,7 @@ export const PSM_DATA: ChantData[] = [
   {
     id: "gregobase:18038",
     incipit: "Filii Sion",
-    gabc: "(c3) FI(h)li(h)i(h) Si(hih)on(hgh.) *(,) ex(f)súl(ed)tent(e) in(fh~) re(hg~)ge(fgf) su(e.)o.(e.) (::) E(h) u(h) o(f) u(h) a(i) e.(h.) (::)",
+    gabc: "(c3) FÍ(h)li(h)i(h) Si(hih)on(hgh.) *(,) ex(f)súl(ed)tent(e) in(fh~) re(hg~)ge(fgf) su(e.)o.(e.) (::) E(h) u(h) o(f) u(h) a(i) e.(h.) (::)",
     office: "an",
     mode: "8",
     books: ["psm"],
@@ -495,7 +495,7 @@ export const PSM_DATA: ChantData[] = [
   {
     id: "gregobase:18052",
     incipit: "Oculi mei",
-    gabc: "(c4) O(e')cu(d)li(e) me(gh)i(h_') *(,) sem(h>)per(g) ad(f) Dó(g)mi(f)num.(e.) (::) <eu>E(h) u(g) o(h) u(ih) a(gf) e.</eu>(e.) (::)",
+    gabc: "(c4) Ó(e')cu(d)li(e) me(gh)i(h_') *(,) sem(h>)per(g) ad(f) Dó(g)mi(f)num.(e.) (::) <eu>E(h) u(g) o(h) u(ih) a(gf) e.</eu>(e.) (::)",
     office: "an",
     mode: "4",
     books: ["psm"],

@@ -46,8 +46,11 @@ export interface ChantTabulaRow {
    * `sa-é` is two.
    */
   diphthong: string | null;
-  /** True when this note's syllable bears the Latin tonic word-accent. */
+  /** True when this note's syllable bears the Latin tonic word-accent: the
+   *  printed acute, or the rule where none is printed (`wordAccent`). */
   accent: boolean;
+  /** The accent was read by the rule, not printed. */
+  accentInferred?: true;
   /** True when this note's syllable is the first of its word. */
   wordStart: boolean;
   /** The engraver asked for a line break BEFORE this note (GABC `z`). */
@@ -254,6 +257,7 @@ export function computeTabula(
       vowel: n.context.vowel,
       diphthong: n.context.diphthong,
       accent: n.context.accent,
+      ...(n.context.accentInferred ? { accentInferred: true as const } : {}),
       // wordStart reads the note's CONTEXT syllable index (the parser's, which
       // resets to 0 at each word boundary — so 0 = word start), NOT the row's
       // own `syllableIndex` above (a global per-phrase counter). Two indices,
