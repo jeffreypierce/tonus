@@ -25,10 +25,9 @@ The genus tables (working/plan-genus-tables.md), in order of work.
   note's velocity); that is a ruling owed.
 - The census's `textual` block (the accent rate) and, for the few chants
   with an unmarked proparoxytone, the ictus-weighted `degreeHist` and
-  `modal` blocks no longer match the shipped bake: 6,059 chants differ in
-  `textual`, 17 in `degreeHist`, 13 in `modal`. The blocks are re-baked in
-  tonus-corpus before this ships; until then tests/census.test.mjs's two
-  "to the bit" tests fail.
+  `modal` blocks moved with the rule: 6,059 chants differ in `textual`, 17
+  in `degreeHist`, 13 in `modal`. The census is re-baked in tonus-corpus on
+  the rule and on the acutes restored on a capital (`src/data/census.ts`).
 
 ## 0.16.0 — 2026-10-28
 
