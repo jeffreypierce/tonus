@@ -2,6 +2,34 @@
 
 All notable changes to tonus. Newest first.
 
+## Unreleased (0.17.0)
+
+The genus tables (working/plan-genus-tables.md), in order of work.
+
+### Added
+
+- **The word accent read by the rule** where the editions print none
+  (`wordAccent`, syllabify.ts). The Solesmes books mark the acute only on
+  words of three syllables and more, so every disyllable and monosyllable
+  read as unaccented: Mihi autem nimis counted 12 accented syllables of 66,
+  now 21. A disyllable is accented on its first, an unmarked word of three
+  or more on the penult, a monosyllable on none; a printed acute wins. The
+  accent is on `Syllable.accent` now, beside the note and the tabula row,
+  and an accent the rule supplied carries `accentInferred: true`.
+
+### Changed
+
+- `accent` on a note, a row and a syllable is the rule's reading, not the
+  printed acute alone. The articulation weight for an accent is still
+  applied from the printed acute only (an inferred accent does not move a
+  note's velocity); that is a ruling owed.
+- The census's `textual` block (the accent rate) and, for the few chants
+  with an unmarked proparoxytone, the ictus-weighted `degreeHist` and
+  `modal` blocks no longer match the shipped bake: 6,059 chants differ in
+  `textual`, 17 in `degreeHist`, 13 in `modal`. The blocks are re-baked in
+  tonus-corpus before this ships; until then tests/census.test.mjs's two
+  "to the bit" tests fail.
+
 ## 0.16.0 — 2026-10-28
 
 Lean and rush.

@@ -100,8 +100,12 @@ export interface Context {
    */
   diphthong: string | null;
   syllableIndex: number;
-  /** True when this note's syllable bears the Latin tonic word-accent. */
+  /** True when this note's syllable bears the Latin tonic word-accent: the
+   *  printed acute, or the rule where none is printed (`wordAccent`). */
   accent: boolean;
+  /** The accent was not printed but read by the rule (a disyllable's first,
+   *  an unmarked penult). Absent when printed or when there is no accent. */
+  accentInferred?: true;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
   /** The GABC separator written just before this note, as written: `!` cuts
@@ -276,8 +280,12 @@ export interface ParsedNote {
    *  The IR groups notes into syllables by it: two adjacent cells with the same
    *  text (purpu-re re-gis, ve ve) are still two syllables. */
   cell?: number;
-  /** True when this note's syllable bears the Latin tonic word-accent. */
+  /** True when this note's syllable bears the Latin tonic word-accent: the
+   *  printed acute, or the rule where none is printed (`wordAccent`). */
   accent: boolean;
+  /** The accent was not printed but read by the rule (a disyllable's first,
+   *  an unmarked penult). Absent when printed or when there is no accent. */
+  accentInferred?: true;
   /** 0-based index of the neume figure within the syllable (GABC break markers). */
   neumeGroup: number;
   /** The GABC separator written just before this note, as written: `!` cuts
@@ -363,6 +371,12 @@ export interface Syllable {
   neumes: Neume[];
   /** Notes sung on this syllable — its melisma. 1 = syllabic, >1 = melismatic. */
   melisma: number;
+  /** The syllable bears the Latin tonic word-accent: the printed acute, or the
+   *  rule where none is printed (a disyllable's first, an unmarked penult;
+   *  `wordAccent`). The same boolean every note of the syllable carries. */
+  accent: boolean;
+  /** The accent was read by the rule, not printed. */
+  accentInferred?: true;
 }
 
 export interface Phrase {

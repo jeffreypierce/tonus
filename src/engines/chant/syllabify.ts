@@ -304,3 +304,28 @@ function findDiphthong(
 export function detectVowelAccent(text: string): boolean {
   return selectVowel(text).accent;
 }
+
+/**
+ * THE WORD ACCENT, from what the editions print and the rule they leave
+ * unprinted (plan-genus-tables § 5, 2026-10-29). The Solesmes books mark the
+ * acute only on words of three syllables and more: a word of two carries its
+ * accent on the first, and a monosyllable carries none, so neither is
+ * printed. Given each syllable's printed acute (`detectVowelAccent`) in
+ * order, returns the index of the word's accented syllable, or -1 for none:
+ *
+ *   one syllable        -1 (a clitic in prose; the ictus pass weighs it)
+ *   two syllables        0
+ *   three and more       the printed acute where there is one, else the
+ *                        penult (the rule where the editor left it unmarked;
+ *                        a proparoxytone the books would always print)
+ *
+ * A printed acute wins at any length. Pure.
+ */
+export function wordAccent(printed: readonly boolean[]): number {
+  const k = printed.length;
+  const marked = printed.indexOf(true);
+  if (marked >= 0) return marked;
+  if (k === 2) return 0;
+  if (k >= 3) return k - 2;
+  return -1;
+}

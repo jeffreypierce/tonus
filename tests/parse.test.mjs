@@ -320,6 +320,27 @@ describe("parseGABC", () => {
     assert.equal(accented.length, plain.length);
   });
 
+  test("the word accent is read by the rule where the editions print none (plan-genus-tables § 5)", () => {
+    // Mi-hi au-tem: two disyllables, no acute printed, each accented on its first
+    const two = notes("(c4) Mi(f)hi(g) au(f)tem(g)");
+    assert.deepEqual(two.map((n) => n.accent), [true, false, true, false]);
+    assert.deepEqual(two.map((n) => n.accentInferred ?? false), [true, false, true, false]);
+    // a monosyllable carries none
+    const one = notes("(c4) sunt(fg)");
+    assert.deepEqual(one.map((n) => n.accent), [false, false]);
+    // a printed acute wins, and is not marked inferred
+    const printed = notes("(c4) Dó(g)mi(h)nus(g)");
+    assert.deepEqual(printed.map((n) => n.accent), [true, false, false]);
+    assert.equal(printed[0].accentInferred, undefined);
+    // three syllables with no acute: the penult, inferred
+    const penult = notes("(c4) Do(g)mi(h)nus(g)");
+    assert.deepEqual(penult.map((n) => n.accent), [false, true, false]);
+    assert.equal(penult[1].accentInferred, true);
+    // every note of a melismatic syllable carries it
+    const mel = notes("(c4) ni(ihi)mis(f)");
+    assert.deepEqual(mel.map((n) => n.accent), [true, true, true, false]);
+  });
+
   test("useVowelAccent can be disabled", () => {
     const result = parseGABC("(c4) Dó(g)mi(h)nus(g)", { useVowelAccent: false });
     assert.ok(result.events.filter((e) => e.type === "note").length === 3);

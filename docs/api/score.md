@@ -86,8 +86,19 @@ interface Syllable {
   neume: Neume;             // the syllable read as ONE figure
   neumes: Neume[];          // its figures, as GABC groups them, each classified
   melisma: number;          // notes on this syllable (1 = syllabic, >1 melismatic)
+  accent: boolean;          // bears the Latin tonic word-accent (see below)
+  accentInferred?: true;    // the accent was read by the rule, not printed
 }
 ```
+
+The accent is the printed acute where the edition prints one, and the rule
+where it does not. The Solesmes books mark the acute only on words of three
+syllables and more, so a word of two is accented on its first and a
+monosyllable on none; an unmarked word of three or more takes the penult.
+A printed acute wins at any length. Where the rule and not the print
+supplied the accent, `accentInferred` says so; the same two fields sit on
+every note's `context` and on every tabula row. The articulation weight for
+an accent is applied from the printed acute alone.
 
 A syllable carries neumes rather than being one. GABC marks the figures with
 `!`, `/` and `//`, and `neumes` names each; `neume` reads the whole syllable as
@@ -321,7 +332,8 @@ interface Context {
   vowel: string;
   diphthong: string | null; // the pair the vowel belongs to: "ae" | "oe" | "au" | "ui"
   syllableIndex: number;
-  accent: boolean; // this note's syllable bears the Latin tonic word-accent
+  accent: boolean; // this note's syllable bears the Latin tonic word-accent (printed, or by the rule)
+  accentInferred?: true; // the accent was read by the rule, not printed
   neumeGroup: number; // neume figure within the syllable (0-based)
   ictus: boolean;
   ictusSign: boolean; // an editorial ictus mark is printed in the source
@@ -376,7 +388,8 @@ interface ChantTabulaRow {
   phraseIndex: number;
   syllableIndex: number;
   noteIndex: number;
-  accent: boolean; // this note's syllable bears the Latin tonic word-accent
+  accent: boolean; // this note's syllable bears the Latin tonic word-accent (printed, or by the rule)
+  accentInferred?: true; // the accent was read by the rule, not printed
   neumeGroup: number; // which neume figure within the syllable (0-based)
   neumeIndex: number; // position of this note within that figure
   wordStart: boolean; // first syllable of its word

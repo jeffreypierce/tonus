@@ -79,7 +79,7 @@ is English. Option keys are addresses (may be Latin); their values are codes.
   `tests/render-stress.test.mjs`.
 - No `serve`/`site`/`diagrams` script: the site left. Run it from
   orreliquum (`npm run serve` there), which vendors this library first.
-- Green tests **and** clean `tsc` at every commit. (Current floor: 872 tests.)
+- Green tests **and** clean `tsc` at every commit. (Current floor: 875 tests, with the two census "to the bit" tests red until tonus-corpus re-bakes the blocks on the word-accent rule; see CHANGELOG, Unreleased.)
 
 ## Fonts (license discipline)
 

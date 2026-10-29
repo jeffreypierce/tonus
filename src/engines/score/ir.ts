@@ -66,6 +66,7 @@ function rawToNote(raw: ParsedNote, scale: Scale): Note {
       diphthong: sung.diphthong,
       syllableIndex: raw.syllableIndex,
       accent: raw.accent,
+      ...(raw.accentInferred ? { accentInferred: true as const } : {}),
       neumeGroup: raw.neumeGroup,
       separator: raw.separator,
       lineBreak: raw.lineBreak,
@@ -118,9 +119,11 @@ function makeSyllable(lyric: string, notes: Note[]): Syllable {
     summit.performance.duration *= SALICUS_PROLONGATION;
   }
   const runs = notes[0]?.context.runs;
+  const accent = Boolean(notes[0]?.context.accent);
+  const inferred = notes[0]?.context.accentInferred ? { accentInferred: true as const } : {};
   return runs
-    ? { lyric, runs, notes, neume, neumes, melisma: notes.length }
-    : { lyric, notes, neume, neumes, melisma: notes.length };
+    ? { lyric, runs, notes, neume, neumes, melisma: notes.length, accent, ...inferred }
+    : { lyric, notes, neume, neumes, melisma: notes.length, accent, ...inferred };
 }
 
 // ── Arsis/thesis classification ── (the model is in the module header above)
