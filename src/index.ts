@@ -7,8 +7,6 @@ import { getPsalm } from "./engines/chant/psalm.js";
 import { buildTemper } from "./engines/temper/api.js";
 import { buildScore } from "./engines/score/api.js";
 import { inscriptio } from "./engines/score/inscriptio.js";
-import { getCosmos } from "./engines/planet/planet.js";
-import { buildHarmonia } from "./engines/harmonia/api.js";
 import { getCensus } from "./engines/census/census.js";
 
 import type { FeastQuery, Feast, Pascha, Season, Grade } from "./engines/cal/types.js";
@@ -32,16 +30,6 @@ import type {
 import type {
   Metrics
 } from "./engines/score/metrics.js";
-import type {
-  Harmony, HarmoniaOpts, VoicedBody, VoicedAspect, Frame, Author
-} from "./engines/harmonia/api.js";
-import type { HarmonyTabulaRow } from "./engines/harmonia/tabula.js";
-import type { PlanetVowel } from "./engines/harmonia/data/vowels.js";
-
-import type { VoicedPitch } from "./engines/harmonia/voice.js";
-import type {
-  Cosmos, CosmosQuery, Body, BodyName, Aspect
-} from "./engines/planet/types.js";
 
 const tonus = {
   festum: getFeast,
@@ -55,8 +43,6 @@ const tonus = {
   temperamentum: buildTemper,
   notatio: buildScore,
   inscriptio,
-  caelum: getCosmos,
-  harmonia: buildHarmonia,
   census: getCensus,
 };
 
@@ -65,7 +51,7 @@ export default tonus;
 // ── The appendix ──
 // The export law: verbs live on the namespace; return values are plain data;
 // the appendix exports canonical constant tables — nothing with a (). A
-// function that earns public life earns a fifteenth Latin noun instead.
+// function that earns public life earns a thirteenth Latin noun instead.
 // A constant is admitted when a caller would otherwise TYPE IT OUT — a mode
 // list, an hour list, the valid `by:` values. Those transcriptions drift, and a
 // caller's drifted copy fails as wrong answers rather than as an error. Naming
@@ -102,17 +88,6 @@ export type { CadentiaGenus, CadentiaSpecies } from "./data/cadentiae.js";
 // TEMPORA.
 export { CADENTIA_LABEL } from "./engines/score/cadence.js";
 
-// planet — the zodiac. ZODIACA is the whole table: it carries each sign's own
-// `sign` and `signum` beside its doctrine, so `ZODIACA[body.zodiac]` answers
-// both what the sign is CALLED and what it MEANS. The bare name arrays stay
-// inside the engine that computes a longitude, where they are the lookup.
-export { ZODIACA } from "./engines/harmonia/data/zodiac.js";
-// DOCTRINAE — the four authorities `harmonia({ doctrina })` voices the spheres
-// by, each with its source, its span and its planets' ratios: what a caller
-// reads to draw or retune the doctrine it asked for.
-export { DOCTRINAE } from "./engines/harmonia/data/doctrines.js";
-export type { Doctrina } from "./engines/harmonia/data/doctrines.js";
-
 // census — the field groups and the block index. CENSUS_GROUPS keys are the
 // valid `by:` values AND the `profile` keys; CENSUS_ORDER holds every censused
 // id, so asking whether a chant is in the census stops needing a try/catch.
@@ -127,7 +102,5 @@ export type {
   TemperamentumOpts, Tuning, Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, ModusCadentiae, ModusGenus, Modus, TunedNote, GamutOptions, Tonus,
   TonusOpts, Score, ScoreOpts, Knobs, PondusInput, PondusOpts, AccentusInput,
-  AccentusOpts, Cadence, Modulation, VoicedPitch, Cosmos, CosmosQuery, Body,
-  BodyName, Aspect, Imprint, Metrics, Harmony, HarmoniaOpts, VoicedBody,
-  VoicedAspect, Frame, Author, HarmonyTabulaRow, PlanetVowel
+  AccentusOpts, Cadence, Modulation, Imprint, Metrics
 };

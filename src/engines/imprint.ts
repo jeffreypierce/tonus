@@ -1,15 +1,13 @@
 // ---------------------------------------------------------------------------
-// engines/imprint — shared analytical fingerprint for Score and Harmony
+// engines/imprint — the analytical fingerprint a Score carries
 // ---------------------------------------------------------------------------
 // An Imprint is a compact summary of the pitch and modal content of a work,
-// computed identically from chant phrases or voiced planetary bodies. Score
-// and Harmony both carry one; callers compare them to measure overlap.
+// computed from the chant's phrases.
 import type { Phrase } from "./score/types.js";
 import type { Pitch } from "./temper/pitch.js";
 import type { Scale } from "./temper/scale.js";
 import { toPitch } from "./temper/pitch.js";
 import { computeModalAffinity, type ModalAffinity } from "./temper/modality.js";
-import type { VoicedBody } from "./harmonia/voice.js";
 
 export type { ModalAffinity };
 
@@ -167,51 +165,5 @@ export function computeImprint(
       lastNotePc: lastNote?.pc,
       tessitura,
     }),
-  };
-}
-
-/** Build an Imprint from voiced planetary bodies (presence-weighted pc counts). */
-export function computeImprintFromBodies(
-  bodies: VoicedBody[],
-  scale: Scale,
-): Imprint {
-  const pcWeight = new Array<number>(12).fill(0);
-  let totalPresence = 0;
-  for (const b of bodies) {
-    pcWeight[b.nota.pitch.pc] += b.presence;
-    totalPresence += b.presence;
-  }
-  const pcDistribution: Record<number, number> = {};
-  for (let pc = 0; pc < 12; pc++) {
-    pcDistribution[pc] = totalPresence > 0 ? pcWeight[pc] / totalPresence : 0;
-  }
-
-  // Vowel attractors: harmony has no phrase text, but each voiced body carries
-  // its own Greek planetary vowel. Weight by presence; pitch is the body's own.
-  const vowelWeight = new Map<string, { weight: number; pitch: Pitch }>();
-  let vowelTotal = 0;
-  for (const b of bodies) {
-    const key = b.vowel.phonetic;
-    const entry = vowelWeight.get(key);
-    if (entry) {
-      entry.weight += b.presence;
-    } else {
-      vowelWeight.set(key, { weight: b.presence, pitch: b.nota.pitch });
-    }
-    vowelTotal += b.presence;
-  }
-  const vowelAttractors: VowelAttractor[] = [];
-  if (vowelTotal > 0) {
-    for (const [vowel, { weight, pitch }] of vowelWeight) {
-      vowelAttractors.push({ vowel, weight: weight / vowelTotal, pitch });
-    }
-    vowelAttractors.sort((a, b) => b.weight - a.weight);
-  }
-
-  return {
-    pcDistribution,
-    attractors: computeAttractors(pcDistribution, scale),
-    vowelAttractors,
-    modalAffinity: computeModalAffinity(pcDistribution),
   };
 }

@@ -19,7 +19,7 @@ export interface Interval {
 }
 
 // The three-tier consonance taxonomy [biblio: schulter-harmony] (the same table
-// stated at ../../../docs/api/heavens.md and ../../../docs/api/tuning.md).
+// stated at ../../../docs/api/tuning.md).
 // Note that the perfect fourth is deliberately NOT perfect here: in medieval counterpoint the P4 above the bass
 // is treated as a dissonance, unlike the melodic P4. So P1/P5/P8 are perfect,
 // the thirds and sixths imperfect, and everything else — including P4 and the

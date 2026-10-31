@@ -666,7 +666,7 @@ describe("tonus", () => {
 describe("the Pythagorean chain spelling (E♭–G♯)", () => {
   // Regression: an ascending-only chain from C once spelled F as E♯ — a wolf
   // ut–fa of 521.5¢ — and b molle as A♯, which broke the heji baseline and
-  // contradicted harmonia's own pure F.
+  // contradicted the pure 4:3 F a doctrina's ratios assume.
   test("ut–fa is a pure fourth (F is F, not E♯)", () => {
     const t = buildTemper({ tuning: "pythagorean" });
     const ratio = t.nota("F4").hz / t.nota("C4").hz;

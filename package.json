@@ -2,7 +2,7 @@
   "name": "tonus",
   "version": "0.16.0",
   "type": "module",
-  "description": "Medieval music analysis: GABC plainchant exports, liturgical calendar, tuning systems, ephemeris, and the harmony of the spheres",
+  "description": "Medieval music analysis: GABC plainchant exports, the liturgical calendar, and tuning systems",
   "author": "Jeffrey Pierce <jeffrey@jeffreypierce.net>",
   "license": "PolyForm-Noncommercial-1.0.0",
   "repository": {
@@ -22,9 +22,6 @@
     "tuning",
     "temperament",
     "solfege",
-    "ephemeris",
-    "musica-universalis",
-    "harmony-of-the-spheres",
     "boethius",
     "divinum-officium"
   ],

@@ -42,7 +42,7 @@ export interface CompoundBeat {
 }
 
 // Performance — per-event interpretation layer.
-// Used by harmonia voicing and by the score engine.
+// Used by the score engine.
 export interface Performance {
   velocity: number;
   duration: number;

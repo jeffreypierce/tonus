@@ -1,7 +1,7 @@
 # tonus API
 
 The technical center of tonus: the full public API, the conventions every method
-obeys, and the error contract. The API is **fourteen methods on the `tonus`
+obeys, and the error contract. The API is **twelve methods on the `tonus`
 namespace**, no sub-namespaces.
 
 **[Interactive demo](https://orreliquum.com/)**
@@ -31,19 +31,17 @@ import tonus from "tonus";
 | `tonus.temperamentum(input?)`    | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
 | `tonus.notatio(chant, opts?)`    | [score](score.md)       | `Score` — GABC → musical score                          |
 | `tonus.inscriptio(score, opts?)` | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
-| `tonus.caelum(query?)`           | [heavens](heavens.md)   | `Cosmos \| Cosmos[]` — ephemeris                        |
-| `tonus.harmonia(cosmos, opts?)`  | [heavens](heavens.md)   | `Harmony` — musica universalis                          |
 | `tonus.census(query)`            | [census](census.md)     | `Census` — a chant against the corpus                   |
 
 ### Query and builder functions
 
 **Query functions** (`festum`, `pascha`, `cantus`,
-`corpus`, `proprium`, `ordinarium`, `officium`, `psalmus`, `caelum`) name what you want and return arrays. Empty matches
+`corpus`, `proprium`, `ordinarium`, `officium`, `psalmus`) name what you want and return arrays. Empty matches
 return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
 chant results sort by rank then incipit.
 
 **Builder functions** (`temperamentum`,
-`notatio`, `harmonia`, and `inscriptio`) construct and return context objects, and throw
+`notatio`, and `inscriptio`) construct and return context objects, and throw
 `Error` on invalid input. Only `Temperamentum` carries methods; `Score` is a
 plain data record, and rendering is the standalone `inscriptio`.
 
@@ -112,13 +110,6 @@ levels](score.md#one-key-two-levels), and
 [lift](tuning.md#lift--how-mode-bound-a-close-is) for what `CADENTIAE_POPULATION`
 is for.
 
-**Heavens**
-
-| Export      | What it holds                                                                                        |
-| ----------- | ---------------------------------------------------------------------------------------------------- |
-| `ZODIACA`   | the twelve signs in ecliptic order, each with its English `sign`, Latin `signum` and its doctrine    |
-| `DOCTRINAE` | the four authorities `harmonia` voices the spheres by → source, date, span, and each planet's ratio |
-
 **Census**
 
 | Export          | What it holds                                                                                          |
@@ -132,7 +123,7 @@ contract](census.md#distance-is-cosine-per-field-group).
 
 ## The entries
 
-The fourteen methods and every table above are on the root, and stay there. Four
+The twelve methods and every table above are on the root, and stay there. Four
 subpath entries hold what the root index was carrying without being asked to:
 the **anatomy** of a return value, and the types whose values a caller had to
 spell by hand against a query or an option bag.
@@ -215,15 +206,6 @@ the list resolve their pitches through the ones before.
 - [Modulations](score.md#modulations)
 - [Theory & Context](score.md#theory--context) · [Sources](score.md#sources)
 
-**[Heavens](heavens.md)** — an ephemeris voiced through the planetary doctrines.
-
-- [The heavens — `caelum`](heavens.md#the-heavens--caelum)
-- [Aspects](heavens.md#aspects)
-- [The voiced heavens — `harmonia`](heavens.md#the-voiced-heavens--harmonia)
-- [The planetary vowels](heavens.md#the-planetary-vowels)
-- [The tabula](heavens.md#the-tabula)
-- [Theory & Context](heavens.md#theory--context) · [Sources](heavens.md#sources)
-
 **[Census](census.md)** — one chant measured against the corpus that holds it.
 
 - [The method](census.md#the-method)
@@ -263,7 +245,7 @@ Dates are UTC-canonical. Local-time constructions like
 `new Date(2026, 0, 6)` resolve to different days depending on the
 machine's timezone. Prefer `new Date("2026-01-06")` instead.
 
-`tonus.festum()` and `tonus.caelum()` default to **1 June 991**, the
+`tonus.festum()` defaults to **1 June 991**, the
 symbolic birthday of Guido d'Arezzo. Pass an explicit `date` for any other
 day.
 
@@ -288,9 +270,6 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
   must supply 7 or 12 steps, beginning at `1/1` (a degree list) or ending at
   `2/1` (Scala convention).
 - `pascha` throws `RangeError` on a non-finite year.
-- `caelum` in range mode (`{ from, to, step }`) throws `RangeError` on a missing
-  bound, `to` before `from`, a non-positive step, or a range exceeding the frame cap.
-- `harmonia` throws `RangeError` on an unknown doctrina.
 - `census` throws on an id with no block (the census covers only the chants
   tonus ships) and on an unknown query key or field group.
 

@@ -9,7 +9,7 @@ describe("tonus namespace", () => {
     assert.equal(feasts[0].nomen, "In Nativitate Domini");
   });
 
-  test("festum() and caelum() default to the medieval epoch (Guido d'Arezzo, 991)", () => {
+  test("festum() defaults to the medieval epoch (Guido d'Arezzo, 991)", () => {
     const feasts = tonus.festum();
     assert.ok(feasts.length > 0);
     assert.equal(
@@ -17,9 +17,11 @@ describe("tonus namespace", () => {
       991,
       "a bare festum() resolves Guido's era, not the modern year",
     );
-    // caelum() shares the same default epoch, so both describe the same day.
-    const sky = tonus.caelum();
-    assert.equal(sky.date.getUTCFullYear(), 991);
+  });
+
+  test("the planets left for orreliquum (0.17.0): no caelum, no harmonia", () => {
+    assert.equal(tonus.caelum, undefined);
+    assert.equal(tonus.harmonia, undefined);
   });
 
   test("cantus returns chants by mode and office", () => {
@@ -375,13 +377,6 @@ describe("guided throws on junk input (the error contract)", () => {
   test("festum rejects a non-Date date", () => {
     assert.throws(() => tonus.festum({ date: "xmas" }), /date must be a Date/);
   });
-  test("caelum rejects a non-Date date", () => {
-    assert.throws(() => tonus.caelum({ date: "solstice" }), /date must be a Date/);
-  });
-  test("harmonia rejects a non-Cosmos input", () => {
-    assert.throws(() => tonus.harmonia(null), /Cosmos/);
-    assert.throws(() => tonus.harmonia({ doctrina: "freud" }), /Cosmos/);
-  });
   test("notatio rejects a non-Chant input", () => {
     assert.throws(() => tonus.notatio(null), /needs a Chant/);
     assert.throws(() => tonus.notatio({ gabc: 123 }), /needs a Chant/);
@@ -397,10 +392,9 @@ describe("guided throws on junk input (the error contract)", () => {
 });
 
 describe("feast filters reject non-Feast input everywhere", () => {
-  test("proprium, ordinarium, officium, caelum all throw with guidance", () => {
+  test("proprium, ordinarium, officium all throw with guidance", () => {
     assert.throws(() => tonus.proprium({ feast: 42 }), /must be a Feast/);
     assert.throws(() => tonus.ordinarium({ feast: {} }), /must be a Feast/);
     assert.throws(() => tonus.officium({ feast: "adv1", hora: "laudes" }), /must be a Feast/);
-    assert.throws(() => tonus.caelum({ feast: 42 }), /must be a Feast/);
   });
 });

@@ -630,8 +630,7 @@ editorial choices behind it are documented at the builder, in
 
 - **The three Ptolemaic diatonics** — antiquity's just intonations, Ptolemy's
   three "shades" of the diatonic. `"ptolemy-intense"` is classical just
-  intonation (pure thirds; coherent with the Ptolemy doctrina in
-  [`harmonia`](heavens.md)); `"ptolemy-soft"` is septimal and dark;
+  intonation (pure thirds); `"ptolemy-soft"` is septimal and dark;
   `"ptolemy-equable"` has neutral, near-equal steps outside the Latin tradition.
   Each tunes one fixed scale, so pairing one with a non-default mode can surface
   unexpected intervals, including a wolf.

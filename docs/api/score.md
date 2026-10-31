@@ -366,8 +366,7 @@ thetic (resting, retractive). The classification rules are in
 `score.tabula` is the flat iteration surface: one row per note, for
 analysis, visualization, or emission.
 
-`Harmony` exposes the same surface for voiced bodies
-([heavens.md](heavens.md#the-tabula)). The tabula is also the rendering
+The tabula is also the rendering
 surface. The SVG renderer ([below](#rendering)) consumes it directly, which is
 why `hz`, `velocity`, `bend`, and the ornament flags live on each row.
 

@@ -36,6 +36,24 @@ The genus tables (working/plan-genus-tables.md), in order of work.
   differ in `textual`, 112 in `degreeHist`, 105 in `modal`. The census is
   re-baked in tonus-corpus (`src/data/census.ts`).
 
+### Removed
+
+- **The planets left for orreliquum.** `caelum` and `harmonia` are gone
+  from the namespace (fourteen methods become twelve), with the `ZODIACA`
+  and `DOCTRINAE` tables and the types `Cosmos`, `CosmosQuery`, `Body`,
+  `BodyName`, `Aspect`, `Harmony`, `HarmoniaOpts`, `VoicedBody`,
+  `VoicedAspect`, `VoicedPitch`, `Frame`, `Author`, `HarmonyTabulaRow`,
+  `PlanetVowel` and `Doctrina`. The ephemeris and the doctrinae of the
+  spheres were speculative where the rest of the library is researched to
+  the source; tonus keeps the chant, the calendar and the tuning.
+  orreliquum carries the sky now (`src/caelum`, ported from 0.16.0 and held
+  to its output bit for bit). A note name or an interval for a planet's
+  pitch is `temperamentum().nota({ hz })` and `intervallum`, as for any
+  pitch.
+- The planetary imprint (`computeImprintFromBodies`): an Imprint is a
+  chant's alone.
+- `docs/api/heavens.md`, and the planetary entries of the bibliography.
+
 ## 0.16.0 — 2026-10-28
 
 Lean and rush.

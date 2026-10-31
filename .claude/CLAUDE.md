@@ -22,7 +22,7 @@ actually loads. Testing the installed package instead passes while the site
 ships a stale vendor tree; that is exactly how the cc/dd swap survived.
 
 tonus is a per-chant, deterministic TypeScript/ESM library modelling Gregorian
-chant, tuning, the liturgical calendar, and cosmology. This file orients an
+chant, tuning, and the liturgical calendar. This file orients an
 agent working in the repo; the detailed rules live in the standards docs below.
 
 ## The two boundaries (read these before adding anything)
@@ -79,7 +79,7 @@ is English. Option keys are addresses (may be Latin); their values are codes.
   `tests/render-stress.test.mjs`.
 - No `serve`/`site`/`diagrams` script: the site left. Run it from
   orreliquum (`npm run serve` there), which vendors this library first.
-- Green tests **and** clean `tsc` at every commit. (Current floor: 877 tests.)
+- Green tests **and** clean `tsc` at every commit. (Current floor: 828 tests.)
 
 ## Fonts (license discipline)
 

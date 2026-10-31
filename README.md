@@ -4,9 +4,7 @@
 analysis. It carries the Gregorian repertoire and the concepts it was built on.
 
 It tunes to scales medieval singers would have used, tells you which chants
-belong to which day and returns analysis and notation, and calculates the
-_music of the spheres_ proposed by Pythagoras, Boethius, and more as real
-intervals.
+belong to which day, and returns analysis and notation.
 
 **[Interactive demo](https://orreliquum.com/)**
 
@@ -35,9 +33,6 @@ const [introit] = tonus.proprium({ feast, office: "in" });
 // Turn the chant into tuned, rhythmicized notes, then draw it.
 const score = tonus.notatio(introit, { temperamentum: t });
 const { svg, geometry } = tonus.inscriptio(score, { width: 680 });
-
-// And voice the Christmas sky as pitch, after Boethius.
-const harmony = tonus.harmonia(tonus.caelum({ date: feast.date }));
 ```
 
 The objects each call returns (`feast`, `t`) pass straight back into the next as
@@ -45,7 +40,7 @@ filters.
 
 ## The API
 
-Fourteen methods, each named for what it returns.
+Twelve methods, each named for what it returns.
 
 | Method                        | Returns                                                           |
 | ----------------------------- | ----------------------------------------------------------------- |
@@ -61,8 +56,6 @@ Fourteen methods, each named for what it returns.
 | `temperamentum({ … })`        | a tuning — `nota`, `gradus`, `modus`, `intervallum`               |
 | `notatio(chant)`              | GABC parsed to phrases, syllables, and tuned notes                |
 | `inscriptio(score)`           | `{ svg, geometry }` — the score drawn, and where each note landed |
-| `caelum({ date })`            | the classical planets at a moment                                 |
-| `harmonia(caelum)`            | those positions voiced as pitch                                   |
 
 **Tuning** covers Pythagorean and meantone temperaments, just intonation and
 custom scales, the Guidonian gamut and hand, hexachords and their mutations,
@@ -82,13 +75,10 @@ melodic character, and drawn to a square-note or modern staff.
 
 ## Concepts
 
-Boethius treated music as a branch of number theory, and divided it into the
-audible and the inaudible: instruments and voices, body and soul, the turning
-cosmos. Chant
-was composed inside that frame: pitch was ratio, the modes a received order,
-the heavens harmonic proportion. tonus takes those claims literally enough to
-compute them, which is why tuning is ratio arithmetic, why the calendar is a
-retrieval index, and why there is an ephemeris in a chant library at all.
+Boethius treated music as a branch of number theory. Chant was composed
+inside that frame: pitch was ratio, the modes a received order. tonus takes
+those claims literally enough to compute them, which is why tuning is ratio
+arithmetic and the calendar a retrieval index.
 
 Where the sources run out or contradict one another, tonus makes an editorial
 call and records it in the code.
@@ -99,8 +89,7 @@ The **[documentation index](docs/api/index.md)** is the technical center: the fu
 API, the conventions, the error contract, and the code standards. From there,
 one page per engine, in dependency order:
 [tuning](docs/api/tuning.md), [calendar](docs/api/calendar.md), [chant](docs/api/chant.md),
-[score](docs/api/score.md), [heavens](docs/api/heavens.md), and
-[census](docs/api/census.md).
+[score](docs/api/score.md), and [census](docs/api/census.md).
 
 ## Install and run
 
@@ -122,8 +111,7 @@ The chant and calendar data are the Solesmes editions, by way of
 Romanum_. The notation is engraved in Daniel Spreadbury's
 [Bravura](https://github.com/steinbergmedia/bravura), the reference font for the
 SMuFL standard. Behind the rest stand Mocquereau and Suñol on rhythm, Rockstro
-and Apel on the modes, Boethius and Ptolemy on tuning, and Godwin on the
-Pythagorean planets.
+and Apel on the modes, and Boethius and Ptolemy on tuning.
 
 Every figure is cited in the code beside what it explains, and
 [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) is the complete list.
