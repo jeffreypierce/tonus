@@ -23,11 +23,18 @@ The genus tables (working/plan-genus-tables.md), in order of work.
   printed acute alone. The articulation weight for an accent is still
   applied from the printed acute only (an inferred accent does not move a
   note's velocity); that is a ruling owed.
-- The census's `textual` block (the accent rate) and, for the few chants
-  with an unmarked proparoxytone, the ictus-weighted `degreeHist` and
-  `modal` blocks moved with the rule: 6,059 chants differ in `textual`, 17
-  in `degreeHist`, 13 in `modal`. The census is re-baked in tonus-corpus on
-  the rule and on the acutes restored on a capital (`src/data/census.ts`).
+- The chant texts carry the acute the transcription lost on words of three
+  syllables and more: 2,146 words in the GregoBase books and 414 in the
+  Nocturnale, restored at extraction in tonus-corpus (emend-accents.mjs).
+  A word takes the place its own source prints it accented elsewhere
+  (ipsíus, glória, sǽcula); a word never printed accented takes it on a
+  capital vowel or a capitalised syllable (Ángelus, DÓmine). Acutes only:
+  no other character of any chant moved.
+- The census's `textual` block (the accent rate) and, for the chants whose
+  accent moved under an ictus, the `degreeHist` and `modal` blocks moved
+  with the rule and the restored acutes: against 0.16.0, 7,540 chants
+  differ in `textual`, 112 in `degreeHist`, 105 in `modal`. The census is
+  re-baked in tonus-corpus (`src/data/census.ts`).
 
 ## 0.16.0 — 2026-10-28
 
