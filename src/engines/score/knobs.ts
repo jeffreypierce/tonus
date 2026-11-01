@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
-// engines/score/knobs — the five singing knobs over the two profile tables
+// engines/score/knobs — the four singing knobs over the two profile tables
 // ---------------------------------------------------------------------------
-// Five knobs set the interpretation. A knob is a number, 0..1, or an object of
+// Four knobs set the interpretation. A knob is a number, 0..1, or an object of
 // its own profile fields with the number beside them as `gradus`. 0.5 is the
 // reference reading (the balanced articulation, the lyrical phrasing); 0 leans
 // to the restrained and recitative profiles. The top is set so that the Mass's
@@ -17,9 +17,6 @@
 //              and its runs rushed (the profile's lean and rush)
 //   cadentia   cadence: how much the ends broaden and settle
 //   expressio  dynamics: the span from soft to loud, short to long
-//   modalitas  mode: how far the chant's mode bends the phrasing (its tenor
-//              pull, its cadence weight, its curve and floor); 0 none, 0.5
-//              what tonus always did quietly, 1 twice that
 
 import type {
   ArticulationOverrides, ArticulationProfile, ArticulationWeights, PhrasingProfile,
@@ -27,7 +24,7 @@ import type {
 import { ARTICULATION_PROFILES } from "./articulation.js";
 import { PHRASING_PROFILES } from "./phrasing.js";
 
-type KnobName = "pondus" | "modulatio" | "cadentia" | "expressio" | "modalitas";
+type KnobName = "pondus" | "modulatio" | "cadentia" | "expressio";
 
 /** A knob: its level, 0..1, or an object of its fields with the level as `gradus` (0.5 when left out). */
 export type Knob<F> = number | (F & { gradus?: number });
@@ -74,11 +71,6 @@ export interface ExpressioFields {
   durationMax?: number;
 }
 
-/** modalitas, the mode's bend. */
-export interface ModalitasFields {
-  tenor?: number;
-}
-
 export interface Knobs {
   /** stress: how hard the accents and the signs are leaned on */
   pondus?: Knob<PondusFields>;
@@ -88,11 +80,9 @@ export interface Knobs {
   cadentia?: Knob<CadentiaFields>;
   /** dynamics: the span from soft to loud and from short to long */
   expressio?: Knob<ExpressioFields>;
-  /** mode: how far the chant's mode bends the phrasing; 0 none, 0.5 tonus's old default, 1 twice that */
-  modalitas?: Knob<ModalitasFields>;
 }
 
-export const KNOB_NAMES: readonly KnobName[] = ["pondus", "modulatio", "cadentia", "expressio", "modalitas"];
+export const KNOB_NAMES: readonly KnobName[] = ["pondus", "modulatio", "cadentia", "expressio"];
 
 // Which profile a field lives in. Three names stand in both (the ictus boost
 // and the neume arch, in weight and in velocity), and one override sets both.
@@ -116,12 +106,7 @@ const FIELDS: Record<KnobName, Record<string, Layer>> = {
     durationBase: "articulation", durationGain: "articulation", durationMin: "articulation", durationMax: "articulation",
     baseVelocity: "phrasing", velSpread: "phrasing",
   },
-  // modalitas is the mode's bend, not a line through the profiles: its one
-  // field, the tenor's pull, is fixed at lyrical unless given.
-  modalitas: { tenor: "phrasing" },
 };
-
-const LINE_KNOBS: KnobName[] = ["pondus", "modulatio", "cadentia", "expressio"];
 
 /** The phrasing numbers the Mass sang over lyrical (orreliquum's MISSA_MANNER),
  *  which define where 0.8 is on the phrasing knobs. */
@@ -158,7 +143,7 @@ function ownerOf(field: string): KnobName | undefined {
 }
 
 /**
- * Read the five knobs: each level checked to 0..1, each object's fields
+ * Read the four knobs: each level checked to 0..1, each object's fields
  * checked against the knob that owns them and sorted into the two profiles.
  * @throws Error on a level outside 0..1, a field another knob owns, an unknown
  *   field or sign weight, or a value that is not a finite number.
@@ -222,7 +207,7 @@ export function knobProfiles(levels: Levels): {
   const articulation: ArticulationOverrides = {};
   const phrasing: Partial<PhrasingProfile> = {};
 
-  for (const name of LINE_KNOBS) {
+  for (const name of KNOB_NAMES) {
     const t = levels[name];
     if (t === undefined) continue;
     for (const [field, layer] of Object.entries(FIELDS[name])) {
@@ -252,7 +237,7 @@ export function knobProfiles(levels: Levels): {
 /** The interpretation the knobs set: each profile's line reading, with any
  *  field given in a knob's object laid over it (sign weights key by key). */
 export function interpretKnobs(k: Knobs): {
-  articulation: ArticulationOverrides; phrasing: Partial<PhrasingProfile>; modalitas?: number;
+  articulation: ArticulationOverrides; phrasing: Partial<PhrasingProfile>;
 } {
   const { levels, articulation: givenA, phrasing: givenP } = readKnobs(k);
   const line = knobProfiles(levels);
@@ -262,6 +247,5 @@ export function interpretKnobs(k: Knobs): {
   return {
     articulation: { ...line.articulation, ...givenA, ...(weights ? { weights } : {}) },
     phrasing: { ...line.phrasing, ...givenP },
-    modalitas: levels.modalitas,
   };
 }

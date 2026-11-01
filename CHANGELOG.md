@@ -19,7 +19,7 @@ The word accent, Rockstro's modes, the knobs alone, and the planets leave.
 
 ### Changed
 
-- **The knobs are the whole interpretation.** Each of the five knobs takes
+- **The knobs are the whole interpretation.** Each of the four knobs takes
   a number, its level from 0 to 1, or an object of its own fields with the
   level beside them as `gradus` (0.5 when left out):
   `cadentia: { gradus: 0.9, ritard: 0 }`. Every field of the two profiles
@@ -28,7 +28,7 @@ The word accent, Rockstro's modes, the knobs alone, and the planets leave.
   `ictusBoost` and `accent` under `pondus`; `curve`, `neumeArch`, `durArch`,
   the three contour fields, `lean` and `rush` under `modulatio`; the cadence
   and the rallentando under `cadentia`; the velocity floor and spread and the
-  duration mapping under `expressio`; `tenor` under `modalitas`. A name in
+  duration mapping under `expressio`. A name in
   both profiles (`ictusBoost`, `neumeArch`, `durArch`) sets both. A field
   given to a knob that does not own it throws, naming its knob, and so does
   an unknown field or an option `notatio` does not know. Migrating:
@@ -94,7 +94,15 @@ The word accent, Rockstro's modes, the knobs alone, and the planets leave.
   recitative, lyrical and solemn profiles stay as the knobs' anchors, and
   the `strict` and `hymnic` profiles, which anchored nothing, are gone. The
   new types are `Knob` and `PondusFields`, `ModulatioFields`,
-  `CadentiaFields`, `ExpressioFields`, `ModalitasFields`.
+  `CadentiaFields` and `ExpressioFields`.
+- **`modalitas` and the mode's bend.** The fifth knob is gone, and with it
+  the bend the mode put on the phrasing (`shapePhrasingForMode`): the
+  authentic or plagal type and the mood epithet no longer move the cadence,
+  the curve or the velocity floor. Phrasing reads the same in every mode.
+  Gone too is the phrasing's `tenor` field, the small velocity pull toward
+  the reciting tone; the reciting tone itself (`ModeData.tenor`), the
+  tabula's `tenor` role and lean and rush's reading of it all stay. The
+  `modalInfluence` option and the `ModalitasFields` type go with it.
 
 ## 0.16.0 — 2026-10-28
 

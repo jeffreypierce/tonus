@@ -17,7 +17,7 @@ import type { Temperamentum } from "../temper/api.js";
 import type { ParseError, Phrase as IRPhrase } from "./types.js";
 import { hasKnobs, interpretKnobs, KNOB_NAMES, type Knobs } from "./knobs.js";
 export type {
-  Knobs, Knob, PondusFields, ModulatioFields, CadentiaFields, ExpressioFields, ModalitasFields,
+  Knobs, Knob, PondusFields, ModulatioFields, CadentiaFields, ExpressioFields,
 } from "./knobs.js";
 
 export interface ScoreOpts extends Knobs {
@@ -43,7 +43,7 @@ export interface Score {
  * Score builder (`tonus.notatio`). Parses a chant's GABC into a musical
  * IR — phrases, syllables, notes with tuned pitches, arsis/thesis
  * rhythm, metrics, imprint, and a tabula. Options: a temperamentum
- * (tuning) and the five knobs (see knobs.ts), each a level or an object of
+ * (tuning) and the four knobs (see knobs.ts), each a level or an object of
  * its fields.
  * @throws Error on invalid Chant input, unparseable GABC, an unknown option,
  *   or a knob out of range or given a field it does not own.
@@ -56,7 +56,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   for (const key of Object.keys(opts ?? {}))
     if (!OPTION_KEYS.has(key))
       throw new Error(`notatio: unknown option ${key} (options: ${[...OPTION_KEYS].join(", ")})`);
-  // The five knobs. With none given the articulation is balanced and the
+  // The four knobs. With none given the articulation is balanced and the
   // phrasing is left to the tabula's own gate (mode or office).
   const knobs = hasKnobs(opts) ? interpretKnobs(opts) : undefined;
   const parsed = parseGABC(chant.gabc, {
@@ -112,7 +112,7 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     // Only pass phrasing when the caller asked for it, so the default
     // tabula shaping (mode-gated) is unchanged.
     interpretation: knobs
-      ? { phrasing: "lyrical", phrasingOverrides: knobs.phrasing, modalInfluence: knobs.modalitas }
+      ? { phrasing: "lyrical", phrasingOverrides: knobs.phrasing,  }
       : undefined,
   });
 

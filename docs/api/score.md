@@ -7,7 +7,7 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
 
 - [Score](#score)
   - [The score — `notatio`](#the-score--notatio)
-  - [Interpretation, the five knobs](#interpretation-the-five-knobs)
+  - [Interpretation, the four knobs](#interpretation-the-four-knobs)
   - [The note](#the-note)
   - [The tabula](#the-tabula)
   - [Rendering](#rendering)
@@ -156,9 +156,9 @@ interface ParseError {
 }
 ```
 
-## Interpretation, the five knobs
+## Interpretation, the four knobs
 
-Interpretation is set at build time by five knobs:
+Interpretation is set at build time by four knobs:
 
 | knob        |           | governs                                                   |
 | ----------- | --------- | --------------------------------------------------------- |
@@ -166,7 +166,6 @@ Interpretation is set at build time by five knobs:
 | `modulatio` | phrasing  | how much a phrase arches, its rise and fall               |
 | `cadentia`  | cadence   | how much the ends broaden and settle                      |
 | `expressio` | dynamics  | the span from soft to loud, and from short to long        |
-| `modalitas` | mode      | how far the chant's mode bends the phrasing               |
 
 A knob is a number, 0 to 1, which sets its level; or an object of its own
 fields, which overrides them, with the level beside them as `gradus` (0.5 when
@@ -175,7 +174,7 @@ left out).
 ```js
 tonus.notatio(chant, {
   temperamentum: t,
-  pondus: 0.8, modulatio: 0.8, cadentia: 0.9, expressio: 0.7, modalitas: 0.5,
+  pondus: 0.8, modulatio: 0.8, cadentia: 0.9, expressio: 0.7,
 });
 
 tonus.notatio(chant, {
@@ -201,11 +200,6 @@ it comes by step, and releases on the final. `modulatio` at 0 leaves every
 note equal; at 0.5 the lean and the rush are modest; at 1 a long melisma is
 three or four notes with runs between. Syllables of fewer than four notes
 are untouched, so syllabic chant keeps its even flow apart from the cadence.
-
-`modalitas` is different in kind: its level is not a line through the anchors
-but the strength of the mode's own bend on the phrasing (the tenor's pull,
-the cadence's weight, a little curve and floor by the mode's character). 0
-turns it off, 0.5 is the strength tonus always applied, 1 is twice that.
 
 With no knob given, notes are articulated at the reference reading, and the
 phrasing is shaped only for a chant that names its mode or its office.
@@ -234,9 +228,8 @@ and `durArch`. One field sets both.
 |             | `ritardCurve`, `finisBoost`                   | how late it gathers; the piece's own last `::`              |
 | `expressio` | `baseVelocity`, `velSpread`                   | the velocity floor and the dynamic range above it           |
 |             | `durationBase`, `durationGain`, `durationMin`, `durationMax` | how sign weight maps to note duration, and its clamp |
-| `modalitas` | `tenor`                                       | pull toward the reciting tone                               |
 
-`weightBase`, `durationBase` and `tenor` do not move with their knob's level;
+`weightBase` and `durationBase` do not move with their knob's level;
 they change only when given.
 
 `weights` merges key by key, so one sign can change on its own. The defaults
@@ -261,7 +254,6 @@ interface ScoreOpts {
   modulatio?: Knob<ModulatioFields>;
   cadentia?: Knob<CadentiaFields>;
   expressio?: Knob<ExpressioFields>;
-  modalitas?: Knob<ModalitasFields>;
 }
 
 // a level, or the knob's fields (from the table above) with the level as gradus

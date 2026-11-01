@@ -26,7 +26,6 @@ export type {
   ModulatioFields,
   CadentiaFields,
   ExpressioFields,
-  ModalitasFields,
   Cadence,
   CadenceTarget,
   CadenceApproach,

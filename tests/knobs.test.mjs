@@ -44,12 +44,6 @@ describe("the five knobs", () => {
     assert.equal(onlyCadence.articulation.weights, undefined);
   });
 
-  test("tenor moves with no knob's level: it is a modalitas field, given by hand", () => {
-    const { phrasing } = knobProfiles({ pondus: 1, modulatio: 1, cadentia: 1, expressio: 1, modalitas: 1 });
-    assert.equal(phrasing.tenor, undefined);
-    assert.equal(interpretKnobs({ modalitas: { tenor: 2 } }).phrasing.tenor, 2);
-  });
-
   test("hasKnobs reads a number or an object", () => {
     assert.equal(hasKnobs({ pondus: 0.3 }), true);
     assert.equal(hasKnobs({ cadentia: { ritard: 0 } }), true);
@@ -58,7 +52,7 @@ describe("the five knobs", () => {
   });
 
   test("buildScore at 0.5 is the reference reading; cadentia widens the close; expressio widens the range", () => {
-    const a = buildScore(chant, { modalitas: 0.5 });   // lyrical and balanced, no line moved
+    const a = buildScore(chant, { cadentia: {} });   // lyrical and balanced, no line moved
     const b = buildScore(chant, { pondus: 0.5, modulatio: 0.5, cadentia: 0.5, expressio: 0.5 });
     assert.deepEqual(velocities(b), velocities(a));
     assert.deepEqual(durations(b), durations(a));
@@ -70,16 +64,6 @@ describe("the five knobs", () => {
     const d = buildScore(chant, { expressio: 1 });
     const span = (s) => Math.max(...velocities(s)) - Math.min(...velocities(s));
     assert.ok(span(d) > span(b), "more expressio, more dynamic range");
-  });
-
-  test("modalitas is the mode's bend on the phrasing: 0 removes it, 1 doubles it", () => {
-    const none = buildScore(chant, { modalitas: 0 });
-    const half = buildScore(chant, { modalitas: 0.5 });
-    const full = buildScore(chant, { modalitas: 1 });
-    const plain = buildScore(chant, { pondus: 0.5 });   // a knob given, modalitas left out: 0.5
-    assert.deepEqual(velocities(half), velocities(plain));
-    assert.notDeepEqual(velocities(none), velocities(half));
-    assert.notDeepEqual(velocities(full), velocities(half));
   });
 
   test("a knob outside 0..1, or NaN, throws", () => {
@@ -96,7 +80,6 @@ describe("the five knobs", () => {
     const k = interpretKnobs({ cadentia: { ritard: 0 } });
     assert.equal(k.phrasing.ritard, 0);
     assert.equal(k.phrasing.cadence, undefined, "cadence stays lyrical's own");
-    assert.equal(k.modalitas, undefined);
   });
 
   test("a sign weight merges key by key over the pondus line", () => {

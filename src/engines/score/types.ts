@@ -232,7 +232,6 @@ export interface PhrasingProfile {
   ritardCurve: number;
   /** A multiplier on the piece's own last `::` — the end of the chant over any other double bar. */
   finisBoost: number;
-  tenor: number;
   baseVelocity: number;
   contourVel: number;
   contourDur: number;
@@ -255,7 +254,6 @@ export interface InterpretationOptions {
   articulationOverrides?: ArticulationOverrides;
   phrasing?: PhrasingType;
   phrasingOverrides?: Partial<PhrasingProfile>;
-  modalInfluence?: number;
 }
 
 export interface ParseOptions {

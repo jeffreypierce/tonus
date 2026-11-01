@@ -20,7 +20,7 @@ import type {
   ModusGenus, Modus, TunedNote, GamutOptions, Tonus, TonusOpts
 } from "./engines/temper/api.js";
 import type {
-  Score, ScoreOpts, Knobs, Knob, PondusFields, ModulatioFields, CadentiaFields, ExpressioFields, ModalitasFields,
+  Score, ScoreOpts, Knobs, Knob, PondusFields, ModulatioFields, CadentiaFields, ExpressioFields,
   Cadence, Modulation
 } from "./engines/score/api.js";
 
@@ -102,6 +102,5 @@ export type {
   TemperamentumOpts, Tuning, Pitch, PitchInput, Step, Neume, NeumeShape,
   Interval, ModeData, ModusCadentiae, ModusGenus, Modus, TunedNote, GamutOptions, Tonus,
   TonusOpts, Score, ScoreOpts, Knobs, Knob, PondusFields, ModulatioFields,
-  CadentiaFields, ExpressioFields, ModalitasFields, Cadence, Modulation, Imprint,
-  Metrics
+  CadentiaFields, ExpressioFields, Cadence, Modulation, Imprint, Metrics
 };
