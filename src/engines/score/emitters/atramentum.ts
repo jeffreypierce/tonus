@@ -135,10 +135,9 @@ export const HOUSE_SERIF = "Junicode, 'Crimson Pro', Georgia, serif";
 export const HOUSE_MONO = "'IBM Plex Mono', ui-monospace, Menlo, monospace";
 
 /** The fourth stack, and NOT a fourth face: neither text face carries the
- *  planetary or musical signs (see fonts/README.md), so a figure that draws one
- *  falls back to the system. Mirrors `--symbol` in the site's stylesheet
- *  — the same sharing-by-numbers seam as HOUSE_SERIF and HOUSE_MONO, and it was duplicated
- *  inline in mutatio.js as a local SIGN_FACE before this existed. */
+ *  musical signs, so a figure that draws one falls back to the system.
+ *  Mirrors `--symbol` in the site's stylesheet — the same sharing-by-numbers
+ *  seam as HOUSE_SERIF and HOUSE_MONO. */
 export const HOUSE_SYMBOL = "'Apple Symbols', 'Segoe UI Symbol', "
   + "'Noto Sans Symbols2', " + HOUSE_SERIF;
 

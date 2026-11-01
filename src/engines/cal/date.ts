@@ -19,7 +19,7 @@ export interface RuleAnchors {
 }
 
 // Re-exported for cal consumers; the canonical definition and rationale live
-// in engines/epoch (it is shared with the planet engine).
+// in engines/epoch.
 export { DEFAULT_EPOCH } from "../epoch.js";
 
 // ── Date math ──

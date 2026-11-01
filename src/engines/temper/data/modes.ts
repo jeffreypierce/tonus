@@ -59,20 +59,34 @@ export interface ModeData {
   scalePcs: number[]; // 7 diatonic pitch classes
   hexachords: ("durum" | "naturale" | "molle")[];
   profile: ModeProfile;
-  // Tonal centres and openings, after Rockstro's Grove table
-  // [biblio: rockstro-grove]. Each list is ORDERED BY IMPORTANCE — Rockstro's
-  // principle is that a mode's characteristic notes are given "in the order in
-  // which we have mentioned them." So `regular` runs final, dominant, then lesser
-  // centres; `initials` from the most characteristic opening downward (Rockstro
-  // footnotes some as "barely used" or used "chiefly in polyphonic music"). The
-  // modal-affinity scorer (score/modality.ts) reads this order: a chant opening
-  // on a mode's primary initial counts for more than one on a low-ranked initial,
-  // which is what separates an authentic mode from its plagal twin on a shared
-  // finalis. Pitch classes, C=0; a value >12 is the upper octave.
+  // Tonal centres and openings, transcribed from Rockstro's Grove table
+  // [biblio: rockstro-grove] (vol. 2, p. 342). Every phrase begins and ends on
+  // a regular or a conceded modulation; the first phrase must begin on one of
+  // the "Absolute Initials", and the last ends on the final.
+  //
+  // THE FRAME: each value is ONE PITCH, in semitones above C3, the frame
+  // `ambitus` uses (gamut.ts adds 48 for MIDI). A value below 0 lies under
+  // C3 (A2 = -3, B2 = -1); 12 is c, 14 is d. The chart prints capital letters
+  // only, so the octave is placed by the chart's own marks: a letter lies in
+  // the mode's one-octave range (Rockstro's Range column, D–D for mode I), an
+  // unmarked endpoint letter is the lower one, footnote 1 ("the inverted 7th")
+  // is the degree below the range, footnote 3 ("the 5th above the Final") is
+  // the upper endpoint, footnote 6 is the lowest note. Two cells carry no mark
+  // to decide: the A of mode II's initials and the D of mode VIII's are read
+  // as the lower (A2, D3), by the rule above (ruled 2026-11-01).
+  // ../../../../tests/modes-rockstro.test.mjs derives every number from the
+  // printed cells.
+  //
+  // ORDER: `regular` is printed order, final then Dominant, Mediant,
+  // Participant, which Rockstro ranks: "the relative importance of which is
+  // shewn by the order in which we have mentioned them." The article ranks
+  // nothing else; `conceded` and `initials` are in printed order, which is
+  // not a ranking. Read a pitch class off any value with ((v % 12) + 12) % 12.
   modulations: {
-    regular: number[];   // principal tonal centres (final, dominant, then others)
-    conceded: number[];  // secondary centres, permitted but less characteristic
-    initials: number[];  // valid opening pitches, most characteristic first
+    regular: number[];      // final, Dominant, Mediant(s), Participant(s), ranked
+    conceded: number[];     // the Conceded Modulations, unranked
+    initials: number[];     // the Absolute Initials, unranked
+    rareInitials: number[]; // the initials footnoted "barely used in an Absolute Initial" (a subset of `initials`)
   };
   ambitus: {
     lowest: number;
@@ -100,7 +114,7 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [2, 4, 5, 7, 9, 11, 0],
       hexachords: ["naturale"],
       profile: { mood: "serious", ethos: "gravis", phrasing: "lyrical", melodic: "falling", tendency: "melismatic" },
-      modulations: { regular: [2, 9, 5, 7], conceded: [12, 4], initials: [2, 5, 7, 9, 14] },
+      modulations: { regular: [2, 9, 5, 7], conceded: [0, 4], initials: [0, 2, 5, 7, 9], rareInitials: [] },
       ambitus: { lowest: 2, highest: 21, span: 19 },
       species: { fifth: [2, 9], fourth: [9, 2] },
     },
@@ -123,7 +137,7 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [2, 4, 5, 7, 9, 11, 0],
       hexachords: ["naturale"],
       profile: { mood: "sad", ethos: "tristis", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
-      modulations: { regular: [2, 5, 7, 9], conceded: [0, 4], initials: [0, 2, 4, 5, 7, 9] },
+      modulations: { regular: [2, 5, 4, -3, 9], conceded: [0, 7], initials: [-3, 0, 2, 4, 5], rareInitials: [4] },
       ambitus: { lowest: 0, highest: 17, span: 17 },
       species: { fifth: [2, 9], fourth: [9, 2] },
     },
@@ -147,7 +161,7 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [4, 5, 7, 9, 11, 0, 2],
       hexachords: ["naturale"],
       profile: { mood: "mystic", ethos: "mysticus", phrasing: "solemn", melodic: "falling", tendency: "melismatic" },
-      modulations: { regular: [4, 0, 7, 9], conceded: [5, 11], initials: [0, 2, 4, 7, 9] },
+      modulations: { regular: [4, 12, 7, 9, 11], conceded: [2, 5], initials: [4, 5, 7, 12], rareInitials: [7] },
       ambitus: { lowest: 4, highest: 16, span: 12 },
       species: { fifth: [4, 11], fourth: [11, 4] },
     },
@@ -171,7 +185,7 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [4, 5, 7, 9, 11, 0, 2],
       hexachords: ["naturale"],
       profile: { mood: "harmonious", ethos: "harmonicus", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
-      modulations: { regular: [4, 9, 7, 0], conceded: [11], initials: [0, 4, 7, 9] },
+      modulations: { regular: [4, 9, 7, 0, 5], conceded: [2, 11], initials: [0, 2, 4, 5, 7, 9], rareInitials: [7, 9] },
       ambitus: { lowest: 2, highest: 21, span: 19 },
       species: { fifth: [4, 11], fourth: [11, 4] },
     },
@@ -193,7 +207,7 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [5, 7, 9, 11, 0, 2, 4],
       hexachords: ["molle"],
       profile: { mood: "happy", ethos: "laetus", phrasing: "solemn", melodic: "rising", tendency: "melismatic" },
-      modulations: { regular: [5, 0, 7, 12], conceded: [9, 2], initials: [5, 7, 9, 0, 12] },
+      modulations: { regular: [5, 12, 9, 7], conceded: [11, 14, 16], initials: [5, 9, 12], rareInitials: [] },
       ambitus: { lowest: 5, highest: 17, span: 12 },
       species: { fifth: [5, 0], fourth: [0, 5] },
     },
@@ -216,7 +230,7 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [5, 7, 9, 11, 0, 2, 4],
       hexachords: ["molle"],
       profile: { mood: "devout", ethos: "devotus", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
-      modulations: { regular: [5, 9, 0, 7], conceded: [2, 12], initials: [0, 2, 4, 5, 7, 9] },
+      modulations: { regular: [5, 9, 2, 0], conceded: [-1, 7, 10], initials: [0, 2, 5], rareInitials: [2] },
       ambitus: { lowest: 3, highest: 21, span: 18 },
       species: { fifth: [5, 0], fourth: [0, 5] },
     },
@@ -239,7 +253,7 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [7, 9, 11, 0, 2, 4, 5],
       hexachords: ["durum"],
       profile: { mood: "angelical", ethos: "angelicus", phrasing: "solemn", melodic: "rising", tendency: "melismatic" },
-      modulations: { regular: [7, 2, 9, 14], conceded: [5, 0], initials: [7, 9, 11, 2, 14] },
+      modulations: { regular: [7, 14, 12, 9], conceded: [11, 16], initials: [7, 9, 11, 12, 14], rareInitials: [9] },
       ambitus: { lowest: 7, highest: 19, span: 12 },
       species: { fifth: [7, 2], fourth: [2, 7] },
     },
@@ -267,7 +281,7 @@ export const MODES = new Map<number, ModeData>([
       scalePcs: [7, 9, 11, 0, 2, 4, 5],
       hexachords: ["durum"],
       profile: { mood: "perfect", ethos: "perfectus", phrasing: "lyrical", melodic: "arch", tendency: "neumatic" },
-      modulations: { regular: [7, 0, 9, 14], conceded: [2, 5], initials: [0, 2, 4, 7, 9, 12, 14] },
+      modulations: { regular: [7, 12, 5, 9, 2], conceded: [11, 14], initials: [0, 2, 5, 7, 9, 12], rareInitials: [] },
       ambitus: { lowest: 5, highest: 19, span: 14 },
       species: { fifth: [7, 2], fourth: [2, 7] },
     },

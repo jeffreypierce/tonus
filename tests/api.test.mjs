@@ -9,7 +9,7 @@ describe("tonus namespace", () => {
     assert.equal(feasts[0].nomen, "In Nativitate Domini");
   });
 
-  test("festum() and caelum() default to the medieval epoch (Guido d'Arezzo, 991)", () => {
+  test("festum() defaults to the medieval epoch (Guido d'Arezzo, 991)", () => {
     const feasts = tonus.festum();
     assert.ok(feasts.length > 0);
     assert.equal(
@@ -17,9 +17,6 @@ describe("tonus namespace", () => {
       991,
       "a bare festum() resolves Guido's era, not the modern year",
     );
-    // caelum() shares the same default epoch, so both describe the same day.
-    const sky = tonus.caelum();
-    assert.equal(sky.date.getUTCFullYear(), 991);
   });
 
   test("cantus returns chants by mode and office", () => {
@@ -133,20 +130,20 @@ describe("tonus namespace", () => {
 
   test("interpretation reaches the tabula: two phrasings differ note-for-note", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) e(f)le(g)i(h)son(g.) (::)" });
-    const solemn = tonus.notatio(chant, { accentus: "solemn" });
-    const flat = tonus.notatio(chant, { accentus: "recitative" });
+    const solemn = tonus.notatio(chant, { pondus: 1, modulatio: 1, cadentia: 1 });
+    const flat = tonus.notatio(chant, { pondus: 0, modulatio: 0, cadentia: 0 });
     const vels = (s) => s.tabula.map((r) => r.velocity);
-    // The accentus shapes note velocities on the tabula.
+    // The knobs shape note velocities on the tabula.
     assert.notDeepEqual(vels(solemn), vels(flat));
   });
 
-  test("notatio accepts pondus and accentus as style strings or opts", () => {
+  test("notatio takes a knob as a level or as an object of its fields", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
-    const s1 = tonus.notatio(chant, { pondus: "strict", accentus: "solemn" });
+    const s1 = tonus.notatio(chant, { pondus: 0.8, modulatio: 0.8 });
     assert.ok(s1.phrases.length > 0);
     const s2 = tonus.notatio(chant, {
-      pondus: { style: "expressive" },
-      accentus: { style: "recitative" },
+      pondus: { gradus: 0.8, ictusBoost: 1 },
+      cadentia: { ritard: 0 },
     });
     assert.ok(s2.phrases.length > 0);
   });
@@ -375,13 +372,6 @@ describe("guided throws on junk input (the error contract)", () => {
   test("festum rejects a non-Date date", () => {
     assert.throws(() => tonus.festum({ date: "xmas" }), /date must be a Date/);
   });
-  test("caelum rejects a non-Date date", () => {
-    assert.throws(() => tonus.caelum({ date: "solstice" }), /date must be a Date/);
-  });
-  test("harmonia rejects a non-Cosmos input", () => {
-    assert.throws(() => tonus.harmonia(null), /Cosmos/);
-    assert.throws(() => tonus.harmonia({ doctrina: "freud" }), /Cosmos/);
-  });
   test("notatio rejects a non-Chant input", () => {
     assert.throws(() => tonus.notatio(null), /needs a Chant/);
     assert.throws(() => tonus.notatio({ gabc: 123 }), /needs a Chant/);
@@ -397,10 +387,9 @@ describe("guided throws on junk input (the error contract)", () => {
 });
 
 describe("feast filters reject non-Feast input everywhere", () => {
-  test("proprium, ordinarium, officium, caelum all throw with guidance", () => {
+  test("proprium, ordinarium, officium all throw with guidance", () => {
     assert.throws(() => tonus.proprium({ feast: 42 }), /must be a Feast/);
     assert.throws(() => tonus.ordinarium({ feast: {} }), /must be a Feast/);
     assert.throws(() => tonus.officium({ feast: "adv1", hora: "laudes" }), /must be a Feast/);
-    assert.throws(() => tonus.caelum({ feast: 42 }), /must be a Feast/);
   });
 });

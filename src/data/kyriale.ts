@@ -1,6 +1,6 @@
 // kyriale.ts — Mass ordinary (kyriale) chants
 // Extracted from GregoBase (GR source ID 2) by scripts/extract-gregobase.mjs
-// Generated: 2026-10-29T15:43:38.484Z
+// Generated: 2026-10-29T16:15:16.302Z
 // Entries: 120
 //
 // `mass` is one of the eighteen numbered Masses, read from the incipit, or null;
@@ -54,7 +54,7 @@ export const KYRIALE: KyrialeEntry[] = [
     mass: null,
     mode: "7",
     incipit: "Asperges me",
-    gabc: "(c2) A(cd)SPER(fvED)GES(ef) me,(g.) (,) * Dó(h!iwj)mi(ji)ne,(hg) (,) hys(h)só(g_[oh:h]f)po,(ef) et(gvFD') mun(e)dá(cdc___)bor :(c.) (:) la(cd)vá(fvED)bis(ef) me,(g.) (;) et(g!hw!ivHG) su(fe)per(d') ni(f)vem(ef) de(gvFD')al(e)bá(cdc___)bor.(c.) (::) <i>Ps.~50.</i> Mi(cfe)se(fg)ré(g')re(g) me(gi)i,(h) De(hg)us,(gh..) *(:) se(ge)cún(fg~)dum(g') ma(g)gnam(g') mi(g)se(g')ri(g)cór(g!hwi)di(g')am(f) tu(fff)am.(dc..) (::) Gló(cfe)ri(fg)a(g) Pa(g)tri,(g') et(g) Fí(g)li(g)o,(g.) (,) et(g) Spi(g)rí(gi)tu(h')i(h) San(hg~)cto :(gh..) *(:) Sic(ge)ut(fg) e(g)rat(g') in(g) prin(g)cí(g')pi(g)o,(g.) (,) et(g) nunc,(gi) et(h) sem(hg~)per,(gh..) (:) et(ge) in(fg) saé(g)cu(g)la(g') sae(g)cu(g!hwi)ló(g')rum.(f) A(fff)men.(dc..) (::)",
+    gabc: "(c2) A(cd)SPÉR(fvED)GES(ef) me,(g.) (,) * Dó(h!iwj)mi(ji)ne,(hg) (,) hys(h)só(g_[oh:h]f)po,(ef) et(gvFD') mun(e)dá(cdc___)bor :(c.) (:) la(cd)vá(fvED)bis(ef) me,(g.) (;) et(g!hw!ivHG) su(fe)per(d') ni(f)vem(ef) de(gvFD')al(e)bá(cdc___)bor.(c.) (::) <i>Ps.~50.</i> Mi(cfe)se(fg)ré(g')re(g) me(gi)i,(h) De(hg)us,(gh..) *(:) se(ge)cún(fg~)dum(g') ma(g)gnam(g') mi(g)se(g')ri(g)cór(g!hwi)di(g')am(f) tu(fff)am.(dc..) (::) Gló(cfe)ri(fg)a(g) Pa(g)tri,(g') et(g) Fí(g)li(g)o,(g.) (,) et(g) Spi(g)rí(gi)tu(h')i(h) San(hg~)cto :(gh..) *(:) Sic(ge)ut(fg) e(g)rat(g') in(g) prin(g)cí(g')pi(g)o,(g.) (,) et(g) nunc,(gi) et(h) sem(hg~)per,(gh..) (:) et(ge) in(fg) saé(g)cu(g)la(g') sae(g)cu(g!hwi)ló(g')rum.(f) A(fff)men.(dc..) (::)",
     books: ["lu", "gr"],
     pages: { "gr": [{ page: "1*", sequence: 1, extent: 2 }], "lu": [{ page: "11", sequence: 1, extent: 1 }] },
   },

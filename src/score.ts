@@ -21,10 +21,11 @@ export type {
   Score,
   ScoreOpts,
   Knobs,
-  PondusInput,
-  PondusOpts,
-  AccentusInput,
-  AccentusOpts,
+  Knob,
+  PondusFields,
+  ModulatioFields,
+  CadentiaFields,
+  ExpressioFields,
   Cadence,
   CadenceTarget,
   CadenceApproach,
@@ -57,8 +58,7 @@ export type {
 } from "./engines/score/metrics.js";
 
 // What an Imprint is built from. The Imprint itself stays on the root — it
-// rides every Score and every Harmony, and is the one summary computed the same
-// way from a chant and from a sky.
+// rides every Score.
 export type {
   Imprint,
   Attractor,

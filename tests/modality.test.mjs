@@ -19,10 +19,11 @@ describe("computeModalAffinity", () => {
     assert.ok(onFinal > onTenor);
   });
 
-  test("the ranked initials bonus separates an authentic mode from its plagal twin", () => {
-    // Modes 7 and 8 share the finalis G. B (pc 11) is a mode-7 initial but not a
-    // mode-8 one, so opening on B should tip an otherwise-tied distribution to 7.
-    const dist = { 7: 0.3, 2: 0.3, 11: 0.2, 0: 0.2 };
+  test("the initials bonus separates an authentic mode from its plagal twin", () => {
+    // Modes 7 and 8 share the finalis G. B (pc 11) is a mode-7 Absolute Initial
+    // but not a mode-8 one (Rockstro), so opening on B tips a near-tie that
+    // mode 8 leads (on its tenor c) to mode 7.
+    const dist = { 7: 0.3, 0: 0.3, 2: 0.2, 11: 0.2 };
     const withoutFirst = computeModalAffinity(dist);
     const openingOnB = computeModalAffinity(dist, { firstNotePc: 11 });
     // The opening pitch changes which of the twin modes leads.
@@ -55,5 +56,23 @@ describe("computeModalAffinity", () => {
     const low = computeModalAffinity(dist, { lastNotePc: 2, tessitura: 1.7 });
     assert.equal(high[0].mode, 1, "high tessitura → authentic (mode 1)");
     assert.equal(low[0].mode, 2, "low tessitura → plagal (mode 2)");
+  });
+});
+
+describe("computeModalAffinity — the footnoted initials", () => {
+  test("an initial Rockstro marks 'barely used' earns a share of the bonus", () => {
+    // Mode 7 lists A (pc 9) as an initial "barely used"; G (pc 7) is a full one.
+    const dist = { 7: 0.5, 2: 0.5 };
+    const at = (first) => computeModalAffinity(dist, { firstNotePc: first }).find((a) => a.mode === 7).score;
+    const none = computeModalAffinity(dist).find((a) => a.mode === 7).score;
+    assert.ok(at(9) > none, "a rare initial still counts");
+    assert.ok(at(7) > at(9), "a full initial counts for more");
+  });
+
+  test("an initial below C3 is read by its pitch class", () => {
+    // Mode 2's A2 is stored as -3; an opening on A (pc 9) must still find it.
+    const dist = { 2: 0.5, 5: 0.5 };
+    const at = (first) => computeModalAffinity(dist, { firstNotePc: first }).find((a) => a.mode === 2).score;
+    assert.ok(at(9) > computeModalAffinity(dist).find((a) => a.mode === 2).score);
   });
 });

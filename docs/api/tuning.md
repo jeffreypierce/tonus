@@ -366,11 +366,15 @@ ascribed to it) as both a Latin epithet (`gravis`, `tristis`, …) and an Englis
 gloss. The full set and its source are at the data, in
 [`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
-The `modulations` fields (`regular`, `conceded`, and `initials`) are the
-mode's tonal centres and valid openings, each list **ordered by importance**
-(after Rockstro's Grove table [`rockstro-grove`](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md)). The
-modal-affinity scorer reads that order; the reasoning is documented at the
-data, in [`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
+The `modulations` fields are the mode's tonal centres and valid openings,
+transcribed from Rockstro's Grove table [`rockstro-grove`](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
+`regular` (the final, then Dominant, Mediant and Participant, in the order
+Rockstro ranks them), `conceded`, `initials` (the Absolute Initials, the
+notes a melody's first phrase may begin on) and `rareInitials` (those he marks
+"barely used"). Each value is **one pitch**, in semitones above C3, the frame
+`ambitus` uses: mode II's A2 is `-3`, mode VII's d is `14`. Take a pitch class
+with `((v % 12) + 12) % 12`. How the chart's capital letters were placed in
+their octaves is documented at the data, in [`temper/data/modes.ts`](https://github.com/jeffreypierce/tonus/blob/main/src/engines/temper/data/modes.ts).
 
 `modus` resolves the mode's structural pitches through its own
 temperamentum: the **finalis** and **reciting** tone as tuned notes (pitch +
@@ -417,9 +421,10 @@ interface ModeData {
   profile: ModeProfile;
   cadences: CadenceFigure[]; // characteristic cadence figures
   modulations: {
-    regular: number[];
+    regular: number[]; // final, Dominant, Mediant, Participant: pitches above C3
     conceded: number[];
-    initials: number[];
+    initials: number[]; // the Absolute Initials
+    rareInitials: number[]; // the initials Rockstro marks "barely used"
   };
   ambitus: {
     lowest: number;
@@ -630,8 +635,7 @@ editorial choices behind it are documented at the builder, in
 
 - **The three Ptolemaic diatonics** — antiquity's just intonations, Ptolemy's
   three "shades" of the diatonic. `"ptolemy-intense"` is classical just
-  intonation (pure thirds; coherent with the Ptolemy doctrina in
-  [`harmonia`](heavens.md)); `"ptolemy-soft"` is septimal and dark;
+  intonation (pure thirds); `"ptolemy-soft"` is septimal and dark;
   `"ptolemy-equable"` has neutral, near-equal steps outside the Latin tradition.
   Each tunes one fixed scale, so pairing one with a non-default mode can surface
   unexpected intervals, including a wolf.

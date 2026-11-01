@@ -3,7 +3,6 @@
 // ---------------------------------------------------------------------------
 
 import type { Note, PhrasingProfile, PhrasingType } from "./types.js";
-import type { ModeData } from "../temper/modes.js";
 
 export type { PhrasingProfile } from "./types.js";
 
@@ -15,11 +14,6 @@ export interface BuildPhrasingOptions {
   overrides?: Partial<PhrasingProfile>;
 }
 
-export interface ShapePhrasingForModeOptions {
-  enabled?: boolean;
-  strength?: number;
-}
-
 export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
   recitative: {
     curve: 0.1,
@@ -29,7 +23,6 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     ritardNotes: 2,
     ritardCurve: 1.6,
     finisBoost: 1.5,
-    tenor: 2.3,
     baseVelocity: 0.65,
     contourVel: 0.08,
     contourDur: 0.05,
@@ -48,7 +41,6 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     ritardNotes: 3,
     ritardCurve: 1.6,
     finisBoost: 1.5,
-    tenor: 1.2,
     baseVelocity: 0.68,
     contourVel: 0.18,
     contourDur: 0.11,
@@ -59,25 +51,6 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     lean: 0.3,
     rush: 0.3,
   },
-  hymnic: {
-    curve: 0.25,
-    accent: 0.6,
-    cadence: 0.12,
-    ritard: 0.35,
-    ritardNotes: 3,
-    ritardCurve: 1.6,
-    finisBoost: 1.5,
-    tenor: 0.9,
-    baseVelocity: 0.69,
-    contourVel: 0.14,
-    contourDur: 0.08,
-    velSpread: 0.45,
-    ictusBoost: 1.08,
-    neumeArch: 0.38,
-    durArch: 0.06,
-    lean: 0.25,
-    rush: 0.25,
-  },
   solemn: {
     curve: 0.5,
     accent: 1,
@@ -86,7 +59,6 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     ritardNotes: 4,
     ritardCurve: 1.6,
     finisBoost: 1.5,
-    tenor: 1.7,
     baseVelocity: 0.71,
     contourVel: 0.22,
     contourDur: 0.13,
@@ -110,130 +82,6 @@ export function buildPhrasing(
   };
 }
 
-// Authentic modes reach a fifth or more above the final and pull harder toward
-// their tenor/reciting note; plagal modes straddle the final and pull less
-// [biblio: sunol-textbook]. These nudge the tenor and cadence gains accordingly.
-const MODE_TYPE_TENOR_MULTIPLIER: Record<ModeData["type"], number> = {
-  authentic: 1.08,
-  plagal: 0.92,
-};
-
-const MODE_TYPE_CADENCE_MULTIPLIER: Record<ModeData["type"], number> = {
-  authentic: 1.05,
-  plagal: 0.95,
-};
-
-// A more melismatic mode leans into its cadences; a syllabic one under-plays them.
-const MODE_TENDENCY_CADENCE_MULTIPLIER: Record<
-  ModeData["profile"]["tendency"],
-  number
-> = {
-  melismatic: 1.06,
-  neumatic: 1.0,
-  syllabic: 0.96,
-  neutral: 1.0,
-};
-
-// The modal ethos → performance mapping. Each mode carries a mood epithet (the
-// Niedermeyer & d'Ortigue tradition [biblio: niedermeyer-ortigue], stored on
-// ModeProfile in modes.ts); these translate that mood into small shaping deltas.
-// The interpretation is tonus's own — the epithets are sourced, these numbers
-// are a tuned editorial gesture, deliberately small. Note the coherence: sadder
-// moods drop the velocity floor AND deepen the phrase curve (below), so they
-// read quieter and more arched; brighter moods do the reverse.
-const MODE_MOOD_BASE_VELOCITY_DELTA: Record<string, number> = {
-  neutral: 0,
-  serious: -0.01,
-  sad: -0.03,
-  mystic: -0.01,
-  harmonious: 0.01,
-  happy: 0.04,
-  devout: 0.01,
-  angelical: 0.03,
-  perfect: 0.02,
-};
-
-const MODE_MOOD_CURVE_DELTA: Record<string, number> = {
-  neutral: 0,
-  serious: 0.01,
-  sad: 0.02,
-  mystic: 0.015,
-  harmonious: 0.005,
-  happy: -0.01,
-  devout: 0.01,
-  angelical: -0.015,
-  perfect: -0.005,
-};
-
-const MODE_STRENGTH_DEFAULT = 0.5;
-const MODE_STRENGTH_MIN = 0;
-const MODE_STRENGTH_MAX = 1;
-const TENOR_MIN = 0.4;
-const TENOR_MAX = 2.8;
-const CADENCE_MIN = 0.05;
-const CADENCE_MAX = 0.35;
-const CURVE_MIN = 0.05;
-const CURVE_MAX = 0.65;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
-function blendMultiplier(multiplier: number, strength: number): number {
-  return 1 + (multiplier - 1) * strength;
-}
-
-export function shapePhrasingForMode(
-  profile: PhrasingProfile,
-  modeData?: ModeData,
-  options: ShapePhrasingForModeOptions = {},
-): PhrasingProfile {
-  if (!modeData || options.enabled === false) return { ...profile };
-
-  const strength = clamp(
-    options.strength ?? MODE_STRENGTH_DEFAULT,
-    MODE_STRENGTH_MIN,
-    MODE_STRENGTH_MAX,
-  );
-  const mood = modeData.profile.mood ?? "neutral";
-  const tendency = modeData.profile.tendency ?? "neutral";
-
-  const tenor = clamp(
-    profile.tenor *
-      blendMultiplier(MODE_TYPE_TENOR_MULTIPLIER[modeData.type], strength),
-    TENOR_MIN,
-    TENOR_MAX,
-  );
-
-  const cadence = clamp(
-    profile.cadence *
-      blendMultiplier(MODE_TYPE_CADENCE_MULTIPLIER[modeData.type], strength) *
-      blendMultiplier(MODE_TENDENCY_CADENCE_MULTIPLIER[tendency], strength),
-    CADENCE_MIN,
-    CADENCE_MAX,
-  );
-
-  const baseVelocity = clamp(
-    profile.baseVelocity + (MODE_MOOD_BASE_VELOCITY_DELTA[mood] ?? 0) * strength,
-    0.4,
-    0.9,
-  );
-
-  const curve = clamp(
-    profile.curve + (MODE_MOOD_CURVE_DELTA[mood] ?? 0) * strength,
-    CURVE_MIN,
-    CURVE_MAX,
-  );
-
-  return {
-    ...profile,
-    tenor,
-    cadence,
-    baseVelocity,
-    curve,
-  };
-}
-
 const VELOCITY_MIN = 0.1;
 const VELOCITY_MAX = 1.0;
 const VELOCITY_SPREAD_MULTIPLIER = 2;
@@ -244,12 +92,6 @@ const DURATION_ARSIS_FACTOR = 0.25;
 const DURATION_ARCH_FACTOR = 0.2;
 const DURATION_MIN = 0.2;
 const DURATION_MAX = 4.0;
-
-const TENOR_GAIN = 0.05;
-// Tenor pull falls linearly with pitch-class distance from the reciting tone and
-// reaches zero at 6 semitones (a tritone) — the far side of the octave, past
-// which a note no longer reads as gravitating to the tenor.
-const TENOR_DISTANCE_DIVISOR = 6;
 
 const CADENCE_VELOCITY_FACTOR = 0.5;
 const CADENCE_DURATION_FACTOR = 0.6;
@@ -271,12 +113,6 @@ const DIVISIO_STRENGTH: Record<string, number> = {
 function getDivisioStrength(divisio: string | undefined): number {
   if (!divisio) return 0;
   return DIVISIO_STRENGTH[divisio] ?? 0;
-}
-
-function pitchClassDistance(pc1: number, pc2: number): number {
-  const forward = (12 + pc2 - pc1) % 12;
-  const backward = (12 + pc1 - pc2) % 12;
-  return Math.min(forward, backward);
 }
 
 export type PhrasingInputEvent =
@@ -418,13 +254,6 @@ export function applyPhrasing(
         (velocity - VELOCITY_CENTER) *
           (profile.velSpread * VELOCITY_SPREAD_MULTIPLIER);
       velocity *= profile.accent;
-
-      if (profile.tenor && typeof tenorPc === "number") {
-        const pc = note.pitch.pc;
-        const dist = pitchClassDistance(pc, tenorPc);
-        const tenorPull = Math.max(0, 1 - dist / TENOR_DISTANCE_DIVISOR);
-        velocity *= 1 + profile.tenor * TENOR_GAIN * tenorPull;
-      }
 
       const divisioStrength = getDivisioStrength(nextDivisio);
       velocity *=

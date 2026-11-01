@@ -2,7 +2,6 @@ import type { ScoreIR, Note, Neume, LyricRun } from "./types.js";
 import { MODES } from "../temper/modes.js";
 import {
   buildPhrasing,
-  shapePhrasingForMode,
   applyPhrasing,
 } from "./phrasing.js";
 import { inferMode } from "./infer.js";
@@ -202,14 +201,11 @@ export function computeTabula(
     const profile = buildPhrasing(interpretation.phrasing ?? "lyrical", {
       overrides: interpretation.phrasingOverrides,
     });
-    const modeProfile = shapePhrasingForMode(profile, modeData, {
-      strength: interpretation.modalInfluence,
-    });
     const tenorPc = modeData?.tenor;
     const finalPc = modeData?.final;
     const shaped = applyPhrasing(
       flatForPhrasing as Parameters<typeof applyPhrasing>[0],
-      modeProfile,
+      profile,
       tenorPc,
       finalPc,
     );

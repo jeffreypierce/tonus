@@ -184,7 +184,7 @@ describe("buildScore", () => {
   const durOf = (gabc, i, opts) => noteOf(gabc, i, opts).performance;
 
   test("a liquescent keeps its duration and loses weight", () => {
-    for (const pondus of ["balanced", "strict", "restrained", "expressive"]) {
+    for (const pondus of [undefined, 0, 0.5, 1]) {
       const liq = noteOf("(c4) A(gh~) (::)", 1, { pondus });
       const plain = noteOf("(c4) A(gh) (::)", 1, { pondus });
       assert.equal(liq.performance.duration, plain.performance.duration, `${pondus}: same duration`);
@@ -202,7 +202,7 @@ describe("buildScore", () => {
   });
 
   test("a pondus override shortens liquescents again, one weight at a time", () => {
-    const clipped = { pondus: { overrides: { weights: { liquescentDuration: -0.35 } } } };
+    const clipped = { pondus: { weights: { liquescentDuration: -0.35 } } };
     assert.ok(durOf("(c4) A(gh~) (::)", 1, clipped).duration < durOf("(c4) A(gh) (::)", 1, clipped).duration);
   });
 
@@ -325,28 +325,26 @@ describe("buildScore", () => {
   });
 });
 
-describe("pondus and accentus options", () => {
-  test("pondus style changes note articulation", () => {
+describe("the knobs reach the score", () => {
+  test("pondus changes note articulation", () => {
     const balanced = buildScore(makeChant(KYRIE_GABC));
-    const strict = buildScore(makeChant(KYRIE_GABC), { pondus: "strict" });
+    const leaned = buildScore(makeChant(KYRIE_GABC), { pondus: 1 });
     const durations = (s) =>
       s.phrases.flatMap((p) => p.syllables.flatMap((sy) => sy.notes.map((n) => n.performance.duration)));
-    assert.notDeepEqual(durations(strict), durations(balanced));
+    assert.notDeepEqual(durations(leaned), durations(balanced));
   });
 
-  test("accentus opts shape the tabula", () => {
+  test("the phrasing knobs shape the tabula", () => {
     const plain = buildScore(makeChant(KYRIE_GABC));
-    const solemn = buildScore(makeChant(KYRIE_GABC), { accentus: "solemn" });
+    const solemn = buildScore(makeChant(KYRIE_GABC), { modulatio: 1, cadentia: 1 });
     assert.equal(plain.tabula.length, solemn.tabula.length);
     const velocities = (s) => s.tabula.map((r) => r.velocity);
     assert.notDeepEqual(velocities(solemn), velocities(plain));
   });
 
-  test("accentus overrides are honored", () => {
-    const base = buildScore(makeChant(KYRIE_GABC), { accentus: "lyrical" });
-    const flat = buildScore(makeChant(KYRIE_GABC), {
-      accentus: { style: "lyrical", overrides: { curve: 0 } },
-    });
+  test("a knob's field is honored", () => {
+    const base = buildScore(makeChant(KYRIE_GABC), { modulatio: 0.5 });
+    const flat = buildScore(makeChant(KYRIE_GABC), { modulatio: { curve: 0 } });
     assert.ok(Array.isArray(flat.tabula));
     const velocities = (s) => s.tabula.map((r) => r.velocity);
     assert.notDeepEqual(velocities(flat), velocities(base));
@@ -357,7 +355,7 @@ describe("the ritard into a close", () => {
   const ratios = (s) => s.tabula.map((r) => r.shapedDuration / r.duration);
 
   test("the final note of a full close is held longest of its phrase", () => {
-    const rows = buildScore(makeChant(KYRIE_GABC), { accentus: "lyrical" }).tabula;
+    const rows = buildScore(makeChant(KYRIE_GABC), { cadentia: 0.5 }).tabula;
     const r = ratios({ tabula: rows });
     const last = rows.length - 1;
     const closing = rows.map((row, i) => i).filter((i) => rows[i].phraseIndex === rows[last].phraseIndex);
@@ -365,17 +363,15 @@ describe("the ritard into a close", () => {
   });
 
   test("a full close broadens more than a comma", () => {
-    const rows = buildScore(makeChant(KYRIE_GABC), { accentus: "lyrical" }).tabula;
+    const rows = buildScore(makeChant(KYRIE_GABC), { cadentia: 0.5 }).tabula;
     const r = ratios({ tabula: rows });
     const commaClose = rows.findLastIndex((row) => row.phraseIndex === 0);
     assert.ok(r[rows.length - 1] > r[commaClose] * 1.2);
   });
 
   test("ritard: 0 removes the window and touches nothing outside it", () => {
-    const withRamp = buildScore(makeChant(KYRIE_GABC), { accentus: "lyrical" }).tabula;
-    const without = buildScore(makeChant(KYRIE_GABC), {
-      accentus: { style: "lyrical", overrides: { ritard: 0 } },
-    }).tabula;
+    const withRamp = buildScore(makeChant(KYRIE_GABC), { cadentia: 0.5 }).tabula;
+    const without = buildScore(makeChant(KYRIE_GABC), { cadentia: { ritard: 0 } }).tabula;
     // Eight rows: a three-note phrase to a comma (all three in lyrical's
     // three-note window), then a five-note close whose first two stand outside.
     assert.equal(withRamp.length, 8);
@@ -388,26 +384,22 @@ describe("the ritard into a close", () => {
   test("the window rises monotonically toward the bar", () => {
     // A ten-note phrase to a double bar, all plain puncta so only position shapes.
     const gabc = "(c4) A(g)b(g)c(g)d(g)e(g)f(g)g(g)h(g)i(g)j(g) (::)";
-    const rows = buildScore(makeChant(gabc), { accentus: "solemn" }).tabula;
+    const rows = buildScore(makeChant(gabc), { cadentia: 1 }).tabula;
     const r = ratios({ tabula: rows });
     for (let i = rows.length - 4; i < rows.length; i++) assert.ok(r[i] > r[i - 1], `row ${i}`);
   });
 
   test("a breath (virgula) moves nothing", () => {
     const gabc = "(c4) Ky(g)ri(h)e(g) (`) e(h)le(ih)i(g)son.(f.) (::)";
-    const withRamp = buildScore(makeChant(gabc), { accentus: "lyrical" }).tabula;
-    const without = buildScore(makeChant(gabc), {
-      accentus: { style: "lyrical", overrides: { ritard: 0 } },
-    }).tabula;
+    const withRamp = buildScore(makeChant(gabc), { cadentia: 0.5 }).tabula;
+    const without = buildScore(makeChant(gabc), { cadentia: { ritard: 0 } }).tabula;
     for (let i = 0; i < 3; i++) assert.equal(withRamp[i].shapedDuration, without[i].shapedDuration);
   });
 
   test("the piece's own last bar broadens more than an inner double bar", () => {
     const gabc = "(c4) Ky(g)ri(h)e(g.) (::) e(h)le(ih)i(g)son.(f.) (::)";
-    const rows = buildScore(makeChant(gabc), { accentus: "lyrical" }).tabula;
-    const plain = buildScore(makeChant(gabc), {
-      accentus: { style: "lyrical", overrides: { finisBoost: 1 } },
-    }).tabula;
+    const rows = buildScore(makeChant(gabc), { cadentia: 0.5 }).tabula;
+    const plain = buildScore(makeChant(gabc), { cadentia: { finisBoost: 1 } }).tabula;
     const last = rows.length - 1;
     assert.ok(rows[last].shapedDuration > plain[last].shapedDuration);
     const inner = rows.findLastIndex((row) => row.phraseIndex === 0);

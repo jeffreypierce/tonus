@@ -7,7 +7,7 @@ standalone `tonus.inscriptio(score)` draws it to SVG.
 
 - [Score](#score)
   - [The score — `notatio`](#the-score--notatio)
-  - [Interpretation, the five knobs](#interpretation-the-five-knobs)
+  - [Interpretation, the four knobs](#interpretation-the-four-knobs)
   - [The note](#the-note)
   - [The tabula](#the-tabula)
   - [Rendering](#rendering)
@@ -156,9 +156,9 @@ interface ParseError {
 }
 ```
 
-## Interpretation, the five knobs
+## Interpretation, the four knobs
 
-Interpretation is set at build time, by five numbers, each 0 to 1:
+Interpretation is set at build time by four knobs:
 
 | knob        |           | governs                                                   |
 | ----------- | --------- | --------------------------------------------------------- |
@@ -166,16 +166,31 @@ Interpretation is set at build time, by five numbers, each 0 to 1:
 | `modulatio` | phrasing  | how much a phrase arches, its rise and fall               |
 | `cadentia`  | cadence   | how much the ends broaden and settle                      |
 | `expressio` | dynamics  | the span from soft to loud, and from short to long        |
-| `modalitas` | mode      | how far the chant's mode bends the phrasing               |
 
-0.5 on every knob is the reference reading (the `balanced` articulation and
-the `lyrical` phrasing below). 0 leans to the restrained and the recitative;
-1 goes past the expressive and the solemn, so a reading that pushes hard has
-room above it. Each number in the two profiles is a line through those
-anchors, read at the knob that owns it; a knob left out keeps its 0.5 value.
-A knob outside 0 to 1 throws, and so does a knob given beside a preset
-(`pondus` by name, or `accentus`): the knobs speak for the whole
-interpretation or not at all.
+A knob is a number, 0 to 1, which sets its level; or an object of its own
+fields, which overrides them, with the level beside them as `gradus` (0.5 when
+left out).
+
+```js
+tonus.notatio(chant, {
+  temperamentum: t,
+  pondus: 0.8, modulatio: 0.8, cadentia: 0.9, expressio: 0.7,
+});
+
+tonus.notatio(chant, {
+  cadentia: { gradus: 0.9, ritard: 0 },  // broad closes, no rallentando
+  pondus: { ictusBoost: 1 },             // stress at 0.5, without the ictus boost
+});
+```
+
+0.5 on every knob is the reference reading. 0 leans to the restrained and the
+recitative; 1 goes past the expressive and the solemn, so a reading that
+pushes hard has room above it. Each field a knob owns is a line through those
+anchors, read at the knob's level; a field given in the object replaces that
+reading, and a knob left out keeps its 0.5 values. A level outside 0 to 1
+throws; so does a field given to a knob that does not own it, an unknown
+field, a value that is not a finite number, and an option `notatio` does not
+know.
 
 Inside `modulatio` is the phrasing one level down, lean and rush. A sung
 melisma is not a row of equal notes: its first and last, its turning points
@@ -186,76 +201,38 @@ note equal; at 0.5 the lean and the rush are modest; at 1 a long melisma is
 three or four notes with runs between. Syllables of fewer than four notes
 are untouched, so syllabic chant keeps its even flow apart from the cadence.
 
-`modalitas` is different in kind: it is not a line through the presets but
-the strength of the mode's own bend on the phrasing (the tenor's pull, the
-cadence's weight, a little curve and floor by the mode's character). 0 turns
-it off, 0.5 is the strength tonus always applied, 1 is twice that.
-
-```js
-tonus.notatio(chant, {
-  temperamentum: t,
-  pondus: 0.8, modulatio: 0.8, cadentia: 0.9, expressio: 0.7, modalitas: 0.5,
-});
-```
-
+With no knob given, notes are articulated at the reference reading, and the
+phrasing is shaped only for a chant that names its mode or its office.
 `rhythmicShape` and `rhythmicIndex` are always populated by the Solesmes
 classifier, whatever the knobs.
 
-### The presets, the older way
+### The fields
 
-Before the knobs, `pondus` took an articulation style and `accentus` a
-phrasing style, by name or as `{ style, overrides }`. Both still work when no
-knob is given, and `accentus` is still the way to reach a single profile
-field by hand.
+Every field belongs to one knob. Three names stand in both the articulation
+(weight and duration) and the phrasing (velocity): `ictusBoost`, `neumeArch`
+and `durArch`. One field sets both.
 
-```js
-tonus.notatio(chant, {
-  pondus: "expressive", // style name…
-  accentus: { style: "solemn", overrides: { /* … */ } }, // …or opts
-});
-```
+| knob        | field                                         | governs                                                     |
+| ----------- | --------------------------------------------- | ----------------------------------------------------------- |
+| `pondus`    | `weights`                                     | per-sign weight and duration deltas: ictus, episema, strophicus, quilisma, liquescent, oriscus, … |
+|             | `weightBase`, `weightGain`, `weightSaturation` | how sign weight accumulates and where it caps               |
+|             | `ruleGain`                                    | the authority of the sign rules over positional shaping     |
+|             | `ictusBoost`                                  | extra weight and velocity on ictic notes                    |
+|             | `accent`                                      | accent emphasis within the phrase                           |
+| `modulatio` | `curve`                                       | depth of the phrase-level velocity arch                     |
+|             | `neumeArch`, `durArch`                        | the arch across a neume, in weight, velocity and duration   |
+|             | `contourScale`, `contourVel`, `contourDur`    | the melodic contour's pull on weight, velocity and duration |
+|             | `lean`, `rush`                                | a melisma's real notes leaned into, its runs rushed; the cadence's penultimate leaned into, its final released |
+| `cadentia`  | `cadence`                                     | weight given to phrase-final cadences                       |
+|             | `ritard`, `ritardNotes`                       | depth and width, in notes, of the rallentando               |
+|             | `ritardCurve`, `finisBoost`                   | how late it gathers; the piece's own last `::`              |
+| `expressio` | `baseVelocity`, `velSpread`                   | the velocity floor and the dynamic range above it           |
+|             | `durationBase`, `durationGain`, `durationMin`, `durationMax` | how sign weight maps to note duration, and its clamp |
 
-| `pondus`       | articulation                                                           |
-| -------------- | ---------------------------------------------------------------------- |
-| `"restrained"` | minimal ornament response, flatter dynamics, the semiological approach |
-| `"balanced"`   | _default_; even articulation, moderate weight                          |
-| `"expressive"` | heightened ornament response, stronger shaping                         |
-| `"strict"`     | full Solesmes rule fidelity, careful episema and quilisma treatment    |
+`weightBase` and `durationBase` do not move with their knob's level;
+they change only when given.
 
-| `accentus`     | phrasing                                            |
-| -------------- | --------------------------------------------------- |
-| `"recitative"` | flat, declamatory; minimal curve, strong tenor pull |
-| `"lyrical"`    | balanced arch, moderate cadence                     |
-| `"hymnic"`     | measured, steady; suits metrical hymns              |
-| `"solemn"`     | deep curve, strong cadence, elevated velocity       |
-
-When neither a knob nor `accentus` is given, the phrasing is `lyrical` with
-the mode's bend at 0.5, the same reading as every knob at 0.5.
-
-A style is a named profile of numbers; `overrides` adjusts individual
-fields on top of the chosen style. The presets in
-`src/engines/score/articulation.ts` and `phrasing.ts` are the reference
-values to start from.
-
-```js
-tonus.notatio(chant, {
-  accentus: { style: "lyrical", overrides: { cadence: 1.0 } }, // heavier cadences
-  pondus: { style: "strict", overrides: { ictusBoost: 0 } }, // …without ictus stress
-});
-```
-
-The `pondus` profile (`ArticulationProfile`):
-
-| field                                                        | governs                                                                                            |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `weights`                                                    | per-mark weight and duration deltas: ictus, episema, strophicus, quilisma, liquescent, oriscus, …  |
-| `weightBase`, `weightGain`, `weightSaturation`               | how ornament weight accumulates and where it caps                                                  |
-| `durationBase`, `durationGain`, `durationMin`, `durationMax` | how accumulated weight maps to note duration                                                       |
-| `neumeArch`, `durArch`                                       | arch shaping across a neume, in weight and duration                                                |
-| `ictusBoost`                                                 | extra weight on ictic notes                                                                        |
-| `ruleGain`, `contourScale`                                   | strength of rule-driven and contour-driven shaping                                                 |
-
-`weights` merges key by key, so one mark can change on its own. The defaults
+`weights` merges key by key, so one sign can change on its own. The defaults
 follow the Liber's rubrics, and taste goes through an override. A liquescent,
 for instance, is lighter but not shorter: it loses "half its force rather than
 its duration". The Antiphonale Monasticum's punctum liquescens, a lone
@@ -263,46 +240,24 @@ liquescent note, is drawn out a little. A choir that clips liquescents sets:
 
 ```js
 tonus.notatio(chant, {
-  pondus: { overrides: { weights: { liquescentDuration: -0.35 } } },
+  pondus: { weights: { liquescentDuration: -0.35 } },
 });
 ```
 
-The `accentus` profile (`PhrasingProfile`):
-
-| field                       | governs                                            |
-| --------------------------- | -------------------------------------------------- |
-| `curve`                     | depth of the phrase-level velocity arch            |
-| `accent`                    | accent emphasis within the phrase                  |
-| `cadence`                   | weight given to phrase-final cadences              |
-| `ritard`, `ritardNotes`     | depth and width, in notes, of the rallentando      |
-| `ritardCurve`, `finisBoost` | how late it gathers; the piece's own last `::`     |
-| `tenor`                     | pull toward the reciting tone                      |
-| `baseVelocity`, `velSpread` | the velocity floor and the dynamic range above it  |
-| `contourVel`, `contourDur`  | melodic-contour influence on velocity and duration |
-| `ictusBoost`                | extra velocity on ictic notes                      |
-| `neumeArch`, `durArch`      | arch shaping across a neume                        |
-| `lean`, `rush`              | the real notes of a melisma leaned into, its runs rushed; the cadence's penultimate leaned into, its final released |
+The anchor profiles in `src/engines/score/articulation.ts` and `phrasing.ts`
+are the reference values to start from.
 
 ```ts
 interface ScoreOpts {
   temperamentum?: Temperamentum;
-  pondus?: number | string | PondusOpts; // the stress knob, or a style from the table, or opts
-  modulatio?: number;
-  cadentia?: number;
-  expressio?: number;
-  modalitas?: number;
-  accentus?: string | AccentusOpts;
+  pondus?: Knob<PondusFields>;
+  modulatio?: Knob<ModulatioFields>;
+  cadentia?: Knob<CadentiaFields>;
+  expressio?: Knob<ExpressioFields>;
 }
 
-interface PondusOpts {
-  style?: string;
-  overrides?: Partial<ArticulationProfile>; // fields from the table above
-}
-
-interface AccentusOpts {
-  style?: string;
-  overrides?: Partial<PhrasingProfile>; // fields from the table above
-}
+// a level, or the knob's fields (from the table above) with the level as gradus
+type Knob<F> = number | (F & { gradus?: number });
 ```
 
 ## The note
@@ -366,8 +321,7 @@ thetic (resting, retractive). The classification rules are in
 `score.tabula` is the flat iteration surface: one row per note, for
 analysis, visualization, or emission.
 
-`Harmony` exposes the same surface for voiced bodies
-([heavens.md](heavens.md#the-tabula)). The tabula is also the rendering
+The tabula is also the rendering
 surface. The SVG renderer ([below](#rendering)) consumes it directly, which is
 why `hz`, `velocity`, `bend`, and the ornament flags live on each row.
 
@@ -451,9 +405,9 @@ interface ChantTabulaRow {
 
 The score is drawn as **SVG**: a self-contained, square-note chant staff with
 SMuFL glyphs baked as inline paths (no external font). It consumes `score.tabula`,
-so the interpretation applied through the knobs (or the older `pondus` and
-`accentus`) is already in the geometry. Microtuning lives on each tabula row's `bend`, `hz`, and `offset` for
-a Web-Audio player to read directly.
+so the interpretation applied through the knobs is already in the geometry.
+Microtuning lives on each tabula row's `bend`, `hz`, and `offset` for a
+Web-Audio player to read directly.
 
 ### inscriptio — the standalone renderer
 
@@ -667,7 +621,7 @@ vowels); the track derives none.
 **`"chironomia"`** draws the conducting hand as one continuous line. Arsic
 beats crest, thetic beats trough, single-note theses pass through shallow, and
 the hand picks up between close arses in a small backward loop
-[biblio: carroll-chironomy]. Each note's `velocity` (the `accentus` shaping)
+[biblio: carroll-chironomy]. Each note's `velocity` (the knobs' shaping)
 becomes nib width, so the line presses where the voice does. Pierik letters
 (A · T · PT) name the beats.
 
@@ -719,12 +673,13 @@ score.imprint.attractors[0];
 // { pc: 0, weight: 0.39, pitch: { spn: "C4", … } }
 
 score.imprint.modalAffinity.slice(0, 2);
-// [ { mode: 7, alias: "mixolydian",     score: 2.64 },
-//   { mode: 8, alias: "hypomixolydian", score: 2.18 } ]
+// [ { mode: 7, alias: "mixolydian",     score: 2.79 },
+//   { mode: 8, alias: "hypomixolydian", score: 2.26 } ]
 ```
 
 The ranking reads three signals beyond the pitch-class distribution: the opening
-note (each mode's initials, in Rockstro's ordering), the closing note (a chant
+note (each mode's Absolute Initials after Rockstro, the ones he marks "barely
+used" counting for less), the closing note (a chant
 rests on its final, the treatises' first determinant of mode), and the tessitura
 (how high the melody sits above its final, the classical authentic/plagal
 separator). Together these rank the labelled mode first for a typical chant, its

@@ -81,12 +81,12 @@ Typical module layout:
 | Public field, Latin content      | Latin key       | `nomen`, `ritus`, `tempus`, `genus`, `modus`   |
 | Public field, machine code/datum | English key     | `season`, `grade`, `mode`, `date`, `masses`    |
 | Engine function                  | camelCase verb  | `getFeast`, `buildScore`, `detectAspects`      |
-| Internal helper                  | camelCase       | `resolveMasses`, `computeSpeed`                |
-| Type / interface                 | PascalCase      | `Feast`, `Body`, `ChantMetrics`                |
-| Type union                       | PascalCase      | `Season`, `CanonicalHour`, `BodyName`          |
-| Constant map/array               | SCREAMING_SNAKE | `ORBITAL_ELEMENTS`, `SEASON_LABEL`             |
+| Internal helper                  | camelCase       | `resolveMasses`, `wordAccent`                  |
+| Type / interface                 | PascalCase      | `Feast`, `Score`, `ChantMetrics`               |
+| Type union                       | PascalCase      | `Season`, `CanonicalHour`, `Grade`             |
+| Constant map/array               | SCREAMING_SNAKE | `CENSUS_GROUPS`, `SEASON_LABEL`                |
 | Module-level cache               | `_camelCase`    | `_byId`, `_calCache`                           |
-| Options interface                | noun + `Opts`   | `CaelumQuery`, `TemperamentumOpts`             |
+| Options interface                | noun + `Opts`   | `ScoreOpts`, `TemperamentumOpts`               |
 
 ---
 
@@ -96,7 +96,7 @@ Typical module layout:
 
 **Public API functions** are what users call. They are Latin nouns (`cantus()`, `festum()`, `temperamentum()`, `notatio()`), follow the query/builder contract, and are assembled in `src/index.ts`.
 
-**Builder engines** expose their public surface through `api.ts`. **Query engines** expose theirs through a file named after the engine's primary domain (e.g. `calendar.ts`, `chant.ts`, `planet/planet.ts`). The `api.ts` pattern is reserved for engines that compose multiple internal modules into a returned context object — with methods (`Temperamentum`) or as a plain data record (`Score`).
+**Builder engines** expose their public surface through `api.ts`. **Query engines** expose theirs through a file named after the engine's primary domain (e.g. `calendar.ts`, `chant.ts`, `census/census.ts`). The `api.ts` pattern is reserved for engines that compose multiple internal modules into a returned context object — with methods (`Temperamentum`) or as a plain data record (`Score`).
 
 ---
 
@@ -108,7 +108,7 @@ it is measured against these before anything else.
 **The analysis boundary — tonus computes one chant, one moment.** Everything
 derivable from a single chant (or a single instant) with received theory,
 deterministically, belongs here: prosody, imprint, cadences, modulations,
-rhythmic types, the ephemeris and harmonia, temperament interval analysis.
+rhythmic types, temperament interval analysis.
 Anything that requires the **corpus** or an **editorial judgment** — family
 vocabularies, thresholds calibrated across many chants, "genus average"
 baselines — does **not** live in tonus. It lives in `tonus-enodatio` (the

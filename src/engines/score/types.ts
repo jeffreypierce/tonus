@@ -42,7 +42,7 @@ export interface CompoundBeat {
 }
 
 // Performance — per-event interpretation layer.
-// Used by harmonia voicing and by the score engine.
+// Used by the score engine.
 export interface Performance {
   velocity: number;
   duration: number;
@@ -163,9 +163,9 @@ export type { Pitch, Step, NeumeShape, OfficeCode, OrdinaryCode };
 
 export type Clef = "c1" | "c2" | "c3" | "c4" | "f1" | "f2" | "f3" | "f4" | `cb${1 | 2 | 3 | 4}` | `fb${1 | 2 | 3 | 4}`;
 
-export type PhrasingType = "recitative" | "lyrical" | "hymnic" | "solemn";
+export type PhrasingType = "recitative" | "lyrical" | "solemn";
 
-export type ArticulationType = "restrained" | "balanced" | "expressive" | "strict";
+export type ArticulationType = "restrained" | "balanced" | "expressive";
 
 export interface ArticulationWeights {
   ictusWeight: number;
@@ -232,7 +232,6 @@ export interface PhrasingProfile {
   ritardCurve: number;
   /** A multiplier on the piece's own last `::` — the end of the chant over any other double bar. */
   finisBoost: number;
-  tenor: number;
   baseVelocity: number;
   contourVel: number;
   contourDur: number;
@@ -255,7 +254,6 @@ export interface InterpretationOptions {
   articulationOverrides?: ArticulationOverrides;
   phrasing?: PhrasingType;
   phrasingOverrides?: Partial<PhrasingProfile>;
-  modalInfluence?: number;
 }
 
 export interface ParseOptions {

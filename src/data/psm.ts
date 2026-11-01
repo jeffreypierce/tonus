@@ -36,7 +36,7 @@ export const PSM_DATA: ChantData[] = [
   {
     id: "gregobase:7476",
     incipit: "Veniet ecce Rex",
-    gabc: "(c4) Ve(e)ni(c)et(d) ec(dhghiv)ce(h) Rex(gh_h_g) ex(f)cél(ee)sus(d.) *(,) cum(d) pot(e)e(f)stá(g)te(fe) ma(de)gna,(ddc) (,) ad(d) sal(dd)ván(c)das(d) gen(fg)tes,(ec) al(d)le(ef)lú(d.)ia.(d.) (::)",
+    gabc: "(c4) Vé(e)ni(c)et(d) ec(dhghiv)ce(h) Rex(gh_h_g) ex(f)cél(ee)sus(d.) *(,) cum(d) pot(e)e(f)stá(g)te(fe) ma(de)gna,(ddc) (,) ad(d) sal(dd)ván(c)das(d) gen(fg)tes,(ec) al(d)le(ef)lú(d.)ia.(d.) (::)",
     office: "an",
     mode: "1",
     books: ["psm"],
@@ -54,7 +54,7 @@ export const PSM_DATA: ChantData[] = [
   {
     id: "gregobase:7561",
     incipit: "Christo datus est",
-    gabc: "(c4)CHris(g)to(gv_FD) da(f)tus(gh) est(g.) *(,)\r\nprin(g)ci(g)pa(h')tus(g) et(f) ho(gh)nor(g) reg(fef)ni:(d!ewf.) (;)\r\nom(c)ni(d') po(f)pu(fg)lus,(g.) (,) \r\ntri(h)bus(g) et(hj) lin(jij)guæ(ih__) ser(ij)vi(h)ent(g) e(hg)i(e_f) in(gh) æ(h)ter(g.)num.(g.) (::)",
+    gabc: "(c4)CHris(g)to(gv_FD) da(f)tus(gh) est(g.) *(,)\r\nprin(g)ci(g)pá(h')tus(g) et(f) ho(gh)nor(g) reg(fef)ni:(d!ewf.) (;)\r\nom(c)ni(d') pó(f)pu(fg)lus,(g.) (,) \r\ntri(h)bus(g) et(hj) lin(jij)guæ(ih__) sér(ij)vi(h)ent(g) e(hg)i(e_f) in(gh) æ(h)tér(g.)num.(g.) (::)",
     office: "an",
     mode: "8",
     books: ["psm"],
@@ -225,7 +225,7 @@ export const PSM_DATA: ChantData[] = [
   {
     id: "gregobase:9104",
     incipit: "Dominus pascit me",
-    gabc: "(c4) Do(f)mi-(f)nus(f') pas(g)cit(gh) me(h.), *(;) Et(g) ni-(f)hil(gh) mi-(g_f_)hi(g) dé-(g)e-(f)rit.(f.) (::) Do(f)mi-(f)nus(f') (::) <sp>V/</sp>.  In(h) pás(hixi)cu-(h)is(h') vi-(g)rén(gh)ti(g)-bus(g'_) (,) me(h) col(g)lo-(f)cá-(gh)vit(h.) *(::) Et(g) ni-(f)hil(gh) mi-(g_f_)hi(g) dé-(g)e-(f)rit.(f.) (::) <sp>V/</sp>. Gló-(h)ri-(h)a(h) Pa(hixi)tri,(h'_) et(g) Fí(gh)li(g)o,(g'_) (,) et(g) Spi-(g)rí-(h)tu-(g)i(gf) San(g)cto(g.h.) ()(::) Do(f)mi-(f)nus(f') (::)",
+    gabc: "(c4) Dó(f)mi-(f)nus(f') pas(g)cit(gh) me(h.), *(;) Et(g) ni-(f)hil(gh) mi-(g_f_)hi(g) dé-(g)e-(f)rit.(f.) (::) Dó(f)mi-(f)nus(f') (::) <sp>V/</sp>.  In(h) pás(hixi)cu-(h)is(h') vi-(g)rén(gh)ti(g)-bus(g'_) (,) me(h) col(g)lo-(f)cá-(gh)vit(h.) *(::) Et(g) ni-(f)hil(gh) mi-(g_f_)hi(g) dé-(g)e-(f)rit.(f.) (::) <sp>V/</sp>. Gló-(h)ri-(h)a(h) Pa(hixi)tri,(h'_) et(g) Fí(gh)li(g)o,(g'_) (,) et(g) Spi-(g)rí-(h)tu-(g)i(gf) San(g)cto(g.h.) ()(::) Dó(f)mi-(f)nus(f') (::)",
     office: "rb",
     mode: null,
     books: ["psm"],
@@ -288,7 +288,7 @@ export const PSM_DATA: ChantData[] = [
   {
     id: "gregobase:15673",
     incipit: "Scio cui credidi",
-    gabc: "(c4)Sci(h)o(hf) cu(gh)i(hg) cré(h)di(fe)di,(d'_) <v>\\greheightstar</v>(,) et(f) cer(g)tus(f) sum(f'_) qui(f)a(f) pot(gh)ens(g>) est(f.) (;) de(f)po(fg)si(f)tum(f) me(fg)um(f) ser(f)va(fe)re(c.) (,) in(e) il(g)lum(f) di(fe)em(dc) ius(d)tus(fe) iu(d.)dex.(.d.) (::)E(h) u(h) o(g) u(f) a(g) e(goh.) (::)",
+    gabc: "(c4)Sci(h)o(hf) cu(gh)i(hg) cré(h)di(fe)di,(d'_) <v>\\greheightstar</v>(,) et(f) cer(g)tus(f) sum(f'_) qui(f)a(f) pot(gh)ens(g>) est(f.) (;) de(f)pó(fg)si(f)tum(f) me(fg)um(f) ser(f)vá(fe)re(c.) (,) in(e) il(g)lum(f) di(fe)em(dc) ius(d)tus(fe) iu(d.)dex.(.d.) (::)E(h) u(h) o(g) u(f) a(g) e(goh.) (::)",
     office: "an",
     mode: "1",
     books: ["psm"],

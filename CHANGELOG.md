@@ -2,9 +2,9 @@
 
 All notable changes to tonus. Newest first.
 
-## Unreleased (0.17.0)
+## 0.17.0 — 2026-11-01
 
-The genus tables (working/plan-genus-tables.md), in order of work.
+The word accent, Rockstro's modes, the knobs alone, and the planets leave.
 
 ### Added
 
@@ -19,16 +19,90 @@ The genus tables (working/plan-genus-tables.md), in order of work.
 
 ### Changed
 
+- **The knobs are the whole interpretation.** Each of the four knobs takes
+  a number, its level from 0 to 1, or an object of its own fields with the
+  level beside them as `gradus` (0.5 when left out):
+  `cadentia: { gradus: 0.9, ritard: 0 }`. Every field of the two profiles
+  is sorted under the knob that owns it (docs/api/score.md, *The fields*):
+  `weights`, `weightBase`, `weightGain`, `weightSaturation`, `ruleGain`,
+  `ictusBoost` and `accent` under `pondus`; `curve`, `neumeArch`, `durArch`,
+  the three contour fields, `lean` and `rush` under `modulatio`; the cadence
+  and the rallentando under `cadentia`; the velocity floor and spread and the
+  duration mapping under `expressio`. A name in
+  both profiles (`ictusBoost`, `neumeArch`, `durArch`) sets both. A field
+  given to a knob that does not own it throws, naming its knob, and so does
+  an unknown field or an option `notatio` does not know. Migrating:
+  `pondus: "expressive"` is about `pondus: 0.8`; `accentus: "solemn"` about
+  `modulatio`, `cadentia` and `expressio` at 0.8; `accentus: { style, overrides }` becomes
+  each override under its knob.
 - `accent` on a note, a row and a syllable is the rule's reading, not the
   printed acute alone. The articulation weight for an accent is still
   applied from the printed acute only (an inferred accent does not move a
   note's velocity); that is a ruling owed.
-- The census's `textual` block (the accent rate) and, for the few chants
-  with an unmarked proparoxytone, the ictus-weighted `degreeHist` and
-  `modal` blocks no longer match the shipped bake: 6,059 chants differ in
-  `textual`, 17 in `degreeHist`, 13 in `modal`. The blocks are re-baked in
-  tonus-corpus before this ships; until then tests/census.test.mjs's two
-  "to the bit" tests fail.
+- The chant texts carry the acute the transcription lost on words of three
+  syllables and more: 2,146 words in the GregoBase books and 414 in the
+  Nocturnale, restored at extraction in tonus-corpus (emend-accents.mjs).
+  A word takes the place its own source prints it accented elsewhere
+  (ipsíus, glória, sǽcula); a word never printed accented takes it on a
+  capital vowel or a capitalised syllable (Ángelus, DÓmine). Acutes only:
+  no other character of any chant moved.
+- **The modes' modulations re-transcribed from Rockstro's chart**
+  (`MODES`, temper/data/modes.ts). Of the 24 lists in modes I–VIII, only
+  mode I's `regular` matched the printed table; the rest differed in which
+  notes they held, not only in octave (mode VII's initial C was stored as a
+  D, mode I's inverted seventh C as the c above). Each value is now one
+  pitch in semitones above C3, the frame `ambitus` uses, so mode II's A2 is
+  `-3`: read a pitch class with `((v % 12) + 12) % 12`, never `v % 12`. A
+  new `rareInitials` carries the initials Rockstro footnotes "barely used".
+  tests/modes-rockstro.test.mjs derives every number from the printed cells.
+- The modal-affinity initials bonus no longer reads list position as rank:
+  the article ranks only the Dominant, Mediant and Participant. A listed
+  initial earns the whole bonus, a "barely used" one half (a placeholder).
+  Against the shipped census, 847 of 7,718 chants change their best-fitting
+  mode, and agreement with the declared mode rises from 4,703 to 4,803 of
+  6,773. Every chant's `modal` block moves, and only that block: the census
+  is re-baked in tonus-corpus on the new tables.
+- The census's `textual` block (the accent rate) and, for the chants whose
+  accent moved under an ictus, the `degreeHist` and `modal` blocks moved
+  with the rule and the restored acutes: against 0.16.0, 7,540 chants
+  differ in `textual` and 112 in `degreeHist` (every `modal` block moves
+  with the modes, above). The census is re-baked in tonus-corpus
+  (`src/data/census.ts`).
+
+### Removed
+
+- **The planets left for orreliquum.** `caelum` and `harmonia` are gone
+  from the namespace (fourteen methods become twelve), with the `ZODIACA`
+  and `DOCTRINAE` tables and the types `Cosmos`, `CosmosQuery`, `Body`,
+  `BodyName`, `Aspect`, `Harmony`, `HarmoniaOpts`, `VoicedBody`,
+  `VoicedAspect`, `VoicedPitch`, `Frame`, `Author`, `HarmonyTabulaRow`,
+  `PlanetVowel` and `Doctrina`. The ephemeris and the doctrinae of the
+  spheres were speculative where the rest of the library is researched to
+  the source; tonus keeps the chant, the calendar and the tuning.
+  orreliquum carries the sky now (`src/caelum`, ported from 0.16.0 and held
+  to its output bit for bit). A note name or an interval for a planet's
+  pitch is `temperamentum().nota({ hz })` and `intervallum`, as for any
+  pitch.
+- The planetary imprint (`computeImprintFromBodies`): an Imprint is a
+  chant's alone.
+- `docs/api/heavens.md`, and the planetary entries of the bibliography.
+- **The presets.** `pondus` by name (`restrained`, `balanced`,
+  `expressive`, `strict`) or as `{ style, overrides }`, and the `accentus`
+  option (`recitative`, `lyrical`, `hymnic`, `solemn`), with the types
+  `PondusInput`, `PondusOpts`, `AccentusInput` and `AccentusOpts`. The
+  knobs replace them; the restrained, balanced and expressive and the
+  recitative, lyrical and solemn profiles stay as the knobs' anchors, and
+  the `strict` and `hymnic` profiles, which anchored nothing, are gone. The
+  new types are `Knob` and `PondusFields`, `ModulatioFields`,
+  `CadentiaFields` and `ExpressioFields`.
+- **`modalitas` and the mode's bend.** The fifth knob is gone, and with it
+  the bend the mode put on the phrasing (`shapePhrasingForMode`): the
+  authentic or plagal type and the mood epithet no longer move the cadence,
+  the curve or the velocity floor. Phrasing reads the same in every mode.
+  Gone too is the phrasing's `tenor` field, the small velocity pull toward
+  the reciting tone; the reciting tone itself (`ModeData.tenor`), the
+  tabula's `tenor` role and lean and rush's reading of it all stay. The
+  `modalInfluence` option and the `ModalitasFields` type go with it.
 
 ## 0.16.0 — 2026-10-28
 

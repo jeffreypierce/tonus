@@ -114,19 +114,10 @@ doctrine tables, and the references behind them. Code cites by bracketed key
 ## Tuning and music theory (temperamentum engine)
 
 - `boethius-institutione` — **Boethius. _De institutione musica_ (c. 500–510),
-  esp. I.27.** The medieval transmission of Pythagorean interval math; also
-  the Boethius doctrina (conjunct diatonic planetary scale, transmitting
-  Nicomachus).
+  esp. I.27.** The medieval transmission of Pythagorean interval math.
 - `ptolemy-harmonics` — **Ptolemy. _Harmonics_ I.15–16 (the three diatonic
   shades) and III with the Canobic Inscription (c. 150).** The tetrachord
-  genera for the tuning presets; the Greater Perfect System tone assignments
-  and aspect–consonance mapping for the doctrina.
-- `ptolemy-tetrabiblos` — **Ptolemy. _Tetrabiblos_ I.17 (the domiciles) and
-  I.19 (the exaltations) (c. 150).** The rulerships and the triplicity and
-  quadruplicity classifications, transmitted whole through the medieval Latin
-  tradition and uncontested across sources; the ground of the zodiac doctrine
-  table. The exaltation degrees it gives (the Sun at 19° Arietis and the rest)
-  are not carried — the sign is the resolution anything here reads.
+  genera for the tuning presets.
 - `schulter-harmony` — **Schulter, Margo. Medieval Music & Arts Foundation
   harmony FAQs:** "Pythagorean Tuning and Medieval Polyphony"
   (<https://www.medieval.org/emfaq/harmony/pyth.html>) and "Hexachords,
@@ -147,37 +138,8 @@ doctrine tables, and the references behind them. Code cites by bracketed key
   Huygens-Fokker Foundation.**
   <https://www.huygens-fokker.org/scala/scl_format.html>. Custom tuning input.
 
-## Musica universalis (harmonia engine)
+## Computus
 
-- `godwin-harmonies` — **Godwin, Joscelyn. _Harmonies of Heaven and Earth: The
-  Spiritual Dimension of Music from Antiquity to the Avant-Garde_. London:
-  Thames & Hudson, 1987.** Planetary scale taxonomy (Types A/B/C) and
-  per-author analyses.
-- `godwin-spheres` — **Godwin, Joscelyn, ed. _The Harmony of the Spheres: A
-  Sourcebook of the Pythagorean Tradition in Music_. Rochester, VT: Inner
-  Traditions, 1993.** Primary-source translations used to verify ratio and
-  tone-name claims.
-- `godwin-vowels` — **Godwin, Joscelyn. _The Mystery of the Seven Vowels in
-  Theory and Practice_. Grand Rapids: Phanes Press, 1991.** Planetary vowel
-  attestations; the Moon→Saturn vowel order after Nicomachus.
-- `doctrina-primaries` — **The doctrina primary sources:** Nicomachus of
-  Gerasa, _Manual of Harmonics_ (c. 100) and _Excerpta ex Nicomacho_; Plato,
-  _Republic_ X, 617b (Myth of Er); Pliny the Elder, _Naturalis historia_ II.xx
-  (c. 77, with octave closure per Censorinus and Theon of Smyrna); Ptolemy,
-  _Harmonics_ III. With the vowel–planet attestations: Porphyry, Marcus
-  Gnosticus, Demetrius of Phaleron, Eusebius of Caesarea, Barthélemy of Edessa
-  (via `godwin-vowels`).
-
-## Astronomy and computus
-
-- `standish-jpl` — **Standish, E. M. "Keplerian Elements for Approximate
-  Positions of the Major Planets." JPL Solar System Dynamics, 1992 (updated
-  for DE430).** <https://ssd.jpl.nasa.gov/planets/approx_pos.html>. The
-  orbital element tables.
-- `schlyter-positions` — **Schlyter, Paul. "Computing planetary positions — a
-  tutorial with worked examples." Stjärnhimlen.**
-  <https://www.stjarnhimlen.se/comp/tutorial.html>. The Sun and Moon position
-  formulae.
 - `computus` — **Easter computus: the Gregorian algorithm (Gauss/Butcher) and,
   before 1583, the classical 19-year Julian cycle with Julian→Gregorian
   day-number conversion.** See
