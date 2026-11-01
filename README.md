@@ -112,6 +112,5 @@ what it explains, and [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) is the complete list.
 [PolyForm Noncommercial 1.0.0](LICENSE): free to use, study, modify, and
 share for any noncommercial purpose — personal projects, research,
 education, art, religious observance. Commercial use requires permission
-from the author. Versions through 0.1.x were published under MIT and
-remain so. Chant and liturgical data derive from GregoBase and Divinum
+from the author. Chant and liturgical data derive from GregoBase and Divinum
 Officium; see [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) for full attribution.
