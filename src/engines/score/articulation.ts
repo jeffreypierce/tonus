@@ -11,14 +11,11 @@
 // (+0.9 duration), a liquescent is a passing lightening (−0.4 weight), an
 // uppercase-syllable note is de-stressed (−0.7).
 //
-// Four profiles select how strongly those rules speak, from a semiological
-// restraint to full Solesmes-rule fidelity:
+// Three profiles anchor the pondus knob (knobs.ts) at 0, 0.5 and toward 1:
 //   restrained — Cardine's semiological reading: rules present but soft-spoken.
-//   balanced   — the default; BASE_WEIGHTS unaltered.
+//   balanced   — the reference; BASE_WEIGHTS unaltered.
 //   expressive — rules pushed (stronger ictus and accent, wider contour).
-//   strict     — maximal Solesmes-rule fidelity (episema to a full double, a
-//                sharper quilisma). The differences live in the per-profile
-//                weight overrides below.
+// The differences live in the per-profile weight overrides below.
 // The curve params (weightBase/Gain/Saturation) shape the tanh knee, not the
 // marks; they are documented at the profile block. These magnitudes are tuned
 // by ear, not taken from a table — the sources fix the direction, not the value.
@@ -102,7 +99,7 @@ const BASE_WEIGHTS: ArticulationWeights = {
 //                      around it, so output sits roughly in [base−gain, base+gain].
 //   weightGain       — how loudly the rules speak: scales the tanh output (also
 //                      multiplied by ruleGain). Rises restrained→expressive as rules
-//                      gain authority (2.3 → 3 → 3.5), strict slightly under expressive.
+//                      gain authority (2.3 → 3 → 3.5).
 //   weightSaturation — the tanh knee divisor: larger = later compression, so louder
 //                      peaks survive; expressive lowers it (2.8) for a sharper dynamic.
 //   durationBase/Gain/Min/Max — the same shape applied to duration deltas, clamped.
@@ -156,26 +153,6 @@ export const ARTICULATION_PROFILES: Record<ArticulationType, ArticulationProfile
     neumeArch: 0.62,
     durArch: 0.1,
     ictusBoost: 1.12,
-  },
-  strict: {
-    weights: {
-      ...BASE_WEIGHTS,
-      episemaDuration: 1.0,
-      quilismaPrevWeight: 0.7,
-      quilismaWeight: -0.4,
-    },
-    weightBase: 5,
-    weightGain: 3.2,
-    weightSaturation: 3,
-    durationBase: 1,
-    durationGain: 0.65,
-    durationMin: 0.2,
-    durationMax: 4,
-    ruleGain: 1.08,
-    contourScale: 0.2,
-    neumeArch: 0.56,
-    durArch: 0.1,
-    ictusBoost: 1.1,
   },
 };
 

@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import tonus from "../dist/index.js";
-import { knobProfiles, hasKnobs } from "../dist/engines/score/knobs.js";
+import { knobProfiles, hasKnobs, interpretKnobs } from "../dist/engines/score/knobs.js";
 import { PHRASING_PROFILES } from "../dist/engines/score/phrasing.js";
 import { ARTICULATION_PROFILES } from "../dist/engines/score/articulation.js";
 
@@ -44,19 +44,21 @@ describe("the five knobs", () => {
     assert.equal(onlyCadence.articulation.weights, undefined);
   });
 
-  test("tenor is not on any knob", () => {
-    const { phrasing } = knobProfiles({ pondus: 1, modulatio: 1, cadentia: 1, expressio: 1 });
+  test("tenor moves with no knob's level: it is a modalitas field, given by hand", () => {
+    const { phrasing } = knobProfiles({ pondus: 1, modulatio: 1, cadentia: 1, expressio: 1, modalitas: 1 });
     assert.equal(phrasing.tenor, undefined);
+    assert.equal(interpretKnobs({ modalitas: { tenor: 2 } }).phrasing.tenor, 2);
   });
 
-  test("hasKnobs reads a number, not a style name", () => {
+  test("hasKnobs reads a number or an object", () => {
     assert.equal(hasKnobs({ pondus: 0.3 }), true);
+    assert.equal(hasKnobs({ cadentia: { ritard: 0 } }), true);
     assert.equal(hasKnobs({}), false);
     assert.equal(hasKnobs(undefined), false);
   });
 
-  test("buildScore at 0.5 matches the presets; cadentia widens the close; expressio widens the range", () => {
-    const a = buildScore(chant, { pondus: "balanced", accentus: "lyrical" });
+  test("buildScore at 0.5 is the reference reading; cadentia widens the close; expressio widens the range", () => {
+    const a = buildScore(chant, { modalitas: 0.5 });   // lyrical and balanced, no line moved
     const b = buildScore(chant, { pondus: 0.5, modulatio: 0.5, cadentia: 0.5, expressio: 0.5 });
     assert.deepEqual(velocities(b), velocities(a));
     assert.deepEqual(durations(b), durations(a));
@@ -86,9 +88,41 @@ describe("the five knobs", () => {
     assert.throws(() => buildScore(chant, { pondus: -0.1 }), /pondus/);
   });
 
-  test("a knob beside a preset throws", () => {
-    assert.throws(() => buildScore(chant, { pondus: "strict", cadentia: 0.5 }), /mixed/);
-    assert.throws(() => buildScore(chant, { accentus: "solemn", expressio: 0.5 }), /mixed/);
+  test("an object's fields lie over the knob's reading; gradus is its level", () => {
+    const rows = (o) => durations(buildScore(chant, o));
+    assert.deepEqual(rows({ cadentia: { gradus: 1 } }), rows({ cadentia: 1 }));
+    assert.notDeepEqual(rows({ cadentia: { gradus: 1, ritard: 0 } }), rows({ cadentia: 1 }));
+    // without gradus the knob sits at 0.5, and only the field given moves
+    const k = interpretKnobs({ cadentia: { ritard: 0 } });
+    assert.equal(k.phrasing.ritard, 0);
+    assert.equal(k.phrasing.cadence, undefined, "cadence stays lyrical's own");
+    assert.equal(k.modalitas, undefined);
+  });
+
+  test("a sign weight merges key by key over the pondus line", () => {
+    const k = interpretKnobs({ pondus: { gradus: 1, weights: { liquescentDuration: -0.35 } } });
+    assert.equal(k.articulation.weights.liquescentDuration, -0.35);
+    assert.ok(k.articulation.weights.ictusWeight > ARTICULATION_PROFILES.expressive.weights.ictusWeight);
+  });
+
+  test("a name in both profiles is one field: ictusBoost, neumeArch, durArch set both", () => {
+    const k = interpretKnobs({ pondus: { ictusBoost: 1 }, modulatio: { neumeArch: 0, durArch: 0 } });
+    assert.equal(k.articulation.ictusBoost, 1);
+    assert.equal(k.phrasing.ictusBoost, 1);
+    for (const f of ["neumeArch", "durArch"]) {
+      assert.equal(k.articulation[f], 0);
+      assert.equal(k.phrasing[f], 0);
+    }
+  });
+
+  test("a field under the wrong knob, an unknown field or option, or a bad value throws", () => {
+    assert.throws(() => buildScore(chant, { pondus: { curve: 0 } }), /curve is a modulatio field, not pondus/);
+    assert.throws(() => buildScore(chant, { cadentia: { nonsense: 1 } }), /cadentia has no field nonsense/);
+    assert.throws(() => buildScore(chant, { pondus: { weights: { nonsense: 1 } } }), /no sign weight nonsense/);
+    assert.throws(() => buildScore(chant, { expressio: { velSpread: NaN } }), /expressio.velSpread/);
+    assert.throws(() => buildScore(chant, { modulatio: { gradus: 2 } }), /modulatio.gradus/);
+    assert.throws(() => buildScore(chant, { pondus: "expressive" }), /pondus must be a number/);
+    assert.throws(() => buildScore(chant, { accentus: "lyrical" }), /unknown option accentus/);
   });
 
   test("lean and rush: a melisma's turning points lean, its runs rush, and the cadence leans into the penultimate", () => {
@@ -109,19 +143,14 @@ describe("the five knobs", () => {
     assert.ok(full[n - 1].velocity < flat[n - 1].velocity);
     // a syllabic phrase closing by a leap is untouched by lean and rush
     const syllabic = { ...chant, gabc: "(c4) A(g)ve(h) Ma(j)ri(h)a(f) (::)" };
-    const a = buildScore(syllabic, { accentus: "lyrical" }).tabula;
-    const b = buildScore(syllabic, { accentus: { style: "lyrical", overrides: { lean: 0, rush: 0 } } }).tabula;
+    const a = buildScore(syllabic, { modulatio: 0.5 }).tabula;
+    const b = buildScore(syllabic, { modulatio: { lean: 0, rush: 0 } }).tabula;
     assert.deepEqual(a.map((r) => r.velocity), b.map((r) => r.velocity));
     assert.deepEqual(a.map((r) => r.shapedDuration), b.map((r) => r.shapedDuration));
     // closing by step, the same phrase does lean into its penultimate
     const stepwise = { ...chant, gabc: "(c4) A(g)ve(h) Ma(j)ri(h)a(g) (::)" };
-    const c = buildScore(stepwise, { accentus: "lyrical" }).tabula;
-    const d = buildScore(stepwise, { accentus: { style: "lyrical", overrides: { lean: 0, rush: 0 } } }).tabula;
+    const c = buildScore(stepwise, { modulatio: 0.5 }).tabula;
+    const d = buildScore(stepwise, { modulatio: { lean: 0, rush: 0 } }).tabula;
     assert.ok(c[c.length - 2].velocity > d[d.length - 2].velocity);
-  });
-
-  test("a style name for pondus still works when no knob is given", () => {
-    const s = buildScore(chant, { pondus: "expressive" });
-    assert.ok(s.tabula.length > 0);
   });
 });

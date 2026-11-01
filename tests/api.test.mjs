@@ -130,20 +130,20 @@ describe("tonus namespace", () => {
 
   test("interpretation reaches the tabula: two phrasings differ note-for-note", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) e(f)le(g)i(h)son(g.) (::)" });
-    const solemn = tonus.notatio(chant, { accentus: "solemn" });
-    const flat = tonus.notatio(chant, { accentus: "recitative" });
+    const solemn = tonus.notatio(chant, { pondus: 1, modulatio: 1, cadentia: 1 });
+    const flat = tonus.notatio(chant, { pondus: 0, modulatio: 0, cadentia: 0 });
     const vels = (s) => s.tabula.map((r) => r.velocity);
-    // The accentus shapes note velocities on the tabula.
+    // The knobs shape note velocities on the tabula.
     assert.notDeepEqual(vels(solemn), vels(flat));
   });
 
-  test("notatio accepts pondus and accentus as style strings or opts", () => {
+  test("notatio takes a knob as a level or as an object of its fields", () => {
     const [chant] = tonus.cantus({ gabc: "(c4) Ky(g)ri(h)e(g.) (::)" });
-    const s1 = tonus.notatio(chant, { pondus: "strict", accentus: "solemn" });
+    const s1 = tonus.notatio(chant, { pondus: 0.8, modulatio: 0.8 });
     assert.ok(s1.phrases.length > 0);
     const s2 = tonus.notatio(chant, {
-      pondus: { style: "expressive" },
-      accentus: { style: "recitative" },
+      pondus: { gradus: 0.8, ictusBoost: 1 },
+      cadentia: { ritard: 0 },
     });
     assert.ok(s2.phrases.length > 0);
   });

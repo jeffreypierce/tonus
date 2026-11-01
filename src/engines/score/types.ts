@@ -163,9 +163,9 @@ export type { Pitch, Step, NeumeShape, OfficeCode, OrdinaryCode };
 
 export type Clef = "c1" | "c2" | "c3" | "c4" | "f1" | "f2" | "f3" | "f4" | `cb${1 | 2 | 3 | 4}` | `fb${1 | 2 | 3 | 4}`;
 
-export type PhrasingType = "recitative" | "lyrical" | "hymnic" | "solemn";
+export type PhrasingType = "recitative" | "lyrical" | "solemn";
 
-export type ArticulationType = "restrained" | "balanced" | "expressive" | "strict";
+export type ArticulationType = "restrained" | "balanced" | "expressive";
 
 export interface ArticulationWeights {
   ictusWeight: number;

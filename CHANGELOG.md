@@ -4,7 +4,7 @@ All notable changes to tonus. Newest first.
 
 ## 0.17.0 — 2026-11-01
 
-The word accent, Rockstro's modes, and the planets leave.
+The word accent, Rockstro's modes, the knobs alone, and the planets leave.
 
 ### Added
 
@@ -19,6 +19,22 @@ The word accent, Rockstro's modes, and the planets leave.
 
 ### Changed
 
+- **The knobs are the whole interpretation.** Each of the five knobs takes
+  a number, its level from 0 to 1, or an object of its own fields with the
+  level beside them as `gradus` (0.5 when left out):
+  `cadentia: { gradus: 0.9, ritard: 0 }`. Every field of the two profiles
+  is sorted under the knob that owns it (docs/api/score.md, *The fields*):
+  `weights`, `weightBase`, `weightGain`, `weightSaturation`, `ruleGain`,
+  `ictusBoost` and `accent` under `pondus`; `curve`, `neumeArch`, `durArch`,
+  the three contour fields, `lean` and `rush` under `modulatio`; the cadence
+  and the rallentando under `cadentia`; the velocity floor and spread and the
+  duration mapping under `expressio`; `tenor` under `modalitas`. A name in
+  both profiles (`ictusBoost`, `neumeArch`, `durArch`) sets both. A field
+  given to a knob that does not own it throws, naming its knob, and so does
+  an unknown field or an option `notatio` does not know. Migrating:
+  `pondus: "expressive"` is about `pondus: 0.8`; `accentus: "solemn"` about
+  `modulatio`, `cadentia` and `expressio` at 0.8; `accentus: { style, overrides }` becomes
+  each override under its knob.
 - `accent` on a note, a row and a syllable is the rule's reading, not the
   printed acute alone. The articulation weight for an accent is still
   applied from the printed acute only (an inferred accent does not move a
@@ -70,6 +86,15 @@ The word accent, Rockstro's modes, and the planets leave.
 - The planetary imprint (`computeImprintFromBodies`): an Imprint is a
   chant's alone.
 - `docs/api/heavens.md`, and the planetary entries of the bibliography.
+- **The presets.** `pondus` by name (`restrained`, `balanced`,
+  `expressive`, `strict`) or as `{ style, overrides }`, and the `accentus`
+  option (`recitative`, `lyrical`, `hymnic`, `solemn`), with the types
+  `PondusInput`, `PondusOpts`, `AccentusInput` and `AccentusOpts`. The
+  knobs replace them; the restrained, balanced and expressive and the
+  recitative, lyrical and solemn profiles stay as the knobs' anchors, and
+  the `strict` and `hymnic` profiles, which anchored nothing, are gone. The
+  new types are `Knob` and `PondusFields`, `ModulatioFields`,
+  `CadentiaFields`, `ExpressioFields`, `ModalitasFields`.
 
 ## 0.16.0 — 2026-10-28
 

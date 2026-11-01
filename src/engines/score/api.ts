@@ -14,45 +14,17 @@ import { MODES } from "../temper/modes.js";
 import { cadentiaGenus, cadentiaSpecies } from "../../data/cadentiae.js";
 import type { Chant } from "../chant/types.js";
 import type { Temperamentum } from "../temper/api.js";
-import type {
-  ArticulationOverrides,
-  ArticulationType,
-  PhrasingProfile,
-  PhrasingType,
-  ParseError,
-  Phrase as IRPhrase,
-} from "./types.js";
-import { hasKnobs, knobProfiles, checkKnobs, type Knobs } from "./knobs.js";
-export type { Knobs } from "./knobs.js";
+import type { ParseError, Phrase as IRPhrase } from "./types.js";
+import { hasKnobs, interpretKnobs, KNOB_NAMES, type Knobs } from "./knobs.js";
+export type {
+  Knobs, Knob, PondusFields, ModulatioFields, CadentiaFields, ExpressioFields, ModalitasFields,
+} from "./knobs.js";
 
-export type PondusStyle = "restrained" | "balanced" | "expressive" | "strict";
-export type AccentusStyle = "recitative" | "lyrical" | "hymnic" | "solemn";
-
-export interface PondusOpts {
-  style?: PondusStyle;
-  overrides?: ArticulationOverrides;
-}
-
-export interface AccentusOpts {
-  style?: AccentusStyle;
-  overrides?: Partial<PhrasingProfile>;
-}
-
-export type PondusInput = PondusStyle | PondusOpts;
-export type AccentusInput = AccentusStyle | AccentusOpts;
-
-export interface ScoreOpts extends Omit<Knobs, "pondus"> {
+export interface ScoreOpts extends Knobs {
   temperamentum?: Temperamentum;
-  /** the stress knob, 0..1; or, the older way, a pondus preset by name or opts */
-  pondus?: number | PondusInput;
-  accentus?: AccentusInput;
 }
 
-function knobsOf(opts?: ScoreOpts): Knobs | undefined {
-  if (!opts) return undefined;
-  const { modulatio, cadentia, expressio, modalitas } = opts;
-  return { pondus: typeof opts.pondus === "number" ? opts.pondus : undefined, modulatio, cadentia, expressio, modalitas };
-}
+const OPTION_KEYS = new Set<string>(["temperamentum", ...KNOB_NAMES]);
 
 export interface Score {
   chant: Chant;
@@ -67,59 +39,28 @@ export interface Score {
   imprint: Imprint;
 }
 
-const PONDUS_TO_ARTICULATION: Record<PondusStyle, ArticulationType> = {
-  restrained: "restrained",
-  balanced: "balanced",
-  expressive: "expressive",
-  strict: "strict",
-};
-
-const ACCENTUS_TO_PHRASING: Record<AccentusStyle, PhrasingType> = {
-  recitative: "recitative",
-  lyrical: "lyrical",
-  hymnic: "hymnic",
-  solemn: "solemn",
-};
-
-function resolvePondus(input?: PondusInput): PondusOpts {
-  return typeof input === "string" ? { style: input } : (input ?? {});
-}
-
-function resolveAccentus(input?: AccentusInput): AccentusOpts {
-  return typeof input === "string" ? { style: input } : (input ?? {});
-}
-
 /**
  * Score builder (`tonus.notatio`). Parses a chant's GABC into a musical
  * IR — phrases, syllables, notes with tuned pitches, arsis/thesis
  * rhythm, metrics, imprint, and a tabula. Options: a temperamentum
- * (tuning), a pondus (articulation weight, style name or opts), and an
- * accentus (phrasing, style name or opts).
- * @throws Error on invalid Chant input or unparseable GABC.
+ * (tuning) and the five knobs (see knobs.ts), each a level or an object of
+ * its fields.
+ * @throws Error on invalid Chant input, unparseable GABC, an unknown option,
+ *   or a knob out of range or given a field it does not own.
  */
 export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   if (!chant || typeof chant !== "object" || typeof (chant as Chant).gabc !== "string")
     throw new Error(
       "notatio needs a Chant with a gabc string — build one with tonus.cantus({ gabc })",
     );
-  // The five knobs. When any is given they speak for the whole
-  // interpretation, so a preset beside them is a contradiction, not a layer.
-  const k = knobsOf(opts);
-  if (hasKnobs(k)) {
-    checkKnobs(k);
-    if (typeof opts?.pondus === "string" || (opts?.pondus && typeof opts.pondus === "object") || opts?.accentus)
-      throw new Error("notatio: the knobs (pondus as a number, modulatio, cadentia, expressio, modalitas) and the presets (pondus by name, accentus) cannot be mixed");
-  }
-  const knobs = hasKnobs(k) ? knobProfiles(k) : undefined;
-  const pondus = resolvePondus(typeof opts?.pondus === "number" ? undefined : opts?.pondus);
-  const accentus = resolveAccentus(opts?.accentus);
+  for (const key of Object.keys(opts ?? {}))
+    if (!OPTION_KEYS.has(key))
+      throw new Error(`notatio: unknown option ${key} (options: ${[...OPTION_KEYS].join(", ")})`);
+  // The five knobs. With none given the articulation is balanced and the
+  // phrasing is left to the tabula's own gate (mode or office).
+  const knobs = hasKnobs(opts) ? interpretKnobs(opts) : undefined;
   const parsed = parseGABC(chant.gabc, {
-    interpretation: knobs
-      ? { articulation: "balanced", articulationOverrides: knobs.articulation }
-      : {
-          articulation: PONDUS_TO_ARTICULATION[pondus.style ?? "balanced"],
-          articulationOverrides: pondus.overrides,
-        },
+    interpretation: { articulation: "balanced", articulationOverrides: knobs?.articulation },
   });
   const modeNum = chant.mode ? parseInt(chant.mode) || undefined : undefined;
   const scale = buildRatios({
@@ -171,13 +112,8 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     // Only pass phrasing when the caller asked for it, so the default
     // tabula shaping (mode-gated) is unchanged.
     interpretation: knobs
-      ? { phrasing: "lyrical", phrasingOverrides: knobs.phrasing, modalInfluence: k?.modalitas }
-      : opts?.accentus
-        ? {
-            phrasing: ACCENTUS_TO_PHRASING[accentus.style ?? "lyrical"],
-            phrasingOverrides: accentus.overrides,
-          }
-        : undefined,
+      ? { phrasing: "lyrical", phrasingOverrides: knobs.phrasing, modalInfluence: knobs.modalitas }
+      : undefined,
   });
 
   return {

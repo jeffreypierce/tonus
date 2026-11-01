@@ -234,7 +234,7 @@ datum. Where a concept has both registers, they form a pair:
 | `name`   | `nomen`  |
 
 Other fields carry only one register. Latin-only, _e.g._ `genus`, `ordinarium`,
-`incipit`, `differentia`, `accentus`. English-only, _e.g._ `date`, `velocity`, `hz`.
+`incipit`, `differentia`, `signum`. English-only, _e.g._ `date`, `velocity`, `hz`.
 
 Display strings live in exported maps (_e.g._ `SEASON_LABEL`),
 never as label fields on objects. The maps are [the appendix](#the-appendix).
