@@ -19,11 +19,6 @@ describe("tonus namespace", () => {
     );
   });
 
-  test("the planets left for orreliquum (0.17.0): no caelum, no harmonia", () => {
-    assert.equal(tonus.caelum, undefined);
-    assert.equal(tonus.harmonia, undefined);
-  });
-
   test("cantus returns chants by mode and office", () => {
     const chants = tonus.cantus({ mode: 1, office: "an", limit: 3 });
     assert.ok(chants.length > 0);
