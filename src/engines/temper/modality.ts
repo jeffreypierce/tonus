@@ -51,13 +51,20 @@ const RECITING_WEIGHT: Record<Exclude<RecitingNote["rank"], "principal">, number
   rare: 0.3,
 };
 
-// A chant's opening note is a modal signal: each mode lists its valid initials
-// in rank order, most characteristic first (Rockstro's Grove ordering
-// [biblio: rockstro-grove]). Opening on a mode's primary initial boosts it more
-// than opening on a lower-ranked one — which is what separates an authentic mode
-// from its plagal partner, since the two share a finalis but rank the same
-// opening pitch differently.
+// A chant's opening note is a modal signal: Rockstro's "Absolute Initials"
+// are the notes a melody's first phrase may begin on [biblio: rockstro-grove].
+// The chart does not rank them; its only grading is the footnote "barely used
+// in an Absolute Initial" (`modulations.rareInitials`), so an opening on a
+// listed initial earns the bonus, and on a footnoted one a share of it. An
+// authentic mode and its plagal twin list different initials, which is what
+// lets the opening separate them on a shared finalis.
 const INITIAL_BONUS = 0.3;
+// The footnoted initial's share: a placeholder, not a calibration.
+const RARE_INITIAL_SHARE = 0.5;
+
+// The modulation lists hold pitches (semitones above C3, some below it), so
+// their pitch class is taken with a floor modulo.
+const pcOf = (v: number): number => ((v % 12) + 12) % 12;
 
 // The last note is the treatises' first determinant of mode: a chant comes to
 // rest on its final. Landing on a mode's final is the single strongest signal.
@@ -82,7 +89,7 @@ const TESSITURA_TOLERANCE = 3;
 const TESSITURA_WEIGHT = 1.0;
 
 export interface ModalAffinityOpts {
-  /** The chant's opening pitch class — applies the rank-weighted initials bonus. */
+  /** The chant's opening pitch class — applies the initials bonus. */
   firstNotePc?: number;
   /** The chant's closing pitch class — applies the final-note and tessitura bonuses. */
   lastNotePc?: number;
@@ -111,8 +118,8 @@ export function computeModalAffinity(
     const set = (pc: number, w: number) => {
       degreeWeight.set(pc, Math.max(degreeWeight.get(pc) ?? 0, w));
     };
-    for (const pc of data.modulations.conceded) set(pc % 12, CONCEDED_MOD_WEIGHT);
-    for (const pc of data.modulations.regular) set(pc % 12, REGULAR_MOD_WEIGHT);
+    for (const v of data.modulations.conceded) set(pcOf(v), CONCEDED_MOD_WEIGHT);
+    for (const v of data.modulations.regular) set(pcOf(v), REGULAR_MOD_WEIGHT);
     set(data.tenor, TENOR_WEIGHT);
     set(data.final, FINALIS_WEIGHT);
     // Additive-only pass: see the comment on RECITING_WEIGHT above for why
@@ -127,11 +134,15 @@ export function computeModalAffinity(
     let score = 0;
     for (const [pc, w] of degreeWeight) score += (pcDistribution[pc] ?? 0) * w;
 
-    // Initials bonus, scaled by how highly the mode ranks the opening pitch.
+    // Initials bonus: whole for a listed initial, a share for a footnoted one
+    // (a pitch class listed in two octaves takes the better of the two).
     if (firstNotePc != null) {
-      const initials = data.modulations.initials;
-      const rank = initials.findIndex((pc) => pc % 12 === firstNotePc);
-      if (rank !== -1) score += (INITIAL_BONUS * (initials.length - rank)) / initials.length;
+      const { initials, rareInitials } = data.modulations;
+      const hits = initials.filter((v) => pcOf(v) === firstNotePc);
+      if (hits.length) {
+        const common = hits.some((v) => !rareInitials.includes(v));
+        score += common ? INITIAL_BONUS : INITIAL_BONUS * RARE_INITIAL_SHARE;
+      }
     }
 
     // Final-note + tessitura: only apply when the chant actually rests on this

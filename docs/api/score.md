@@ -718,12 +718,13 @@ score.imprint.attractors[0];
 // { pc: 0, weight: 0.39, pitch: { spn: "C4", … } }
 
 score.imprint.modalAffinity.slice(0, 2);
-// [ { mode: 7, alias: "mixolydian",     score: 2.64 },
-//   { mode: 8, alias: "hypomixolydian", score: 2.18 } ]
+// [ { mode: 7, alias: "mixolydian",     score: 2.79 },
+//   { mode: 8, alias: "hypomixolydian", score: 2.26 } ]
 ```
 
 The ranking reads three signals beyond the pitch-class distribution: the opening
-note (each mode's initials, in Rockstro's ordering), the closing note (a chant
+note (each mode's Absolute Initials after Rockstro, the ones he marks "barely
+used" counting for less), the closing note (a chant
 rests on its final, the treatises' first determinant of mode), and the tessitura
 (how high the melody sits above its final, the classical authentic/plagal
 separator). Together these rank the labelled mode first for a typical chant, its

@@ -30,6 +30,22 @@ The genus tables (working/plan-genus-tables.md), in order of work.
   (ipsíus, glória, sǽcula); a word never printed accented takes it on a
   capital vowel or a capitalised syllable (Ángelus, DÓmine). Acutes only:
   no other character of any chant moved.
+- **The modes' modulations re-transcribed from Rockstro's chart**
+  (`MODES`, temper/data/modes.ts). Of the 24 lists in modes I–VIII, only
+  mode I's `regular` matched the printed table; the rest differed in which
+  notes they held, not only in octave (mode VII's initial C was stored as a
+  D, mode I's inverted seventh C as the c above). Each value is now one
+  pitch in semitones above C3, the frame `ambitus` uses, so mode II's A2 is
+  `-3`: read a pitch class with `((v % 12) + 12) % 12`, never `v % 12`. A
+  new `rareInitials` carries the initials Rockstro footnotes "barely used".
+  tests/modes-rockstro.test.mjs derives every number from the printed cells.
+- The modal-affinity initials bonus no longer reads list position as rank:
+  the article ranks only the Dominant, Mediant and Participant. A listed
+  initial earns the whole bonus, a "barely used" one half (a placeholder).
+  Against the shipped census, 847 of 7,718 chants change their best-fitting
+  mode, and agreement with the declared mode rises from 4,703 to 4,803 of
+  6,773. Every chant's `modal` block moves; the census must be re-baked in
+  tonus-corpus before release (tests/census.test.mjs fails until it is).
 - The census's `textual` block (the accent rate) and, for the chants whose
   accent moved under an ictus, the `degreeHist` and `modal` blocks moved
   with the rule and the restored acutes: against 0.16.0, 7,540 chants
