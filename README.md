@@ -73,16 +73,6 @@ the Office hours, the psalter, and the Matins nocturns.
 **Scores** are shaped by the Solesmes arsis/thesis rhythm, fingerprinted for
 melodic character, and drawn to a square-note or modern staff.
 
-## Concepts
-
-Boethius treated music as a branch of number theory. Chant was composed
-inside that frame: pitch was ratio, the modes a received order. tonus takes
-those claims literally enough to compute them, which is why tuning is ratio
-arithmetic and the calendar a retrieval index.
-
-Where the sources run out or contradict one another, tonus makes an editorial
-call and records it in the code.
-
 ## Documentation
 
 The **[documentation index](docs/api/index.md)** is the technical center: the full
@@ -113,8 +103,9 @@ Romanum_. The notation is engraved in Daniel Spreadbury's
 SMuFL standard. Behind the rest stand Mocquereau and Suñol on rhythm, Rockstro
 and Apel on the modes, and Boethius and Ptolemy on tuning.
 
-Every figure is cited in the code beside what it explains, and
-[BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) is the complete list.
+Where the sources run out or contradict one another, tonus makes an editorial
+call and records it in the code. Every figure is cited in the code beside
+what it explains, and [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) is the complete list.
 
 ## License
 
