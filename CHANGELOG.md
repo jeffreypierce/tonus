@@ -2,9 +2,9 @@
 
 All notable changes to tonus. Newest first.
 
-## Unreleased (0.17.0)
+## 0.17.0 — 2026-11-01
 
-The genus tables (working/plan-genus-tables.md), in order of work.
+The word accent, Rockstro's modes, and the planets leave.
 
 ### Added
 
@@ -49,8 +49,9 @@ The genus tables (working/plan-genus-tables.md), in order of work.
 - The census's `textual` block (the accent rate) and, for the chants whose
   accent moved under an ictus, the `degreeHist` and `modal` blocks moved
   with the rule and the restored acutes: against 0.16.0, 7,540 chants
-  differ in `textual`, 112 in `degreeHist`, 105 in `modal`. The census is
-  re-baked in tonus-corpus (`src/data/census.ts`).
+  differ in `textual` and 112 in `degreeHist` (every `modal` block moves
+  with the modes, above). The census is re-baked in tonus-corpus
+  (`src/data/census.ts`).
 
 ### Removed
 
