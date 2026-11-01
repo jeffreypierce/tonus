@@ -44,8 +44,8 @@ The genus tables (working/plan-genus-tables.md), in order of work.
   initial earns the whole bonus, a "barely used" one half (a placeholder).
   Against the shipped census, 847 of 7,718 chants change their best-fitting
   mode, and agreement with the declared mode rises from 4,703 to 4,803 of
-  6,773. Every chant's `modal` block moves; the census must be re-baked in
-  tonus-corpus before release (tests/census.test.mjs fails until it is).
+  6,773. Every chant's `modal` block moves, and only that block: the census
+  is re-baked in tonus-corpus on the new tables.
 - The census's `textual` block (the accent rate) and, for the chants whose
   accent moved under an ictus, the `degreeHist` and `modal` blocks moved
   with the rule and the restored acutes: against 0.16.0, 7,540 chants
