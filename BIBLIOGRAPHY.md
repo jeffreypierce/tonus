@@ -1,9 +1,7 @@
 # Bibliography
 
 The sources the library draws on: chant and calendar data, algorithms,
-doctrine tables, and the references behind them. The planetary sources
-(the ephemeris, the doctrinae of the spheres) left with the planets for
-orreliquum in 0.17.0. Code cites by bracketed key
+doctrine tables, and the references behind them. Code cites by bracketed key
 (`[biblio: key]`); each docs page keeps a `## Sources` line pointing here.
 
 ## Data corpora

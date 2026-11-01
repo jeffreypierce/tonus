@@ -6,7 +6,7 @@
 // of Guido d'Arezzo (c. 991), inventor of staff notation and the Guidonian
 // hand. His exact birth date is unrecorded; 991-06-01 is an editorial anchor.
 //
-// The calendar (cal) is its one reader since the ephemeris left for orreliquum
-// (0.17.0); it stays at the engines root as the library's default moment.
+// The calendar (cal) is its one reader; it stays at the engines root as the
+// library's default moment.
 // (Year 991 ≥ 100, so it is safe from JS Date's 0–99 → 1900+ remapping.)
 export const DEFAULT_EPOCH: Date = new Date(Date.UTC(991, 5, 1));
