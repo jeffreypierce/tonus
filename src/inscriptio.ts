@@ -8,8 +8,8 @@
 // The root namespace still carries `inscriptio` — the export law puts verbs on
 // the namespace, and this module does not repeal it. What the entry adds is a
 // place to hold the drawing surface ON ITS OWN, so a caller who only wants a
-// picture imports one name and reads one type list rather than the library's
-// ninety-seven.
+// picture imports one name and reads one type list rather than the whole
+// library's.
 //
 // It also surfaces four types the root index never exported: Theme and
 // ThemeColors (which an `opts.theme` caller had to spell out by hand) and

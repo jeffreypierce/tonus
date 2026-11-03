@@ -7,11 +7,13 @@
 // (cadenceKeys, engines/score/cadence.ts): no second key parser. Tallies both
 // levels, genus and species, with counts and final-close counts per mode.
 //
-// Run from repo root, after a build:  node scripts/mine-cadentiae.mjs
-// Then bake:                          node scripts/bake-cadentiae.mjs
+// Run from repo root:  npm run mine:cadentiae [-- <out.json>]   (builds first)
+//                 or:  node scripts/mine-cadentiae.mjs [out.json]   (after a build)
+// Then bake:           npm run bake:cadentiae [-- <out.json>]
 //
-// Emits working/qa-sweep/cadentiae-tally.json — every genus and species, no
-// floor; the bake applies the floor. The engine fingerprint rides the artifact
+// Emits the tally (default working/qa-sweep/cadentiae-tally.json, gitignored;
+// the one argument overrides it): every genus and species, no floor; the bake
+// applies the floor. The engine fingerprint rides the artifact
 // so the bake can say whether the engine moved since the mine.
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -22,8 +24,10 @@ import { CENSUS_ORDER } from "../dist/data/census.js";
 import { buildScore, cadenceKeys } from "../dist/engines/score/api.js";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(__dir, "../working/qa-sweep");
-const OUT = resolve(OUT_DIR, "cadentiae-tally.json");
+const OUT = process.argv[2]
+  ? resolve(process.cwd(), process.argv[2])
+  : resolve(__dir, "../working/qa-sweep/cadentiae-tally.json");
+const OUT_DIR = dirname(OUT);
 
 const genera = new Map(); // genus key -> { motion, degree, n, F, modes, closes, species: Map }
 const byMode = {};

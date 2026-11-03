@@ -63,7 +63,7 @@ export default tonus;
 export {
   SEASON_LABEL,  // season code → English name        ("adv" → "Advent")
   TEMPORA,       // season code → Latin name          ("adv" → "Tempus Adventus")
-  GRADE_ORDER,   // grade code → rank, low is higher
+  GRADE_ORDER,   // the grade codes in precedence order, highest first
   GRADUS,        // grade code → Latin name
 } from "./engines/cal/types.js";
 
@@ -71,7 +71,7 @@ export {
 export {
   HORAE,      // the eight canonical hours, Matins first — the order is content
   OFFICIA,    // office code → Latin genus  ("an" → "Antiphona")
-  ORDINARIA,  // ordinary code → Latin name ("kyrie" → "Kyrie eleison")
+  ORDINARIA,  // ordinary code → Latin name ("ke" → "Kyrie eleison")
   MODI,       // mode number → Latin name   ("1" → "Modus I")
 } from "./engines/chant/types.js";
 export { SOURCES } from "./engines/chant/chant.js";  // book code → bibliographic record

@@ -14,10 +14,11 @@
 // catalogue held 122 families for as long as it took someone to notice it held
 // 110. A number the library can derive is checked here against the library.
 //
-// The source checks read the SOURCE tree, not `dist/`: comments are stripped
-// from the build, so there is nothing left to check by the time the rest of
-// the suite runs. The docs checks read `dist/`, because they compare prose
-// against what the shipped library actually reports.
+// The source checks read the SOURCE tree, not `dist/`: a comment's path
+// resolves from the .ts file that holds it, and src/data is excluded by
+// directory, which dist does not mirror one for one. The docs checks read
+// `dist/`, because they compare prose against what the shipped library
+// actually reports.
 
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
@@ -57,11 +58,10 @@ describe("comments — the reference pages moved to docs/api/", () => {
     const stale = [];
     for (const { rel, text } of FILES) {
       for (const [i, line] of text.split("\n").entries()) {
-        // A markdown page under docs/ that is NOT under docs/api/. The two
-        // root-level documents that legitimately live there are excluded by
-        // name rather than by pattern, so a new one has to be considered.
+        // A markdown page under docs/ that is NOT under docs/api/. docs/
+        // holds nothing else, so there is no exemption.
         const m = line.match(/docs\/(?!api\/)([a-z-]+\.md)/);
-        if (m && !["index.md"].includes(m[1])) stale.push(`${rel}:${i + 1}  ${m[0]}`);
+        if (m) stale.push(`${rel}:${i + 1}  ${m[0]}`);
       }
     }
     assert.deepEqual(stale, [], `stale doc paths:\n  ${stale.join("\n  ")}`);
@@ -84,6 +84,18 @@ describe("comments — the reference pages moved to docs/api/", () => {
   });
 });
 
+// TEMPORARY. Files whose comments still cite the gitignored working/ tree,
+// each owned by a parallel fix stream that is removing those citations. The
+// allowance covers working/ paths in these files only; every other path in
+// them is still checked. Empty this set once those streams land.
+const PENDING_WORKSHOP_CITATIONS = new Set([
+  "src/engines/score/emitters/moderna.ts",
+  "src/engines/score/emitters/svg.ts",
+  "src/engines/score/modulation.ts",
+  "src/engines/score/neume.ts",
+  "src/engines/temper/data/modes.ts",
+]);
+
 describe("comments — a path resolves from the file that names it", () => {
   // The docs/api move was only half the defect. Every path was ALSO written as
   // if from the repo root, from files three and four levels down, so none of
@@ -91,11 +103,14 @@ describe("comments — a path resolves from the file that names it", () => {
   // out of src/engines/chant/data/ looks for it in that directory. Checking
   // that a file exists somewhere is not the same as checking the link works.
   test("every repo path in a comment resolves relative to its own file", () => {
+    // working/ is included so a comment citing the gitignored workshop fails:
+    // the path does not exist in a clone or in the published package.
     const PATHISH =
-      /(?:\.\.\/)*(?:docs|tests|scripts)\/[\w./-]*\.\w+|(?:\.\.\/)*BIBLIOGRAPHY\.md/g;
+      /(?:\.\.\/)*(?:docs|tests|scripts|working)\/[\w./-]*\.\w+|(?:\.\.\/)*BIBLIOGRAPHY\.md/g;
     const broken = [];
     for (const { path, rel, text } of FILES) {
       const here = dirname(path);
+      const workshopPending = PENDING_WORKSHOP_CITATIONS.has(rel.split("\\").join("/"));
       for (const [i, line] of text.split("\n").entries()) {
         const trimmed = line.trim();
         const isComment = trimmed.startsWith("//") || trimmed.startsWith("*")
@@ -104,6 +119,7 @@ describe("comments — a path resolves from the file that names it", () => {
         for (const m of line.matchAll(PATHISH)) {
           // Trailing sentence punctuation is not part of the path.
           const target = m[0].replace(/[.,;:]+$/, "");
+          if (workshopPending && /(?:^|\/)working\//.test(target)) continue;
           try {
             statSync(resolve(here, target));
           } catch {

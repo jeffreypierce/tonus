@@ -28,8 +28,8 @@
 //
 // This is inventa, not tradita: a computed catalogue with stated method and
 // open code. No editorial names ride the table; the key is the name. The
-// received figures of the treatises are a reference note beside it
-// (working/notes/cadentiae-tradita.md), and each is a species of this key.
+// received figures of the treatises are each a species of this key; they are
+// recorded as an editorial note outside the package, not in this table.
 
 /** One species: a collapsed closing tail with its corpus statistics. */
 export interface CadentiaSpecies {

@@ -330,7 +330,7 @@ function oneCorpus(code: ChantSource): Corpus {
   if (cached) return cached;
 
   const src = SOURCES[code];
-  if (!src) throw new Error(`Unknown corpus code: "${code}" (expected ${Object.keys(SOURCES).join(", ")})`);
+  if (!src) throw new Error(`corpus: unknown corpus code "${code}" (expected ${Object.keys(SOURCES).join(", ")})`);
 
   // What the book PRINTS. Reading `source.code` here would count only the
   // records this book happens to store, which is why the Antiphonarius used to

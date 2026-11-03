@@ -1,7 +1,8 @@
 // ---------------------------------------------------------------------------
 // engines/census — where a chant sits against the corpus that holds it
 // ---------------------------------------------------------------------------
-// The corpus repo censuses every shipped chant into a block of 221 float32s:
+// The corpus repo censuses every shipped chant but the Toni Communes (office
+// "or", the recitation formulas) into a block of 221 float32s:
 // modal behaviour, degree histogram, interval bigrams, trigram and cadence
 // vocabulary, chironomy, text setting. This engine reads those blocks and
 // answers one question — how typical is this chant, and what is it near?
@@ -11,11 +12,18 @@
 // dictionaries and the same mean. What is shipped is cited; what is not is
 // computed the way it would have been.
 //
-// DISTANCE IS COSINE PER FIELD GROUP, never over the flat 221. Cosine
-// on the whole vector is dominated by the 121-float melodic block and by sheer
-// magnitude, so a long Tract would neighbor other long chants for being long.
-// Per-group cosine asks about SHAPE within each dimension, and `all` is the
-// equal-weight mean of those — every dimension one vote, no tunable weights.
+// DISTANCE IS COSINE PER FIELD GROUP, never over the flat 221. Cosine on the
+// whole vector is decided by magnitude: the raw scalars (ambitus, final and
+// tenor pitch class, notes per phrase) carry nearly all of its length, and the
+// five distribution groups together under 1%. Per-group cosine asks about
+// SHAPE within each dimension, and `all` is the equal-weight mean of those —
+// every dimension one vote, no tunable weights.
+//
+// Known limitation, of the baked layout and not of this arithmetic: inside
+// `modal`, `chironomy` and `textual` the same raw scalars sit beside
+// normalized slots and outweigh them (block.ts), so those three typicalities
+// mostly read ambitus, notes per phrase and cadential melisma. Mending it is a
+// change to the block, which is a re-bake in the corpus repo.
 
 import {
   CENSUS_BLOCKS_B64,
@@ -25,6 +33,7 @@ import {
   CENSUS_ORDER,
 } from "../../data/census.js";
 import { censusGroups } from "./block.js";
+import { buildScore } from "../score/api.js";
 import { attestationCutoff, chantAdmissible } from "../chant/attest.js";
 import type {
   Census,
@@ -148,7 +157,13 @@ function resolveChant(query: CensusQuery): {
     if (typeof id !== "string" || !id) {
       throw new Error("census: the score's chant has no id; census({ score }) names its chant by score.chant.id.");
     }
-    return { id, slices: censusGroups(score, CENSUS_DICTIONARIES), self: index().get(id) };
+    // The block formula reads the score at notatio's defaults, as the bake
+    // did. A Score built with knobs or a temperamentum carries different
+    // durations, phrasing and pitches, so the chant is re-read from
+    // score.chant with no options: the census of a score is the census of its
+    // chant, whatever options the caller notated it under.
+    const plain = buildScore(score.chant);
+    return { id, slices: censusGroups(plain, CENSUS_DICTIONARIES), self: index().get(id) };
   }
 
   const id = query.id;
@@ -158,8 +173,9 @@ function resolveChant(query: CensusQuery): {
   const self = index().get(id);
   if (self == null) {
     throw new Error(
-      `census: no block for "${id}". The census covers the ${CENSUS_ORDER.length} chants ` +
-        "tonus ships; to census any other chant, pass its notated score: census({ score }).",
+      `census: no block for "${id}". The census covers the ${CENSUS_ORDER.length.toLocaleString("en-US")} censused chants ` +
+        "(every shipped chant but the Toni Communes, office \"or\"); to census any other chant, " +
+        "pass its notated score: census({ score }).",
     );
   }
   const slices = {} as Record<CensusGroup, ArrayLike<number>>;
@@ -245,7 +261,10 @@ export function getCensus(query: CensusQuery): Census {
       }
       scored.push({ id: otherId, similarity: sum / groupsToUse.length });
     }
-    // Ties → lower id, so the same question always has the same answer.
+    // Ties → the lexicographically lower id string (so "gregobase:10" precedes
+    // "gregobase:9"), and the same question always has the same answer. On a
+    // narrow group (cadenceFinal, with one final per chant) ties are common
+    // and large, so the order inside a tie class is this rule, not a ranking.
     scored.sort((a, b) => b.similarity - a.similarity || (a.id < b.id ? -1 : 1));
     neighbors.push(...scored.slice(0, k));
   }

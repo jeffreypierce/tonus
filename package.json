@@ -2,7 +2,7 @@
   "name": "tonus",
   "version": "0.17.0",
   "type": "module",
-  "description": "Medieval music analysis: GABC plainchant exports, the liturgical calendar, and tuning systems",
+  "description": "Gregorian chant in GABC: retrieval, notation and SVG engraving, a corpus census, the liturgical calendar, and medieval tuning",
   "author": "Jeffrey Pierce <jeffrey@jeffreypierce.net>",
   "license": "PolyForm-Noncommercial-1.0.0",
   "repository": {
@@ -27,24 +27,24 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./inscriptio": {
-      "import": "./dist/inscriptio.js",
-      "types": "./dist/inscriptio.d.ts"
+      "types": "./dist/inscriptio.d.ts",
+      "import": "./dist/inscriptio.js"
     },
     "./census": {
-      "import": "./dist/census.js",
-      "types": "./dist/census.d.ts"
+      "types": "./dist/census.d.ts",
+      "import": "./dist/census.js"
     },
     "./corpus": {
-      "import": "./dist/corpus.js",
-      "types": "./dist/corpus.d.ts"
+      "types": "./dist/corpus.d.ts",
+      "import": "./dist/corpus.js"
     },
     "./score": {
-      "import": "./dist/score.js",
-      "types": "./dist/score.d.ts"
+      "types": "./dist/score.d.ts",
+      "import": "./dist/score.js"
     }
   },
   "main": "./dist/index.js",
@@ -67,7 +67,9 @@
     "prepublishOnly": "npm run clean && npm run build",
     "lab": "npm run build && node scripts/render-lab.mjs",
     "stress": "npm run build && node scripts/render-stress.mjs",
-    "glyphs": "node scripts/extract-smufl-glyphs.mjs"
+    "glyphs": "node scripts/extract-smufl-glyphs.mjs",
+    "mine:cadentiae": "npm run build && node scripts/mine-cadentiae.mjs",
+    "bake:cadentiae": "node scripts/bake-cadentiae.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

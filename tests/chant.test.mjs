@@ -392,7 +392,7 @@ describe("getCorpus", () => {
   });
 
   test("unknown code throws (message lists the known codes)", () => {
-    assert.throws(() => getCorpus("zz"), /Unknown corpus code/);
+    assert.throws(() => getCorpus("zz"), /^Error: corpus: unknown corpus code "zz"/);
     assert.throws(() => getCorpus("zz"), /nr/); // derived list includes nr now
   });
 });
@@ -402,8 +402,8 @@ describe("the shelf without Hildegard, and what her books left behind", () => {
   // transposed modes, the finer office codes, cantusId, folio pages. These
   // pin both halves: the books are gone, the machinery still answers.
   test("sym and ov are not books on the shelf", () => {
-    assert.throws(() => getCorpus("sym"), /Unknown corpus code/);
-    assert.throws(() => getCorpus("ov"), /Unknown corpus code/);
+    assert.throws(() => getCorpus("sym"), /corpus: unknown corpus code/);
+    assert.throws(() => getCorpus("ov"), /corpus: unknown corpus code/);
     assert.equal(getChants({ id: ["symphonia:001", "ordo:001"] }).length, 0);
     assert.ok(!getCorpus().books.some((b) => b.code === "sym" || b.code === "ov"));
   });

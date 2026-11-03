@@ -546,15 +546,19 @@ describe("a parsed chant sits on the gamut, not below it", () => {
     const tonus = (await import("../dist/index.js")).default;
     const { CENSUS_ORDER } = await import("../dist/index.js");
     const below = [];
+    let checked = 0;
     for (const id of CENSUS_ORDER.slice(0, 200)) {
       const [chant] = tonus.cantus({ id });
       if (!chant) continue;
       let score;
       try { score = tonus.notatio(chant); } catch { continue; }
       if (!score.tabula.length) continue;
+      checked++;
       const lowest = Math.min(...score.tabula.map((r) => r.midi));
       if (lowest < GAMMA_UT) below.push(`${id} (lowest ${lowest})`);
     }
+    // A sample that silently skipped everything would pass vacuously.
+    assert.ok(checked >= 190, `only ${checked} of 200 chants parsed and were checked`);
     assert.deepEqual(below.slice(0, 5), [],
       `${below.length} chants read below Γ (midi ${GAMMA_UT}) — the staff has `
       + "come unanchored from the gamut; see parse.ts's `oct`");

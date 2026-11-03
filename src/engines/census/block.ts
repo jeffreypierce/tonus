@@ -89,7 +89,12 @@ export function censusGroups(
   const finalMidi = rows[rows.length - 1]!.midi;
   const width = (g: CensusGroup): number => CENSUS_GROUPS[g]!.count;
 
-  // modal: 8-mode affinity (normalized) · final pc · tenor pc · ambitus · margin
+  // modal: 8-mode affinity (normalized) · final pc · tenor pc · ambitus · margin.
+  // The affinities sum to 1 while final/tenor pc run 0–11 and the ambitus is
+  // in semitones, so the scalars hold almost all of the group's length and a
+  // cosine on it mostly compares them. The same holds for chironomy[4] (notes
+  // per phrase) and textual[6] (cadential melisma). This is the baked layout;
+  // the bit-for-bit agreement with the bake means it changes only by re-bake.
   const modal = new Float32Array(width("modal"));
   {
     const byMode = new Map(score.imprint.modalAffinity.map((a) => [a.mode, a.score]));
