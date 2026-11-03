@@ -15,8 +15,7 @@ export interface ModeProfile {
 }
 
 // No cadence figures ride the mode. The received figures (Niedermeyer &
-// d'Ortigue, Bragers) were data here until 0.11; they are now a reference note
-// (working/notes/cadentiae-tradita.md) against the ONE cadence catalogue, the
+// d'Ortigue, Bragers) are not data here: the one cadence catalogue is the
 // mined CADENTIAE (data/cadentiae.ts), which `modus(n).cadences` reads per mode
 // at call. Reference data is fixed; a cadence is a measurement, and
 // measurements ride the verb.

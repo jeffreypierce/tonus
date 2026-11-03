@@ -796,8 +796,7 @@ interface ModalAffinity {
 ## Metrics
 
 `score.metrics` measures the chant's shape: counts, range, melisma, melodic
-motion, contour, tessitura, rhythm, cadence. It is chant-specific; `Harmony`
-has no metrics.
+motion, contour, tessitura, rhythm, cadence.
 
 ```js
 tonus.notatio(puerNatusEst).metrics;

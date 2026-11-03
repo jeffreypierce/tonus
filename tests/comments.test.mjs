@@ -84,18 +84,6 @@ describe("comments — the reference pages moved to docs/api/", () => {
   });
 });
 
-// TEMPORARY. Files whose comments still cite the gitignored working/ tree,
-// each owned by a parallel fix stream that is removing those citations. The
-// allowance covers working/ paths in these files only; every other path in
-// them is still checked. Empty this set once those streams land.
-const PENDING_WORKSHOP_CITATIONS = new Set([
-  "src/engines/score/emitters/moderna.ts",
-  "src/engines/score/emitters/svg.ts",
-  "src/engines/score/modulation.ts",
-  "src/engines/score/neume.ts",
-  "src/engines/temper/data/modes.ts",
-]);
-
 describe("comments — a path resolves from the file that names it", () => {
   // The docs/api move was only half the defect. Every path was ALSO written as
   // if from the repo root, from files three and four levels down, so none of
@@ -110,7 +98,6 @@ describe("comments — a path resolves from the file that names it", () => {
     const broken = [];
     for (const { path, rel, text } of FILES) {
       const here = dirname(path);
-      const workshopPending = PENDING_WORKSHOP_CITATIONS.has(rel.split("\\").join("/"));
       for (const [i, line] of text.split("\n").entries()) {
         const trimmed = line.trim();
         const isComment = trimmed.startsWith("//") || trimmed.startsWith("*")
@@ -119,7 +106,6 @@ describe("comments — a path resolves from the file that names it", () => {
         for (const m of line.matchAll(PATHISH)) {
           // Trailing sentence punctuation is not part of the path.
           const target = m[0].replace(/[.,;:]+$/, "");
-          if (workshopPending && /(?:^|\/)working\//.test(target)) continue;
           try {
             statSync(resolve(here, target));
           } catch {

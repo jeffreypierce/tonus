@@ -9,11 +9,10 @@
 //
 // A span's `kind` GRADES the evidence: a one-phrase lean is an "inflection"
 // (passing colour), two phrases or more is a "modulation", and a chant whose
-// whole frame is foreign reads "transposition". Before that grading, 78% of
-// every span detected was a single phrase and 80% of moded chants "modulated"
-// — including Suñol's own Christus resurgens example, whose deuterus lean is
-// itself one phrase. Measured over 2,784 moded chants
-// (working/qa-sweep/measure-modulation.mjs).
+// whole frame is foreign reads "transposition". Ungraded, most detected spans
+// are a single phrase and most moded chants would "modulate", Suñol's own
+// Christus resurgens example among them, whose deuterus lean is itself one
+// phrase.
 //
 // A NOTE ON THE PHRASE-CLOSING NOTE (considered and rejected):
 // passing each phrase's last pc into the affinity (the final-note bonus that
