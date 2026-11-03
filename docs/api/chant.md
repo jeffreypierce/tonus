@@ -95,7 +95,7 @@ tonus.corpus();
 // { count: 7825,      // chants tonus holds, each counted once
 //   listings: 9743,   // rows on the shelf — a chant in two books appears twice
 //   total: 9796,     // what the books hold, before dedup
-//   genera: [ { office: "an", genus: "Antiphona", count: 3959 }, … ],
+//   genera: [ { office: "an", genus: "Antiphona", count: 3963 }, … ],
 //   modes:  [ { mode: "1", modus: "Modus I", count: 1505 }, … ],
 //   books:  [ …7 Corpus entries, in registry order ] }
 ```
@@ -182,9 +182,15 @@ nothing".
 
 ## Retrieval — `cantus`
 
-`cantus(query?)` searches across the corpora by id, incipit, mode, genre,
-and source. Results sort by rank, then incipit; `limit` and `offset` page
-through them.
+`cantus(query)` searches across the corpora by id, incipit, mode, genre,
+and source. Results sort by incipit (or by `mode` or `id`, as `sort` asks);
+`limit` and `offset` page through them.
+
+A query must name something to find. An empty query throws, and so does one
+whose every filter is empty (`{ sort: "id" }`, `{ incipit: "" }`): no search
+ran, and the whole shelf is [`corpus()`](#the-books--corpus). An unknown key
+throws, and so does a value outside its vocabulary (`sort`, `cursus`, an
+`ordinary` code).
 
 ```js
 tonus.cantus({ mode: 1, office: "an", source: "am", limit: 1 });
@@ -193,14 +199,13 @@ tonus.cantus({ mode: 1, office: "an", source: "am", limit: 1 });
 ```js
 [
   {
-    id: "gregobase:10082",
-    incipit: "Ait latro",
-    gabc: "(c4) A(d)it(f') la(d)tro(dc) ad(f) la(g)tró(f_h)nem:(h'_) *(,)…",
+    id: "gregobase:8739",
+    incipit: "Ad Jesum autem",
+    gabc: "(c4) AD(d) Je(d)sum(f') au(d)tem(dc) *() cum(f) ve(g)nís(f_h)sent,(h.) (;)…",
     office: "an",
-    genus: "Antiphona",
     mode: "1",
-    modus: "Modus I",
-    pages: [{ page: "439", sequence: 2, extent: 2 }],
+    books: ["am"],
+    pages: [{ page: "570", sequence: 1, extent: 1 }],
     source: {
       book: "Antiphonale Monasticum",
       fullTitle: null,
@@ -210,12 +215,15 @@ tonus.cantus({ mode: 1, office: "an", source: "am", limit: 1 });
       scanSource: "Scans courtesy of Corpus Christi Watershed",
       code: "am",
     },
+    genus: "Antiphona",
+    modus: "Modus I",
+    cantusId: null,
   },
 ];
 ```
 
-The Graduale is the Mass book and holds four antiphons in the shipped corpus,
-so the same query against `source: "gr"` returns `[]`.
+The Graduale is the Mass book and prints few antiphons (45 in all), so the
+same query against `source: "gr"` returns 8.
 
 `cantus` also accepts raw GABC through the `gabc` field. The corpus is
 bypassed and a single user `Chant` returns. The input may be a notation
@@ -247,7 +255,7 @@ name:
 | `ca`     | Canticum  | `of`     | Offertorium  | `tp`     | Tropa              |
 | `co`     | Communio  | `ps`     | Psalmus      | `or`     | Toni Communes      |
 | `gr`     | Graduale  | `re`     | Responsorium | `ky`     | Kyriale            |
-| `im`     | Improperia| `rb`     | Resp. Breve  | `va`     | Varia              |
+| `im`     | Improperia| `rb`     | Responsorium Breve | `va` | Varia             |
 | `ap`     | Antiphona ad psalmum | `av` | Antiphona votiva | `ae` | Antiphona in evangelio |
 | `pa`     | Prosa     | `su`     | Supplicatio  |          |                    |
 
@@ -363,6 +371,12 @@ Within tonus an id is exactly one chant. A melody printed in several books is
 stored once, under the record `cantus({ id })` returns, so `id` is a stable key
 to a chant rather than to a printing.
 
+Four ids are both a shelf chant and a Kyriale entry: the Asperges me, its two
+ad libitum settings, and the Vidi aquam, which the Liber Usualis prints as
+antiphons and the Kyriale as the sprinkling rite. `cantus({ id })` returns the
+shelf's record (`office: "an"`); under `ordinary` the same id returns the
+Kyriale's (`ordinary: "as"` or `"va"`).
+
 ## The repertoire as of a date — the era view
 
 `before: 1098` keeps only chants a manuscript of the 10th century or earlier
@@ -394,9 +408,16 @@ door.
 
 ## The Mass propers — `proprium`
 
-`proprium(query?)` retrieves the chants whose texts change with the day:
-Introitus, Graduale, Alleluia or Tractus, Offertorium, Communio. A feast
-narrows the result to its own propers.
+`proprium(query)` retrieves the chants whose texts change with the day:
+Introitus, Graduale, Alleluia or Tractus, Offertorium, Communio, in the order
+they are sung. A feast narrows the result to its own propers. Handed the whole
+list `festum` returns for a day, it sings the day's principal feast (the first
+for each date), not every celebration the calendar finds.
+
+The other `cantus` filters refine the result and read it as `cantus` does:
+`source` is a book the chant is printed in, and the chant is presented as that
+book. A `sort` reorders; without one the sung order stands. `gabc` and
+`ordinary` belong to `cantus` alone and throw here, as an empty query does.
 
 ```js
 const [feast] = tonus.festum({ date: new Date("2026-12-25") });
@@ -409,14 +430,14 @@ slot, the Commune Sanctorum (formularies for classes of saints) supplies it
 through 48 commune sets and 254 feast-to-commune mappings.
 
 ```ts
-interface PropriumQuery extends CantusQuery {
+interface PropriumQuery extends Omit<CantusQuery, "gabc" | "ordinary"> {
   feast?: Feast | Feast[];
 }
 ```
 
 ## The ordinary — `ordinarium`
 
-`ordinarium(query?)` retrieves the fixed chants of the Mass from the
+`ordinarium(query)` retrieves the fixed chants of the Mass from the
 Kyriale. A feast drives mass selection through its `masses` list, the
 masses the day's Kyriale RUBRIC appoints, derived as described in
 [calendar.md](calendar.md#the-days-feasts--festum); `mass` pins one of the
@@ -426,8 +447,10 @@ Vidi aquam), `ad-libitum` (the Cantus ad libitum) or `requiem` (the Missa pro
 defunctis). Only the `mass` section carries a mass number; every other entry
 reads `mass: 0`. Where the rubric names several masses, the year rotates
 through them (same feast, same year → same answer, every time), and sibling
-printings under one number (Mass I prints two dismissals; Mass XVII prints
-Kyrie A/B/C) rotate with it. Slots resolve independently, which the book
+printings under one number (Mass XVII prints Kyrie A/B/C) rotate with it.
+Mass I's two dismissals do not rotate: the double-alleluia Ite Ia belongs to
+the Easter octave (Easter Day through Low Saturday), and Ite Ib to the rest of
+Paschaltide. Slots resolve independently, which the book
 licenses outright ("chants from one Mass may be used together with those
 from others") with one exception, the book's own: **"the Ferial Masses
 excepted."** Under a ferial rubric the sung ordinary is not gathered from
@@ -436,12 +459,12 @@ several masses; only the dismissal travels.
 ```js
 const [easter] = tonus.festum({ date: new Date("2026-04-05") });
 tonus.ordinarium({ feast: easter });
-// ky  Kyrie I       (mass 1) — Lux et origo, Paschal time, every year
+// ke  Kyrie I       (mass 1) — Lux et origo, Paschal time, every year
 // gl  Gloria I      (mass 1)
-// cr  Credo III     (mass 0) — the credo rotates on its own cycle
+// cr  Credo I       (mass 0) — the credo rotates on its own cycle
 // sa  Sanctus I     (mass 1)
 // ag  Agnus Dei I   (mass 1)
-// it  Ite Ia        (mass 1)
+// it  Ite Ia        (mass 1) — the octave's double alleluia
 // va  Vidi aquam    (mass 0) — the Paschaltide sprinkling antiphon rides along
 ```
 
@@ -463,15 +486,28 @@ rule and the rotation both.
 **Maundy Thursday** (In Cena Domini) is the Triduum's exception: it keeps a
 full Mass with the Gloria, its ordinary fixed to Mass I (Lux et origo).
 
-The sprinkle rite (aspersion before the principal Sunday Mass) is appended
-and selected by season: **Vidi aquam** (`va`) in Paschaltide, **Asperges
-me** (`as`) otherwise.
+The Kyriale's era rule bounds the settings at 1324 (_Docta Sanctorum
+Patrum_), by the centuries the book's own editors print beside each part. A
+part dated after it is not sung, and its slot borrows from another mass. The
+rule reaches the Credos too: Credo III (17th century) and Credo IV (15th) are
+outside it, so the credo cycle runs through I, II, V and VI.
+
+The sprinkle rite (aspersion before the principal Sunday Mass) is appended on
+Sundays only, selected by season: **Vidi aquam** (`va`) in Paschaltide,
+**Asperges me** (`as`) otherwise.
 
 ```js
 tonus.ordinarium({ ordinary: "ke" }); // every Kyrie
+tonus.ordinarium({ ordinary: ["ke", "gl"] }); // every Kyrie and Gloria
 tonus.ordinarium({ mass: 9, ordinary: "gl" }); // Gloria of Cum jubilo
 tonus.ordinarium({ section: "ad-libitum", ordinary: "ke" }); // the eleven ad libitum Kyries
 ```
+
+The other `cantus` filters (`id`, `incipit`, `mode`, `source`, `before`,
+`cursus`) refine the result on both paths, the feast's and the book's, and
+`limit` and `offset` window it last, over what the filters kept. Without a
+feast the book's order stands; `sort` reorders. `gabc` throws here, as an
+empty query does.
 
 | `ordinary` | `ordinarium`                                  |
 | ---------- | --------------------------------------------- |
@@ -493,9 +529,9 @@ interface OrdinaryChant extends Chant {
   section: "mass" | "credo" | "sprinkling" | "ad-libitum" | "requiem";
 }
 
-interface OrdinariumQuery extends CantusQuery {
+interface OrdinariumQuery extends Omit<CantusQuery, "gabc"> {
   feast?: Feast | Feast[];
-  ordinary?: OrdinaryCode;
+  ordinary?: OrdinaryCode | OrdinaryCode[];
   mass?: number; // 1–18
   section?: "mass" | "credo" | "sprinkling" | "ad-libitum" | "requiem";
 }
@@ -503,13 +539,18 @@ interface OrdinariumQuery extends CantusQuery {
 
 ## The Office — `officium`
 
-`officium(query?)` retrieves the chants of a canonical hour; a feast acts
-as a filter. Without an hour, every available hour returns.
+`officium(query)` retrieves the chants of a canonical hour; a feast acts
+as a filter. Without an hour, every available hour returns. Every hour comes
+back in the order it is sung; `sort` reorders. Handed the whole list `festum`
+returns for a day, it sings the day's principal feast only, so Christmas does
+not merge with the Advent feria the calendar also finds. The other `cantus`
+filters refine the hour as they refine `proprium`.
 
 ```js
 const christmas = tonus.festum({ date: new Date("2026-12-25") });
 tonus.officium({ feast: christmas, hora: "laudes" });
-// 7 chants: the Lauds antiphons, the Benedictus antiphon, and the hymn
+// 7 chants: the Lauds antiphons (Quem vidistis pastores, Genuit
+// puerpera, …) and the hymn A solis ortus
 ```
 
 | Hour                        | Content                                                                      |
@@ -524,8 +565,14 @@ tonus.officium({ feast: christmas, hora: "laudes" });
 **Prime and Compline are ordos, not chant sets.** These two hours are
 almost invariable: the same
 sequence each day, varying only by season. They are assembled from a small
-seasonal ordo and returned in liturgical order. With no feast, each resolves
-for the [default epoch](index.md#dates).
+seasonal ordo. With no feast, each resolves for the
+[default epoch](index.md#dates). Both open with _Deus in adjutorium_ in the
+ferial tone. The monastic Compline has no Gospel canticle. The _Gloria Patri_
+that closes each psalm is not emitted.
+
+The Sacred Triduum strips Compline to its psalms: no opening, hymn,
+responsory or Marian antiphon, and in their place the antiphon _Christus
+factus est_.
 
 **Matins is returned flat.** The night office answers like any other hour,
 its responsories drawn from the Nocturnale Romanum (`nr`). But the
@@ -534,12 +581,12 @@ their grouping into nocturns is not expressed.
 
 ```js
 tonus.officium({ feast: christmas, hora: "completorium" });
-// Deus in adjutorium → Ps 4, 90, 133 → Te lucis → In manus tuas
-// → Nunc dimittis → Alma Redemptoris (simple tone)
+// Deus in adiutorium (Tonus ferialis) → Ps 4, 90, 133 → Te lucis
+// → In manus tuas → Alma Redemptoris (simple tone)
 ```
 
 ```ts
-interface OfficiumQuery extends CantusQuery {
+interface OfficiumQuery extends Omit<CantusQuery, "gabc" | "ordinary"> {
   feast?: Feast | Feast[];
   hora?: CanonicalHour;
 }
@@ -569,16 +616,21 @@ Pss 1–19 across the week (Sunday opens Ps 118); and Compline is the fixed
 three, 4, 90 and 133.
 
 ```js
+const [benedict] = tonus.festum({ date: new Date("2026-03-21") });
 tonus.officium({ feast: benedict, hora: "vesperae" });
 // the monastic Vespers antiphons, sourced from the Antiphonale Monasticum
 ```
 
 ## Psalms — `psalmus`
 
-`psalmus(query?)` returns psalm and canticle verses as intoned chant:
+`psalmus(query)` returns psalm and canticle verses as intoned chant:
 GABC pointed to a psalm tone, modes 1–8 or the tonus peregrinus (mode 0).
-`differentia` selects the cadential variant; `intonatio` controls whether
-the opening formula is included, as it is for a psalm's first verse.
+`differentia` selects the cadential variant. The intonation opens the first
+verse of the run only, except in the Benedictus and the Magnificat, where
+every verse takes it; `intonatio: true` asks for it on every verse and
+`false` on none. A flex (†) in the first half-verse is sung as the tone's
+flex: the voice drops on the flex member's last syllable. The breviary's other
+marks (+, a joined verse's number) are not sung.
 `inDirectum` recites a verse straight through to the termination with no
 mediant, as a psalm sung without an antiphon; `solemn` uses a tone's
 ornamented mediant where it has one. Canticles are addressed by name:
@@ -594,15 +646,23 @@ tonus.psalmus({ psalm: 109, verse: "1a", mode: 1 });
   {
     incipit: "Dixit Dóminus Dómino meo:",
     modus: "Modus I",
-    gabc: "(c4) (f)Di(h)xit (j)Dó(h)mi(h)nus (h)Dó(j)mi(h)no (g)me(h)o:(:) …",
+    gabc: "(c4) Di(f)xit(h) Dó(j)mi(h)nus(h) Dó(h)mi(j)no(h) me(g)o:(h)(:) Se(h)de(h) a(j) dex(h)tris(g) me(h)is:(g)(::)",
   },
 ];
 ```
 
+The cadences are pointed by syllable count: each takes as many syllables from
+the end of its half-verse as the tone has notes. The books point them to the
+word accents, and where the last word is a proparoxytone the two differ.
+
 ```js
-tonus.psalmus({ psalm: 109, mode: 2, differentia: "6F" });
+tonus.psalmus({ psalm: 109, mode: 2, differentia: "2D" });
 tonus.psalmus({ psalm: "benedictus", mode: 8, intonatio: false });
+tonus.psalmus({ psalm: 109, mode: 2, differentia: "6F" }); // throws: tone 2 has no differentia "6F"
 ```
+
+An empty query, an unknown mode, and a differentia the tone does not carry
+throw.
 
 The tones and their differentiae follow the Graduale Romanum appendix; the
 tone's anatomy as tuned pitches is available from
@@ -612,9 +672,9 @@ tone's anatomy as tuned pitches is available from
 interface PsalmusQuery {
   psalm?: number | string;
   verse?: string;
-  mode?: number;
+  mode?: number; // 1–8, or 0 for the tonus peregrinus
   differentia?: string; // differentia code, e.g. "6F", "4e"
-  intonatio?: boolean; // include opening intonation formula, default true
+  intonatio?: boolean; // every verse (true), none (false); absent: by the rubric
   inDirectum?: boolean; // recite straight through, no mediant
   solemn?: boolean; // use the ornamented solemn mediant where the tone has one
 }
@@ -671,9 +731,9 @@ as the books do:
   every Mass: Kyrie, Gloria, Credo, Sanctus, Agnus Dei, Ite or Benedicamus.
   Their melodies live in the **Kyriale**, eighteen numbered mass-settings
   plus ad libitum chants, each conventionally assigned to a class of day
-  (Lux et origo for Paschaltide, Orbis factor for Sundays throughout the year, the
-  Missa de Angelis everywhere). Feast-aware mass selection follows those
-  assignments.
+  (Lux et origo for Paschaltide, Orbis factor for Sundays throughout the
+  year). Feast-aware mass selection follows the assignments the Kyriale's
+  rubrics make, bounded by its era rule.
 
 ### The Office: the daily cursus
 
@@ -689,7 +749,9 @@ medieval inheritance intact in the Tridentine books.
 
 Psalm verses are not through-composed; they are _intoned_ on recitation
 formulas (`tonus.psalmus`): one tone per mode, plus the wandering
-**tonus peregrinus** with its two tenors (sung to _In exitu Israel_).
+**tonus peregrinus** (sung to _In exitu Israel_). In the books its two
+halves recite on different pitches; the tone table here gives it a single
+tenor.
 Each tone has a fixed anatomy: an **intonatio** (the opening rise, sung
 for the first verse), recitation on the **tenor**, a **mediatio** cadence
 at the verse's colon, recitation again, and a **terminatio** cadence.
@@ -705,6 +767,6 @@ finalis per mode, are on the tuning page
 ## Sources
 
 Sources for this page are in the central [bibliography](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md):
-`gregobase` (the ten Solesmes books), `nocturnale-romanum`, `divinum-officium`,
+`gregobase` (the six Solesmes books: `gr`, `lu`, `la`, `lh`, `am`, `psm`), `nocturnale-romanum` (`nr`), `divinum-officium`,
 `graduale-toni-communes`, `bloomfield-compline`, `gregorio-gabc`, `apel-chant`,
 `hiley-plainchant`, `saulnier-guide`.

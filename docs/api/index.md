@@ -22,12 +22,12 @@ import tonus from "tonus";
 | -------------------------------- | ----------------------- | ------------------------------------------------------- |
 | `tonus.festum(query?)`           | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
 | `tonus.pascha(year)`             | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
-| `tonus.cantus(query?)`           | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
+| `tonus.cantus(query)`            | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
 | `tonus.corpus(code?)`            | [chant](chant.md)       | `Corpus` — a book's ledger; no arg → the whole shelf    |
-| `tonus.proprium(query?)`         | [chant](chant.md)       | `Chant[]` — Mass propers                                |
-| `tonus.ordinarium(query?)`       | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
-| `tonus.officium(query?)`         | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |
-| `tonus.psalmus(query?)`          | [chant](chant.md)       | `Chant[]` — intoned psalm verses                        |
+| `tonus.proprium(query)`          | [chant](chant.md)       | `Chant[]` — Mass propers                                |
+| `tonus.ordinarium(query)`        | [chant](chant.md)       | `OrdinaryChant[]` — Kyriale                             |
+| `tonus.officium(query)`          | [chant](chant.md)       | `Chant[]` — Divine Office hours                         |
+| `tonus.psalmus(query)`           | [chant](chant.md)       | `Chant[]` — intoned psalm verses                        |
 | `tonus.temperamentum(input?)`    | [tuning](tuning.md)     | `Temperamentum` — tuning context                        |
 | `tonus.notatio(chant, opts?)`    | [score](score.md)       | `Score` — GABC → musical score                          |
 | `tonus.inscriptio(score, opts?)` | [score](score.md)       | `Inscriptio` — `{ svg, geometry }`, the score drawn     |
@@ -38,7 +38,8 @@ import tonus from "tonus";
 **Query functions** (`festum`, `pascha`, `cantus`,
 `corpus`, `proprium`, `ordinarium`, `officium`, `psalmus`) name what you want and return arrays. Empty matches
 return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
-chant results sort by rank then incipit.
+`cantus` results sort by incipit; the day verbs (`proprium`, `ordinarium`,
+`officium`) keep the order the liturgy sings, and any of them takes `sort`.
 
 **Builder functions** (`temperamentum`,
 `notatio`, and `inscriptio`) construct and return context objects, and throw
@@ -52,7 +53,7 @@ Context objects can be passed back into query functions as filters:
 
 ```js
 const feasts = tonus.festum({ season: "pasc" });
-tonus.proprium({ feast: feasts, office: "an" });
+tonus.proprium({ feast: feasts, office: "in" });
 
 const t = tonus.temperamentum({ tuning: "pythagorean" });
 t.nota("D4");
@@ -260,7 +261,11 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 - Query functions return `[]` on no match, never throw. But an **empty or
   unknown-key query** throws (a mistyped filter is a bug, not an empty result):
   `festum({ month: 12 })` and `cantus({})` throw rather than silently resolving a
-  plausible-looking answer.
+  plausible-looking answer. Every chant verb (`cantus`, `proprium`,
+  `ordinarium`, `officium`, `psalmus`) shares one door: a query whose every
+  filter is empty (`{ sort: "id" }`) throws too, and so does a value outside its
+  vocabulary (`sort`, `cursus`, an `ordinary` code, a psalm tone's `mode` or
+  `differentia`).
 - Builder functions throw `Error` with a descriptive message on invalid input.
 - `notatio` throws on invalid `Chant` input.
 - `inscriptio` throws on a non-`Score` argument or an unknown notation species.
