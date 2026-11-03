@@ -971,9 +971,13 @@ describe("QA — the day verbs keep the liturgy's order and read the shelf", () 
   });
 
   test("a festum list sings its principal feast only", () => {
-    const all = christmas();
-    assert.ok(all.length >= 2, "Christmas 2025 also finds the Advent feria");
-    assert.equal(getPropers({ feast: all }).length, 5);
+    // The Immaculate Conception falls on an Advent feria: two entries, one Mass.
+    const all = getFeast({ date: new Date(Date.UTC(2025, 11, 8)) });
+    assert.ok(all.length >= 2, "8 Dec 2025 also finds the Advent feria");
+    assert.deepEqual(
+      getPropers({ feast: all }).map((c) => c.id),
+      getPropers({ feast: all[0] }).map((c) => c.id),
+    );
     const lauds = getHour({ feast: all, hora: "laudes" });
     const nativityOnly = getHour({ feast: all[0], hora: "laudes" });
     assert.deepEqual(lauds.map((c) => c.id), nativityOnly.map((c) => c.id));
