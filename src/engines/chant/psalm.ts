@@ -8,7 +8,9 @@ import {
   type OfficePsalmPortion,
 } from "../../data/office-psalms-monastic.js";
 import { intone } from "./intone.js";
+import { TONES } from "../temper/data/tones.js";
 import { MODI, type Chant, type PsalmusQuery } from "./types.js";
+import { assertQueryShape } from "./query.js";
 
 // Canticle numbers follow the generated psalms.json numbering (verified against
 // the incipits: 231 "Benedíctus Dóminus", 232 "Magníficat", 233 "Nunc dimíttis",
@@ -20,6 +22,21 @@ const CANTICLE_NAMES: Record<string, number> = {
   "nunc dimittis": 233,
   benedicite: 210,
 };
+
+// The two Gospel canticles take the intonation on EVERY verse; every other
+// psalm and canticle on its first verse only [biblio: liber-usualis]. The
+// Nunc dimittis, the third Gospel canticle, is sung like a psalm.
+const INTONED_THROUGHOUT: ReadonlySet<number> = new Set([231, 232]);
+
+/**
+ * Which verses of a run take the intonation. `intonatio: false` silences it,
+ * `true` asks for it on every verse, and the default is the rubric: the first
+ * verse of the run, or every verse of the Benedictus and Magnificat.
+ */
+function intonedAt(psalm: number, index: number, asked: boolean | undefined): boolean {
+  if (asked != null) return asked;
+  return index === 0 || INTONED_THROUGHOUT.has(psalm);
+}
 
 function lookupVerses(psalm: number | string, verse?: string): PsalmVerse[] {
   if (typeof psalm === "string") {
@@ -72,30 +89,55 @@ function verseToChant(
 const PSALMUS_QUERY_KEYS = new Set([
   "psalm", "verse", "mode", "differentia", "intonatio", "inDirectum", "solemn",
 ]);
+// The keys that name WHAT to sing; the rest say how.
+const PSALMUS_FILTER_KEYS = new Set(["psalm", "verse"]);
+
+/**
+ * The tone a query names, as a number — or a throw. A mode the tone table does
+ * not carry is a malformed query: there is no psalm it failed to find. A
+ * numeric string ("8") is read as its number, the spelling cantus accepts.
+ */
+function toneMode(mode: number | string | undefined): number {
+  if (mode == null) return 8;
+  const n = typeof mode === "string" && /^\d+$/.test(mode.trim()) ? Number(mode) : mode;
+  if (typeof n !== "number" || !TONES.some((t) => t.mode === n)) {
+    throw new Error(
+      `psalmus: unknown mode ${JSON.stringify(mode)} (expected ${TONES.map((t) => t.mode).sort().join(", ")}; 0 is the tonus peregrinus).`,
+    );
+  }
+  return n;
+}
+
+/** An unknown differentia throws, naming the codes the tone does carry. */
+function assertDifferentia(mode: number, code: string | undefined): void {
+  if (code == null) return;
+  const tone = TONES.find((t) => t.mode === mode)!;
+  if (!tone.differentiae.some((d) => d.code === code)) {
+    throw new Error(
+      `psalmus: tone ${mode} has no differentia "${code}" ` +
+      `(expected ${tone.differentiae.map((d) => d.code).join(", ")}).`,
+    );
+  }
+}
 
 /**
  * Psalm and canticle retrieval (`tonus.psalmus`) from the Psalterium,
  * intoned to the psalm tones (modes 1-8 plus tonus peregrinus) as GABC.
  */
 export function getPsalm(query?: PsalmusQuery): Chant[] {
-  if (!query || Object.keys(query).length === 0) return [];
-
-  // The same door policy as cantus and officium: an unknown key throws, so a
-  // stale or misspelled option is learned immediately, not silently ignored.
-  const unknown = Object.keys(query).filter((k) => !PSALMUS_QUERY_KEYS.has(k));
-  if (unknown.length) {
-    throw new Error(
-      `psalmus: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
-      `(expected ${[...PSALMUS_QUERY_KEYS].join(", ")}).`,
-    );
-  }
+  assertQueryShape(query, PSALMUS_QUERY_KEYS, PSALMUS_FILTER_KEYS, "psalmus");
+  const mode = toneMode(query.mode);
+  assertDifferentia(mode, query.differentia);
 
   const verses = lookupVerses(query.psalm ?? 0, query.verse);
   if (!verses.length) return [];
 
-  const mode = query.mode ?? 8;
-  return verses.map((v) =>
-    verseToChant(v, mode, query.differentia, query.intonatio, query.inDirectum, query.solemn),
+  return verses.map((v, i) =>
+    verseToChant(
+      v, mode, query.differentia,
+      intonedAt(v.psalm, i, query.intonatio),
+      query.inDirectum, query.solemn,
+    ),
   );
 }
 
@@ -114,7 +156,7 @@ export function getPsalmRange(
       const n = parseInt(v.verse, 10);
       return !isNaN(n) && n >= lo && n <= hi;
     })
-    .map((v) => verseToChant(v, mode));
+    .map((v, i) => verseToChant(v, mode, undefined, intonedAt(psalm, i, undefined)));
 }
 
 /** A psalm portion — whole psalm or an inclusive verse range — intoned. */

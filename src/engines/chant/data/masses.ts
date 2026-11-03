@@ -453,7 +453,7 @@ export const MASS_CENTURY: Record<number, Partial<Record<string, MassCentury>>> 
     sa: { from: 11, to: 11, printed: "XI. s." },
     ag: { from: 11, to: 11, printed: "XI. s." },
   },
-  // Mass VII — Kyrie Rex splendes
+  // Mass VII — Kyrie Rex splendens
   7: {
     ke: { from: 10, to: 10, printed: "X. s." },
     gl: { from: 12, to: 12, printed: "XII. s." },
@@ -551,18 +551,18 @@ export const CREDO_CENTURY: Record<string, MassCentury> = {
 // here, so it is stated plainly rather than implied:
 //
 // This is NOT a corpus-wide era filter. tonus has per-chant EDITORIAL dates
-// for the Kyriale and for nothing else — 71 of 2,860 shipped chants, 2.5%. A
-// bound applied beyond that would be filtering 97.5% of the repertory on data
-// that does not exist. The attestation filter learned this the hard way: at
+// for the Kyriale and for nothing else — a few dozen settings in a shelf of
+// thousands. A bound applied beyond that would be filtering nearly the whole
+// repertory on data that does not exist. The attestation filter learned this the hard way: at
 // 69% coverage it answered "what was sung in 1098" by deleting the Night
 // Office, because CANTUS had not yet dated the responsories, and it stayed
 // retired until the coverage was closed (see chant/attest.ts). 2.5% is the
 // stricter version of the same mistake.
 //
-// So the corpus's period is set by THE CUT — it ships what the liturgy places —
-// and this rule only keeps the ordinary from reaching for a setting the
-// Kyriale's own editors date to the Renaissance. Within its 2.5% the data is
-// near-complete (66 of 72 mass parts printed) and per-part, which is what makes
+// So the corpus's period is set by the extractor's admission cut — it ships
+// what the liturgy places — and this rule only keeps the ordinary from
+// reaching for a setting the Kyriale's own editors date to the Renaissance.
+// Within the Kyriale the data is near-complete (66 of 72 mass parts printed) and per-part, which is what makes
 // it safe to act on where CANTUS attestation was not.
 //
 // The cutoff: Docta Sanctorum Patrum, John XXII's bull at Avignon (1324),
@@ -627,5 +627,24 @@ export function partWithinEra(
   if (!entry) return true;                       // no printed century → admit
   const century = entry.alt ?? entry.from;
   if (century == null) return true;              // "?. s." → admit
+  return century <= latestWholeCentury(toYear);
+}
+
+/**
+ * Whether a Credo is early enough to sing, by the same bound and the same
+ * closed-century rule as partWithinEra. The six Credos are dated as the
+ * masses' parts are (CREDO_CENTURY, from the Kyriale's own ascriptions), so
+ * the era rule reaches them too: III (XVII. s.) and IV (XV. s.) fall outside
+ * 1324, I, V and VI inside, and II, undated, is admitted.
+ */
+export function credoWithinEra(
+  numeral: string | null | undefined,
+  toYear: number = ORDINARY_LATEST_YEAR,
+): boolean {
+  if (!numeral) return true;
+  const entry = CREDO_CENTURY[numeral];
+  if (!entry) return true;
+  const century = entry.alt ?? entry.from;
+  if (century == null) return true;
   return century <= latestWholeCentury(toYear);
 }

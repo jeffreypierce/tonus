@@ -31,22 +31,14 @@ export type OrdinaryCode =
  * unit: a book appears here because some chant the liturgy asks for is found in
  * it, not because the whole book ships.
  *
- * The first seven are the original corpus. The office books after them widened
- * it: they carry antiphons and short responsories that fill weekday office
- * slots — without them a matcher could only bind a slot to a chant the five
- * extracted books happened to hold, which is why 41 Fridays had no Vespers
- * ("Per singulos dies" lives in the Psalterium Monasticum).
+ * The office books beside the Mass books carry the antiphons and short
+ * responsories that fill weekday office slots; without them a matcher could
+ * bind a slot only to a chant the Mass books happened to hold.
  *
- * That widening brought in eight; six are gone again. am1, am2,
- * am3, lr, ar1 and ar2 are bare transcriptions — no episema, no ictus,
- * essentially no mora — so once the office matchers began preferring a
- * rhythmically marked witness, every text they carried was better served by a
- * book we already ship. tonus reads those marks for playback, so a bare chant is
- * a worse copy, not a missing one.
- *
- * ams and psm stayed because they are fully marked, and psm holds "Per singulos
- * dies" — the Friday Vespers antiphon the widening was for. Every chant tonus
- * now ships carries rhythmic notation.
+ * Every book on the shelf is rhythmically marked (episema, ictus, mora). Bare
+ * transcriptions were admitted once and cut again: tonus reads those marks for
+ * playback, so a bare chant is a worse copy of one a marked book already
+ * prints, not a missing one.
  */
 export type ChantSource =
   | "gr" | "lu" | "la" | "lh" | "am" | "nr"
@@ -291,7 +283,7 @@ export interface Corpus {
    * What the book HOLDS, before the cut — the ledger of what was left behind.
    * Same genera/modes shape as the shipped counts above, so an omission is
    * visible rather than merely implied by a smaller number. `null` for a book
-   * outside GregoBase (nr, ky), the same "unmeasured, not zero" rule as
+   * outside GregoBase (nr), the same "unmeasured, not zero" rule as
    * `total`/`unique`/`shared`.
    */
   full: CorpusFullCount | null;
@@ -379,13 +371,15 @@ export interface CantusQuery {
   sort?: "incipit" | "mode" | "id";
 }
 
-export interface PropriumQuery extends CantusQuery {
+// The day verbs take cantus's filters to refine what they assemble — every one
+// but `gabc`, which parses a user chant and has nothing to refine. proprium
+// and officium assemble no ordinary, so `ordinary` is not theirs either.
+export interface PropriumQuery extends Omit<CantusQuery, "gabc" | "ordinary"> {
   feast?: Feast | Feast[];
 }
 
-export interface OrdinariumQuery extends CantusQuery {
+export interface OrdinariumQuery extends Omit<CantusQuery, "gabc"> {
   feast?: Feast | Feast[];
-  ordinary?: OrdinaryCode;
   /** One of Masses I–XVIII. */
   mass?: number;
   /** A section of the Kyriale: "mass", "credo", "sprinkling", "ad-libitum", "requiem". */
@@ -398,7 +392,7 @@ export interface OrdinariumQuery extends CantusQuery {
 // chimera — Tridentine psalms under monastic hymns and versicles, agreeing on
 // barely a handful of chant ids. An option that cannot produce a cursus anyone sang is
 // worse than no option, because callers read it as a supported choice.
-export interface OfficiumQuery extends CantusQuery {
+export interface OfficiumQuery extends Omit<CantusQuery, "gabc" | "ordinary"> {
   feast?: Feast | Feast[];
   hora?: CanonicalHour;
 }
@@ -406,8 +400,12 @@ export interface OfficiumQuery extends CantusQuery {
 export interface PsalmusQuery {
   psalm?: number | string;
   verse?: string;
+  /** The psalm tone: 1–8, or 0 for the tonus peregrinus. */
   mode?: number;
   differentia?: string;
+  /** The intonation: on every verse (true), none (false), or by the rubric
+   *  when absent — the first verse, or every verse of the Gospel canticles
+   *  Benedictus and Magnificat. */
   intonatio?: boolean;
   /** Sing in directum: straight through to the termination, no mediant. */
   inDirectum?: boolean;

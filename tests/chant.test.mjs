@@ -7,6 +7,17 @@ import { getHour } from "../dist/engines/chant/hour.js";
 import { getPsalm } from "../dist/engines/chant/psalm.js";
 import { getFeast } from "../dist/engines/cal/calendar.js";
 import { OFFICIA } from "../dist/engines/chant/types.js";
+import {
+  COMPLINE_ORDINARY, COMPLINE_SEASONAL, COMPLINE_TRIDUUM, MARIAN_ANTIPHONS,
+} from "../dist/engines/chant/data/compline.js";
+import { PRIME_ORDINARY, PRIME_SEASONAL } from "../dist/engines/chant/data/prime.js";
+
+// Every id an ordo table names, flattened. resolveChant drops an unknown id,
+// so an ordo test that only reads what came back cannot see a dangling one —
+// the table is read directly, and each id must resolve through cantus.
+const tableIds = (table) =>
+  Object.values(table).flatMap((v) => (typeof v === "string" ? [v] : tableIds(v)));
+const OPENING = /^Deus in adiutorium \(Tonus ferialis\)$/;
 
 // Every part of the Mass ordinary — the doors to the Kyriale, which is
 // addressable but not shelved.
@@ -611,26 +622,48 @@ describe("getHour — completorium (Compline)", () => {
   const propers = (chants) => chants.filter((c) => !c.id.startsWith("psalm:"));
   const incipits = (chants) => propers(chants).map((c) => c.incipit);
 
-  test("assembles the full ordo: opening, 4 psalms, hymn, responsory, canticle, Marian", () => {
+  test("assembles the monastic ordo: opening, 3 psalms, hymn, responsory, Marian", () => {
     const c = complineFor("2026-12-06"); // Advent
-    // The four fixed psalms (4, 30, 90, 133) contribute many verses.
     const psalmVerses = c.filter((x) => x.id.startsWith("psalm:"));
-    assert.ok(psalmVerses.length > 20, "the four fixed psalms are included");
+    assert.ok(psalmVerses.length > 20, "the three fixed psalms are included");
     const names = incipits(c).join(" | ");
-    assert.ok(names.includes("Deus in adjutorium"), "opening");
+    assert.match(names, /Deus in adiutorium/, "opening");
     assert.ok(names.includes("Te lucis"), "hymn");
     assert.ok(names.includes("In manus tuas"), "short responsory");
-    assert.ok(names.includes("Nunc dimittis"), "gospel canticle");
+    // The monastic Compline has no Gospel canticle. gregobase:1346 was the
+    // Candlemas TRACT Nunc dimittis, sung here as if it were the canticle.
+    assert.ok(!names.includes("Nunc dimittis"), "no Gospel canticle");
+    assert.ok(!c.some((x) => x.office === "tr"), "no tract in Compline");
+  });
+
+  test("the opening is the ferial versicle, not the Introit of the same incipit", () => {
+    // ⟨QA⟩ gregobase:501 is "Deus in adjutorium", the INTROIT of the twelfth
+    // Sunday after Pentecost (office "in"); both ordos opened with it.
+    for (const c of [complineFor("2026-08-15"), getHour({ feast: getFeast({ date: new Date("2026-08-15") }), hora: "prima" })]) {
+      assert.match(c[0].incipit, OPENING);
+      assert.equal(c[0].office, "or");
+      assert.ok(!c.some((x) => x.id === "gregobase:501"));
+    }
   });
 
   test("preserves liturgical order (not sorted by incipit)", () => {
     const c = complineFor("2026-12-06");
     // First item is the opening versicle, not an alphabetically-first antiphon.
-    assert.equal(c[0].incipit, "Deus in adjutorium");
+    assert.match(c[0].incipit, OPENING);
     const names = incipits(c);
-    // Te lucis (hymn) precedes Nunc dimittis (canticle) precedes the Marian.
+    // Te lucis (hymn) precedes In manus tuas precedes the Marian.
     assert.ok(names.indexOf("Te lucis ante terminum (In Adventu)") <
-      names.indexOf("Nunc dimittis"));
+      names.findIndex((n) => /In manus/.test(n)));
+    assert.match(names.at(-1), /Alma/);
+  });
+
+  test("the Triduum strips Compline to its psalms and Christus factus est", () => {
+    // Good Friday 2026: no opening, hymn, responsory or Marian antiphon.
+    const c = complineFor("2026-04-03");
+    const sung = propers(c);
+    assert.deepEqual(sung.map((x) => x.id), [COMPLINE_TRIDUUM.christusFactusEst]);
+    assert.equal(sung[0].office, "an");
+    assert.ok(c.filter((x) => x.id.startsWith("psalm:")).length > 20, "the psalms stay");
   });
 
   test("Marian antiphon rotates by season and the Candlemas date boundary", () => {
@@ -651,17 +684,20 @@ describe("getHour — completorium (Compline)", () => {
   });
 
   test("every ordo chant resolves (no dangling ids)", () => {
-    const c = complineFor("2026-08-15");
-    assert.ok(c.length > 0);
-    for (const chant of c) {
-      assert.ok(chant.gabc && chant.gabc.length > 0, `${chant.incipit} has gabc`);
+    const ids = [
+      ...tableIds(COMPLINE_ORDINARY), ...tableIds(COMPLINE_SEASONAL),
+      ...tableIds(COMPLINE_TRIDUUM), ...tableIds(MARIAN_ANTIPHONS),
+    ];
+    assert.ok(ids.length > 10);
+    for (const id of ids) {
+      assert.equal(getChants({ id }).length, 1, `${id} resolves to one chant`);
     }
   });
 
   test("no-feast completorium resolves to the default epoch", () => {
     const c = getHour({ hora: "completorium" });
     assert.ok(c.length > 0, "returns the default-epoch Compline ordo");
-    assert.equal(c[0].incipit, "Deus in adjutorium");
+    assert.match(c[0].incipit, OPENING);
   });
 
   test("Compline uses the exact psalm scheme: 4, 90, 133 — whole psalms", () => {
@@ -686,7 +722,7 @@ describe("getHour — completorium (Compline)", () => {
     const feasts = getFeast({ date: new Date("2026-12-06") });
     assert.ok(feasts.length >= 2, "the test date has concurrent feasts");
     const c = getHour({ feast: feasts, hora: "completorium" });
-    assert.equal(c.filter((x) => !x.id.startsWith("psalm:")).length, 5,
+    assert.equal(c.filter((x) => !x.id.startsWith("psalm:")).length, 4,
       "the seasonal ordo appears once, not once per feast");
   });
 });
@@ -702,14 +738,14 @@ describe("getHour — prima (Prime)", () => {
     const psalmVerses = c.filter((x) => x.id.startsWith("psalm:"));
     assert.ok(psalmVerses.length > 20, "the fixed psalms are included");
     const names = incipits(c).join(" | ");
-    assert.ok(names.includes("Deus in adjutorium"), "opening");
+    assert.match(names, /Deus in adiutorium/, "opening");
     assert.ok(/[JI]am lucis/.test(names), "hymn Iam lucis");
     assert.ok(names.includes("Christe Fili Dei"), "short responsory");
   });
 
   test("preserves liturgical order (opening first, not incipit-sorted)", () => {
     const c = primeFor("2026-08-15");
-    assert.equal(c[0].incipit, "Deus in adjutorium");
+    assert.match(c[0].incipit, OPENING);
     const names = incipits(c);
     assert.ok(names.indexOf(names.find((n) => /lucis/.test(n))) <
       names.indexOf(names.find((n) => /Christe Fili/.test(n))),
@@ -723,15 +759,15 @@ describe("getHour — prima (Prime)", () => {
   });
 
   test("every ordo chant resolves (no dangling ids)", () => {
-    for (const chant of primeFor("2026-08-15")) {
-      assert.ok(chant.gabc && chant.gabc.length > 0, `${chant.incipit} has gabc`);
+    for (const id of [...tableIds(PRIME_ORDINARY), ...tableIds(PRIME_SEASONAL)]) {
+      assert.equal(getChants({ id }).length, 1, `${id} resolves to one chant`);
     }
   });
 
   test("no-feast prima resolves to the default epoch", () => {
     const c = getHour({ hora: "prima" });
     assert.ok(c.length > 0);
-    assert.equal(c[0].incipit, "Deus in adjutorium");
+    assert.match(c[0].incipit, OPENING);
   });
 
   test("Prime psalmody varies by weekday (DO monastic scheme)", () => {
@@ -876,5 +912,148 @@ describe("getChants — the id fast path", () => {
     const nr = getChants({ source: "nr" })[0];
     assert.equal(getChants({ source: "gr", id: nr.id }).length, 0);
     assert.equal(getChants({ source: "nr", id: nr.id }).length, 1);
+  });
+});
+
+describe("QA — the query contract at every chant door", () => {
+  test("an empty query throws at every verb", () => {
+    for (const [name, fn] of [
+      ["cantus", getChants], ["proprium", getPropers], ["ordinarium", getOrdinary],
+      ["officium", getHour], ["psalmus", getPsalm],
+    ]) {
+      assert.throws(() => fn({}), new RegExp(`${name}: an empty query`), name);
+      assert.throws(() => fn(), new RegExp(name), name);
+    }
+  });
+
+  test("a query with no effective filter throws rather than return the shelf", () => {
+    for (const q of [{ sort: "id" }, { gabc: "" }, { incipit: "" }, { id: undefined }, { limit: 5 }, { mode: [] }]) {
+      assert.throws(() => getChants(q), /empty query/, JSON.stringify(q));
+    }
+  });
+
+  test("values outside their vocabulary throw", () => {
+    assert.throws(() => getChants({ mode: 1, cursus: "bogus" }), /unknown cursus/);
+    assert.throws(() => getChants({ mode: 1, sort: "bogus" }), /unknown sort/);
+    assert.throws(() => getPsalm({ psalm: 1, mode: 9 }), /unknown mode 9/);
+    assert.throws(() => getPsalm({ psalm: 1, mode: 2, differentia: "6F" }), /tone 2 has no differentia "6F"/);
+    // A numeric string is the mode's own spelling, as cantus reads it.
+    assert.equal(getPsalm({ psalm: 1, mode: "8" }).length, getPsalm({ psalm: 1, mode: 8 }).length);
+  });
+
+  test("gabc is cantus's alone: the day verbs refuse it", () => {
+    assert.throws(() => getPropers({ gabc: "(c4) a(f)" }), /unknown query key/);
+    assert.throws(() => getHour({ gabc: "(c4) a(f)" }), /unknown query key/);
+  });
+});
+
+describe("QA — the four ids both the shelf and the Kyriale hold", () => {
+  for (const id of ["gregobase:497", "gregobase:905", "gregobase:142", "gregobase:958"]) {
+    test(`${id} resolves to the shelf's record, and to the Kyriale's under ordinary`, () => {
+      const [shelf] = getChants({ id });
+      assert.equal(getChants({ id }).length, 1);
+      assert.equal(shelf.office, "an");
+      assert.equal(getChants({ id, office: "an" }).length, 1, "the shelf's own office finds it");
+      const ord = getChants({ id, ordinary: ["as", "va"] });
+      assert.equal(ord.length, 1);
+      assert.ok(["as", "va"].includes(ord[0].ordinary));
+    });
+  }
+});
+
+describe("QA — the day verbs keep the liturgy's order and read the shelf", () => {
+  const christmas = () => getFeast({ date: new Date(Date.UTC(2025, 11, 25)) });
+
+  test("proprium keeps the sung order: Introit, Gradual, Alleluia, Offertory, Communion", () => {
+    const p = getPropers({ feast: christmas() });
+    assert.deepEqual(p.map((c) => c.office), ["in", "gr", "al", "of", "co"]);
+    assert.equal(getPropers({ feast: christmas(), sort: "incipit" })[0].office, "al", "sort is still honoured");
+  });
+
+  test("a festum list sings its principal feast only", () => {
+    const all = christmas();
+    assert.ok(all.length >= 2, "Christmas 2025 also finds the Advent feria");
+    assert.equal(getPropers({ feast: all }).length, 5);
+    const lauds = getHour({ feast: all, hora: "laudes" });
+    const nativityOnly = getHour({ feast: all[0], hora: "laudes" });
+    assert.deepEqual(lauds.map((c) => c.id), nativityOnly.map((c) => c.id));
+    assert.deepEqual(
+      getOrdinary({ feast: all }).map((c) => c.id),
+      getOrdinary({ feast: all[0] }).map((c) => c.id),
+    );
+  });
+
+  test("source reads the books a chant is printed in, not where it is filed", () => {
+    const p = getPropers({ feast: christmas()[0], source: "gr" });
+    assert.equal(p.length, 5, "every Christmas proper is printed in the Graduale");
+    assert.ok(p.every((c) => c.source.code === "gr"), "presented as the Graduale");
+    const o = getOrdinary({ mass: 1, source: "lu" });
+    assert.ok(o.length > 0 && o.every((c) => c.books.includes("lu")));
+  });
+});
+
+describe("QA — the ordinary's rubrics", () => {
+  const day = (y, m, d) => getFeast({ date: new Date(Date.UTC(y, m - 1, d)) })[0];
+
+  test("ordinary takes an array of codes, and limit counts after the filters", () => {
+    const parts = getOrdinary({ ordinary: ["ke", "gl"] });
+    assert.ok(parts.length > 0);
+    assert.ok(parts.every((c) => c.ordinary === "ke" || c.ordinary === "gl"));
+    assert.equal(getOrdinary({ ordinary: ["ke", "gl"], limit: 3 }).length, 3);
+    assert.equal(getOrdinary({ mass: 1, incipit: "Agnus", limit: 1 }).length, 1);
+  });
+
+  test("the sprinkling rite precedes the Sunday Mass only", () => {
+    const weekday = getOrdinary({ feast: day(2025, 7, 16) });
+    assert.ok(!weekday.some((c) => c.ordinary === "as" || c.ordinary === "va"), "no Asperges on a Wednesday");
+    const sunday = getOrdinary({ feast: day(2025, 7, 20) });
+    assert.equal(sunday.filter((c) => c.ordinary === "as").length, 1);
+    const easter = getOrdinary({ feast: day(2026, 4, 5) });
+    assert.equal(easter.filter((c) => c.ordinary === "va").length, 1, "Vidi aquam in Paschaltide");
+  });
+
+  test("the double-alleluia Ite belongs to the Easter octave", () => {
+    const ite = (f) => getOrdinary({ feast: f }).find((c) => c.ordinary === "it")?.incipit;
+    for (const d of [5, 8, 11]) assert.equal(ite(day(2026, 4, d)), "Ite Ia", `April ${d}`);
+    for (const d of [12, 15, 30]) assert.equal(ite(day(2026, 4, d)), "Ite Ib", `April ${d}`);
+    // Year-independent: the octave decides, not the rotation.
+    assert.equal(ite(day(2027, 3, 28)), "Ite Ia");
+    assert.equal(ite(day(2027, 4, 7)), "Ite Ib");
+  });
+});
+
+describe("QA — psalmody: intonation, flex, and the unsung marks", () => {
+  test("the intonation opens the first verse only", () => {
+    const [v1, v2] = getPsalm({ psalm: 1, mode: 1 });
+    assert.match(v1.gabc, /^\(c4\) Be\(f\)á\(h\)tus\(j\)/, "F-A-C on the first verse");
+    assert.match(v2.gabc, /^\(c4\) Sed\(h\) in\(h\)/, "the tenor from the second");
+  });
+
+  test("the Benedictus and Magnificat take it on every verse", () => {
+    const opening = (v) => /^\(c4\) [^(]+\(([a-m]+)\)/.exec(v.gabc)[1];
+    for (const psalm of ["magnificat", "benedictus", "nunc dimittis"]) {
+      const sung = getPsalm({ psalm, mode: 8 });
+      const bare = getPsalm({ psalm, mode: 8, intonatio: false });
+      const intoned = sung.map((v, i) => opening(v) !== opening(bare[i]));
+      assert.equal(intoned[0], true, `${psalm}: verse 1`);
+      assert.equal(intoned[1], psalm !== "nunc dimittis", `${psalm}: verse 2`);
+    }
+  });
+
+  test("intonatio overrides the rubric either way", () => {
+    assert.ok(getPsalm({ psalm: 1, mode: 1, intonatio: true }).every((v) => /^\(c4\) [^(]+\(f\)/.test(v.gabc)));
+    assert.ok(!getPsalm({ psalm: 1, mode: 1, intonatio: false }).some((v) => /^\(c4\) [^(]+\(f\)/.test(v.gabc)));
+  });
+
+  test("the flex marks are sung as the flex, never as syllables", () => {
+    const [v1] = getPsalm({ psalm: 1, mode: 1 });
+    assert.ok(!/[†‡+]/.test(v1.gabc), "no mark is tokenised");
+    // Tone 1's flex drops a tone, tenor A to G, on the last syllable.
+    assert.match(v1.gabc, /im\(h\)pi\(h\)ó\(h\)rum,\(g\)\(,\)/);
+    const [joined] = getPsalm({ psalm: 15, verse: "1", mode: 8 });
+    assert.ok(!/\(2\)/.test(joined.gabc.replace(/\([a-m,:;]*\)/g, "")), "the absorbed verse number is not sung");
+    const [mag] = getPsalm({ psalm: "magnificat", mode: 8 });
+    assert.match(mag.gabc, /^\(c4\) Ma\([a-m]\)gní\([a-m]\)fi\([a-m]\)cat\([a-m]\)\(:\)/,
+      "the sign of the cross is not a syllable");
   });
 });

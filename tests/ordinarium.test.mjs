@@ -142,11 +142,17 @@ describe("ordinarium — the credo rotation", () => {
         if (cr) { seen.add(cr.incipit); break; }
       }
     }
-    for (const n of ["I", "II", "III", "IV", "V", "VI"]) {
+    for (const n of ["I", "II", "V", "VI"]) {
       assert.ok(
         seen.has(`Credo ${n}`),
         `Credo ${n} is heard (heard: ${[...seen].sort().join(", ")})`,
       );
+    }
+    // The 1324 era rule reaches the Credos too: III (XVII. s.) and IV
+    // (XV. s.) are dated past the bound by the Kyriale's own editors, and
+    // CREDO_CENTURY sat in masses.ts unread until the rule was applied.
+    for (const n of ["III", "IV"]) {
+      assert.ok(!seen.has(`Credo ${n}`), `Credo ${n} is outside the era rule`);
     }
   });
 

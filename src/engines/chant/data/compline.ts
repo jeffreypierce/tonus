@@ -1,30 +1,40 @@
 // data/compline — the Ordo of Compline (completorium)
 //
-// Compline in the traditional Roman rite is nearly invariable: the same spine
+// Compline in the Benedictine cursus is nearly invariable: the same spine
 // every night, varying only by liturgical season (the hymn Te lucis and the
 // short responsory In manus tuas) and by the seasonal Marian antiphon at the
 // end. This is an editorial ordo — it references chants already in the corpus
 // by their gregobase: id, it does not carry any GABC of its own (cf. masses.ts,
 // which is likewise a hand-authored profile table, not corpus-extracted).
 //
-// Ordo structure after the traditional Roman Compline; seasonal assignment and
-// the Marian rotation follow standard practice, cross-checked against
-// [biblio: bloomfield-compline] (public domain). See
-// ../../../../docs/api/chant.md and ../../../../BIBLIOGRAPHY.md.
+// The monastic Compline has no Gospel canticle: the Nunc dimittis (and its
+// antiphon Salva nos) belongs to the Roman hour, which tonus does not
+// assemble. The seasonal assignment and the Marian rotation follow standard
+// practice, cross-checked against [biblio: bloomfield-compline] (public
+// domain). See ../../../../docs/api/chant.md and ../../../../BIBLIOGRAPHY.md.
 
 import type { Season } from "../../cal/types.js";
 
-// Compline's psalmody (Ps 4, 30 vv. 2–6, 90, 133) is not hand-listed here — it
-// comes from the extracted DO Tridentine scheme via
-// `officePsalmPortions("Completorium", …)`. Only the ordo structure and the
-// seasonal/Marian rules are editorial and live in this file.
+// Compline's psalmody (the Benedictine three: Pss 4, 90, 133, said every
+// night) is not hand-listed here — it comes from the extracted DO monastic
+// scheme via `officePsalmPortions("Completorium", …)`. Only the ordo
+// structure and the seasonal/Marian rules are editorial and live in this file.
 
 /** The invariable spine — chants sung the same every night. */
 export const COMPLINE_ORDINARY = {
-  /** Deus in adjutorium — the opening versicle. */
-  opening: "gregobase:501",
-  /** Nunc dimittis — the gospel canticle. */
-  canticle: "gregobase:1346",
+  /**
+   * Deus in adjutorium — the opening versicle, in the ferial tone
+   * ("Tonus ferialis", Liber Usualis / Liber Antiphonarius). Not
+   * gregobase:501, which shares the incipit and is the Introit of the
+   * twelfth Sunday after Pentecost.
+   */
+  opening: "gregobase:15354",
+} as const;
+
+/** The Triduum's one chant in place of the hymn, responsory and antiphon. */
+export const COMPLINE_TRIDUUM = {
+  /** Christus factus est — the antiphon, not the Gradual (gregobase:873). */
+  christusFactusEst: "gregobase:1862",
 } as const;
 
 /**

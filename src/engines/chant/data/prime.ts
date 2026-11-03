@@ -14,15 +14,15 @@
 
 import type { Season } from "../../cal/types.js";
 
-// Prime's psalmody (Ps 53 + a weekday-proper psalm + Ps 118 in two sections,
-// varying by weekday per DO's Tridentine scheme) is not hand-listed here — it
-// comes from the extracted scheme via `officePsalmPortions("Prima", weekday)`.
+// Prime's psalmody (the Benedictine distribution: Pss 1–19 walked across the
+// week, Sunday opening Ps 118) is not hand-listed here — it comes from the
+// extracted DO monastic scheme via `officePsalmPortions("Prima", weekday)`.
 // Only the ordo structure and the seasonal responsory rule are editorial.
 
 /** The invariable spine. */
 export const PRIME_ORDINARY = {
-  /** Deus in adjutorium — the opening versicle. */
-  opening: "gregobase:501",
+  /** Deus in adjutorium — the opening versicle, ferial tone (see compline.ts). */
+  opening: "gregobase:15354",
   /**
    * Iam lucis orto sidere — Prime's hymn. Its variants are keyed by feast rank
    * (ferial / Sunday / major feast) rather than by season; the ferial-and-
@@ -32,8 +32,14 @@ export const PRIME_ORDINARY = {
 } as const;
 
 /**
- * Season → the seasonal short responsory Christe Fili Dei vivi. Only Advent and
- * Paschaltide have their own setting; the rest of the year uses "per Annum."
+ * Season → the seasonal short responsory Christe Fili Dei vivi. Advent and
+ * Paschaltide have their own setting; the rest of the year sings "per Annum."
+ *
+ * Christmastide and Epiphanytide properly change the verse (Qui natus es de
+ * Maria Virgine; Qui apparuisti hodie) over the per-annum melody. No book on
+ * the shelf prints either verse as a chant of its own (the Advent record only
+ * names Qui natus es in a rubric, for the Immaculate Conception), so those
+ * seasons sing the per-annum record, verse Qui sedes, until one does.
  */
 export const PRIME_SEASONAL: Readonly<Record<Season, { responsory: string }>> =
   Object.freeze({
