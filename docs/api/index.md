@@ -21,7 +21,7 @@ import tonus from "tonus";
 | Method                           | Page                    | Returns                                                 |
 | -------------------------------- | ----------------------- | ------------------------------------------------------- |
 | `tonus.festum(query?)`           | [calendar](calendar.md) | `Feast[]` — liturgical calendar lookup                  |
-| `tonus.pascha(year)`             | [calendar](calendar.md) | `Pascha` — the movable anchors of a liturgical year     |
+| `tonus.pascha(year)`             | [calendar](calendar.md) | `Pascha` — the anchors of a civil year                  |
 | `tonus.cantus(query?)`           | [chant](chant.md)       | `Chant[]` — cross-corpus chant retrieval / GABC parsing |
 | `tonus.corpus(code?)`            | [chant](chant.md)       | `Corpus` — a book's ledger; no arg → the whole shelf    |
 | `tonus.proprium(query?)`         | [chant](chant.md)       | `Chant[]` — Mass propers                                |
@@ -36,8 +36,9 @@ import tonus from "tonus";
 ### Query and builder functions
 
 **Query functions** (`festum`, `pascha`, `cantus`,
-`corpus`, `proprium`, `ordinarium`, `officium`, `psalmus`) name what you want and return arrays. Empty matches
-return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
+`corpus`, `proprium`, `ordinarium`, `officium`, `psalmus`) name what you want and return arrays
+(`pascha` excepted: it returns one `Pascha` record for its year). Empty matches
+return `[]`, never `null`. Calendar results sort by day, then by precedence;
 chant results sort by rank then incipit.
 
 **Builder functions** (`temperamentum`,
@@ -78,7 +79,7 @@ table of codes or English keeps English.
 | -------------- | --------------------------------------------------------------- |
 | `SEASON_LABEL` | season code → English display label (`adv` → "Advent")          |
 | `TEMPORA`      | season code → the Latin tempus name (`adv` → "Tempus Adventus") |
-| `GRADE_ORDER`  | the fourteen grades in precedence order (sort by `indexOf`)     |
+| `GRADE_ORDER`  | the fourteen grades in dignity order (sort by `indexOf`)        |
 | `GRADUS`       | grade code → the Latin rank name                                |
 
 **Chant**
@@ -173,7 +174,7 @@ the list resolve their pitches through the ones before.
 - [Psalm tones — `tonus`](tuning.md#psalm-tones--tonus)
 - [Theory & Context](tuning.md#theory--context) · [Sources](tuning.md#sources)
 
-**[Calendar](calendar.md)** — the Tridentine calendar against Julian/Gregorian-computus Easter.
+**[Calendar](calendar.md)** — the Divino Afflatu Roman calendar against Julian/Gregorian-computus Easter.
 
 - [The day's feasts — `festum`](calendar.md#the-days-feasts--festum)
 - [Rank — `ritus` and `grade`](calendar.md#rank--ritus-and-grade)

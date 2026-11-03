@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { getFeast } from "../dist/engines/cal/calendar.js";
+import { getFeast, getPascha } from "../dist/engines/cal/calendar.js";
 import { pascha } from "../dist/engines/cal/date.js";
 import {
   GRADE_ORDER,
@@ -80,7 +80,8 @@ describe("getFeast", () => {
     // as "no query" and returns the DEFAULT EPOCH — a plausible wrong answer
     // for whatever date was meant, which is the failure the guard above exists
     // to prevent.
-    const christmas = new Date(Date.UTC(991, 11, 25));
+    // Christmas 991 is Julian Dec 25 — proleptic-Gregorian Dec 30.
+    const christmas = new Date(Date.UTC(991, 11, 30));
     assert.throws(() => getFeast(christmas), /festum\(\{ date \}\)/);
     // The query form is the one that answers.
     assert.equal(getFeast({ date: christmas })[0].nomen, "In Nativitate Domini");
@@ -337,8 +338,11 @@ describe("the calendar has no silent days", () => {
     assert.ok(at("2026-11-18").length > 0, "Wednesday of the resumed 6th Epiphany week");
     assert.ok(at("2026-11-27").length > 0, "Friday of the last week after Pentecost");
     assert.ok(at("2026-11-28").length > 0, "Saturday before Advent");
-    const dec30 = at("2026-12-30").find((f) => f.id === "Nat30");
-    assert.ok(dec30, "Dec 30 carries the octave day (Nat30)");
+    // 2026's Sunday within the octave falls Dec 27, so its office is said on
+    // Dec 30; in 2024 (Sunday Dec 29) Dec 30 is the plain octave day.
+    assert.ok(at("2026-12-30").some((f) => f.id === "Nat1-0"), "Dec 30, 2026 carries the Sunday within the octave");
+    const dec30 = at("2024-12-30").find((f) => f.id === "Nat30");
+    assert.ok(dec30, "Dec 30, 2024 carries the octave day (Nat30)");
     assert.equal(dec30.grade, "semiduplex", "a day within the Christmas octave is semiduplex");
   });
 
@@ -384,5 +388,185 @@ describe("the calendar has no silent days", () => {
           `${where}: season spans ${(end - start) / day + 1} days`);
       }
     }
+  });
+});
+
+describe("precedence (Divino Afflatu, simplified)", () => {
+  const ids = (iso) => getFeast({ date: new Date(iso) }).map((f) => f.id);
+
+  test("the excluding days lead a I-class feast falling on them", () => {
+    assert.deepEqual(ids("2028-03-19"), ["Quad3-0", "03-19"], "St Joseph on Lent III");
+    assert.deepEqual(ids("1978-03-19"), ["Quad6-0", "03-19"], "St Joseph on Palm Sunday");
+    assert.deepEqual(ids("2029-03-25"), ["Quad6-0", "03-25"], "Annunciation on Palm Sunday");
+    assert.equal(ids("2035-03-25")[0], "Pasc0-0", "Annunciation on Easter Sunday");
+  });
+
+  test("on a tie of grade the temporale leads", () => {
+    assert.deepEqual(ids("2038-06-24"), ["Pent01-4", "06-24"], "Corpus Christi and St John Baptist");
+  });
+
+  test("an ordinary Sunday yields to I and II class only", () => {
+    assert.equal(ids("2026-01-25")[0], "Epi3-0", "Conversion of St Paul (Duplex majus) follows the Sunday");
+    assert.equal(ids("2008-11-02")[0], "Epi4-0", "All Souls on a Sunday follows it (no transfer)");
+    assert.equal(ids("2024-12-29")[0], "Nat1-0", "St Thomas Becket (Duplex) follows the Sunday");
+  });
+
+  test("a greater Sunday of the II class yields only to a I-class feast", () => {
+    assert.equal(ids("2025-12-21")[0], "Adv4-0", "St Thomas (II class) follows Advent IV");
+    assert.equal(ids("2024-12-08")[0], "12-08", "the Immaculate Conception (I class) leads Advent II");
+  });
+});
+
+describe("temporale placement", () => {
+  const ids = (iso) => getFeast({ date: new Date(iso) }).map((f) => f.id);
+  const dateOf = (id, from, to) =>
+    getFeast({ from: new Date(from), to: new Date(to) })
+      .filter((f) => f.id === id)
+      .map((f) => f.date.toISOString().slice(0, 10));
+
+  test("the Holy Name is the Sunday of Jan 2–5, else Jan 2", () => {
+    assert.deepEqual(dateOf("Nat2-0", "2023-01-01", "2023-01-13"), ["2023-01-02"]);
+    assert.deepEqual(dateOf("Nat2-0", "2024-01-01", "2024-01-13"), ["2024-01-02"]);
+    assert.deepEqual(dateOf("Nat2-0", "2026-01-01", "2026-01-13"), ["2026-01-04"]);
+    assert.deepEqual(dateOf("Nat2-0", "2029-01-01", "2029-01-13"), ["2029-01-02"]);
+    assert.deepEqual(dateOf("Nat2-0", "2030-01-01", "2030-01-13"), ["2030-01-02"]);
+    assert.ok(!ids("2030-01-06").includes("Nat2-0"), "never on the Epiphany");
+  });
+
+  test("the Sunday within the Christmas octave stays inside the octave", () => {
+    // Christmas 2022 is a Sunday: no Sunday within the octave, office on Dec 30.
+    assert.deepEqual(dateOf("Nat1-0", "2022-12-25", "2023-01-08"), ["2022-12-30"]);
+    assert.deepEqual(dateOf("Nat1-0", "2024-12-25", "2025-01-08"), ["2024-12-29"]);
+    assert.ok(!ids("2023-01-01").includes("Nat1-0"));
+  });
+
+  test("Advent IV ends on Christmas Eve", () => {
+    assert.deepEqual(ids("2026-12-25"), ["12-25"]);
+  });
+
+  test("the January Epiphany weeks end at Septuagesima", () => {
+    assert.ok(!ids("2008-02-10").some((id) => id.startsWith("Epi")), "Lent I 2008 carries no Epiphany Sunday");
+  });
+
+  test("in a leap year the feasts of Feb 24–28 move a day", () => {
+    assert.ok(!ids("2028-02-24").includes("02-24"));
+    assert.ok(ids("2028-02-25").includes("02-24"), "St Matthias on the 25th");
+    assert.ok(ids("2028-02-28").includes("02-27"));
+    assert.ok(ids("2027-02-24").includes("02-24"), "a common year keeps the 24th");
+    // 1900 is not a Gregorian leap year; 1500 is a Julian one, so St Matthias
+    // keeps Julian Feb 25 — Gregorian March 6.
+    assert.ok(ids("1900-02-24").includes("02-24"));
+    assert.ok(ids("1500-03-06").includes("02-24"));
+  });
+
+  test("no day of 1900–2100 is empty or carries two temporale entries", () => {
+    const temporale = (id) => !/^\d\d-\d\d$/.test(id);
+    const d = new Date(Date.UTC(1900, 0, 1));
+    for (; d.getUTCFullYear() <= 2100; d.setUTCDate(d.getUTCDate() + 1)) {
+      const day = getFeast({ date: d }).map((f) => f.id);
+      const iso = d.toISOString().slice(0, 10);
+      assert.ok(day.length > 0, `${iso} is empty`);
+      assert.ok(day.filter(temporale).length <= 1, `${iso}: ${day.join(", ")}`);
+    }
+  });
+});
+
+describe("dates before the reform", () => {
+  const ids = (iso) => getFeast({ date: new Date(iso) }).map((f) => f.id);
+
+  test("the fixed feasts keep their Julian dates", () => {
+    // 1350: Julian March 25 is Gregorian April 2, Maundy Thursday.
+    assert.deepEqual(ids("1350-04-02"), ["Quad6-4", "03-25"]);
+    assert.ok(!ids("1350-03-25").includes("03-25"));
+    assert.equal(getFeast({ date: new Date("1351-01-02") })[0].id, "12-25");
+    assert.equal(getPascha(1350).christmas.toISOString().slice(0, 10), "1351-01-02");
+  });
+
+  test("the reform's ten skipped days keep no fixed feast", () => {
+    // Julian Oct 4 1582 (St Francis) is Gregorian Oct 14; the next day is
+    // Gregorian Oct 15 (St Teresa). Feasts of Oct 5–14 have no day in 1582.
+    assert.ok(ids("1582-10-14").includes("10-04"));
+    assert.ok(ids("1582-10-15").includes("10-15"));
+    const oct1582 = getFeast({ from: new Date("1582-09-01"), to: new Date("1582-11-30") }).map((f) => f.id);
+    assert.ok(!oct1582.includes("10-07") && !oct1582.includes("10-13"));
+  });
+
+  test("no day of 900–1700 is empty or has two temporale entries", () => {
+    const temporale = (id) => !/^\d\d-\d\d$/.test(id);
+    const d = new Date(Date.UTC(900, 0, 1));
+    for (; d.getUTCFullYear() <= 1700; d.setUTCDate(d.getUTCDate() + 1)) {
+      const day = getFeast({ date: d }).map((f) => f.id);
+      const iso = d.toISOString().slice(0, 10);
+      assert.ok(day.length > 0, `${iso} is empty`);
+      assert.ok(day.filter(temporale).length <= 1, `${iso}: ${day.join(", ")}`);
+    }
+  });
+});
+
+describe("the era view's later saints and temporale", () => {
+  const range = (from, to, before) =>
+    getFeast({ from: new Date(from), to: new Date(to), ...(before ? { before } : {}) }).map((f) => f.id);
+
+  test("Angela Merici (canonized 1807) is not kept in 1500", () => {
+    assert.ok(range("1500-06-05", "1500-06-15").includes("06-01"));
+    assert.ok(!range("1500-06-05", "1500-06-15", 1500).includes("06-01"));
+  });
+
+  test("Francis of Assisi enters at his canonization; Corpus Christi at 1264", () => {
+    assert.ok(range("1250-10-05", "1250-10-15", 1250).includes("10-04"));
+    assert.ok(!range("1220-10-05", "1220-10-15", 1220).includes("10-04"));
+    assert.ok(range("1300-05-20", "1300-06-30", 1300).includes("Pent01-4"));
+    assert.ok(!range("1250-05-20", "1250-06-30", 1250).includes("Pent01-4"));
+    assert.ok(!range("1250-05-20", "1250-06-30", 1250).includes("Pent01-5"), "its octave goes with it");
+  });
+
+  test("the default epoch no longer resolves to Angela Merici", () => {
+    assert.ok(!getFeast().some((f) => f.id === "06-01"));
+  });
+});
+
+describe("feast flags", () => {
+  const feast = (iso, id) => getFeast({ date: new Date(iso) }).find((f) => f.id === id);
+
+  test("marian marks Our Lady's feasts, not her kin's", () => {
+    assert.equal(feast("2026-02-02", "02-02").marian, true);
+    assert.equal(feast("2026-03-25", "03-25").marian, true);
+    assert.deepEqual(feast("2026-03-25", "03-25").masses, [9, 10]);
+    assert.equal(feast("2026-03-19", "03-19").marian, false);
+    assert.equal(feast("2026-07-26", "07-26").marian, false);
+    assert.equal(feast("2026-08-16", "08-16").marian, false);
+  });
+
+  test("apostolic marks SS Philip and James on May 1", () => {
+    assert.equal(feast("2026-05-01", "05-01").apostolic, true);
+    assert.equal(feast("2026-06-28", "06-28").apostolic, false, "06-28 is St Irenaeus");
+  });
+});
+
+describe("query guards", () => {
+  test("from/to must be valid Dates", () => {
+    assert.throws(() => getFeast({ from: "2026-01-01", to: new Date("2026-01-02") }), /from must be a Date/);
+    assert.throws(() => getFeast({ from: new Date("2026-01-01"), to: new Date("nope") }), /to must be a Date/);
+  });
+
+  test("date and from/to are exclusive; nomen must be non-empty", () => {
+    assert.throws(() => getFeast({ date: new Date("2026-01-01"), from: new Date("2026-01-01") }), /not both/);
+    assert.throws(() => getFeast({ nomen: "" }), /nomen/);
+  });
+
+  test("pascha: small years are years, not 1900s; year < 1 and non-numbers throw", () => {
+    assert.equal(getPascha(33).easter.getUTCFullYear(), 33);
+    assert.equal(pascha(33).getUTCFullYear(), 33);
+    assert.throws(() => getPascha(0), RangeError);
+    assert.throws(() => getPascha(-5), RangeError);
+    assert.throws(() => getPascha("2026"), TypeError);
+  });
+
+  test("baptism is the Sunday after the Epiphany, the Holy Family's", () => {
+    const p = getPascha(2023); // Jan 7, 2023 is a Saturday; Jan 8 the Sunday
+    assert.equal(p.baptism.toISOString().slice(0, 10), "2023-01-08");
+    const p2 = getPascha(2024); // Jan 7, 2024 is itself a Sunday
+    assert.equal(p2.baptism.toISOString().slice(0, 10), "2024-01-07");
+    assert.ok(getFeast({ date: p2.baptism }).some((f) => f.id === "Epi1-0"));
   });
 });

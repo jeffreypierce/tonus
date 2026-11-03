@@ -4,18 +4,19 @@
 // The era, and why it is what it is. The calendar's *structure* is medieval —
 // the temporale from Advent through the season after Pentecost (Septuagesima
 // included), the eight-hour office cursus, the duplex/semiduplex/simplex
-// dignity system. The *data* is the Tridentine codification (1570–1962) drawn
-// from Divinum Officium [biblio: divinum-officium], substantially continuous
-// with late-medieval Roman usage but carrying feasts instituted as late as the
-// 1950s (Queenship of Mary 1954, Immaculate Heart 1944).
+// dignity system. The *data* is the Roman calendar as Divinum Officium
+// [biblio: divinum-officium] gives it under the Divino Afflatu rubrics (1911,
+// in the state of c. 1954): substantially continuous with late-medieval Roman
+// usage, but carrying feasts instituted as late as the 1950s (Queenship of
+// Mary 1954, Immaculate Heart 1944).
 //
 // Decision: those post-medieval feasts are KEPT, not pruned. Pruning would
 // break the DO data's integrity and demand per-feast historical adjudication;
-// instead tonus states its actual era plainly. The honest description is
-// "Tridentine Roman, continuous with medieval practice" — not "a medieval
-// calendar." (Per-feast era metadata — medieval / tridentine / modern — is
-// noted as future work.) The rank system this data carries is documented at
-// `ritus`/`Grade` in ./types.ts; Easter reckoning at pascha() in ./date.ts.
+// instead tonus states its actual era plainly, and `festum({ before })` views
+// the day as of an earlier year (./data/eras.ts). Precedence follows the same
+// era: the Divino Afflatu ordering, simplified (see precedence below). The
+// rank system is documented at `ritus`/`Grade` in ./types.ts; Easter
+// reckoning at pascha() in ./date.ts.
 import { CAL, type CalEntry } from "../../data/cal.js";
 import { feastKeptBy } from "./data/eras.js";
 import {
@@ -31,8 +32,8 @@ import {
   addDays,
   subDays,
   firstSundayOnOrAfter,
-  nextSunday,
-  pascha,
+  fixedAnchors,
+  easterSunday,
   resolveEntryId,
   DEFAULT_EPOCH,
   type RuleAnchors,
@@ -46,6 +47,7 @@ import {
   TEMPORA,
   entryGrade,
   gradeOrder,
+  EXCLUDING_DAYS,
   BVM_FEAST_IDS,
   APOSTOLIC_FEAST_IDS,
   PENITENTIAL_SEASONS,
@@ -57,8 +59,8 @@ const _anchorCache = new Map<number, RuleAnchors>();
 export function getAnchors(year: number): RuleAnchors {
   if (_anchorCache.has(year)) return _anchorCache.get(year)!;
 
-  const easter = startOfDay(pascha(year));
-  const advent1 = firstSundayOnOrAfter(new Date(Date.UTC(year, 10, 27)));
+  const easter = easterSunday(year);
+  const { christmas, epiphany, adventFirstSunday } = fixedAnchors(year);
   const anchors: RuleAnchors = {
     year,
     easter,
@@ -67,11 +69,13 @@ export function getAnchors(year: number): RuleAnchors {
     septuagesima: subDays(easter, 63),
     pentecost: addDays(easter, 49),
     ascension: addDays(easter, 39),
-    adventFirstSunday: advent1,
-    gaudete: addDays(advent1, 14),
-    christmas: new Date(Date.UTC(year, 11, 25)),
-    epiphany: new Date(Date.UTC(year, 0, 6)),
-    baptism: nextSunday(new Date(Date.UTC(year, 0, 7))),
+    adventFirstSunday,
+    gaudete: addDays(adventFirstSunday, 14),
+    christmas,
+    epiphany,
+    // The Sunday after the Epiphany — the Holy Family's Sunday in this
+    // calendar, the Baptism of the Lord in the modern one.
+    baptism: firstSundayOnOrAfter(addDays(epiphany, 1)),
   };
 
   _anchorCache.set(year, anchors);
@@ -79,19 +83,29 @@ export function getAnchors(year: number): RuleAnchors {
 }
 
 /**
- * The movable anchors of a liturgical year (`tonus.pascha`). Easter is
+ * The movable anchors of civil year `year` (`tonus.pascha`). Easter is
  * computed by the Gregorian (Gauss/Butcher) computus from 1583 and by the
  * Julian computus with day-number conversion before that; everything else
- * anchors to it, except Advent, which anchors to November 27.
+ * anchors to it, except Advent (the Sunday on or after November 27) and the
+ * fixed Christmas and Epiphany. Before the reform those fixed dates are Julian
+ * calendar dates, returned — like every Date here — as proleptic-Gregorian
+ * UTC midnights.
  */
 export function getPascha(year: number): Pascha {
+  if (typeof year !== "number") {
+    throw new TypeError(
+      `pascha: year must be a number, got ${typeof year} ${JSON.stringify(year)}`,
+    );
+  }
   if (!Number.isFinite(year)) {
     throw new RangeError(`pascha requires a finite year, got ${year}`);
   }
-  const a = getAnchors(Math.trunc(year));
+  const y = Math.trunc(year);
+  if (y < 1) throw new RangeError(`pascha requires a year from AD 1, got ${year}`);
+  const a = getAnchors(y);
   const d = (x: Date) => new Date(x.getTime());
   return {
-    year: Math.trunc(year),
+    year: y,
     septuagesima: d(a.septuagesima),
     ashWednesday: d(a.ashWednesday),
     firstLentSunday: d(a.firstLentSunday),
@@ -113,27 +127,24 @@ export function getPascha(year: number): Pascha {
 export function buildCalendar(year: number): Map<string, CalEntry[]> {
   if (_calCache.has(year)) return _calCache.get(year)!;
 
-  const anchors = getAnchors(year);
   const map = new Map<string, CalEntry[]>();
-
-  for (const entry of CAL) {
-    for (const { key } of resolveEntryId(entry.id, year, anchors)) {
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(entry);
+  if (year >= 0) {
+    const anchors = getAnchors(year);
+    for (const entry of CAL) {
+      for (const { key } of resolveEntryId(entry.id, year, anchors)) {
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(entry);
+      }
     }
   }
-
-  // Lower rank number means higher priority.
-  for (const list of map.values())
-    list.sort((a, b) => entryGradeOrder(a) - entryGradeOrder(b));
 
   _calCache.set(year, map);
   return map;
 }
 
-// Season boundaries follow the Divinum Officium Tempora stems exactly, so a
-// date's season always matches the stem of any Tempora feast that falls on it
-// (asserted by the stem↔season test):
+// Season boundaries, by date (a feast's season is the season of its DAY, not
+// of its stem — Ash Wednesday is Quadp3-3 but falls in `quad`, and the
+// resumed Epiphany weeks of November fall in `pent`):
 //   adv   Advent I Sunday          → Christmas (Dec 25)
 //   nat   Christmas                → epiphanySunday (1st Sun after Epiphany)
 //   epi   epiphanySunday           → Septuagesima (Easter − 63)
@@ -141,9 +152,7 @@ export function buildCalendar(year: number): Map<string, CalEntry[]> {
 //   quad  Ash Wednesday            → Easter
 //   pasc  Easter                   → trinitySunday (Pentecost + 7); the
 //                                     Pentecost octave stays paschal
-//   pent  trinitySunday            → next Advent I Sunday
-// Epi and Nat both anchor on firstSundayOnOrAfter(feast+1) in
-// resolveTemporaStem; epiphanySunday is that boundary between them.
+//   pent  trinitySunday            → that year's Advent I Sunday
 function epiphanySunday(a: RuleAnchors): Date {
   return firstSundayOnOrAfter(addDays(a.epiphany, 1));
 }
@@ -154,39 +163,25 @@ function trinitySunday(a: RuleAnchors): Date {
 
 function findSeason(date: Date): { code: Season; start: Date; end: Date } {
   const year = date.getUTCFullYear();
-  const a = getAnchors(year);
-  const prev = getAnchors(year - 1);
-  const next = getAnchors(year + 1);
-
-  const s = (code: Season, start: Date, end: Date) => ({
-    code,
-    start: startOfDay(start),
-    end: startOfDay(end),
-  });
-
-  if (date >= next.adventFirstSunday && date < next.christmas)
-    return s("adv", next.adventFirstSunday, next.christmas);
-  if (date >= a.adventFirstSunday && date < a.christmas)
-    return s("adv", a.adventFirstSunday, a.christmas);
-  if (date >= prev.christmas && date < epiphanySunday(a))
-    return s("nat", prev.christmas, epiphanySunday(a));
-  if (date >= a.christmas && date < epiphanySunday(next))
-    return s("nat", a.christmas, epiphanySunday(next));
-  if (date >= epiphanySunday(a) && date < a.septuagesima)
-    return s("epi", epiphanySunday(a), a.septuagesima);
-  if (date >= a.septuagesima && date < a.ashWednesday)
-    return s("quadp", a.septuagesima, a.ashWednesday);
-  if (date >= a.ashWednesday && date < a.easter)
-    return s("quad", a.ashWednesday, a.easter);
-  if (date >= a.easter && date < trinitySunday(a))
-    return s("pasc", a.easter, trinitySunday(a));
-  // Advent of THIS year closes the season after Pentecost — the `adv` branch
-  // above has already claimed those days, so reaching for next year's Advent
-  // put the end date sixteen months out and made the season 547 days long.
-  if (date >= trinitySunday(a) && date < a.adventFirstSunday)
-    return s("pent", trinitySunday(a), a.adventFirstSunday);
-
-  return s("epi", epiphanySunday(a), a.septuagesima);
+  // The anchors of three civil years cover any day: before the reform the
+  // Julian Christmas of one year falls in the next Gregorian January.
+  for (const y of [year - 1, year, year + 1]) {
+    if (y < 0) continue;
+    const a = getAnchors(y);
+    const spans: [Season, Date, Date][] = [
+      ["epi", epiphanySunday(a), a.septuagesima],
+      ["quadp", a.septuagesima, a.ashWednesday],
+      ["quad", a.ashWednesday, a.easter],
+      ["pasc", a.easter, trinitySunday(a)],
+      ["pent", trinitySunday(a), a.adventFirstSunday],
+      ["adv", a.adventFirstSunday, a.christmas],
+      ["nat", a.christmas, epiphanySunday(getAnchors(y + 1))],
+    ];
+    for (const [code, start, end] of spans) {
+      if (date >= start && date < end) return { code, start, end };
+    }
+  }
+  throw new Error(`findSeason: ${isoDate(date)} falls in no season`);
 }
 
 // The Sunday-as-such grades. Per the canonical grade table, an ordinary Sunday is
@@ -285,7 +280,7 @@ function calEntryToFeast(
   d: Date,
 ): Feast {
   const id = entry.id ?? "";
-  // All 642 entries carry a ritus; "Feria" is a defensive floor only.
+  // Every entry carries a ritus; "Feria" is a defensive floor only.
   const ritus = entry.ritus ?? "Feria";
   const grade = entryGrade(id, ritus);
   return {
@@ -305,24 +300,56 @@ function calEntryToFeast(
   };
 }
 
-// Precedence order of a raw CalEntry (for same-day sorting before conversion).
-function entryGradeOrder(entry: CalEntry): number {
-  return gradeOrder(entryGrade(entry.id, entry.ritus ?? "Feria"));
+const isTemporale = (id: string) => !/^\d{2}-\d{2}$/.test(id);
+
+/**
+ * Same-day precedence: lower sorts first. A simplified Divino Afflatu table,
+ * the rubrics of the shipped data:
+ *
+ *  1. The days that admit no feast at all (EXCLUDING_DAYS) lead whatever falls
+ *     on them — Annunciation on Palm Sunday, St Joseph on a Lent Sunday.
+ *  2. Otherwise the grade ladder (GRADE_ORDER), with the Sundays placed where
+ *     the 1911 rubrics put them: a greater Sunday of the II class (Advent II–IV,
+ *     the Septuagesima block) yields only to I-class feasts, an ordinary Sunday
+ *     to I- and II-class feasts — so a Duplex majus no longer takes the Sunday.
+ *  3. On a tie, the temporale before the sanctorale (Corpus Christi before
+ *     the Nativity of St John).
+ *
+ * Not modelled: transfer. An impeded feast is listed after the day that
+ * impedes it, not moved to its next free day; nor are the feasts of the Lord
+ * that take an ordinary Sunday, or the finer occurrence tables.
+ */
+function precedence(entry: CalEntry, date: Date): number {
+  const id = entry.id;
+  const grade = entryGrade(id, entry.ritus ?? "Feria");
+  if (EXCLUDING_DAYS.has(id)) return -1;
+  let p = gradeOrder(grade);
+  if (isTemporale(id) && date.getUTCDay() === 0) {
+    if (grade === "semiduplex-ii") p = gradeOrder("duplex-ii") - 0.5;
+    else p = Math.min(p, gradeOrder("semiduplex-ii") + 0.5);
+  }
+  return p;
+}
+
+function byPrecedence(date: Date) {
+  return (a: CalEntry, b: CalEntry) =>
+    precedence(a, date) - precedence(b, date) ||
+    Number(isTemporale(b.id)) - Number(isTemporale(a.id));
 }
 
 function feastsForDate(date: Date): Feast[] {
   const d = startOfDay(date);
   const key = isoDate(d);
   const year = d.getUTCFullYear();
-  // Tempora anchored in the previous year can spill into January (e.g.
-  // Nat2-0, the Sunday of the Holy Name), so the prior year's calendar is
-  // consulted too.
-  const entries = [
-    ...(buildCalendar(year).get(key) ?? []),
-    ...(buildCalendar(year - 1).get(key) ?? []),
-  ];
+  // Entries of a neighbouring civil year can land on this day: the Holy Name
+  // (Nat2-0) belongs to the previous year's Christmas cycle, and before the
+  // reform a Julian late December falls in the Gregorian January (and, before
+  // AD 200, a Julian January 1 in the Gregorian December before it).
+  const entries = [year, year - 1, year + 1].flatMap(
+    (y) => buildCalendar(y).get(key) ?? [],
+  );
   if (!entries.length) return [];
-  entries.sort((a, b) => entryGradeOrder(a) - entryGradeOrder(b));
+  entries.sort(byPrecedence(d));
   const season = findSeason(d);
   return entries.map((e) => calEntryToFeast(e, season, d));
 }
@@ -332,13 +359,23 @@ const FEAST_QUERY_KEYS = new Set([
   "before",
 ]);
 
+function assertDate(value: unknown, key: string): asserts value is Date {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime()))
+    throw new Error(
+      `festum: ${key} must be a Date — e.g. new Date("2026-12-25") (UTC-canonical)`,
+    );
+  if (value.getUTCFullYear() < 1)
+    throw new RangeError(`festum: ${key} must fall in AD 1 or later`);
+}
+
 /**
- * Calendar lookup (`tonus.festum`). Returns matching feasts sorted
- * `day asc, rank desc` — for a date, the primary feast plus concurrent
- * feasts; for a `from`/`to` range, every day flattened; with no query,
- * the default-epoch day (Guido d'Arezzo's era); for a filter-only query,
- * the liturgical year containing that epoch. Dates are UTC-canonical:
- * build them from ISO strings or `Date.UTC`.
+ * Calendar lookup (`tonus.festum`). Returns matching feasts sorted by day,
+ * and within a day by precedence (see `precedence`) — for a date, the
+ * leading entry plus the others falling on it; for a `from`/`to` range,
+ * every day flattened; with no query, the default-epoch day (Guido
+ * d'Arezzo's era); for a filter-only query, the liturgical year containing
+ * that epoch. Dates are UTC-canonical, proleptic Gregorian: build them from
+ * ISO strings or `Date.UTC` (years from 100; below that, setUTCFullYear).
  */
 export function getFeast(query?: FeastQuery): Feast[] {
   // A bare Date is the natural guess, and it has no own enumerable keys — so
@@ -366,18 +403,28 @@ export function getFeast(query?: FeastQuery): Feast[] {
     );
   }
 
+  const ranged = query.from != null || query.to != null;
+  if (query.date != null && ranged) {
+    throw new Error("festum: give either date or from/to, not both");
+  }
+  if (query.nomen != null && (typeof query.nomen !== "string" || query.nomen === "")) {
+    throw new Error(`festum: nomen must be a non-empty string — e.g. festum({ nomen: "Adventus" })`);
+  }
+  if (query.before != null && !Number.isFinite(query.before)) {
+    throw new Error(`festum: before must be a year — e.g. festum({ date, before: 1350 })`);
+  }
+
   let results: Feast[];
 
-  if (query.date) {
-    if (!(query.date instanceof Date) || Number.isNaN(query.date.getTime()))
-      throw new Error(
-        `festum: date must be a Date — e.g. new Date("2026-12-25") (UTC-canonical)`,
-      );
+  if (query.date != null) {
+    assertDate(query.date, "date");
     results = feastsForDate(query.date);
-  } else if (query.from != null || query.to != null) {
+  } else if (ranged) {
     if (query.from == null || query.to == null) {
       throw new RangeError("festum range requires both from and to");
     }
+    assertDate(query.from, "from");
+    assertDate(query.to, "to");
     if (query.to.getTime() < query.from.getTime()) {
       throw new RangeError("festum range: to must be >= from");
     }
@@ -414,9 +461,6 @@ export function getFeast(query?: FeastQuery): Feast[] {
   // A day whose every candidate is later than `before` returns empty, which is
   // the honest answer: that day had no feast yet.
   if (query.before != null) {
-    if (!Number.isFinite(query.before)) {
-      throw new Error(`festum: before must be a year — e.g. festum({ date, before: 1350 })`);
-    }
     results = results
       .filter((f) => feastKeptBy(f.id, query.before!))
       // Stamp the view on the survivors. The chant verbs read it back, so one
@@ -443,12 +487,7 @@ export function getFeast(query?: FeastQuery): Feast[] {
     results = results.filter((f) => f.apostolic === query.apostolic);
   }
 
-  // Sort: day asc, rank desc (lower rank number = higher priority, so asc)
-  results.sort(
-    (a, b) =>
-      a.date.getTime() - b.date.getTime() ||
-      gradeOrder(a.grade) - gradeOrder(b.grade),
-  );
-
+  // Already day-ascending and, within a day, in precedence order: every branch
+  // above walks the days in order and feastsForDate sorts each one.
   return results;
 }
