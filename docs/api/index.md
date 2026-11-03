@@ -35,10 +35,14 @@ import tonus from "tonus";
 
 ### Query and builder functions
 
-**Query functions** (`festum`, `pascha`, `cantus`,
-`corpus`, `proprium`, `ordinarium`, `officium`, `psalmus`) name what you want and return arrays. Empty matches
+**Query functions** (`festum`, `cantus`, `proprium`, `ordinarium`,
+`officium`, `psalmus`) name what you want and return arrays. Empty matches
 return `[]`, never `null`. Calendar results sort `day asc, dignity desc`;
 chant results sort by rank then incipit.
+
+**Lookups** (`pascha` and `corpus`) take the query form but return one record,
+not an array. `pascha(year)` returns the year's `Pascha`. `corpus(code)` returns
+one book's `Corpus`, and `corpus()` the whole shelf's `CorpusLedger`.
 
 **Builder functions** (`temperamentum`,
 `notatio`, and `inscriptio`) construct and return context objects, and throw
@@ -52,7 +56,7 @@ Context objects can be passed back into query functions as filters:
 
 ```js
 const feasts = tonus.festum({ season: "pasc" });
-tonus.proprium({ feast: feasts, office: "an" });
+tonus.proprium({ feast: feasts, office: "in" });
 
 const t = tonus.temperamentum({ tuning: "pythagorean" });
 t.nota("D4");
@@ -118,8 +122,8 @@ is for.
 | `CENSUS_ORDER`  | every censused chant id, in block order — so membership is a lookup, not a `try/catch`                 |
 | `CENSUS_DICTIONARIES` | `{ trigrams, cadences }`: the fifteen keys each of those groups counts, in slot order; slot sixteen is "other" |
 
-Use these to pool blocks without reproducing the distance rule. See [the census
-contract](census.md#distance-is-cosine-per-field-group).
+Use these to pool blocks under the census's own distance rule. See [pooling
+blocks](census.md#pooling-blocks--the-distance-rule).
 
 ## The entries
 
@@ -150,8 +154,9 @@ signatures name them. What moved off is what only a caller already **holding** a
 Each entry also surfaces types that were reachable through a signature but
 nameable nowhere: `ChantSource` and `OfficeCode` (the codes `cantus({ source })`
 and `office` take), `Theme` and `TrackName` (what an `opts` bag accepts), and
-`CENSUS_BLOCK_FLOATS` (the stride a caller decoding a block had to get by
-counting `CENSUS_GROUPS`). That drift — a value you must pass but cannot name —
+`CENSUS_BLOCK_FLOATS` (the width of one census block, the frame
+`CENSUS_GROUPS`' offsets index into; the blocks themselves are not exported,
+and `census` returns each group's values). That drift — a value you must pass but cannot name —
 is what the entries exist to stop.
 
 ## Full contents
@@ -208,15 +213,14 @@ the list resolve their pitches through the ones before.
 
 **[Census](census.md)** — one chant measured against the corpus that holds it.
 
-- [The method](census.md#the-method)
-- [What a block holds](census.md#what-a-block-holds)
-- [How the measurement works](census.md#how-the-measurement-works)
-- [Distance is cosine per field group](census.md#distance-is-cosine-per-field-group)
-- [Profile and typicality](census.md#profile-and-typicality)
-- [Balance — distance and deviance](census.md#balance--distance-and-deviance)
-- [Neighbors, and `by`](census.md#neighbors-and-by)
-- [The era view](census.md#the-era-view)
-- [What the census is not](census.md#what-the-census-is-not)
+- [Censusing a chant — `census`](census.md#censusing-a-chant--census)
+- [Reading the profile — `profile`](census.md#reading-the-profile--profile) · [What a block holds](census.md#what-a-block-holds) · [Typicality](census.md#typicality)
+- [Measuring balance — `balance`](census.md#measuring-balance--balance)
+- [Finding neighbors — `by` and `k`](census.md#finding-neighbors--by-and-k) · [Ties](census.md#ties)
+- [Restricting to an era — `before`](census.md#restricting-to-an-era--before)
+- [Censusing a composed chant — `score`](census.md#censusing-a-composed-chant--score)
+- [Pooling blocks — the distance rule](census.md#pooling-blocks--the-distance-rule)
+- [Theory & Context](census.md#theory--context) · [Sources](census.md#sources)
 
 ## Conventions
 
@@ -261,6 +265,9 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
   unknown-key query** throws (a mistyped filter is a bug, not an empty result):
   `festum({ month: 12 })` and `cantus({})` throw rather than silently resolving a
   plausible-looking answer.
+- Two empty queries have a sanctioned default instead. `festum()` and
+  `festum({})` answer for the epoch date, 1 June 991 (see [Dates](#dates)).
+  `corpus()` and `corpus({})` return the whole shelf's ledger.
 - Builder functions throw `Error` with a descriptive message on invalid input.
 - `notatio` throws on invalid `Chant` input.
 - `inscriptio` throws on a non-`Score` argument or an unknown notation species.
@@ -270,8 +277,9 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
   must supply 7 or 12 steps, beginning at `1/1` (a degree list) or ending at
   `2/1` (Scala convention).
 - `pascha` throws `RangeError` on a non-finite year.
-- `census` throws on an id with no block (the census covers only the chants
-  tonus ships) and on an unknown query key or field group.
+- `corpus` throws on an unknown book code or query key.
+- `census` throws on an id with no block (the census covers every shipped
+  chant but the _Toni Communes_) and on an unknown query key or field group.
 
 ### The bibliography — [`BIBLIOGRAPHY.md`](https://github.com/jeffreypierce/tonus/blob/main/BIBLIOGRAPHY.md)
 
