@@ -12,7 +12,7 @@
 // SIGNATURE is a cadence's name — no familia binomials, no adventus case
 // ladder; `arrival` already carries the number). The third register arrived
 // 2026-08-11: the PROSODIA reads the WORD — how the melody treats the text,
-// at the syllable and word grain (labbed as diagram-word-track rounds 01-08).
+// at the syllable and word grain.
 //
 // THE GOVERNING INK SYSTEM (ruled 2026-07-29). One ink, one nib:
 // - Every track mark draws in the score's black; strata differ by OPACITY
@@ -123,7 +123,7 @@ export function trackBands(tracks: readonly TrackName[] | undefined, k: number):
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PROSODIA — the word's band below the lyric line (diagram-word-track-08)
+// PROSODIA — the word's band below the lyric line
 // ═══════════════════════════════════════════════════════════════════════════
 // How the melody treats the text, read at two grains in two lanes:
 //
@@ -160,6 +160,8 @@ export interface ProsodiaConfig {
   rightFor: (system: number) => number;
   /** The liturgical red for the accent dots (the 2026-08-11 amendment). */
   rubricaColor: string;
+  /** The score's note ink — the track's one black. Defaults to INK. */
+  noteColor?: string;
 }
 
 /** Band room the prosodia reserves below each system's lyric line. The 8
@@ -253,6 +255,7 @@ function prosSyllables(notes: TrackNote[]): ProsSyl[] {
 
 /** The prosodia track, every system. */
 export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
+  const ink = cfg.noteColor ?? INK;
   if (notes.length === 0) return "";
   const k = cfg.k;
   const sylls = prosSyllables(notes);
@@ -283,10 +286,10 @@ export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
     const xR = Math.min(e.max + 2 * k, cfg.rightFor(s));
     const yRule = wordBaseOf(s) - P_TENT_PLAIN * k;
     g.push(`<line x1="${xL.toFixed(1)}" y1="${yRule.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${yRule.toFixed(1)}" ` +
-      `stroke="${INK}" stroke-opacity="${STRATUM.rule}" stroke-width="${sc(0.5 * k)}"/>`);
+      `stroke="${ink}" stroke-opacity="${STRATUM.rule}" stroke-width="${sc(0.5 * k)}"/>`);
     const yRail = railYOf(s);
     g.push(`<line x1="${xL.toFixed(1)}" y1="${yRail.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${yRail.toFixed(1)}" ` +
-      `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
+      `stroke="${ink}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
   }
 
   // ── the fence: stems, tenor dashes, the melisma ridge, divisio ──
@@ -322,10 +325,10 @@ export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
         `L${p.x0.toFixed(1)} ${(yB - ridge(p.x0)).toFixed(1)} ` +
         `L${xc.toFixed(1)} ${(yB - h).toFixed(1)} ` +
         `L${p.x1.toFixed(1)} ${(yB - ridge(p.x1)).toFixed(1)} ` +
-        `L${p.x1.toFixed(1)} ${yB.toFixed(1)} Z" fill="${INK}" fill-opacity="${STRATUM.block}"/>`);
+        `L${p.x1.toFixed(1)} ${yB.toFixed(1)} Z" fill="${ink}" fill-opacity="${STRATUM.block}"/>`);
       if (p.n >= 8) {
         g.push(`<text x="${xc.toFixed(1)}" y="${(yB - h / 2 + 2.6 * k).toFixed(1)}" ` +
-          `font-size="${sc(7 * k)}" text-anchor="middle" fill="${INK}" ` +
+          `font-size="${sc(7 * k)}" text-anchor="middle" fill="${ink}" ` +
           `opacity="${STRATUM.letters}" font-family="${esc(HOUSE_MONO)}">${p.n}</text>`);
       }
       // The thread: the same ridge, crossing the gap to the next block.
@@ -333,7 +336,7 @@ export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
         const q = arr[i + 1]!;
         g.push(`<line x1="${p.x1.toFixed(1)}" y1="${(yB - ridge(p.x1)).toFixed(1)}" ` +
           `x2="${q.x0.toFixed(1)}" y2="${(yB - ridge(q.x0)).toFixed(1)}" ` +
-          `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
+          `stroke="${ink}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
       }
     });
   }
@@ -344,11 +347,11 @@ export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
         // Recitation is flatness: the syllable lies down.
         g.push(`<line x1="${p.x0.toFixed(1)}" y1="${(yB - 3 * k).toFixed(1)}" ` +
           `x2="${Math.min(p.x1, p.x0 + 9 * k).toFixed(1)}" y2="${(yB - 3 * k).toFixed(1)}" ` +
-          `stroke="${INK}" stroke-opacity="${STRATUM.letters}" stroke-width="${sc(P_STEM_W * k)}"/>`);
+          `stroke="${ink}" stroke-opacity="${STRATUM.letters}" stroke-width="${sc(P_STEM_W * k)}"/>`);
       } else {
         g.push(`<line x1="${p.x0.toFixed(1)}" y1="${yB.toFixed(1)}" ` +
           `x2="${p.x0.toFixed(1)}" y2="${(yB - prosH(p.n, k)).toFixed(1)}" ` +
-          `stroke="${INK}" stroke-opacity="${STRATUM.letters}" stroke-width="${sc(P_STEM_W * k)}"/>`);
+          `stroke="${ink}" stroke-opacity="${STRATUM.letters}" stroke-width="${sc(P_STEM_W * k)}"/>`);
       }
     }
     if (p.divisio) {
@@ -356,7 +359,7 @@ export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
       const yTop = wordBaseOf(p.system) - P_TENT_ACC * k;
       g.push(`<line x1="${(p.x1 + 4 * k).toFixed(1)}" y1="${yTop.toFixed(1)}" ` +
         `x2="${(p.x1 + 4 * k).toFixed(1)}" y2="${yB.toFixed(1)}" ` +
-        `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
+        `stroke="${ink}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.5 * k)}"/>`);
     }
   }
 
@@ -442,7 +445,7 @@ export function buildProsodia(notes: TrackNote[], cfg: ProsodiaConfig): string {
         (x) => P_TENT_VN_MIN
           + (P_TENT_VN_MAX - P_TENT_VN_MIN)
             * Math.max(0, 1 - Math.abs(x - xa) / halfW),
-        1, k)}" fill="${INK}" fill-opacity="${STRATUM.margin}"/>`);
+        1, k)}" fill="${ink}" fill-opacity="${STRATUM.margin}"/>`);
       if (e.accX != null) {
         g.push(e.arsic
           ? `<circle cx="${xa.toFixed(1)}" cy="${yPeak.toFixed(1)}" r="${sc(P_ACC_R * k)}" fill="${cfg.rubricaColor}"/>`
@@ -472,6 +475,8 @@ export interface ChironomiaConfig {
   k: number;
   /** y of the wave's midline within a system (system-local). */
   waveMidY: number;
+  /** The score's note ink — the track's one black. Defaults to INK. */
+  noteColor?: string;
 }
 
 /** Band room the chironomia reserves below each system's lyric line. */
@@ -538,7 +543,7 @@ function beatsToPts(anchors: { x: number; idx: number; shape: "arsic" | "thetic"
 
 /** The chiron-12 wave engine: merge, breathe, chain, loop, settle. */
 function waveEngine(ptsIn: WavePt[], last: number, yM: number, k: number,
-  vat: (x: number) => number, vmax: number): string {
+  vat: (x: number) => number, vmax: number, ink: string): string {
   // Close thetic neighbors merge into one broader trough (never across a div).
   const pts: WavePt[] = [];
   for (const p of ptsIn) {
@@ -622,7 +627,7 @@ function waveEngine(ptsIn: WavePt[], last: number, yM: number, k: number,
   // The governing nib at the wave stratum.
   const d = ribbonPath(samples, vat, vmax, k);
   let out = `<g class="chironomia">` +
-    `<path d="${d}" fill="${INK}" fill-opacity="${STRATUM.wave}" fill-rule="nonzero"/></g>`;
+    `<path d="${d}" fill="${ink}" fill-opacity="${STRATUM.wave}" fill-rule="nonzero"/></g>`;
 
   // Pierik letters at the crests/troughs (a merged trough lists each thesis).
   const letters: string[] = ['<g class="chironomia-letters">'];
@@ -633,7 +638,7 @@ function waveEngine(ptsIn: WavePt[], last: number, yM: number, k: number,
       const ly = p.up ? p.y - 4 * k : p.y + 11.5 * k;
       letters.push(
         `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="${(9 * k).toFixed(1)}" ` +
-        `text-anchor="middle" fill="${INK}" opacity="${STRATUM.letters}" ` +
+        `text-anchor="middle" fill="${ink}" opacity="${STRATUM.letters}" ` +
         `font-family="${esc(HOUSE_SERIF)}">${labs[j]}</text>`,
       );
     }
@@ -667,7 +672,7 @@ export function buildChironomia(notes: TrackNote[], cfg: ChironomiaConfig): stri
     const vat = velocityAt(velpts);
     const { pts, last } = beatsToPts(anchors, k);
     if (pts.length === 0) continue;
-    out.push(waveEngine(pts, last, yM, k, vat, vmax));
+    out.push(waveEngine(pts, last, yM, k, vat, vmax, cfg.noteColor ?? INK));
   }
   return out.join("");
 }
@@ -685,12 +690,11 @@ export function buildChironomia(notes: TrackNote[], cfg: ChironomiaConfig): stri
 // cadence is the sparkline's OWN ENDING re-inked at full strength (ruled
 // 2026-07-29 — no redrawn sigil, no extra weight; the ink change alone marks
 // the claim), landing on a terminal node — filled when the family's measured
-// finality closes (the CADENTIAE join), open when it suspends. Beneath, a
-// light end-ticked bracket ties the figure to its label: the signature
-// ("2,0,-2 @0") — the 07-28 ruling, the signature IS the name. The label
-// always FOLLOWS its figure, clamping to the margin at the system's edge;
-// crowded labels dodge to a second row. Weak claims (confidence < 0.45) draw
-// nothing.
+// finality closes (the CADENTIAE join), open when it suspends. Beneath the
+// node, its label: the genus's in-mode share ("3.9%"), or `rara` where the
+// close joins no catalogued genus (see cadenceLabel). The label centres on
+// the node, clamping into the system at its edges; crowded labels dodge to a
+// second row. Weak claims (confidence < 0.45) draw nothing.
 
 export interface TonariumConfig {
   /** Scale factor: staffInterval / (40/6) — 1 at the default staffHeight. */
@@ -703,6 +707,8 @@ export interface TonariumConfig {
   serifFamily: string;
   /** The liturgical red for the mode line. */
   rubricaColor: string;
+  /** The score's note ink — the track's one black. Defaults to INK. */
+  noteColor?: string;
 }
 
 const LANE_H = 42;
@@ -773,6 +779,7 @@ function cadenceLift(genus: CadentiaGenus | undefined, mode?: number): string | 
 export function buildTonarium(notes: TrackNote[], data: TrackData,
   cfg: TonariumConfig): string {
   if (notes.length === 0) return "";
+  const ink = cfg.noteColor ?? INK;
   const out: string[] = [];
   const k = cfg.k;
   const laneH = LANE_H * k;
@@ -827,7 +834,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
     for (const letter of RAIL_ORDER) {
       const y = railY(sysY, letter);
       g.push(`<line x1="${xL.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${y.toFixed(1)}" ` +
-        `stroke="${INK}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.55 * k)}"/>`);
+        `stroke="${ink}" stroke-opacity="${STRATUM.rail}" stroke-width="${sc(0.55 * k)}"/>`);
     }
 
     // ── the sparkline: the governing nib at the spark stratum ──
@@ -844,7 +851,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       samplesByPhrase.set(p, samples);
       if (samples.length < 2) continue;
       const d = ribbonPath(samples, vat, vmax, 1);
-      g.push(`<path d="${d}" fill="${INK}" fill-opacity="${STRATUM.spark}"/>`);
+      g.push(`<path d="${d}" fill="${ink}" fill-opacity="${STRATUM.spark}"/>`);
     }
 
     // ── the mode line: rubrica, stepping between maneriae rails ──
@@ -925,25 +932,22 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
       let dot: number | undefined;
       if (samples.length >= 2) {
         const d = ribbonPath(samples, vat, vmax, 1);
-        g.push(`<path d="${d}" fill="${INK}" fill-opacity="${(STRATUM.cadence * op).toFixed(2)}"/>`);
+        g.push(`<path d="${d}" fill="${ink}" fill-opacity="${(STRATUM.cadence * op).toFixed(2)}"/>`);
         if (lands) {
           const [nx, ny] = samples[samples.length - 1]!;
           dot = nx;
           const r = sc(1.8 * k);
           g.push(closes
-            ? `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="${INK}" opacity="${op.toFixed(2)}"/>`
-            : `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="none" stroke="${INK}" ` +
+            ? `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="${ink}" opacity="${op.toFixed(2)}"/>`
+            : `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${r}" fill="none" stroke="${ink}" ` +
               `stroke-width="${sc(0.9 * k)}" opacity="${op.toFixed(2)}"/>`);
         }
       }
 
-      // The label: how characteristic this close is OF THIS CHANT'S MODE —
-      // the family's in-mode share over its corpus share ("×2.1"). The raw
-      // key is the family's name, but a name is not the question the diagram
-      // asks; it moves to the margin (data-cadentia on the group) and the
-      // reader gets the measure instead. It always FOLLOWS its figure; at the
-      // system's edge it clamps to the margin rather than jumping to the
-      // figure's other side. A light end-ticked bracket ties it to the span.
+      // The label: how often this close ends a phrase in this chant's mode,
+      // the genus share (see cadenceLabel). The names are not the question
+      // the diagram asks; they ride the group as data (data-genus,
+      // data-nomen, data-species) and the reader gets the measure instead.
       const lab = cadenceLabel(genus, data.mode);
       if (lab && lands) {
         // The label sits UNDER THE CLOSING DOT, centred on it. The dot is
@@ -966,7 +970,7 @@ export function buildTonarium(notes: TrackNote[], data: TrackData,
         labelRight[row] = Math.max(labelRight[row], span[1]);
         const yRow = yC + row * 9.5 * k;
         g.push(`<text x="${anchor.toFixed(1)}" y="${(yRow + 2.8 * k).toFixed(1)}" font-size="${sc(9 * k)}" ` +
-          `opacity="${(STRATUM.label * op).toFixed(2)}" fill="${INK}" ` +
+          `opacity="${(STRATUM.label * op).toFixed(2)}" fill="${ink}" ` +
           `font-family="${esc(HOUSE_MONO)}">${esc(lab)}</text>`);
       }
       g.push("</g>");

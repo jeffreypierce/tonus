@@ -432,8 +432,10 @@ interface ChantTabulaRow {
 
 ## Rendering
 
-The score is drawn as **SVG**: a self-contained, square-note chant staff with
-SMuFL glyphs baked as inline paths (no external font). It consumes `score.tabula`,
+The score is drawn as **SVG**: a square-note chant staff with SMuFL glyphs baked
+as inline paths, so the music needs no font. Text (lyric, title, margin mark,
+initial) names a font-family the host page supplies, unless the caller embeds
+its own bytes (see [theme](#theme--faces-and-ink)). It consumes `score.tabula`,
 so the interpretation applied through the knobs is already in the geometry.
 Microtuning lives on each tabula row's `bend`, `hz`, and `offset` for a
 Web-Audio player to read directly.
@@ -442,8 +444,12 @@ Web-Audio player to read directly.
 
 `tonus.inscriptio(score, opts?)` draws a `Score` and returns `{ svg, geometry }`.
 Rendering is a standalone function that _takes_ a score, not a method on one. The
-score analyzes, `inscriptio` inks. It throws on a non-Score or an unknown
-notation species (the builder-function contract).
+score analyzes, `inscriptio` inks. It throws on a non-Score, on an unknown
+option key, and on an invalid value: an unknown `notation`, `accidentals`,
+`centsBaseline`, `annotation`, named `scale` or track name; a `width` or
+numeric `scale` that is not a positive finite number; a `tracks` that is not
+an array; an unknown `theme` key, font role or colour role (the
+builder-function contract).
 
 ```js
 const score = tonus.notatio(introit);
@@ -467,24 +473,32 @@ close, not exact: a lyric set in a face far from the assumed proportions will
 break slightly early or late.
 
 Two consequences worth planning around. `width` is a **request, not a promise**:
-the canvas returned is `max(width, content)`, so a chant whose content cannot fit
-comes back wider rather than clipped. And a caller who needs typographic
+the canvas returned is `max(width, content)` in both species, so a chant whose
+content cannot fit (a single syllable wider than the line) comes back wider
+rather than clipped. And a caller who needs typographic
 precision should render at a generous `width` and scale the result, rather than
 relying on the estimate to land a tight column exactly.
 
 Options, by group (all optional):
 
-- **layout**: `width` wraps systems to fit (absent = a single line); `scale`
-  sets how big the chant is drawn: `"small"`, `"normal"` (default), `"large"`,
-  or a staff height in px for fitting a known column. A named size is a size of
-  type: the lyric is the same in both species (16px at `"normal"`), and each
-  draws its staff to suit, so quadrata's staff at `"normal"` is a little under
-  40px. A number is the staff height exactly, so in quadrata `scale: 40` draws
-  slightly larger than `"normal"`. Everything scales from it
-  (notes, lyrics, the air between systems), and it reflows the music, so a
-  larger scale means fewer notes per line. The page margin does not scale: it
-  belongs to the page rather than the notation, and scaling it gave a large
-  chant *less* usable width than a small one.
+- **layout**: `width` wraps systems to fit (absent = a single line, and a GABC
+  `z` is then ignored); `scale` sets how big the chant is drawn: `"small"`,
+  `"normal"` (default), `"large"`, or a staff height in px for fitting a known
+  column. A named size is a size of type: the lyric is the same in both species
+  (16px at `"normal"`), and each draws its staff to suit, so quadrata's staff at
+  `"normal"` is a little under 40px and moderna's five lines span about 30px. A
+  number is the drawn staff's height (top line to bottom line) exactly, in
+  either species, so `scale: 40` draws larger than `"normal"` in both.
+  Everything scales from it (notes, clef, lyrics, the air between systems), and
+  it reflows the music, so a larger scale means fewer notes per line. The page
+  margin does not scale: it belongs to the page rather than the notation, and
+  scaling it gave a large chant *less* usable width than a small one.
+- **line breaks**: a system ends at a divisio, or between syllables, never
+  inside a syllable. Quadrata prefers a divisio and keeps a word whole where it
+  can; a word that will not fit a line already 85% full is carried over at a
+  syllable, with a hyphen at the line's end, as the books carry it. Moderna
+  breaks between any two syllables. Both honour `z` (when `width` is set) and
+  the `<nlba>` seal.
 - **front matter**: set as the Solesmes books open a piece: `title` centers
   over the score; `rubric` (or `annotation: "auto"` to derive the genus/mode
   mark, abbreviated as the books set it — _Intr. 8._, _Ton. comm. 1._; an
@@ -494,6 +508,14 @@ Options, by group (all optional):
   title; the margin mark and the initial are **quadrata's alone**, because moderna is
   a transcription read as an edition, and carries the analysis tracks a
   reserved cap column would fight. It ignores them rather than refusing.
+- **intonation**: `accidentals` chooses the channel. `"standard"` (default)
+  draws the accidentals the GABC writes, in square notation's own glyphs under
+  quadrata (b rotundum, b quadratum) and as ♭ ♮ ♯ under moderna. `"heji"`
+  draws HEJI comma-inflected accidentals and `"cents"` floats each note's
+  deviation in cents above the staff; both are modern analytical overlays and
+  **moderna only**, so asking for either under quadrata throws.
+  `centsBaseline` (`"pythagorean"` default, or `"et"`) sets what the cents are
+  measured from.
 - **theme**: the dress, `fonts` and `colors`.
 
 ### theme — faces and ink
@@ -525,8 +547,10 @@ supplies the face (`@font-face`). A slot may instead carry
 inside the SVG's `<style>`, making the file self-contained (at the cost of its
 size; one `@font-face` per family + weight, deduped). tonus bundles no font
 files: with `embed` it is a conduit for data the consumer supplies, so the
-consumer carries the face's license terms. Unset roles keep the house serif.
-`moderna` honours the `lyric`, `title`, and `annotation` slots.
+consumer carries the face's license terms. Unset roles keep the house serif
+(Junicode first, then the Garamonds). `moderna` honours the `lyric` and `title`
+slots; it draws no initial and no margin mark, so it has no use for the other
+two.
 
 #### The recommended face — Junicode
 
@@ -557,9 +581,9 @@ tonus.inscriptio(score, {
 });
 ```
 
-Reference it rather than `embed` it unless one SVG must travel alone: the face
-is 196 KB base64'd, which triples a typical chant and repeats in every file,
-where a reference is cached once.
+Reference it rather than `embed` it unless one SVG must travel alone: an
+embedded face is larger than a typical chant's own markup and repeats in every
+file, where a reference is cached once.
 
 **`colors`** reach the SVG as CSS custom properties with the theme's own value
 as the fallback, `fill="var(--tonus-note, #111)"`. A rendered chant therefore
@@ -575,16 +599,26 @@ sets the property rethemes the score without re-rendering it.
 }
 ```
 
-The emitter's semantic classes (`note`, `lyric`, `dropcap`, `custos`,
-`episema`, `divisio`, `clef`, `mora`, `ictus`) are stylable from the host page.
+The emitters' semantic classes are stylable from the host page.
+
+| species | classes |
+| --- | --- |
+| both | `note`, `clef`, `accidental`, `ledger`, `stem`, `divisio`, `mora`, `lyric`, `lyric hyphen`, `title`, `cents` |
+| quadrata | `swash` (the porrectus's diagonal, beside `note`), `key-flat`, `custos`, `episema`, `ictus`, `signum`, `rubric` (the margin mark), `dropcap` |
+| moderna | `slur`, `quilisma` |
+
+Every notehead carries `data-note-index="phrase.syllable.neumeGroup.neumeIndex"`,
+the address that joins it to its tabula row; quadrata's also carry
+`data-staff`, the row's staff letter.
 
 **`scale` is not part of the theme**: line breaking consumes it, so a scale
 change re-renders while a colour change does not.
 
 Nothing else about the layout is a caller's decision. The margin, the air
 between systems, the notehead calibration against the staff, and the line-end
-custos are constants. The custos appears whenever a system wraps, as it does in
-a chant book.
+custos are constants. The custos is quadrata's: it appears at the end of every
+wrapped system, as it does in a chant book, except after a divisio finalis
+(`::`), where the melody does not continue. Moderna draws none.
 
 **The geometry contract (public API).** `geometry` is one `NoteGeometry` per
 note, in tabula order, so `geometry[i]` and `tabula[i]` are the same note two
@@ -598,11 +632,17 @@ interface NoteGeometry {
   neumeIndex: number;  // position within the neume FIGURE
   system: number;      // which wrapped system the note landed in
   x: number; y: number; // notehead anchor, svg user units
-  inkLeft: number;      // the figure's measured ink extent. `x` is its LEFT
-  inkRight: number;     //   edge, so a mark that spans notes reaches for these
+  inkLeft: number;      // the ink extent: a mark that spans notes
+  inkRight: number;     //   reaches for these rather than for `x`
   systemY: number;      // the system's top offset within the svg
 }
 ```
+
+The anchor differs by species. Quadrata's square glyphs start at the anchor and
+run right, so `x` is the head's left edge and `inkLeft`/`inkRight` are the
+figure's measured ink (a porrectus's first two notes share the swash's extent,
+the second anchored at the swash's foot). Moderna centres each round head on
+the anchor, so `x` is the head's centre and the ink straddles it evenly.
 
 `y` is already absolute on the canvas; `systemY` reports which system a note
 is in, not an offset to add.
@@ -672,30 +712,32 @@ A wrapped cadence draws its node and label once, in the system holding the
 figure's last note.
 
 Every inked cadence carries a label beneath its node: the family's **in-mode
-share** (`"3.9%"`), how often this close ends a chant in this chant's mode.
-Where the chant has no mode, or the family has too few occurrences in it to
-divide, it falls back to the plain corpus share. A close that joins
-no [`CADENTIAE`](index.md#the-appendix) family reads **`rara`**. That is a
-measurement rather than a gap: the catalogue holds the 110 families above
-fifty corpus occurrences, so failing to join means rarer than anything it
-records. About 43% of the corpus's cadences join no family, though of the
-labels a page prints, about a third read `rara`. It is a word, not a number, so
+share** (`"3.9%"`), how often this close's genus ends a phrase in this
+chant's mode. Where the chant has no mode, or the genus has too few occurrences
+in it to divide, it falls back to the plain corpus share. A close that joins
+no [`CADENTIAE`](index.md#the-appendix) genus reads **`rara`**. That is a
+measurement rather than a gap: the catalogue tables every genus above a floor
+of fifty corpus occurrences, so failing to join means rarer than anything it
+records, and few closes fall below that floor. It is a word, not a number, so
 it is not read on the percentage scale beside it.
 
-Each cadence group carries `data-cadentia` (the family key, which joins back
-to [`CADENTIAE`](index.md#the-appendix) and carries the provenance a margin
-gloss can print) and `data-lift` (distinctiveness, for a caller who wants it
-rather than frequency). Crowded labels dodge to a second row.
+Each cadence group carries the keys that join back to
+[`CADENTIAE`](index.md#the-appendix): `data-genus`, `data-nomen` and
+`data-species`, with `data-species-share` (the species' own in-mode share,
+where it clears the floor in the mode) and `data-lift` (the genus's
+distinctiveness, for a caller who wants it rather than frequency). Crowded
+labels dodge to a second row.
 
 Everywhere, confidence is opacity, and a claim below confidence 0.45 draws
 nothing. Every mark sits under the notation that would falsify it.
 
 ## The imprint
 
-Both `Score` and `Harmony` expose `imprint: Imprint`, analytic
-fingerprints computed from different inputs: unweighted pitch-class counts
-from chant phrases, presence-weighted voiced bodies from the sky. The two
-are comparable.
+`score.imprint` is the chant's analytic fingerprint: a pitch-class
+distribution over its phrases, the attractors and vowel attractors read from
+it, and the eight modes ranked by fit. The distribution weights the notes that
+carry the mode: a note on an ictus counts 1.5×, a cadence's resolution 2×
+[biblio: mocquereau-nombre]; the magnitudes are an editorial weighting.
 
 ```js
 score.imprint.attractors[0];

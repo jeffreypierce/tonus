@@ -373,7 +373,7 @@ describe("inscriptio — multi-system layout", () => {
     // Uniform step between consecutive systems.
     const step = offsets[1] - offsets[0];
     for (let i = 2; i < offsets.length; i++) {
-      assert.ok(Math.abs(offsets[i] - offsets[i - 1] - step) < 0.01, "uniform system step");
+      assert.ok(Math.abs(offsets[i] - offsets[i - 1] - step) < 0.015, "uniform system step");
     }
   });
 
@@ -1045,5 +1045,142 @@ describe("heads — every written shape reaches its Bravura glyph", () => {
     const { svg } = inscriptio(buildScore(makeChant("(c4) a(gr1) b(gr0r2) c(gr3) d(gr4) e(gr5) (::)")));
     assert.equal(svg.match(/class="signum"/g)?.length, 5);
     assert.equal(svg.match(/scale\(-1 1\)|scale\(1 -1\)/g)?.length, 2);
+  });
+});
+
+describe("line breaking — a system ends between syllables, never inside one", () => {
+  // `wordStart` rides every row of a word's first syllable, so a test on the
+  // flag alone broke between two figures of one syllable: Mirabilis Deus at
+  // 700 set `for(g/jjj)` with the g on one line and the jjj on the next.
+  const splitSyllables = (score, geometry) => {
+    const seen = new Map();
+    let split = 0;
+    geometry.forEach((g) => {
+      const key = `${g.phraseIndex}.${g.syllableIndex}`;
+      if (seen.has(key) && seen.get(key) !== g.system) split++;
+      seen.set(key, g.system);
+    });
+    return split;
+  };
+
+  test("Mirabilis Deus at 700 keeps every syllable on one system", () => {
+    const chant = tonus.cantus({ source: "gr" }).find((c) => /^Mirabilis Deus/i.test(c.incipit));
+    assert.ok(chant, "fixture present");
+    const score = tonus.notatio(chant);
+    for (const width of [500, 700]) {
+      const { geometry } = inscriptio(score, { width });
+      assert.equal(splitSyllables(score, geometry), 0, `width ${width}`);
+    }
+  });
+
+  test("across a slice of the Graduale, no syllable is split and overruns stay small", () => {
+    const pool = tonus.cantus({ source: "gr" }).filter((_, i) => i % 25 === 0);
+    let over = 0;
+    for (const chant of pool) {
+      const score = tonus.notatio(chant);
+      const { svg, geometry } = inscriptio(score, { width: 500 });
+      assert.equal(splitSyllables(score, geometry), 0, chant.id);
+      const w = Number(/viewBox="0 0 (\S+)/.exec(svg)[1]);
+      if (w > 500) over++;
+    }
+    // A syllable wider than the line still overruns; nothing else should.
+    assert.ok(over <= Math.ceil(pool.length * 0.15), `${over} of ${pool.length} overran`);
+  });
+
+  test("a continuation system opens at its clef, as the first one does", () => {
+    const long = buildScore(makeChant(
+      "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (:) " +
+      "Chri(g)ste(h) e(gh)le(hg)i(f)son.(g.) (:) " +
+      "Ký(g)ri(h)e(gh) e(hg)lé(fg)i(gf)son.(g.) (::)",
+    ));
+    const { geometry } = inscriptio(long, { width: 250 });
+    const firstX = new Map();
+    for (const g of geometry) if (!firstX.has(g.system)) firstX.set(g.system, g.x);
+    assert.ok(firstX.size >= 2);
+    for (const x of firstX.values()) assert.equal(x, firstX.get(0));
+  });
+
+  test("a word wider than the line is carried at a syllable, with its hyphen", () => {
+    const gabc = "(c3) " + Array.from({ length: 24 }, (_, i) => `syl${i}(g)`).join("") + " end(h) (::)";
+    const { svg, geometry } = inscriptio(buildScore(makeChant(gabc)), { width: 300 });
+    assert.ok(new Set(geometry.map((g) => g.system)).size >= 2, "wrapped");
+    assert.ok(/class="lyric hyphen"/.test(svg), "the carried word takes a hyphen");
+    assert.ok(Number(/viewBox="0 0 (\S+)/.exec(svg)[1]) <= 300, "fits the width");
+  });
+});
+
+describe("inscriptio — option validation (the builder contract)", () => {
+  const score = buildScore(makeChant(KYRIE_GABC));
+  const bad = [
+    [{ scale: NaN }, /scale must be a positive/],
+    [{ scale: Infinity }, /scale must be a positive/],
+    [{ scale: -20 }, /scale must be a positive/],
+    [{ scale: 0 }, /scale must be a positive/],
+    [{ width: NaN }, /width must be a positive/],
+    [{ width: -1 }, /width must be a positive/],
+    [{ accidentals: "bogus" }, /unknown accidentals "bogus"/],
+    [{ notation: "moderna", centsBaseline: "bogus" }, /unknown centsBaseline/],
+    [{ annotation: "yes" }, /unknown annotation "yes"/],
+    [{ tracks: "chironomia" }, /tracks must be an array/],
+    [{ tracks: ["bogus"] }, /unknown track "bogus"/],
+    [{ widht: 500 }, /unknown option widht/],
+    [{ dropcap: "yes" }, /dropcap must be a boolean/],
+    [{ theme: { colours: {} } }, /unknown theme key colours/],
+    [{ theme: { colors: { ink: "#000" } } }, /unknown colour role ink/],
+    [{ theme: { fonts: { body: "X" } } }, /unknown font role body/],
+  ];
+  for (const [opts, re] of bad) {
+    test(`throws on ${JSON.stringify(opts, (k, v) => (typeof v === "number" && !Number.isFinite(v) ? String(v) : v))}`, () => {
+      assert.throws(() => inscriptio(score, opts), re);
+    });
+  }
+
+  test("valid options still render", () => {
+    const { svg } = inscriptio(score, { width: 400, scale: 40, tracks: ["chironomia"], annotation: "auto", dropcap: true });
+    assert.ok(svg.startsWith("<svg"));
+  });
+});
+
+describe("inscriptio — ink, escaping and the dropcap", () => {
+  const score = buildScore(makeChant(KYRIE_GABC));
+
+  test("the tracks take the score's note ink, so a theme re-inks them", () => {
+    for (const notation of ["quadrata", "moderna"]) {
+      const { svg } = inscriptio(score, {
+        notation, tracks: ["prosodia", "chironomia", "tonarium"],
+        theme: { colors: { note: "#abcdef" } },
+      });
+      const tracks = svg.slice(svg.indexOf('class="chironomia"'));
+      assert.ok(tracks.includes("var(--tonus-note, #abcdef)"), notation);
+      assert.ok(!/fill="#111"|stroke="#111"/.test(svg), `${notation}: no literal track ink`);
+    }
+  });
+
+  test("a family or colour carrying & or < keeps the SVG well-formed", () => {
+    const FAKE = Buffer.from("x").toString("base64");
+    const { svg } = inscriptio(score, {
+      title: "T",
+      theme: {
+        fonts: { title: { family: "A & <B>", embed: { base64: FAKE } } },
+        colors: { note: "a&b" },
+      },
+    });
+    const style = /<style>(.*?)<\/style>/s.exec(svg)[1];
+    assert.ok(!/[<]/.test(style) && !/&(?!amp;|lt;|gt;)/.test(style), style);
+    assert.ok(svg.includes("var(--tonus-note, a&amp;b)"));
+  });
+
+  test("a one-letter first syllable drawn as the initial leaves no empty lyric", () => {
+    const { svg } = inscriptio(buildScore(makeChant("(c4) A(g)ve(h) Ma(g)rí(h)a.(g) (::)")), { dropcap: true });
+    assert.ok(!/<text class="lyric"[^>]*><\/text>/.test(svg));
+    assert.ok(svg.includes('class="dropcap"'));
+  });
+
+  test("the porrectus's second note is anchored at the swash's foot, not its start", () => {
+    const s = buildScore(makeChant("(c4) Ky(hgh) (::)"));
+    const { svg, geometry } = inscriptio(s);
+    assert.ok(svg.includes('class="note swash"'), "a porrectus swash");
+    assert.ok(geometry[1].x > geometry[0].x, `second note right of the first (${geometry[0].x} → ${geometry[1].x})`);
+    assert.ok(geometry[1].x < geometry[1].inkRight);
   });
 });

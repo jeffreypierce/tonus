@@ -20,7 +20,7 @@ describe("inscriptio — the chironomia track (quadrata)", () => {
     assert.ok(tracked.svg.includes('class="chironomia"'), "the wave group");
     // Pressure is line WEIGHT (the shared nib), not an opacity gradient.
     assert.ok(!tracked.svg.includes("linearGradient"), "no gradient ink");
-    assert.ok(/class="chironomia"><path [^>]*fill="#111" fill-opacity="0\.75"/.test(tracked.svg),
+    assert.ok(/class="chironomia"><path [^>]*fill="var\(--tonus-note, #111\)" fill-opacity="0\.75"/.test(tracked.svg),
       "one ink at the wave stratum");
     assert.ok(tracked.svg.includes('class="chironomia-letters"'), "the letter row");
     assert.ok(/>A<\/text>/.test(tracked.svg), "arsis letters");
@@ -53,7 +53,7 @@ describe("inscriptio — the tonarium track (moderna)", () => {
     // the emitter's to set, and a literal here fails as a red suite when the
     // stratum is retuned — which says the rails vanished, not that they moved.
     const rails = (tracked.svg.match(
-      new RegExp(`stroke="#111" stroke-opacity="${STRATUM.rail}"`, "g")) || []).length;
+      new RegExp(`stroke="var\\(--tonus-note, #111\\)" stroke-opacity="${STRATUM.rail}"`, "g")) || []).length;
     assert.equal(rails, systems * 4, "all four rails, every system");
     // The home mode's numeral (VII) rides the strip in rubrica.
     assert.ok(/font-style="italic">VII</.test(tracked.svg), "the governing numeral");

@@ -2,8 +2,10 @@
 // engines/score/emitters/svg — square-note chant score as SVG
 // ---------------------------------------------------------------------------
 // Renders the score's tabula as a 4-line Gregorian staff with SMuFL glyphs
-// (outlines baked from Bravura in smufl-glyphs.json). Fully self-contained: all
-// notation is inline <path>; only lyric text uses a system font.
+// (outlines baked from Bravura in smufl-glyphs.json). All notation is inline
+// <path>, so the music needs no font; the text (lyric, title, margin mark,
+// dropcap, cents labels) names a font-family the host supplies, unless the
+// caller embeds its own bytes.
 //
 // SMuFL fonts are metrically standardized: 1 em = 4 staff spaces, so one staff
 // space = upm/4 font units. Bravura draws its punctum 0.81 of a space tall;
@@ -82,7 +84,9 @@ export interface ThemeColors {
   note?: string;
   /** The four staff lines. */
   staffLine?: string;
-  /** Liturgical red: the dropcap, rubrics, and the annotation block. */
+  /** Liturgical red: rubric-styled lyric runs (GABC `<c>`) and the analysis
+   *  tracks' claims (the tonarium's mode line, the prosodia's accents). The
+   *  dropcap and the margin mark take the note ink, as the books set them. */
   rubrica?: string;
 }
 
@@ -91,7 +95,7 @@ export interface Theme {
   colors?: ThemeColors;
 }
 
-interface ResolvedFont {
+export interface ResolvedFont {
   family: string;
   weight: number | null;
   scale: number;
@@ -104,7 +108,7 @@ interface ResolvedFonts {
   lyric: ResolvedFont;
 }
 
-function resolveFont(slot: FontSlot | undefined, fallback: string): ResolvedFont {
+export function resolveFont(slot: FontSlot | undefined, fallback: string): ResolvedFont {
   if (!slot) return { family: fallback, weight: null, scale: 1, embed: null };
   if (typeof slot === "string") return { family: slot, weight: null, scale: 1, embed: null };
   return {
@@ -120,7 +124,7 @@ const EMBED_MIME: Record<string, string> = {
 };
 
 /** One @font-face rule per embedded (family, weight); deduped across slots. */
-export function fontFaceCss(fonts: ResolvedFont[]): string {
+export function fontFaceCss(fonts: readonly ResolvedFont[]): string {
   const seen = new Set<string>();
   const rules: string[] = [];
   for (const f of fonts) {
@@ -136,7 +140,11 @@ export function fontFaceCss(fonts: ResolvedFont[]): string {
       `format("${format}")}`,
     );
   }
-  return rules.length ? `<defs><style>${rules.join("")}</style></defs>` : "";
+  // The rules are XML-escaped as text: a <style> in SVG is parsed as XML (and
+  // inline in HTML as foreign content), so an `&` or `<` in a family name made
+  // the file ill-formed. Entities decode back to the CSS before it is read.
+  const css = rules.join("").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return rules.length ? `<defs><style>${css}</style></defs>` : "";
 }
 
 /** font-family (+ optional font-weight) attributes for a resolved slot. */
@@ -157,7 +165,7 @@ export interface SvgOpts {
   /** Notehead/clef/sign size as a factor on the SMuFL nominal, where Bravura's
    *  punctum stands 0.81 of a staff space. Default `NOTE_SCALE`. */
   noteScale?: number;
-  /** Horizontal padding / left margin in px. Default 12. */
+  /** Horizontal padding / left margin in px. Default 14. */
   padding?: number;
   /** Colour of staff lines. Defaults to `noteColor`. */
   staffLineColor?: string;
@@ -184,7 +192,8 @@ export interface SvgOpts {
   annotation?: "auto";
   /** Draw a rubricated initial from the first lyric; the first system indents. */
   dropcap?: boolean;
-  /** The liturgical red for dropcap and annotations. Default a sober red. */
+  /** The liturgical red for rubric runs and the tracks' claims. Default a
+   *  sober red. */
   rubricaColor?: string;
   /** The intonation channel: standard accidentals, HEJI commas, or cents labels. */
   accidentals?: AccidentalMode;
@@ -233,8 +242,9 @@ const LIQUESCENT_FACTOR = 0.66;
 // Accidentals, inline and in the key signature.
 const ACCIDENTAL_FACTOR = 0.62;
 
-/** A themeable colour: the caller's value, reachable from CSS by name. */
-const cssVar = (name: string, value: string): string => `var(--tonus-${name}, ${value})`;
+/** A themeable colour: the caller's value, reachable from CSS by name. The
+ *  value is escaped, since it lands inside an attribute. */
+export const cssVar = (name: string, value: string): string => `var(--tonus-${name}, ${esc(value)})`;
 
 function resolveOpts(o: SvgOpts): Resolved {
   const staffHeight = o.staffHeight ?? 40;
@@ -322,7 +332,7 @@ function resolveOpts(o: SvgOpts): Resolved {
 // with without passing a `fonts` option at all. Every name after it is the
 // fallback that was here before, so a page without Junicode renders exactly as
 // it did. See score.md → "The recommended face".
-const HOUSE_SERIF =
+export const HOUSE_SERIF =
   "Junicode, 'Crimson Pro', 'Crimson Text', 'EB Garamond', Garamond, Georgia, serif";
 
 // The books abbreviate the genus in the margin mark (Intr., Grad., Offert.).
@@ -458,6 +468,13 @@ function custosX(x: number, prevLyricRight: number, r: Resolved): number {
 // is the size it reads at without competing with the notes it guides.
 const CUSTOS_FACTOR = 0.85 * 1.1;
 
+// How full a line must already be before a word that does not fit is sent
+// whole to the next line rather than carried over at a syllable. Swept over
+// the Graduale at 500 and 700px: 0.75 left 358 lines under three-quarters
+// full at 700, 0.85 left 170 (fewer than the 277 of the earlier mid-syllable
+// breaking) with no overruns added, and 0.9 gained nothing further.
+const WORD_HOLD = 0.85;
+
 /** The custos for a pitch: which of the six cuts.
  *
  *  EA04-EA09 are COMPLETE signs — a skinny neume, head and stroke in one
@@ -506,7 +523,7 @@ export function lyricMarkup(
       if (run.italic) attrs.push('font-style="italic"');
       if (run.bold) attrs.push('font-weight="700"');
       if (run.smallCaps) attrs.push('font-variant="small-caps"');
-      if (run.rubric) attrs.push(`fill="${esc(rubricaColor)}"`);
+      if (run.rubric) attrs.push(`fill="${rubricaColor}"`);   /* already escaped (cssVar) */
       return attrs.length
         ? `<tspan ${attrs.join(" ")}>${esc(run.text)}</tspan>`
         : esc(run.text);
@@ -616,8 +633,9 @@ interface NotePlacement {
 
 /**
  * One entry per tabula row, in tabula order — the TRACK CONTRACT. Analysis
- * overlays (chironomy, tonarium) consume score data + this geometry to place
- * marks against notes, without scraping the SVG for coordinates.
+ * overlays (the three built-in tracks, prosodia, chironomia and tonarium, and
+ * any downstream one) consume score data + this geometry to place marks
+ * against notes, without scraping the SVG for coordinates.
  */
 export interface NoteGeometry {
   phraseIndex: number;
@@ -959,8 +977,9 @@ export function toSvg(
    * RULED 2026-10-21 (Jeffrey), glyphs apart, as the books print them: in
    * the LU (1961, p. xj, "Pressus" and "Other pressus or apposed neums") the
    * two notes of a pressus do not touch. A first pass closed them up, the
-   * clivis stem between two touching heads, and it was wrong. The page that
-   * decided it: working/review/quadrata-strokes.html.
+   * clivis stem between two touching heads, and it was wrong: set side by
+   * side with the LU's own examples, the apposed heads read as the printed
+   * pressus and the touching ones as a different figure.
    */
   const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
     const glyphs = segmentGlyphs(figure);
@@ -1089,8 +1108,12 @@ export function toSvg(
           body.push(stem(swash.inkLeft + r.stemWeight, figure[0]!.staffPosition, figure[1]!.staffPosition));
           body.push(swash.svg);
           placements.push({ row: figure[0]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[0]!.staffPosition, L, r), system, systemY: L.systemY });
-          placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[1]!.staffPosition, L, r), system, systemY: L.systemY });
+          // The second note is the swash's FOOT, at its right end: anchored
+          // at the swash's start, a playhead on it sat over the first note.
+          // It takes a head's width in from the swash's end, as the stacked
+          // third note does.
           const upWidth = (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale;
+          placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: Math.max(cx, swash.inkRight - upWidth), y: yFor(figure[1]!.staffPosition, L, r), system, systemY: L.systemY });
           const upper = placeNote(figure[2]!, Math.max(atX, swash.inkRight - upWidth));
           if (figure[2]!.staffPosition - figure[1]!.staffPosition > 1) {
             body.push(stem(swash.inkRight, figure[1]!.staffPosition, figure[2]!.staffPosition));
@@ -1204,8 +1227,13 @@ export function toSvg(
       }
 
     if (newSyllable && prevSyllable !== -1) {
-      x += afterDivisio ? 0 : r.interSyllable;
-      if (figure[0]!.wordStart && !afterDivisio) x += r.interWord;
+      // A line the layout has just opened starts at its clef, as the first
+      // one does: the syllable and word gaps are air BETWEEN syllables, and
+      // charging them here set every continuation line a gap right of the
+      // first.
+      const noGap = afterDivisio || freshSystem;
+      x += noGap ? 0 : r.interSyllable;
+      if (figure[0]!.wordStart && !noGap) x += r.interWord;
       afterDivisio = false;
       // Column rule: don't let this syllable's lyric collide with the last.
       const lyricText = displayLyric(figure[0]!).text;
@@ -1309,7 +1337,6 @@ export function toSvg(
       // afterwards and hoping. Exsurge computes the same boundary once up front
       // (`staffRight - CustosLong.width`), which makes a custos structurally
       // unable to overrun — where tonus used to place it past a finished `x`.
-      // See working/notes/exsurge-line-breaking.md.
       //
       // A final divisio needs no custos (nothing follows), so the full width is
       // available there.
@@ -1429,48 +1456,139 @@ export function toSvg(
     // barely more than half full, against a handful in moderna — which breaks
     // between syllables. That gap was the asymmetry, not a spacing difference.
     //
-    // The books break mid-phrase freely; the unit is the word, never a syllable
-    // mid-word (which would split a lyric) and never mid-neume. So: at a word
-    // start, with the coming word measured, break if it will not fit.
+    // The books break mid-phrase freely, and never mid-neume or mid-syllable.
+    // The word is the unit they keep whole; a long word is carried over at a
+    // syllable boundary with a hyphen at the line's end. So: at each syllable
+    // boundary, with the coming word (or syllable) measured, break if it will
+    // not fit.
     //
-    // And never on a system that holds nothing yet: a word wider than the whole
-    // line cannot be rescued by breaking, and a divisio break just above has
-    // already opened the line it would open — breaking again left an empty
+    // And never on a system that holds nothing yet: a syllable wider than the
+    // whole line cannot be rescued by breaking, and a divisio break just above
+    // has already opened the line it would open. Breaking again left an empty
     // staff between two full ones (the long Kyrie at 250px, once the heads
     // grew).
-    if (r.width != null && j < rows.length && rows[j]!.wordStart &&
-        !afterDivisio && !freshSystem && !rows[j]!.keepWithPrev) {
-      // Measure the coming WORD the same way the phrase is measured — by
-      // placing and rewinding, so the number is the one the drawing produces.
+    //
+    // `wordStart` rides EVERY row of a word's first syllable, not only its
+    // first note, so a test on the flag alone fired between two figures of
+    // that syllable and broke the system inside it (`for(g/jjj)` with the g
+    // on one line and the jjj on the next). A break point is a SYLLABLE
+    // boundary; a word begins only where a new syllable does.
+    const opensSyllable = (n: number): boolean =>
+      n > 0 &&
+      (rows[n]!.syllableIndex !== rows[n - 1]!.syllableIndex ||
+       rows[n]!.phraseIndex !== rows[n - 1]!.phraseIndex);
+    const opensWord = (n: number): boolean => rows[n]!.wordStart && opensSyllable(n);
+
+    const custosW2 = r.custos
+      ? (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale * 0.85
+        + r.interGlyph
+      : 0;
+    // Measure from `from` to the next boundary `stop` names, by placing and
+    // rewinding as the phrase is measured, so the number is the one the
+    // drawing produces. The lyric column rule runs here too: a syllable whose
+    // lyric is wider than its notes pushes what follows, and a line ends at
+    // its lyric's right edge when that is the further one. `lyricFloor` is the
+    // previous lyric's right edge, relative to the run's start.
+    const measureRun = (
+      from: number, stop: (n: number) => boolean, lyricFloor = -Infinity,
+    ): number => {
       let tw = 0;
-      let pSyl = rows[j]!.syllableIndex;
-      let k = j;
+      let lyricRight = lyricFloor;
+      let k = from;
       while (k < rows.length) {
-        if (k > j && rows[k]!.wordStart) break;          // the next word begins
+        if (k > from && stop(k)) break;
         let e = k + 1;
         while (e < rows.length && sameFigure(rows[e - 1]!, rows[e]!)) e++;
-        if (rows[k]!.syllableIndex !== pSyl) tw += r.interSyllable;
-        else if (k > j) tw += r.interGlyph * separatorSpace(rows[k]!.separator);
-        pSyl = rows[k]!.syllableIndex;
-        tw = measureFigure(rows.slice(k, e), tw);
+        const fig = rows.slice(k, e);
+        const opens = k === from || opensSyllable(k);
+        const text = opens ? displayLyric(rows[k]!).text : "";
+        if (k > from && opens) {
+          tw += r.interSyllable + (rows[k]!.wordStart ? r.interWord : 0);
+        } else if (k > from) {
+          tw += r.interGlyph * separatorSpace(rows[k]!.separator);
+        }
+        if (text) {
+          const estFigW = fig.length * (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale;
+          const estLeft = tw + estFigW / 2 - estLyricW(text) / 2;
+          if (estLeft < lyricRight + minLyricGap) tw += lyricRight + minLyricGap - estLeft;
+        }
+        const startX = tw;
+        tw = measureFigure(fig, tw);
+        if (text) lyricRight = (startX + tw) / 2 + estLyricW(text) / 2;
         k = e;
       }
+      // A run that closes its phrase carries the divisio after it: the bar and
+      // the air either side, less the custos room `bound` already reserves
+      // (the custos sits in that trailing air). Leaving it out let a phrase's
+      // last word fit and its barline overrun the line.
+      const lastRow = rows[k - 1]!;
+      const closesPhrase = k >= rows.length || rows[k]!.phraseIndex !== lastRow.phraseIndex;
+      const divCode = closesPhrase && lastRow.divisio ? DIVISIO_GLYPH[lastRow.divisio] : undefined;
+      if (divCode) {
+        const g = GLYPHS[divCode];
+        const ink = g ? g.bbox[2] * r.glyphScale : 0;
+        tw += r.staffInterval * 2.1 + ink + Math.max(0, r.staffInterval * 2.1 - custosW2);
+      }
+      return Math.max(tw, lyricRight);
+    };
 
-      const custosW2 = r.custos
-        ? (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale * 0.85
-          + r.interGlyph
-        : 0;
+    // The word is the unit to keep whole. A word that does not fit even a
+    // line of its own (a long melisma under a narrow width) is set from where
+    // the line stands and carried over at a syllable, with the hyphen the
+    // books print there (the lyric pass below draws it). Breaking before such
+    // a word would only leave the line short and the word overrunning the next.
+    //
+    // The first word after an unbroken divisio is tested like any other: it
+    // used to be exempt, so the word that opened a phrase on a line the
+    // divisio had declined to end could run off the canvas unchecked.
+    //
+    // A `<nlba>` seal extends the unit: the run to keep whole reaches through
+    // the sealed group, so the break falls before the group's head rather
+    // than the group running off the line. Inside a group the seal holds
+    // unless the group cannot fit any line, where it yields (breaking.ts).
+    if (r.width != null && j < rows.length && opensSyllable(j) && !freshSystem) {
       const bound = r.width - r.padding - custosW2;
-      const wordVerdict = decideBreak({
+      // Where a fresh line's music starts: past its clef, as closeSystem sets it.
+      const mark = body.length;
+      const lineStart = drawClef(activeClef, r.padding);
+      body.length = mark;
+      const fits = (w: number): boolean => lineStart + w <= bound;
+      const word = opensWord(j);
+      const gap = afterDivisio ? 0 : r.interSyllable + (word ? r.interWord : 0);
+      const floor = prevLyricRight - (x + gap);
+      const stopWord = (n: number): boolean => opensWord(n) && !rows[n]!.keepWithPrev;
+      const stopSyl = (n: number): boolean => opensSyllable(n) && !rows[n]!.keepWithPrev;
+      let need: number;
+      let sealedRun: number | undefined;
+      if (!rows[j]!.keepWithPrev) {
+        const wordW = word ? measureRun(j, stopWord) : Infinity;
+        // Kept whole only while that leaves the line it ends reasonably full:
+        // a long melismatic word otherwise left three quarters of a line
+        // empty behind it, where the books carry it over at a syllable.
+        const full = x >= bound * WORD_HOLD;
+        if (fits(wordW) && full) need = measureRun(j, stopWord, floor);
+        else {
+          const sylW = measureRun(j, stopSyl);
+          need = fits(sylW) ? measureRun(j, stopSyl, floor) : measureRun(j, opensSyllable, floor);
+        }
+      } else {
+        let head = j;
+        while (head > 0 && rows[head]!.keepWithPrev) head--;
+        sealedRun = measureRun(head, stopSyl);
+        need = measureRun(j, opensSyllable, floor);
+      }
+      const verdict = decideBreak({
         next: rows[j]!,
-        x: x + r.interSyllable + r.interWord,
+        x: x + gap,
         boundary: bound,
-        need: tw,
-        sealedRun: tw,
-        lineStart: r.padding,
+        need,
+        sealedRun,
+        lineStart,
         forcedHandled: true,
       });
-      if (wordVerdict.break) closeSystem(rows[j]!, true);
+      // No custos after a divisio finalis, as at the divisio break above.
+      const finalis = afterDivisio && figure[figure.length - 1]!.divisio === "::";
+      if (verdict.break) closeSystem(rows[j]!, !finalis);
     }
 
     prevSyllable = syllableIndex;
@@ -1559,45 +1677,18 @@ export function toSvg(
 
   // Close the final system; height reaches the last.
   systemMaxX.push(Math.max(x, prevLyricRight) + r.padding);
-    // The canvas is what the CALLER asked for, not what the content happened to
-    // reach. Width was `max(systemMaxX)` in both species, so a render of a
-    // requested 900 came out 915, 986, 1074, 1203 — whatever the widest system
-    // ended at. A host applying `max-width: 100%` then shrank each render by a
-    // different factor, which is why the same page showed one chant's notation
-    // a third smaller than another's, and why the two species never agreed:
-    // measured across fourteen graduals, moderna landed between 0.66 and 0.95
-    // of quadrata's on-screen size with no pattern a reader could learn.
-    //
-    // `width` is the wrap point, and now also the canvas. Content still wraps
-    // inside it; it no longer decides how big the picture is. Without a width
-    // there is nothing to wrap to and the content still sets the size.
+  // THE CANVAS IS THE REQUESTED WIDTH, grown only by an overrun. A
+  // content-driven width returned 915, 986, 1074, 1203 for one request of 900,
+  // so a host applying `max-width` shrank each chant by a different factor and
+  // no two renders on a page shared a scale. With `width` as the canvas, a
+  // short chant keeps the full column (its staff lines stop where its music
+  // does) and every render shares one scale. Content that cannot fit grows the
+  // canvas rather than being clipped: the break tests measure by placing, so
+  // what remains is a single syllable wider than the line, a clef change
+  // announced at a line's end, or a lyric estimate running past its notes, and
+  // clipping any of those cuts the end off a staff. Without a width there is
+  // nothing to wrap to and the content sets the size.
   const contentW = Math.ceil(Math.max(...systemMaxX));
-  // A CEILING, not a floor. `width` is the room the caller has; content wraps
-  // inside it and the canvas never exceeds it, so a host applying `max-width`
-  // shrinks nothing and every render on a page shares one scale. But a chant
-  // that does not fill the room keeps its own width — padding it out to the
-  // full column would leave a short chant floating in white space, and any
-  // host that scales to fit would then shrink the notation for having been
-  // short. That is the bug this line replaced, in the other direction.
-  // The canvas is the requested width. Every render on a page then shares one
-  // scale, which is the thing a reader actually notices: width used to be
-  // `max(systemMaxX)`, so a requested 900 came back 915, 986, 1074, 1203 by
-  // chant and a host applying `max-width` shrank each differently.
-  //
-  // Content that overruns is handled at the SOURCE — the wrap check breaks a
-  // system before it spills (see the lookahead below) — not by growing the
-  // canvas to fit it. Letting the canvas follow the content is what made the
-  // scale wander again; letting it clip is what cut the tail off a staff. The
-  // overrun itself had to go.
-  // The requested width, so every render on a page shares one scale — a
-  // content-driven width returned 915, 986, 1074, 1203 for the same request
-  // and a host applying `max-width` shrank each differently.
-  //
-  // The `max` is a safety net for the last few pixels. Placement is decided
-  // from an estimate of the coming phrase, absorbed by a tolerance (see the
-  // break above), and the residue is small: over forty chants the worst
-  // overrun is 35px on a 900px line. Growing the canvas by that is invisible;
-  // clipping it takes the end off a staff.
   const width = r.width != null ? Math.max(Math.ceil(r.width), contentW) : contentW;
   const height = Math.ceil(L.systemY + L.lyricY + r.lyricSize * 0.6 + bands.extra);
 
@@ -1617,6 +1708,7 @@ export function toSvg(
         laneTop: L.lyricY + bands.prosodia.top,
         rightFor: (s) => (systemMaxX[s] ?? width) - r.padding,
         rubricaColor: r.rubricaColor,
+        noteColor: r.noteColor,
       }));
     }
     if (bands.chironomia) {
@@ -1625,6 +1717,7 @@ export function toSvg(
         // Clear of the lyric line's descenders: the crest's letters top out
         // ~26px above the midline, and the lyric baseline sits at lyricY.
         waveMidY: L.lyricY + bands.chironomia.top + 33 * trackScale,
+        noteColor: r.noteColor,
       }));
     }
     if (bands.tonarium) {
@@ -1634,6 +1727,7 @@ export function toSvg(
         rightFor: (s) => (systemMaxX[s] ?? width) - r.padding,
         serifFamily: r.fonts.lyric.family,
         rubricaColor: r.rubricaColor,
+        noteColor: r.noteColor,
       }));
     }
   }
@@ -1668,26 +1762,29 @@ export function toSvg(
         .filter((run) => run.text.length > 0);
     }
   }
+  // A one-letter first syllable ("A-", "O") is wholly the initial, and leaves
+  // nothing on the lyric line; no empty <text> is drawn for it.
 
   const lyricSvgs: string[] = [];
   const lyricFontSize = r.lyricSize * r.fonts.lyric.scale;
   // Lyric weight defaults to moderna's 500 (one weight across the duae
   // species, ruled 2026-07-29); an explicit fonts.lyric.weight overrides.
   const lyricWeightAttr = r.fonts.lyric.weight != null ? "" : ' font-weight="500"';
-  const lyricText = (cx: number, systemY: number, text: string, runs?: LyricRun[]): string =>
-    `<text class="lyric" x="${cx.toFixed(2)}" y="${(systemY + L.lyricY).toFixed(2)}" ` +
+  const lyricText = (cx: number, systemY: number, text: string, runs?: LyricRun[], cls = "lyric"): string =>
+    `<text class="${cls}" x="${cx.toFixed(2)}" y="${(systemY + L.lyricY).toFixed(2)}" ` +
     `text-anchor="middle" ${fontAttrs(r.fonts.lyric)}${lyricWeightAttr} ` +
     `font-size="${lyricFontSize.toFixed(1)}" fill="${r.noteColor}">${lyricMarkup(runs, text, r.rubricaColor)}</text>`;
   for (let k = 0; k < lyrics.length; k++) {
     const ly = lyrics[k]!;
     const next = lyrics[k + 1];
+    if (!ly.text) continue;
     lyricSvgs.push(lyricText(ly.cx, ly.systemY, ly.text, ly.runs));
     // Continuing syllable in the same system → a centred hyphen in the gap.
     if (next && !next.wordStart && next.systemY === ly.systemY) {
       const thisRight = ly.cx + estLyricW(ly.text) / 2;
       const nextLeft = next.cx - estLyricW(next.text) / 2;
       if (nextLeft - thisRight > r.lyricSize * 0.4) {
-        lyricSvgs.push(lyricText((thisRight + nextLeft) / 2, ly.systemY, "-"));
+        lyricSvgs.push(lyricText((thisRight + nextLeft) / 2, ly.systemY, "-", undefined, "lyric hyphen"));
       }
     } else if (next && !next.wordStart) {
       // ...and a word carried to the NEXT system takes a hyphen at the line's
@@ -1698,7 +1795,7 @@ export function toSvg(
       // joining the halves.
       // "Sanc" ended a line and "tus" opened the next, reading as two words.
       const thisRight = ly.cx + estLyricW(ly.text) / 2;
-      lyricSvgs.push(lyricText(thisRight + r.lyricSize * 0.42, ly.systemY, "-"));
+      lyricSvgs.push(lyricText(thisRight + r.lyricSize * 0.42, ly.systemY, "-", undefined, "lyric hyphen"));
     }
   }
 
@@ -1706,12 +1803,12 @@ export function toSvg(
   // system. The initial IS the lyric's first letter, so the lyric line carries
   // the remainder only (the book prints "K yrie" as cap + "yrie").
   //
-  // IT TAKES THE NOTE INK, NOT THE RUBRICA. The printed books set the initial
-  // in black and spend their red on the genus/mode mark beside it — see the
-  // Liber's "Intr. 1." over a black R. It was rubricated here, which put the
-  // reserved colour on the largest mark on the page and left the rubric it is
-  // reserved for competing with it. A caller wanting a red initial themes
-  // `--tonus-note` on the cap, or passes its own colour.
+  // IT TAKES THE NOTE INK, NOT THE RUBRICA, and so does the margin mark. The
+  // Solesmes books print in one ink — the Liber's "Intr. 1." over a black R —
+  // and the rubrica here is reserved for the text's own rubrics (`<c>` runs)
+  // and the tracks' claims. Rubricating the initial put the reserved colour on
+  // the largest mark on the page. A caller wanting a red initial styles
+  // `.dropcap` from the host page.
   const dropcapSvgs: string[] = [];
   if (capInitial && lyrics.length > 0) {
     const y = headerY + L.lyricY; // bottom-aligned with the first lyric baseline

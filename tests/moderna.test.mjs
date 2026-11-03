@@ -4,6 +4,7 @@ import { buildScore } from "../dist/engines/score/api.js";
 import { inscriptio } from "../dist/engines/score/inscriptio.js";
 import { buildTemper } from "../dist/engines/temper/api.js";
 import { GLYPHS } from "../dist/data/smufl-glyphs.js";
+import tonus from "../dist/index.js";
 
 function makeChant(gabc, mode = "7") {
   return {
@@ -164,5 +165,87 @@ describe("moderna heads carry the tabula address", () => {
       assert.ok(keys.has(key), `row ${key} has a tagged head`);
     }
     assert.equal(keys.size, tagged.length, "no address is reused");
+  });
+});
+
+describe("moderna — canvas, breaks, scale and ink", () => {
+  const vb = (svg) => /viewBox="0 0 (\S+) (\S+)"/.exec(svg).slice(1).map(Number);
+
+  test("the canvas grows to fit content wider than the width, rather than clipping it", () => {
+    // One syllable of forty notes cannot fit 200px; quadrata already grew.
+    const gabc = "(c4) A(" + "gh".repeat(20) + ") (::)";
+    const { svg } = inscriptio(buildScore(makeChant(gabc)), { notation: "moderna", width: 200 });
+    assert.ok(vb(svg)[0] > 200, `canvas ${vb(svg)[0]}`);
+  });
+
+  test("a GABC z breaks the line only when a width wraps", () => {
+    const score = buildScore(makeChant("(c4) Pu(g)er(h) (z) na(gh)tus(f.) (::)"));
+    const single = inscriptio(score, { notation: "moderna" });
+    assert.deepEqual([...new Set(single.geometry.map((g) => g.system))], [0]);
+    const wrapped = inscriptio(score, { notation: "moderna", width: 900 });
+    assert.ok(new Set(wrapped.geometry.map((g) => g.system)).size > 1);
+  });
+
+  test("a numeric scale is the drawn staff's span, as in quadrata", () => {
+    const score = buildScore(makeChant("(c4) Pu(g)er(h) na(gh)tus(f.) (::)"));
+    const { svg } = inscriptio(score, { notation: "moderna", scale: 40 });
+    // The staff lines are the unclassed lines in the staff-line ink.
+    const ys = [...svg.matchAll(/<line x1="[\d.]+" y1="([\d.]+)" x2="[\d.]+" y2="[\d.]+" stroke="var\(--tonus-staff-line/g)]
+      .map((m) => Number(m[1])).slice(0, 5);
+    assert.equal(ys.length, 5);
+    assert.ok(Math.abs(ys[4] - ys[0] - 40) < 0.05, `span ${ys[4] - ys[0]}`);
+  });
+
+  test("the clef zone scales with the staff, so a large clef clears the first note", () => {
+    const score = buildScore(makeChant("(c4) Pu(g)er(h) (::)"));
+    for (const scale of [40, 75, 120]) {
+      const { svg, geometry } = inscriptio(score, { notation: "moderna", scale });
+      const clefX = Number(/<g class="clef" transform="translate\(([\d.]+)/.exec(svg)[1]);
+      const clefW = GLYPHS.E052.advance * (Number(/<g class="clef"[^>]*scale\(([\d.]+)/.exec(svg)[1]));
+      assert.ok(geometry[0].inkLeft > clefX + clefW, `scale ${scale}: note clears the clef`);
+    }
+  });
+
+  test("staff and ledger lines take the staff-line colour; the house serif is the default face", () => {
+    const score = buildScore(makeChant("(c4) Pu(g)er(h) na(gh)tus(f.) (::)"));
+    const { svg } = inscriptio(score, {
+      notation: "moderna", theme: { colors: { note: "#222", staffLine: "#999" } },
+    });
+    assert.ok(svg.includes('stroke="var(--tonus-staff-line, #999)"'));
+    assert.ok(!svg.includes("Crimson Pro', Georgia, serif\">"), "not the old private default");
+    assert.match(svg, /class="lyric"[^>]*font-family="Junicode, /);
+  });
+
+  test("the title slot's scale and embed reach moderna", () => {
+    const FAKE = Buffer.from("x").toString("base64");
+    const score = buildScore(makeChant("(c4) Pu(g)er(h) (::)"));
+    const { svg } = inscriptio(score, {
+      notation: "moderna", title: "Puer",
+      theme: { fonts: { title: { family: "T Face", scale: 2, embed: { base64: FAKE } } } },
+    });
+    assert.match(svg, /@font-face\{font-family:"T Face"/);
+    assert.match(svg, /class="title"[^>]*font-size="44"/);
+  });
+
+  test("two renders never share ink (no module state)", () => {
+    const score = buildScore(makeChant("(c4) Pu(g)er(h) (::)"));
+    inscriptio(score, { notation: "moderna", theme: { colors: { note: "#f00" } } });
+    const { svg } = inscriptio(score, { notation: "moderna" });
+    assert.ok(!svg.includes("#f00"));
+  });
+});
+
+describe("moderna — the break test measures what it draws", () => {
+  test("across a slice of the Graduale at 500, systems stay inside the width", () => {
+    // The test once measured a syllable's notes alone, leaving out its lyric,
+    // its signs and a closing divisio; the clipped canvas hid the overrun.
+    const pool = tonus.cantus({ source: "gr" }).filter((_, i) => i % 25 === 0);
+    let over = 0;
+    for (const chant of pool) {
+      const { svg } = inscriptio(tonus.notatio(chant), { notation: "moderna", width: 500 });
+      if (Number(/viewBox="0 0 (\S+)/.exec(svg)[1]) > 500) over++;
+    }
+    // Only a syllable wider than the line may overrun.
+    assert.ok(over <= Math.ceil(pool.length * 0.05), `${over} of ${pool.length} overran`);
   });
 });
