@@ -263,7 +263,10 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
   plausible-looking answer.
 - Builder functions throw `Error` with a descriptive message on invalid input.
 - `notatio` throws on invalid `Chant` input.
-- `inscriptio` throws on a non-`Score` argument or an unknown notation species.
+- `inscriptio` throws on a non-`Score` argument, an unknown option key, or an
+  invalid option value (an unknown notation, accidental channel, scale, track or
+  theme role; a non-positive `width` or numeric `scale`), and on `accidentals:
+  "heji"` or `"cents"` under quadrata.
 - `temperamentum.tonus()` throws if `mode` is `"auto"`. Mode must be set
   explicitly.
 - Malformed `comma`, ratio, or Scala input throws `RangeError`; custom scales
