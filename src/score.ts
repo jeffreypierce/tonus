@@ -8,8 +8,8 @@
 // objects a Metrics is built from.
 //
 // They came off the root index because they are not answers, they are the
-// grain of one answer. Ten of the ninety-seven names it carried were reachable
-// only by holding a Score already, which meant a reader scanning the index for
+// grain of one answer. Many of the names it carried were reachable only by
+// holding a Score already, which meant a reader scanning the index for
 // what tonus DOES had to step over the anatomy of one return value to find the
 // next verb. That is the density, and this is where it goes.
 //
