@@ -693,17 +693,71 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     bySyl.get(k)!.push(r);
   }
 
-    // Width of a syllable and the gap that follows it — moderna's unit of
-    // advance, and the only measuring this emitter owes the break decision.
-    const sylWidth = (key: string): number => {
-      const rows = bySyl.get(key) ?? [];
-      return noteAdvances(syllableStrokes(rows), rows, gm).reduce((a, b) => a + b, 0) + gm.SYL_GAP;
+    // One syllable's horizontal layout from `x0`: each note's column, the
+    // lyric, and the syllable's width (the wider of its notes and its lyric).
+    // Pure, so the break test measures with the very function that places,
+    // rather than a second estimate that leaves out the lyric and the signs.
+    const layoutSyllable = (srows: readonly Row[], x0: number, sysY: number) => {
+      // Display form: trimmed styled runs when markup rides, else the trimmed
+      // plain string — one derivation for measuring and drawing.
+      const spans = srows[0]!.runs ? trimRuns(srows[0]!.runs!) : undefined;
+      const lyr = spans ? spans.map((sp) => sp.text).join("") : stripLyric(srows[0]!.lyric ?? "");
+      const figures = syllableStrokes(srows);
+      const advances = noteAdvances(figures, srows, gm);
+      let nx = x0 + gm.NH_W / 2 + 1 * gm.k;
+      const notePos: Array<{ mx: number; my: number; steps: number; spelled: string | null }> = [];
+      for (const r of srows) {
+        if (r.quilisma) nx += 9.6 * gm.k;   // room for the fused squiggle
+        const mk = markByRow.get(r);
+        if (mk?.kind === "glyph") nx += accidentalWidth(mk.glyph!, gm); // room for the accidental
+        const { y, steps, accidental } = writtenY(r.spn, sysY, gm, lift);
+        // A sign the SPELLING demands. `computeAccidentals` speaks for the marks
+        // written in the GABC (`accidentalSource: "explicit"`); a transposed
+        // score carries its accidentals in `spn` alone, where nothing was ever
+        // written, so those would otherwise go undrawn and the note would read a
+        // semitone off with no sign to say so.
+        //
+        // The guard is `alteredSpns`, NOT this row's own `mk`. A written sign is
+        // carried by the note BEFORE the one it governs — on gregobase:1180 the
+        // three signs sit on rows 27/39/62 and their B-flats on 31/40/66, wholly
+        // disjoint — so asking "does this row carry a mark?" says no on the very
+        // note the sign already covers, and drew a second glyph for each.
+        const spelled = accidental !== 0 && !alteredSpns.has(r.spn)
+          ? (accidental === -1 ? G.accidentalFlat : G.accidentalSharp)
+          : null;
+        if (spelled) nx += accidentalWidth(spelled, gm);
+        notePos.push({ mx: nx, my: y, steps, spelled });
+        nx += advances[notePos.length - 1]! + 4.6 * gm.k * r.mora;
+      }
+      const notesW = nx - x0 - gm.ADV + gm.NH_W / 2 + 2 * gm.k;
+      return { spans, lyr, figures, notePos, sylW: Math.max(notesW, textW(lyr, lyricSize)) };
+    };
+
+    // The divisio that closes a phrase after syllable `si`, as [kind, pad],
+    // or null. Its bar and air are part of what must fit.
+    const divisioAfter = (si: number): { kind: string; pad: number } | null => {
+      const srows = bySyl.get(sylKeys[si]!)!;
+      const last = srows[srows.length - 1]!;
+      const nextK = si + 1 < sylKeys.length ? sylKeys[si + 1]! : null;
+      const nextPhrase = nextK ? Number(nextK.split(".")[0]) : -1;
+      if (!last.divisio || (nextK !== null && nextPhrase === last.phraseIndex)) return null;
+      const kind = DIV_KIND[last.divisio] ?? "full";
+      return { kind, pad: ({ tick: 2, half: 5, full: 7, double: 9 }[kind] ?? 7) * gm.k };
+    };
+
+    // Width of a syllable and what follows it (its gap, and a closing divisio)
+    // — moderna's unit of advance, and the only measuring this emitter owes
+    // the break decision.
+    const sylWidth = (si: number): number => {
+      const div = divisioAfter(si);
+      return layoutSyllable(bySyl.get(sylKeys[si]!)!, 0, 0).sylW + gm.SYL_GAP
+        + (div ? div.pad + 8 * gm.k : 0);
     };
 
     const breakBefore = (k: string, si: number): boolean => {
       // Moderna breaks BETWEEN SYLLABLES, a finer granularity than quadrata's
       // divisio, so the measurement is exact rather than statistical: the
-      // syllable's own notes at their own advance, plus its trailing gap.
+      // syllable laid out as it will be drawn, plus what follows it.
       //
       // The rules governing the decision — `z` forces, `<nlba>` seals, a seal
       // yields to the page, the boundary is never overrun — live in breaking.ts
@@ -716,11 +770,11 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       // The sealed run from here to the close of its `<nlba>` group. Measured
       // whole because admitting the head alone seals every seam after it, and
       // the line could then no longer break at all.
-      let sealedRun = sylWidth(k);
+      let sealedRun = sylWidth(si);
       for (let m = si + 1; m < sylKeys.length; m++) {
         const mr = bySyl.get(sylKeys[m]!) ?? [];
         if (!mr[0]?.keepWithPrev) break;
-        sealedRun += sylWidth(sylKeys[m]!);
+        sealedRun += sylWidth(m);
       }
 
       return decideBreak({
@@ -752,41 +806,7 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
       clefSvgs.push(clef(clefX, systemY, gm));
     }
 
-    // Display form: trimmed styled runs when markup rides, else the trimmed
-    // plain string — one derivation for measuring and drawing.
-    const spans = srows[0]!.runs ? trimRuns(srows[0]!.runs!) : undefined;
-    const lyr = spans ? spans.map((s) => s.text).join("") : stripLyric(srows[0]!.lyric ?? "");
-
-    // Note x-positions within the syllable.
-    const figures = syllableStrokes(srows);
-    const advances = noteAdvances(figures, srows, gm);
-    let nx = x + gm.NH_W / 2 + 1 * gm.k;
-    const notePos: Array<{ mx: number; my: number; steps: number; spelled: string | null }> = [];
-    for (const r of srows) {
-      if (r.quilisma) nx += 9.6 * gm.k;   // room for the fused squiggle
-      const mk = markByRow.get(r);
-      if (mk?.kind === "glyph") nx += accidentalWidth(mk.glyph!, gm); // room for the accidental
-      const { y, steps, accidental } = writtenY(r.spn, systemY, gm, lift);
-      // A sign the SPELLING demands. `computeAccidentals` speaks for the marks
-      // written in the GABC (`accidentalSource: "explicit"`); a transposed
-      // score carries its accidentals in `spn` alone, where nothing was ever
-      // written, so those would otherwise go undrawn and the note would read a
-      // semitone off with no sign to say so.
-      //
-      // The guard is `alteredSpns`, NOT this row's own `mk`. A written sign is
-      // carried by the note BEFORE the one it governs — on gregobase:1180 the
-      // three signs sit on rows 27/39/62 and their B-flats on 31/40/66, wholly
-      // disjoint — so asking "does this row carry a mark?" says no on the very
-      // note the sign already covers, and drew a second glyph for each.
-      const spelled = accidental !== 0 && !alteredSpns.has(r.spn)
-        ? (accidental === -1 ? G.accidentalFlat : G.accidentalSharp)
-        : null;
-      if (spelled) nx += accidentalWidth(spelled, gm);
-      notePos.push({ mx: nx, my: y, steps, spelled });
-      nx += advances[notePos.length - 1]! + 4.6 * gm.k * r.mora;
-    }
-    const notesW = nx - x - gm.ADV + gm.NH_W / 2 + 2 * gm.k;
-    const sylW = Math.max(notesW, textW(lyr, lyricSize));
+    const { spans, lyr, figures, notePos, sylW } = layoutSyllable(srows, x, systemY);
 
     // Draw notes.
     srows.forEach((r, i) => {
@@ -839,15 +859,11 @@ export function toModerna(rows: Row[], chant: Chant, options: SvgOpts = {}): Svg
     x += sylW + gm.SYL_GAP;
 
     // Divisio at a phrase end.
-    const last = srows[srows.length - 1]!;
-    const nextK = si + 1 < sylKeys.length ? sylKeys[si + 1]! : null;
-    const nextPhrase = nextK ? Number(nextK.split(".")[0]) : -1;
-    if (last.divisio && (nextK === null || nextPhrase !== last.phraseIndex)) {
-      const kind = DIV_KIND[last.divisio] ?? "full";
-      const pad = ({ tick: 2, half: 5, full: 7, double: 9 }[kind] ?? 7) * gm.k;
-      const isFinal = nextK === null;
-      body.push(divisioMark(x + pad - 4 * gm.k, kind, systemY + gm.MTOP, isFinal, gm));
-      x += pad + 8 * gm.k;
+    const div = divisioAfter(si);
+    if (div) {
+      const isFinal = si + 1 >= sylKeys.length;
+      body.push(divisioMark(x + div.pad - 4 * gm.k, div.kind, systemY + gm.MTOP, isFinal, gm));
+      x += div.pad + 8 * gm.k;
     }
   }
 

@@ -4,6 +4,7 @@ import { buildScore } from "../dist/engines/score/api.js";
 import { inscriptio } from "../dist/engines/score/inscriptio.js";
 import { buildTemper } from "../dist/engines/temper/api.js";
 import { GLYPHS } from "../dist/data/smufl-glyphs.js";
+import tonus from "../dist/index.js";
 
 function makeChant(gabc, mode = "7") {
   return {
@@ -231,5 +232,20 @@ describe("moderna — canvas, breaks, scale and ink", () => {
     inscriptio(score, { notation: "moderna", theme: { colors: { note: "#f00" } } });
     const { svg } = inscriptio(score, { notation: "moderna" });
     assert.ok(!svg.includes("#f00"));
+  });
+});
+
+describe("moderna — the break test measures what it draws", () => {
+  test("across a slice of the Graduale at 500, systems stay inside the width", () => {
+    // The test once measured a syllable's notes alone, leaving out its lyric,
+    // its signs and a closing divisio; the clipped canvas hid the overrun.
+    const pool = tonus.cantus({ source: "gr" }).filter((_, i) => i % 25 === 0);
+    let over = 0;
+    for (const chant of pool) {
+      const { svg } = inscriptio(tonus.notatio(chant), { notation: "moderna", width: 500 });
+      if (Number(/viewBox="0 0 (\S+)/.exec(svg)[1]) > 500) over++;
+    }
+    // Only a syllable wider than the line may overrun.
+    assert.ok(over <= Math.ceil(pool.length * 0.05), `${over} of ${pool.length} overran`);
   });
 });
