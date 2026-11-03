@@ -14,11 +14,13 @@
 // the caller's to do, under the rule census.md fixes — cosine per field group,
 // never over the flat 221.
 //
-// CENSUS_BLOCK_FLOATS joins the two constants the root already exported. A
-// caller decoding a block had to know the stride and could get it only by
-// counting CENSUS_GROUPS, which is the transcription the appendix rule exists
-// to prevent. CENSUS_DICTIONARIES is the same case for the trigram and
-// cadence groups: their sixteen slots mean nothing without the keys.
+// CENSUS_GROUPS, CENSUS_ORDER and CENSUS_DICTIONARIES are also on the root.
+// CENSUS_BLOCK_FLOATS is exported here only: the width of one whole block, the
+// frame CENSUS_GROUPS' offsets index into, which also holds the non-similarity
+// fields (flags, attestation, extras, reserve) no group names. The blocks
+// themselves are not exported; `census` hands back each group's values.
+// CENSUS_DICTIONARIES names the trigram and cadence groups' slots, which mean
+// nothing without the keys.
 
 export { getCensus as census } from "./engines/census/census.js";
 

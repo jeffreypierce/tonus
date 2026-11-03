@@ -1,10 +1,10 @@
 // tests/census — tonus.census({ id })
 //
-// The census is the one verb backed by a POSITIONAL binary: 2,187 blocks of 225
-// float32s, addressed by index. Nothing in the data is self-describing, so the
-// tests that matter are the ones that would catch a silent shift — a block
-// belonging to the wrong chant, a group read at the wrong offset — rather than
-// re-asserting arithmetic.
+// The census is the one verb backed by a POSITIONAL binary: one block of
+// CENSUS_BLOCK_FLOATS float32s per censused chant, addressed by index.
+// Nothing in the data is self-describing, so the tests that matter are the
+// ones that would catch a silent shift (a block belonging to the wrong chant,
+// a group read at the wrong offset) rather than re-asserting arithmetic.
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import tonus from "../dist/index.js";
@@ -61,7 +61,7 @@ describe("census — the blocks address the right chants", () => {
     // ⟨2026-08-31⟩ The bijection is no longer against the whole SHELF, and the
     // difference is the point rather than a tolerance. Recitation formulas —
     // office `or`, which is GregoBase's Toni Communes — are shipped but not
-    // censused: eleven Benedicamus Domino settings are one gesture, not eleven
+    // censused: the 46 Benedicamus Domino settings are one gesture, not 46
     // chants, and censusing them would invent a distribution out of a tone.
     // So this pins BOTH halves: every censused chant has a block, and the
     // chants without one are exactly the formulas. A block for a formula, or a
@@ -302,6 +302,29 @@ describe("census({ score }) — a chant the corpus never held", () => {
     const byId = census({ id: SEED });
     const byScore = census({ score: notatio(cantus({ id: SEED })[0]) });
     assert.deepEqual(byScore, byId);
+  });
+
+  test("notatio's options do not move the census of a score", () => {
+    // The block formula reads a default parse. A Score built under knobs or
+    // another temperamentum carries other durations, phrasing and pitches;
+    // census({ score }) re-reads score.chant at the defaults, so it still
+    // answers exactly as census({ id }) does.
+    const chant = cantus({ id: SEED })[0];
+    const byId = census({ id: SEED });
+    for (const opts of [
+      { pondus: 1 },
+      { modulatio: 1, expressio: 1 },
+      { temperamentum: tonus.temperamentum({ mode: 5 }) },
+    ]) {
+      assert.deepEqual(census({ score: notatio(chant, opts) }), byId, JSON.stringify(Object.keys(opts)));
+    }
+  });
+
+  test("an unknown id's error names the censused population and the formulas", () => {
+    assert.throws(
+      () => census({ id: "gregobase:999999" }),
+      new RegExp(`${CENSUS_ORDER.length.toLocaleString("en-US")} censused chants.*Toni Communes`),
+    );
   });
 
   test("a composed chant gets the whole answer, under its own id", () => {
