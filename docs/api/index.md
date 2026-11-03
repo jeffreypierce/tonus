@@ -97,7 +97,7 @@ table of codes or English keeps English.
 | Export                 | What it holds                                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------- |
 | `MODES`                | the eight modes' doctrine: final, tenor, ambitus, reciting notes, modulations                         |
-| `TONES`                | the psalm tones (Graduale Romanum appendix), with their differentiae                                  |
+| `TONES`                | the psalm tones (the Toni Communes of the Liber Usualis), with their differentiae                     |
 | `CADENTIAE`            | the **mined** cadence catalogue (`CadentiaGenus`) — genera, their species, share, finality, per mode  |
 | `CADENTIAE_POPULATION` | the denominator behind every `share`: all phrase-ends, and the same total per mode                    |
 | `CADENTIA_LABEL`       | the English of every word a cadence's `nomen` can contain (`cadens` → "falling a step onto")          |
@@ -266,9 +266,13 @@ an ensemble) it is seeded, so the same seed yields byte-identical output.
 - `inscriptio` throws on a non-`Score` argument or an unknown notation species.
 - `temperamentum.tonus()` throws if `mode` is `"auto"`. Mode must be set
   explicitly.
-- Malformed `comma`, ratio, or Scala input throws `RangeError`; custom scales
-  must supply 7 or 12 steps, beginning at `1/1` (a degree list) or ending at
-  `2/1` (Scala convention).
+- `temperamentum` throws on an unknown option key. A malformed or
+  out-of-range `comma` (outside [0, 1]), `root` (not an integer 0–11), `a4`
+  (not positive), `transpose` (not an integer), a ratio that is not a positive
+  number, an empty `scale`, or a malformed Scala file throws `RangeError`;
+  custom scales must supply 7 or 12 steps, beginning at `1/1` (a degree list)
+  or ending at `2/1` (Scala convention). A non-positive frequency throws
+  `RangeError`, and so does a differentia the tone does not have.
 - `pascha` throws `RangeError` on a non-finite year.
 - `census` throws on an id with no block (the census covers only the chants
   tonus ships) and on an unknown query key or field group.

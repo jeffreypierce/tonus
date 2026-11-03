@@ -2,6 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { buildTemper } from "../dist/engines/temper/api.js";
 import { midiToGabc, gabcToMidi } from "../dist/engines/temper/gabc.js";
+import tonus from "../dist/index.js";
 
 describe("buildTemper", () => {
   test("defaults to pythagorean tuning with A4=440", () => {
@@ -611,8 +612,9 @@ describe("modus", () => {
 
   test("tunes the finalis and tenor through the temperamentum", () => {
     const m = buildTemper({ mode: 3 }).modus(3);
-    // Deuterus: final Mi = E4, tenor C4.
-    assert.equal(m.finalis.pitch.spn, "E4");
+    // Deuterus, in the frame the modes are written in (C3 = 48): final E3,
+    // tenor the c above it.
+    assert.equal(m.finalis.pitch.spn, "E3");
     assert.equal(m.finalis.step.role, "finalis");
     assert.equal(m.reciting.pitch.spn, "C4");
     assert.equal(m.reciting.step.role, "tenor");
@@ -628,10 +630,10 @@ describe("modus", () => {
 
   test("ambitusNotes walk the mode's diatonic range", () => {
     const m = buildTemper({ mode: 3 }).modus(3);
-    // Deuterus authentic: E4 up to E5, diatonic.
+    // Deuterus authentic: E3 up to E4, diatonic.
     const spns = m.ambitusNotes.map((n) => n.pitch.spn);
-    assert.equal(spns[0], "E4");
-    assert.equal(spns.at(-1), "E5");
+    assert.equal(spns[0], "E3");
+    assert.equal(spns.at(-1), "E4");
     // Every note is in the mode's scale (a Guidonian step with a degree).
     for (const n of m.ambitusNotes) assert.ok(n.step.degree >= 1 && n.step.degree <= 7);
   });
@@ -777,8 +779,10 @@ describe("gabc — letters, clefs, and the one accidental chant sings", () => {
   test("B-flat spells with the flat mark rather than throwing", () => {
     // 58 = B♭3. Under c4 the B natural sits on slot 'i', so the flat reads `ix`
     // — the same line, marked. (B♭4 is off the thirteen-slot staff under c4.)
-    assert.equal(midiToGabc(58, "c4"), "ix");
+    // `ix` alone is the sign with no note; the flat then the note is `ixi`.
+    assert.equal(midiToGabc(58, "c4"), "ixi");
     assert.equal(midiToGabc(59, "c4"), "i");
+    assert.equal(gabcToMidi("ix", "c4"), 58, "the bare sign still reads");
   });
 
   test("the flat round-trips back to the pitch it came from", () => {
@@ -820,13 +824,132 @@ describe("gabc — letters, clefs, and the one accidental chant sings", () => {
     assert.equal(gabcToMidi("f", "c2"), 60);
     assert.equal(gabcToMidi("h", "c3"), 60);
     assert.equal(gabcToMidi("j", "c4"), 60);
-    // The f-clefs treat doIdx as the slot carrying DO (not fa), so under f3
-    // "do" is at slot 7 and fa lands on 'k'. NOTE: parse.ts disagrees — it
-    // reads fa(53) on 'h' under f3, a fifth away. That divergence predates the
-    // CLEFS derivation (verified against the committed table) and is recorded
-    // in backlog.md; these assertions pin gabc.ts's CURRENT behaviour so the
-    // derivation is provably faithful, not the resolution of that conflict.
-    assert.equal(gabcToMidi("k", "f3"), 53);
-    assert.equal(gabcToMidi("m", "f4"), 53);
+    // An f-clef puts fa (F3, 53) on its named line: h under f3, j under f4.
+    assert.equal(gabcToMidi("h", "f3"), 53);
+    assert.equal(gabcToMidi("j", "f4"), 53);
+    assert.equal(gabcToMidi("d", "f1"), 53);
+  });
+});
+
+// ── QA regressions: input validation, spelling, the frame, the gamut ──
+
+
+describe("temperamentum — input is validated, not clamped or ignored", () => {
+  test("a non-positive or malformed ratio throws RangeError instead of hanging", () => {
+    assert.throws(() => buildTemper({ scale: ["1/1", "0/1", "9/8", "5/4", "4/3", "3/2", "5/3"] }), RangeError);
+    const t = buildTemper();
+    for (const bad of ["0/1", "-5", "1/4abc", "abc", ""]) assert.throws(() => t.ratio(bad), RangeError, bad);
+  });
+
+  test("an empty scale throws rather than falling back to pythagorean", () => {
+    assert.throws(() => buildTemper({ scale: "" }), RangeError);
+    assert.throws(() => buildTemper({ scale: [] }), RangeError);
+  });
+
+  test("comma outside [0, 1], a bad root, a4 or transpose throw", () => {
+    assert.throws(() => buildTemper({ tuning: "meantone", comma: 2 }), RangeError);
+    assert.throws(() => buildTemper({ tuning: "meantone", comma: -0.1 }), RangeError);
+    assert.throws(() => buildTemper({ tuning: "meantone", comma: "1/4abc" }), RangeError);
+    assert.throws(() => buildTemper({ root: 12 }), RangeError);
+    assert.throws(() => buildTemper({ root: 1.5 }), RangeError);
+    assert.throws(() => buildTemper({ a4: 0 }), RangeError);
+    assert.throws(() => buildTemper({ a4: NaN }), RangeError);
+    assert.throws(() => buildTemper({ transpose: 0.5 }), RangeError);
+    assert.equal(buildTemper({ tuning: "meantone", comma: "1/3" }).comma, 1 / 3);
+  });
+
+  test("an unknown option key throws", () => {
+    assert.throws(() => buildTemper({ tunning: "equal" }), /unknown option.*tunning/);
+  });
+
+  test("a non-positive frequency throws RangeError", () => {
+    const t = buildTemper();
+    assert.throws(() => t.nota(-1), RangeError);
+    assert.throws(() => t.nota({ hz: 0 }), RangeError);
+  });
+});
+
+describe("nota — spelling and octave", () => {
+  const t = buildTemper();
+  test("an accidental carries the pitch across C", () => {
+    assert.equal(t.nota("B#4").midi, 72);
+    assert.equal(t.nota("Cb4").midi, 59);
+  });
+
+  test("a written flat stays a flat", () => {
+    assert.equal(t.nota("Db4").spn, "Db4");
+    assert.equal(t.nota({ spn: "Gb4" }).spn, "Gb4");
+    assert.equal(t.nota("C#4").spn, "C#4");
+  });
+
+  test("a GABC letter under an f-clef reads as notatio reads it", () => {
+    for (const [clef, letter] of [["f3", "h"], ["f4", "j"], ["f3", "k"], ["c3", "h"]]) {
+      const tab = tonus.notatio(tonus.cantus({ gabc: `(${clef}) A(${letter})` })[0]).tabula;
+      assert.equal(t.nota({ gabc: letter, clef }).spn, tab[0].spn, `${letter} under ${clef}`);
+    }
+    assert.equal(t.nota({ gabc: "h", clef: "f3" }).spn, "F3");
+  });
+});
+
+describe("ratio — exact display and the folded match", () => {
+  test("an exact fraction displays reduced, as written", () => {
+    const t = buildTemper();
+    assert.equal(t.ratio("2187/2048").display, "2187:2048");
+    assert.equal(t.ratio("6/4").display, "3:2");
+    assert.equal(t.ratio("2").display, "2:1");
+  });
+
+  test("a pitch class below the root is found", () => {
+    const t = buildTemper({ mode: 1 });
+    assert.equal(t.ratio("16/9").step?.nomen, "Cesolfaut");
+    assert.equal(t.ratio("1/2").step?.role, "finalis");
+    assert.equal(t.ratio("3/2").step?.role, "tenor");
+  });
+});
+
+describe("modus — steps read against the mode asked for, in the modes' frame", () => {
+  test("modus(n) reads roles against n, not the context's mode", () => {
+    const t = buildTemper();
+    for (let n = 1; n <= 8; n++) {
+      assert.equal(t.modus(n).finalis.step.role, "finalis", `mode ${n}`);
+      assert.equal(t.modus(n).reciting.step.role, "tenor", `mode ${n}`);
+    }
+  });
+
+  test("modus and gamut agree on the frame (C3 = 48)", () => {
+    const t = buildTemper({ mode: 1 });
+    const m = t.modus(1);
+    assert.deepEqual(m.ambitusNotes.map((n) => n.pitch.midi), t.gamut().map((p) => p.midi));
+    assert.equal(m.finalis.pitch.spn, "D3");
+    assert.equal(m.reciting.pitch.spn, "A3");
+    assert.equal(buildTemper().modus(8).reciting.pitch.spn, "C4", "the tenor above the final");
+  });
+});
+
+describe("the Guidonian gamut — every letter's syllables", () => {
+  // Received theory: the seven hexachords on Γ, C, F, G, c, f, g, read up the
+  // gamut [biblio: sunol-textbook, apel-chant].
+  const RECEIVED = [
+    [43, "Γ", "UT"], [45, "A", "RE"], [47, "B", "MI"], [48, "C", "FA UT"],
+    [50, "D", "SOL RE"], [52, "E", "LA MI"], [53, "F", "FA UT"], [55, "G", "SOL RE UT"],
+    [57, "a", "LA MI RE"], [58, "b", "FA"], [59, "♮", "MI"], [60, "c", "SOL FA UT"],
+    [62, "d", "LA SOL RE"], [64, "e", "LA MI"], [65, "f", "FA UT"], [67, "g", "SOL RE UT"],
+    [69, "aa", "LA MI RE"], [70, "bb", "FA"], [71, "♮♮", "MI"], [72, "cc", "SOL FA"],
+    [74, "dd", "LA SOL"], [76, "ee", "LA"],
+  ];
+  const ORDER = ["UT", "RE", "MI", "FA", "SOL", "LA"];
+  const t = buildTemper();
+  for (const [midi, name, syllables] of RECEIVED) {
+    test(`${name} is ${syllables.toLowerCase()}`, () => {
+      const step = t.gradus(midi);
+      assert.equal(step.name, name);
+      const got = step.variants.map((v) => v.solmization)
+        .sort((x, y) => ORDER.indexOf(y) - ORDER.indexOf(x)).join(" ");
+      assert.equal(got, syllables);
+    });
+  }
+  test("no hexachordum naturale above aa", () => {
+    for (const midi of [72, 74, 76])
+      assert.ok(!t.gradus(midi).variants.some((v) => v.hexachord === "naturale"), String(midi));
   });
 });
