@@ -418,11 +418,65 @@ describe("parseGABC", () => {
     // /[n] n times. Before, @ /0 and /[n] lost their marks, and /// was read
     // as a note that was not one.
     const sep = (g) => notes(`(c4) a(${g})`).map((e) => [e.neumeGroup, e.separator]);
-    assert.deepEqual(sep("f!h"), [[0, null], [1, "!"]]);
+    assert.deepEqual(sep("f!h"), [[0, null], [0, "!"]], "a cut parts no figure");
     assert.deepEqual(sep("f@h"), [[0, null], [0, "@"]], "a fusion parts no figure");
     assert.deepEqual(sep("f//h"), [[0, null], [1, "//"]]);
     assert.deepEqual(sep("f/0h"), [[0, null], [1, "/0"]]);
     assert.deepEqual(sep("f/[-1]g"), [[0, null], [1, "/[-1]"]]);
     assert.deepEqual(sep("f///h"), [[0, null], [1, "///"]]);
+  });
+});
+
+describe("parseGABC — gregorio's lyric spans, comments and marks", () => {
+  test("a translation in square brackets is not lyric, and gives no accent", () => {
+    const [n] = notes("(c4) Hic[Here](g)");
+    assert.equal(n.lyric, "Hic");
+    const [m] = notes("(c4) Hic[Hére](g)");
+    assert.equal(m.accent, false, "the translation's acute does not accent the syllable");
+  });
+
+  test("a parenthesis inside verbatim TeX or a translation opens no note group", () => {
+    assert.equal(notes("(c4) <v>(</v>a(g) b(h)<v>)</v>(g)").length, 3);
+    assert.equal(notes("(c4) Hic[<v>\\textup{(Hæc)}</v>](g) est(h)").length, 2);
+    assert.equal(notes("(c4) Hic[<v>\\textup{(Hæc)}</v>](g)")[0].lyric, "Hic");
+  });
+
+  test("a % comment runs to the end of its line; a file header ends at %%", () => {
+    assert.deepEqual(notes("(c4) a(g) % b(h) c(i)\nd(j)").map((e) => e.lyric), ["a", "d"]);
+    assert.equal(notes("name: x;\n%%\n(c4) a(g)").length, 1);
+  });
+
+  test("the uppercase O is the oriscus scapus", () => {
+    const [n] = notes("(c4) a(gO)");
+    assert.equal(n.oriscus, true);
+    assert.equal(n.shape, "oriscus");
+    assert.equal(notes("(c4) a(gO1h)")[0].oriscusDirection, "ascending");
+  });
+
+  test("a flat on another degree leaves B natural", () => {
+    // `ex` flattens E; the B after it was written without a flat.
+    assert.deepEqual(notes("(c4) A(exei)").map((e) => e.step), [51, 59]);
+  });
+
+  test("under a flat clef a natural on B holds through the word", () => {
+    assert.deepEqual(notes("(cb3) A(gyg)b(g)").map((e) => e.step), [59, 59]);
+    assert.deepEqual(notes("(cb3) A(gyg) b(g)").map((e) => e.step), [59, 58], "a new word restores the clef's flat");
+  });
+
+  test("`!` cuts the glyph and keeps the figure", () => {
+    assert.deepEqual(notes("(c3) A(g!hg)").map((e) => e.neumeGroup), [0, 0, 0]);
+  });
+
+  test("gregorio's numbered bars are their base bar", () => {
+    assert.deepEqual(rests("(c4) a(g) (;1) b(h) (,2) c(g) (;8) d(h) (::)").map((r) => r.divisio), [";", ",", ";", "::"]);
+  });
+
+  test("r6–r8 are signs over a full note, not a hollow head", () => {
+    for (const r of ["r6", "r7", "r8"]) assert.equal(notes(`(c4) a(g${r})`)[0].hollow, false, r);
+    assert.equal(notes("(c4) a(gr)")[0].hollow, true);
+  });
+
+  test("a verbatim \\kern leaves no text", () => {
+    assert.equal(notes("(c4) <v>\\kern 6mm</v>A(g)")[0].lyric, "A");
   });
 });

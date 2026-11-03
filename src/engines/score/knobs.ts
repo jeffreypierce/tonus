@@ -29,7 +29,9 @@ type KnobName = "pondus" | "modulatio" | "cadentia" | "expressio";
 /** A knob: its level, 0..1, or an object of its fields with the level as `gradus` (0.5 when left out). */
 export type Knob<F> = number | (F & { gradus?: number });
 
-/** pondus, stress. `ictusBoost` sets both the ictus weight and its velocity. */
+/** pondus, stress. `ictusBoost` lengthens an ictic note, in the articulation
+ *  and again in the phrasing; it touches neither weight nor velocity. `accent`
+ *  is the phrasing's uniform velocity gain, every note alike. */
 export interface PondusFields {
   weights?: Partial<ArticulationWeights>;
   weightBase?: number;
@@ -40,7 +42,8 @@ export interface PondusFields {
   accent?: number;
 }
 
-/** modulatio, phrasing. `neumeArch` and `durArch` set the arch in weight and in velocity alike. */
+/** modulatio, phrasing. `neumeArch` and `durArch` are the arch across a
+ *  syllable's notes, in weight and in duration (the articulation). */
 export interface ModulatioFields {
   curve?: number;
   contourScale?: number;
@@ -84,8 +87,9 @@ export interface Knobs {
 
 export const KNOB_NAMES: readonly KnobName[] = ["pondus", "modulatio", "cadentia", "expressio"];
 
-// Which profile a field lives in. Three names stand in both (the ictus boost
-// and the neume arch, in weight and in velocity), and one override sets both.
+// Which profile a field lives in. One name stands in both, the ictus boost
+// (the articulation's lengthening at the ictus and the phrasing's), and one
+// override sets both.
 type Layer = "articulation" | "phrasing" | "both";
 
 // Every field, sorted under the knob that owns it. `weights` (pondus) is the
@@ -96,7 +100,7 @@ const FIELDS: Record<KnobName, Record<string, Layer>> = {
     ruleGain: "articulation", ictusBoost: "both", accent: "phrasing",
   },
   modulatio: {
-    contourScale: "articulation", neumeArch: "both", durArch: "both",
+    contourScale: "articulation", neumeArch: "articulation", durArch: "articulation",
     curve: "phrasing", contourVel: "phrasing", contourDur: "phrasing", lean: "phrasing", rush: "phrasing",
   },
   cadentia: {

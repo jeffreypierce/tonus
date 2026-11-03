@@ -64,6 +64,11 @@ function decodeTex(buf: string): { text: string; italic: boolean } {
   const italic = /\\itshape\b/.test(buf);
   const text = buf
     .replace(/\\pageref\{[^}]*\}/g, "")   // cross-refs to the paper book
+    // Spacing and colour commands take an argument that is no text: `\kern
+    // 6mm` read " 6mm" once only the command name was dropped.
+    .replace(/\\kern\s*-?[\d.]+\s*(?:mm|cm|in|pt|bp|dd|cc|pc|sp|em|ex)?/g, "")
+    .replace(/\\[hv]space\*?\{[^}]*\}/g, "")
+    .replace(/\\textcolor\{[^}]*\}/g, "")
     .replace(/\\greheightstar\b/g, "*")
     .replace(/\\ddag\b/g, "‡")
     .replace(/\\P\b/g, "¶")

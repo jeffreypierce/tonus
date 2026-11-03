@@ -254,14 +254,13 @@ describe("buildScore", () => {
 
   // The salicus is classified at SYLLABLE scope, and the exception is the
   // point. Its rule reads the oriscus on the next-to-last note of an ascent;
-  // 41 of the corpus's 255 salici are written across a figure boundary, the
-  // oriscus in one figure and the summit in the next. Splitting first severed
-  // them and the count fell to 251 — narrowing Cardine's definition by
-  // refactoring rather than by ruling.
+  // a salicus may be written across a spacing separator, the oriscus in one
+  // figure and the summit in the next. Splitting first would sever it —
+  // narrowing Cardine's definition by refactoring rather than by ruling.
   test("a salicus split across figures keeps its name", () => {
     // The oriscus (o) on the second note of a three-note ascent, with the
     // figure broken before the summit.
-    const score = buildScore(makeChant("(c4) a(fgo!h) (::)"));
+    const score = buildScore(makeChant("(c4) a(fgo/h) (::)"));
     const syl = score.phrases[0].syllables.find((s) => s.notes.length === 3);
     assert.ok(syl, "the three-note ascent parsed");
     assert.ok(syl.notes.some((n) => n.context.oriscus), "the oriscus survived parsing");
@@ -409,7 +408,7 @@ describe("the ritard into a close", () => {
 
 describe("tabula figure grouping", () => {
   test("tabula exposes neumeGroup and per-figure neumeIndex", () => {
-    const rows = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).tabula;
+    const rows = buildScore(makeChant("(c4) Ky(gh/gg)ri(h)e(g.) (::)")).tabula;
     const syl0 = rows.filter((r) => r.syllableIndex === 0);
     assert.deepEqual(syl0.map((r) => r.neumeGroup), [0, 0, 1, 1]);
     assert.deepEqual(syl0.map((r) => r.neumeIndex), [0, 1, 0, 1]);
@@ -621,5 +620,61 @@ describe("written heads — liquescence, oriscus, hollow, signa", () => {
     assert.equal(head("gr3")[4], "circulus");
     assert.equal(head("gr4")[4], "semicirculus");
     assert.equal(head("gr5")[4], "semicirculusReversus");
+  });
+});
+
+describe("buildScore — the incise, the mode, the melisma", () => {
+  test("the first compound beat of an incise is arsic, even on a fall", () => {
+    const [first] = buildScore(makeChant("(c4) A(hg) b(f) c(e) (::)")).phrases[0].syllables[0].notes;
+    assert.equal(first.performance.rhythmicShape, "arsic");
+  });
+
+  test("two bars with no note between them close one phrase, under the stronger", () => {
+    const score = buildScore(makeChant("(c4) a(g) (;) (::) b(h) (::)"));
+    assert.equal(score.phrases.length, 2);
+    assert.equal(score.phrases[0].divisio.divisio, "::");
+    assert.equal(score.metrics.phraseCount, 2);
+  });
+
+  test("a cadence's target is read in the chant's mode, whatever the tuning's", async () => {
+    const { temperamentum } = await import("../dist/index.js").then((m) => m.default);
+    // Mode 1 closes on D; a mode-7 tuning names D no role of its own.
+    const gabc = "(c4) A(f) b(e) c(d) (::)";
+    const plain = buildScore(makeChant(gabc, "1")).cadences.at(-1);
+    const tuned = buildScore(makeChant(gabc, "1"), { temperamentum: temperamentum({ mode: 7 }) }).cadences.at(-1);
+    assert.equal(plain.target, "finalis");
+    assert.equal(tuned.target, plain.target);
+    assert.equal(tuned.nomen, plain.nomen);
+  });
+
+  test("a run of monosyllables is no melisma: lean and rush leave it alone", () => {
+    const gabc = "(c4) et(g) in(h) te(g) ad(h) de(g) pro(h) me(g) (::)";
+    const leaned = buildScore(makeChant(gabc), { modulatio: { lean: 1, rush: 1 } }).tabula;
+    const plain = buildScore(makeChant(gabc), { modulatio: { lean: 0, rush: 0 } }).tabula;
+    // The cadence leans its last two notes; everything before it is untouched.
+    for (let i = 0; i < 5; i++) assert.equal(leaned[i].velocity, plain[i].velocity, `note ${i}`);
+  });
+});
+
+describe("inferMode — the compass about the final", () => {
+  const irOf = (midis) => ({
+    chant: {},
+    phrases: [{ syllables: [{ notes: midis.map((midi) => ({ pitch: { midi } })) }] }],
+  });
+
+  test("a melody a fourth below to a fifth above its final reads plagal", async () => {
+    const { inferMode } = await import("../dist/engines/score/infer.js");
+    // D final (62), reaching A below (57) and A above (69).
+    assert.equal(inferMode(irOf([62, 60, 57, 60, 62, 64, 65, 69, 65, 64, 62])), 2);
+  });
+
+  test("a melody from its final to the octave reads authentic", async () => {
+    const { inferMode } = await import("../dist/engines/score/infer.js");
+    assert.equal(inferMode(irOf([62, 65, 69, 72, 74, 72, 69, 67, 65, 64, 62])), 1);
+  });
+
+  test("a header mode wins", async () => {
+    const { inferMode } = await import("../dist/engines/score/infer.js");
+    assert.equal(inferMode({ ...irOf([62, 74, 62]), chant: { mode: "2" } }), 2);
   });
 });

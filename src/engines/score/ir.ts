@@ -26,14 +26,16 @@
 //
 // classifyGroup applies Carroll's three melodic rules in priority order
 // (Chironomy Ch. 4), with two conventional overrides (Ch. 5–6). Both are
-// documented at the function. The first compound beat of an incise is always
-// arsic (an incise never begins with thesis — Carroll p. 43); when the rules
-// tie, the shape alternates from the previous group.
+// documented at the function. The first compound beat of an incise is arsic
+// ahead of the three rules (an incise never begins with thesis — Carroll
+// p. 43); only the doubly-dotted clivis, a cadential figure, outranks it. When
+// the rules tie, the shape alternates from the previous group.
 //
 // Modeled: the compound-beat classification, the per-note rhythmic index, and
 // the observable Le Guennant rhythmic types (IV–VIII; classifyRhythmicType).
-// Not yet: Carroll's textual rules (word-accent → arsic, word-final → thetic —
-// they need a Latin accent model).
+// Not yet: Carroll's textual rules (word-accent → arsic, word-final → thetic).
+// The word accent is on every note (`context.accent`); the rules that would
+// read it are not written.
 import type { ArsisThesis, CompoundBeat, RhythmicType, ScoreIR, ParsedNote, Note, ParseResult, Phrase, Syllable } from "./types.js";
 import type { Scale } from "../temper/scale.js";
 import { toPitch } from "../temper/pitch.js";
@@ -128,7 +130,8 @@ function makeSyllable(lyric: string, notes: Note[]): Syllable {
 
 // ── Arsis/thesis classification ── (the model is in the module header above)
 // Carroll's three melodic rules, in priority order [biblio: carroll-chironomy, Ch. 4]:
-//   Rule 1 (incise unity): ictuses up to the melodic apex are arsic; after, thetic
+//   Rule 1 (incise unity): after the melodic apex, thetic (the rise to it is
+//           read by rules 2 and 3)
 //   Rule 2 (relative ictus pitch): higher ictus → arsic; lower → thetic
 //   Rule 3 (neume slope): rising notes → arsic; falling → thetic
 // Conventional overrides (Ch. 5–6): salicus always arsic; doubly-dotted clivis
@@ -200,15 +203,22 @@ function classifyGroup(
     return "thetic";
   }
 
+  // An incise never begins with thesis (Carroll p. 43), so its first compound
+  // beat is arsic before any of the three rules is read; only the cadential
+  // clivis above outranks it. The slope rule once ran first, and an incise
+  // opening on a falling neume began thetic.
+  if (!prev) return "arsic";
+
   const groupIctusMidi = group.ictusMidi ?? group.notes[0]!.pitch.midi;
 
-  // Rule 1: incise unity — at or after the apex, everything thetic.
-  if (prev && prev.ictusMidi !== undefined && prev.ictusMidi >= apexMidi) {
+  // Rule 1: incise unity — once the apex is passed, everything thetic. The
+  // rising half is left to rules 2 and 3, which read it beat by beat.
+  if (prev.ictusMidi !== undefined && prev.ictusMidi >= apexMidi) {
     return "thetic";
   }
 
   // Rule 2: relative ictus pitch.
-  if (prev && prev.ictusMidi !== undefined) {
+  if (prev.ictusMidi !== undefined) {
     if (groupIctusMidi > prev.ictusMidi) return "arsic";
     if (groupIctusMidi < prev.ictusMidi) return "thetic";
   }
@@ -217,9 +227,6 @@ function classifyGroup(
   const slope = groupSlope(group.notes);
   if (slope > 0) return "arsic";
   if (slope < 0) return "thetic";
-
-  // Default: first group of a piece is arsic (Carroll: never begin with thesis).
-  if (!prev) return "arsic";
 
   // Tie-breaker: alternate from previous.
   return prev.shape === "arsic" ? "thetic" : "arsic";
@@ -357,6 +364,14 @@ export function buildIR(
         currentPhrase.syllables.push(makeSyllable(currentLyric, currentNotes));
         currentLyric = null;
         currentNotes = [];
+      }
+      // Two bars with no note between them close one phrase, not two: the
+      // second is the same pause written again (`(;) (::)`), and the stronger
+      // of the two stands. A bar before any note opens nothing.
+      if (currentPhrase.syllables.length === 0) {
+        const last = phrases[phrases.length - 1];
+        if (last?.divisio && event.duration > last.divisio.duration) last.divisio = event;
+        continue;
       }
       currentPhrase.divisio = event;
       phrases.push(currentPhrase);

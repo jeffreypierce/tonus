@@ -1,15 +1,15 @@
 // ---------------------------------------------------------------------------
 // engines/score/articulation — note-level articulation profiles
 // ---------------------------------------------------------------------------
-// The pondus ("weight") tables. Each GABC performance mark — episema, quilisma,
-// liquescent, strophicus, oriscus, ictus — carries a weight delta and a
-// duration delta that the parser folds into a note's weight and duration (see
-// the tanh compressor in parse.ts). The signs encode the semiological reading of
-// the mark [biblio: cardine-semiology], and the durational values the Solesmes
-// rhythmic tradition [biblio: desrocquettes-values, liber-usualis]: POSITIVE
-// lengthens/stresses, NEGATIVE lightens/shortens. So an episema lengthens
-// (+0.9 duration), a liquescent is a passing lightening (−0.4 weight), an
-// uppercase-syllable note is de-stressed (−0.7).
+// The pondus ("weight") tables. Each GABC performance mark — the episemata,
+// the mora, quilisma, liquescent, strophicus, oriscus — carries a weight delta
+// and a duration delta that the parser folds into a note's weight and duration
+// (see the tanh compressor in parse.ts). The signs encode the semiological
+// reading of the mark [biblio: cardine-semiology], and the durational values
+// the Solesmes rhythmic tradition [biblio: desrocquettes-values,
+// liber-usualis]: POSITIVE lengthens/stresses, NEGATIVE lightens/shortens. So
+// a mora vocis lengthens (+0.9 duration), a liquescent is a passing
+// lightening (−0.4 weight), a punctum inclinatum is de-stressed (−0.7).
 //
 // Three profiles anchor the pondus knob (knobs.ts) at 0, 0.5 and toward 1:
 //   restrained — Cardine's semiological reading: rules present but soft-spoken.
@@ -32,12 +32,16 @@ export interface BuildArticulationOptions {
 }
 
 const BASE_WEIGHTS: ArticulationWeights = {
-  // Ictus — the rhythmic footfall (parse.ts's three-rule assignment): a stress
-  // and a slight broadening.
+  // The written episemata — the vertical (') and the horizontal (_) — a
+  // stress and a slight broadening. These weigh the MARKS the source writes,
+  // not the ictus the Liber's rules place (ictus.ts): a placed ictus is
+  // lengthened only by `ictusBoost`.
   ictusWeight: 0.9,
   ictusDuration: 0.35,
-  // Episema — the horizontal episema is the Solesmes lengthening mark; the note
-  // is broadened but only lightly stressed. Double episema broadens further.
+  // Mora vocis — the dot (.), the Solesmes doubling of the note: broadened,
+  // only lightly stressed; the double dot (..) broadens further. The keys say
+  // "episema" for a historical reason and are kept so overrides stay valid;
+  // the horizontal episema is weighed with the vertical, above.
   episemaWeight: 0.6,
   episemaDuration: 0.9,
   episemaDoubleDuration: 0.6,
@@ -72,12 +76,15 @@ const BASE_WEIGHTS: ArticulationWeights = {
   initioMelismaDuration: 0.1,
   // Accent — a tonic word-accent lands a stress.
   accentWeight: 0.4,
-  // Uppercase — an emphasized-capital syllable in GABC is conventionally the
-  // quiet incipit letter of a chant, so it is de-stressed and slightly quickened.
+  // Uppercase — an uppercase pitch letter is the punctum inclinatum, the
+  // diamond of a descending run (climacus and its kin): de-stressed and
+  // slightly quickened, a note of passage.
   uppercaseWeight: -0.7,
   uppercaseDuration: -0.2,
   // Repercussion (pressus) — like the quilisma, the weight falls on the note
-  // *before* the repercussed unison; the oriscus element itself is light.
+  // *before* the repercussed unison. Where the repeat is an oriscus,
+  // repercussionOriscusWeight takes some of that back from the note before:
+  // an oriscus pair leans less than a pressus.
   repercussionPrevWeight: 0.5,
   repercussionPrevDuration: 0.4,
   repercussionOriscusWeight: -0.5,
@@ -86,8 +93,10 @@ const BASE_WEIGHTS: ArticulationWeights = {
   oriscusWeight: -0.3,
   oriscusDuration: -0.15,
   oriscusPrevWeight: 0.3,
-  // Break (a neume-internal division `!`/`/`) marks a fresh onset → a stress;
-  // dash (a bare context, e.g. an unaccented syllable) lightens and quickens.
+  // Break (a spacing separator inside a syllable, `/` `//` `/0` `/[n]`) marks
+  // a fresh onset → a stress. The cut `!` and the fusion `@` part no figure
+  // and take none. Dash (`-` before a pitch, the initio debilis, the weak
+  // first note of a neume) lightens and quickens.
   breakWeight: 0.6,
   dashWeight: -0.8,
   dashDuration: -0.2,
@@ -105,8 +114,9 @@ const BASE_WEIGHTS: ArticulationWeights = {
 //   durationBase/Gain/Min/Max — the same shape applied to duration deltas, clamped.
 //   ruleGain         — global authority of the mark rules vs. positional shaping.
 //   contourScale     — how much melodic contour (rise/fall) colours velocity.
-//   neumeArch/durArch— the within-neume rise-and-fall (see phrasing.ts's arch).
-//   ictusBoost       — a final multiplier on ictus notes.
+//   neumeArch/durArch— the rise-and-fall across a syllable's notes, in weight
+//                      and in duration (parse.ts's finalization pass).
+//   ictusBoost       — a final multiplier on the duration of ictic notes.
 // All tuned by ear; the ordering across profiles is the doctrine, the values are not.
 export const ARTICULATION_PROFILES: Record<ArticulationType, ArticulationProfile> = {
   restrained: {

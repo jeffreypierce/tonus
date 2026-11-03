@@ -15,10 +15,13 @@ const ARCH = "(c4) A(f)scen(g)dit(a) et(g) des(f)cen(dc)dit.(cd..) (::)";
 describe("metrics — melodic-interval statistics", () => {
   const p = buildScore(makeChant(ARCH)).metrics;
 
-  test("motus classifies each adjacent motion as step / skip / leap", () => {
-    const { step, skip, leap } = p.intervals.motus;
+  test("motus classifies each adjacent motion as unison / step / skip / leap", () => {
+    const { unison, step, skip, leap } = p.intervals.motus;
     // Every within-phrase motion is counted exactly once.
-    const total = step + skip + leap;
+    const total = unison + step + skip + leap;
+    const motions = Object.values(p.intervals.histogram).reduce((s, n) => s + n, 0);
+    assert.equal(total, motions);
+    assert.equal(unison, p.intervals.histogram[0] ?? 0, "a repeated pitch is no step");
     assert.ok(total > 0);
     // This line is mostly stepwise.
     assert.ok(step >= skip + leap);

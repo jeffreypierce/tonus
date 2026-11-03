@@ -41,8 +41,9 @@ export interface IntervalStats {
   maxLeap: number;
   /** Fraction of motions that are leaps (≥ a fourth, 5+ semitones). */
   leapRate: number;
-  /** Motion by class: step (1–2 st), skip (a third, 3–4), leap (a fourth+, 5+). */
-  motus: { step: number; skip: number; leap: number };
+  /** Motion by class: unison (a repeated pitch, 0 st), step (a second, 1–2),
+   *  skip (a third, 3–4), leap (a fourth or wider, 5+). */
+  motus: { unison: number; step: number; skip: number; leap: number };
 }
 
 /** The melodic arch of the piece: where it begins, peaks, and ends, and its shape. */
@@ -54,9 +55,10 @@ export interface Arcus {
   /** Last note's MIDI. */
   final: number;
   /**
-   * Signed arch index: how much the melody rises to its peak versus where it
-   * settles. +1 a full arch (rises high, returns low), 0 flat/monotonic,
-   * negative when it ends above where it began relative to the climb.
+   * Arch index: the fall from the peak to the last note, over the climb from
+   * the first note to the peak. Never negative: 0 when the melody ends on its
+   * peak (or never climbs), 1 when it returns to where it began, above 1 when
+   * it ends below its first note.
    */
   archIndex: number;
 }
@@ -107,7 +109,7 @@ export function computeMetrics(phrases: Phrase[]): Metrics {
   // Interval statistics — adjacent notes WITHIN a phrase; prevMidi resets to null
   // at each phrase so a breath across a divisio is not counted as a leap.
   const histogram: Record<number, number> = {};
-  let motions = 0, stepCount = 0, skipCount = 0, leapCount = 0, maxLeap = 0;
+  let motions = 0, unisonCount = 0, stepCount = 0, skipCount = 0, leapCount = 0, maxLeap = 0;
   let prevMidi: number | null = null;
 
   // Tessitura + arch: running MIDI sum, the first note, the peak, the last note.
@@ -162,7 +164,8 @@ export function computeMetrics(phrases: Phrase[]): Metrics {
           const abs = Math.abs(iv);
           motions++;
           if (abs > maxLeap) maxLeap = abs;
-          if (abs <= 2) stepCount++;
+          if (abs === 0) unisonCount++;
+          else if (abs <= 2) stepCount++;
           else if (abs <= 4) skipCount++;
           else leapCount++;
         }
@@ -210,7 +213,7 @@ export function computeMetrics(phrases: Phrase[]): Metrics {
   const tessitura = noteCount > 0 ? midiSum / noteCount - lastMidi : null;
 
   // Arch: the climb to the peak vs. the descent to the close, normalized by the
-  // total climb so a full rise-and-return reads ~+1 and a monotone rise reads ~0.
+  // total climb so a full rise-and-return reads 1 and a monotone rise reads 0.
   let arcus: Arcus | null = null;
   if (firstMidi !== null) {
     const climb = peakMidi - firstMidi;
@@ -222,7 +225,7 @@ export function computeMetrics(phrases: Phrase[]): Metrics {
     histogram,
     maxLeap,
     leapRate: motions > 0 ? leapCount / motions : 0,
-    motus: { step: stepCount, skip: skipCount, leap: leapCount },
+    motus: { unison: unisonCount, step: stepCount, skip: skipCount, leap: leapCount },
   };
 
   const melismaCadential = cadentialMelismas.length > 0

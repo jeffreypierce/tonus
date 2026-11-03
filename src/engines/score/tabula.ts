@@ -1,4 +1,4 @@
-import type { ScoreIR, Note, Neume, LyricRun } from "./types.js";
+import type { ScoreIR, Note, Neume, LyricRun, Syllable } from "./types.js";
 import { MODES } from "../temper/modes.js";
 import {
   buildPhrasing,
@@ -163,6 +163,9 @@ export function computeTabula(
   const annotated: AnnotatedNote[] = [];
   type RestEntry = { type: "rest"; divisio: string; duration: number };
   const flatForPhrasing: Array<Note | RestEntry> = [];
+  // Each note's syllable, for the phrasing's melisma reading: one Syllable
+  // object per syllable, so it is its own key.
+  const syllableOf = new Map<Note, Syllable>();
 
   for (let pi = 0; pi < ir.phrases.length; pi++) {
     const phrase = ir.phrases[pi];
@@ -181,6 +184,7 @@ export function computeTabula(
           neume: syl.neume,
         });
         flatForPhrasing.push(note);
+        syllableOf.set(note, syl);
       }
       si++;
     }
@@ -208,6 +212,7 @@ export function computeTabula(
       profile,
       tenorPc,
       finalPc,
+      syllableOf,
     );
 
     for (let i = 0; i < shaped.length && i < annotated.length; i++) {

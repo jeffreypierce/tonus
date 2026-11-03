@@ -112,11 +112,11 @@ export interface Context {
    *  the glyph with no space (the pieces stay one neume), `@` fuses two glyphs
    *  into one, `/` adds the small space between elements, `//` the larger,
    *  `/0` half the small, `/[n]` n times it. null otherwise. `neumeGroup`
-   *  counts every one of them but `@` as a new figure. */
+   *  counts every one of them but `!` and `@` as a new figure. */
   separator: string | null;
   /** The engraver asked for a line break BEFORE this note — GABC's `z` (and
-   *  `Z`, its page-break sibling, honoured the same way since tonus paginates
-   *  nothing). An editor who set a chant chose where its lines end, and that
+   *  `Z`, its ragged sibling, with their `+`/`-` custos forms; not `z0`, the
+   *  custos alone). An editor who set a chant chose where its lines end, and that
    *  choice carries information a width cannot: a break at the right place is
    *  an editorial reading of the piece. Where it is absent the layout decides. */
   lineBreak?: boolean;
@@ -237,8 +237,6 @@ export interface PhrasingProfile {
   contourDur: number;
   velSpread: number;
   ictusBoost: number;
-  neumeArch: number;
-  durArch: number;
   /** How much a REAL note is leaned into (louder, longer): in a long melisma
    *  the first and last note, the turning points and the notes on the tenor
    *  or the final; at a cadence the note before the final when it comes by
@@ -290,11 +288,11 @@ export interface ParsedNote {
    *  the glyph with no space (the pieces stay one neume), `@` fuses two glyphs
    *  into one, `/` adds the small space between elements, `//` the larger,
    *  `/0` half the small, `/[n]` n times it. null otherwise. `neumeGroup`
-   *  counts every one of them but `@` as a new figure. */
+   *  counts every one of them but `!` and `@` as a new figure. */
   separator: string | null;
   /** The engraver asked for a line break BEFORE this note — GABC's `z` (and
-   *  `Z`, its page-break sibling, honoured the same way since tonus paginates
-   *  nothing). An editor who set a chant chose where its lines end, and that
+   *  `Z`, its ragged sibling, with their `+`/`-` custos forms; not `z0`, the
+   *  custos alone). An editor who set a chant chose where its lines end, and that
    *  choice carries information a width cannot: a break at the right place is
    *  an editorial reading of the piece. Where it is absent the layout decides. */
   lineBreak?: boolean;
