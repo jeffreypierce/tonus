@@ -18,12 +18,14 @@ export interface Interval {
   consonance: Consonance;
 }
 
-// The three-tier consonance taxonomy [biblio: schulter-harmony] (the same table
-// stated at ../../../docs/api/tuning.md).
-// Note that the perfect fourth is deliberately NOT perfect here: in medieval counterpoint the P4 above the bass
-// is treated as a dissonance, unlike the melodic P4. So P1/P5/P8 are perfect,
-// the thirds and sixths imperfect, and everything else — including P4 and the
-// tritone — dissonant.
+// The three-tier consonance grade is the classification of counterpoint from
+// the fourteenth century on: P1/P5/P8 perfect, the thirds and sixths
+// imperfect, everything else dissonant, the fourth included, because a fourth
+// above the lowest voice was treated as a dissonance. It is a grade of
+// simultaneities, not of melody, where the fourth is a consonance throughout.
+// Earlier (thirteenth-century) theory ranked the fourth with the fifth
+// [biblio: schulter-harmony]; the grade here follows the later practice and
+// is stated at ../../../docs/api/tuning.md.
 const PERFECT_CLASSES = new Set(["P1", "P5", "P8"]);
 const IMPERFECT_CLASSES = new Set(["m3", "M3", "m6", "M6"]);
 

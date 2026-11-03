@@ -59,3 +59,11 @@ describe("MODES.modulations — Rockstro's chart", () => {
     });
   }
 });
+
+describe("MODES.ambitus — Rockstro's Range column", () => {
+  for (const [n, row] of Object.entries(CHART)) {
+    test(`mode ${n}: the range is the octave above the chart's low note`, () => {
+      assert.deepEqual(MODES.get(Number(n)).ambitus, { lowest: row.low, highest: row.low + 12, span: 12 });
+    });
+  }
+});

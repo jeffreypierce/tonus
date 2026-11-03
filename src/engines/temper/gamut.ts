@@ -2,7 +2,7 @@
 // engines/temper/gamut — modal pitch collection
 // ---------------------------------------------------------------------------
 
-import { MODES } from "./modes.js";
+import { getMode } from "./modes.js";
 import { toPitch } from "./pitch.js";
 import type { Pitch } from "./pitch.js";
 import type { Scale } from "./scale.js";
@@ -15,9 +15,8 @@ export interface GamutOptions {
 }
 
 export function buildGamut(scala: Scale, opts: GamutOptions = {}): Pitch[] {
-  const modeData = MODES.get(scala.mode);
-  if (!modeData)
-    throw new RangeError(`Unknown mode: ${scala.mode}. Supported: 1–8.`);
+  // temperamentum has already refused any mode outside 1–8.
+  const modeData = getMode(scala.mode);
 
   const low = opts.span?.[0] ?? modeData.ambitus.lowest + 48;
   const high = opts.span?.[1] ?? modeData.ambitus.highest + 48;

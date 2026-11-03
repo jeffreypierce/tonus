@@ -2,7 +2,7 @@
 // engines/temper/pitch — Pitch type, input parsing, and scale binding
 // ---------------------------------------------------------------------------
 
-import { NAME_TO_CHROMA, SOLFEGE_TO_CHROMA, SHARP_SPELLING, FLAT_SPELLING, PREFER_FLAT_PCS, GUIDO_TO_PC } from "./data/constants.js";
+import { SOLFEGE_TO_CHROMA, SHARP_SPELLING, FLAT_SPELLING, PREFER_FLAT_PCS, GUIDO_TO_PC } from "./data/constants.js";
 import { gabcToMidi } from "./gabc.js";
 import { MODES } from "./modes.js";
 import { midiToHz } from "./scale.js";
@@ -31,7 +31,7 @@ export type PitchInput =
   | { spn: string }
   | { solfege: string; oct?: number }                              // modern fixed-do
   | { solmization: string; hexachord?: "durum" | "naturale" | "molle"; oct?: number }  // medieval
-  | { gabc: string; clef?: string; oct?: number };
+  | { gabc: string; clef?: string };                                // the clef fixes the octave
 
 // Context passed alongside bare string input for GABC/medieval resolution
 export interface PitchContext {
@@ -119,8 +119,10 @@ export function toPitch(input: PitchInput, scale: Scale, prefer?: "flat" | "shar
   //
   // The Graduale only ever writes B-flat (pc 10, the bmolle), so the corpus
   // never reached the gap; `notatio` passes the hint because a caller may set
-  // any GABC accidental on any degree.
-  const useFlat = prefer ? prefer === "flat" : PREFER_FLAT_PCS.has(pc);
+  // any GABC accidental on any degree. A spelled input ("Db4", { spn: "Gb4" })
+  // carries its own hint.
+  const hint = prefer ?? writtenAccidental(input);
+  const useFlat = hint ? hint === "flat" : PREFER_FLAT_PCS.has(pc);
   const sp = useFlat ? FLAT_SPELLING[pc]! : SHARP_SPELLING[pc]!;
   const accStr = sp.acc === -1 ? "b" : sp.acc === 1 ? "#" : "";
   const spn = `${sp.step}${accStr}${oct}`;
@@ -128,13 +130,11 @@ export function toPitch(input: PitchInput, scale: Scale, prefer?: "flat" | "shar
   return { midi, pc, oct, acc: sp.acc, spn, hz, offset, bend, ratio };
 }
 
-// ── scaleDegreeInMode ──
-export function scaleDegreeInMode(midi: number, mode: number): number | null {
-  const modeData = MODES.get(mode);
-  if (!modeData) return null;
-  const pc = ((midi % 12) + 12) % 12;
-  const idx = modeData.scalePcs.indexOf(pc);
-  return idx === -1 ? null : idx + 1;
+// The accidental an SPN input was written with, if any.
+function writtenAccidental(input: PitchInput): "flat" | "sharp" | undefined {
+  const s = typeof input === "string" ? input : typeof input === "object" && input && "spn" in input ? input.spn : null;
+  const m = s?.trim().match(/^[A-Ga-g]([#b])-?\d+$/);
+  return m ? (m[1] === "b" ? "flat" : "sharp") : undefined;
 }
 
 // ── Internal helpers ──
@@ -144,17 +144,21 @@ function clamp(n: number): number {
 }
 
 function hzToMidi(hz: number, a4 = 440): number {
+  if (!(Number.isFinite(hz) && hz > 0))
+    throw new RangeError(`A frequency must be a positive number of Hz (or a MIDI integer 0–127), got ${hz}`);
   return clamp(69 + 12 * Math.log2(hz / a4));
 }
+
+// The octave number belongs to the LETTER, so an accidental can carry the
+// pitch across C: B#4 is the C above B4 (MIDI 72), Cb4 the B below C4 (59).
+const LETTER_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
 function parseSpn(s: string): number {
   const m = s.trim().match(/^([A-Ga-g])([#b]?)(-?\d+)$/);
   if (!m) throw new Error(`Invalid scientific pitch name: "${s}"`);
   const [, letter, acc, octStr] = m;
-  const normalized = letter!.toUpperCase() + (acc === "b" ? "b" : acc === "#" ? "#" : "");
-  const pc = NAME_TO_CHROMA.get(normalized);
-  if (pc === undefined) throw new Error(`Unknown note name: "${normalized}"`);
-  return (parseInt(octStr!, 10) + 1) * 12 + pc;
+  const alter = acc === "#" ? 1 : acc === "b" ? -1 : 0;
+  return (parseInt(octStr!, 10) + 1) * 12 + LETTER_PC[letter!.toUpperCase()]! + alter;
 }
 
 function parseModernSolfege(s: string, oct: number): number {

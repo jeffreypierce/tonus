@@ -810,7 +810,7 @@ describe("getPsalm", () => {
   test("a verse is words, not one hyphenated word", () => {
     const [v] = getPsalm({ psalm: 1, mode: 1 });
     // Text first, then its notes.
-    assert.match(v.gabc, /Be\(f\)á\(h\)tus\(j\)/,
+    assert.match(v.gabc, /Be\(f\)á\(g\)tus\(h\)/,
       "syllable precedes its note group");
     assert.ok(!/\(\w+\)Be/.test(v.gabc), "no note group leads a syllable");
   });

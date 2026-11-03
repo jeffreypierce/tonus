@@ -10,7 +10,7 @@ export interface GuidonianVariant {
 
 export interface GuidonianEntry {
   hand: { finger: Finger; region: Region };
-  name: [string, string]; // [short, compound] e.g. ["d", "Desolre"]
+  name: [string, string]; // [short, compound] e.g. ["d", "Delasolre"]
   variants: GuidonianVariant[];
 }
 
@@ -34,6 +34,13 @@ export interface GuidonianEntry {
 // the medieval glyphs (GLYPH.flat / GLYPH.natural); these names stay letters,
 // because this table names joints rather than drawing them. After Suñol
 // [biblio: sunol-textbook] and Apel [biblio: apel-chant].
+//
+// THE TOP OF THE GAMUT. The seven hexachords start on Γ, C, F, G, c, f, g;
+// the last naturale (on c) ends at aa, the last molle (on f) at dd, the last
+// durum (on g) at ee. So cc is sol-fa (molle sol, durum fa: no naturale ut),
+// dd la-sol, ee la alone, and the compound names say as much: Cesolfa,
+// Delasol, Ela. The variants once listed a naturale for all three, a
+// hexachord on cc that the gamut does not have; the names were already right.
 // prettier-ignore
 export const GUIDONIAN_DATA = new Map<number, GuidonianEntry>([
   [43, { hand: { finger: "thumb",  region: "tip"   }, name: ["Γ",  "Gammaut"   ], variants: [{ hexachord: "durum",    solmization: "UT"  }] }],
@@ -55,7 +62,7 @@ export const GUIDONIAN_DATA = new Map<number, GuidonianEntry>([
   [69, { hand: { finger: "middle", region: "mid"   }, name: ["aa", "Alamire"   ], variants: [{ hexachord: "durum",    solmization: "RE"  }, { hexachord: "naturale", solmization: "LA"  }, { hexachord: "molle", solmization: "MI" }] }],
   [70, { hand: { finger: "ring",   region: "mid"   }, name: ["bb", "Befa"      ], variants: [{ hexachord: "molle",    solmization: "FA"  }] }],
   [71, { hand: { finger: "ring",   region: "mid"   }, name: ["♮♮", "Bemi"      ], variants: [{ hexachord: "durum",    solmization: "MI"  }] }],
-  [72, { hand: { finger: "ring",   region: "top"   }, name: ["cc", "Cesolfa"   ], variants: [{ hexachord: "durum",    solmization: "FA"  }, { hexachord: "naturale", solmization: "UT"  }, { hexachord: "molle", solmization: "SOL" }] }],
-  [74, { hand: { finger: "middle", region: "top"   }, name: ["dd", "Delasol"   ], variants: [{ hexachord: "durum",    solmization: "SOL" }, { hexachord: "naturale", solmization: "RE"  }, { hexachord: "molle", solmization: "LA" }] }],
-  [76, { hand: { finger: "middle", region: "super" }, name: ["ee", "Ela"       ], variants: [{ hexachord: "durum",    solmization: "LA"  }, { hexachord: "naturale", solmization: "MI"  }] }],
+  [72, { hand: { finger: "ring",   region: "top"   }, name: ["cc", "Cesolfa"   ], variants: [{ hexachord: "durum",    solmization: "FA"  }, { hexachord: "molle",    solmization: "SOL" }] }],
+  [74, { hand: { finger: "middle", region: "top"   }, name: ["dd", "Delasol"   ], variants: [{ hexachord: "durum",    solmization: "SOL" }, { hexachord: "molle",    solmization: "LA"  }] }],
+  [76, { hand: { finger: "middle", region: "super" }, name: ["ee", "Ela"       ], variants: [{ hexachord: "durum",    solmization: "LA"  }] }],
 ]);

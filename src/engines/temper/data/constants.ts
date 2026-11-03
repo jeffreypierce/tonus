@@ -2,51 +2,7 @@
 // engines/temper/data/constants — pitch-class vocabulary, solfège, intervals
 // ---------------------------------------------------------------------------
 
-/** 12 pitch-class names, index = pitch class 0–11. Sharp-biased except Eb/Ab/Bb. */
-export const PITCH_CLASS = [
-  "C",
-  "C#",
-  "D",
-  "Eb",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "Ab",
-  "A",
-  "Bb",
-  "B",
-] as const;
-
-/** Diatonic step letters in ascending order. */
-export const DIATONIC_STEPS = ["C", "D", "E", "F", "G", "A", "B"] as const;
-
-export type DiatonicStep = (typeof DIATONIC_STEPS)[number];
-
-/** Map any note name (including enharmonics) to its pitch class 0–11. */
-export const NAME_TO_CHROMA = new Map<string, number>([
-  ["C", 0],
-  ["B#", 0],
-  ["C#", 1],
-  ["Db", 1],
-  ["D", 2],
-  ["D#", 3],
-  ["Eb", 3],
-  ["E", 4],
-  ["Fb", 4],
-  ["E#", 5],
-  ["F", 5],
-  ["F#", 6],
-  ["Gb", 6],
-  ["G", 7],
-  ["G#", 8],
-  ["Ab", 8],
-  ["A", 9],
-  ["A#", 10],
-  ["Bb", 10],
-  ["B", 11],
-  ["Cb", 11],
-]);
+export type DiatonicStep = "C" | "D" | "E" | "F" | "G" | "A" | "B";
 
 // Modern fixed-do solfège → pitch class (input only; UT = C always)
 export const SOLFEGE_TO_CHROMA = new Map<string, number>([

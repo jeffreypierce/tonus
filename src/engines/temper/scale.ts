@@ -4,7 +4,7 @@
 // Builds the 12 pitch-class ratios for a temperament. The default is pure
 // Pythagorean — all intervals from the 3/2 fifth and the octave — because that
 // is the tuning of medieval theory from Boethius through the Guidonian gamut
-// [biblio: boethius-institutione, guidonian-gamut], and it is correct for
+// [biblio: boethius-institutione, schulter-harmony], and it is correct for
 // unaccompanied chant: melodic fifths/fourths are perfect, the narrow limma
 // (256/243) gives half-steps a keen leading quality, and the wide Pythagorean
 // third (81/64) never has to serve as a consonance.
@@ -89,54 +89,94 @@ export function approximate(value: number, maxDen = 1000): [number, number] {
   return [bestNum, bestDen];
 }
 
+function gcd(a: number, b: number): number {
+  while (b) [a, b] = [b, a % b];
+  return a;
+}
+
 export function toRatio(input: string): RatioResult {
   const r = parseStep(input);
   const cents = 1200 * Math.log2(r);
-  const [num, den] = approximate(r);
-  const display = den === 1 ? `${num}:1` : `${num}:${den}`;
+  // An exact fraction displays as written, reduced: "2187/2048" is already the
+  // apotome, and a Stern-Brocot search capped at denominator 1000 would print
+  // its nearest small neighbour (236:221) instead. Cents and decimals have no
+  // written fraction, so they take the approximation.
+  const exact = exactFraction(input);
+  const [num, den] = exact ?? approximate(r);
+  const display = `${num}:${den}`;
   return { ratio: r, cents, display };
 }
 
-function foldOct(r: number): number {
+function exactFraction(input: string): [number, number] | null {
+  const s = input.trim().split(/\s/)[0]!;
+  const m = s.match(/^(\d+)(?:[/:](\d+))?$/);
+  if (!m) return null;
+  const num = Number(m[1]);
+  const den = m[2] != null ? Number(m[2]) : 1;
+  const g = gcd(num, den);
+  return [num / g, den / g];
+}
+
+/** A positive ratio folded into the octave [1, 2). */
+export function foldOctave(r: number): number {
+  // Folding halves or doubles toward [1, 2); a ratio that is not a positive
+  // finite number never arrives, and would loop forever here.
+  if (!(r > 0) || !Number.isFinite(r)) throw new RangeError(`Cannot octave-fold ratio ${r}`);
   let x = r;
   while (x >= 2) x *= 0.5;
   while (x < 1) x *= 2;
   return x;
 }
 
-function parseComma(comma: number | string): number {
-  if (typeof comma === "number") return comma;
-  const s = comma.trim();
-  const slash = s.indexOf("/");
-  if (slash !== -1) {
-    const num = parseFloat(s.slice(0, slash));
-    const den = parseFloat(s.slice(slash + 1));
-    if (!Number.isFinite(num) || !Number.isFinite(den) || den === 0)
-      throw new RangeError(`Invalid comma fraction: "${s}"`);
-    return num / den;
+// The comma is the fraction of the syntonic comma each fifth gives up: 0 is
+// pure (Pythagorean), 1 narrows every fifth by a whole comma. Outside [0, 1]
+// there is no temperament the name describes, so the value is refused rather
+// than clamped behind the caller's back.
+export function parseComma(comma: number | string): number {
+  let n: number;
+  if (typeof comma === "number") {
+    n = comma;
+  } else {
+    const s = comma.trim();
+    const m = s.match(/^(\d+(?:\.\d+)?)(?:\/(\d+(?:\.\d+)?))?$/);
+    if (!m) throw new RangeError(`Invalid comma value: "${s}" (expected e.g. 0.25 or "1/4")`);
+    const den = m[2] != null ? Number(m[2]) : 1;
+    if (den === 0) throw new RangeError(`Invalid comma fraction: "${s}"`);
+    n = Number(m[1]) / den;
   }
-  const n = parseFloat(s);
-  if (!Number.isFinite(n)) throw new RangeError(`Invalid comma value: "${s}"`);
+  if (!Number.isFinite(n) || n < 0 || n > 1)
+    throw new RangeError(`comma must lie in [0, 1] (a fraction of the syntonic comma), got ${comma}`);
   return n;
 }
 
 // Parse a single pitch value using Scala convention:
 // period present → cents, slash or colon → ratio, bare integer → ratio over 1
+// A ratio must be a positive finite number: zero or a negative has no pitch
+// (and no logarithm), and the octave fold would never terminate on one.
+// Trailing junk inside the first token ("1/4abc") is refused rather than read
+// as its numeric prefix.
 export function parseStep(v: number | string): number {
-  if (typeof v === "number") return 2 ** (v / 1200);
-  const s = v.trim().split(/\s/)[0]!; // first token only (Scala allows trailing text)
+  if (typeof v === "number") {
+    if (!Number.isFinite(v)) throw new RangeError(`Invalid step value: ${v}`);
+    return 2 ** (v / 1200);
+  }
+  const s = v.trim().split(/\s/)[0] ?? ""; // first token only (Scala allows trailing text)
   const ratioMatch = s.match(/^(\d+)[/:](\d+)$/);
   if (ratioMatch) {
     const num = Number(ratioMatch[1]);
     const den = Number(ratioMatch[2]);
-    if (!Number.isFinite(num) || !Number.isFinite(den) || den === 0)
-      throw new RangeError(`Invalid ratio: "${s}"`);
+    if (!(num > 0) || !(den > 0) || !Number.isFinite(num / den))
+      throw new RangeError(`Invalid ratio: "${s}" (numerator and denominator must be positive)`);
     return num / den;
   }
-  const n = parseFloat(s);
-  if (!Number.isFinite(n)) throw new RangeError(`Invalid step value: "${s}"`);
-  if (s.includes(".")) return 2 ** (n / 1200); // cents
-  return n; // bare integer → ratio (e.g. 2 = 2/1)
+  if (/^-?\d*\.\d*$/.test(s) && /\d/.test(s)) return 2 ** (Number(s) / 1200); // cents
+  if (/^\d+$/.test(s)) {
+    const n = Number(s);
+    if (n > 0) return n; // bare integer → ratio (e.g. 2 = 2/1)
+  }
+  throw new RangeError(
+    `Invalid step value: "${v}". Use a ratio ("3/2", "3:2", "2"), positive, or cents with a period ("701.955").`,
+  );
 }
 
 export interface ScalaFile {
@@ -211,20 +251,18 @@ export function pythagoreanCentsByPc(): number[] {
 }
 
 function buildPythagoreanRatios(commaN: number): number[] {
-  const tf = commaN === 0
-    ? PURE_FIFTH
-    : PURE_FIFTH * Math.pow(1 / SYNTONIC_COMMA, Math.min(1, Math.max(0, commaN)));
+  const tf = commaN === 0 ? PURE_FIFTH : PURE_FIFTH * Math.pow(1 / SYNTONIC_COMMA, commaN);
   const out = new Array<number>(12);
   for (let k = 0; k < 12; k++) {
     const pc = FIFTH_TO_CHROM[k]!;
-    out[pc] = foldOct(tf ** k);
+    out[pc] = foldOctave(tf ** k);
   }
   // Anchor on C and fold each pitch class into the C-register [1, 2): the
   // table's contract is "ascending within the C octave, then normalized to
   // root". The E♭–G♯ chain reaches some pcs below C, so without this fold the
   // table comes out octave-scrambled (A at 27/32, a broken ratio() matcher).
   const root = out[0] ?? 1;
-  for (let i = 0; i < 12; i++) out[i] = foldOct((out[i] ?? 1) / root);
+  for (let i = 0; i < 12; i++) out[i] = foldOctave((out[i] ?? 1) / root);
   return out;
 }
 
@@ -240,7 +278,7 @@ const NATURAL_PCS = [0, 2, 4, 5, 7, 9, 11];
 // species of this one gamut, so its interval qualities emerge from *where the
 // final sits within the fixed tuning*, handled downstream by normalizeToRoot.
 // This yields the authentic per-mode qualities (a Dorian minor third, a
-// Mixolydian ♭7) and the honest syntonic wolf (D–A = 40/27 under
+// Mixolydian ♭7) and the genus's own syntonic wolf (D–A = 40/27 under
 // ptolemy-intense).
 //
 // Mapping the genus degree-per-mode onto scalePcs instead would force
@@ -251,7 +289,7 @@ function expandDiatonicSteps(diatonic: number[]): number[] {
   const base = buildPythagoreanRatios(0);
   const out = base.slice();
   for (let i = 0; i < 7 && i < diatonic.length; i++) {
-    out[NATURAL_PCS[i]!] = foldOct(diatonic[i]!);
+    out[NATURAL_PCS[i]!] = foldOctave(diatonic[i]!);
   }
   return out;
 }
@@ -304,8 +342,8 @@ const CHAIN_SPELLING = ["Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#
  * wide (737.6¢ at quarter-comma). That sign change is the thing a reader of
  * the slider is watching, and it is why `fromPure` is signed.
  *
- * Derived from the SAME walk `buildPythagoreanRatios` does, deliberately.
- * There is a closed form (1200·7 − 11·fifth, which agrees to the decimal),
+ * Derived from the SAME walk `buildPythagoreanRatios` does. There is a
+ * closed form (1200·7 − 11·fifth, which agrees to the decimal),
  * but two derivations of one number is how they drift apart.
  *
  * Null when no chain built the scale: a Ptolemaic genus and a custom Scala
@@ -366,7 +404,7 @@ export function buildRatios(opts: ScaleOpts = {}): Scale {
           "Custom scale must begin at 1/1 (a degree list) or end at 2/1 (Scala convention)",
         );
       }
-      parsed = parsed.map(foldOct);
+      parsed = parsed.map(foldOctave);
     }
     if (parsed.length === 7) {
       ratios = expandDiatonicSteps(parsed);
@@ -393,9 +431,10 @@ export function midiToHz(
   const pc = m % 12;
   const oct = Math.floor(m / 12) - 1;
   // Interval from A (pc=9) to target pc in cents, within the tuning.
-  // cents[] is root-normalized, and its octave folding differs by build path
-  // (the Pythagorean builder leaves below-root pcs negative; the diatonic-
-  // steps builder folds everything to [0,1200)). Place every pc in the
+  // cents[] is root-normalized: the table is divided by the root's ratio, so a
+  // pc below the root comes out negative (ratio < 1) and one above positive,
+  // and an engine-resolved table riding back in keeps the register it arrived
+  // in. Place every pc in the
   // C-register first — its height above pitch-class C within one octave —
   // so the A→pc displacement is correct regardless of root or tuning.
   const posC = (p: number): number => {
