@@ -12,7 +12,7 @@
   editorial calibration live in the sibling `tonus-enodatio` and re-enter only as
   generated data with provenance. And `score` analyzes while `inscriptio` draws
   (the rendering boundary): rendering is a standalone function taking a `Score`;
-  the two canonical analysis tracks ship with it (`tracks`), and custom tracks
+  three opt-in analysis tracks ship with it (`tracks`), and custom tracks
   live downstream on the geometry contract.
 - **The query/builder contract.** A no-match is `[]`; a malformed query throws.
   Builders throw on invalid input and carry an `errors` field for parse-level
@@ -38,7 +38,8 @@
 
 - **ESM only** — `type: "module"`, `.js` extensions on all imports (even `.ts` source files)
 - **`module: "NodeNext"`** — no `require()`, no CommonJS
-- **Strict mode** — no implicit any, no unchecked indexing
+- **Strict mode** (`strict: true`) — no implicit any. `noUncheckedIndexedAccess`
+  is not on; guard an index read where a miss is possible.
 - Use `type` imports for type-only imports:
   ```ts
   import type { Feast } from "./types.js";
@@ -122,14 +123,14 @@ theory and may be hand-authored here, with its `[biblio:]` citation.
 **The rendering boundary — `score` analyzes, `inscriptio` draws.** Rendering is
 not a property of an analysis result; it is a standalone function that _takes_ a
 `Score`. tonus inks **the score itself** — both notation species, layout, lyrics,
-declarative highlighting — plus the two **canonical analysis tracks**, opt-in
-through `inscriptio`'s `tracks` option (ruled 2026-07-28; previously downstream):
-_chironomia_ under quadrata, _tonarium_ under moderna, species-paired by the
-two-register principle. The tracks are still track-shaped inside the library:
+declarative highlighting — plus three **analysis tracks**, opt-in through
+`inscriptio`'s `tracks` option: _prosodia_, _chironomia_ and _tonarium_. Any
+track rides either species; pairing chironomia with quadrata and tonarium with
+moderna is the house default, not a constraint. The tracks are still track-shaped inside the library:
 they consume the same note anchors the geometry contract exports (never the
 notation's ink), and they cite corpus vocabulary (CADENTIAE) only as generated
 data with provenance. One emitter format: SVG. The crisp rule: `inscriptio` inks
-the score and its two tracks; any _other_ track is a downstream component on the
+the score and its three tracks; any _other_ track is a downstream component on the
 geometry contract.
 
 ---
@@ -150,6 +151,12 @@ tonus.festum({ nonsense: 1 }); // throws — unknown key, likely a typo
 The distinction: `[]` means "I searched and found nothing"; a throw means "I
 can't tell what you asked for." Silently resolving a malformed query to a
 plausible-looking answer hides the bug.
+
+Sanctioned exceptions, each documented in `docs/api/index.md`: `festum()` and
+`festum({})` answer for the epoch date; `corpus()` and `corpus({})` return the
+whole shelf's ledger. `pascha` and `corpus` are lookups that return one record,
+not an array. `census` answers for exactly one chant, so an id with no block
+throws.
 
 **Builder functions** return context objects, throw on invalid input:
 
@@ -261,22 +268,24 @@ score.errors; // → ParseError[] from GABC parse
 
 Callers check `.errors` before using the result. Downstream methods on a context object with errors should fail soft: return empty/null results, not throw.
 
-TypeScript handles type-level mistakes at compile time — no runtime guards needed for wrong argument types.
+The public API also validates JS callers at runtime: a wrong type or an
+unknown option key throws with guidance (`festum({ date: "xmas" })`,
+`temperamentum({ tuning: 42 })`, `notatio(null)`).
 
 ---
 
 ## Tests
 
 - `node:test` + `node:assert/strict` — no test framework
-- Import from `../../dist/index.js`, never from source
-- One test file per public API function
+- Import from `../dist/…`, never from source
+- Test the public API by preference; engine-level regression tests may import
+  `../dist/engines/*` where the public surface cannot reach the case
 - Name tests as full sentences
-- Test the public API, not engine internals
 
 ```mjs
 import test from "node:test";
 import assert from "node:assert/strict";
-import tonus from "../../dist/index.js";
+import tonus from "../dist/index.js";
 
 test("cantus: returns chants for mode 1", () => {
   const chants = tonus.cantus({ mode: 1 });

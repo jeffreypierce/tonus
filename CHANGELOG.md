@@ -2,6 +2,125 @@
 
 All notable changes to tonus. Newest first.
 
+## Unreleased
+
+A QA pass over the whole library: the code against received theory, the docs
+against the code. Most entries change output; under 0.x the next release is a
+minor. **Re-bake owed in tonus-corpus:** the parser changes move 222 of the
+7,718 shipped census blocks (`tests/census.test.mjs` holds the drift at a
+fixed ceiling until then), and CADENTIAE should be re-mined on the new engine.
+orreliquum must re-vendor: the Guidonian table, `modus()` and `MODES.ambitus`
+changed.
+
+### Calendar
+
+- **Breaking (output):** precedence follows Divino Afflatu. The excluding days
+  (Advent I, Ash Wednesday, the Lent Sundays, Holy Week, the Easter and
+  Pentecost octaves) lead any feast on them; Advent II–IV and the Septuagesima
+  Sundays yield only to I class, other Sundays only to I/II class; on equal
+  grade the temporale leads. Transfers are not modelled (calendar.md says so).
+- **Breaking (output):** before 1583 the fixed feasts and the Christmas,
+  Epiphany and Advent anchors are placed by the Julian calendar, so they line
+  up with the Julian Easter. Dates stay proleptic Gregorian. The default epoch
+  day now answers Pasc7-3.
+- Fixed placements: the Holy Name (Sunday of Jan 2–5, else Jan 2), the Sunday
+  in the Christmas octave (Dec 29–31, else Dec 30), Advent IV ferias stop at
+  Christmas Eve, the January Epiphany weeks stop at Septuagesima, and leap
+  years move the Feb 24–28 feasts a day (St Matthias on the 25th). No day in
+  1900–2100 now carries two temporale entries (3,852 did).
+- `marian` marks Our Lady's feasts (Purification, Annunciation, Lourdes,
+  Carmel, Rosary, Presentation, Ransom, Seven Sorrows added; St Joseph, St Anne,
+  St Joachim removed), which moves their Kyriale masses. `apostolic` holds SS
+  Philip & James on 05-01.
+- Years 1–99 are no longer remapped to the 1900s; `pascha` throws on a year
+  below 1 or a non-number; `festum` validates `from`/`to`, refuses `date`
+  mixed with a range, and an empty `nomen`. `pascha().baptism` is the Sunday
+  after the Epiphany.
+- The era view dates about 60 more feasts (Corpus Christi 1264, Trinity 1334,
+  the later saints by canonization).
+
+### Chant
+
+- **Breaking:** every chant verb shares one query guard. An empty query, or one
+  whose filters are all empty (`{ sort: "id" }`), throws at `proprium`,
+  `ordinarium`, `officium` and `psalmus` as at `cantus`; an unknown `sort`,
+  `cursus`, mode or differentia throws.
+- **Breaking (output):** `proprium` and `officium` keep the sung order unless
+  `sort` is given; a `festum` list sings each date's principal feast only;
+  `source` reads the books a chant is printed in.
+- `ordinarium`: the Asperges / Vidi aquam on Sundays only; Ite Ia in the Easter
+  octave only; the 1324 era rule reaches the Credos; an array `ordinary` works.
+- Compline and Prime open with the ferial *Deus in adiutorium* (not the
+  Pent12 Introit); the Candlemas Tract is gone from Compline; Triduum Compline
+  is the psalms and *Christus factus est*.
+- Syllabification follows the Solesmes books: the qu glide stays with q, a
+  diaeresis forces the split, clusters carry over (Chri-stus, ma-gnus), ex-
+  before a vowel keeps its x. Agreement with the corpus's printed breaks:
+  87.7% → 94.3% of 135,980 words.
+- Psalmody: the intonation opens the first verse only (every verse of the
+  Benedictus and Magnificat); the flex is sung, and † ‡ + are no longer sung
+  as syllables. Pointing is by syllable count; the docs say so.
+- The four ids the shelf shares with the Kyriale resolve to the shelf record.
+
+### Tuning
+
+- **Breaking:** the psalm tones re-transcribed from the Liber Usualis, from the
+  corpus's pointed psalms and Euouae endings. Tenors agree with `MODES`, every
+  termination ends on the note its code names, and the differentia codes are
+  the LU's (unknown codes throw). Tones III, IV E, V and VI intonations and
+  mediants are not corpus-attested and await a check against LU pp. 112–117.
+  No solemn mediants are transcribed.
+- **Breaking:** the Guidonian cc, dd and ee have no hexachordum naturale;
+  `modus()` sits in the C3 frame `gamut()` uses and reads roles against its own
+  mode; `MODES.ambitus` is Rockstro's one-octave Range.
+- **Breaking:** `temperamentum` rejects unknown keys and out-of-range `comma`,
+  `root`, `a4`, `transpose`; ratios reject zero, negatives and trailing junk (a
+  `0/1` scale step hung forever).
+- F-clefs read a fourth too low in `nota`; B♯ and C♭ crossed C an octave off;
+  a written flat now stays a flat; `ratio()` finds pitch classes below the root
+  and displays an exact fraction as written.
+
+### Score analysis
+
+- **Breaking (output):** GABC is parsed as gregorio reads it: `!` keeps one
+  figure, `z0` is a custos alone, uppercase `O` is an oriscus, an accidental
+  alters only its own degree, `[…]` translations and `<v>` spans open no note
+  groups, `%` comments are stripped, numbered bars read as their base bar.
+- **Breaking (output):** the first compound beat of an incise is arsic; two
+  bars with nothing between them close one phrase; `motus.step` no longer
+  counts unisons (new `motus.unison`).
+- `inferMode` reads authentic or plagal by the compass about the final
+  (30.6% → 61.9% accuracy with the header hidden).
+- Cadence target and name read in the chant's mode, not the tuning's;
+  lean/rush group by syllable.
+
+### Rendering
+
+- **Breaking:** `inscriptio` validates its options and theme (unknown keys, bad
+  enums, non-positive `width`/`scale`, non-array `tracks` throw).
+- **Breaking (output):** quadrata breaks systems between syllables, never
+  inside one (overruns at 500px over the Graduale: 778 → 6). In moderna a
+  numeric `scale` is the staff height, the canvas widens rather than clips,
+  `z` needs a `width`, and the default face is the house serif.
+- Tracks and moderna staff lines take the theme's ink (dark mode); moderna's
+  fixed sizes scale with the staff; font-family names and colours are escaped;
+  the porrectus' second note sits at the swash's foot.
+
+### Census, docs, tooling
+
+- `census({ score })` re-reads the chant at `notatio`'s defaults, so it always
+  equals `census({ id })`.
+- census.md rewritten to the page template with every example re-run; the
+  scalar slots that dominate `modal`, `chironomy` and `textual` are recorded
+  as a known limitation (the layout fix needs a re-bake).
+- Every docs page re-checked against the build: stale examples regenerated,
+  false claims corrected, missing options documented. COVERAGE has current
+  figures; BIBLIOGRAPHY entries carry anchors and name the computus as coded.
+- `package.json` exports put `types` first. New `mine:cadentiae` /
+  `bake:cadentiae` scripts. The engine fingerprint hashes the import closure
+  (its value changed). The boundary gate catches every import form. A comment
+  citing the gitignored `working/` tree fails the comment test.
+
 ## 0.17.0 — 2026-11-01
 
 The word accent, Rockstro's modes, the knobs alone, and the planets leave.

@@ -35,8 +35,9 @@ agent working in the repo; the detailed rules live in the standards docs below.
   provenance. The library never runs a census; it cites one.
 - **Rendering boundary** — `score` (via `notatio`) analyzes; `inscriptio`
   draws. Rendering is a standalone function taking a `Score`, not a method on
-  one. tonus inks the score; analysis *tracks* (overlays above/below the
-  staff) live downstream, built on the geometry contract `inscriptio` returns.
+  one. tonus inks the score and three opt-in analysis *tracks* (`prosodia`,
+  `chironomia`, `tonarium`, any species); any other track lives downstream,
+  built on the geometry contract `inscriptio` returns.
   One emitter format: SVG.
 
 Both are stated in full in `.claude/standards/CODE-STANDARDS.md` → *Boundaries*.
@@ -54,7 +55,7 @@ Both are stated in full in `.claude/standards/CODE-STANDARDS.md` → *Boundaries
 
 ## Register in one line
 
-Public API methods are **Latin nouns of action** (`cantus`, `festum`,
+Public API methods are **Latin nouns** (`cantus`, `festum`,
 `notatio`, `inscriptio`). Latin keys carry authentic Latin content (`nomen`,
 `modus`, `genus`); English keys carry machine codes/data (`mode`, `season`,
 `date`). Engine internals are English (`getFeast`, `buildScore`). Output data
@@ -62,8 +63,10 @@ is English. Option keys are addresses (may be Latin); their values are codes.
 
 ## Build & test
 
-- `npm run build` — `tsc` + copies `psalms.json` / `smufl-glyphs.json` to `dist/`.
-- `npm test` — builds, then runs `node --test tests/*.test.mjs`. **Tests
+- `npm run build` — `tsc`, copies the six data JSONs to `dist/data/`, then
+  `scripts/bake-data.mjs` inlines them (dist imports no `node:` builtins).
+- `npm run gate` — the rendering-boundary and entry-map check; `npm test` runs it.
+- `npm test` — builds, gates, then runs `node --test tests/*.test.mjs`. **Tests
   import from `dist/`, never `src/`** — always build before testing (the test
   script does).
 - `npx tsc --noEmit` — typecheck without emit.
@@ -77,13 +80,18 @@ is English. Option keys are addresses (may be Latin); their values are codes.
   `working/review/svg-stress.html` from `scripts/stress-pieces.mjs`: one real
   corpus piece per genus, full dress. Runs headlessly in
   `tests/render-stress.test.mjs`.
+- `npm run glyphs` — re-extracts the Bravura outlines from `vendor/` into
+  `src/data/smufl-glyphs.*`. `npm run mine:cadentiae` / `bake:cadentiae`
+  re-mine and re-bake `src/data/cadentiae.ts` (the tally lands in `working/`
+  unless a path is given).
 - No `serve`/`site`/`diagrams` script: the site left. Run it from
   orreliquum (`npm run serve` there), which vendors this library first.
-- Green tests **and** clean `tsc` at every commit. (Current floor: 845 tests.)
+- Green tests **and** clean `tsc` at every commit. (Current floor: 999 tests.)
 
 ## Fonts (license discipline)
 
-tonus bundles NO font files, ever. The `fonts` option emits font-family
+tonus ships NO font files, ever (`vendor/` holds the Bravura build input,
+OFL, outside the npm `files`). The `fonts` option emits font-family
 references; a slot's `embed` carries the CALLER's bytes into the SVG. Bravura
 music glyphs are baked (SIL OFL). Junicode is OFL (safe to embed/bake).
 Pfeffer and MyFonts/Kaer faces are license-restricted: reference-only unless
@@ -96,7 +104,9 @@ The chant/calendar data in `src/data/*.ts` is **generated** by `tonus-corpus`
 Officium + the Nocturnale Romanum, then `scripts/sync-to-tonus.mjs` copies
 `output/*.ts` → `src/data/`. Do not hand-edit generated data files; fix the
 extractor and re-sync. Hand-built editorial tables (masses, tones, compline,
-prime) live beside the engine that owns them, not in `src/data/`.
+prime) live beside the engine that owns them, not in `src/data/`. Exceptions in
+`src/data/` that tonus itself owns: `cadentiae.ts` and `smufl-glyphs.*`
+(baked by tonus's own scripts), `gabc-glyphs.ts` and `types.ts` (hand-written).
 
 ## Git & release
 
@@ -108,5 +118,5 @@ prime) live beside the engine that owns them, not in `src/data/`.
   manual passkey flow — the registry can lag the git tags; check
   `npm view tonus version` before assuming a version shipped.
 - **License: PolyForm Noncommercial 1.0.0 from 0.2.0** (0.1.x remain MIT).
-  Before the 0.2.0 push, the LICENSE text must be verified against
-  polyformproject.org (it was transcribed offline). Publish is gated on that.
+  The LICENSE text matches the SPDX copy of PolyForm Noncommercial 1.0.0
+  byte for byte, plus the Required Notice line.
