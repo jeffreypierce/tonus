@@ -4,8 +4,24 @@
 // Psalmody structure follows the Liber Usualis rules [biblio: liber-usualis]:
 // each verse is intonation → tenor (reciting note) → mediation → final cadence,
 // with the flex a subdivision of a long first half. The intonation is sung on
-// the first verse only (unless repeated, as in the Magnificat) — see the
-// `intonation` option; `inDirectum` recites straight through with no mediant.
+// the first verse only (unless repeated, as in the Magnificat) — the caller
+// says which verse that is through the `intonation` option (psalm.ts decides);
+// `inDirectum` recites straight through with no mediant.
+//
+// THE POINTING IS BY SYLLABLE COUNT, NOT BY ACCENT. Each cadence takes as many
+// syllables from the end of its half-verse as the tone has notes, one note to a
+// syllable. The books point the cadences to the word accents instead — a
+// mediant of one accent waits for the last accented syllable, adding a note of
+// preparation before a dactyl — and the tone table carries no accent shape
+// (PsalmTone holds a flat note list per cadence), so that pointing cannot be
+// derived here. Where the final words are spondees the two agree; before a
+// proparoxytone they do not. Accent-aware pointing is open design work.
+//
+// The texts carry the breviary's marks, which are directions, not syllables:
+// † (and DO's ‡, where two numbered verses were joined) is the FLEX, + the sign
+// of the cross at the Benedictus, Magnificat and Nunc dimittis, and an inline
+// "(2)" the number of the verse a joined verse absorbed. All are stripped
+// before syllabification; the flex is sung (tone.flex), the others are not.
 import { syllabifyPhrase } from "./syllabify.js";
 import { getTone, getDifferentia } from "../temper/data/tones.js";
 import { midiToGabc } from "../temper/gabc.js";
@@ -77,6 +93,16 @@ export interface IntoneOpts {
   solemn?: boolean;
 }
 
+// The flex marks, and the marks that are not sung at all.
+const FLEX_MARK = /\s*[†‡]\s*/;
+function unsungMarksOut(text: string): string {
+  return text
+    .replace(/\(\d+[a-z]?\)/g, " ")   // an absorbed verse's number, "(2)"
+    .replace(/(^|\s)\+(?=\s|$)/g, " ") // the sign of the cross
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function intone(text: string | PsalmVerse, opts: IntoneOpts = {}): string {
   let rawText: string;
   if (typeof text === "object") {
@@ -84,6 +110,7 @@ export function intone(text: string | PsalmVerse, opts: IntoneOpts = {}): string
   } else {
     rawText = text;
   }
+  rawText = unsungMarksOut(rawText);
 
   const clef = DEFAULT_CLEF;
   const mode = opts.mode ?? 8;
@@ -95,33 +122,38 @@ export function intone(text: string | PsalmVerse, opts: IntoneOpts = {}): string
   const mediantLetters = midiListToLetters(mediant, clef);
   const terminationLetters = midiListToLetters(diff.termination, clef);
   const intonationLetters = midiListToLetters(tone.intonation, clef);
-
-  // In directum ignores the verse's mediant split: the whole verse recites to
-  // the termination as one phrase (a psalm sung with no antiphon framing).
-  const starIdx = opts.inDirectum ? -1 : rawText.indexOf(" * ");
-
-  if (starIdx === -1) {
-    const text = opts.inDirectum ? rawText.replace(" * ", " ") : rawText;
-    const syllables = syllabifyPhrase(text.trim());
-    const body = buildHalf(syllables, tenorLetter, terminationLetters);
-    return CLEF + body + "(::)";
-  }
-
-  const half1Text = rawText.slice(0, starIdx).trim();
-  const half2Text = rawText.slice(starIdx + 3).trim();
-
-  const half1Sylls = syllabifyPhrase(half1Text);
-  const half2Sylls = syllabifyPhrase(half2Text);
-
+  const flexLetters = midiListToLetters(tone.flex, clef);
   const useIntonation = opts.intonation !== false;
 
-  const h1 = buildHalf(
-    half1Sylls,
-    tenorLetter,
-    mediantLetters,
-    useIntonation ? intonationLetters : undefined,
-  );
-  const h2 = buildHalf(half2Sylls, tenorLetter, terminationLetters);
+  // A half-verse, its flex members first. Each member before a flex mark
+  // recites and drops on the flex (the tone's flex notes on its last
+  // syllables, counted like every cadence here); the last member carries the
+  // half's own cadence. The intonation opens the first member only.
+  const sing = (half: string, cadence: string[], intoned: boolean): string => {
+    const members = half.split(FLEX_MARK).filter((m) => m.trim());
+    return members.map((m, i) => {
+      const last = i === members.length - 1;
+      const sylls = syllabifyPhrase(m.trim());
+      const prefix = intoned && i === 0 ? intonationLetters : undefined;
+      return buildHalf(sylls, tenorLetter, last ? cadence : flexLetters, prefix);
+    }).join("(,) ");
+  };
+
+  // In directum ignores the verse's mediant split and its flex: the whole
+  // verse recites to the termination as one phrase (a psalm sung with no
+  // antiphon framing).
+  if (opts.inDirectum) {
+    const flat = rawText.replace(" * ", " ").replace(new RegExp(FLEX_MARK.source, "g"), " ");
+    return CLEF + buildHalf(syllabifyPhrase(flat.trim()), tenorLetter, terminationLetters) + "(::)";
+  }
+
+  const starIdx = rawText.indexOf(" * ");
+  if (starIdx === -1) {
+    return CLEF + sing(rawText, terminationLetters, false) + "(::)";
+  }
+
+  const h1 = sing(rawText.slice(0, starIdx).trim(), mediantLetters, useIntonation);
+  const h2 = sing(rawText.slice(starIdx + 3).trim(), terminationLetters, false);
 
   return `${CLEF}${h1}(:) ${h2}(::)`;
 }

@@ -6,6 +6,8 @@ import type {
   CorpusFullCount, CorpusLedger, CorpusQuery,
 } from "./types.js";
 import { OFFICIA, MODI, CANTUS_QUERY_KEYS, assertOrdinaryCodes } from "./types.js";
+import { SOURCES, registerPages, inBooks } from "./books.js";
+import { assertQueryShape, sortChants } from "./query.js";
 import { CORPUS_OVERLAP, CORPUS_FULL } from "../../data/corpus-overlap.js";
 import { attestationCutoff, chantAdmissible } from "./attest.js";
 import { ATTESTATION } from "../../data/attestation.js";
@@ -67,8 +69,8 @@ function chantFromGABC(query: CantusQuery): Chant[] {
   const mode = query.mode != null ? String(query.mode) : headerMode;
   // The office-part header carries either a code ("in") or a Latin genre name
   // ("Introitus", any casing) — normalize to the OfficeCode vocabulary so user
-  // chants honour the same contract as corpus chants; unrecognized values fall
-  // to "or" like an absent header.
+  // chants honour the same contract as corpus chants; an unrecognized value
+  // falls to `va` (Varia, the catch-all) like an absent header.
   const officeFromHeader = ((): OfficeCode | null => {
     if (!officePart) return null;
     const v = officePart.trim().toLowerCase();
@@ -98,38 +100,15 @@ function chantFromGABC(query: CantusQuery): Chant[] {
   }];
 }
 
-// Every printing's pages, by chant id then book code. Kept beside the corpus
-// rather than on the Chant: a caller gets the pages for the book they ASKED
-// about (see presentAs), and carrying all of them on every record would invite
-// reading the wrong volume's citation.
-const PAGES_BY_BOOK = new Map<string, Record<string, Chant["pages"]>>();
-
-/**
- * The same chant, presented as the book the caller asked for.
- *
- * A melody printed in several books is stored once, under one owner, so its
- * `source` and `pages` are the owner's. Ask `cantus({ source: "gr" })` and you
- * mean the Graduale: you want the Graduale's bibliographic record and the
- * Graduale's page numbers, not the Liber Usualis's because that is where the
- * record happens to be filed. `books` is unchanged — the shelf is the shelf.
- */
-// The owner's pages, and the whole map remembered for presentAs. A generated
-// record always carries the map (one key when one book prints it); a hand-built
-// Chant may carry a bare array, which is taken as it stands.
+// The owner's pages, and the whole map remembered for presentAs (books.ts). A
+// generated record always carries the map (one key when one book prints it);
+// a hand-built Chant may carry a bare array, which is taken as it stands.
 function pagesFor(c: ChantData, code: string | undefined): Chant["pages"] {
   const byBook = c.pages as unknown;
   if (Array.isArray(byBook)) return byBook as Chant["pages"];
   const map = byBook as Record<string, Chant["pages"]>;
-  PAGES_BY_BOOK.set(c.id, map);
+  registerPages(c.id, map);
   return (code && map[code]) || Object.values(map)[0] || [];
-}
-
-function presentAs(chant: Chant, code: ChantSource): Chant {
-  if (chant.source.code === code) return chant;
-  const src = SOURCES[code];
-  if (!src) return chant;
-  const pages = PAGES_BY_BOOK.get(chant.id)?.[code];
-  return { ...chant, source: src, pages: pages ?? chant.pages };
 }
 
 function withLabels(c: ChantData, source: Chant["source"]): Chant {
@@ -177,48 +156,45 @@ const CORPUS: Chant[] = [
 // `ordinary`, and stay out of the shelf's book list and row count.
 //
 // Not shelved, but CITED: each entry carries the books that print it (gr, lu)
-// and their pages, so its by-book map is registered here the same way a corpus
-// record's is. That is what lets `cantus({ id, source: "lu" })` answer with the
-// Liber Usualis's leaf number instead of nothing.
-const KYRIALE_CHANTS: Chant[] = KYRIALE.map((entry) => {
-  const chant = entryToOrdinaryChant(entry);
-  const byBook = entry.pages as unknown;
-  if (byBook && !Array.isArray(byBook)) {
-    PAGES_BY_BOOK.set(chant.id, byBook as Record<string, Chant["pages"]>);
-  }
-  return chant;
-});
+// and their pages; entryToOrdinaryChant registers its by-book map the same way
+// a corpus record's is. That is what lets `cantus({ id, source: "lu" })` answer
+// with the Liber Usualis's leaf number instead of nothing.
+const KYRIALE_CHANTS: Chant[] = KYRIALE.map(entryToOrdinaryChant);
 
 /** Everything nameable: the shelf, plus the ordinary that no shelf holds. */
 const ADDRESSABLE: Chant[] = [...CORPUS, ...KYRIALE_CHANTS];
 
+// ONE record per id, the SHELF's first. Four ids are both a shelf listing and
+// a Kyriale entry (the Asperges, its two ad libitum settings, the Vidi aquam:
+// the Liber Usualis prints them as antiphons, the Kyriale as the sprinkling
+// rite). Built last-wins over ADDRESSABLE, the index handed back the Kyriale
+// record, so `cantus({ id, office: "an" })` found nothing the shelf plainly
+// holds. The shelf record answers an id; the Kyriale's answers the `ordinary`
+// door, which reads its own pool (see getChants).
 let _byId: Map<string, Chant> | null = null;
 function byId(): Map<string, Chant> {
-  if (!_byId) _byId = new Map(ADDRESSABLE.map((c) => [c.id, c]));
+  if (!_byId) {
+    _byId = new Map();
+    for (const c of ADDRESSABLE) if (!_byId.has(c.id)) _byId.set(c.id, c);
+  }
   return _byId;
 }
 
-// The book registry, and so the shelf `corpus()` reports. `ky` is deliberately
-// absent: it is a partition of `gr`, not a book (see CORPUS above). Its
-// bibliographic record still rides every kyriale chant's `source` — a caller
-// reading one is told which book it is printed in — but the Kyriale is not a
-// row in the ledger, because the Graduale already is.
-export const SOURCES: Record<ChantSource, Chant["source"]> = {
-  gr: GR_SOURCE, lu: LU_SOURCE, la: LA_SOURCE, lh: LH_SOURCE, am: AM_SOURCE, nr: NR_SOURCE,
-  // office books — provenance, not acquisition
-  psm: PSM_SOURCE,
-};
+let _kyrialeById: Map<string, Chant> | null = null;
+function kyrialeById(): Map<string, Chant> {
+  if (!_kyrialeById) _kyrialeById = new Map(KYRIALE_CHANTS.map((c) => [c.id, c]));
+  return _kyrialeById;
+}
+
+export { SOURCES };
 
 // Tally a book's genre and mode distribution — computed once per code, cached.
 const _corpusCache = new Map<ChantSource, Corpus>();
 
 /**
- * Metadata and content breakdown for one corpus book (`tonus.corpus`). Pass a
- * source code; get the book's bibliographic identity plus its genre and mode
- * distributions. Computed on first access from the loaded corpus, then cached.
- */
-/**
- * One book's ledger, or the whole shelf's.
+ * One book's ledger, or the whole shelf's (`tonus.corpus`): the book's
+ * bibliographic identity plus its genre and mode distributions, computed on
+ * first access from the loaded corpus, then cached.
  *
  * `corpus("am")` and `corpus({ book: "am" })` are the same question — the bare
  * code came first and keeps working, the object form matches every other verb.
@@ -417,28 +393,21 @@ export { CANTUS_QUERY_KEYS };
  * (the codes in SOURCES). A `gabc` field bypasses the corpus and returns a
  * single user chant parsed from raw GABC (body or full file with headers).
  */
+// The keys that name WHAT to find; limit, offset and sort only shape a result.
+const CANTUS_FILTER_KEYS = new Set(
+  [...CANTUS_QUERY_KEYS].filter((k) => !["limit", "offset", "sort"].includes(k)),
+);
+
 export function getChants(query?: CantusQuery): Chant[] {
   // A no-match returns []; a malformed query is a caller bug and throws with
-  // guidance (the reconciled query contract — see CODE-STANDARDS → Boundaries).
+  // guidance (the query contract — see query.ts).
   //
-  // An empty query is a MALFORMATION here, not a no-match, and that is
-  // deliberate: the filters below narrow from CORPUS, so an empty query has no
-  // honest answer. Returning [] would claim a search found nothing when none
-  // ran; returning the corpus would dress 2,767 listings as a result. The whole
-  // shelf is `corpus()`, which says so in its name.
-  if (!query || Object.keys(query).length === 0) {
-    throw new Error(
-      "cantus: an empty query matches nothing meaningful — pass a filter " +
-      `(one of ${[...CANTUS_QUERY_KEYS].join(", ")}), or a gabc string to parse.`,
-    );
-  }
-  const unknown = Object.keys(query).filter((k) => !CANTUS_QUERY_KEYS.has(k));
-  if (unknown.length > 0) {
-    throw new Error(
-      `cantus: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
-      `(expected ${[...CANTUS_QUERY_KEYS].join(", ")}).`,
-    );
-  }
+  // An empty query is a MALFORMATION here, not a no-match: the filters below
+  // narrow from the shelf, so a query with no filter has no honest answer.
+  // Returning [] would claim a search found nothing when none ran; returning
+  // the shelf would dress the corpus as a result. The whole shelf is
+  // `corpus()`, which says so in its name.
+  assertQueryShape(query, CANTUS_QUERY_KEYS, CANTUS_FILTER_KEYS, "cantus");
 
   if (query.gabc) return chantFromGABC(query);
 
@@ -456,7 +425,8 @@ export function getChants(query?: CantusQuery): Chant[] {
   // ask for a Kyrie, you do not stumble onto one.
   let out: readonly Chant[] = ordinaries ? KYRIALE_CHANTS : CORPUS;
   if (ids) {
-    const map = byId();
+    // Under `ordinary` an id names the Kyriale's record (see byId).
+    const map = ordinaries ? kyrialeById() : byId();
     out = ids.map((id) => map.get(id)).filter((c): c is Chant => !!c);
   }
   if (ordinaries) {
@@ -465,15 +435,7 @@ export function getChants(query?: CantusQuery): Chant[] {
   }
 
   const sources = toArray(query.source);
-  if (sources) {
-    const set = new Set<string>(sources);
-    out = out
-      .filter((c) => c.books.some((b) => set.has(b)))
-      .map((c) => {
-        const asked = c.books.find((b) => set.has(b)) as ChantSource | undefined;
-        return asked ? presentAs(c, asked) : c;
-      });
-  }
+  if (sources) out = inBooks(out, sources);
 
   const offices = toArray(query.office);
   if (offices) {
@@ -508,16 +470,7 @@ export function getChants(query?: CantusQuery): Chant[] {
     }
   }
 
-  const sort = query.sort ?? "incipit";
-  const sorted = [...out].sort((a, b) => {
-    if (sort === "id") return a.id.localeCompare(b.id);
-    if (sort === "mode")
-      return (
-        String(a.mode ?? "").localeCompare(String(b.mode ?? "")) ||
-        a.incipit.localeCompare(b.incipit)
-      );
-    return a.incipit.localeCompare(b.incipit);
-  });
+  const sorted = sortChants([...out], query.sort ?? "incipit");
 
   const offset = Math.max(0, query.offset ?? 0);
   const limit =

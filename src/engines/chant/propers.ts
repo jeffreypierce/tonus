@@ -2,9 +2,10 @@
 // engines/chant/propers — Mass proper lookup
 // ---------------------------------------------------------------------------
 import { resolveChant } from "./chant.js";
+import { assertQueryShape, refine, principalFeasts } from "./query.js";
 import { eraCutoff, chantAdmissible } from "./attest.js";
 import { temporaSundayId } from "../cal/date.js";
-import type { Chant, PropriumQuery, OfficeCode } from "./types.js";
+import type { Chant, PropriumQuery } from "./types.js";
 import { PENITENTIAL_SEASONS, type Feast, type Season } from "../cal/types.js";
 import { PROPERS, type ProperSet } from "../../data/propers.js";
 import { COMMUNE_PROPERS, FEAST_COMMUNE, type CommuneProperSet } from "../../data/commune.js";
@@ -79,36 +80,34 @@ function assertFeasts(feasts: Feast[] | undefined, method: string): void {
 }
 
 
-function toArray<T>(v: T | T[] | undefined): T[] | undefined {
-  if (v === undefined) return undefined;
-  return Array.isArray(v) ? v : [v];
-}
-
+// `gabc` and `ordinary` are cantus's alone: one parses a user chant, the other
+// opens the Kyriale, and the proper has neither to refine.
 const PROPRIUM_QUERY_KEYS = new Set([
-  "feast", "id", "gabc", "incipit", "mode", "office", "source",
+  "feast", "id", "incipit", "mode", "office", "source",
   "before", "cursus",
   "limit", "offset", "sort",
 ]);
+const PROPRIUM_FILTER_KEYS = new Set(
+  [...PROPRIUM_QUERY_KEYS].filter((k) => !["limit", "offset", "sort"].includes(k)),
+);
 
 /**
  * Mass proper retrieval (`tonus.proprium`): Introitus, Graduale,
- * Alleluia/Tractus, Offertorium, Communio. A feast narrows the result;
- * feasts without a dedicated proper fall back to the Commune Sanctorum.
+ * Alleluia/Tractus, Offertorium, Communio, in that order — the order they are
+ * sung. A feast narrows the result; feasts without a dedicated proper fall
+ * back to the Commune Sanctorum.
  */
 export function getPropers(query?: PropriumQuery): Chant[] {
-  if (!query || Object.keys(query).length === 0) return [];
-  // The reconciled query contract (as festum/cantus): an unknown key is a
+  // The query contract (query.ts): an empty query or an unknown key is a
   // caller bug, not a filter that silently matches everything.
-  const unknown = Object.keys(query).filter((k) => !PROPRIUM_QUERY_KEYS.has(k));
-  if (unknown.length > 0) {
-    throw new Error(
-      `proprium: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
-      `(expected ${[...PROPRIUM_QUERY_KEYS].join(", ")}).`,
-    );
-  }
+  assertQueryShape(query, PROPRIUM_QUERY_KEYS, PROPRIUM_FILTER_KEYS, "proprium");
 
-  const feasts = toFeastArray(query.feast);
-  assertFeasts(feasts, "proprium");
+  // One Mass a day: the principal feast's (see principalFeasts). Handed
+  // festum's whole list for Christmas, the proper used to sing the Nativity's
+  // and the Advent feria's side by side.
+  const rawFeasts = toFeastArray(query.feast);
+  assertFeasts(rawFeasts, "proprium");
+  const feasts = principalFeasts(rawFeasts);
   let results: Chant[];
 
   if (feasts) {
@@ -119,7 +118,6 @@ export function getPropers(query?: PropriumQuery): Chant[] {
     results = PROPERS.flatMap((p) => resolveProperChants(p.feastId));
   }
 
-
   // The era view: an own `before` wins; otherwise the view festum({ before })
   // stamped on the feast rides along. A proper has no pool of alternatives, so
   // an excluded chant degrades to SILENCE by design — the same evidence law as
@@ -129,47 +127,8 @@ export function getPropers(query?: PropriumQuery): Chant[] {
     results = results.filter((c) => chantAdmissible(c.id, cutoff, query.cursus));
   }
 
-  const offices = toArray(query.office);
-  if (offices) {
-    const set = new Set<string>(offices);
-    results = results.filter((c) => set.has(c.office));
-  }
-
-  const modes = toArray(query.mode);
-  if (modes) {
-    const set = new Set(modes.map(String));
-    results = results.filter((c) => c.mode != null && set.has(c.mode));
-  }
-
-  const sources = toArray(query.source);
-  if (sources) {
-    const set = new Set<string>(sources);
-    results = results.filter((c) => c.source.code != null && set.has(c.source.code));
-  }
-
-  if (query.incipit) {
-    const needle = query.incipit.toLowerCase();
-    results = results.filter((c) => c.incipit.toLowerCase().includes(needle));
-  }
-
-  if (query.id) {
-    const ids = toArray(query.id)!;
-    const set = new Set(ids);
-    results = results.filter((c) => set.has(c.id));
-  }
-
-  const sort = query.sort ?? "incipit";
-  results.sort((a, b) => {
-    if (sort === "id") return a.id.localeCompare(b.id);
-    if (sort === "mode")
-      return (
-        String(a.mode ?? "").localeCompare(String(b.mode ?? "")) ||
-        a.incipit.localeCompare(b.incipit)
-      );
-    return a.incipit.localeCompare(b.incipit);
-  });
-
-  const offset = Math.max(0, query.offset ?? 0);
-  const limit = query.limit == null ? results.length : Math.max(0, query.limit);
-  return results.slice(offset, offset + limit);
+  // The cantus filters, read the way cantus reads them (a `source` is the
+  // books a chant is PRINTED in, presented as the book asked for), and the
+  // sung order kept unless a `sort` is asked.
+  return refine(results, query);
 }

@@ -7,6 +7,7 @@ import { intonePortion, officePsalmPortions } from "./psalm.js";
 import { temporaSundayId } from "../cal/date.js";
 import { getFeast } from "../cal/calendar.js";
 import { HORAE } from "./types.js";
+import { assertQueryShape, refine, principalFeasts } from "./query.js";
 import type { Chant, OfficiumQuery, CanonicalHour } from "./types.js";
 import type { Feast } from "../cal/types.js";
 import { OFFICE_MONASTIC, type OfficeDay } from "../../data/office-monastic.js";
@@ -17,6 +18,7 @@ import { FEAST_COMMUNE } from "../../data/commune.js";
 import {
   COMPLINE_ORDINARY,
   COMPLINE_SEASONAL,
+  COMPLINE_TRIDUUM,
   marianAntiphonFor,
 } from "./data/compline.js";
 import { PRIME_ORDINARY, PRIME_SEASONAL } from "./data/prime.js";
@@ -36,13 +38,15 @@ function officeMap(): Map<string, OfficeDay> {
   return _office;
 }
 
-const OFFICIUM_QUERY_KEYS = new Set([...CANTUS_QUERY_KEYS, "feast", "hora"]);
-
-// Hours whose result is an ordered sequence (an ordo) rather than a set of
-// chants — they keep assembly order instead of being sorted by incipit.
-const ORDERED_ORDO_HOURS: ReadonlySet<CanonicalHour> = new Set([
-  "prima", "tertia", "sexta", "nona", "completorium",
+// `gabc` parses a user chant and `ordinary` opens the Kyriale: neither has an
+// office to refine.
+const OFFICIUM_QUERY_KEYS = new Set([
+  ...[...CANTUS_QUERY_KEYS].filter((k) => k !== "gabc" && k !== "ordinary"),
+  "feast", "hora",
 ]);
+const OFFICIUM_FILTER_KEYS = new Set(
+  [...OFFICIUM_QUERY_KEYS].filter((k) => !["limit", "offset", "sort"].includes(k)),
+);
 
 // The purely seasonal/fixed hours — identical for every feast of a day, so
 // concurrent feasts collapse to one and a no-feast query resolves the default
@@ -52,11 +56,15 @@ const SEASONAL_ORDO_HOURS: ReadonlySet<CanonicalHour> = new Set([
 ]);
 
 // Compline is fixed and seasonal, not per-feast: it does not use the OfficeDay
-// tables at all. The ordo is assembled from the season (Te lucis, In manus
-// tuas), the fixed psalms (from the extracted DO scheme), the invariable spine
-// (Deus in adjutorium, Nunc dimittis), and the date-driven Marian antiphon.
-// See ./data/compline.ts.
+// tables at all. The ordo is assembled from the invariable opening (Deus in
+// adjutorium), the fixed psalms (from the extracted DO scheme), the season
+// (Te lucis, In manus tuas), and the date-driven Marian antiphon. The
+// monastic Compline has no Gospel canticle. See ./data/compline.ts.
+//
+// The Gloria Patri that closes each psalm is not emitted: the psalter rows
+// carry the psalm's own verses, and the doxology is the singer's to add.
 function complineForFeast(feast: Feast): Chant[] {
+  if (feast.grade === "triduum") return triduumCompline(feast);
   const seasonal = COMPLINE_SEASONAL[feast.season];
   const results: Chant[] = [];
 
@@ -74,12 +82,25 @@ function complineForFeast(feast: Feast): Chant[] {
   const responsory = seasonal && resolveChant(seasonal.inManusTuas);
   if (responsory) results.push(responsory);
 
-  const canticle = resolveChant(COMPLINE_ORDINARY.canticle);
-  if (canticle) results.push(canticle);
-
   const marian = resolveChant(marianAntiphonFor(feast.season, feast.date));
   if (marian) results.push(marian);
 
+  return results;
+}
+
+// The Sacred Triduum strips the hour to its psalms: no opening versicle, no
+// hymn, no short responsory, no Marian antiphon — and in their place the
+// antiphon Christus factus est [biblio: liber-usualis]. (Its text grows
+// through the three days, "usque ad mortem", then "mortem autem crucis", then
+// "Propter quod et Deus"; the corpus holds the one setting, so each night
+// sings it whole.)
+function triduumCompline(feast: Feast): Chant[] {
+  const results: Chant[] = [];
+  for (const p of officePsalmPortions("Completorium", feast.weekday)) {
+    results.push(...intonePortion(p));
+  }
+  const christus = resolveChant(COMPLINE_TRIDUUM.christusFactusEst);
+  if (christus) results.push(christus);
   return results;
 }
 
@@ -365,25 +386,19 @@ function assertFeasts(feasts: Feast[] | undefined, method: string): void {
  * available hours; a feast acts as a filter.
  */
 export function getHour(query?: OfficiumQuery): Chant[] {
-  if (!query || Object.keys(query).length === 0) return [];
-
   // officium once accepted any key unexamined, which is how the removed
   // `rite` kept being accepted after it stopped meaning anything: a JS
   // caller asking for rite: "romanum" got monastic chants and no warning. A
   // silently-ignored option is worse than a missing one, because the caller
-  // believes they chose. Same guard cantus and proprium carry.
-  const unknown = Object.keys(query).filter(
-    (k) => !OFFICIUM_QUERY_KEYS.has(k),
-  );
-  if (unknown.length > 0) {
-    throw new Error(
-      `officium: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
-      `(expected ${[...OFFICIUM_QUERY_KEYS].join(", ")}).`,
-    );
-  }
+  // believes they chose. The door is query.ts's, shared with every verb.
+  assertQueryShape(query, OFFICIUM_QUERY_KEYS, OFFICIUM_FILTER_KEYS, "officium");
 
-  const feasts = toArray(query.feast);
-  assertFeasts(feasts, "officium");
+  // One office a day: the principal feast's (see principalFeasts). Handed
+  // festum's whole list for Christmas, the hour used to merge the Nativity
+  // with the Advent feria the calendar also finds that day.
+  const rawFeasts = toArray(query.feast);
+  assertFeasts(rawFeasts, "officium");
+  const feasts = principalFeasts(rawFeasts);
 
   // A misspelled hour is a malformed query, not an empty one: without this it
   // matched nothing and returned [], and the caller read that as "no chants at
@@ -398,12 +413,7 @@ export function getHour(query?: OfficiumQuery): Chant[] {
   let results: Chant[];
 
   if (feasts && hour) {
-    // Prime and Compline are seasonal/weekday ordos, identical for every feast
-    // of the day — so concurrent feasts collapse to a single ordo rather than
-    // repeating it. The other hours are genuinely per-feast.
-    results = SEASONAL_ORDO_HOURS.has(hour)
-      ? feasts[0] ? chantsForFeastHour(feasts[0], hour) : []
-      : feasts.flatMap((f) => chantsForFeastHour(f, hour));
+    results = feasts.flatMap((f) => chantsForFeastHour(f, hour));
   } else if (feasts) {
     results = feasts.flatMap((f) => HORAE.flatMap((h) => chantsForFeastHour(f, h)));
   } else if (hour && SEASONAL_ORDO_HOURS.has(hour)) {
@@ -435,53 +445,9 @@ export function getHour(query?: OfficiumQuery): Chant[] {
     }
   }
 
-  // Apply CantusQuery filters
-  const offices = toArray(query.office);
-  if (offices) {
-    const set = new Set<string>(offices);
-    results = results.filter((c) => set.has(c.office));
-  }
-
-  const modes = toArray(query.mode);
-  if (modes) {
-    const set = new Set(modes.map(String));
-    results = results.filter((c) => c.mode != null && set.has(c.mode));
-  }
-
-  const sources = toArray(query.source);
-  if (sources) {
-    const set = new Set<string>(sources);
-    results = results.filter((c) => c.source.code != null && set.has(c.source.code));
-  }
-
-  if (query.incipit) {
-    const needle = query.incipit.toLowerCase();
-    results = results.filter((c) => c.incipit.toLowerCase().includes(needle));
-  }
-
-  if (query.id) {
-    const ids = new Set(toArray(query.id));
-    results = results.filter((c) => ids.has(c.id));
-  }
-
-  // The little hours and Compline are ordered ordos — their sequence IS the
-  // content — so they keep assembly order unless the caller explicitly asks for
-  // a sort. The other hours return a set of chants, sorted by incipit.
-  const isOrderedOrdo = query.hora != null && ORDERED_ORDO_HOURS.has(query.hora);
-  if (query.sort || !isOrderedOrdo) {
-    const sort = query.sort ?? "incipit";
-    results.sort((a, b) => {
-      if (sort === "id") return a.id.localeCompare(b.id);
-      if (sort === "mode")
-        return (
-          String(a.mode ?? "").localeCompare(String(b.mode ?? "")) ||
-          a.incipit.localeCompare(b.incipit)
-        );
-      return a.incipit.localeCompare(b.incipit);
-    });
-  }
-
-  const offset = Math.max(0, query.offset ?? 0);
-  const limit = query.limit == null ? results.length : Math.max(0, query.limit);
-  return results.slice(offset, offset + limit);
+  // The cantus filters, read the way cantus reads them (`source` is the books
+  // a chant is printed in). Every hour is an ordo — its sequence IS the
+  // content, psalms before the hymn, antiphons in the order sung — so the
+  // assembly order is kept unless the caller asks for a sort.
+  return refine(results, query);
 }

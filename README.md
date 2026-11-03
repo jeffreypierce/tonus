@@ -68,7 +68,7 @@ resolved against Easter by the Julian or the Gregorian computus.
 **The repertoire** is 7,825 chants across seven books, six Solesmes editions and
 the _Nocturnale Romanum_ night office in
 [GABC](https://gregorio-project.github.io/) notation: Mass propers, the Kyriale,
-the Office hours, the psalter, and the Matins nocturns.
+the Office hours, the psalter, and the Matins responsories.
 
 **Scores** are shaped by the Solesmes arsis/thesis rhythm, fingerprinted for
 melodic character, and drawn to a square-note or modern staff.

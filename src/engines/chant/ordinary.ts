@@ -6,6 +6,7 @@ import {
   AD_LIB,
   WHOLE_MASS_RUBRICS,
   partWithinEra,
+  credoWithinEra,
   type MassEntry,
   type MassRubric,
 } from "./data/masses.js";
@@ -13,6 +14,8 @@ import { KYRIALE, type KyrialeEntry, type KyrialeSection } from "../../data/kyri
 import { attestationCutoff, eraCutoff, chantAdmissible } from "./attest.js";
 import { ATTESTATION } from "../../data/attestation.js";
 import { CANTUS_QUERY_KEYS } from "./types.js";
+import { registerPages } from "./books.js";
+import { assertQueryShape, refine, principalFeasts } from "./query.js";
 import {
   KY_SOURCE,
   MODI,
@@ -334,15 +337,25 @@ const CREDO_BIAS_EVERY = 2;
  * CREDO_PRIORITY naming all six. The narrow `credos` data is a separate gap
  * still open; this reads it as a preference rather than the whole permission.
  */
-function selectCredoCode(feast: Feast, allowed: string[], year: number): string | null {
+function selectCredoCode(
+  feast: Feast,
+  allowed: string[],
+  year: number,
+  singable: readonly string[] = CREDO_PRIORITY,
+): string | null {
   if (!allowed.length) return null;
-  const preferred = preferredCredoCode(feast, allowed);
+  // The era rule narrows both the preference and the circuit to the credos it
+  // admits (see credoWithinEra): Credo III (XVII. s.) and IV (XV. s.) are the
+  // Kyriale's own late settings, and the 1324 bound keeps them out exactly as
+  // it keeps out Mass VIII's Kyrie.
+  const preferred = preferredCredoCode(feast, allowed.filter((c) => singable.includes(c)));
   if (preferred && year % CREDO_BIAS_EVERY === 0) return preferred;
   // The off-years advance their OWN cycle. Keyed on the raw year, the
   // rotation's parity was coupled to the bias (2 divides 6): odd years could
   // only ever land on indices 1, 3, 5 — III, II, VI — and Credo V was never
   // sung on any day of any year.
-  return rotate(CREDO_PRIORITY, Math.floor(year / CREDO_BIAS_EVERY))[0];
+  const circuit = CREDO_PRIORITY.filter((c) => singable.includes(c));
+  return circuit.length ? rotate(circuit, Math.floor(year / CREDO_BIAS_EVERY))[0] : null;
 }
 
 // Exported for the corpus surface (chant.ts): the kyriale rides `cantus`
@@ -362,6 +375,9 @@ export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
   // with no citation still falls back to its own printing, so it stays findable.
   const books = (entry.books?.length ? entry.books : ["ky"]) as OrdinaryChant["books"];
   const pages = entry.pages?.[books[0] as string] ?? [];
+  if (entry.pages && !Array.isArray(entry.pages)) {
+    registerPages(entry.id, entry.pages as Record<string, OrdinaryChant["pages"]>);
+  }
   return {
     id: entry.id,
     incipit: entry.incipit,
@@ -385,6 +401,18 @@ export function entryToOrdinaryChant(entry: KyrialeEntry): OrdinaryChant {
     mass: entry.mass ?? 0,
     section: entry.section,
   };
+}
+
+// Easter Day through Low Saturday: the octave whose Masses close with the
+// double alleluia.
+const EASTER_OCTAVE = /^Pasc0-[0-6]$/;
+function isEasterOctave(feast: Feast): boolean {
+  return EASTER_OCTAVE.test(feast.id);
+}
+
+/** Whether a setting's sung text carries the alleluia. */
+function sungAlleluia(entry: KyrialeEntry): boolean {
+  return /allel/i.test(entry.gabc.replace(/\([^)]*\)/g, ""));
 }
 
 // Maundy Thursday (In Cena Domini) is a Triduum exception: it retains a full
@@ -454,7 +482,7 @@ function ordinaryForFeast(
     appendixLeadsThisYear(rubric, massNumbers.length, year);
 
   const pick = (office: string): OrdinaryChant | null => {
-    const entries = entriesForOffice(
+    let entries = entriesForOffice(
       office,
       massNumbers,
       year,
@@ -463,6 +491,16 @@ function ordinaryForFeast(
       appendixAllowed,
       pool,
     );
+    // The double-alleluia dismissal belongs to the Easter octave, Easter Day
+    // through Low Saturday, and to no other day [liber-usualis, Mass I]; the
+    // plain one to the rest of Paschaltide. Mass I prints both (Ite Ia, Ib),
+    // and rotating them by year sang the octave's dismissal on an ordinary
+    // Eastertide weekday every other year.
+    if (office === "it") {
+      const octave = isEasterOctave(feast);
+      const fit = entries.filter((e) => sungAlleluia(e) === octave);
+      if (fit.length) entries = fit;
+    }
     const best = selectBestChant(entries, mode);
     return best ? entryToOrdinaryChant(best) : null;
   };
@@ -487,14 +525,19 @@ function ordinaryForFeast(
   // Credo — In Cena Domini's Mass has no Creed.
   if (!isMaundyThursday) {
     const allowed = allowedCredos(masses);
-    const credoCode = selectCredoCode(feast, allowed, year);
+    // Exact numeral match, never substring: `.includes("V")` found
+    // "Credo IV" first, so a day asking for Credo V was served IV under a
+    // V label — the honest-label fix exposed it, and the cycle test caught
+    // the numeral that had silently never sounded.
+    const credoNumeral = (incipit: string) => /Credo\s+([IVX]+)/.exec(incipit)?.[1] ?? null;
+    const credoEntries = pool.filter(
+      (e) => e.office === "cr" && credoWithinEra(credoNumeral(e.incipit)),
+    );
+    const singable = credoEntries
+      .map((e) => credoNumeral(e.incipit))
+      .filter((c): c is string => c != null);
+    const credoCode = selectCredoCode(feast, allowed, year, singable);
     if (credoCode) {
-      const credoEntries = pool.filter((e) => e.office === "cr");
-      // Exact numeral match, never substring: `.includes("V")` found
-      // "Credo IV" first, so a day asking for Credo V was served IV under a
-      // V label — the honest-label fix exposed it, and the cycle test caught
-      // the numeral that had silently never sounded.
-      const credoNumeral = (incipit: string) => /Credo\s+([IVX]+)/.exec(incipit)?.[1] ?? null;
       const named = credoEntries.find((e) => credoNumeral(e.incipit) === credoCode);
       const best = named ?? selectBestChant(credoEntries, mode);
       if (best) {
@@ -526,9 +569,9 @@ function ordinaryForFeast(
   }
 
   // Sprinkle rite: Vidi aquam in Paschaltide (through the Pentecost octave),
-  // Asperges otherwise. It precedes the principal Sunday Mass only — not the
-  // evening Mass of In Cena Domini.
-  if (!isMaundyThursday) {
+  // Asperges otherwise. It precedes the principal SUNDAY Mass and no other —
+  // so not a weekday, a weekday feast, or the evening Mass of In Cena Domini.
+  if (feast.weekday === 0 && !isMaundyThursday) {
     const sprinkleType = feast.season === "pasc" ? "va" : "as";
     const sprinkleEntries = entriesForOffice(
       sprinkleType,
@@ -562,31 +605,28 @@ function assertFeasts(feasts: Feast[] | undefined, method: string): void {
 }
 
 
-const ORDINARIUM_QUERY_KEYS = new Set([...CANTUS_QUERY_KEYS, "feast", "ordinary", "mass", "section"]);
+// `gabc` parses a user chant and means nothing to a day verb, so it is not a
+// key here; every other cantus filter refines the assembled result.
+const ORDINARIUM_QUERY_KEYS = new Set([
+  ...[...CANTUS_QUERY_KEYS].filter((k) => k !== "gabc"),
+  "feast", "mass", "section",
+]);
+const ORDINARIUM_FILTER_KEYS = new Set(
+  [...ORDINARIUM_QUERY_KEYS].filter((k) => !["limit", "offset", "sort"].includes(k)),
+);
 
 /**
  * Mass ordinary retrieval (`tonus.ordinarium`) from the Kyriale. A feast
  * drives mass selection; `mass` pins a kyriale number directly.
  */
 export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
-  if (!query || Object.keys(query).length === 0) return [];
+  // The same door as cantus, officium, proprium and psalmus (query.ts): an
+  // empty query or an unknown key throws, so a stale or misspelled option is
+  // learned immediately, not silently ignored.
+  assertQueryShape(query, ORDINARIUM_QUERY_KEYS, ORDINARIUM_FILTER_KEYS, "ordinarium");
 
-  // The same door policy as cantus and officium: an unknown key throws, so a
-  // stale or misspelled option is learned immediately, not silently ignored.
-  const unknown = Object.keys(query).filter((k) => !ORDINARIUM_QUERY_KEYS.has(k));
-  if (unknown.length) {
-    throw new Error(
-      `ordinarium: unknown query key(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
-      `(expected ${[...ORDINARIUM_QUERY_KEYS].join(", ")}).`,
-    );
-  }
-
-  if (query.ordinary) {
-    assertOrdinaryCodes(
-      Array.isArray(query.ordinary) ? query.ordinary : [query.ordinary],
-      "ordinarium",
-    );
-  }
+  const ordinaries = toArray(query.ordinary);
+  if (ordinaries) assertOrdinaryCodes(ordinaries, "ordinarium");
 
   if (query.section != null && !KYRIALE_SECTIONS.has(query.section)) {
     throw new Error(
@@ -595,8 +635,10 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
     );
   }
 
-  const feasts = toArray(query.feast);
-  assertFeasts(feasts, "ordinarium");
+  // One Mass a day: the principal feast's (see principalFeasts).
+  const rawFeasts = toArray(query.feast);
+  assertFeasts(rawFeasts, "ordinarium");
+  const feasts = principalFeasts(rawFeasts);
   // `mode` accepts a scalar or an array, with cantus's semantics: match any.
   const filterModes = query.mode == null
     ? null
@@ -617,9 +659,11 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
         : null;
       return ordinaryForFeast(f, query.mass, filterModes, adm);
     });
-  } else if (query.mass != null || query.ordinary || query.section) {
+    if (query.section) results = results.filter((c) => c.section === query.section);
+    if (ordinaries) results = results.filter((c) => ordinaries.includes(c.ordinary));
+  } else {
     // Direct kyriale query without feast context — same admissibility rule as
-    // cantus, so the two doors cannot disagree.
+    // cantus, so the two doors cannot disagree. The book's order is kept.
     let entries = KYRIALE.slice();
     const cutoff = attestationCutoff(query, "ordinarium");
     if (cutoff != null || query.cursus) {
@@ -627,35 +671,15 @@ export function getOrdinary(query?: OrdinariumQuery): OrdinaryChant[] {
     }
     if (query.mass != null) entries = entries.filter((e) => e.mass === query.mass);
     if (query.section) entries = entries.filter((e) => e.section === query.section);
-    if (query.ordinary) entries = entries.filter((e) => e.office === query.ordinary);
-    if (filterModes) entries = entries.filter((e) => e.mode != null && filterModes.includes(e.mode));
-
-    const offset = Math.max(0, query.offset ?? 0);
-    const limit = query.limit == null ? entries.length : Math.max(0, query.limit);
-    results = entries.slice(offset, offset + limit).map(entryToOrdinaryChant);
-  } else {
-    return [];
+    if (ordinaries) entries = entries.filter((e) => (ordinaries as string[]).includes(e.office));
+    results = entries.map(entryToOrdinaryChant);
   }
 
-  // Apply remaining CantusQuery filters
-  if (feasts && query.section) {
-    results = results.filter((c) => c.section === query.section);
+  // The remaining cantus filters, then the window — taken over what survives
+  // them, so `limit` counts what the caller sees. (The mode filter has already
+  // run: inside a feast it steers the pick, outside it narrows the book.)
+  if (!feasts && filterModes) {
+    results = results.filter((c) => c.mode != null && filterModes.includes(c.mode));
   }
-
-  if (query.incipit) {
-    const needle = query.incipit.toLowerCase();
-    results = results.filter((c) => c.incipit.toLowerCase().includes(needle));
-  }
-
-  if (query.id) {
-    const ids = new Set(toArray(query.id));
-    results = results.filter((c) => ids.has(c.id));
-  }
-
-  if (query.source) {
-    const sources = new Set<string>(toArray(query.source)!);
-    results = results.filter((c) => c.source.code != null && sources.has(c.source.code));
-  }
-
-  return results;
+  return refine(results, { ...query, mode: undefined });
 }
