@@ -117,25 +117,31 @@ export function intone(text: string | PsalmVerse, opts: IntoneOpts = {}): string
   const tone = getTone(mode);
   const diff = getDifferentia(tone, opts.differentia);
 
-  const tenorLetter = midiToGabc(tone.tenor, clef);
-  const mediant = opts.solemn && tone.solemnMediant ? tone.solemnMediant : tone.mediant;
+  // An ending with its own tone body (4A, 4A*) sings over that body; every
+  // other ending takes the tone's. The peregrinus recites its second half on
+  // its second tenor.
+  const tenor = diff.tenor ?? tone.tenor;
+  const tenorLetter = midiToGabc(tenor, clef);
+  const secondTenorLetter = midiToGabc(tone.secondTenor ?? tenor, clef);
+  const plainMediant = diff.mediant ?? tone.mediant;
+  const mediant = opts.solemn && tone.solemnMediant ? tone.solemnMediant : plainMediant;
   const mediantLetters = midiListToLetters(mediant, clef);
   const terminationLetters = midiListToLetters(diff.termination, clef);
-  const intonationLetters = midiListToLetters(tone.intonation, clef);
-  const flexLetters = midiListToLetters(tone.flex, clef);
+  const intonationLetters = midiListToLetters(diff.intonation ?? tone.intonation, clef);
+  const flexLetters = midiListToLetters(diff.flex ?? tone.flex, clef);
   const useIntonation = opts.intonation !== false;
 
   // A half-verse, its flex members first. Each member before a flex mark
   // recites and drops on the flex (the tone's flex notes on its last
   // syllables, counted like every cadence here); the last member carries the
   // half's own cadence. The intonation opens the first member only.
-  const sing = (half: string, cadence: string[], intoned: boolean): string => {
+  const sing = (half: string, cadence: string[], intoned: boolean, recto = tenorLetter): string => {
     const members = half.split(FLEX_MARK).filter((m) => m.trim());
     return members.map((m, i) => {
       const last = i === members.length - 1;
       const sylls = syllabifyPhrase(m.trim());
       const prefix = intoned && i === 0 ? intonationLetters : undefined;
-      return buildHalf(sylls, tenorLetter, last ? cadence : flexLetters, prefix);
+      return buildHalf(sylls, recto, last ? cadence : flexLetters, prefix);
     }).join("(,) ");
   };
 
@@ -153,7 +159,7 @@ export function intone(text: string | PsalmVerse, opts: IntoneOpts = {}): string
   }
 
   const h1 = sing(rawText.slice(0, starIdx).trim(), mediantLetters, useIntonation);
-  const h2 = sing(rawText.slice(starIdx + 3).trim(), terminationLetters, false);
+  const h2 = sing(rawText.slice(starIdx + 3).trim(), terminationLetters, false, secondTenorLetter);
 
   return `${CLEF}${h1}(:) ${h2}(::)`;
 }

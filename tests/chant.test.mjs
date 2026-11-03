@@ -1029,8 +1029,19 @@ describe("QA — the ordinary's rubrics", () => {
 describe("QA — psalmody: intonation, flex, and the unsung marks", () => {
   test("the intonation opens the first verse only", () => {
     const [v1, v2] = getPsalm({ psalm: 1, mode: 1 });
-    assert.match(v1.gabc, /^\(c4\) Be\(f\)á\(h\)tus\(j\)/, "F-A-C on the first verse");
+    assert.match(v1.gabc, /^\(c4\) Be\(f\)á\(g\)tus\(h\)/, "F-G-A on the first verse");
     assert.match(v2.gabc, /^\(c4\) Sed\(h\) in\(h\)/, "the tenor from the second");
+  });
+
+  test("an ending with its own body sings over it; the peregrinus takes its second tenor", () => {
+    // 4A recites on d (k under c4), not tone IV's a.
+    const [, v4a] = getPsalm({ psalm: 1, mode: 4, differentia: "4A" });
+    assert.match(v4a.gabc, /^\(c4\) Sed\(k\) in\(k\)/);
+    // The peregrinus: first half on a (h), second half on g.
+    const [, vp] = getPsalm({ psalm: 1, mode: 0 });
+    const [h1, h2] = vp.gabc.split("(:)");
+    assert.match(h1, /Sed\(h\) in\(h\)/);
+    assert.match(h2, /^ et\(g\) in\(g\)/);
   });
 
   test("the Benedictus and Magnificat take it on every verse", () => {
