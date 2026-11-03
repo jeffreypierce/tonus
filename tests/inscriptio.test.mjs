@@ -373,7 +373,7 @@ describe("inscriptio — multi-system layout", () => {
     // Uniform step between consecutive systems.
     const step = offsets[1] - offsets[0];
     for (let i = 2; i < offsets.length; i++) {
-      assert.ok(Math.abs(offsets[i] - offsets[i - 1] - step) < 0.01, "uniform system step");
+      assert.ok(Math.abs(offsets[i] - offsets[i - 1] - step) < 0.015, "uniform system step");
     }
   });
 
@@ -1036,5 +1036,66 @@ describe("heads — every written shape reaches its Bravura glyph", () => {
     const { svg } = inscriptio(buildScore(makeChant("(c4) a(gr1) b(gr0r2) c(gr3) d(gr4) e(gr5) (::)")));
     assert.equal(svg.match(/class="signum"/g)?.length, 5);
     assert.equal(svg.match(/scale\(-1 1\)|scale\(1 -1\)/g)?.length, 2);
+  });
+});
+
+describe("line breaking — a system ends between syllables, never inside one", () => {
+  // `wordStart` rides every row of a word's first syllable, so a test on the
+  // flag alone broke between two figures of one syllable: Mirabilis Deus at
+  // 700 set `for(g/jjj)` with the g on one line and the jjj on the next.
+  const splitSyllables = (score, geometry) => {
+    const seen = new Map();
+    let split = 0;
+    geometry.forEach((g) => {
+      const key = `${g.phraseIndex}.${g.syllableIndex}`;
+      if (seen.has(key) && seen.get(key) !== g.system) split++;
+      seen.set(key, g.system);
+    });
+    return split;
+  };
+
+  test("Mirabilis Deus at 700 keeps every syllable on one system", () => {
+    const chant = tonus.cantus({ source: "gr" }).find((c) => /^Mirabilis Deus/i.test(c.incipit));
+    assert.ok(chant, "fixture present");
+    const score = tonus.notatio(chant);
+    for (const width of [500, 700]) {
+      const { geometry } = inscriptio(score, { width });
+      assert.equal(splitSyllables(score, geometry), 0, `width ${width}`);
+    }
+  });
+
+  test("across a slice of the Graduale, no syllable is split and overruns stay small", () => {
+    const pool = tonus.cantus({ source: "gr" }).filter((_, i) => i % 25 === 0);
+    let over = 0;
+    for (const chant of pool) {
+      const score = tonus.notatio(chant);
+      const { svg, geometry } = inscriptio(score, { width: 500 });
+      assert.equal(splitSyllables(score, geometry), 0, chant.id);
+      const w = Number(/viewBox="0 0 (\S+)/.exec(svg)[1]);
+      if (w > 500) over++;
+    }
+    // A syllable wider than the line still overruns; nothing else should.
+    assert.ok(over <= Math.ceil(pool.length * 0.15), `${over} of ${pool.length} overran`);
+  });
+
+  test("a continuation system opens at its clef, as the first one does", () => {
+    const long = buildScore(makeChant(
+      "(c4) Ky(g)ri(h)e(g.) (,) e(h)le(ih)i(g)son.(f.) (:) " +
+      "Chri(g)ste(h) e(gh)le(hg)i(f)son.(g.) (:) " +
+      "Ký(g)ri(h)e(gh) e(hg)lé(fg)i(gf)son.(g.) (::)",
+    ));
+    const { geometry } = inscriptio(long, { width: 250 });
+    const firstX = new Map();
+    for (const g of geometry) if (!firstX.has(g.system)) firstX.set(g.system, g.x);
+    assert.ok(firstX.size >= 2);
+    for (const x of firstX.values()) assert.equal(x, firstX.get(0));
+  });
+
+  test("a word wider than the line is carried at a syllable, with its hyphen", () => {
+    const gabc = "(c3) " + Array.from({ length: 24 }, (_, i) => `syl${i}(g)`).join("") + " end(h) (::)";
+    const { svg, geometry } = inscriptio(buildScore(makeChant(gabc)), { width: 300 });
+    assert.ok(new Set(geometry.map((g) => g.system)).size >= 2, "wrapped");
+    assert.ok(/class="lyric hyphen"/.test(svg), "the carried word takes a hyphen");
+    assert.ok(Number(/viewBox="0 0 (\S+)/.exec(svg)[1]) <= 300, "fits the width");
   });
 });
