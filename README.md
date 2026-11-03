@@ -21,8 +21,8 @@ import tonus from "tonus";
 
 // Build a tuning: Pythagorean, set to mode 1.
 const t = tonus.temperamentum({ mode: 1 });
-t.nota("D4"); // 293.33 Hz, the final of mode 1, through pure fifths
-t.gradus("D4"); // "Delasolre": RE of the natural hexachord, the finalis
+t.nota("D4").hz; // 293.33, the final of mode 1, through pure fifths
+t.gradus("D4").nomen; // "Delasolre": RE of the natural hexachord, the finalis
 
 // Ask the calendar for a day, then pull the chant that belongs to it.
 const [feast] = tonus.festum({ date: new Date("2026-12-25") });
@@ -35,8 +35,8 @@ const score = tonus.notatio(introit, { temperamentum: t });
 const { svg, geometry } = tonus.inscriptio(score, { width: 680 });
 ```
 
-The objects each call returns (`feast`, `t`) pass straight back into the next as
-filters.
+The objects each call returns pass straight back into the next: `feast` as a
+query filter, `t` as an option.
 
 ## The API
 
@@ -76,7 +76,7 @@ melodic character, and drawn to a square-note or modern staff.
 ## Documentation
 
 The **[documentation index](docs/api/index.md)** is the technical center: the full
-API, the conventions, the error contract, and the code standards. From there,
+API, the conventions, and the error contract. From there,
 one page per engine, in dependency order:
 [tuning](docs/api/tuning.md), [calendar](docs/api/calendar.md), [chant](docs/api/chant.md),
 [score](docs/api/score.md), and [census](docs/api/census.md).

@@ -2,7 +2,7 @@
 
 What the tonus calendar actually resolves to: for each day, whether tonus
 carries its Mass propers and its Divine Office. Measured against the shipped
-build, 2026-10-28.
+build, 2026-11-03.
 
 ## The day, end to end
 
@@ -42,7 +42,7 @@ omission — the Tridentine reform leaves only a handful standing.
 ## Divine Office — slot fill
 
 The office table is **464 rows**, the Benedictine cursus. tonus serves one
-cursus; see [chant.md](docs/chant.md#one-cursus-the-benedictine) for why the
+cursus; see [chant.md](docs/api/chant.md#one-cursus-the-benedictine) for why the
 Roman office was cut rather than kept as an option.
 
 | Slot | Filled | Rate |
@@ -93,12 +93,12 @@ These are **returns, not distinct chants** — a psalm sung daily counts daily.
 That is why the office books dominate and the Graduale, sung once a day at
 Mass, sits low despite being among the largest books.
 
-The shipped corpus is 9,906 rows over 7,988 distinct chants, across nine
-books — the books themselves. The corpus was assignment-driven until
-2026-08-31, shipping only what some day called for; that gate is gone, so a
-chant with no day to be sung on is still on the shelf and still findable.
+The shipped corpus is 9,743 book listings over 7,825 distinct chants, across
+seven books, carried whole. A chant with no day to be sung on is on the shelf
+and findable all the same.
 
-`corpus()` reports the whole shelf (7,988 listed of **9,959 catalogued**), and every
-book carries a `full` tally in the same genera/modes shape as its shipped one —
-so the Antiphonale's 1,049 catalogued antiphons and the 1,045 tonus lists sit side by side.
+`corpus()` reports the whole shelf (7,825 chants held of **9,796 catalogued**),
+and every book carries a `full` tally in the same genera/modes shape as its
+shipped one, so the Antiphonale's 1,049 catalogued antiphons and the 1,045
+tonus holds sit side by side.
 See [what the book holds](docs/api/chant.md#what-the-book-holds--full).
