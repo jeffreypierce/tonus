@@ -1,40 +1,15 @@
 // ---------------------------------------------------------------------------
-// engines/score/infer — mode and chant type inference from parsed GABC
+// engines/score/infer — mode inference from parsed GABC
 // ---------------------------------------------------------------------------
-import type { ChantType, ScoreIR, OrdinaryCode, OfficeCode } from "./types.js";
-import { OFFICIA } from "../chant/types.js";
+// A chant whose header names no mode is read for one: its closing note picks
+// the maneria, its compass about that note the authentic or plagal mode.
+import type { ScoreIR } from "./types.js";
 import { MODES } from "../temper/modes.js";
 
-// Identify an ordinary chant by its opening words. Two movements have a second,
-// interior incipit because they are conventionally intoned from their second
-// phrase: the Gloria's "Et in terra pax" (the celebrant sings "Gloria in
-// excelsis") and the Credo's "Patrem omnipotentem" ("Credo in unum Deum").
-const ORDINARY_INCIPITS: Array<[RegExp, OrdinaryCode]> = [
-  [/^kyrie/i, "ke"],
-  [/^gloria/i, "gl"],
-  [/^etinterra/i, "gl"],
-  [/^credo/i, "cr"],
-  [/^patrem/i, "cr"],
-  [/^sanctus/i, "sa"],
-  [/^agnus/i, "ag"],
-  [/^benedica/i, "be"],
-  [/^ite/i, "it"],
-];
-
-const OFFICE_CODES = new Set(Object.keys(OFFICIA));
-
-export function inferChantType(ir: ScoreIR): ChantType | undefined {
-  const officePart = ir.chant.office?.toLowerCase().trim();
-  if (officePart && OFFICE_CODES.has(officePart)) return officePart as OfficeCode;
-
-  const incipit = collectIncipit(ir, 4);
-  if (!incipit) return undefined;
-
-  for (const [pattern, type] of ORDINARY_INCIPITS) {
-    if (pattern.test(incipit)) return type;
-  }
-  return undefined;
-}
+// The compass of each mode about its final, in semitones below and above:
+// authentic, a tone below to the octave; plagal, a fourth below to a fifth.
+const AUTHENTIC_FRAME = [2, 12] as const;
+const PLAGAL_FRAME = [5, 7] as const;
 
 export function inferMode(ir: ScoreIR): number | undefined {
   const headerMode = parseInt(ir.chant.mode ?? "", 10);
@@ -60,34 +35,24 @@ export function inferMode(ir: ScoreIR): number | undefined {
   if (candidates.length === 0) return undefined;
   if (candidates.length === 1) return candidates[0];
 
-  // Within a maneria the authentic mode ranges a fifth-and-more ABOVE the final,
-  // the plagal one straddles it (roughly a fourth below to a fifth above) [biblio:
-  // sunol-textbook]. So the mean pitch's height above the final separates them.
-  // The thresholds are asymmetric and tuned: a melody must sit a clear +3
-  // semitones above the final to read authentic, but only dip −1 below to read
-  // plagal (plagal melodies dip under the final; authentic ones rarely do).
-  const finalisStep = midis[midis.length - 1];
-  const mean = midis.reduce((s, v) => s + v, 0) / midis.length;
-  const offset = mean - finalisStep;
+  // Within a maneria the two modes differ by their compass about the final:
+  // the authentic runs from the final (or the tone below it) up to the octave,
+  // the plagal from about a fourth below the final to a fifth above it
+  // [biblio: sunol-textbook]. The melody's own lowest and highest notes are
+  // set against each frame, and the nearer frame names the mode; a tie reads
+  // authentic. The frames are the treatise's, in semitones; nothing here is
+  // tuned to a corpus. The mean pitch, which this read once, sits below the
+  // final in almost no plagal chant, and so named nearly every one authentic.
+  const finalisStep = midis[midis.length - 1]!;
+  const below = finalisStep - Math.min(...midis);
+  const above = Math.max(...midis) - finalisStep;
+  const off = (frame: readonly [number, number]) =>
+    Math.abs(below - frame[0]) + Math.abs(above - frame[1]);
 
   const authentic = candidates.filter((n) => MODES.get(n)?.type === "authentic");
   const plagal = candidates.filter((n) => MODES.get(n)?.type === "plagal");
 
-  if (offset > 3 && authentic.length > 0) return authentic[0];
-  if (offset < -1 && plagal.length > 0) return plagal[0];
+  if (plagal.length > 0 && (authentic.length === 0 || off(PLAGAL_FRAME) < off(AUTHENTIC_FRAME)))
+    return plagal[0];
   return (authentic[0] ?? plagal[0])!;
-}
-
-function collectIncipit(ir: ScoreIR, maxSyllables: number): string {
-  const parts: string[] = [];
-  outer: for (const phrase of ir.phrases) {
-    for (const syl of phrase.syllables) {
-      const text = syl.lyric.replace(/-+$/, "").trim();
-      if (text) {
-        parts.push(text);
-        if (parts.length >= maxSyllables) break outer;
-      }
-    }
-  }
-  return parts.join("");
 }

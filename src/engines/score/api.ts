@@ -4,7 +4,7 @@
 import { parseGABC } from "./parse.js";
 import { buildIR } from "./ir.js";
 import { buildRatios } from "../temper/scale.js";
-import { computeMeta } from "./meta.js";
+import { inferMode } from "./infer.js";
 import { computeImprint, type Imprint } from "../imprint.js";
 import { computeMetrics, type Metrics } from "./metrics.js";
 import { detectCadences, type Cadence } from "./cadence.js";
@@ -45,8 +45,9 @@ export interface Score {
  * rhythm, metrics, imprint, and a tabula. Options: a temperamentum
  * (tuning) and the four knobs (see knobs.ts), each a level or an object of
  * its fields.
- * @throws Error on invalid Chant input, unparseable GABC, an unknown option,
- *   or a knob out of range or given a field it does not own.
+ * GABC problems do not throw; they land in `errors`.
+ * @throws Error on invalid Chant input, an unknown option, or a knob out of
+ *   range or given a field it does not own.
  */
 export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   if (!chant || typeof chant !== "object" || typeof (chant as Chant).gabc !== "string")
@@ -57,7 +58,8 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     if (!OPTION_KEYS.has(key))
       throw new Error(`notatio: unknown option ${key} (options: ${[...OPTION_KEYS].join(", ")})`);
   // The four knobs. With none given the articulation is balanced and the
-  // phrasing is left to the tabula's own gate (mode or office).
+  // phrasing is left to the tabula's own gate: a mode (named or inferred) or
+  // an office.
   const knobs = hasKnobs(opts) ? interpretKnobs(opts) : undefined;
   const parsed = parseGABC(chant.gabc, {
     interpretation: { articulation: "balanced", articulationOverrides: knobs?.articulation },
@@ -72,14 +74,14 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
     steps: opts?.temperamentum?.cents,
   });
   const ir = buildIR(parsed, chant, scale);
-  const meta = computeMeta(ir, { mode: modeNum });
+  // The chant's mode: its header's, or read from the notes (infer.ts). Every
+  // modal reading below takes this one; the temperamentum's mode tunes.
+  const modeOf = modeNum ?? inferMode(ir);
+  const modeData = modeOf !== undefined ? MODES.get(modeOf) : undefined;
 
   // Cadence detection runs here, where the resolved mode is in hand. Pure
   // data — mirrors the arsis/thesis pass in ir.ts.
-  const cadences = detectCadences(
-    ir.phrases,
-    meta.mode != null ? MODES.get(meta.mode) : undefined,
-  );
+  const cadences = detectCadences(ir.phrases, modeData);
 
   // The corpus join, on the same footing as MODES above: a resolved table
   // meeting detected data. The detector computes the key and stops, so this
@@ -98,13 +100,13 @@ export function buildScore(chant: Chant, opts?: ScoreOpts): Score {
   }
 
   // Modulation: where the tonal centre leans away from the home mode.
-  const modulations = detectModulations(ir.phrases, meta.mode ?? undefined);
+  const modulations = detectModulations(ir.phrases, modeData?.mode);
 
   const tabula = computeTabula(ir, {
-    mode: meta.mode ?? undefined,
-    // The office gate: a chant that names its liturgical type gets phrasing
-    // even when its mode must be inferred — the gate computeTabula always had,
-    // now actually fed.
+    mode: modeData?.mode,
+    // The phrasing gate (computeTabula): a mode, which is here whenever the
+    // header names one or the notes yield one, or the chant's office. Only a
+    // chant with neither — no mode readable, no office — is left unshaped.
     office: chant.office,
     a4Hz: opts?.temperamentum?.a4,
     transpose: opts?.temperamentum?.transpose,

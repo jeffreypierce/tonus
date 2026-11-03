@@ -294,8 +294,18 @@ function phraseFinalWindow(phrase: Phrase): WindowNote[] {
   return window;
 }
 
-function classifyTarget(final: WindowNote | undefined): CadenceTarget {
+/** The landing's role in the chant's mode. Read from `modeData`, the same mode
+ *  `steps` is read in, and not from the note's own `step.role`: that one is
+ *  the temperamentum's reading, and a tuning in another mode would name the
+ *  landing in one mode and measure its approach in another. With no mode the
+ *  note's role stands. */
+function classifyTarget(final: WindowNote | undefined, modeData: ModeData | undefined): CadenceTarget {
   if (!final) return "alia";
+  if (modeData) {
+    if (final.pc === modeData.final) return "finalis";
+    if (final.pc === modeData.tenor) return "tenor";
+    return "alia";
+  }
   if (final.role === "finalis") return "finalis";
   if (final.role === "tenor") return "tenor";
   return "alia";
@@ -425,7 +435,7 @@ export function detectCadences(
 
     const divisio = phrase.divisio.divisio;
     const finalNote = window[window.length - 1];
-    const target = classifyTarget(finalNote);
+    const target = classifyTarget(finalNote, modeData);
     const approach = classifyApproach(window);
     const pcs = window.map((w) => w.pc);
 

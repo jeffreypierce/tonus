@@ -88,13 +88,15 @@ describe("the five knobs", () => {
     assert.ok(k.articulation.weights.ictusWeight > ARTICULATION_PROFILES.expressive.weights.ictusWeight);
   });
 
-  test("a name in both profiles is one field: ictusBoost, neumeArch, durArch set both", () => {
+  test("a name in both profiles is one field: ictusBoost sets both", () => {
     const k = interpretKnobs({ pondus: { ictusBoost: 1 }, modulatio: { neumeArch: 0, durArch: 0 } });
     assert.equal(k.articulation.ictusBoost, 1);
     assert.equal(k.phrasing.ictusBoost, 1);
+    // The arch across a syllable is the articulation's alone: the phrasing
+    // never read it, so it no longer carries it.
     for (const f of ["neumeArch", "durArch"]) {
       assert.equal(k.articulation[f], 0);
-      assert.equal(k.phrasing[f], 0);
+      assert.equal(k.phrasing[f], undefined);
     }
   });
 

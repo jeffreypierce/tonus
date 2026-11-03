@@ -28,8 +28,6 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     contourDur: 0.05,
     velSpread: 0.35,
     ictusBoost: 1.06,
-    neumeArch: 0.2,
-    durArch: 0.04,
     lean: 0.1,
     rush: 0.1,
   },
@@ -46,8 +44,6 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     contourDur: 0.11,
     velSpread: 0.5,
     ictusBoost: 1.08,
-    neumeArch: 0.5,
-    durArch: 0.08,
     lean: 0.3,
     rush: 0.3,
   },
@@ -64,8 +60,6 @@ export const PHRASING_PROFILES: Record<PhrasingType, PhrasingProfile> = {
     contourDur: 0.13,
     velSpread: 0.55,
     ictusBoost: 1.12,
-    neumeArch: 0.62,
-    durArch: 0.1,
     lean: 0.45,
     rush: 0.4,
   },
@@ -135,12 +129,19 @@ const RELEASE_VELOCITY = 0.12;
 
 type Role = "real" | "passing" | "release" | null;
 
-function realNotes(notes: Note[], closing: string | undefined, tenorPc?: number, finalPc?: number): Role[] {
+function realNotes(
+  notes: Note[], closing: string | undefined, tenorPc?: number, finalPc?: number,
+  syllableOf?: ReadonlyMap<Note, unknown>,
+): Role[] {
   const roles: Role[] = notes.map(() => null);
-  // the melismas: group by syllable
+  // The melismas: the notes of one syllable. A syllable is known by identity
+  // where the caller gives it; `context.syllableIndex` counts within a word and
+  // restarts at 0, so a run of monosyllables ("et in te") would read as one
+  // melisma by it, and serves only when no identity is given.
+  const key = (n: Note): unknown => syllableOf?.get(n) ?? n.context.syllableIndex;
   let start = 0;
   for (let i = 1; i <= notes.length; i++) {
-    const same = i < notes.length && notes[i].context.syllableIndex === notes[start].context.syllableIndex;
+    const same = i < notes.length && key(notes[i]) === key(notes[start]);
     if (same) continue;
     const n = i - start;
     if (n >= MELISMA_MIN) {
@@ -175,6 +176,8 @@ export function applyPhrasing(
   profile: PhrasingProfile,
   tenorPc?: number,
   finalPc?: number,
+  /** Each note's syllable, by any key unique to it — see realNotes. */
+  syllableOf?: ReadonlyMap<Note, unknown>,
 ): ShapedNote[] {
   const shaped: ShapedNote[] = [];
 
@@ -228,7 +231,7 @@ export function applyPhrasing(
     const roles = realNotes(
       noteEntries.map((e) => e.ev as Note),
       noteEntries[noteEntries.length - 1].nextDivisio,
-      tenorPc, finalPc,
+      tenorPc, finalPc, syllableOf,
     );
 
     noteEntries.forEach(({ ev, nextDivisio }, order) => {
