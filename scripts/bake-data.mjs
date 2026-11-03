@@ -20,7 +20,7 @@
 // TypeScript sources are untouched — this rewrites emitted output only.
 
 import { readFile, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -35,19 +35,25 @@ const DIR_CONST = /^const __dir = dirname\(fileURLToPath\(import\.meta\.url\)\);
 const READ_CALL =
   /((?:export\s+)?const\s+\w+\s*=\s*)JSON\.parse\(\s*readFileSync\(\s*resolve\(__dir,\s*"([^"]+)"\)\s*,\s*"utf8"\)\s*,?\s*\)((?:\.\w+)*)\s*;/g;
 
+// A node-builtin import, in any of its forms: static `from "node:…"`, bare
+// `import "node:…"`, dynamic `import("node:…")`, either quote. Only the import
+// forms count; comments survive in dist, and a comment that mentions node:fs
+// is not a dependency.
+const NODE_DEP = /(?:\bfrom\s*|\bimport\s*\(\s*|^\s*import\s+)["']node:/m;
+
 let baked = 0;
 let bytes = 0;
 
-const files = (await readFile(join(HERE, "..", "package.json"), "utf8"), [
+const files = [
   "smufl-glyphs.js", "psalms.js", "office-ferial.js",
   "commune-office.js", "seasonal-respbreve.js", "attestation.js",
-]);
+];
 
 for (const name of files) {
   const path = join(DIST, name);
   if (!existsSync(path)) continue;
   let src = await readFile(path, "utf8");
-  if (!/node:(fs|path|url)/.test(src)) continue;   // already baked
+  if (!NODE_DEP.test(src)) continue;   // already baked
 
   const reads = [...src.matchAll(READ_CALL)];
   if (!reads.length) {
@@ -59,15 +65,18 @@ for (const name of files) {
   for (const [whole, head, json, accessor] of reads) {
     const payload = await readFile(join(DIST, json), "utf8");
     // Keep the accessor: the module exports a slice of the file, not all of it.
-    src = src.replace(whole, `${head}(${payload.trim()})${accessor};`);
+    // A function replacement, so a `$&` or `$1` inside the JSON payload is
+    // inserted as text rather than read as a replacement pattern.
+    const inlined = `${head}(${payload.trim()})${accessor};`;
+    src = src.replace(whole, () => inlined);
     bytes += payload.length;
   }
   src = src.replace(NODE_IMPORT, "").replace(DIR_CONST, "");
   // Collapse the blank run the removed preamble leaves behind.
   src = src.replace(/^\n{2,}/, "").replace(/\n{3,}/g, "\n\n");
 
-  if (/node:(fs|path|url)/.test(src)) {
-    console.error(`bake-data: ${name} still references a node builtin after baking.`);
+  if (NODE_DEP.test(src)) {
+    console.error(`bake-data: ${name} still imports a node builtin after baking.`);
     process.exit(1);
   }
   await writeFile(path, src);
@@ -75,10 +84,18 @@ for (const name of files) {
 }
 
 // The whole point: nothing under dist/ may import a node builtin.
-const { execSync } = await import("node:child_process");
-const leaking = execSync(
-  `grep -rl 'node:' ${resolve(HERE, "..", "dist")} 2>/dev/null | grep '\\.js$' || true`,
-).toString().trim();
+function jsFiles(dir) {
+  const out = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) out.push(...jsFiles(p));
+    else if (e.name.endsWith(".js")) out.push(p);
+  }
+  return out;
+}
+const leaking = jsFiles(resolve(HERE, "..", "dist"))
+  .filter((p) => NODE_DEP.test(readFileSync(p, "utf8")))
+  .join("\n");
 if (leaking) {
   console.error("bake-data: node builtins still reachable from dist:\n" +
     leaking.split("\n").map((l) => `  ${l}`).join("\n"));

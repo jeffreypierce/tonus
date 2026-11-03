@@ -67,7 +67,9 @@
     "prepublishOnly": "npm run clean && npm run build",
     "lab": "npm run build && node scripts/render-lab.mjs",
     "stress": "npm run build && node scripts/render-stress.mjs",
-    "glyphs": "node scripts/extract-smufl-glyphs.mjs"
+    "glyphs": "node scripts/extract-smufl-glyphs.mjs",
+    "mine:cadentiae": "npm run build && node scripts/mine-cadentiae.mjs",
+    "bake:cadentiae": "node scripts/bake-cadentiae.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

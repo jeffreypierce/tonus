@@ -2,11 +2,11 @@
 // scripts/engine-fingerprint — has the engine moved under a mined table?
 // ---------------------------------------------------------------------------
 // Some shipped data is MINED: computed by running the engine over the corpus,
-// then baked. Those tables go stale silently. CADENTIAE did exactly that — it
+// then baked. Those tables go stale silently. CADENTIAE did exactly that: it
 // was baked before the Latin syllable-splitter refinements (14676de), and since
-// syllable boundaries move phrase ends, 46 event keys and 9 of 122 families had
-// drifted. Nothing failed. The table simply described a corpus the engine no
-// longer produced, and only a re-mine found it.
+// syllable boundaries move phrase ends, 46 event keys and nine of the families
+// the catalogue then held had drifted. Nothing failed. The table described a
+// corpus the engine no longer produced, and only a re-mine found it.
 //
 // So each mining artifact records the fingerprint of the engine that made it,
 // and the bake compares. This does NOT say the data is wrong — it says the code
@@ -14,40 +14,71 @@
 //
 // A git SHA would be the obvious fingerprint and the wrong one: it moves on
 // every commit, so it would warn constantly and be ignored within a week. This
-// hashes the CONTENTS of the files that actually decide a mined value — the
-// parse, the IR (which is where syllabification lands), the tabula the miners
-// read, and the shared key function. Touch a doc comment in one and it fires,
-// which is the acceptable end of the trade; touch anything else in the repo and
-// it stays quiet.
+// hashes the CONTENTS of the files that decide a mined value. They are not
+// listed by hand: a hand list missed the pitch, step, neume, articulation,
+// ictus and lyric modules the tabula reads through. The set is the transitive
+// closure of relative imports from ROOTS (the parse, the shared key function,
+// the flat rows the miners walk, the IR), less generated data under src/data/
+// (a mined table must not fingerprint itself) and type-only imports (erased
+// at build).
+// Touch a doc comment in one and it fires, which is the acceptable end of the
+// trade; touch anything outside the closure and it stays quiet.
 import { createHash } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** The sources a mined value depends on, in a fixed order. */
-export const ENGINE_SOURCES = [
-  "src/engines/score/parse.ts",     // GABC → notes
-  "src/engines/score/ir.ts",        // phrases, syllables, rhythm
+/** Where the closure starts: the modules a mined value is computed by. */
+const ROOTS = [
+  "src/engines/score/parse.ts",     // GABC → notes (parseGABC, which buildScore runs first)
   "src/engines/score/cadence.ts",   // cadenceKeys — THE shared key function
   "src/engines/score/tabula.ts",    // the flat rows the miners walk
-  "src/engines/chant/syllabify.ts", // the splitter that moved last time
+  "src/engines/score/ir.ts",        // phrases, syllables, rhythm
 ];
 
+/** Relative value imports of one module (`import type` is erased, so skipped). */
+function valueImports(abs) {
+  const src = readFileSync(abs, "utf8");
+  const out = [];
+  const IMPORT =
+    /^\s*(?:import|export)\s+(type\s+)?(?:[^;]*?\s+from\s+)?["'](\.{1,2}\/[^"']+)["']/gm;
+  for (const m of src.matchAll(IMPORT)) {
+    if (m[1]) continue;
+    out.push(resolve(dirname(abs), m[2].replace(/\.js$/, ".ts")));
+  }
+  return out;
+}
+
+/** The sources a mined value depends on, sorted so the hash order is fixed. */
+export function engineSources() {
+  const seen = new Set();
+  const queue = ROOTS.map((r) => resolve(ROOT, r));
+  while (queue.length) {
+    const abs = queue.pop();
+    if (seen.has(abs)) continue;
+    if (!existsSync(abs)) {
+      throw new Error(`engine-fingerprint: ${relative(ROOT, abs)} is imported but missing`);
+    }
+    seen.add(abs);
+    for (const dep of valueImports(abs)) {
+      if (relative(ROOT, dep).startsWith("src/data/")) continue;
+      queue.push(dep);
+    }
+  }
+  return [...seen].map((abs) => relative(ROOT, abs)).sort();
+}
+
 /**
- * A short content hash over those sources. Stable across unrelated commits,
+ * A short content hash over the closure. Stable across unrelated commits,
  * different the moment one of them changes.
  */
 export function engineFingerprint() {
   const h = createHash("sha256");
-  for (const rel of ENGINE_SOURCES) {
-    const abs = resolve(ROOT, rel);
-    if (!existsSync(abs)) {
-      throw new Error(`engine-fingerprint: ${rel} is missing — update ENGINE_SOURCES`);
-    }
+  for (const rel of engineSources()) {
     h.update(rel);
-    h.update(readFileSync(abs));
+    h.update(readFileSync(resolve(ROOT, rel)));
   }
   return h.digest("hex").slice(0, 16);
 }

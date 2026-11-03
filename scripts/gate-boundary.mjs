@@ -1,20 +1,19 @@
 #!/usr/bin/env node
 // ---------------------------------------------------------------------------
-// gate-boundary.mjs — the two boundaries, checked instead of described
+// gate-boundary.mjs — the rendering boundary's import rule and the entry map
 // ---------------------------------------------------------------------------
 // CODE-STANDARDS states the rendering boundary in prose: `score` analyzes,
-// `inscriptio` draws. Prose has already failed to hold it once — the analysis
-// tracks were downstream, moved in on 2026-07-28, and moved out again on
-// 08-19. A paragraph cannot fail a build; this can.
+// `inscriptio` draws. A paragraph cannot fail a build; this can, for the part
+// of the boundary an import graph shows.
 //
 // Two checks, both cheap:
 //
-// 1. THE RENDERING BOUNDARY. Only `engines/score/inscriptio.ts` and the
-//    emitters themselves may import from `emitters/`. Everything else in the
-//    library — every analysis pass, every other engine, the root index — must
-//    be able to run without the drawing code existing. This is true today
-//    (measured: zero analyze-side imports), so the gate starts green; its
-//    whole job is to keep it that way.
+// 1. THE DRAWER'S DOOR. No module other than `engines/score/inscriptio.ts` and
+//    the emitters themselves imports from `emitters/` directly. The root
+//    index reaches the drawing code, but only through `inscriptio`; analysis
+//    passes and the other engines never name an emitter. Every import form
+//    counts: static `import … from`, `export … from`, a bare `import "…"`,
+//    and a dynamic `import("…")`, in either quote.
 //
 // 2. THE ENTRY MAP. Every subpath in package.json `exports` has a source
 //    module behind it, and every root-level entry module is exported. An entry
@@ -53,10 +52,13 @@ const files = walk(SRC);
 for (const rel of files) {
   if (rel.startsWith(EMITTER_DIR) || DRAWERS.has(rel)) continue;
   const src = readFileSync(join(SRC, rel), "utf8");
-  for (const m of src.matchAll(/^\s*(?:import|export)[^;]*?from\s+"([^"]+)"/gm)) {
-    if (m[1].includes("emitters/")) {
+  const SPECIFIER =
+    /\bfrom\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']|^\s*import\s+["']([^"']+)["']/gm;
+  for (const m of src.matchAll(SPECIFIER)) {
+    const spec = m[1] ?? m[2] ?? m[3];
+    if (spec.includes("emitters/")) {
       failures.push(
-        `${rel} imports "${m[1]}" — only ${[...DRAWERS].join(", ")} and the ` +
+        `${rel} imports "${spec}" — only ${[...DRAWERS].join(", ")} and the ` +
         `emitters themselves may reach into emitters/. If this import is right, ` +
         `the rendering boundary moved and DRAWERS here should say so.`,
       );
