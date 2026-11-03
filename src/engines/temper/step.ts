@@ -36,8 +36,9 @@ function spnLetterForPc(pc: number): string {
   return sp.step;
 }
 
-export function toStep(midi: number, scala?: Scale): Step {
-  const mode = scala?.mode;
+// `mode` defaults to the scale's own; `modus(n)` passes n, so a mode's steps
+// read against that mode whatever the context was built in.
+export function toStep(midi: number, scala?: Scale, mode: number | undefined = scala?.mode): Step {
   const guido = lookupGuido(midi, mode);
 
   const pc = ((midi % 12) + 12) % 12;

@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // engines/temper/api — Temperamentum context builder
 // ---------------------------------------------------------------------------
-import { buildRatios, parseScala, getPtolemaicRatios, toRatio, wolfOf } from "./scale.js";
+import { buildRatios, parseScala, parseComma, getPtolemaicRatios, toRatio, wolfOf, foldOctave } from "./scale.js";
 import type { Scale, ScaleOpts, ScalaFile, RatioResult, Lupus } from "./scale.js";
 import { parsePitch, toPitch } from "./pitch.js";
 import type { Pitch, PitchInput } from "./pitch.js";
@@ -43,6 +43,7 @@ export interface TonusOpts {
 export interface Tonus {
   mode: number;
   differentia: string;
+  tenor: Pitch;         // the reciting note (the differentia's own, where it has one)
   intonatio: Pitch[];   // opening intonation formula
   mediatio: Pitch[];    // mediant cadence at the verse colon
   terminatio: Pitch[];  // termination cadence (per differentia)
@@ -55,10 +56,10 @@ export interface TunedNote {
 }
 
 /**
- * A mode's reference data (ModeData), enriched with its structural pitches
- * tuned through the temperamentum that returned it. `modus()`. `cadences` is
- * the mode's trimmed set from the corpus catalogue, derived at call — a
- * measurement riding the verb, where the reference data above is fixed.
+ * What `modus()` returns: a mode's reference data (ModeData), with its
+ * structural pitches tuned through the temperamentum that returned it.
+ * `cadences` is the mode's set from the corpus catalogue, derived at call: a
+ * measurement riding the verb, where the reference data is fixed.
  */
 export interface Modus extends ModeData {
   finalis: TunedNote;         // the final, tuned
@@ -90,14 +91,24 @@ export interface Temperamentum {
   tonus(opts?: TonusOpts): Tonus;
 }
 
+const OPTION_KEYS = new Set(["tuning", "mode", "a4", "root", "transpose", "comma", "scale"]);
+
 function resolveOpts(input?: TemperamentumInput): TemperamentumOpts {
   if (input == null) return {};
   if (typeof input === "string") return { tuning: input };
-  if (typeof input !== "object")
+  if (typeof input !== "object" || Array.isArray(input))
     throw new Error(
-      `temperamentum input must be a tuning name or an options object, got ${typeof input}`,
+      `temperamentum input must be a tuning name or an options object, got ${Array.isArray(input) ? "an array (pass it as { scale: [...] })" : typeof input}`,
     );
   const opts = input;
+  // The same door policy as the query functions: an unknown key is a typo
+  // ({ tunning: "equal" }) and throws, rather than building the default tuning.
+  const unknown = Object.keys(opts).filter((k) => !OPTION_KEYS.has(k));
+  if (unknown.length)
+    throw new Error(
+      `temperamentum: unknown option(s) ${unknown.map((k) => `"${k}"`).join(", ")} ` +
+        `(expected ${[...OPTION_KEYS].join(", ")}).`,
+    );
   if (opts.tuning != null && typeof opts.tuning !== "string")
     throw new Error(`tuning must be a string, got ${typeof opts.tuning}`);
   if (
@@ -106,11 +117,22 @@ function resolveOpts(input?: TemperamentumInput): TemperamentumOpts {
     (!Number.isInteger(opts.mode) || opts.mode < 1 || opts.mode > 8)
   )
     throw new RangeError(`Unknown mode: ${opts.mode}. Supported: 1–8 or "auto".`);
+  if (opts.a4 != null && !(Number.isFinite(opts.a4) && opts.a4 > 0))
+    throw new RangeError(`a4 must be a positive frequency in Hz, got ${opts.a4}`);
+  if (opts.root != null && !(Number.isInteger(opts.root) && opts.root >= 0 && opts.root <= 11))
+    throw new RangeError(`root must be a pitch class, an integer 0–11, got ${opts.root}`);
+  if (opts.transpose != null && !Number.isInteger(opts.transpose))
+    throw new RangeError(`transpose must be a whole number of semitones, got ${opts.transpose}`);
+  if (opts.comma != null) parseComma(opts.comma); // throws outside [0, 1]
+  if (opts.scale != null) {
+    const empty = Array.isArray(opts.scale) ? opts.scale.length === 0 : opts.scale.trim() === "";
+    if (empty) throw new RangeError("scale is empty: pass a Scala file string or an array of 7 or 12 steps");
+  }
   return opts;
 }
 
 function resolveScale(opts: TemperamentumOpts): { tuning: string; scaleSteps?: string[] } {
-  if (!opts.scale) return { tuning: opts.tuning ?? "pythagorean" };
+  if (opts.scale == null) return { tuning: opts.tuning ?? "pythagorean" };
 
   if (Array.isArray(opts.scale)) {
     return { tuning: opts.tuning ?? "custom", scaleSteps: opts.scale };
@@ -214,12 +236,17 @@ export function buildTemper(input?: TemperamentumInput): Temperamentum {
 
     ratio(input: string): RatioResult & { step: Step | null } {
       const result = toRatio(input);
-      const folded = result.ratio >= 2 ? result.ratio / Math.pow(2, Math.floor(Math.log2(result.ratio))) : result.ratio;
+      // Compare octave-free: the input folded into [1, 2), against each table
+      // entry folded the same way. The table is root-relative, so a pitch
+      // class below the root sits under 1 (16/9 above D is C, at 8/9 in the
+      // table) and an unfolded comparison never finds it.
+      const folded = foldOctave(result.ratio);
       let step: Step | null = null;
       for (let pc = 0; pc < 12; pc++) {
-        if (Math.abs((scala.ratios[pc] ?? 0) - folded) < 1e-6) {
-          const baseMidi = 60 + pc;
-          step = toStep(baseMidi, scala);
+        if (Math.abs(foldOctave(scala.ratios[pc] ?? 1) - folded) < 1e-6) {
+          // Name the pitch where the ratio puts it: above the root, in the
+          // frame the modes are written in (C3 = 48).
+          step = toStep(48 + scala.root + ((pc - scala.root + 12) % 12), scala);
           break;
         }
       }
@@ -232,11 +259,12 @@ export function buildTemper(input?: TemperamentumInput): Temperamentum {
 
     modus(mode: number): Modus {
       const data = getMode(mode);
-      // The mode's degrees are stored as semitone offsets from C (pc 0), with
-      // values past 12 in the upper octave. Anchor them at C4 (MIDI 60).
+      // The mode's degrees are stored as semitones above C3, values past 12 in
+      // the upper octave (data/modes.ts, THE FRAME); gamut() reads the same
+      // frame. Steps read against THIS mode, not the context's.
       const tuned = (offset: number): TunedNote => ({
-        pitch: toPitch(60 + offset, scala),
-        step: toStep(60 + offset, scala),
+        pitch: toPitch(48 + offset, scala),
+        step: toStep(48 + offset, scala, mode),
       });
 
       const scaleSet = new Set(data.scalePcs);
@@ -245,10 +273,12 @@ export function buildTemper(input?: TemperamentumInput): Temperamentum {
         if (scaleSet.has(((off % 12) + 12) % 12)) ambitusNotes.push(tuned(off));
       }
 
+      // `final` and `tenor` are pitch classes; place each inside the mode's
+      // range, so mode VIII's tenor is the c above its final g, not below it.
       return {
         ...data,
-        finalis: tuned(data.final),
-        reciting: tuned(data.tenor),
+        finalis: tuned(data.ambitus.lowest + ((data.final - data.ambitus.lowest + 12) % 12)),
+        reciting: tuned(data.ambitus.lowest + ((data.tenor - data.ambitus.lowest + 12) % 12)),
         ambitusNotes,
         cadences: modusCadentiae(data),
       };
@@ -261,8 +291,11 @@ export function buildTemper(input?: TemperamentumInput): Temperamentum {
       return {
         mode: modeVal,
         differentia: diff.code,
-        intonatio: tone.intonation.map((m) => toPitch(m, scala)),
-        mediatio: tone.mediant.map((m) => toPitch(m, scala)),
+        tenor: toPitch(diff.tenor ?? tone.tenor, scala),
+        // An ending that brings its own tone body (IV A, on the transposed
+        // tenor d) sings its own intonation and mediant.
+        intonatio: (diff.intonation ?? tone.intonation).map((m) => toPitch(m, scala)),
+        mediatio: (diff.mediant ?? tone.mediant).map((m) => toPitch(m, scala)),
         terminatio: diff.termination.map((m) => toPitch(m, scala)),
       };
     },
