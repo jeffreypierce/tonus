@@ -86,7 +86,7 @@ type FigureRow = Pick<ChantTabulaRow, "phraseIndex" | "syllableIndex" | "neumeGr
 /** Whether `row` belongs to the same drawn figure as `prev`: the same
  *  syllable, and the same GABC figure or joined to it by `!`. gregorio's `!`
  *  cuts the glyph without parting the neume, so the pieces are spaced as
- *  glyphs of one figure, not as figures. (The analysis keeps `neumeGroup`.) */
+ *  glyphs of one figure, not as figures; the analysis reads them as one figure too. */
 export function sameFigure(prev: FigureRow, row: FigureRow): boolean {
   return prev.phraseIndex === row.phraseIndex && prev.syllableIndex === row.syllableIndex &&
     (prev.neumeGroup === row.neumeGroup || row.separator === "!");

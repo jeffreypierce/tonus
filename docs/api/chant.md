@@ -673,7 +673,7 @@ interface PsalmusQuery {
   psalm?: number | string;
   verse?: string;
   mode?: number; // 1–8, or 0 for the tonus peregrinus
-  differentia?: string; // differentia code, e.g. "6F", "4e"
+  differentia?: string; // differentia code, e.g. "6F", "4E"
   intonatio?: boolean; // every verse (true), none (false); absent: by the rubric
   inDirectum?: boolean; // recite straight through, no mediant
   solemn?: boolean; // use the ornamented solemn mediant where the tone has one
@@ -756,7 +756,7 @@ Each tone has a fixed anatomy: an **intonatio** (the opening rise, sung
 for the first verse), recitation on the **tenor**, a **mediatio** cadence
 at the verse's colon, recitation again, and a **terminatio** cadence.
 
-Terminations come in variants, the **differentiae** (`"6F"`, `"4e"`, …),
+Terminations come in variants, the **differentiae** (`"6F"`, `"4E"`, …),
 whose purpose is practical: ending the verse on a pitch that leads
 smoothly back into the antiphon's opening. The tones and differentiae in
 tonus follow the Graduale Romanum appendix (Toni Communes), keyed by the
