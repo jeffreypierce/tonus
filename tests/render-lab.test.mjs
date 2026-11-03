@@ -17,9 +17,9 @@ describe("the render lab battery", () => {
     });
   }
 
-  test("the battery is deterministic (same plate twice, byte-identical)", () => {
-    const a = plates[0].render().svg;
-    const b = plates[0].render().svg;
-    assert.equal(a, b);
+  test("the battery is deterministic (every plate twice, byte-identical)", () => {
+    for (const plate of plates) {
+      assert.equal(plate.render().svg, plate.render().svg, plate.title);
+    }
   });
 });

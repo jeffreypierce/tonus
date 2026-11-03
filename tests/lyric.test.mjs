@@ -147,7 +147,7 @@ describe("lyric markup — the emitters draw it", () => {
     // italic ij., euouae — the exact shapes the census found 6,431 of.
     const real = tonus.cantus({ office: "al" })
       .find((c) => c.gabc.includes("<sp>V/</sp>") && c.gabc.includes("<i>"));
-    if (!real) return; // corpus slice without one — the constructed tests above cover it
+    assert.ok(real, "the corpus holds an Alleluia with <sp>V/</sp> and <i>; the test needs one");
     const svg = tonus.inscriptio(tonus.notatio(real)).svg;
     assert.ok(!svg.includes("&lt;sp&gt;") && !svg.includes("&lt;i&gt;"), "no tag soup");
     assert.ok(svg.includes("℣"), "the versicle mark is drawn");
