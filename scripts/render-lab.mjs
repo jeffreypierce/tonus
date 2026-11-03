@@ -6,9 +6,10 @@
 // Keep that file open in a browser (file://…/working/review/svg-lab.html) and
 // refresh after each `npm run lab` — the eyeball half of the render tests.
 //
-// Faces: Crimson Pro arrives via a Google Fonts <link> (view-time fetch);
-// Junicode embeds from a local clone when one is found — set JUNICODE_DIR or
-// keep the clone as a sibling of tonus (~/Developer/Junicode-font).
+// Faces: Junicode, which leads the house stack, embeds from a local clone when
+// one is found — set JUNICODE_DIR or keep the clone as a sibling of tonus
+// (~/Developer/Junicode-font). Crimson Pro, the house stack's first fallback,
+// arrives via a Google Fonts <link> (view-time fetch) for the wardrobe row.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,7 +50,7 @@ const fontFace = junicode
 // specimen sheet for choosing which settings the fonts option should carry.
 const SPEC = "Quem quaeritis in sepulchro? Resurrexit sicut dixit · 1462";
 const wardrobeRows = [
-  ["Crimson Pro", `font-family:'Crimson Pro',serif`, "the house face — also a garalde, hence the resemblance"],
+  ["Crimson Pro", `font-family:'Crimson Pro',serif`, "the house stack's first fallback — also a garalde, hence the resemblance"],
   ["Junicode plain", `font-family:'${JUNICODE}',serif`, "Fell-types base, no settings"],
   ["wght 300", `font-family:'${JUNICODE}';font-variation-settings:'wght' 300`, "light"],
   ["wght 700", `font-family:'${JUNICODE}';font-variation-settings:'wght' 700`, "bold"],
@@ -92,7 +93,7 @@ const html = `<!doctype html>
   .ward-note { color: #999; font-size: .78rem; }
 </style></head><body>
 <h1>tonus — svg render lab</h1>
-<p class="note">npm run lab · refresh this tab after each round · faces: Crimson Pro (house) + Junicode${junicode ? " (embedded)" : " (reference only — clone not found)"}</p>
+<p class="note">npm run lab · refresh this tab after each round · faces: Junicode (house)${junicode ? " (embedded)" : " (reference only — clone not found)"} + Crimson Pro (fallback)</p>
 ${wardrobe}
 ${results.map((c, i) => `<h2>${i + 1} · ${c.title}</h2><p class="note">${c.note}</p><div class="plate">${c.err ? `<span class="err">THROWS: ${c.err}</span>` : c.svg}</div>`).join("\n")}
 <p class="stamp">tonus ${JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version} · ${results.filter((c) => !c.err).length}/${results.length} plates rendered</p>

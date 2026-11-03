@@ -40,11 +40,9 @@ const fontkit = fk.default ?? fk;
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "..");
 
-// Vendored first: the repo's own copy is the one this script is gated against.
-// The sibling path stays as a fallback for a checkout that predates vendoring.
+// The repo's own vendored copy, the one this script is gated against.
 const BRAVURA_CANDIDATES = [
   resolve(REPO, "vendor", "Bravura.otf"),
-  resolve(REPO, "..", "gabc-smufl", "sources", "Bravura.otf"),
 ];
 const OUT = resolve(REPO, "src", "data", "smufl-glyphs.json");
 

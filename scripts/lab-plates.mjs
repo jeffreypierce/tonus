@@ -67,7 +67,7 @@ export function buildPlates(tonus, fonts = {}) {
     },
     {
       title: `${label} — moderna`,
-      note: "same chant, same options, same staff span — only the notation differs",
+      note: "same chant, same options, same lyric size — only the notation differs",
       render: () => tonus.inscriptio(tonus.notatio(byId(id)()), {
         width: 900, notation: "moderna", theme: JF,
       }),
@@ -93,7 +93,7 @@ export function buildPlates(tonus, fonts = {}) {
     fontPlate,
     {
       title: "Quadrata — baseline (Junicode)",
-      note: "the square-note render, Junicode lyrics at weight 560",
+      note: "the square-note render, Junicode lyrics at weight 500",
       render: () => tonus.inscriptio(tonus.notatio(kyrie()), { theme: JF }),
     },
     {
