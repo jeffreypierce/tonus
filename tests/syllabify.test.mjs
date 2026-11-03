@@ -177,7 +177,9 @@ describe("hiatus, glides, and consonantal i (the ecclesiastical rules)", () => {
   test("the ngu glide: lin-gua, san-guis — but gu elsewhere is a vowel", () => {
     assert.deepEqual(syllabifyWord("lingua"), ["lin", "gua"]);
     assert.deepEqual(syllabifyWord("sanguis"), ["san", "guis"]);
-    assert.deepEqual(syllabifyWord("exiguus"), ["e", "xi", "gu", "us"]);
+    // ex- before a vowel keeps its x (ex-áu-di); the gu is still a vowel.
+    assert.deepEqual(syllabifyWord("exiguus"), ["ex", "i", "gu", "us"]);
+    assert.deepEqual(syllabifyWord("arguit"), ["ar", "gu", "it"]);
   });
 
   test("qu still swallows its u: qui-a", () => {
@@ -201,5 +203,48 @@ describe("wordAccent: the rule the editions leave unprinted", () => {
   test("a monosyllable carries none", () => {
     assert.equal(wordAccent([false]), -1);
     assert.equal(wordAccent([]), -1);
+  });
+});
+
+describe("syllabifyWord — the Solesmes breaks the corpus prints", () => {
+  // ⟨QA⟩ Each case was read off the corpus GABC's own syllable breaks.
+  test("the qu glide travels with its q: a-qua, i-ni-qui-tas, ne-que", () => {
+    assert.deepEqual(syllabifyWord("aqua"), ["a", "qua"]);
+    assert.deepEqual(syllabifyWord("iniquitas"), ["i", "ni", "qui", "tas"]);
+    assert.deepEqual(syllabifyWord("neque"), ["ne", "que"]);
+    assert.deepEqual(syllabifyWord("requiem"), ["re", "qui", "em"]);
+  });
+
+  test("a diaeresis forces the hiatus: Is-ra-ël, po-ë-ta, a-ër", () => {
+    assert.deepEqual(syllabifyWord("Israël"), ["Is", "ra", "ël"]);
+    assert.deepEqual(syllabifyWord("Michaël"), ["Mi", "cha", "ël"]);
+    assert.deepEqual(syllabifyWord("poëta"), ["po", "ë", "ta"]);
+    assert.deepEqual(syllabifyWord("aër"), ["a", "ër"]);
+  });
+
+  test("the Hebrew names in -ael are hiatus unmarked too", () => {
+    assert.deepEqual(syllabifyWord("Israel"), ["Is", "ra", "el"]);
+    assert.deepEqual(syllabifyWord("Raphael"), ["Ra", "pha", "el"]);
+    // …and the diphthong stands everywhere else.
+    assert.deepEqual(syllabifyWord("caelum"), ["cae", "lum"]);
+  });
+
+  test("s + consonant, gn, mn, ct carry over whole", () => {
+    assert.deepEqual(syllabifyWord("Christus"), ["Chri", "stus"]);
+    assert.deepEqual(syllabifyWord("noster"), ["no", "ster"]);
+    assert.deepEqual(syllabifyWord("magnus"), ["ma", "gnus"]);
+    assert.deepEqual(syllabifyWord("agnus"), ["a", "gnus"]);
+    assert.deepEqual(syllabifyWord("omnes"), ["o", "mnes"]);
+    assert.deepEqual(syllabifyWord("factus"), ["fa", "ctus"]);
+    assert.deepEqual(syllabifyWord("conspectu"), ["con", "spe", "ctu"]);
+    // A cluster with no carried tail still splits after its first consonant.
+    assert.deepEqual(syllabifyWord("mundus"), ["mun", "dus"]);
+    assert.deepEqual(syllabifyWord("ecce"), ["ec", "ce"]);
+  });
+
+  test("the ex- prefix keeps its x before a vowel; x elsewhere opens", () => {
+    assert.deepEqual(syllabifyWord("exáudi"), ["ex", "áu", "di"]);
+    assert.deepEqual(syllabifyWord("exaltabo"), ["ex", "al", "ta", "bo"]);
+    assert.deepEqual(syllabifyWord("dixit"), ["di", "xit"]);
   });
 });

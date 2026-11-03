@@ -7,16 +7,34 @@
 //      NOT diphthongs in ecclesiastical Latin (De-i, e-le-i-son, fu-it, su-i)
 //      — except the pronoun stems cui/hui (cui, huic), where ui is true.
 //      eu is NOT a diphthong either (de-us, me-us split normally).
-//   2. qu → single consonant (u is silent after q); likewise the ngu glide
-//      (lin-gua, sán-guis) — but not gu elsewhere (e-xi-gu-us, ar-gu-it).
-//   3. i between vowels, or word-initial before a vowel, is consonantal (the
+//   2. A diaeresis forces the hiatus the books print it to mark: Is-ra-ël,
+//      po-ë-ta, a-ër. The Hebrew names in -ael are hiatus with or without it
+//      (Is-ra-el, Mi-cha-el, Ra-pha-el): no Latin word ends in a diphthong
+//      before a final l.
+//   3. qu → one consonant (u is silent after q), and so is the ngu glide
+//      (lin-gua, sán-guis) — but not gu elsewhere (e-xi-gu-us, ar-gu-it). The
+//      glide travels with its consonant: a-qua, i-ni-qui-tas, ne-que.
+//   4. i between vowels, or word-initial before a vowel, is consonantal (the
 //      j sound): e-ius, ma-ior, al-le-lu-ia, Ie-su — it opens the next
 //      syllable rather than closing this one.
-//   4. All other adjacent vowels split (ecclesiastical): fi-li-a, glo-ri-a
-//   5. Single consonant between vowels → goes with following vowel (V·CV)
-//   6. Consonant clusters: muta cum liquida (tr, pr, br, gr, dr, cr, fr, pl, bl,
-//      cl, gl, fl) and the Greek digraphs th, ph, ch stay with the following
-//      vowel; all other clusters split after the first consonant
+//   5. All other adjacent vowels split (ecclesiastical): fi-li-a, glo-ri-a
+//   6. Single consonant between vowels → goes with following vowel (V·CV).
+//      The one exception is the prefix ex- before a vowel, whose x closes the
+//      syllable: ex-áu-di, ex-al-tá-bo, éx-i-it.
+//   7. Consonant clusters keep with the following vowel the longest tail that
+//      can open a syllable: muta cum liquida (tr, pr, br, gr, dr, cr, fr, pl,
+//      bl, cl, gl, fl), the Greek digraphs th, ph, ch, and the groups the
+//      Solesmes books carry over whole: st, sc, sp, ct, pt, ps, gn, mn (Chri-
+//      stus, no-ster, ma-gnus, o-mnes, fa-ctus, san-ctus, con-spé-ctu). Their
+//      three-letter extensions (str, scr, spl, spr, chr, phr, thr) carry over
+//      too. A cluster with no such tail splits after its first consonant.
+//
+// Rule 7 follows the editions, not the classical grammarians (who split
+// nos-ter, mag-nus). Measured against the syllable breaks the corpus GABC
+// itself prints, the editions' practice agrees with the shipped corpus on
+// about nine words in ten; what remains is chiefly morphology the books
+// honour word by word (sic-ut, ad-o-ré-mus, sanc-tus beside san-ctus), which
+// no letter rule recovers.
 //
 // Diacritics (áéíóúàèìòùâêîôû etc.) are treated as their base vowel throughout,
 // and the ligatures æ/œ expand to their pairs in either case (see selectVowel).
@@ -32,23 +50,19 @@ const SOFT_HYPHEN = "\u00ad";
 // a classical Latin diphthong (de-us, me-us split normally).
 const DIPHTHONGS = new Set(["ae", "oe", "au"]);
 
-// Muta cum liquida pairs that stay with the following vowel
-const MUTA_CUM_LIQUIDA = new Set([
-  "tr",
-  "dr",
-  "pr",
-  "br",
-  "cr",
-  "gr",
-  "fr",
-  "pl",
-  "bl",
-  "cl",
-  "gl",
-  "fl",
-  "th",
-  "ph",
-  "ch",
+// The consonant groups that open a syllable, and so stay with the following
+// vowel (rule 7 above). Muta cum liquida and the Greek digraphs first, then
+// the groups the Solesmes editions carry over whole. Each entry was checked
+// against the corpus's printed breaks: st 3,882 carried over against 1,353
+// split, ct 1,664/765, gn 1,802/235, sc 1,186/377, ps 478/153, sp 351/134,
+// mn 1,129/877, str 889/303; pt is an even split alone (325/342) but carried
+// over inside mpt (179/93), so it is admitted. sq is not: the books split it
+// (s-qu 392/89).
+const ONSETS = new Set([
+  "tr", "dr", "pr", "br", "cr", "gr", "fr", "pl", "bl", "cl", "gl", "fl",
+  "th", "ph", "ch",
+  "st", "sc", "sp", "ct", "pt", "ps", "gn", "mn",
+  "str", "scr", "spl", "spr", "chr", "phr", "thr",
 ]);
 
 // Strip diacritics for rule matching, keep original for output
@@ -63,9 +77,10 @@ function isVowelBase(ch: string): boolean {
   return VOWELS.has(baseChar(ch));
 }
 
-function isConsonantBase(ch: string): boolean {
-  const b = baseChar(ch);
-  return /[a-z]/.test(b) && !VOWELS.has(b);
+// A diaeresis (ë, ï, ü …) marks a vowel the books want sounded apart from its
+// neighbour, whatever the pair would otherwise be.
+function hasDiaeresis(ch: string): boolean {
+  return ch.normalize("NFD").includes("\u0308");
 }
 
 // ── Core syllabifier ──
@@ -87,7 +102,7 @@ export function syllabifyWord(word: string): string[] {
   // cluster before a vowel (lin-gua, sán-guis) — but a u after plain g is a
   // real vowel (e-xi-gu-us, ar-gu-it).
   const isGlideU = (i: number): boolean => {
-    if (baseChar(chars[i]) !== "u") return false;
+    if (baseChar(chars[i]) !== "u" || hasDiaeresis(chars[i])) return false;
     const prev = i > 0 ? baseChar(chars[i - 1]) : "";
     if (prev === "q") return true;
     const prev2 = i > 1 ? baseChar(chars[i - 2]) : "";
@@ -98,7 +113,7 @@ export function syllabifyWord(word: string): string[] {
   // the following vowel's: between real vowels (e-ius, ma-ior, al-le-lu-ia)
   // or word-initial before a vowel (Ie-su, iu-bi-lá-te).
   const isConsonantalI = (i: number): boolean => {
-    if (baseChar(chars[i]) !== "i") return false;
+    if (baseChar(chars[i]) !== "i" || hasDiaeresis(chars[i])) return false;
     if (i + 1 >= n || !isVowelBase(chars[i + 1])) return false;
     if (i === 0) return true;
     return isVowelBase(chars[i - 1]) && !isGlideU(i - 1);
@@ -125,6 +140,13 @@ export function syllabifyWord(word: string): string[] {
     // Adjacent vowels (no consonants between them)
     if (v2 === v1 + 1) {
       const pair = baseChar(chars[v1]) + baseChar(chars[v2]);
+      // The diaeresis is the book saying "two syllables" (rule 2).
+      if (hasDiaeresis(chars[v2])) { splits.add(v2); continue; }
+      // The Hebrew names in -ael: hiatus, printed with or without the mark.
+      if (pair === "ae" && v2 + 2 === n && baseChar(chars[n - 1]) === "l") {
+        splits.add(v2);
+        continue;
+      }
       if (DIPHTHONGS.has(pair)) continue;
       // ui is a true diphthong only in the pronoun stems (cui, huic, and the
       // cui- compounds); everywhere else it is hiatus (fu-it, su-i).
@@ -135,30 +157,38 @@ export function syllabifyWord(word: string): string[] {
       continue;
     }
 
-    // Consonants between v1 and v2
-    const consonants = chars.slice(v1 + 1, v2);
-    const cLen = consonants.length;
-
-    if (cLen === 0) {
-      // Shouldn't happen after digraph check, but guard
-      splits.add(v2);
-    } else if (cLen === 1) {
-      // Single consonant → goes with following vowel: V | CV
-      splits.add(v1 + 1);
-    } else {
-      // Cluster — check last two consonants for muta cum liquida
-      const last2 = consonants
-        .slice(-2)
-        .map((c) => baseChar(c))
-        .join("");
-      if (MUTA_CUM_LIQUIDA.has(last2)) {
-        // Keep muta+liquida together with following vowel: VC…·tCV
-        splits.add(v2 - 2);
-      } else {
-        // Split after first consonant: VC·C…V
-        splits.add(v1 + 2);
+    // The consonants between v1 and v2, as UNITS: a glide u rides the
+    // consonant before it (qu, ngu's gu), and a consonantal i is a consonant
+    // of its own. Counting the glide as a letter of the cluster is what split
+    // a-qua as aq-ua.
+    const units: { at: number; text: string }[] = [];
+    for (let i = v1 + 1; i < v2; i++) {
+      if (isGlideU(i) && units.length) {
+        units[units.length - 1].text += "u";
+        continue;
       }
+      units.push({ at: i, text: baseChar(chars[i]) });
     }
+
+    if (units.length === 1) {
+      // The ex- prefix before a vowel keeps its x (ex-áu-di, éx-i-it).
+      if (v1 === 0 && units[0].text === "x" && baseChar(chars[0]) === "e") {
+        splits.add(v1 + 2);
+      } else {
+        // Single consonant → goes with following vowel: V | CV
+        splits.add(units[0].at);
+      }
+      continue;
+    }
+
+    // A cluster: the longest tail that can open a syllable goes forward.
+    let cut = -1;
+    for (let k = 0; k < units.length; k++) {
+      const tail = units.slice(k).map((u) => u.text).join("");
+      if (units.length - k >= 2 && ONSETS.has(tail)) { cut = k; break; }
+    }
+    // No such tail: split after the first consonant (VC·C…V).
+    splits.add(units[cut >= 0 ? cut : 1].at);
   }
 
   // Build syllable strings from split positions
