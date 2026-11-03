@@ -62,8 +62,8 @@ custom scales, the Guidonian gamut and hand, hexachords and their mutations,
 and intervals named as the treatises name them. Each of the eight modes carries
 its final, dominant, ambitus, and ethos, with its psalm tones.
 
-**The calendar** is Tridentine, resolved against Easter by
-the Julian or the Gregorian computus.
+**The calendar** is the Roman calendar of the Divino Afflatu rubrics (c. 1954),
+resolved against Easter by the Julian or the Gregorian computus.
 
 **The repertoire** is 7,825 chants across seven books, six Solesmes editions and
 the _Nocturnale Romanum_ night office in

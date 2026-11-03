@@ -9,4 +9,4 @@
 // The calendar (cal) is its one reader; it stays at the engines root as the
 // library's default moment.
 // (Year 991 ≥ 100, so it is safe from JS Date's 0–99 → 1900+ remapping.)
-export const DEFAULT_EPOCH: Date = new Date(Date.UTC(991, 5, 1));
+export const DEFAULT_EPOCH: Date = new Date(Date.UTC(991, 5, 1)); // proleptic Gregorian (Julian 27 May)

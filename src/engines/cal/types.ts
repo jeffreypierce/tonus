@@ -3,9 +3,9 @@
 // ---------------------------------------------------------------------------
 
 // ── Season codes ──
-// One-to-one with the Divinum Officium Tempora stems, so findSeason and the
-// cal data agree by construction (Adv→adv, Nat→nat, Epi→epi, Quadp→quadp,
-// Quad→quad, Pasc→pasc, Pent→pent).
+// Named after the Divinum Officium Tempora stems (Adv→adv, Nat→nat, Epi→epi,
+// Quadp→quadp, Quad→quad, Pasc→pasc, Pent→pent), but a feast's season is read
+// from its date, not its stem: Ash Wednesday is Quadp3-3 and falls in `quad`.
 export type Season = "adv" | "nat" | "epi" | "quadp" | "quad" | "pasc" | "pent";
 
 export const SEASON_LABEL: Readonly<Record<Season, string>> = Object.freeze({
@@ -38,7 +38,7 @@ export const PENITENTIAL_SEASONS: ReadonlySet<Season> = new Set<Season>([
 ]);
 
 // ── Feast dignity (grade) ──
-// The authentic Tridentine rank (the "ritus" string) reduces to a canonical
+// The authentic rank (the "ritus" string) reduces to a canonical
 // ordered Grade. Ordering is classis-primary: a first-class day outranks
 // any non-first-class feast regardless of the duplex/semiduplex axis, so a
 // plain Duplex feast never displaces a Lent Sunday (Semiduplex I classis).
@@ -61,9 +61,10 @@ export type Grade =
   | "vigilia"
   | "feria";
 
-// High → low precedence. Position in this array IS the dignity — earlier
-// outranks later. There is no separate numeric rank field; precedence is read
-// from this order via gradeOrder / compareGrade.
+// High → low dignity. Position in this array IS the dignity — earlier
+// outranks later. There is no separate numeric rank field. Same-day
+// precedence starts from this order and adjusts it for the excluding days and
+// the Sundays (precedence in ./calendar.ts).
 export const GRADE_ORDER: readonly Grade[] = [
   "triduum",
   "duplex-i",
@@ -150,7 +151,7 @@ const RITUS_PATTERNS: readonly [string, Grade][] = [
   ["Feria", "feria"],
 ];
 
-/** Reduce a Tridentine ritus string to its canonical Grade. */
+/** Reduce a ritus string to its canonical Grade. */
 export function ritusToGrade(ritus: string): Grade {
   const exact = RITUS_TO_GRADE[ritus];
   if (exact) return exact;
@@ -161,13 +162,13 @@ export function ritusToGrade(ritus: string): Grade {
 }
 
 // ── Privileged Sundays (per-id dignity overrides) ──
-// DO's Tridentine ritus line under-specifies four privileged Sundays as plain
+// DO's ritus line under-specifies four privileged Sundays as plain
 // "Semiduplex"; their precedence lived only in DO's numeric rank, which tonus
-// does not use. Historically Advent I is a first-class Sunday (yields to
-// nothing) and the Septuagesima-block Sundays are second-class (yield only to
-// first- and second-class feasts) — the same Sunday classes DO itself encodes
-// for Lent ("Semiduplex I classis") and late Advent ("Semiduplex II classis").
-// `ritus` stays verbatim; only the derived grade is lifted.
+// does not use. Advent I is a first-class Sunday and the Septuagesima-block
+// Sundays are second-class — the same Sunday classes DO itself encodes for
+// Lent ("Semiduplex I classis") and late Advent ("Semiduplex II classis").
+// `ritus` stays verbatim; only the derived grade is lifted. That Advent I
+// yields to NO feast is not a grade matter: it is in EXCLUDING_DAYS below.
 export const PRIVILEGED_SUNDAYS: Readonly<Record<string, Grade>> =
   Object.freeze({
     "Adv1-0": "semiduplex-i", // Dominica I Adventus
@@ -189,27 +190,50 @@ export function gradeOrder(grade: Grade): number {
   return GRADE_ORDER.indexOf(grade);
 }
 
-/** Sort comparator: earlier in GRADE_ORDER (higher dignity) sorts first. */
-export function compareGrade(a: Grade, b: Grade): number {
-  return gradeOrder(a) - gradeOrder(b);
-}
+// ── Days that admit no feast ──
+// Under Divino Afflatu these days exclude every feast: whatever falls on them
+// is impeded (and, in the books, transferred or commemorated). They lead the
+// day whatever the other entry's grade — a Duplex I classis Annunciation on
+// Palm Sunday, or St Joseph on a Lent Sunday, follows the temporale.
+export const EXCLUDING_DAYS: ReadonlySet<string> = new Set([
+  "Adv1-0", // Dominica I Adventus
+  "Quadp3-3", // Feria IV Cinerum (Ash Wednesday)
+  "Quad1-0", "Quad2-0", "Quad3-0", "Quad4-0", // Sundays of Lent
+  "Quad5-0", // Dominica de Passione
+  "Quad6-0", // Dominica in Palmis
+  "Quad6-1", "Quad6-2", "Quad6-3", // Holy Week, Monday to Wednesday
+  "Quad6-4", "Quad6-5", "Quad6-6", // the Triduum
+  "Pasc0-0", "Pasc0-1", "Pasc0-2", "Pasc0-3", "Pasc0-4", "Pasc0-5", "Pasc0-6", // Easter and its octave
+  "Pasc1-0", // Dominica in Albis
+  "Pasc7-0", "Pasc7-1", "Pasc7-2", "Pasc7-3", "Pasc7-4", "Pasc7-5", "Pasc7-6", // Pentecost and its octave
+]);
 
 // ── BVM / Apostolic feast sets (keyed by DO stem: MM-DD for Sancti) ──
+// Feasts OF Our Lady and OF the Apostles (and Evangelists), not their vigils
+// nor the feasts of their kin: a vigil is not the feast it precedes, and St
+// Joseph, St Anne and St Joachim are not Marian feasts. `marian` selects the
+// Kyriale's "For feasts of the Blessed Virgin" (IX, X) and Credo IV;
+// `apostolic` selects Credo III.
 export const BVM_FEAST_IDS: ReadonlySet<string> = new Set([
-  "12-08", // Immaculate Conception
-  "03-19", // St. Joseph
+  "02-02", // Purification
+  "02-11", // Apparition at Lourdes
+  "03-25", // Annunciation
+  "Quad5-5", // Seven Sorrows (Friday of Passion week)
   "05-31", // Queenship of Mary
   "07-02", // Visitation
-  "07-26", // St. Anne
+  "07-16", // Our Lady of Mount Carmel
   "08-05", // Our Lady of the Snows
-  "08-14", // Vigil of the Assumption
   "08-15", // Assumption
-  "08-16", // St. Joachim
   "08-22", // Immaculate Heart
   "09-08", // Nativity of Mary
   "09-12", // Most Holy Name of Mary
   "09-15", // Seven Sorrows
+  "09-24", // Our Lady of Ransom
+  "10-07", // Holy Rosary
   "10-11", // Motherhood of Mary
+  "11-21", // Presentation of Mary
+  "12-08", // Immaculate Conception
+  "12-15", // Octave of the Immaculate Conception
 ]);
 
 export const APOSTOLIC_FEAST_IDS: ReadonlySet<string> = new Set([
@@ -217,11 +241,10 @@ export const APOSTOLIC_FEAST_IDS: ReadonlySet<string> = new Set([
   "12-21", // St. Thomas
   "01-25", // Conversion of St. Paul
   "02-24", // St. Matthias
-  "05-11", // SS. Philip and James
+  "05-01", // SS. Philip and James
   "06-11", // St. Barnabas
-  "06-28", // Vigil of SS. Peter and Paul
   "06-29", // SS. Peter and Paul
-  "06-30", // St. Paul
+  "06-30", // Commemoration of St. Paul
   "07-25", // St. James
   "08-24", // St. Bartholomew
   "09-21", // St. Matthew
@@ -233,21 +256,21 @@ export const APOSTOLIC_FEAST_IDS: ReadonlySet<string> = new Set([
 
 // ── Core interface ──
 // Field-name registers: a Latin key returns authentic Latin content (nomen,
-// ritus, grade, tempus); an English key returns a machine code or datum
-// (season, date, weekday, masses).
+// ritus, tempus); an English key returns a machine code or datum (grade,
+// season, date, weekday, masses).
 export interface Feast {
   id: string;
   nomen: string;      // Latin feast name, e.g. "In Nativitate Domini"
-  ritus: string;      // authentic Tridentine rank, e.g. "Duplex majus"
+  ritus: string;      // authentic rank (DO [Rank] line), e.g. "Duplex majus"
   grade: Grade; // canonical grade the ritus reduces to; precedence via
                       // GRADE_ORDER (no separate numeric rank field)
   season: Season;     // machine code (DO Tempora stem)
   tempus: string;     // Latin season name, e.g. "Tempus Adventus"
   seasonStart: Date;
   seasonEnd: Date;
-  date: Date;
+  date: Date;       // proleptic-Gregorian UTC midnight
   weekday: number;  // 0 = Sunday
-  masses: number[]; // ranked list of compatible kyriale mass numbers
+  masses: number[]; // the masses the day's Kyriale rubric appoints, in book order
   marian: boolean;
   apostolic: boolean;
   /** The era view this feast was resolved under — the `before` year given to
@@ -275,8 +298,9 @@ export interface FeastQuery {
   before?: number;
 }
 
-// The movable anchors of one liturgical year, as returned by tonus.pascha.
-// All dates are UTC midnights.
+// The anchors of one CIVIL year, as returned by tonus.pascha (its Advent and
+// Christmas open the next liturgical year). All dates are proleptic-Gregorian
+// UTC midnights.
 export interface Pascha {
   year: number;
   septuagesima: Date;
