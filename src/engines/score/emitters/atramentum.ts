@@ -56,14 +56,18 @@
 // it through the vendored render subgraph, and outside consumers have no
 // reason to draw in tonus's hand.
 
-/** The one ink. Everything black is this black. */
+/** The one ink. Everything black is this black. It is the fallback: inside
+ * a rendered score the tracks draw in the score's own note ink (the themed
+ * `var(--tonus-note, …)`), so a theme or a host stylesheet re-inks the tracks
+ * with the notation. */
 export const INK = "#111";
 
 /** The liturgical red. Reserved for the CLAIM lines: the mode's in the
  * tonarium, and — ruled 2026-08-11, amending the 07-29 reservation — the
  * word's accent in the prosodia. The precedent is the score's own text
- * apparatus: the dropcap and annotations have always been rubricated, and
- * in the books red is the word's colour. Nothing else wears it. */
+ * apparatus, where red is the rubric's colour (a `<c>` run of the lyric):
+ * in the books red belongs to the words about the words. Nothing else in a
+ * track wears it. */
 export const RUBRICA = "#9E2B25";
 
 /** Stratum opacities: one ink, graded. The melody strata (wave, spark) sit

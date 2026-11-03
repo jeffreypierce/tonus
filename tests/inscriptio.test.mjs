@@ -1099,3 +1099,79 @@ describe("line breaking — a system ends between syllables, never inside one", 
     assert.ok(Number(/viewBox="0 0 (\S+)/.exec(svg)[1]) <= 300, "fits the width");
   });
 });
+
+describe("inscriptio — option validation (the builder contract)", () => {
+  const score = buildScore(makeChant(KYRIE_GABC));
+  const bad = [
+    [{ scale: NaN }, /scale must be a positive/],
+    [{ scale: Infinity }, /scale must be a positive/],
+    [{ scale: -20 }, /scale must be a positive/],
+    [{ scale: 0 }, /scale must be a positive/],
+    [{ width: NaN }, /width must be a positive/],
+    [{ width: -1 }, /width must be a positive/],
+    [{ accidentals: "bogus" }, /unknown accidentals "bogus"/],
+    [{ notation: "moderna", centsBaseline: "bogus" }, /unknown centsBaseline/],
+    [{ annotation: "yes" }, /unknown annotation "yes"/],
+    [{ tracks: "chironomia" }, /tracks must be an array/],
+    [{ tracks: ["bogus"] }, /unknown track "bogus"/],
+    [{ widht: 500 }, /unknown option widht/],
+    [{ dropcap: "yes" }, /dropcap must be a boolean/],
+    [{ theme: { colours: {} } }, /unknown theme key colours/],
+    [{ theme: { colors: { ink: "#000" } } }, /unknown colour role ink/],
+    [{ theme: { fonts: { body: "X" } } }, /unknown font role body/],
+  ];
+  for (const [opts, re] of bad) {
+    test(`throws on ${JSON.stringify(opts, (k, v) => (typeof v === "number" && !Number.isFinite(v) ? String(v) : v))}`, () => {
+      assert.throws(() => inscriptio(score, opts), re);
+    });
+  }
+
+  test("valid options still render", () => {
+    const { svg } = inscriptio(score, { width: 400, scale: 40, tracks: ["chironomia"], annotation: "auto", dropcap: true });
+    assert.ok(svg.startsWith("<svg"));
+  });
+});
+
+describe("inscriptio — ink, escaping and the dropcap", () => {
+  const score = buildScore(makeChant(KYRIE_GABC));
+
+  test("the tracks take the score's note ink, so a theme re-inks them", () => {
+    for (const notation of ["quadrata", "moderna"]) {
+      const { svg } = inscriptio(score, {
+        notation, tracks: ["prosodia", "chironomia", "tonarium"],
+        theme: { colors: { note: "#abcdef" } },
+      });
+      const tracks = svg.slice(svg.indexOf('class="chironomia"'));
+      assert.ok(tracks.includes("var(--tonus-note, #abcdef)"), notation);
+      assert.ok(!/fill="#111"|stroke="#111"/.test(svg), `${notation}: no literal track ink`);
+    }
+  });
+
+  test("a family or colour carrying & or < keeps the SVG well-formed", () => {
+    const FAKE = Buffer.from("x").toString("base64");
+    const { svg } = inscriptio(score, {
+      title: "T",
+      theme: {
+        fonts: { title: { family: "A & <B>", embed: { base64: FAKE } } },
+        colors: { note: "a&b" },
+      },
+    });
+    const style = /<style>(.*?)<\/style>/s.exec(svg)[1];
+    assert.ok(!/[<]/.test(style) && !/&(?!amp;|lt;|gt;)/.test(style), style);
+    assert.ok(svg.includes("var(--tonus-note, a&amp;b)"));
+  });
+
+  test("a one-letter first syllable drawn as the initial leaves no empty lyric", () => {
+    const { svg } = inscriptio(buildScore(makeChant("(c4) A(g)ve(h) Ma(g)rí(h)a.(g) (::)")), { dropcap: true });
+    assert.ok(!/<text class="lyric"[^>]*><\/text>/.test(svg));
+    assert.ok(svg.includes('class="dropcap"'));
+  });
+
+  test("the porrectus's second note is anchored at the swash's foot, not its start", () => {
+    const s = buildScore(makeChant("(c4) Ky(hgh) (::)"));
+    const { svg, geometry } = inscriptio(s);
+    assert.ok(svg.includes('class="note swash"'), "a porrectus swash");
+    assert.ok(geometry[1].x > geometry[0].x, `second note right of the first (${geometry[0].x} → ${geometry[1].x})`);
+    assert.ok(geometry[1].x < geometry[1].inkRight);
+  });
+});

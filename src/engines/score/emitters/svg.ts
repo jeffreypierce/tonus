@@ -2,8 +2,10 @@
 // engines/score/emitters/svg — square-note chant score as SVG
 // ---------------------------------------------------------------------------
 // Renders the score's tabula as a 4-line Gregorian staff with SMuFL glyphs
-// (outlines baked from Bravura in smufl-glyphs.json). Fully self-contained: all
-// notation is inline <path>; only lyric text uses a system font.
+// (outlines baked from Bravura in smufl-glyphs.json). All notation is inline
+// <path>, so the music needs no font; the text (lyric, title, margin mark,
+// dropcap, cents labels) names a font-family the host supplies, unless the
+// caller embeds its own bytes.
 //
 // SMuFL fonts are metrically standardized: 1 em = 4 staff spaces, so one staff
 // space = upm/4 font units. Bravura draws its punctum 0.81 of a space tall;
@@ -82,7 +84,9 @@ export interface ThemeColors {
   note?: string;
   /** The four staff lines. */
   staffLine?: string;
-  /** Liturgical red: the dropcap, rubrics, and the annotation block. */
+  /** Liturgical red: rubric-styled lyric runs (GABC `<c>`) and the analysis
+   *  tracks' claims (the tonarium's mode line, the prosodia's accents). The
+   *  dropcap and the margin mark take the note ink, as the books set them. */
   rubrica?: string;
 }
 
@@ -91,7 +95,7 @@ export interface Theme {
   colors?: ThemeColors;
 }
 
-interface ResolvedFont {
+export interface ResolvedFont {
   family: string;
   weight: number | null;
   scale: number;
@@ -104,7 +108,7 @@ interface ResolvedFonts {
   lyric: ResolvedFont;
 }
 
-function resolveFont(slot: FontSlot | undefined, fallback: string): ResolvedFont {
+export function resolveFont(slot: FontSlot | undefined, fallback: string): ResolvedFont {
   if (!slot) return { family: fallback, weight: null, scale: 1, embed: null };
   if (typeof slot === "string") return { family: slot, weight: null, scale: 1, embed: null };
   return {
@@ -120,7 +124,7 @@ const EMBED_MIME: Record<string, string> = {
 };
 
 /** One @font-face rule per embedded (family, weight); deduped across slots. */
-export function fontFaceCss(fonts: ResolvedFont[]): string {
+export function fontFaceCss(fonts: readonly ResolvedFont[]): string {
   const seen = new Set<string>();
   const rules: string[] = [];
   for (const f of fonts) {
@@ -136,7 +140,11 @@ export function fontFaceCss(fonts: ResolvedFont[]): string {
       `format("${format}")}`,
     );
   }
-  return rules.length ? `<defs><style>${rules.join("")}</style></defs>` : "";
+  // The rules are XML-escaped as text: a <style> in SVG is parsed as XML (and
+  // inline in HTML as foreign content), so an `&` or `<` in a family name made
+  // the file ill-formed. Entities decode back to the CSS before it is read.
+  const css = rules.join("").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return rules.length ? `<defs><style>${css}</style></defs>` : "";
 }
 
 /** font-family (+ optional font-weight) attributes for a resolved slot. */
@@ -157,7 +165,7 @@ export interface SvgOpts {
   /** Notehead/clef/sign size as a factor on the SMuFL nominal, where Bravura's
    *  punctum stands 0.81 of a staff space. Default `NOTE_SCALE`. */
   noteScale?: number;
-  /** Horizontal padding / left margin in px. Default 12. */
+  /** Horizontal padding / left margin in px. Default 14. */
   padding?: number;
   /** Colour of staff lines. Defaults to `noteColor`. */
   staffLineColor?: string;
@@ -184,7 +192,8 @@ export interface SvgOpts {
   annotation?: "auto";
   /** Draw a rubricated initial from the first lyric; the first system indents. */
   dropcap?: boolean;
-  /** The liturgical red for dropcap and annotations. Default a sober red. */
+  /** The liturgical red for rubric runs and the tracks' claims. Default a
+   *  sober red. */
   rubricaColor?: string;
   /** The intonation channel: standard accidentals, HEJI commas, or cents labels. */
   accidentals?: AccidentalMode;
@@ -233,8 +242,9 @@ const LIQUESCENT_FACTOR = 0.66;
 // Accidentals, inline and in the key signature.
 const ACCIDENTAL_FACTOR = 0.62;
 
-/** A themeable colour: the caller's value, reachable from CSS by name. */
-const cssVar = (name: string, value: string): string => `var(--tonus-${name}, ${value})`;
+/** A themeable colour: the caller's value, reachable from CSS by name. The
+ *  value is escaped, since it lands inside an attribute. */
+export const cssVar = (name: string, value: string): string => `var(--tonus-${name}, ${esc(value)})`;
 
 function resolveOpts(o: SvgOpts): Resolved {
   const staffHeight = o.staffHeight ?? 40;
@@ -322,7 +332,7 @@ function resolveOpts(o: SvgOpts): Resolved {
 // with without passing a `fonts` option at all. Every name after it is the
 // fallback that was here before, so a page without Junicode renders exactly as
 // it did. See score.md → "The recommended face".
-const HOUSE_SERIF =
+export const HOUSE_SERIF =
   "Junicode, 'Crimson Pro', 'Crimson Text', 'EB Garamond', Garamond, Georgia, serif";
 
 // The books abbreviate the genus in the margin mark (Intr., Grad., Offert.).
@@ -513,7 +523,7 @@ export function lyricMarkup(
       if (run.italic) attrs.push('font-style="italic"');
       if (run.bold) attrs.push('font-weight="700"');
       if (run.smallCaps) attrs.push('font-variant="small-caps"');
-      if (run.rubric) attrs.push(`fill="${esc(rubricaColor)}"`);
+      if (run.rubric) attrs.push(`fill="${rubricaColor}"`);   /* already escaped (cssVar) */
       return attrs.length
         ? `<tspan ${attrs.join(" ")}>${esc(run.text)}</tspan>`
         : esc(run.text);
@@ -623,8 +633,9 @@ interface NotePlacement {
 
 /**
  * One entry per tabula row, in tabula order — the TRACK CONTRACT. Analysis
- * overlays (chironomy, tonarium) consume score data + this geometry to place
- * marks against notes, without scraping the SVG for coordinates.
+ * overlays (the three built-in tracks, prosodia, chironomia and tonarium, and
+ * any downstream one) consume score data + this geometry to place marks
+ * against notes, without scraping the SVG for coordinates.
  */
 export interface NoteGeometry {
   phraseIndex: number;
@@ -966,8 +977,9 @@ export function toSvg(
    * RULED 2026-10-21 (Jeffrey), glyphs apart, as the books print them: in
    * the LU (1961, p. xj, "Pressus" and "Other pressus or apposed neums") the
    * two notes of a pressus do not touch. A first pass closed them up, the
-   * clivis stem between two touching heads, and it was wrong. The page that
-   * decided it: working/review/quadrata-strokes.html.
+   * clivis stem between two touching heads, and it was wrong: set side by
+   * side with the LU's own examples, the apposed heads read as the printed
+   * pressus and the touching ones as a different figure.
    */
   const renderFigure = (figure: ChantTabulaRow[], atXIn: number): number => {
     const glyphs = segmentGlyphs(figure);
@@ -1096,8 +1108,12 @@ export function toSvg(
           body.push(stem(swash.inkLeft + r.stemWeight, figure[0]!.staffPosition, figure[1]!.staffPosition));
           body.push(swash.svg);
           placements.push({ row: figure[0]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[0]!.staffPosition, L, r), system, systemY: L.systemY });
-          placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: cx, y: yFor(figure[1]!.staffPosition, L, r), system, systemY: L.systemY });
+          // The second note is the swash's FOOT, at its right end: anchored
+          // at the swash's start, a playhead on it sat over the first note.
+          // It takes a head's width in from the swash's end, as the stacked
+          // third note does.
           const upWidth = (GLYPHS[GLYPH.punctum]?.advance ?? 0) * r.glyphScale * r.noteScale;
+          placements.push({ row: figure[1]!, inkLeft: swash.inkLeft, inkRight: swash.inkRight, x: Math.max(cx, swash.inkRight - upWidth), y: yFor(figure[1]!.staffPosition, L, r), system, systemY: L.systemY });
           const upper = placeNote(figure[2]!, Math.max(atX, swash.inkRight - upWidth));
           if (figure[2]!.staffPosition - figure[1]!.staffPosition > 1) {
             body.push(stem(swash.inkRight, figure[1]!.staffPosition, figure[2]!.staffPosition));
@@ -1321,7 +1337,6 @@ export function toSvg(
       // afterwards and hoping. Exsurge computes the same boundary once up front
       // (`staffRight - CustosLong.width`), which makes a custos structurally
       // unable to overrun — where tonus used to place it past a finished `x`.
-      // See working/notes/exsurge-line-breaking.md.
       //
       // A final divisio needs no custos (nothing follows), so the full width is
       // available there.
@@ -1693,6 +1708,7 @@ export function toSvg(
         laneTop: L.lyricY + bands.prosodia.top,
         rightFor: (s) => (systemMaxX[s] ?? width) - r.padding,
         rubricaColor: r.rubricaColor,
+        noteColor: r.noteColor,
       }));
     }
     if (bands.chironomia) {
@@ -1701,6 +1717,7 @@ export function toSvg(
         // Clear of the lyric line's descenders: the crest's letters top out
         // ~26px above the midline, and the lyric baseline sits at lyricY.
         waveMidY: L.lyricY + bands.chironomia.top + 33 * trackScale,
+        noteColor: r.noteColor,
       }));
     }
     if (bands.tonarium) {
@@ -1710,6 +1727,7 @@ export function toSvg(
         rightFor: (s) => (systemMaxX[s] ?? width) - r.padding,
         serifFamily: r.fonts.lyric.family,
         rubricaColor: r.rubricaColor,
+        noteColor: r.noteColor,
       }));
     }
   }
@@ -1744,6 +1762,8 @@ export function toSvg(
         .filter((run) => run.text.length > 0);
     }
   }
+  // A one-letter first syllable ("A-", "O") is wholly the initial, and leaves
+  // nothing on the lyric line; no empty <text> is drawn for it.
 
   const lyricSvgs: string[] = [];
   const lyricFontSize = r.lyricSize * r.fonts.lyric.scale;
@@ -1757,6 +1777,7 @@ export function toSvg(
   for (let k = 0; k < lyrics.length; k++) {
     const ly = lyrics[k]!;
     const next = lyrics[k + 1];
+    if (!ly.text) continue;
     lyricSvgs.push(lyricText(ly.cx, ly.systemY, ly.text, ly.runs));
     // Continuing syllable in the same system → a centred hyphen in the gap.
     if (next && !next.wordStart && next.systemY === ly.systemY) {
@@ -1782,12 +1803,12 @@ export function toSvg(
   // system. The initial IS the lyric's first letter, so the lyric line carries
   // the remainder only (the book prints "K yrie" as cap + "yrie").
   //
-  // IT TAKES THE NOTE INK, NOT THE RUBRICA. The printed books set the initial
-  // in black and spend their red on the genus/mode mark beside it — see the
-  // Liber's "Intr. 1." over a black R. It was rubricated here, which put the
-  // reserved colour on the largest mark on the page and left the rubric it is
-  // reserved for competing with it. A caller wanting a red initial themes
-  // `--tonus-note` on the cap, or passes its own colour.
+  // IT TAKES THE NOTE INK, NOT THE RUBRICA, and so does the margin mark. The
+  // Solesmes books print in one ink — the Liber's "Intr. 1." over a black R —
+  // and the rubrica here is reserved for the text's own rubrics (`<c>` runs)
+  // and the tracks' claims. Rubricating the initial put the reserved colour on
+  // the largest mark on the page. A caller wanting a red initial styles
+  // `.dropcap` from the host page.
   const dropcapSvgs: string[] = [];
   if (capInitial && lyrics.length > 0) {
     const y = headerY + L.lyricY; // bottom-aligned with the first lyric baseline
