@@ -254,14 +254,13 @@ describe("buildScore", () => {
 
   // The salicus is classified at SYLLABLE scope, and the exception is the
   // point. Its rule reads the oriscus on the next-to-last note of an ascent;
-  // 41 of the corpus's 255 salici are written across a figure boundary, the
-  // oriscus in one figure and the summit in the next. Splitting first severed
-  // them and the count fell to 251 — narrowing Cardine's definition by
-  // refactoring rather than by ruling.
+  // a salicus may be written across a spacing separator, the oriscus in one
+  // figure and the summit in the next. Splitting first would sever it —
+  // narrowing Cardine's definition by refactoring rather than by ruling.
   test("a salicus split across figures keeps its name", () => {
     // The oriscus (o) on the second note of a three-note ascent, with the
     // figure broken before the summit.
-    const score = buildScore(makeChant("(c4) a(fgo!h) (::)"));
+    const score = buildScore(makeChant("(c4) a(fgo/h) (::)"));
     const syl = score.phrases[0].syllables.find((s) => s.notes.length === 3);
     assert.ok(syl, "the three-note ascent parsed");
     assert.ok(syl.notes.some((n) => n.context.oriscus), "the oriscus survived parsing");
@@ -409,7 +408,7 @@ describe("the ritard into a close", () => {
 
 describe("tabula figure grouping", () => {
   test("tabula exposes neumeGroup and per-figure neumeIndex", () => {
-    const rows = buildScore(makeChant("(c4) Ky(gh!gg)ri(h)e(g.) (::)")).tabula;
+    const rows = buildScore(makeChant("(c4) Ky(gh/gg)ri(h)e(g.) (::)")).tabula;
     const syl0 = rows.filter((r) => r.syllableIndex === 0);
     assert.deepEqual(syl0.map((r) => r.neumeGroup), [0, 0, 1, 1]);
     assert.deepEqual(syl0.map((r) => r.neumeIndex), [0, 1, 0, 1]);

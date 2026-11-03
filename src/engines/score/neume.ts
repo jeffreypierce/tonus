@@ -41,19 +41,17 @@ export function classifyNeume(notes: Note[]): Neume {
   //
   // This detection was previously keyed on the Solesmes ictus (GABC `'`) on
   // the second-to-last note, which is a different thing and a much larger set.
-  // Measured over the sung corpus today: 302 salici against 2,960 scandici, so
-  // the old rule claimed roughly 3,262 groups where 302 are real — and of that
-  // wider set only 9.4% carry an oriscus at all. An ictus-marked ascent with no
+  // Measured over the shelf (the seven books, 7,709 chants, 2026-11-03), 616
+  // syllables read as salici against 5,418 as scandici, so the ictus rule
+  // claimed a set several times the real one. An ictus-marked ascent with no
   // oriscus IS a scandicus that Solesmes marked for rhythm; the mark survives
   // on `context.ictus` for anyone reading it. Bevenot calls the conflation "a
   // trap" [biblio: cardine-semiology].
   //
-  // (This paragraph read 2,795 / 36 / 226 until 2026-08-11. Those came from
-  // working/qa-sweep/salicus-before.json, a run over 2,887 chants and 28,498
-  // phrases — a corpus that predates the accidental fix in `parse.ts`, which
-  // was emitting a phantom note at every accidental and inflating every count
-  // downstream. The shape of the finding survived re-measurement; the figures
-  // did not.)
+  // (The figures here have been re-measured three times as the parser was
+  // corrected: the phantom accidental notes, then the `!` cut read as a figure
+  // boundary and the oriscus scapus `O` read as no oriscus. The shape of the
+  // finding has survived each; the figures have not, and are dated.)
   //
   // The LIMIT of this, stated because it is easy to mistake for a bug: tonus
   // sees only what the transcription marks. Bevenot's own example — the mode-6
@@ -89,7 +87,8 @@ export function classifyNeume(notes: Note[]): Neume {
 /**
  * The syllable's figures, each classified in its own right.
  *
- * GABC marks figure boundaries (`!`, `/`, `//`) and the parser records them as
+ * GABC marks figure boundaries (`/`, `//`, `/0`, `/[n]`; the cut `!` and the
+ * fusion `@` part none) and the parser records them as
  * `context.neumeGroup`, but classification read the whole syllable, so a
  * three-figure melisma was named once and the name was almost always
  * "compound" — two of every three compounds the corpus reported. A syllable is
@@ -97,12 +96,12 @@ export function classifyNeume(notes: Note[]): Neume {
  *
  * THE SALICUS IS CLASSIFIED AT SYLLABLE SCOPE, DELIBERATELY, and the exception
  * is the point rather than an oversight. Its rule reads the oriscus on the
- * next-to-last note of an ascent (see `classifyNeume` above), and 41 of the
- * corpus's 255 salici are written across a figure boundary — the oriscus in
- * one figure, the summit in the next. Splitting first severed them and the
- * count fell to 251, which would have narrowed Cardine's definition by
- * refactoring rather than by ruling. The ascent is the neume; where the
- * scribe broke the figure is a separate fact.
+ * next-to-last note of an ascent (see `classifyNeume` above), and a salicus
+ * may be written across a spacing separator — the oriscus in one figure, the
+ * summit in the next (8 of the shelf's 616, 2026-11-03; the `!` cut, which
+ * once made most of them, parts no figure). Splitting first would sever them,
+ * narrowing Cardine's definition by refactoring rather than by ruling. The
+ * ascent is the neume; where the scribe broke the figure is a separate fact.
  */
 export function classifyFigures(notes: Note[]): Neume[] {
   if (notes.length === 0) return [];

@@ -157,7 +157,7 @@ describe("clef changes", () => {
   test("a change on a forced break: the new clef closes the line, the custos speaks in it", () => {
     for (const gabc of [
       "(c4) A(h) B(i) C(j) (z) (c3) D(h) E(i) (::)",
-      "(c4) A(h) B(i) C(j) (z0::c3) D(h) E(i) (::)",
+      "(c4) A(h) B(i) C(j) (z::c3) D(h) E(i) (::)",
     ]) {
       const sc = fromGabc(gabc);
       const { svg, geometry } = tonus.inscriptio(sc, { width: 300 });

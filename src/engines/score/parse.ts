@@ -22,10 +22,11 @@
 //
 // Accidental scope follows the Liber: a flat holds for the rest of the word, or
 // until the next bar line (even a quarter-bar), and is cancelled by a natural —
-// so `bmolle` resets at word and bar boundaries. The neume taxonomy (punctum,
-// virga, podatus, clivis, scandicus, salicus, climacus, torculus, porrectus and
-// their compounds) and the liquescent/quilisma/pressus treatments are the
-// Liber's; each is classified where it is read below.
+// so the accidental state resets at word and bar boundaries. The neume
+// taxonomy (punctum, virga, podatus, clivis, scandicus, salicus, climacus,
+// torculus, porrectus and their compounds) is the Liber's, and is named from
+// these notes in neume.ts; the liquescent, quilisma and pressus marks are read
+// here, each where its letter is.
 import type {
   ArticulationProfile,
   LyricRun,
@@ -76,6 +77,9 @@ const CLEF_OFFSETS = new Map<string, number>([
   ["fb4", 7],
 ]);
 
+// The bars, by their base sign. Gregorio's numbered variants (`;1`–`;8`, the
+// short bars drawn between two given lines, and `,0`–`,6`) are positions of
+// the same divisio, so `divisioOf` reads each as its base bar.
 const DIVISIO_DURATIONS = new Map<RestEvent["divisio"], number>([
   [",", 0.54],
   ["`", 0.33],
@@ -86,9 +90,74 @@ const DIVISIO_DURATIONS = new Map<RestEvent["divisio"], number>([
 
 const STAFF_STEPS = [0, 2, 4, 5, 7, 9, 11] as const;
 
+/** A bar token's divisio: its base sign, the numbered variants folded in. */
+function divisioOf(token: string): RestEvent["divisio"] | null {
+  const base = /^[,;][0-8]$/.test(token) ? token[0]! : token;
+  return DIVISIO_DURATIONS.has(base as RestEvent["divisio"]) ? (base as RestEvent["divisio"]) : null;
+}
+
+// Lyric spans that may hold a parenthesis: verbatim TeX (`<v>(</v>`) and the
+// translation in square brackets (`Hic[<v>\textup{(Hæc)}</v>]`). Read raw,
+// their `(` opened a note group the scribe never wrote. They are masked with
+// private-use stand-ins before the syllables are cut, and restored in the text.
+const OPEN_MASK = "\uE000";
+const CLOSE_MASK = "\uE001";
+const maskParens = (s: string): string => s.replace(/\(/g, OPEN_MASK).replace(/\)/g, CLOSE_MASK);
+const unmaskParens = (s: string): string =>
+  s.replace(/\uE000/g, "(").replace(/\uE001/g, ")");
+
+function maskLyricSpans(source: string): string {
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    const ch = source[i]!;
+    if (ch === "(") {
+      // A note group, copied through to its close.
+      const end = source.indexOf(")", i);
+      const stop = end < 0 ? source.length : end + 1;
+      out += source.slice(i, stop);
+      i = stop;
+      continue;
+    }
+    const span = lyricSpanEnd(source, i);
+    if (span > i) {
+      out += maskParens(source.slice(i, span));
+      i = span;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
+/** Where a `<v>…</v>` or `[…]` lyric span starting at `i` ends, or `i`. A
+ *  bracket that meets a note group before it closes is not a translation. */
+function lyricSpanEnd(source: string, i: number): number {
+  if (source.startsWith("<v>", i)) {
+    const end = source.indexOf("</v>", i + 3);
+    return end < 0 ? i : end + 4;
+  }
+  if (source[i] !== "[") return i;
+  let j = i + 1;
+  while (j < source.length) {
+    if (source[j] === "]") return j + 1;
+    if (source[j] === "(") return i;
+    const inner = source.startsWith("<v>", j) ? lyricSpanEnd(source, j) : j;
+    j = inner > j ? inner : j + 1;
+  }
+  return i;
+}
+
+/** The syllable's text without its translation: gregorio prints `[…]` under
+ *  the line, so it is neither lyric nor accent. Verbatim TeX keeps a bracket. */
+function stripTranslation(text: string): string {
+  return text.replace(/<v>[\s\S]*?<\/v>|\[[^\]]*\]/g, (m) => (m[0] === "<" ? m : ""));
+}
+
 const SYLLABLES_REGEX = /(?=.)((?:[^(])*)(?:\(?([^)]*)\)?)?/g;
 const NOTATIONS_REGEX =
-  /z0|z|Z|::|:|[,;][1-6]?|`|[cf][1-4]|cb[1-4]|fb[1-4]|\/\[-?[\d.]+\]|\/0|\/+|@| |\!|-?[a-mA-M][oOwWvVrRsxy#~\+><_\.'012345]*(?:\[[^\]]*\]?)*|\{([^}]+)\}?/g;
+  /z0|[zZ][+-]?|::|:|[,;][0-8]?|`|[cf][1-4]|cb[1-4]|fb[1-4]|\/\[-?[\d.]+\]|\/0|\/+|@| |\!|-?[a-mA-M][oOwWvVrRsxy#~\+><_\.'012345678]*(?:\[[^\]]*\]?)*|\{([^}]+)\}?/g;
 
 /** GABC's separators inside a syllable's notes: `!` cuts the glyph with no
  *  space, `/` adds the small space between elements, `//` the larger one,
@@ -174,10 +243,12 @@ function initialAccidentalState(clef: string): Map<number, AccidentalValue> {
 }
 
 function isLineBreak(token: string): boolean {
-  // GABC's explicit break: `z` a line break, `Z` a page break, `z0` a break
-  // that suppresses the custos. tonus paginates nothing, so all three mean the
-  // same thing here — end the system.
-  return token === "z" || token === "Z" || token === "z0";
+  // Gregorio's explicit breaks: `z` a justified line break, `Z` a ragged one,
+  // each with `+` or `-` to force or suppress its custos. tonus draws the
+  // custos by its own option, so every form means the same thing here: end
+  // the system. `z0` is NOT a break. It is the custos alone, its pitch read
+  // from the next note, and `(z0::c3)` is a mid-line clef change.
+  return /^[zZ][+-]?$/.test(token);
 }
 
 function isSkippable(token: string): boolean {
@@ -248,10 +319,6 @@ function parseNeume(
   const neumeArch = profile.neumeArch ?? 0.5;
   const durArch = profile.durArch ?? 0.08;
 
-  // bmolle: set from clef key sig, updated by x/y modifiers within tokens
-  let bmolle = clef.includes("b");
-
-
   const { notation, repeats, fused } = unrollRepeats(written);
 
   // Count note tokens for initio/melisma detection
@@ -262,8 +329,9 @@ function parseNeume(
   const breaks: number[] = [];
   const breakKinds: string[] = [];
   const intermed: IntermNote[] = [];
-  // neumeGroup: 0-based index of the neume figure within this syllable. GABC
-  // glyph separators (!, /, //) start a new figure; MusicXML slurs each figure.
+  // neumeGroup: 0-based index of the neume figure within this syllable. The
+  // spacing separators (/, //, /0, /[n]) start a new figure. `!` does not: it
+  // cuts the glyph and keeps the neume, so `g!hg` is one figure of three notes.
   let neumeGroup = 0;
 
   notation.forEach((rawToken, i) => {
@@ -273,7 +341,7 @@ function parseNeume(
     if (SEPARATOR.test(rawToken)) {
       breaks.push(i);
       breakKinds.push(rawToken);
-      neumeGroup++;
+      if (rawToken !== "!") neumeGroup++;
       return;
     }
 
@@ -317,11 +385,9 @@ function parseNeume(
     let explicitAccidental: AccidentalValue | null = null;
 
     if (marks.includes("x")) {
-      bmolle = true;
       explicitAccidental = -1;
       accidentalState.set(degree, -1);
     } else if (marks.includes("y")) {
-      bmolle = false;
       explicitAccidental = 0;
       accidentalState.set(degree, 0);
     } else if (marks.includes("#")) {
@@ -353,17 +419,13 @@ function parseNeume(
       return;
     }
 
-    // Apply bmolle to B (degree 6 = B natural step 11 → B-flat step 10)
-    let step = baseStep;
-    if (bmolle && degree === 6) step -= 1;
-    // Apply chromatic accidentals from state (on top of bmolle)
-    const stateAccidental = accidentalState.get(degree) ?? 0;
-    const activeAccidental = explicitAccidental ?? stateAccidental;
-    // If bmolle already lowered B, don't double-apply flat from state
-    if (!(bmolle && degree === 6 && activeAccidental === -1)) {
-      step += activeAccidental;
-    }
-    step += octave * 12;
+    // The alteration is the state's, and the state alone: the clef's B-flat
+    // seeds it (initialAccidentalState), a written x / y / # sets its degree,
+    // and the word or bar resets it. A separate b-molle flag once rode beside
+    // it, set by ANY x and reset only per syllable, so `(c4) A(exei)` sang a
+    // B-flat nobody wrote and a `by` under a cb clef held for one syllable.
+    const activeAccidental = explicitAccidental ?? accidentalState.get(degree) ?? 0;
+    const step = baseStep + activeAccidental + octave * 12;
 
     // A sign handed over by a preceding accidental token is drawn AT this note,
     // whatever its degree. A GABC accidental is a key-signature mark, not an
@@ -460,8 +522,9 @@ function parseNeume(
     }
 
     // Oriscus (o = soft, light note taken slightly faster; the rhythmic
-    // support falls on the note before it). Suñol, Textbook Ch. V.
-    if (marks.includes("o")) {
+    // support falls on the note before it). Suñol, Textbook Ch. V. `O` is
+    // gregorio's oriscus scapus, the oriscus with a stem: the same note.
+    if (/o/i.test(marks)) {
       w += weights.oriscusWeight;
       durWeight += weights.oriscusDuration;
       isOriscus = true;
@@ -474,7 +537,7 @@ function parseNeume(
     if (prev && step === prev.step) {
       prev._weight += weights.repercussionPrevWeight;
       prev._durWeight += weights.repercussionPrevDuration;
-      if (marks.includes("o")) {
+      if (isOriscus) {
         prev._weight += weights.repercussionOriscusWeight;
       }
     }
@@ -508,8 +571,8 @@ function parseNeume(
     // o0 / o1 write the orientation; a bare o leaves it to the next pitch,
     // resolved after the syllable's notes are known (below).
     const oriscusDirection: "ascending" | "descending" | null = !isOriscus ? null
-      : marks.includes("o1") ? "ascending"
-      : marks.includes("o0") ? "descending"
+      : /o1/i.test(marks) ? "ascending"
+      : /o0/i.test(marks) ? "descending"
       : null;
 
     intermed.push({
@@ -677,7 +740,14 @@ export function parseGABC(
   const events: ParseResult["events"] = [];
   const facts = new Map<ParsedNote, IctusFacts>();
   let cellSerial = 0;   // one per notated syllable cell — see ParsedNote.cell
-  const source = (gabc || "").trim();
+  // A whole file's header ends at `%%`; the notation is what follows. Then a
+  // `%` opens a comment to the end of its line, as in gregorio: the corpus
+  // writes editorial variants there, notes included. `\%` is a literal sign.
+  const raw = gabc || "";
+  const header = raw.indexOf("%%");
+  const source = (header >= 0 ? raw.slice(header + 2) : raw)
+    .replace(/(^|[^\\])%[^\n]*/g, "$1")
+    .trim();
 
   if (!source) {
     return {
@@ -700,7 +770,9 @@ export function parseGABC(
   // One lyric decoder per source: GABC style tags open and close across
   // syllable (and word) boundaries, so the decode state rides the whole walk.
   const lyricDecoder = createLyricDecoder();
-  const split = source.replace(/\)\s(?=[^\)]*(?:\(|$))/g, ")\n").split(/\n/g);
+  const split = maskLyricSpans(source)
+    .replace(/\)\s(?=[^\)]*(?:\(|$))/g, ")\n")
+    .split(/\n/g);
 
   split.forEach((word) => {
     if (!word) return;
@@ -708,7 +780,7 @@ export function parseGABC(
     // clears any accidental the previous word set (the clef's own signature
     // persists). This is the scope the header states, now enforced.
     accidentalState = initialAccidentalState(currentClef);
-    pendingAccidental.acc = null;   // a new clef clears any unclaimed sign
+    pendingAccidental.acc = null;   // a new word clears any unclaimed sign
 
     SYLLABLES_REGEX.lastIndex = 0;
     let match: RegExpExecArray | null;
@@ -718,7 +790,9 @@ export function parseGABC(
     const wordSyllables: { notes: ParsedNote[]; accent: boolean }[] = [];
 
     while ((match = SYLLABLES_REGEX.exec(word)) !== null) {
-      const rawText = (match[1] ? match[1].trim().split("|")[0] : "") || "";
+      const rawText = stripTranslation(
+        unmaskParens((match[1] ? match[1].trim().split("|")[0] : "") || ""),
+      );
       // Decode GABC lyric markup EVERY syllable — a style opened here may
       // close syllables later, so the decoder's state must advance even when
       // this syllable carries no notes.
@@ -739,11 +813,12 @@ export function parseGABC(
         if (CLEF_OFFSETS.has(token)) {
           currentClef = token;
           accidentalState = initialAccidentalState(currentClef);
-    pendingAccidental.acc = null;   // a new clef clears any unclaimed sign
+          pendingAccidental.acc = null;   // a new clef clears any unclaimed sign
           continue;
         }
-        if (DIVISIO_DURATIONS.has(token as RestEvent["divisio"])) {
-          if (!divisioToken) divisioToken = token as RestEvent["divisio"];
+        const divisio = divisioOf(token);
+        if (divisio) {
+          if (!divisioToken) divisioToken = divisio;
           continue;
         }
         // A BREAK IS ITS OWN GROUP. GABC writes one as `(z)`, alone; a `z`
@@ -753,10 +828,10 @@ export function parseGABC(
         // three responsories in the Nocturnale cut their systems a third of
         // the way across the page and left the rest of the line empty.
         //
-        // The rule is NOTES BEFORE IT, not "alone in its group": `(z0::c3)` is
-        // a real break carrying the double bar and the new clef after it, and
-        // those are common. What is never a break is a `z` that FOLLOWS
-        // notes, which is what `(gz)` and `(hjHG__z)` are.
+        // The rule is NOTES BEFORE IT, not "alone in its group": `(z::c3)` is
+        // a real break carrying the double bar and the new clef after it.
+        // What is never a break is a `z` that FOLLOWS notes, which is what
+        // `(gz)` and `(hjHG__z)` are.
         if (isLineBreak(token)) {
           if (noteTokens.length === 0) pendingLineBreak = true;
           continue;
@@ -788,16 +863,16 @@ export function parseGABC(
           notes: events.slice(before).filter((e): e is ParsedNote => e.type === "note"),
           accent,
         });
-          // The break lands on the FIRST note the marker precedes, and is
-          // spent there. A `z` usually sits in a group with NO notes of its
-          // own — "…(::) (z)Ps. E(g)ru…" — so the flag outlives that group
-          // and is claimed by the next note born, which is the one the
-          // engraver meant to start the new line.
-          if (pendingLineBreak) {
-            const first = events[before];
-            if (first && first.type === "note") first.lineBreak = true;
-            pendingLineBreak = false;
-          }
+        // The break lands on the FIRST note the marker precedes, and is
+        // spent there. A `z` usually sits in a group with NO notes of its
+        // own — "…(::) (z)Ps. E(g)ru…" — so the flag outlives that group
+        // and is claimed by the next note born, which is the one the
+        // engraver meant to start the new line.
+        if (pendingLineBreak) {
+          const first = events[before];
+          if (first && first.type === "note") first.lineBreak = true;
+          pendingLineBreak = false;
+        }
       }
 
       if (divisioToken) {
@@ -807,7 +882,7 @@ export function parseGABC(
           duration: DIVISIO_DURATIONS.get(divisioToken) ?? 0.5,
         });
         accidentalState = initialAccidentalState(currentClef);
-    pendingAccidental.acc = null;   // a new clef clears any unclaimed sign
+        pendingAccidental.acc = null;   // a bar clears any unclaimed sign
       }
 
       syllableIndex += 1;

@@ -759,23 +759,32 @@ describe("inscriptio — font embedding (caller's bytes, self-contained SVG)", (
     );
   });
 
-  // …but a break that CARRIES its bar and clef still breaks. `(z0::c3)` is
-  // common in the corpus, and guarding on "alone in its group" killed it.
-  test("`z0::c3` breaks, carrying the bar and the new clef", () => {
-    const score = buildScore(makeChant("(c3) a(g) b(h) (z0::c3) c(i) d(j)"));
+  // …but a break that CARRIES its bar and clef still breaks; guarding on
+  // "alone in its group" killed `(z::c3)`.
+  test("`z::c3` breaks, carrying the bar and the new clef", () => {
+    const score = buildScore(makeChant("(c3) a(g) b(h) (z::c3) c(i) d(j)"));
     assert.equal(
       score.tabula.filter((r) => r.lineBreak).length, 1,
       "the marker leads its group, so it is the engraver's break",
     );
   });
 
-  test("`Z` and `z0` break the same way — tonus paginates nothing", () => {
-    for (const marker of ["Z", "z0"]) {
+  test("`z`, `Z` and their custos forms break the same way — tonus paginates nothing", () => {
+    for (const marker of ["z", "Z", "z-", "Z+"]) {
       const score = buildScore(makeChant(`(c3) a(g) b(h) (${marker}) c(i)`));
       assert.ok(
         score.tabula.some((r) => r.lineBreak),
         `${marker} is read as a break`,
       );
+    }
+  });
+
+  // gregorio's `z0` is the custos alone, its pitch the next note's: no break.
+  // The corpus writes `(z0::c3)` 64 times for a clef change inside the line.
+  test("`z0` is a custos, not a break", () => {
+    for (const marker of ["z0", "z0::c3"]) {
+      const score = buildScore(makeChant(`(c3) a(g) b(h) (${marker}) c(i)`));
+      assert.equal(score.tabula.filter((r) => r.lineBreak).length, 0, marker);
     }
   });
 
