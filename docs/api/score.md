@@ -1,6 +1,6 @@
 # Score
 
-`tonus.notatio` renders a chant into a score: the analyzed, tuned, and
+`tonus.notatio` builds a chant into a score: the analyzed, tuned, and
 rhythm-classified reading of one GABC melody. The score is data: `phrases`,
 `tabula`, `metrics`, `cadences`, `modulations`, and `imprint`. The
 standalone `tonus.inscriptio(score)` draws it to SVG.
@@ -53,6 +53,10 @@ notation, which are signs of punctuation rather than measure:
 | `:`     | divisio maior (full bar)     |
 | `::`    | divisio finalis (double bar) |
 
+gregorio's numbered bars (`;1`–`;8`, `,0`–`,6`) are read as their base bar.
+Two bars with no note between them close one phrase, under the stronger of
+the two; a bar before the first note opens none.
+
 This hierarchy is read three ways in the engine, each weighting the bars for its
 own end: an analytic cadence weight (metrics), a phrasing strength (which zeroes
 the virgula), and a rest duration (the divisio's pause length). Each weighting
@@ -101,7 +105,8 @@ every note's `context` and on every tabula row. The articulation weight for
 an accent is applied from the printed acute alone.
 
 A syllable carries neumes rather than being one. GABC marks the figures with
-`!`, `/` and `//`, and `neumes` names each; `neume` reads the whole syllable as
+`/`, `//`, `/0` and `/[n]`, and `neumes` names each; the cut `!` and the
+fusion `@` join glyphs within one figure, as gregorio sets them; `neume` reads the whole syllable as
 a single figure, which for a melisma of several is usually `compound`. A
 syllable of one figure reports the same shape both ways. The salicus is the
 exception and reports at syllable scope: its rule reads the oriscus on the
@@ -116,7 +121,10 @@ and `>` leave the name alone. A lone note marked with one is the punctum
 liquescens, and stays a `punctum`.
 
 GABC's lyric markup is decoded at parse, so `lyric` is always clean display
-text: the `<sp>` shortcuts arrive as real characters (`<sp>V/</sp>` → ℣,
+text. A translation in square brackets (`Hic[Here]`) is not lyric, and is
+dropped; a parenthesis inside verbatim TeX or a translation (`<v>(</v>`) opens
+no note group. A `%` begins a comment that runs to the end of its line, and a
+whole file's header, through `%%`, is skipped. Beyond that: the `<sp>` shortcuts arrive as real characters (`<sp>V/</sp>` → ℣,
 `<sp>R/</sp>` → ℟, `<sp>+</sp>` → the flex †, `<sp>'ae</sp>` → ǽ, the
 `\greheightstar` verbatim → the raised *), centering braces and layout tags
 (`<clear>`, `<nlba>`) vanish, above-lines text (`<alt>`) is not lyric text,
@@ -124,7 +132,8 @@ and page cross-references (`\pageref`) to the paper books are dropped. Style
 tags (`<i>`, `<b>`, `<sc>`, `<c>` for rubric color, `<e>` for elision) survive
 as `runs`, styled spans that concatenate to `lyric`; a style opened in one
 syllable and closed several later (the common `<i>ij.</i>` and euouae
-patterns) styles every syllable it crosses. Both notation species draw the
+patterns) styles every syllable it crosses. Verbatim spacing commands
+(`\kern 6mm`, `\hspace{…}`) leave no text. Both notation species draw the
 runs (italic, bold, small caps, rubric color) as SVG `<tspan>`s.
 
 ```typescript
@@ -196,37 +205,40 @@ Inside `modulatio` is the phrasing one level down, lean and rush. A sung
 melisma is not a row of equal notes: its first and last, its turning points
 and the notes on the tenor or the final are the real notes, and the rest are
 runs between them. A sung cadence leans into the note before the final when
-it comes by step, and releases on the final. `modulatio` at 0 leaves every
-note equal; at 0.5 the lean and the rush are modest; at 1 a long melisma is
+it comes by step, and releases on the final. `modulatio` at 0 leans least; at 0.5 the lean and the rush are modest; at 1 a long melisma is
 three or four notes with runs between. Syllables of fewer than four notes
 are untouched, so syllabic chant keeps its even flow apart from the cadence.
+`modulatio` at 0 still leaves its recitative floor of lean and rush (0.1
+each), so "every note equal" is the fields at 0: `modulatio: { lean: 0, rush: 0 }`.
 
 With no knob given, notes are articulated at the reference reading, and the
-phrasing is shaped only for a chant that names its mode or its office.
+phrasing is shaped for any chant with a mode, named in its header or read
+from its notes, or that names its office. Only a chant with neither keeps
+`velocity: null` on its rows.
 `rhythmicShape` and `rhythmicIndex` are always populated by the Solesmes
 classifier, whatever the knobs.
 
 ### The fields
 
-Every field belongs to one knob. Three names stand in both the articulation
-(weight and duration) and the phrasing (velocity): `ictusBoost`, `neumeArch`
-and `durArch`. One field sets both.
+Every field belongs to one knob. One name stands in both the articulation
+(weight and duration) and the phrasing (velocity and shaped duration):
+`ictusBoost`, which lengthens an ictic note in each. One field sets both.
 
 | knob        | field                                         | governs                                                     |
 | ----------- | --------------------------------------------- | ----------------------------------------------------------- |
 | `pondus`    | `weights`                                     | per-sign weight and duration deltas: ictus, episema, strophicus, quilisma, liquescent, oriscus, … |
 |             | `weightBase`, `weightGain`, `weightSaturation` | how sign weight accumulates and where it caps               |
 |             | `ruleGain`                                    | the authority of the sign rules over positional shaping     |
-|             | `ictusBoost`                                  | extra weight and velocity on ictic notes                    |
-|             | `accent`                                      | accent emphasis within the phrase                           |
+|             | `ictusBoost`                                  | a multiplier on an ictic note's duration (not its weight or velocity) |
+|             | `accent`                                      | a uniform gain on every note's velocity                     |
 | `modulatio` | `curve`                                       | depth of the phrase-level velocity arch                     |
-|             | `neumeArch`, `durArch`                        | the arch across a neume, in weight, velocity and duration   |
+|             | `neumeArch`, `durArch`                        | the arch across a syllable's notes, in weight and duration  |
 |             | `contourScale`, `contourVel`, `contourDur`    | the melodic contour's pull on weight, velocity and duration |
 |             | `lean`, `rush`                                | a melisma's real notes leaned into, its runs rushed; the cadence's penultimate leaned into, its final released |
 | `cadentia`  | `cadence`                                     | weight given to phrase-final cadences                       |
 |             | `ritard`, `ritardNotes`                       | depth and width, in notes, of the rallentando               |
 |             | `ritardCurve`, `finisBoost`                   | how late it gathers; the piece's own last `::`              |
-| `expressio` | `baseVelocity`, `velSpread`                   | the velocity floor and the dynamic range above it           |
+| `expressio` | `baseVelocity`, `velSpread`                   | a multiplier on the shaped velocity, and its spread about the centre (velocity is clamped to 0.1–1) |
 |             | `durationBase`, `durationGain`, `durationMin`, `durationMax` | how sign weight maps to note duration, and its clamp |
 
 `weightBase` and `durationBase` do not move with their knob's level;
@@ -276,7 +288,7 @@ interface Note {
 }
 
 interface Performance {
-  velocity: number; // 0–1 shaping factor
+  velocity: number; // always 0 here: the shaped velocity is the tabula row's
   duration: number;
   rhythmicShape: "arsic" | "thetic"; // quality of this note's compound beat
   rhythmicIndex: number; // 1-based position within the compound beat
@@ -286,18 +298,23 @@ interface Context {
   lyric: string;
   vowel: string;
   diphthong: string | null; // the pair the vowel belongs to: "ae" | "oe" | "au" | "ui"
-  syllableIndex: number;
+  runs?: LyricRun[]; // styled lyric spans (see Syllable above)
+  syllableIndex: number; // the syllable within its WORD (0 = the word's first)
   accent: boolean; // this note's syllable bears the Latin tonic word-accent (printed, or by the rule)
   accentInferred?: true; // the accent was read by the rule, not printed
-  neumeGroup: number; // neume figure within the syllable (0-based)
+  neumeGroup: number; // neume figure within the syllable (0-based); `!` and `@` part none
+  separator: string | null; // the GABC separator written before this note: ! @ / // /0 /[n]
+  lineBreak?: boolean; // a forced system break (gabc z / Z) falls before this note
+  keepWithPrev?: boolean; // inside an <nlba> span: no line break before this syllable
   ictus: boolean;
   ictusSign: boolean; // an editorial ictus mark is printed in the source
   episema: boolean;
   accidentalSource: "none" | "state" | "explicit";
+  accidentalSign?: -1 | 0 | 1; // an accidental SIGN drawn before this note (gabc x / y / #)
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
-  oriscus: boolean;
+  oriscus: boolean; // gabc o, or O (the oriscus scapus)
   liquescence: "deminutive" | "ascending" | "descending" | null; // ~ < >
   oriscusDirection: "ascending" | "descending" | null; // o1/o0, else toward the next pitch
   hollow: boolean; // cavum, gabc r
@@ -309,6 +326,14 @@ interface Context {
   shape: string; // the notehead shape (punctum, inclinatum, quilisma, lineaPunctum, …)
   weight: number; // articulation weight
 }
+```
+
+An accidental holds for the rest of its word or until the next bar, and
+alters only the degree it is written on: a flat on E leaves the B natural. A
+clef with a flat (`cb3`, `fb2`) sets B-flat at every word and bar, and a
+natural written on B holds through the word like any other accidental.
+
+```ts
 ```
 
 A compound beat is the group of notes between one ictus and the next;
@@ -327,14 +352,14 @@ why `hz`, `velocity`, `bend`, and the ornament flags live on each row.
 
 ```js
 score.tabula[0];
-// { lyric: "PU", midi: 43, hz: 97.8,
-//   name: "Γ", nomen: "Gammaut",
+// { lyric: "PU", midi: 55, hz: 195.56,
+//   name: "G", nomen: "Gesolreut",
 //   rhythmicShape: "arsic", rhythmicIndex: 1, ictus: true,
 //   degree: 1, role: "finalis", … }
 ```
 
-The first note of _Puer natus est_ sits on Gammaut, the bottom of the
-Guidonian hand.
+The first note of _Puer natus est_ sits on Gesolreut, the G of the grave
+hexachords, an octave above Gammaut at the bottom of the Guidonian hand.
 
 ```ts
 interface ChantTabulaRow {
@@ -346,7 +371,10 @@ interface ChantTabulaRow {
   accentInferred?: true; // the accent was read by the rule, not printed
   neumeGroup: number; // which neume figure within the syllable (0-based)
   neumeIndex: number; // position of this note within that figure
+  separator: string | null; // the GABC separator written before this note
   wordStart: boolean; // first syllable of its word
+  lineBreak: boolean; // a forced system break falls before this note
+  keepWithPrev: boolean; // inside an <nlba> span
 
   // note fields
   midi: number;
@@ -354,6 +382,7 @@ interface ChantTabulaRow {
   octave: number;
   accidental: -1 | 0 | 1;
   accidentalSource: "none" | "state" | "explicit";
+  accidentalSign?: -1 | 0 | 1; // an accidental sign drawn before this note
   quilisma: boolean;
   liquescent: boolean;
   strophicus: boolean;
@@ -368,11 +397,11 @@ interface ChantTabulaRow {
   offset: number;
   spn: string; // scientific pitch name, "D4"
   staffLetter: string; // the GABC staff letter as written
-  staffPosition: number; // vertical staff position (line/space index)
+  staffPosition: number; // half-spaces above the staff's bottom line (0 = the line, 1 = the space above)
   clef: string; // the clef in force at this note ("c3", "f4", …)
   shape: string; // the notehead shape (punctum, inclinatum, quilisma, lineaPunctum, …)
   bend: number; // 14-bit MIDI pitch bend (8192 = center)
-  velocity: number | null;
+  velocity: number | null; // the shaped velocity; null when no phrasing ran
   duration: number;
   shapedDuration: number;
   rhythmicShape: "arsic" | "thetic";
@@ -774,7 +803,7 @@ interface Arcus {
   initial: number;   // first note MIDI
   peak: number;      // highest note MIDI
   final: number;     // last note MIDI
-  archIndex: number; // signed: +1 rises and returns, 0 flat/monotonic
+  archIndex: number; // ≥ 0: 0 ends on its peak, 1 returns to its start, > 1 ends below it
 }
 ```
 
@@ -788,13 +817,14 @@ interface IntervalStats {
   histogram: Record<number, number>; // signed semitone interval → count
   maxLeap: number;                   // largest absolute interval (semitones)
   leapRate: number;                  // fraction of motions that are leaps
-  motus: { step: number; skip: number; leap: number };
+  motus: { unison: number; step: number; skip: number; leap: number };
 }
 ```
 
-| motion | semitones | interval          |
-| ------ | --------- | ----------------- |
-| `step` | 1–2       | a second          |
+| motion   | semitones | interval          |
+| -------- | --------- | ----------------- |
+| `unison` | 0         | a repeated pitch  |
+| `step`   | 1–2       | a second          |
 | `skip` | 3–4       | a third           |
 | `leap` | 5+        | a fourth or wider |
 
@@ -871,17 +901,17 @@ the two-word name a page prints: `cadens finalis`, `insistens tenor`,
 `desiliens quinta`. The key stays `genus`; the name is its reading in a mode.
 
 The English sits beside the Latin. [`CADENTIA_LABEL`](index.md#the-appendix)
-glosses every word a `nomen` can contain, and `glossOf` reads a whole name:
+glosses every word a `nomen` can contain, so a whole name reads word by word:
 
 ```js
 import { CADENTIA_LABEL } from "tonus";
-import { glossOf } from "tonus/dist/engines/score/api.js";
 
 CADENTIA_LABEL.cadens; // "falling a step onto"
 CADENTIA_LABEL.subfinalis; // "the note below the final"
-glossOf("cadens finalis"); // "falling a step onto the final"
-glossOf("insistens tenor"); // "standing on the tenor"
-glossOf("desiliens quinta"); // "leaping down onto the fifth"
+const gloss = (nomen) => nomen.split(" ").map((w) => CADENTIA_LABEL[w] ?? w).join(" ");
+gloss("cadens finalis"); // "falling a step onto the final"
+gloss("insistens tenor"); // "standing on the tenor"
+gloss("desiliens quinta"); // "leaping down onto the fifth"
 ```
 
 Both join [`CADENTIAE`](index.md#the-appendix), the mined catalogue, which
@@ -926,7 +956,7 @@ interface Cadence {
 ```
 
 A one-note phrase is a cadence (a landing with no gesture) and keys as its
-landing alone (`"0"`, genus `"none @0"`).
+landing alone (`"0"`, genus `"sola @0"`).
 
 `degree` is signed and not octave-reduced: `@-3`, a fourth below the final,
 and `@4`, a fifth above, are distinct genera.
@@ -990,9 +1020,10 @@ between bars:
 3. So does any note that begins a group, unless rules 1 or 2 claim a note
    beside it.
 
-Two ictus never fall in succession unless the first is of double value. The
-one exception, a group start before its own dotted note, is taken from the
-Antiphonale Monasticum. Wherever more than three notes would pass without an
+Two ictus never fall in succession unless the first is of double value. There
+are two exceptions, where a group start keeps its ictus beside the next note's:
+before its own dotted note, taken from the Antiphonale Monasticum, and before
+a lone horizontal episema, which the Liber says "generally" takes the ictus. Wherever more than three notes would pass without an
 ictus, the run is cut 2+2, 2+3 or 3+2. The cut prefers word endings, then
 accented syllables, and avoids a weak penultimate. Where those tie, it counts
 back by twos from the next ictus. The word accent never places an ictus on its
@@ -1004,17 +1035,18 @@ lengthens the group.
 The classifier applies Carroll's three melodic rules in priority order
 (_Chironomy_ Ch. 4):
 
-1. **Incise unity.** Ictuses before the melodic apex of the incise are
-   arsic; after it, thetic. The apex is the incise's highest-pitched
-   ictus.
+1. **Incise unity.** Once the melodic apex of the incise is passed, every
+   compound beat is thetic. The apex is the incise's highest-pitched ictus.
+   The rise to it is read by rules 2 and 3.
 2. **Relative ictus pitch.** An ictus higher than the one before it tends
    arsic; lower tends thetic.
 3. **Neume slope.** When the first two are inconclusive, rising notes are
    arsic, falling thetic.
 
-The first compound beat of an incise is always arsic. When every rule is inconclusive, the
-shape alternates from the previous group. Two conventional overrides
-precede the rules. The **salicus** is always arsic, because the tension toward
+The first compound beat of an incise is arsic ahead of the three rules: an
+incise never begins with thesis. When every rule is inconclusive, the shape
+alternates from the previous group. Two conventional overrides precede
+everything, the first beat included. The **salicus** is always arsic, because the tension toward
 its summit is the arsic gesture, and the **doubly-dotted clivis** is always
 thetic, as a cadential figure.
 
@@ -1023,8 +1055,8 @@ A salicus here is Cardine's: an ascent of at least three notes whose
 oriscus is what makes one. An ascending group carrying only the editorial
 Solesmes ictus is a **scandicus** that was marked for rhythm. The distinction
 is worth stating because conflating the two is, in Bevenot's word, a trap: over
-the sung corpus tonus finds about 260 salici against about 1,900 scandici, so
-only about an eighth of that wider set carries an oriscus at all.
+the shelf's 7,709 chants tonus reads 616 syllables as salici against 5,418 as
+scandici.
 
 Cardine's correction also decides WHICH note is principal. The printed
 editions lengthen the oriscus itself; the manuscripts show the principal note

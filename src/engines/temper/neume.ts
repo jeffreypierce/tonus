@@ -50,7 +50,7 @@ export type NeumeShape =
   // nothing is worse than the gap.
   | "scandicus subpunctis"  // two rising, then all falling
   // The liquescent figures: a pes, clivis or climacus whose last note is the
-  // deminished half-note. The contour is the plain figure's. The written mark
+  // diminished half-note. The contour is the plain figure's. The written mark
   // is what names it, so only the score layer returns these. `neuma` reads
   // pitches alone and never does. See `classifyNeume` (score/neume.ts).
   | "epiphonus"   // a pes, upper note liquescent
